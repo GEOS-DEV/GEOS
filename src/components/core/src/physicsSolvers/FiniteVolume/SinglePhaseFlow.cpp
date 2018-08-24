@@ -597,7 +597,7 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                 0 );
 
   //TODO element sync doesn't work yet
-//  std::map<string, array1d<string> > fieldNames;
+//  std::map<string, string_array > fieldNames;
 //  fieldNames["element"].push_back(viewKeys.blockLocalDofNumber.Key());
 //
 //  CommunicationTools::
@@ -1395,7 +1395,7 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
 
 
   // TODO Sync dP once element field syncing is reimplemented.
-  //std::map<string, array1d<string> > fieldNames;
+  //std::map<string, string_array > fieldNames;
   //fieldNames["element"].push_back(viewKeyStruct::deltaFluidPressureString);
   //CommunicationTools::SynchronizeFields(fieldNames,
   //                            mesh,

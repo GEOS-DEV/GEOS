@@ -79,7 +79,7 @@ void BoundaryConditionBase::ReadXML(TICPP::HierarchicalDataNode* hdn){
 
   m_fieldName = hdn->GetAttributeStringOrDefault("fieldname","");
   {
-    array1d<string> tempSetName;
+    string_array tempSetName;
     tempSetName = hdn->GetStringVector("setname");
     if (!tempSetName.empty())
       throw GPException("ERROR!!! setname is not supported anymore in boundary condition.  Use setnames instead.");
@@ -245,13 +245,13 @@ void BoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hdn)
   }
   else
   {
-    array1d<string> vTypesVect = Tokenize(varTypesStr," ");
+    string_array vTypesVect = Tokenize(varTypesStr," ");
     m_variableTypes.resize(vTypesVect.size());
 
     if(m_variableTypes.size() != m_variableNames.size())
       throw GPException("Error InitialConditionFunction: Number of variable types not equal to number of variables.");
 
-    for( array1d<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
+    for( string_array::size_type i=0 ; i < vTypesVect.size() ; ++i )
       m_variableTypes[i] = fromString<FieldType>(vTypesVect[i]);
 
   }
@@ -422,16 +422,16 @@ void MultiVarDirichletBoundaryCondition::ReadXML(TICPP::HierarchicalDataNode* hd
   }
 }
 
-void MultiVarDirichletBoundaryCondition::CheckVars(const array1d<string> &varName)
+void MultiVarDirichletBoundaryCondition::CheckVars(const string_array &varName)
 {
   if(!m_isClamped)
   {
-    array1d<string> tmp;
-    for(array1d<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
+    string_array tmp;
+    for(string_array::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
     {
       bool notFound = true;
-      array1d<string>::const_iterator itt = m_tables.begin();
-      for(array1d<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
+      string_array::const_iterator itt = m_tables.begin();
+      for(string_array::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
       {
         if(streq(*it, *itm))
         {
@@ -458,7 +458,7 @@ const array1d<real64>& MultiVarDirichletBoundaryCondition::GetValues(realT time)
 
     array1d<real64> t(1, time);
     array1d<real64>::iterator itv = m_value.begin();
-    for(array1d<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
+    for(string_array::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
       *itv = TableManager::Instance().LookupTable<1>(*it, t);
     m_time = time;
   }
@@ -494,14 +494,14 @@ void MultiVarSrcFluxBoundaryCondition::ReadXML(TICPP::HierarchicalDataNode* hdn)
 }
 
 
-void MultiVarSrcFluxBoundaryCondition::CheckVars(const array1d<string> &varName)
+void MultiVarSrcFluxBoundaryCondition::CheckVars(const string_array &varName)
 {
-  array1d<string> tmp;
-  for(array1d<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
+  string_array tmp;
+  for(string_array::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
   {
     bool notFound = true;
-    array1d<string>::const_iterator itt = m_tables.begin();
-    for(array1d<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
+    string_array::const_iterator itt = m_tables.begin();
+    for(string_array::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
     {
       if(streq(*it, *itm))
       {
@@ -525,7 +525,7 @@ const array1d<real64>& MultiVarSrcFluxBoundaryCondition::GetValues(realT time)
   {
     array1d<real64> t(1, time);
     array1d<real64>::iterator itv = m_value.begin();
-    for(array1d<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
+    for(string_array::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
       *itv = TableManager::Instance().LookupTable<1>(*it, t);
     m_time = time;
   }
@@ -635,13 +635,13 @@ void TractionBoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hd
   }
   else
   {
-    array1d<string> vTypesVect = Tokenize(varTypesStr," ");
+    string_array vTypesVect = Tokenize(varTypesStr," ");
     m_variableTypes.resize(vTypesVect.size());
 
     if(m_variableTypes.size() != m_variableNames.size())
       throw GPException("Error TractionBoundaryConditionFunction: Number of variable types not equal to number of variables.");
 
-    for( array1d<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
+    for( string_array::size_type i=0 ; i < vTypesVect.size() ; ++i )
       m_variableTypes[i] = fromString<FieldType>(vTypesVect[i]);
 
   }

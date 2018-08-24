@@ -2863,7 +2863,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
  * @param fieldNames
  * @param commID
  */
-//void PartitionBase::SetBufferSizes( const std::map<string, array1d<string> >& fieldNames,
+//void PartitionBase::SetBufferSizes( const std::map<string, string_array >& fieldNames,
 //                                    const CommRegistry::commID commID  )
 //{
 //  // get buffer sizes, and send/receive sizes
@@ -2883,16 +2883,16 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  }
 //}
 //
-//void PartitionBase::SynchronizeFields( const std::map<string, array1d<string> >& fieldNames,
+//void PartitionBase::SynchronizeFields( const std::map<string, string_array >& fieldNames,
 //                                       const CommRegistry::commID commID  )
 //{
 ////
 //  if(m_hasLocalGhosts){
 //    // synchronize local ghosts prior to external communication
 //    std::map<DomainPartition::ObjectDataStructureKeys,
-// array1d<string>>::const_iterator it  = fieldNames.begin();
+// string_array>::const_iterator it  = fieldNames.begin();
 //    std::map<DomainPartition::ObjectDataStructureKeys,
-// array1d<string>>::const_iterator iend  = fieldNames.end();
+// string_array>::const_iterator iend  = fieldNames.end();
 //    for(;it!=iend;++it){
 //
 //      if(it->first == DomainPartition::FiniteElementElementManager)
@@ -2911,7 +2911,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //          const localIndex_array& target =
 // m_elementRegionsLocalGhosts[regionName];
 //
-//          for( array1d<string>::size_type i =0; i < it->second.size(); ++i){
+//          for( string_array::size_type i =0; i < it->second.size(); ++i){
 //            const std::string& fieldName = it->second[i];
 //            FieldType fieldType = elementRegion.GetFieldType(fieldName);
 //
@@ -2929,7 +2929,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //        const localIndex_array& source = m_localGhostSources[it->first];
 //        const localIndex_array& target = m_localGhosts[it->first];
 //
-//        for( array1d<string>::size_type i =0; i < it->second.size(); ++i){
+//        for( string_array::size_type i =0; i < it->second.size(); ++i){
 //          const std::string& fieldName = it->second[i];
 //          FieldType fieldType = object.GetFieldType(fieldName);
 //

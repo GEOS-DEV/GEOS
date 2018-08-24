@@ -52,7 +52,7 @@ void ApplyRigidWallBoundaryCondition( ObjectDataStructureBaseT& object, const re
         const R1Tensor& b = bc->m_position;
         const R1Tensor& n = bc->GetDirection(0.0);   // fixme need time
 
-        for(array1d<string>::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
+        for(string_array::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
         {
           std::string setName = bc->m_setNames[i];
 
@@ -117,7 +117,7 @@ void ApplyTractionBoundaryCondition( PhysicalDomainT& domain, realT time)
       //  const R1Tensor& n = bc->GetDirection(time); //oldway
 
 
-      for(array1d<string>::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
+      for(string_array::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
       {
         int findSet = 1;
 
