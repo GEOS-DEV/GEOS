@@ -18,10 +18,17 @@
 namespace geosx
 {
 
+/**
+ * \class TrilinosSolver
+ * \brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
+ */
+
 class TrilinosSolver
 {
 public:
 
+  //! @name Constructor/Destructor Methods
+  //@{
   /**
    * @brief Empty solver constructor.
    *
@@ -36,9 +43,13 @@ public:
 
   /**
    * @brief Virtual destructor.
+   *
    */
   virtual ~TrilinosSolver() = default;
+  //@}
 
+  //! @name Solvers
+  //@{
   /**
    * @brief Solve system.
    *
@@ -71,6 +82,7 @@ public:
   void dsolve( EpetraSparseMatrix &Mat,
                EpetraVector &rhs,
                EpetraVector &sol );
+  //@}
 
 protected:
 

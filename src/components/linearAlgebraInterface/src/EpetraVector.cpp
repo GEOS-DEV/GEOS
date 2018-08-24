@@ -37,13 +37,15 @@ void EpetraVector::scale( real64 const scalingFactor )
 {
   vector.get()->Scale( scalingFactor );
 }
+
 // Dot product with the vector vec.
 void EpetraVector::dot( EpetraVector const &vec,
                         real64 *dst )
 {
   vector.get()->Dot( *vec.getPointer(), dst );
 }
-// Multiply all elements by scalingFactor.
+
+//
 void EpetraVector::update( real64 const alpha,
                            EpetraVector const &vec,
                            real64 const beta )
