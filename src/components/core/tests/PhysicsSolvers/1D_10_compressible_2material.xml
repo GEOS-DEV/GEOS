@@ -79,7 +79,7 @@
                    cellBlocks="cb1" 
                    numericalMethod="FE1" 
                    material="water"
-                   materialList="water rock" />
+                   materialList="water gel rock" />
   </ElementRegions>
 
   <Constitutive>
@@ -88,6 +88,13 @@
                                   referenceDensity="1000"
                                   compressibility="5e-10"
                                   referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <CompressibleSinglePhaseFluid name="gel"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.01"
                                   viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
