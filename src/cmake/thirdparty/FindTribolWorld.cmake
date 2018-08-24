@@ -24,7 +24,7 @@ find_path( TRIBOL_WORLD_INCLUDE_DIRS tribol/tribol.hpp
 
 blt_find_libraries(FOUND_LIBS TRIBOL_WORLD_LIBRARIES 
                    NAMES      slide_world worlds_core rcb_decomp bisectree vista chai tribol
-                   PATHS      ${TRIBOL_DIR}/lib )
+                   PATHS      ${TRIBOL_WORLD_DIR}/lib )
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set TRIBOL_FOUND to TRUE
