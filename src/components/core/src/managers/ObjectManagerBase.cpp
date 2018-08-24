@@ -277,7 +277,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
 
   int rank=0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
 
@@ -366,7 +366,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
 
   int rank=0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
@@ -449,7 +449,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::localToGlobalMapString) );
 
   int rank=0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
   localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
@@ -510,7 +510,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   GEOS_ASSERT( localToGlobalString==viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect")
 
   int rank=0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 

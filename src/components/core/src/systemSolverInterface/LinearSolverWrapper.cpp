@@ -80,7 +80,7 @@ namespace systemSolverInterface
 
 LinearSolverWrapper::LinearSolverWrapper():
 #if USE_MPI
-  m_epetraComm(MPI_COMM_WORLD)
+  m_epetraComm(MPI_COMM_GEOSX)
 #else
   m_epetraComm()
 #endif

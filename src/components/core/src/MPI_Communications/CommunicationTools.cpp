@@ -106,7 +106,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   integer_array & ghostRank = object.getReference<integer_array>(object.m_ObjectManagerBaseViewKeys.ghostRank);
   ghostRank = -2;
 
-  int const commSize = MPI_Size( MPI_COMM_WORLD );
+  int const commSize = MPI_Size( MPI_COMM_GEOSX );
   localIndex numberOfObjectsHere = object.size();
   localIndex_array numberOfObjects( commSize );
   localIndex_array glocalIndexOffset( commSize );
@@ -116,9 +116,9 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                  reinterpret_cast<char*>( numberOfObjects.data() ),
                  sizeof(localIndex),
                  MPI_CHAR,
-                 MPI_COMM_WORLD );
+                 MPI_COMM_GEOSX );
 
-  int const commRank = MPI_Rank( MPI_COMM_WORLD );
+  int const commRank = MPI_Rank( MPI_COMM_GEOSX );
 
   glocalIndexOffset[0] = 0;
   for( int rank = 1 ; rank < commSize ; ++rank )
@@ -198,7 +198,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       neighbor.MPI_iSendReceive( reinterpret_cast<const char*>( objectToCompositionObjectSendBuffer.data() ),
                                  sendSize,
                                  commID,
-                                 MPI_COMM_WORLD );
+                                 MPI_COMM_GEOSX );
     }
     for( localIndex in = 0 ; in < neighbors.size() ; ++in )
     {
@@ -353,7 +353,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
     {
       allNeighbors[i].MPI_iSendReceive( globalPartitionBoundaryObjectsIndices,
                                         neighborPartitionBoundaryObjects[i],
-                                        commID, MPI_COMM_WORLD );
+                                        commID, MPI_COMM_GEOSX );
     }
 
     for( int i=0 ; i<allNeighbors.size() ; ++i )
