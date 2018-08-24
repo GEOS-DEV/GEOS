@@ -405,8 +405,8 @@ private:
 
   string m_baseFileName;
 
-  array1d<string> m_emptyMeshes;
-  array1d<string> m_emptyVariables;
+  string_array m_emptyMeshes;
+  string_array m_emptyVariables;
 
   /**
    *
@@ -514,7 +514,7 @@ template<> inline float CastField<float, real64> (const real64& field, int const
  * with the component of the tensor.
  */
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, array1d<string>& varnamestring, char const* varnames[]);
+void SetVariableNames(string const & fieldName, string_array& varnamestring, char const* varnames[]);
 
 
 }
@@ -613,7 +613,7 @@ void SiloFile::WriteDataField( string const & meshName,
   array1d<void*> vars(nvars);
 
 
-  array1d<string> varnamestring(nvars);
+  string_array varnamestring(nvars);
   std::vector<std::vector<OUTTYPE> > castedField(nvars);
 
   if( materialName != "none" )
@@ -760,7 +760,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  array1d<string> vBlockNames(size);
+  string_array vBlockNames(size);
   std::vector<char*> BlockNames(size);
   std::vector<int> blockTypes(size);
   char tempBuffer[1024];

@@ -336,7 +336,7 @@ protected:
   }
 
   std::string m_tableName;
-  array1d<string> m_variableNames;
+  string_array m_variableNames;
   array1d<FieldType> m_variableTypes;
   int m_component;
 };
@@ -359,7 +359,7 @@ public:
 
 protected:
   std::string functionName_;
-  array1d<string> variableNames_;
+  string_array variableNames_;
   array1d<FieldType> variableTypes_;
   int component_;
 

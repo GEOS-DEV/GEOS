@@ -271,7 +271,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
-  //  for( array1d<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  //  for( string_array::size_type r=0 ; r<m_regionNames.size() ; ++r )
   //  {
   //    numElements.push_back( 0 );
   //  }
@@ -343,7 +343,10 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     if (m_elementType.size() == 1)
     {
       m_elementType.resize(m_numElePerBox.size());
-      m_elementType = m_elementType[0];
+      for( size_t i=1 ; i< m_elementType.size() ; ++i )
+      {
+        m_elementType[i] = m_elementType[0];
+      }
     }
     else
     {
@@ -396,7 +399,10 @@ void InternalMeshGenerator::ReadXML_PostProcess()
       if (m_regionNames.size() == 1)
       {
         m_regionNames.resize(numBlocks);
-        m_regionNames = m_regionNames[0];
+        for( size_t i=1 ; i< m_elementType.size() ; ++i )
+        {
+          m_regionNames[i] = m_regionNames[0];
+        }
       }
       else
       {
