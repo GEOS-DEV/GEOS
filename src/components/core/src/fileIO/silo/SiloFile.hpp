@@ -117,7 +117,7 @@ public:
   void MakeSubDirectory( string const & subdir, string const & rootdir )
   {
     int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
     char dirname[100];
     DBGetDir (m_dbBaseFilePtr, dirname );
@@ -938,7 +938,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   // write multimesh object
   int rank = 0;
 #if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
   {
@@ -988,7 +988,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
   int size = 1;
 #if USE_MPI
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_size(MPI_COMM_GEOSX, &size);
 #endif
 
   string_array vBlockNames(size);

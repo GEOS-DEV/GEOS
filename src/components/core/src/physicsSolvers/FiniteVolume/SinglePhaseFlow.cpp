@@ -458,10 +458,10 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
               ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   int numMpiProcesses;
-  MPI_Comm_size( MPI_COMM_WORLD, &numMpiProcesses );
+  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
 
   int thisMpiProcess = 0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &thisMpiProcess );
+  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
 
   localIndex numLocalRowsToSend = numLocalRows;
   array1d<localIndex> gather(numMpiProcesses);
@@ -1340,7 +1340,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
 
   // compute global residual norm
   realT globalResidualNorm;
-  MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalResidualNorm);
 }
