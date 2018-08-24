@@ -177,7 +177,7 @@ public:
                                                         // condition is applied
                                                         // to: eg. face, node,
                                                         // edge.
-  array1d<string> m_setNames; // sets the boundary condition is applied to
+  string_array m_setNames; // sets the boundary condition is applied to
   std::string m_regionName;
 
   bool m_isConstantInSpace;
@@ -272,7 +272,7 @@ private:
 
   std::vector<FieldTypeMultiPtr> m_fieldPtrs;
   array1d<FieldType> m_variableTypes;
-  array1d<string> m_variableNames;
+  string_array m_variableNames;
   std::vector<realT> m_x;    // function input vector
 
   Function* m_function;
@@ -338,7 +338,7 @@ private:
 
   std::vector<FieldTypeMultiPtr> m_fieldPtrs;
   array1d<FieldType> m_variableTypes;
-  array1d<string> m_variableNames;
+  string_array m_variableNames;
   std::vector<realT> m_x;    // function input vector
   realT m_scale;
   realT m_offset;
@@ -424,7 +424,7 @@ public:
     return BoundaryConditionName();
   }
 
-  array1d<string> m_varName;
+  string_array m_varName;
 protected:
 
   //realT m_time; // last time bc value was calculated
@@ -463,7 +463,7 @@ public:
 
   const array1d<real64>& GetValues(realT time);
 
-  void CheckVars(const array1d<string> &nvarName);
+  void CheckVars(const string_array &nvarName);
 
   bool isClamped() const
   {
@@ -473,7 +473,7 @@ public:
 protected:
 
   bool m_isClamped;
-  array1d<string> m_tables;
+  string_array m_tables;
 
 };
 
@@ -523,13 +523,13 @@ public:
     return m_allocedByWeight;
   }
 
-  void CheckVars(const array1d<string> &varNames);
+  void CheckVars(const string_array &varNames);
 
 protected:
 
   bool m_allocedByWeight;
   array1d<real64> m_allocFac;
-  array1d<string> m_tables;
+  string_array m_tables;
 
 };
 

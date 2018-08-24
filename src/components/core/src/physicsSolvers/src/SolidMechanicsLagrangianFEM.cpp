@@ -1290,7 +1290,7 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
                                 0 );
 
 
-  std::map<string, array1d<string> > fieldNames;
+  std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back(viewKeys.trilinosIndex.Key());
 
   CommunicationTools::SynchronizeFields(fieldNames,
