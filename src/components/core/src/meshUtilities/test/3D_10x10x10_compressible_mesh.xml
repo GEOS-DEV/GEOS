@@ -23,6 +23,7 @@
   </Mesh>
 
   <Geometry>
+    <Box name="all"    type="0" xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
     <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01,  1.01,  1.01"/>
     <Box name="sink"   type="0" xMin=" 8.99,  8.99,  8.99" xMax="10.01, 10.01, 10.01"/>
   </Geometry>

@@ -161,14 +161,25 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                 if( mesh.NumHex() > 0) {
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("HEX");
                     auto & cellToVertex = cellBlock->nodeList();
+                    cellBlock->resize( mesh.NumCells() );
+                    cellBlock->numNodesPerElement() = mesh.NumVerticesInCell(0);
                     cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
-                        for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
-                        {
-                            cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
-                        }
+
+                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
+                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
+                      cellToVertex[k][2] = mesh.CellVertexIndex(k,3);
+                      cellToVertex[k][3] = mesh.CellVertexIndex(k,2);
+                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
+                      cellToVertex[k][5] = mesh.CellVertexIndex(k,5);
+                      cellToVertex[k][6] = mesh.CellVertexIndex(k,7);
+                      cellToVertex[k][7] = mesh.CellVertexIndex(k,6);
+//                        for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
+//                        {
+//                            cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
+//                        }
                     }
                 }
                 if( mesh.NumTetra() > 0) {
