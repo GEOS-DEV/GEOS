@@ -52,6 +52,9 @@ public:
   /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// XML post processing
+  virtual void ReadXML_PostProcess() override;
+
   /// A method to add child events
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
