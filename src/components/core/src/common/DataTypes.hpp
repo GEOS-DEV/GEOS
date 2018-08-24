@@ -155,8 +155,8 @@ using real32_const_array  = array1d<real32 const>;
 using real64_array        = array1d<real64>;
 using real64_const_array  = array1d<real64 const>;
 
-using string_array        = array1d<string>;
-using string_const_array  = array1d<string const>;
+using string_array        = std::vector<string>;
+using string_const_array  = std::vector<string const>;
 
 using localIndex_array        = array1d<localIndex>;
 using localIndex_const_array  = array1d<localIndex const>;

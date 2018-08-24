@@ -310,7 +310,7 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 displacementIndices,
                                 0 );
 
-  std::map<string, array1d<string> > fieldNames;
+  std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("blockLocalDofNumber_LaplaceFEM");
 
   CommunicationTools::SynchronizeFields(fieldNames,

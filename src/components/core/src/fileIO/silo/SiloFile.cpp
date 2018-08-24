@@ -158,30 +158,30 @@ template<> int GetNumberOfVariablesInField<string> ()
 }
 
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, array1d<string>& varnamestring, char const* varnames[])
+void SetVariableNames(string const & fieldName, string_array& varnamestring, char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
   varnamestring[0] = fieldName;
   varnames[0] = varnamestring[0].c_str();
 }
 template void SetVariableNames<int> ( string const & fieldName,
-                                      array1d<string>& varnamestring,
+                                      string_array& varnamestring,
                                       char const* varnames[]);
 template void SetVariableNames<unsigned long>( string const & fieldName,
-                                               array1d<string>& varnamestring,
+                                               string_array& varnamestring,
                                                char const* varnames[]);
 template void SetVariableNames<real64>( string const & fieldName,
-                                        array1d<string>& varnamestring,
+                                        string_array& varnamestring,
                                         char const* varnames[]);
 template void SetVariableNames<long long unsigned int>( string const & fieldName,
-                                                        array1d<string>& varnamestring,
+                                                        string_array& varnamestring,
                                                         char const* varnames[]);
 
 
 
 template<>
 void SetVariableNames<R1Tensor> ( string const & fieldName,
-                                  array1d<string>& varnamestring,
+                                  string_array& varnamestring,
                                   char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R1Tensor> ());
@@ -195,7 +195,7 @@ void SetVariableNames<R1Tensor> ( string const & fieldName,
 
 template<>
 void SetVariableNames<R2Tensor> ( string const & fieldName,
-                                  array1d<string>& varnamestring,
+                                  string_array& varnamestring,
                                   char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -221,7 +221,7 @@ void SetVariableNames<R2Tensor> ( string const & fieldName,
 
 template<>
 void SetVariableNames<R2SymTensor> ( string const & fieldName,
-                                     array1d<string>& varnamestring,
+                                     string_array& varnamestring,
                                      char const * varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -851,7 +851,7 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-    array1d<string> vBlockNames(size);
+    string_array vBlockNames(size);
     std::vector<char*> BlockNames(size);
     char tempBuffer[1024];
     char currentDirectory[256];
@@ -911,13 +911,13 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   if( rank != 0 )
   {
-    for( array1d<string>::const_iterator emptyObject=m_emptyVariables.begin() ;
+    for( string_array::const_iterator emptyObject=m_emptyVariables.begin() ;
          emptyObject!=m_emptyVariables.end() ; ++emptyObject )
     {
       sendbufferVars += *emptyObject + ' ';
     }
 
-    for( array1d<string>::const_iterator emptyObject=m_emptyMeshes.begin() ;
+    for( string_array::const_iterator emptyObject=m_emptyMeshes.begin() ;
          emptyObject!=m_emptyMeshes.end() ; ++emptyObject )
     {
       sendbufferMesh += *emptyObject + ' ';
@@ -968,12 +968,12 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     std::istringstream iss(receiveBufferVars);
     copy(std::istream_iterator<string>(iss),
          std::istream_iterator<string>(),
-         std::back_inserter< array1d<string> >(m_emptyVariables));
+         std::back_inserter< string_array >(m_emptyVariables));
 
     std::istringstream issm(receiveBufferMesh);
     copy(std::istream_iterator<string>(issm),
          std::istream_iterator<string>(),
-         std::back_inserter< array1d<string> >(m_emptyMeshes));
+         std::back_inserter< string_array >(m_emptyMeshes));
   }
 
   if( rank == 0 )
@@ -982,7 +982,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     DBfile *siloFile = DBOpen(baseFilePathAndName.c_str(), DB_UNKNOWN, DB_APPEND);
     string empty("EMPTY");
 
-    for( array1d<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
+    for( string_array::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
          != m_emptyVariables.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
@@ -1029,7 +1029,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     }
 
 
-    for( array1d<string>::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
+    for( string_array::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
          != m_emptyMeshes.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);

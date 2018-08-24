@@ -166,7 +166,7 @@ public:
   void RebuildSyncLists( MeshLevel * const meshLevel,
                          int const commID );
 
-  void PackBufferForSync( std::map<string, array1d<string> > const & fieldNames,
+  void PackBufferForSync( std::map<string, string_array > const & fieldNames,
                           MeshLevel * const meshLevel,
                           int const commID );
 
