@@ -70,6 +70,7 @@ namespace geosx
     {
       MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*Mat.getPointer(),MLList);
     }
+    solver.SetAztecOption(AZ_output,0);
     solver.SetPrecOperator(MLPrec.get());
     solver.Iterate(max_iter,newton_tol);
   }

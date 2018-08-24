@@ -69,29 +69,30 @@ public:
                globalIndex const m_nColGlobal,
                integer const nMaxEntriesPerRow = 0 );
 
-//  /**
-//   * @brief Create a square matrix from number of unknowns.
-//   *
-//   * \param comm MPI communicator.
-//   * \param m_nRowGlobal Global number of unknowns.
-//   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
-//   */
-//  void create( MPI_Comm const comm,
-//               integer const m_nRowGlobal,
-//               std::vector<integer> const nMaxEntriesPerRow );
-//
-//  /**
-//   * @brief Create a square matrix from number of unknowns.
-//   *
-//   * \param comm MPI communicator.
-//   * \param m_nRowGlobal Global number of rows.
-//   * \param m_nColGlobal Global number of columns.
-//   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
-//   */
-//  void create( MPI_Comm const comm,
-//               globalIndex const m_nRowGlobal,
-//               globalIndex const m_nColGlobal,
-//               std::vector<integer> const nMaxEntriesPerRow );
+  // TODO see if we need a vector of nnz
+  //  /**
+  //   * @brief Create a square matrix from number of unknowns.
+  //   *
+  //   * \param comm MPI communicator.
+  //   * \param m_nRowGlobal Global number of unknowns.
+  //   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
+  //   */
+  //  void create( MPI_Comm const comm,
+  //               integer const m_nRowGlobal,
+  //               std::vector<integer> const nMaxEntriesPerRow );
+  //
+  //  /**
+  //   * @brief Create a square matrix from number of unknowns.
+  //   *
+  //   * \param comm MPI communicator.
+  //   * \param m_nRowGlobal Global number of rows.
+  //   * \param m_nColGlobal Global number of columns.
+  //   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
+  //   */
+  //  void create( MPI_Comm const comm,
+  //               globalIndex const m_nRowGlobal,
+  //               globalIndex const m_nColGlobal,
+  //               std::vector<integer> const nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from Epetra_Map.
@@ -119,7 +120,16 @@ public:
                integer const nMaxEntriesPerRow = 0 );
 
   /**
-   * @brief Create a matrix from an existing Epetra_FECrsMatrix.
+   * @brief Create a matrix from an existing Epetra_CrsGraph.
+   *
+   * TODO change that to whatever format the sparsity pattern will be.
+   *
+   * \param Epetra_CrsGraph existing graph.
+   */
+  void create( Epetra_CrsGraph &graph );
+
+  /**
+   * @brief Create a matrix from an existing Epetra_CrsMatrix.
    *
    * \param Epetra_CrsMatrix existing matrix.
    */
@@ -220,6 +230,8 @@ public:
    * Inserts the values <tt>values</tt> to row <tt>iRow</tt>, at locations specified
    * by <tt>cols</tt>. <tt>nCols</tt> is the number of entries (columns) in the row, and the
    * size of both <tt>values</tt> and <tt>cols</tt>.
+   *
+   * TODO remove the possibility to dynamically construct the sparsity pattern.
    *
    * \param iRow Global row index.
    * \param nCols Number of columns to modify.

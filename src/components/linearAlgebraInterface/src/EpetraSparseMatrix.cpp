@@ -25,7 +25,7 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
                                  integer const     nMaxEntriesPerRow )
 {
   Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, nMaxEntriesPerRow, false ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, nMaxEntriesPerRow, false ) );
 }
 
 // Create a matrix from number of elements
@@ -36,7 +36,7 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
 {
   Epetra_Map rowMap = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
   Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, nMaxEntriesPerRow, false ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, nMaxEntriesPerRow, false ) );
 }
 
 //// Create a matrix from number of elements
@@ -63,7 +63,7 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
 void EpetraSparseMatrix::create( Epetra_Map const &input_map,
                                  integer const nMaxEntriesPerRow )
 {
-  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_map, nMaxEntriesPerRow, false ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_map, nMaxEntriesPerRow, false ) );
 }
 
 // Create a matrix from two Epetra_Maps
@@ -71,7 +71,13 @@ void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
                                  Epetra_Map const &input_col_map,
                                  integer const nMaxEntriesPerRow )
 {
-  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_row_map, input_col_map, nMaxEntriesPerRow, false ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_row_map, input_col_map, nMaxEntriesPerRow, false ) );
+}
+
+// Create a matrix from an Epetra_CrsGraph.
+void EpetraSparseMatrix::create( Epetra_CrsGraph &graph )
+{
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, graph ) );
 }
 
 // Create a matrix from an Epetra_CrsMatrix.
@@ -86,7 +92,7 @@ void EpetraSparseMatrix::zero()
   matrix->PutScalar( 0 );
 }
 
-// Empty open function (implemented fo HYPRE compatibility).
+// Empty open function (implemented for HYPRE compatibility).
 void EpetraSparseMatrix::open()
 {}
 
@@ -247,6 +253,7 @@ void EpetraSparseMatrix::set( globalIndex const iRow,
 }
 
 // Set values at row iRow and columns cols (size nCols)
+// TODO remove the possibility to dynamically construct the sparsity pattern.
 void EpetraSparseMatrix::insert( globalIndex const iRow,
                                  integer const nCols,
                                  real64 const *values,
