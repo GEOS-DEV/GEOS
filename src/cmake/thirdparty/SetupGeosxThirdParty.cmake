@@ -147,6 +147,7 @@ set( thirdPartyLibs ${thirdPartyLibs} raja )
 ################################
 # CHAI
 ################################
+if(ENABLE_CHAI)
 if( EXISTS ${CHAI_DIR})
     message("Using system CHAI found at ${CHAI_DIR}")
     set(CHAI_FOUND TRUE)
@@ -166,6 +167,7 @@ blt_register_library( NAME chai
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
 set( thirdPartyLibs ${thirdPartyLibs} chai )  
+endif()
 
 
 ################################
