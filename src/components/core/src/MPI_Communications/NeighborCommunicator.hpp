@@ -37,7 +37,7 @@ namespace geosx
 inline int CommTag( int const senderRank, int const receiverRank, int const comm )
 {
   int m_size;
-  MPI_Comm_size( MPI_COMM_WORLD, &m_size );
+  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
   return senderRank * m_size + receiverRank + m_size * m_size * comm;
 }
 

@@ -164,7 +164,7 @@ void ApplyTractionBoundaryCondition( PhysicalDomainT& domain, realT time)
         }
 
         int findSetAll;
-        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
         if (findSetAll == 0)
         {
           std::stringstream msg;

@@ -217,7 +217,7 @@ void ApplyDirichletBoundaryCondition( ObjectDataStructureBaseT& object,
           findSet = 0;
         }
         int findSetAll;
-        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
         if (findSetAll == 0)
         {
           std::stringstream msg;
@@ -321,7 +321,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
         }
 
         int findSetAll;
-        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
         if (findSetAll == 0)
         {
           std::stringstream msg;
@@ -373,7 +373,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
           findSet = 0;
         }
         int findSetAll;
-        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
         if (findSetAll == 0)
         {
           std::stringstream msg;
@@ -429,7 +429,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
         }
 
         int findSetAll;
-        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
         if (findSetAll == 0)
         {
           std::stringstream msg;
@@ -535,7 +535,7 @@ void ApplyBoundaryCondition(BCFunctionPtr boundaryConditionFunctionPtr,
           findSet = 0;
         }
         int findSetAll;
-        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
         if (findSetAll == 0)
         {
           std::stringstream msg;
@@ -628,7 +628,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
             findSet = 0;
           }
           int findSetAll;
-          MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+          MPI_Allreduce(&findSet, &findSetAll, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
           if (findSetAll == 0)
           {
             std::stringstream msg;

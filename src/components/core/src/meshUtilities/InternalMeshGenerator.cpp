@@ -546,7 +546,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
                    m_numElemsTotal[i],
                    MPI_DOUBLE,
                    MPI_MAX,
-                   MPI_COMM_WORLD );
+                   MPI_COMM_GEOSX );
   }
 
   // find starting/ending index

@@ -320,7 +320,7 @@ void SiloFile::MakeSiloDirectories()
 
   int rank=0;
 #if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 
   if( rank==0 )
@@ -350,12 +350,12 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite )
   // Ensure all procs agree on numGroups, driver and file_ext
   m_numGroups = 2;
 
-  MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_GEOSX);
+  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
   m_baton = PMPIO_Init( m_numGroups,
                         readwrite,
-                        MPI_COMM_WORLD,
+                        MPI_COMM_GEOSX,
                         1,
                         PMPIO_DefaultCreate,
                         PMPIO_DefaultOpen,
@@ -395,7 +395,7 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
 
   int rank = 0;
 #if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   int const groupRank = PMPIO_GroupRank(m_baton, rank);
   char fileName[200] = { 0 };
@@ -442,7 +442,7 @@ void SiloFile::WaitForBaton( int const domainNumber, string const & restartFileN
 
   int rank = 0;
 #if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   int const groupRank = PMPIO_GroupRank(m_baton, rank);
   char fileName[200] = { 0 };
@@ -482,7 +482,7 @@ void SiloFile::HandOffBaton()
 
   int rank = 0;
 #if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank==0 )
   {
@@ -632,7 +632,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
   // write multimesh object
   int rank = 0;
 #if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
   {
@@ -711,7 +711,7 @@ void SiloFile::WriteBeamMesh(string const & meshName,
   {
     int rank = 0;
   #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   #endif
     if( rank == 0 )
     {
@@ -744,7 +744,7 @@ void SiloFile::WritePointMesh( string const & meshName,
   {
     int rank = 0;
   #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   #endif
     if( rank == 0 )
     {
@@ -841,14 +841,14 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
   // write multimesh object
   int rank = 0;
 #if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
   {
 
     int size = 1;
 #if USE_MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_size(MPI_COMM_GEOSX, &size);
 #endif
 
     array1d<string> vBlockNames(size);
@@ -903,8 +903,8 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   int size = 1;
   int rank = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_GEOSX, &size);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
   string sendbufferVars;
   string sendbufferMesh;
@@ -930,7 +930,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   integer_array rcounts(size);
   integer_array displs(size);
-  MPI_Gather( &sizeOfSendBufferVars, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather( &sizeOfSendBufferVars, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_GEOSX);
 
   int sizeOfReceiveBuffer = 0;
   displs[0] = 0;
@@ -943,10 +943,10 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   MPI_Gatherv ( &sendbufferVars[0], sizeOfSendBufferVars, MPI_CHAR,
                 &receiveBufferVars[0], rcounts.data(), displs.data(),
-                MPI_CHAR, 0, MPI_COMM_WORLD );
+                MPI_CHAR, 0, MPI_COMM_GEOSX );
 
 
-  MPI_Gather( &sizeOfSendBufferMesh, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather( &sizeOfSendBufferMesh, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_GEOSX);
 
   int sizeOfReceiveBufferMesh = 0;
   displs[0] = 0;
@@ -959,7 +959,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   MPI_Gatherv ( &sendbufferMesh[0], sizeOfSendBufferMesh, MPI_CHAR,
                 &receiveBufferMesh[0], rcounts.data(), displs.data(),
-                MPI_CHAR, 0, MPI_COMM_WORLD );
+                MPI_CHAR, 0, MPI_COMM_GEOSX );
 
 
 
@@ -1235,7 +1235,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 {
   int rank = 0;
 #ifdef USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 
   //--------------WRITE FE DATA-----------------

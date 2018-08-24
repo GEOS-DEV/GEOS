@@ -44,10 +44,15 @@
 #include "ManagedArray.hpp"
 #include "math/TensorT/TensorT.h"
 
+
+
 #ifdef USE_ATK
 #include "sidre/SidreTypes.hpp"
 #endif
 
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
 
 #if 0//def __INTEL_COMPILER
 /**
@@ -73,6 +78,11 @@ namespace std
  */
 namespace geosx
 {
+
+
+#ifdef USE_MPI
+extern MPI_Comm MPI_COMM_GEOSX;
+#endif
 
 // underlying types not for general use!!
 //using int32 = std::int32_t;
