@@ -147,6 +147,7 @@ set( thirdPartyLibs ${thirdPartyLibs} raja )
 ################################
 # CHAI
 ################################
+if(ENABLE_CHAI)
 if( EXISTS ${CHAI_DIR})
     message("Using system CHAI found at ${CHAI_DIR}")
     set(CHAI_FOUND TRUE)
@@ -166,6 +167,7 @@ blt_register_library( NAME chai
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
 set( thirdPartyLibs ${thirdPartyLibs} chai )  
+endif()
 
 
 ################################
@@ -433,6 +435,20 @@ if(UNCRUSTIFY_FOUND)
         add_dependencies(style uncrustify_style)
     endif()
     
+endif()
+
+################################
+# TRIBOL
+################################
+if (EXISTS ${TRIBOL_WORLD_DIR})
+  message( "TRIBOL_WORLD_DIR = ${TRIBOL_WORLD_DIR}" )
+  include(cmake/thirdparty/FindTribolWorld.cmake)
+  blt_register_library( NAME tribolworld
+                        INCLUDES ${TRIBOL_WORLD_INCLUDE_DIRS} 
+                        LIBRARIES  ${TRIBOL_WORLD_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+else()
+  message( "Not using tribolworld" )
 endif()
 
 message("Leaving SetupGeosxThirdParty.cmake\n")
