@@ -292,25 +292,50 @@ public:
   void leftRightScale( EpetraVector const &vecLeft,
                        EpetraVector const &vecRight);
 
+  /**
+   * @brief Clear a row and multiplies the diagonal term by <tt>factor</tt>.
+   */
+  void clearRow( globalIndex const row,
+                 real64 const factor);
+
   //@}
 
   //! @name Accessors Methods
   //@{
+
   /**
    * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
-  void getRow( int GlobalRow,
-               int &NumEntries,
+  void getRow( globalIndex GlobalRow,
+               integer &NumEntries,
+               real64* Values,
+               globalIndex* Indices );
+
+  /**
+   * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
+   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
+   */
+  void getRow( globalIndex GlobalRow,
+               integer &NumEntries,
                std::vector<real64> &vecValues,
-               std::vector<int> &vecIndices );
+               std::vector<globalIndex> &vecIndices );
 
   /**
    * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
   void getLocalRow( localIndex myRow,
-                    int &NumEntries,
+                    integer &NumEntries,
+                    real64* Values,
+                    localIndex* Indices );
+
+  /**
+   * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
+   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
+   */
+  void getLocalRow( localIndex myRow,
+                    integer &NumEntries,
                     std::vector<real64> &vecValues,
                     std::vector<localIndex> &vecIndices );
 
@@ -370,6 +395,12 @@ public:
   Epetra_Map const & DomainMap() const;
 
   /**
+   * @brief Wrapper for LID function. Returns the local map of the corresponding global index.
+   * Returns -1 if the global row is not owned by the processor.
+   */
+  localIndex rowMapLID(globalIndex GID) const;
+
+  /**
    * @brief Returns the infinity norm of the matrix.
    */
   real64 normInf() const;
@@ -408,7 +439,7 @@ private:
   /**
    * @brief Pointer to the underlying Epetra_CrsMatrix.
    */
-  std::unique_ptr<Epetra_CrsMatrix> matrix = nullptr;
+  std::unique_ptr<Epetra_CrsMatrix> m_matrix = nullptr;
 
 };
 

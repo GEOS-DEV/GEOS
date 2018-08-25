@@ -34,13 +34,13 @@
 
 using namespace geosx;
 
-template< typename SI >
+template< typename LAI >
 void testLaplaceOperator()
 {
 
-  using ParallelMatrix = typename SI::ParallelMatrix;
-  using ParallelVector = typename SI::ParallelVector;
-  using LinearSolver = typename SI::LinearSolver;
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+  using ParallelVector = typename LAI::ParallelVector;
+  using LinearSolver = typename LAI::LinearSolver;
 
   MPI_Init(nullptr,nullptr);
 
@@ -52,7 +52,7 @@ void testLaplaceOperator()
   MPI_Comm comm = MPI_COMM_WORLD;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 400;
+  globalIndex n = 300;
   globalIndex N = n*n;
 
   ParallelMatrix testMatrix;
@@ -179,6 +179,7 @@ void testLaplaceOperator()
   // Matrix/vector multiplication
   testMatrix.multiply(x, b);
 
+  // Test dot product
   real64 dotTest;
   x.dot(x,&dotTest);
 
@@ -224,6 +225,14 @@ void testLaplaceOperator()
   real64 normDirectSol;
   solDirect.normInf(normDirectSol);
   EXPECT_TRUE( std::fabs(normDirectSol - 1) <= 1e-8 );
+
+  // Test clearRow
+  testMatrix.clearRow(2*N/4+n,2.0);
+  testMatrix.getLocalRow(static_cast<localIndex>(n),numValRown,vecValuesRown,vecIndicesRown);
+  if (rank == 2)
+  {
+    EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
+  }
 
   MPI_Finalize();
 
