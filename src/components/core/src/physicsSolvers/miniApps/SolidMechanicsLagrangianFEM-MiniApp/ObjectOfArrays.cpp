@@ -11,7 +11,7 @@
 #include "ShapeFun_impl.hpp"
 #include "omp.h"
 
-#include "../SolidMechanicsLagrangianFEMKernels_impl.hpp"
+#include "../../src/SolidMechanicsLagrangianFEMKernels_impl.hpp"
 
 //
 //Driver for the GEOSX proxy app
@@ -42,10 +42,9 @@ int main(int argc, char* const argv[])
   //
   //Generate an element list
   //
-  Index_type * RAJA_RESTRICT const elementList = memoryManager::allocate<Index_type>(NoElem, dataAllocated);
-  for(Index_type i=0; i<NoElem; ++i) elementList[i] = i;  
-  RAJA::TypedListSegment<Index_type> elementList_raja(elementList,NoElem);
-
+  Index_type * const elementList = memoryManager::allocate<Index_type>(NoElem, dataAllocated);
+  for(Index_type i=0; i<NoElem; ++i) elementList[i] = i;
+  
   //
   //Allocate space for constitutive map
   //
@@ -159,30 +158,30 @@ int main(int argc, char* const argv[])
 
 #if !defined(COMPUTE_SHAPE_FUN) && !defined(THREE_KERNEL_UPDATE)
       //Monolithic Kernel: Assumes precomputed shape function derivatives
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<kernelPol>(NoElem, elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<kernelPol>(NoElem, elementList, dt, elemsToNodes,
                                                                           u_x, u_y, u_z, uhat_x, uhat_y, uhat_z,
                                                                           dNdX_x, dNdX_y, dNdX_z, constitutiveMap, devStressData,
                                                                           meanStress,shearModulus, bulkModulus, detJ, acc_x, acc_y, acc_z, myUpdate, nx, nx, nx);      
 #elif defined(COMPUTE_SHAPE_FUN) && !defined(THREE_KERNEL_UPDATE)
 
       //Monolithic Kernel which computes shape function derivatives 
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<kernelPol>(NoElem,elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                                 u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, VX, P,
                                                                                 constitutiveMap, devStressData, meanStress,shearModulus,
                                                                                 bulkModulus, detJ, acc_x, acc_y, acc_z, myUpdate, nx, nx, nx);
 
 #elif defined(THREE_KERNEL_UPDATE)
       //Kinematic step
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<kernelPol>(NoElem,elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                                     u_x, u_y, u_z, uhat_x, uhat_y, uhat_z,
                                                                                     dNdX_x, dNdX_y, dNdX_z, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                                     bulkModulus, detJ, acc_x, acc_y, acc_z, Dadt, Rot, detF, inverseF);
       //Constitutive update
-      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<kernelPol>(NoElem, elementList_raja, Dadt, Rot, constitutiveMap, devStressData,
+      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<kernelPol>(NoElem, elementList, Dadt, Rot, constitutiveMap, devStressData,
                                                                               meanStress, shearModulus, bulkModulus);
 
       //Integration step
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_IntegrationKernel<kernelPol>(NoElem,elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_IntegrationKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                                       u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, 
                                                                                       dNdX_x, dNdX_y, dNdX_z, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                                       bulkModulus, detJ, acc_x, acc_y, acc_z,

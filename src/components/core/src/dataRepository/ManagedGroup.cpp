@@ -420,7 +420,7 @@ void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 }
 
 
-localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
+localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
@@ -476,7 +476,7 @@ localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
 }
 
 
-localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
+localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
                             integer const recursive ) const
 {
   localIndex_array nullArray;
@@ -485,7 +485,7 @@ localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
 
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
-                               array1d<string> const & wrapperNames,
+                               string_array const & wrapperNames,
                                localIndex_array const & packList,
                                integer const recursive ) const
 {
@@ -543,7 +543,7 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
 }
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
-                            array1d<string> const & wrapperNames,
+                            string_array const & wrapperNames,
                             integer const recursive ) const
 {
   localIndex_array nullArray;

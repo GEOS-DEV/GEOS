@@ -93,7 +93,7 @@ public:
   template< typename T >
   void SendReceive( const array1d<array1d<T> >& sendArray, array1d<array1d<T> >& recvArray );
 
-//  void SynchronizeFields( const std::map<std::string, array1d<string> >& fieldNames,
+//  void SynchronizeFields( const std::map<std::string, string_array >& fieldNames,
 //                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
   void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
@@ -105,7 +105,7 @@ public:
 
   virtual void SetContactGhostRange( const double bufferSize ) = 0;
 //
-//  void SetBufferSizes( const std::map<string, array1d<string> >& fieldNames,
+//  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
 //                       const CommRegistry::commID commID  );
 //
 //  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
