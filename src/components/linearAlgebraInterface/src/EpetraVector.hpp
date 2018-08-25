@@ -140,7 +140,7 @@ public:
 
 protected:
   // Unique pointer to underlying Epetra_Vector type.
-  std::unique_ptr<Epetra_Vector> vector = nullptr;
+  std::unique_ptr<Epetra_Vector> m_vector = nullptr;
 };
 
 }
