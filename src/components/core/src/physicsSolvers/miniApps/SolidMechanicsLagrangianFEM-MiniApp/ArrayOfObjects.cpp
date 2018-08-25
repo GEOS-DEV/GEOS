@@ -10,7 +10,7 @@
 #include "ShapeFun_impl.hpp"
 #include "omp.h"
 
-#include "../SolidMechanicsLagrangianFEMKernels_impl.hpp"
+#include "../../src/SolidMechanicsLagrangianFEMKernels_impl.hpp"
 
 //
 //Driver for the GEOSX proxy app
@@ -41,11 +41,10 @@ int main(int argc, char* const argv[])
   //
   //Generate an element list
   //  
-  Index_type * RAJA_RESTRICT const elementList = memoryManager::allocate<Index_type>(NoElem, dataAllocated);
+  Index_type * const elementList = memoryManager::allocate<Index_type>(NoElem, dataAllocated);
   for(Index_type i=0; i<NoElem; ++i) elementList[i] = i;  
-  RAJA::TypedListSegment<Index_type> elementList_raja(elementList,NoElem);
 
-
+  
   //
   //Allocate space for constitutive map
   //
@@ -140,25 +139,25 @@ int main(int argc, char* const argv[])
 
 #if !defined(COMPUTE_SHAPE_FUN) && !defined(THREE_KERNEL_UPDATE)
       //Standard Monolithic Kernel
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<kernelPol>(NoElem,elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                           u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                           bulkModulus, detJ, acc, myUpdate, nx, nx, nx);
 #elif defined(COMPUTE_SHAPE_FUN) && !defined(THREE_KERNEL_UPDATE)
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<kernelPol>(NoElem,elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                                 u, uhat, VX, P, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                                 bulkModulus, detJ, acc, myUpdate, nx, nx, nx);            
 #elif defined(THREE_KERNEL_UPDATE)
 
       //Kinematic step
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<kernelPol>(NoElem,elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                                     u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                                     bulkModulus, detJ, acc, Dadt, Rot, detF, inverseF,
                                                                                     nx, nx, nx);
       //Constitutive update
-      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<kernelPol>(NoElem, elementList_raja, Dadt, Rot, constitutiveMap, devStressData,
+      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<kernelPol>(NoElem, elementList, Dadt, Rot, constitutiveMap, devStressData,
                                                                               meanStress, shearModulus, bulkModulus);      
       //Integration step
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<kernelPol>(NoElem,elementList_raja, dt, elemsToNodes,
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                                       u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                                       bulkModulus, detJ, acc, Dadt, Rot, detF, inverseF,
                                                                                       nx, nx, nx);

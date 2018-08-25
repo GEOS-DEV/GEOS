@@ -22,6 +22,8 @@
 #include "RAJA/RAJA.hpp"
 #include <iostream>
 
+#include "../../../common/DataTypes.hpp"
+
 //compile time constants
 #define local_dim 3
 #define inumQuadraturePoints 8
@@ -29,11 +31,12 @@
 #define localMatSz 9
 
 //define constants
-using RAJA::Index_type;
-using real64 = double;
+using localIndex = geosx::localIndex;
+using globalIndex = geosx::globalIndex;
+using real64 = geosx::real64;
 using geosxData   = double* const RAJA_RESTRICT;
 using geosxData_const   = double const * const RAJA_RESTRICT;
-using geosxIndex = RAJA::Index_type * const;
+using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 //#define STRUCTURED_GRID
 

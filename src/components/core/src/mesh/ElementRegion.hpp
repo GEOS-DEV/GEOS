@@ -190,12 +190,12 @@ public:
 
   } m_regionViewKeys;
 
-  array1d<string> & getMaterialList() {return m_materialList;}
-  array1d<string> const & getMaterialList() const {return m_materialList;}
+  string_array & getMaterialList() {return m_materialList;}
+  string_array const & getMaterialList() const {return m_materialList;}
 
   private:
   ElementRegion& operator=(const ElementRegion& rhs);
-  array1d<string> m_materialList;
+  string_array m_materialList;
 //  string & m_elementType;
 
 };

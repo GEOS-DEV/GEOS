@@ -24,7 +24,7 @@
 
 struct P_Wrapper{
   real64 array[8][3][8];
-  RAJA_HOST_DEVICE RAJA_INLINE real64 &operator()(Index_type e, Index_type a, Index_type c){
+  RAJA_HOST_DEVICE RAJA_INLINE real64 &operator()(localIndex e, localIndex a, localIndex c){
     return array[e][a][c];
   }  
 };
@@ -34,12 +34,12 @@ struct Sym_Mat
   real64 array[6];
 
   //Accessor for non diagonal entries
-  RAJA_HOST_DEVICE real64 &operator()(Index_type r, Index_type c){
+  RAJA_HOST_DEVICE real64 &operator()(localIndex r, localIndex c){
     return array[c + 2*r];
   }
 
   //Accesor for diagonal entries;
-  RAJA_HOST_DEVICE real64 &operator()(Index_type i){
+  RAJA_HOST_DEVICE real64 &operator()(localIndex i){
     return array[2*i];
   }
 };
@@ -80,10 +80,10 @@ template <typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void AijBjk (T A[local_dim][local_dim], T B[local_dim][local_dim], T C [local_dim][local_dim] ) {
 
-  for(Index_type row=0; row<local_dim; ++row) {
-    for(Index_type col=0; col<local_dim; ++col) {
+  for(localIndex row=0; row<local_dim; ++row) {
+    for(localIndex col=0; col<local_dim; ++col) {
       T dot=0.;
-      for(Index_type c=0; c<local_dim; ++c){
+      for(localIndex c=0; c<local_dim; ++c){
         dot += A[row][c]*B[c][col];
       }
 
@@ -144,11 +144,11 @@ template<typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void AijBkj (T A[local_dim][local_dim], T B[local_dim][local_dim], T C[local_dim][local_dim] ) {
 
-  for(Index_type row=0; row<local_dim; ++row){
-    for(Index_type col=0; col<local_dim; ++col){
+  for(localIndex row=0; row<local_dim; ++row){
+    for(localIndex col=0; col<local_dim; ++col){
 
       T dot=0.0;
-      for(Index_type c=0; c<local_dim; ++c){
+      for(localIndex c=0; c<local_dim; ++c){
         dot += A[row][c]*B[col][c];
       }
 
@@ -160,14 +160,14 @@ RAJA_INLINE void AijBkj (T A[local_dim][local_dim], T B[local_dim][local_dim], T
 
 //Copy Global to Local;
 RAJA_HOST_DEVICE
-RAJA_INLINE void GlobalToLocal(const Index_type nodeList[8], Index_type k, 
+RAJA_INLINE void GlobalToLocal(const localIndex nodeList[8], localIndex k, 
                                real64 u_local[24], real64 uhat_local[24],
                                geosxData iu, geosxData iuhat)
 {  
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {
-      Index_type id = nodeList[a];
-      for(Index_type i=0; i<local_dim; ++i)
+      localIndex id = nodeList[a];
+      for(localIndex i=0; i<local_dim; ++i)
         {
           u_local[i + local_dim*a] = iu[i+local_dim*id];
           uhat_local[i + local_dim*a] = iuhat[i + local_dim*id];
@@ -177,15 +177,15 @@ RAJA_INLINE void GlobalToLocal(const Index_type nodeList[8], Index_type k,
 
 //Copy Global to Local;
 RAJA_HOST_DEVICE
-RAJA_INLINE void GlobalToLocal(const Index_type nodeList[8], Index_type k, 
+RAJA_INLINE void GlobalToLocal(const localIndex nodeList[8], localIndex k, 
                                real64 u_local_x[8], real64 u_local_y[8],real64 u_local_z[8],
                                real64 uhat_local_x[8], real64 uhat_local_y[8], real64 uhat_local_z[8],
                                geosxData iu_x, geosxData iu_y, geosxData iu_z,
                                geosxData iuhat_x, geosxData iuhat_y, geosxData iuhat_z)
 {  
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {
-      Index_type id = nodeList[a];
+      localIndex id = nodeList[a];
 
       u_local_x[a] = iu_x[id];
       u_local_y[a] = iu_y[id];
@@ -201,7 +201,7 @@ RAJA_INLINE void GlobalToLocal(const Index_type nodeList[8], Index_type k,
 //Integrate Function
 RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local[local_dim*inumNodesPerElement],real64 idetJ, real64 detF, real64 Finv[local_dim][local_dim],
-                           real64 TotalStress[local_dim][local_dim], geosxData idNdX, Index_type k, Index_type q, Index_type noElem)
+                           real64 TotalStress[local_dim][local_dim], geosxData idNdX, localIndex k, localIndex q, localIndex noElem)
   
 {
   //---------[Integrate - Function]---------------------
@@ -209,8 +209,8 @@ RAJA_INLINE void Integrate(real64 f_local[local_dim*inumNodesPerElement],real64 
   real64 P[local_dim][local_dim];
   
   AijBkj(TotalStress,Finv,P);
-  for(Index_type ty=0; ty<local_dim; ++ty){
-    for(Index_type tx=0; tx<local_dim; ++tx){
+  for(localIndex ty=0; ty<local_dim; ++ty){
+    for(localIndex tx=0; tx<local_dim; ++tx){
       P[ty][tx] *= integrationFactor;
     }
   } 
@@ -229,7 +229,7 @@ RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement], real64 f_local_y[inumNodesPerElement], real64 f_local_z[inumNodesPerElement],
                            real64 idetJ, real64 detF, real64 Finv[local_dim][local_dim],
                            real64 TotalStress[local_dim][local_dim], geosxData idNdX_x, geosxData idNdX_y, geosxData idNdX_z,
-                           Index_type k, Index_type q, Index_type noElem)
+                           localIndex k, localIndex q, localIndex noElem)
   
 {
   //---------[Integrate - Function]---------------------
@@ -237,8 +237,8 @@ RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement], real64 f_local
   real64 P[local_dim][local_dim];
   
   AijBkj(TotalStress,Finv,P);
-  for(Index_type ty=0; ty<local_dim; ++ty){
-    for(Index_type tx=0; tx<local_dim; ++tx){
+  for(localIndex ty=0; ty<local_dim; ++ty){
+    for(localIndex tx=0; tx<local_dim; ++tx){
       P[ty][tx] *= integrationFactor;
     }
   } 
@@ -257,22 +257,22 @@ RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement], real64 f_local_y[inumNodesPerElement], real64 f_local_z[inumNodesPerElement],
                            real64 idetJ, real64 detF, geosxData Finv_ptr,
                            real64 TotalStress[local_dim][local_dim], geosxData idNdX_x, geosxData idNdX_y, geosxData idNdX_z,
-                           Index_type k, Index_type q, Index_type noElem)
+                           localIndex k, localIndex q, localIndex noElem)
   
 {
   real64 const integrationFactor = idetJ*detF;
   real64 P[local_dim][local_dim];
   real64 Finv[local_dim][local_dim];
   
-  for(Index_type r=0; r<local_dim; ++r){
-    for(Index_type c=0; c<local_dim; ++c){
+  for(localIndex r=0; r<local_dim; ++r){
+    for(localIndex c=0; c<local_dim; ++c){
       Finv[r][c] = Finv_ptr(k,q,r,c);
     }
   }
   
   AijBkj(TotalStress,Finv,P);
-  for(Index_type ty=0; ty<local_dim; ++ty){
-    for(Index_type tx=0; tx<local_dim; ++tx){
+  for(localIndex ty=0; ty<local_dim; ++ty){
+    for(localIndex tx=0; tx<local_dim; ++tx){
       P[ty][tx] *= integrationFactor;
     }
   } 
@@ -292,22 +292,22 @@ RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local[local_dim * inumNodesPerElement],
                            real64 idetJ, real64 detF, geosxData Finv_ptr,
                            real64 TotalStress[local_dim][local_dim], geosxData idNdX,
-                           Index_type k, Index_type q, Index_type noElem)
+                           localIndex k, localIndex q, localIndex noElem)
   
 {
   real64 const integrationFactor = idetJ*detF;
   real64 P[local_dim][local_dim];
   real64 Finv[local_dim][local_dim];
   
-  for(Index_type r=0; r<local_dim; ++r){
-    for(Index_type c=0; c<local_dim; ++c){
+  for(localIndex r=0; r<local_dim; ++r){
+    for(localIndex c=0; c<local_dim; ++c){
       Finv[r][c] = Finv_ptr(k,q,r,c);
     }
   }
   
   AijBkj(TotalStress,Finv,P);
-  for(Index_type ty=0; ty<local_dim; ++ty){
-    for(Index_type tx=0; tx<local_dim; ++tx){
+  for(localIndex ty=0; ty<local_dim; ++ty){
+    for(localIndex tx=0; tx<local_dim; ++tx){
       P[ty][tx] *= integrationFactor;
     }
   } 
@@ -326,7 +326,7 @@ RAJA_INLINE void Integrate(real64 f_local[local_dim * inumNodesPerElement],
 RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local[local_dim*inumNodesPerElement],real64 idetJ, real64 detF, real64 Finv[local_dim][local_dim],
                            real64 TotalStress[local_dim][local_dim], real64 dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim],
-                           Index_type q, Index_type noElem)
+                           localIndex q, localIndex noElem)
   
 {
   //---------[Integrate - Function]---------------------
@@ -334,8 +334,8 @@ RAJA_INLINE void Integrate(real64 f_local[local_dim*inumNodesPerElement],real64 
   real64 P[local_dim][local_dim];
   
   AijBkj(TotalStress,Finv,P);
-  for(Index_type ty=0; ty<local_dim; ++ty){
-    for(Index_type tx=0; tx<local_dim; ++tx){
+  for(localIndex ty=0; ty<local_dim; ++ty){
+    for(localIndex tx=0; tx<local_dim; ++tx){
       P[ty][tx] *= integrationFactor;
     }
   } 
@@ -355,15 +355,15 @@ RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement],real64 f_local_
                            real64 idetJ, real64 detF, real64 Finv[local_dim][local_dim],
                            real64 TotalStress[local_dim][local_dim],real64 dNdX_x[inumQuadraturePoints][inumNodesPerElement],
                            real64 dNdX_y[inumQuadraturePoints][inumNodesPerElement],real64 dNdX_z[inumQuadraturePoints][inumNodesPerElement],
-                           Index_type q) 
+                           localIndex q) 
 {
   //---------[Integrate - Function]---------------------
   real64 const integrationFactor = idetJ*detF;
   real64 P[local_dim][local_dim];
   
   AijBkj(TotalStress,Finv,P);
-  for(Index_type ty=0; ty<local_dim; ++ty){
-    for(Index_type tx=0; tx<local_dim; ++tx){
+  for(localIndex ty=0; ty<local_dim; ++ty){
+    for(localIndex tx=0; tx<local_dim; ++tx){
       P[ty][tx] *= integrationFactor;
     }
   } 
@@ -382,9 +382,9 @@ template<typename atomicPol, typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void AddLocalToGlobal(T nodeList, real64 f_local[local_dim*inumNodesPerElement], geosxData iacc)
 {
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {          
-      Index_type id = nodeList[a];
+      localIndex id = nodeList[a];
       RAJA::atomic::atomicAdd<atomicPol>(&iacc[0 + local_dim*id],f_local[0 + local_dim*a]);
       RAJA::atomic::atomicAdd<atomicPol>(&iacc[1 + local_dim*id],f_local[1 + local_dim*a]);
       RAJA::atomic::atomicAdd<atomicPol>(&iacc[2 + local_dim*id],f_local[2 + local_dim*a]);
@@ -398,9 +398,9 @@ RAJA_INLINE void AddLocalToGlobal(T nodeList,
                                   real64 f_local_x[inumNodesPerElement],real64 f_local_y[inumNodesPerElement],real64 f_local_z[inumNodesPerElement],
                                   geosxData iacc_x, geosxData iacc_y, geosxData iacc_z)
 {
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {          
-      Index_type id = nodeList[a];
+      localIndex id = nodeList[a];
       RAJA::atomic::atomicAdd<atomicPol>(&iacc_x[id],f_local_x[a]);
       RAJA::atomic::atomicAdd<atomicPol>(&iacc_y[id],f_local_y[a]);
       RAJA::atomic::atomicAdd<atomicPol>(&iacc_z[id],f_local_z[a]);
@@ -410,8 +410,8 @@ RAJA_INLINE void AddLocalToGlobal(T nodeList,
 
 RAJA_HOST_DEVICE
 RAJA_INLINE void CalculateGradient(real64 dUdX[3][3], real64 u_local[24],
-                                   geosxData idNdX, Index_type k, Index_type q, Index_type noElem){
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+                                   geosxData idNdX, localIndex k, localIndex q, localIndex noElem){
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {              
       dUdX[0][0] += u_local[0 + local_dim*a]*idNdX(k,q,a,0);
       dUdX[0][1] += u_local[0 + local_dim*a]*idNdX(k,q,a,1);
@@ -432,9 +432,9 @@ RAJA_HOST_DEVICE
 RAJA_INLINE void CalculateGradient(real64 dUdX[3][3],
                                    real64 u_local_x[8], real64 u_local_y[8], real64 u_local_z[8],
                                    geosxData idNdX_x,geosxData idNdX_y,geosxData idNdX_z,
-                                   Index_type k, Index_type q, Index_type noElem){
+                                   localIndex k, localIndex q, localIndex noElem){
   
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {              
       dUdX[0][0] += u_local_x[a]*idNdX_x(k,q,a);
       dUdX[0][1] += u_local_x[a]*idNdX_y(k,q,a);
@@ -457,9 +457,9 @@ RAJA_INLINE void CalculateGradient(real64 dUdX[3][3],
                                    real64 idNdX_x[inumQuadraturePoints][inumNodesPerElement],
                                    real64 idNdX_y[inumQuadraturePoints][inumNodesPerElement],
                                    real64 idNdX_z[inumQuadraturePoints][inumNodesPerElement],
-                                   Index_type k, Index_type q){
+                                   localIndex k, localIndex q){
   
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {              
       dUdX[0][0] += u_local_x[a]*idNdX_x[q][a];
       dUdX[0][1] += u_local_x[a]*idNdX_y[q][a];
@@ -479,9 +479,9 @@ RAJA_INLINE void CalculateGradient(real64 dUdX[3][3],
 
 RAJA_HOST_DEVICE
 RAJA_INLINE void CalculateGradient(real64 dUdX[3][3], real64 u_local[24],
-                                   real64 dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim], Index_type q){
+                                   real64 dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim], localIndex q){
 
-  for(Index_type a=0; a<inumNodesPerElement; ++a)
+  for(localIndex a=0; a<inumNodesPerElement; ++a)
     {              
       dUdX[0][0] += u_local[0 + local_dim*a]*dNdX[q][a][0];
       dUdX[0][1] += u_local[0 + local_dim*a]*dNdX[q][a][1];
