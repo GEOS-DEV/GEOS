@@ -41,7 +41,7 @@ using geosxIndex = const localIndex * const RAJA_RESTRICT;
 //#define STRUCTURED_GRID
 
 //
-#define EXTERNAL_KERNELS
+//#define EXTERNAL_KERNELS
 
 //#define OBJECT_OF_ARRAYS_LAYOUT
 #define ARRAY_OF_OBJECTS_LAYOUT

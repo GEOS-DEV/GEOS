@@ -7,7 +7,7 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="1"
+                                  verboseLevel="3"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
