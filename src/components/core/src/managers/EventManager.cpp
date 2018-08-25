@@ -133,8 +133,8 @@ void EventManager::FillDocumentationNode()
 
 void EventManager::ReadXML_PostProcess()
 {
-  real64 maxTime = this->getReference<real64>(viewKeys.maxTime);
-  integer maxCycle = this->getReference<integer>(viewKeys.maxCycle);
+  real64 & maxTime = this->getReference<real64>(viewKeys.maxTime);
+  integer & maxCycle = this->getReference<integer>(viewKeys.maxCycle);
 
   // If maxTime, maxCycle are default, set them to their max values
   if (maxTime < 0)
