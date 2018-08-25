@@ -30,6 +30,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/MeshBody.hpp"
 
+#include "coupling/TribolCoupling.hpp"
 
 namespace geosx
 {
@@ -190,8 +191,25 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
   // Run problem
   real64 epsilon = std::numeric_limits<real64>::epsilon();
-  while(((maxTime < 0) || (maxTime - time > epsilon)) && ((maxCycle < 0) || (cycle < maxCycle)) && (exitFlag == 0))
+  while(1) {
   {
+    int terminate = (((maxTime < 0) || (maxTime - time > epsilon)) && ((maxCycle < 0) || (cycle < maxCycle)) && (exitFlag == 0)) ? 0 : 1 ;
+
+    TribolCoupling::SyncTermination(&terminate) ;
+
+    if (terminate) {
+       break ;
+    }
+
+    real64 newDt ;
+    TribolCoupling::SyncTimestep(&newDt) ;
+
+    if (newDt < dt)
+    {
+        std::cout << "     dt: " << dt << ", coupled dt=" << newDt << std::endl;
+        GEOS_ERROR( "coupling error" );
+    }
+
     real64 nextDt = 1e6;
     std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
 
@@ -231,6 +249,8 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     dt = nextDt;
     dt = (maxTime - time < dt) ? (maxTime - time) : dt;
   }
+
+  TribolCoupling::Cleanup() ;
 }
 
 } /* namespace geosx */

@@ -4,6 +4,7 @@ set( subdirs
      codingUtilities
      common
      constitutive
+     coupling
      dataRepository
      fileIO
      finiteElement
