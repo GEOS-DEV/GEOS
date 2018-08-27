@@ -224,8 +224,12 @@ void TribolCoupling::SyncTimestep(real64* newDt)
 
 void TribolCoupling::Cleanup()
 {
+   SlideWorldAdapter::DestroyWorld() ;
    delete s_tribolProblem ;
+   s_tribolProblem = nullptr ;
    s_tribolDomain = nullptr ;
+   s_slideWorldSourceNodes = nullptr ;
+   s_slideWorldSourceFaces = nullptr ;
 }
 
 } /* namespace geosx */
