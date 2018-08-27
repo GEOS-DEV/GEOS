@@ -44,7 +44,7 @@ DomainPartition::DomainPartition( std::string const & name,
 {
 
 
-  this->RegisterViewWrapper< array<NeighborCommunicator> >(viewKeys.neighbors);
+  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
   MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -134,11 +134,11 @@ void DomainPartition::GenerateSets(  )
     string name = viewWrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = 0;
-    ViewWrapper<lSet> const * const setPtr = nodeSets->getWrapper<lSet>(name);
+    ViewWrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
-      lSet const & set = setPtr->reference();
+      set<localIndex> const & set = setPtr->reference();
       for( auto const a : set )
       {
         nodeInSet[name][a] = 1;
@@ -158,14 +158,14 @@ void DomainPartition::GenerateSets(  )
     for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
       CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
-      lArray2d const & elemsToNodes = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+      array2d<localIndex> const & elemsToNodes = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
       std::map< string, integer_array > numNodesInSet;
 
       for( auto & setName : setNames )
       {
 
-        lSet & set = elementSets->RegisterViewWrapper<lSet>(setName)->reference();
+        set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
@@ -179,7 +179,7 @@ void DomainPartition::GenerateSets(  )
           }
           if( count == elemsToNodes.size(1) )
           {
-            set.insert(k);
+            targetSet.insert(k);
           }
         }
       }
@@ -192,7 +192,7 @@ void DomainPartition::SetupCommunications()
 {
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
-  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
   //get communicator, rank, and coordinates
   MPI_Comm cartcomm;
@@ -249,7 +249,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
 {
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
-  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
   if (idim == nsdof)
   {

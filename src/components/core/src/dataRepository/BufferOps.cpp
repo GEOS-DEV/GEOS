@@ -51,13 +51,13 @@ localIndex Unpack( char const *& buffer, string& var )
 
 }
 
-//localIndex CommBufferOps::PackSize( const array<string>& container )
+//localIndex CommBufferOps::PackSize( const string_array& container )
 //{
 //  localIndex sizeOfPackedChars = 0;
 //  const localIndex arrayLength = container.size();
 //
 //  sizeOfPackedChars += PackSize( arrayLength );
-//  for( array<string>::const_iterator i=container.begin() ; i!=container.end() ; ++i )
+//  for( string_array::const_iterator i=container.begin() ; i!=container.end() ; ++i )
 //  {
 //    sizeOfPackedChars += PackSize(*i);
 //  }
@@ -69,7 +69,7 @@ localIndex Unpack( char const *& buffer, string& var )
 
 
 //localIndex CommBufferOps::Unpack( const char*& buffer,
-//                               array<string>& array )
+//                               string_array& array )
 //{
 //  array.clear();
 //  localIndex sizeOfUnpackedChars = 0;

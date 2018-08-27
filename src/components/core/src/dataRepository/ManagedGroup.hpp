@@ -75,8 +75,7 @@ using indexType = localIndex;
  * @author Randolph R. Settgast
  *
  * class that encapsulates and manages a collection of DataObjects. Can be
- * considered a "node" in a
- * hierarchy of managers that represent physical groupings of data.
+ * considered a "node" in a hierarchy of managers that represent physical groupings of data/
  *
  */
 class ManagedGroup
@@ -100,16 +99,18 @@ public:
 //                         ManagedGroup * const parent,
 //                         cxx_utilities::DocumentationNode * docNode );
 
+
+  /**
+   * @brief move constructor
+   * @param source source ManagedGroup
+   */
+  ManagedGroup( ManagedGroup&& source );
+
   /**
    *
    */
   virtual ~ManagedGroup();
 
-  /**
-   *
-   * @param source source WrapperCollection
-   */
-  ManagedGroup( ManagedGroup&& source );
 
 
   ManagedGroup() = delete;
@@ -262,6 +263,60 @@ public:
     return group_cast<T const *>(m_subGroups[key]);
   }
 
+  /**
+   * @brief This will grab the pointer to an object in the data structure
+   * @param path a unix-style string (absolute, relative paths valid)
+   */
+  template< typename T = ManagedGroup >
+  T const * GetGroupByPath( string const & path ) const
+  {
+    size_t directoryMarker = path.find("/");
+
+    if (directoryMarker == std::string::npos)
+    {
+      // Target should be a child of this group
+      return m_subGroups[path];
+    }
+    else
+    {
+      // Split the path
+      string const child = path.substr(0, directoryMarker);
+      string const subPath = path.substr(directoryMarker+1, path.size());
+
+      if (directoryMarker == 0)            // From root
+      {
+        if (this->getParent() == nullptr)  // At root
+        {
+          return this->GetGroupByPath(subPath);
+        }
+        else                               // Not at root
+        {
+          return this->getParent()->GetGroupByPath(path);
+        }
+      }
+      else if (child[0] == '.')
+      {
+        if (child[1] == '.')               // '../' = Reverse path
+        {
+          return this->getParent()->GetGroupByPath(subPath); 
+        }
+        else                               // './' = This path
+        {
+          return this->GetGroupByPath(subPath);
+        }
+      }
+      else
+      {
+        return m_subGroups[child]->GetGroupByPath(subPath);
+      }
+    }
+  }
+  
+  template< typename T = ManagedGroup >
+  T * GetGroupByPath( string const & path )
+  {
+    return const_cast<T *>(const_cast< ManagedGroup const * >(this)->GetGroupByPath(path));
+  }
 
   subGroupMap & GetSubGroups()
   {
@@ -272,6 +327,12 @@ public:
   {
     return m_subGroups;
   }
+
+  /**
+   * @brief return the number of sub groups in this ManagedGroup
+   * @return number of sub groups in this ManagedGroup
+   */
+  localIndex numSubGroups() const { return m_subGroups.size(); }
 
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
@@ -298,6 +359,60 @@ public:
       T const * subGroup = static_cast<T const *>( subGroupIter.second );
 #endif
       lambda( subGroup );
+    }
+  }
+
+  template< typename T = ViewWrapperBase, typename LAMBDA >
+  void forViewWrappers( LAMBDA lambda )
+  {
+    for( auto& wrapperIter : m_wrappers )
+    {
+#ifdef USE_DYNAMIC_CASTING
+      T & wrapper = dynamic_cast<T &>( *wrapperIter.second );
+#else
+      T & wrapper = static_cast<T &>( *wrapperIter.second );
+#endif
+      lambda( wrapper );
+    }
+  }
+
+  template< typename T = ViewWrapperBase, typename LAMBDA >
+  void forViewWrappers( LAMBDA lambda ) const
+  {
+    for( auto const & wrapperIter : m_wrappers )
+    {
+#ifdef USE_DYNAMIC_CASTING
+      T const & wrapper = dynamic_cast<T const &>( *wrapperIter.second );
+#else
+      T const & wrapper = static_cast<T const &>( *wrapperIter.second );
+#endif
+      lambda( wrapper );
+    }
+  }
+
+  template< typename Wrapped, typename LAMBDA >
+  void forViewWrappersByType(LAMBDA lambda)
+  {
+    for( auto & wrapperIter : m_wrappers )
+    {
+      if ( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      {
+        auto & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
+        lambda(wrapper);
+      }
+    }
+  }
+
+  template< typename Wrapped, typename LAMBDA >
+  void forViewWrappersByType(LAMBDA lambda) const
+  {
+    for( auto const & wrapperIter : m_wrappers )
+    {
+      if( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      {
+        auto const & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
+        lambda(wrapper);
+      }
     }
   }
 
@@ -335,6 +450,15 @@ public:
                                         T * newObject,
                                         bool takeOwnership );
 
+  /**
+   * @brief Register a ViewWrapper into this ManagedGroup
+   * @param name the key name to use for this new wrapper
+   * @param wrapper a pointer to the new wrapper
+   * @return a ViewWrapperBase pointer that holds the address of the new wrapper
+   */
+  ViewWrapperBase * RegisterViewWrapper( string const & name,
+                                         ViewWrapperBase * const wrapper );
+
 //  template< typename T >
 //  void RegisterViewWrapperRecursive( string const & name );
 //
@@ -361,7 +485,7 @@ public:
   ///
 
 
-  void PrintDataHierarchy();
+  void PrintDataHierarchy(integer indent = 0);
 
   virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
 
@@ -371,32 +495,45 @@ public:
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
+  /**
+   * This function provides a mechanism by which to post process any values that were read into the
+   * xml file prior to initialization.
+   */
   virtual void ReadXML_PostProcess() {}
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 
   void SetDocumentationNodes();
 
+  /**
+   * Function to generate documentation nodes for each variable in this object. The documentation
+   * nodes are then used to register variables and read xml input into variables.
+   */
   virtual void FillDocumentationNode();
 
+
+  /**
+   * @param rootGroup The group for which to register new documentation node to.
+   * Function to generate documentation nodes for each variable in this an object. The documentation
+   * nodes are then used to register variables and read xml input into variables.
+   */
   void SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup);
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
-
-  virtual localIndex PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( string_array const & wrapperNames,
                         integer const recursive ) const;
 
-  virtual localIndex PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( string_array const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
+                    string_array const & wrapperNames,
                     integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
+                    string_array const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive ) const;
 
@@ -671,6 +808,12 @@ public:
 
     return m_parent;
   }
+
+  localIndex getIndexInParent() const
+  {
+    return m_parent->GetSubGroups().getIndex( this->m_name );
+  }
+
 
   viewWrapperMap const & wrappers() const
   {

@@ -29,7 +29,7 @@ using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
+  ExecutableGroup( name, parent ),
   m_linearSolverWrapper(),
   m_verboseLevel(0),
   m_gravityVector( R1Tensor(0.0) ),
@@ -147,9 +147,21 @@ void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
 real64 SolverBase::SolverStep( real64 const& time_n,
                            real64 const& dt,
                            const int cycleNumber,
-                           ManagedGroup * domain )
+                           DomainPartition * domain )
 {
   return 0;
+}
+
+
+void SolverBase::Execute( real64 const& time_n,
+                          real64 const& dt,
+                          const int cycleNumber,
+                          ManagedGroup * domain )
+{
+  if ( dt > 0 )
+  {
+    SolverStep(time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+  }
 }
 
 
@@ -218,10 +230,16 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       AssembleSystem( domain, blockSystem, time_n, stepDt );
 
       // apply boundary conditions to system
-      ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+      ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
 
       // get residual norm
-      real64 residualNorm = CalculateResidualNorm( blockSystem );
+      real64 residualNorm = CalculateResidualNorm(blockSystem, domain);
+
+      if (m_verboseLevel >= 1)
+      {
+        std::cout << "Attempt: " << dtAttempt  << ", Newton: " << k
+                  << ", R = " << residualNorm << std::endl;
+      }
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
@@ -256,10 +274,17 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           AssembleSystem( domain, blockSystem, time_n, stepDt );
 
           // apply boundary conditions to system
-          ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+          ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
 
           // get residual norm
-          residualNorm = CalculateResidualNorm( blockSystem );
+          residualNorm = CalculateResidualNorm(blockSystem, domain);
+
+          if (m_verboseLevel >= 1)
+          {
+            std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
+                      << ", Line search: " << lineSearchIteration + 1
+                      << ", R = " << residualNorm << std::endl;
+          }
 
           // if the residual norm is less than the last residual, we can proceed to the
           // solution step
@@ -348,7 +373,8 @@ void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
 
 real64
 SolverBase::
-CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem )
+CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                       DomainPartition * const domain )
 {
   GEOS_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden.");
   return 0;
@@ -361,8 +387,8 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 }
 
 void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                          real64 const scalingFactor,
-                          DomainPartition * const  )
+                                      real64 const scalingFactor,
+                                      DomainPartition * const  )
 {
   GEOS_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden.");
 }

@@ -16,13 +16,13 @@ namespace geosx
 
 struct ModifiedObjectLists
 {
-  lSet newNodes;
-  lSet newEdges;
-  lSet newFaces;
-  lSet modifiedNodes;
-  lSet modifiedEdges;
-  lSet modifiedFaces;
-  std::map< std::string, lSet > modifiedElements;
+  set<localIndex> newNodes;
+  set<localIndex> newEdges;
+  set<localIndex> newFaces;
+  set<localIndex> modifiedNodes;
+  set<localIndex> modifiedEdges;
+  set<localIndex> modifiedFaces;
+  std::map< std::string, set<localIndex> > modifiedElements;
 };
 
 
@@ -64,7 +64,7 @@ public:
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
-                             dataRepository::ManagedGroup * domain ) override;
+                             DomainPartition * domain ) override;
 //
 //  virtual void ImplicitStepSetup( real64 const& time_n,
 //                              real64 const& dt,
@@ -144,15 +144,15 @@ private:
 //                            EdgeManager & edgeManager,
 //                            FaceManager & faceManager,
 //                            ElementRegionManager & elementManager,
-//                            array<lSet>& nodesToRupturedFaces,
-//                            array<lSet>& edgesToRupturedFaces,
+//                            array1d<set<localIndex>>& nodesToRupturedFaces,
+//                            array1d<set<localIndex>>& edgesToRupturedFaces,
 //                            const bool prefrac = false );
   void PostUpdateRuptureStates( NodeManager & nodeManager,
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager & elementManager,
-                                array<lSet>& nodesToRupturedFaces,
-                                array<lSet>& edgesToRupturedFaces );
+                                array1d<set<localIndex>>& nodesToRupturedFaces,
+                                array1d<set<localIndex>>& edgesToRupturedFaces );
 
   int CheckEdgeSplitability( const localIndex edgeID,
                                 NodeManager & nodeManager,
@@ -173,8 +173,8 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    array<lSet>& nodesToRupturedFaces,
-                    array<lSet>& edgesToRupturedFaces,
+                    array1d<set<localIndex>>& nodesToRupturedFaces,
+                    array1d<set<localIndex>>& edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists& modifiedObjects,
                     const bool prefrac );
@@ -184,9 +184,9 @@ private:
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
                            ElementRegionManager & elemManager,
-                           const array<lSet>& nodesToRupturedFaces,
-                           const array<lSet>& edgesToRupturedFaces,
-                           lSet& separationPathFaces,
+                           const array1d<set<localIndex>>& nodesToRupturedFaces,
+                           const array1d<set<localIndex>>& edgesToRupturedFaces,
+                           set<localIndex>& separationPathFaces,
                            map<localIndex,int>& edgeLocations,
                            map<localIndex,int>& faceLocations,
                            map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations  );
@@ -199,15 +199,15 @@ private:
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists& modifiedObjects,
-                        array<lSet>& nodesToRupturedFaces,
-                        array<lSet>& edgesToRupturedFaces,
-                        const lSet& separationPathFaces,
+                        array1d<set<localIndex>>& nodesToRupturedFaces,
+                        array1d<set<localIndex>>& edgesToRupturedFaces,
+                        const set<localIndex>& separationPathFaces,
                         const map<localIndex,int>& edgeLocations,
                         const map<localIndex,int>& faceLocations,
                         const map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
 
-bool SetLocations( const lSet& separationPathFaces,
+bool SetLocations( const set<localIndex>& separationPathFaces,
                    ElementRegionManager & elemManager,
                    const FaceManager & faceManager,
                    const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,
@@ -218,7 +218,7 @@ bool SetLocations( const lSet& separationPathFaces,
 
 bool SetElemLocations( const int side,
                        const std::pair<CellBlockSubRegion*, localIndex >& elem,
-                       const lSet& separationPathFaces,
+                       const set<localIndex>& separationPathFaces,
                        ElementRegionManager & elemManager,
                        const FaceManager & faceManager,
                        const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,

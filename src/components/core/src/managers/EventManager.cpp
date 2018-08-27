@@ -16,19 +16,14 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * EventManager.cpp
- *
- *  Created on: Oct 5, 2016
- *      Author: sherman
+/**
+ * @file EventManager.cpp
  */
 
 #include "EventManager.hpp"
-#include "Event.hpp"
+#include "managers/Events/EventBase.hpp"
 
 #include "DocumentationNode.hpp"
-
-#include "dataRepository/RestartFlags.hpp"
 
 namespace geosx
 {
@@ -36,15 +31,16 @@ namespace geosx
 using namespace dataRepository;
 using namespace cxx_utilities;
 
+
 EventManager::EventManager( std::string const & name,
                             ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{
-  this->RegisterViewWrapper< map<double,std::unique_ptr<Event> > >(keys::Events);
-}
+{}
+
 
 EventManager::~EventManager()
 {}
+
 
 void EventManager::FillDocumentationNode()
 {
@@ -54,142 +50,179 @@ void EventManager::FillDocumentationNode()
   docNode->setName("Events");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Contains the set of solver applications");
+
+  docNode->AllocateChildNode( viewKeys.time.Key(),
+                              viewKeys.time.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "simulation time",
+                              "simulation time",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.dt.Key(),
+                              viewKeys.dt.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "simulation dt",
+                              "simulation dt",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.cycle.Key(),
+                              viewKeys.cycle.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "simulation cycle",
+                              "simulation cycle",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.maxTime.Key(),
+                              viewKeys.maxTime.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "simulation maxTime",
+                              "simulation maxTime",
+                              "-1",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.maxCycle.Key(),
+                              viewKeys.maxCycle.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "simulation maxCycle",
+                              "simulation maxCycle",
+                              "-1",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.verbosity.Key(),
+                              viewKeys.verbosity.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "event manager verbosity",
+                              "event manager verbosity",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+}
+
+
+void EventManager::ReadXML_PostProcess()
+{
+  real64 & maxTime = this->getReference<real64>(viewKeys.maxTime);
+  integer & maxCycle = this->getReference<integer>(viewKeys.maxCycle);
+
+  // If maxTime, maxCycle are default, set them to their max values
+  if (maxTime < 0)
+  {
+    maxTime = std::numeric_limits<real64>::max();
+  }
+  if (maxCycle < 0)
+  {
+    maxCycle = std::numeric_limits<integer>::max();
+  }
 }
 
 
 void EventManager::CreateChild( string const & childKey, string const & childName )
 {
   std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
-  this->RegisterGroup<SolverApplication>( childName );
+  std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
+  this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
 
 
-void EventManager::CheckEventTiming()
+void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
-  cxx_utilities::DocumentationNode * const docNode = getDocumentationNode();
+  real64& time = *(this->getData<real64>(viewKeys.time));
+  real64& dt = *(this->getData<real64>(viewKeys.dt));
+  integer& cycle = *(this->getData<integer>(viewKeys.cycle));
+  real64 const maxTime = this->getReference<real64>(viewKeys.maxTime);
+  integer const maxCycle = this->getReference<integer>(viewKeys.maxCycle);
+  integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
+  integer exitFlag = 0;
 
-  for (std::map<std::string,DocumentationNode>::iterator eit=docNode->m_child.begin() ; eit!=docNode->m_child.end() ; ++eit)
+  // Setup event targets
+  this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
   {
-    dataRepository::ManagedGroup * applicationA = GetGroup(eit->first);
-    ViewWrapper<real64>::rtype endTime = applicationA->getData<real64>(keys::endTime);
+    subEvent->GetTargetReferences();
+  });
 
-    if (++eit != docNode->m_child.end())
+  // Run problem
+  while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
+  {
+    real64 nextDt = std::numeric_limits<real64>::max();
+    std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+
+    this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
     {
-      dataRepository::ManagedGroup * applicationB = GetGroup(eit->first);
-      ViewWrapper<real64>::rtype beginTime = applicationB->getData<real64>(keys::beginTime);
+      subEvent->CheckEvents(time, dt, cycle, domain);
+      integer eventForecast = subEvent->GetForecast();
 
-      if (fabs(*(beginTime) - *(endTime)) > 1e-6)
+      if (eventForecast == 1)
       {
-        std::cout << "Error in solver application times: " << eit->first << std::endl;
-        throw std::invalid_argument("Solver application times must be contiguous!");
+        subEvent->SignalToPrepareForExecution(time, dt, cycle, domain);
       }
 
-      --eit;
-    }
+      if (eventForecast <= 0)
+      {
+        subEvent->Execute(time, dt, cycle, domain);
+      }
+
+      real64 requestedDt = 1e6;
+      if (eventForecast <= 1)
+      {
+        requestedDt = subEvent->GetTimestepRequest(time + dt);
+      }
+      nextDt = std::min(requestedDt, nextDt);
+
+      exitFlag += subEvent->GetExitFlag();
+
+      // Debug information
+      if (verbosity > 0)
+      {
+        std::cout << "     Event: " << subEvent->getName() << ", f=" << eventForecast << ", dt_r=" << requestedDt << std::endl;
+      }      
+    });
+
+    time += dt;
+    ++cycle;
+    dt = nextDt;
+    dt = (time + dt > maxTime) ? (maxTime - time) : dt;
   }
-}
 
 
-
-SolverApplication::SolverApplication( std::string const & name,
-                                      ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
-{}
-
-SolverApplication::~SolverApplication()
-{}
-
-void SolverApplication::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  // docNode->setName(this->CatalogName());
-  docNode->setName("Application");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Describes the timing of the solver application");
-
-  docNode->AllocateChildNode( keys::time,
-                              keys::time,
-                              -1,
-                              "real64",
-                              "real64",
-                              "application current time",
-                              "application current time",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::beginTime,
-                              keys::beginTime,
-                              -1,
-                              "real64",
-                              "real64",
-                              "application start time",
-                              "application start time",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::endTime,
-                              keys::endTime,
-                              -1,
-                              "real64",
-                              "real64",
-                              "application endTime",
-                              "application endTime",
-                              "1.0e9",
-                              "",
-                              0,
-                              1,
-                              0,
-                              RestartFlags::WRITE );
-
-  docNode->AllocateChildNode( keys::dt,
-                              keys::dt,
-                              -1,
-                              "real64",
-                              "real64",
-                              "application dt",
-                              "application dt",
-                              "-1.0",
-                              "",
-                              0,
-                              1,
-                              0,
-                              RestartFlags::WRITE );
-
-  docNode->AllocateChildNode( keys::cycle,
-                              keys::cycle,
-                              -1,
-                              "integer",
-                              "integer",
-                              "application current cycle",
-                              "application current cycle",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::solvers,
-                              keys::solvers,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "application solvers",
-                              "application solvers",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0,
-                              RestartFlags::WRITE );
+  // Cleanup
+  std::cout << "Cleaning up events" << std::endl;
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->Cleanup(time, cycle, domain);     
+  });
 
 }
-
 
 } /* namespace geosx */

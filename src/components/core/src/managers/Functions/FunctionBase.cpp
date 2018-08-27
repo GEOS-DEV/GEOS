@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FunctionBase.cpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
+/**
+ * @file FunctionBase.cpp
  */
 
 #include "FunctionBase.hpp"
@@ -38,10 +35,9 @@ FunctionBase::FunctionBase( const std::string& name,
   ManagedGroup( name, parent )
 {}
 
+
 FunctionBase::~FunctionBase()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 void FunctionBase::FillDocumentationNode()
@@ -109,8 +105,28 @@ integer FunctionBase::isFunctionOfTime() const
 }
 
 
+real64_array FunctionBase::EvaluateStats( dataRepository::ManagedGroup const * const group,
+                                          real64 const time,
+                                          set<localIndex> const & set) const
+{
+  localIndex N = set.size();
+  real64_array sub(N);
+  Evaluate( group, time, set, sub );
 
-//REGISTER_CATALOG_ENTRY( FunctionBase, FunctionBase, std::string const &,
-// ManagedGroup * const )
+  real64_array result(3);
+  result[0] = 1e10;   // min
+  result[1] = 0.0;    // avg
+  result[2] = -1e10;  // max
+  for( localIndex ii=0; ii<N; ii++ )
+  {
+    result[0] = std::min(result[0], sub[ii]);
+    result[1] += sub[ii];
+    result[2] = std::max(result[0], sub[ii]);
+  }
+  result[1] /= N;
+
+  return result;
+}
+
 
 } /* namespace ANST */

@@ -175,6 +175,16 @@ public:
     return std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject));
   }
 
+  virtual std::unique_ptr<ViewWrapperBase> clone( string const & name,
+                                                  ManagedGroup * const parent ) override
+  {
+    std::unique_ptr<ViewWrapperBase>
+    clonedWrapper = std::make_unique<ViewWrapper<T> >( name, parent, this->m_data, false );
+
+    return clonedWrapper;
+  }
+
+
 
   /**
    * Virtual function to return the typeid of T. Not so sure this does what we
@@ -195,9 +205,7 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
-#ifdef USE_ATK
       GEOS_ERROR("invalid cast attempt");
-#endif
     }
     return static_cast< ViewWrapper<T>& >(base);
   }
@@ -206,9 +214,7 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
-#ifdef USE_ATK
       GEOS_ERROR("invalid cast attempt");
-#endif
     }
     return static_cast< ViewWrapper<T> const & >(base);
   }
@@ -957,6 +963,15 @@ public:
     return d_size / sizeof(T);
   }
 
+
+  virtual bool shouldRegisterDataPtr() const override
+  {
+    std::type_index type_index = std::type_index(elementTypeID());
+    axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+    return sidre_type_id != axom::sidre::TypeID::NO_TYPE_ID;
+  }
+
+
   
   void registerDataPtr(axom::sidre::View * view) const override
   {
@@ -1147,7 +1162,7 @@ public:
 
   void unregisterDataPtr(axom::sidre::View* view = nullptr) const
   {
-#ifdef ATK_FOUND
+#ifdef USE_ATK
     view = (view != nullptr) ? view : getSidreView();
     view->setExternalDataPtr(AXOM_NULLPTR);
 #endif
@@ -1189,7 +1204,6 @@ public:
       localIndex num_elements = numElementsFromByteSize(byte_size);
 
       int ndims = view->getNumDimensions();
-//      axom::sidre::SidreLength dims[ndims];
       axom::sidre::SidreLength dims[10];
       view->getShape(ndims, dims);
 

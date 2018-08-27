@@ -29,10 +29,10 @@ namespace dataRepository {
 
 #ifdef USE_ATK
 template<typename T> 
-ViewWrapper<array<T>> * createArrayView(ManagedGroup * parent, const string & name,
-                                        int sfp, const array<T> & data)
+ViewWrapper<array1d<T>> * createArrayView(ManagedGroup * parent, const string & name,
+                                        int sfp, const array1d<T> & data)
 {
-  ViewWrapper<array<T>> * view = parent->RegisterViewWrapper<array<T>>(name);
+  ViewWrapper<array1d<T>> * view = parent->RegisterViewWrapper<array1d<T>>(name);
   view->setSizedFromParent(sfp);
 
   /* Resize the array */
@@ -57,7 +57,7 @@ ViewWrapper<array<T>> * createArrayView(ManagedGroup * parent, const string & na
 
 
 template<typename T> 
-void checkArrayView(const ViewWrapper<array<T>> * view, int sfp, const array<T> & data) 
+void checkArrayView(const ViewWrapper<array1d<T>> * view, int sfp, const array1d<T> & data) 
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());
@@ -68,10 +68,10 @@ void checkArrayView(const ViewWrapper<array<T>> * view, int sfp, const array<T> 
 }
 
 template<typename T> 
-ViewWrapper<Array2dT<T>> * createArray2dView(ManagedGroup * parent, const string & name,
-                                          int sfp, const Array2dT<T> & data)
+ViewWrapper<array2d<T>> * createArray2dView(ManagedGroup * parent, const string & name,
+                                          int sfp, const array2d<T> & data)
 {
-  ViewWrapper<Array2dT<T>> * view = parent->RegisterViewWrapper<Array2dT<T>>(name);
+  ViewWrapper<array2d<T>> * view = parent->RegisterViewWrapper<array2d<T>>(name);
   view->setSizedFromParent(sfp);
 
   /* Resize the array */
@@ -88,7 +88,7 @@ ViewWrapper<Array2dT<T>> * createArray2dView(ManagedGroup * parent, const string
   EXPECT_EQ(view->byteSize(), expected_size);
 
   /* Set the data */
-  Array2dT<T> & view_data = view->reference();
+  array2d<T> & view_data = view->reference();
   for (int i = 0; i < dims[0]; i++) 
   {
     for (int j = 0; j < dims[1]; j++) 
@@ -105,14 +105,14 @@ ViewWrapper<Array2dT<T>> * createArray2dView(ManagedGroup * parent, const string
 
 
 template<typename T> 
-void checkArray2dView(const ViewWrapper<Array2dT<T>> * view, int sfp, const Array2dT<T> & data) 
+void checkArray2dView(const ViewWrapper<array2d<T>> * view, int sfp, const array2d<T> & data) 
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());
   EXPECT_EQ(view->size(0), data.size(0));
   EXPECT_EQ(view->size(1), data.size(1));
   
-  const Array2dT<T> & view_data = view->reference();
+  const array2d<T> & view_data = view->reference();
   for (int i = 0; i < data.size(0); i++) 
   {
     for (int j = 0; j < data.size(1); j++) 
@@ -126,10 +126,10 @@ void checkArray2dView(const ViewWrapper<Array2dT<T>> * view, int sfp, const Arra
 
 template<typename T> 
 ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
-                                    int sfp, const set<T> & data)
+                                    localIndex sfp, const set<T> & data)
 {
   ViewWrapper<set<T>> * view = parent->RegisterViewWrapper<set<T>>(name);
-  view->setSizedFromParent(sfp);
+  view->setSizedFromParent(int(sfp));
 
   /* Resize the array */
   localIndex expected_size = data.size() * sizeof(T);
@@ -152,7 +152,7 @@ ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
 
 
 template<typename T> 
-void checkSetView(const ViewWrapper<set<T>> * view, int sfp, const set<T> & data) 
+void checkSetView(const ViewWrapper<set<T>> * view, localIndex sfp, const set<T> & data) 
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());
@@ -200,14 +200,14 @@ ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const s
   ViewWrapper<string_array> * view = parent->RegisterViewWrapper<string_array>(name);
   view->setSizedFromParent(sfp);
 
-  uint expected_size = arr.size() * sizeof(string);
+  unsigned long expected_size = arr.size() * sizeof(string);
   view->resize(arr.size());
 
   EXPECT_EQ(static_cast<uint>(view->size()), arr.size());
   EXPECT_EQ(view->byteSize(), expected_size);
 
   view_rtype<string_array> view_data = view->data();
-  for (localIndex i = 0; i < arr.size(); ++i)
+  for (string_array::size_type i = 0; i < arr.size(); ++i)
   {
     view_data[i] = arr[i];
   }
@@ -322,8 +322,8 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_real641_sfp = sfp++;
   int view_real641_size = 1000;
   real64_array view_real641_data(view_real641_size);
-  for (real64 i = 0; i < view_real641_size; i++) {
-    view_real641_data[i] = i * i / (i + 5);
+  for (int i = 0; i < view_real641_size; i++) {
+    view_real641_data[i] = i * i / (i + 5.0);
   }
   createArrayView(real64_group, view_real641_name, view_real641_sfp, 
                   view_real641_data);
@@ -333,8 +333,8 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_real642_sfp = sfp++;
   int view_real642_size = 1000;
   real64_array view_real642_data(view_real642_size);
-  for (real64 i = 0; i < view_real642_size; i++) {
-    view_real642_data[i] = i * i / (5 + 5 * i + i * i);
+  for (int i = 0; i < view_real642_size; i++) {
+    view_real642_data[i] = i * i / (5.0 + 5.0 * i + i * i);
   }
   createArrayView(real64_group, view_real642_name, view_real642_sfp, 
                   view_real642_data);
@@ -358,8 +358,8 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_real32_sfp = sfp++;
   int view_real32_size = 782;
   real32_array view_real32_data(view_real32_size);
-  for (real32 i = 0; i < view_real32_size; i++) {
-    view_real32_data[i] = (i * i - 100 * i + 3) / (i + 3);
+  for (int i = 0; i < view_real32_size; i++) {
+    view_real32_data[i] = (i * i - 100.0f * i + 3.0f) / (i + 3.0f);
   }
   createArrayView(mixed_group, view_real32_name, view_real32_sfp, 
                   view_real32_data);
@@ -407,7 +407,7 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_real642d_sfp = sfp++;
   localIndex dim0 = 10;
   localIndex dim1 = 20;
-  Array2dT<real64> view_real642d_arr(dim0, dim1);
+  array2d<real64> view_real642d_arr(dim0, dim1);
   for (localIndex i = 0; i < dim0; i++)
   {
     for (localIndex j = 0; j < dim1; j++)
@@ -422,7 +422,7 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_r1t2d_sfp = sfp++;
   dim0 = 10;
   dim1 = 20;
-  Array2dT<R1Tensor> view_r1t2d_arr(dim0, dim1);
+  array2d<R1Tensor> view_r1t2d_arr(dim0, dim1);
   for (localIndex i = 0; i < dim0; i++)
   {
     for (localIndex j = 0; j < dim1; j++)
@@ -472,8 +472,8 @@ TEST(testSidreExtended, testSidreExtended) {
   ViewWrapper<real64> * view_pi_new = mixed_group_new->RegisterViewWrapper<real64>(view_pi_name);
   ViewWrapper<set<localIndex>> * view_setlocalIndex_new = mixed_group_new->RegisterViewWrapper<set<localIndex>>(view_setlocalIndex_name);
   ViewWrapper<set<string>> * view_setString_new = mixed_group_new->RegisterViewWrapper<set<string>>(view_setString_name);
-  ViewWrapper<Array2dT<real64>> * view_real642d_new = mixed_group_new->RegisterViewWrapper<Array2dT<real64>>(view_real642d_name);
-  ViewWrapper<Array2dT<R1Tensor>> * view_r1t2d_new = mixed_group_new->RegisterViewWrapper<Array2dT<R1Tensor>>(view_r1t2d_name);
+  ViewWrapper<array2d<real64>> * view_real642d_new = mixed_group_new->RegisterViewWrapper<array2d<real64>>(view_real642d_name);
+  ViewWrapper<array2d<R1Tensor>> * view_r1t2d_new = mixed_group_new->RegisterViewWrapper<array2d<R1Tensor>>(view_r1t2d_name);
 
 
   /* Load the data */

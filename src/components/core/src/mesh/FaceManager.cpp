@@ -54,6 +54,8 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
                              &(elementList()),
                              false );
 
+  this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
+
   m_toElements.resize(0,2);
 
   //0-based; note that the following field is ALSO 0
@@ -105,14 +107,14 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 {
 
   localIndex_array tempNodeList;
-  array<localIndex_array> tempFaceToNodeMap;
+  array1d<localIndex_array> tempFaceToNodeMap;
 
   localIndex numFaces = 0;
-  array<localIndex_array> facesByLowestNode;
+  array1d<localIndex_array> facesByLowestNode;
 
-  Array2dT<localIndex> & elemRegionList = this->elementRegionList();
-  Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<localIndex> & elemList = this->elementList();
+  array2d<localIndex> & elemRegionList = this->elementRegionList();
+  array2d<localIndex> & elemSubRegionList = this->elementSubRegionList();
+  array2d<localIndex> & elemList = this->elementList();
 
   m_toElements.setElementRegionManager( elementManager );
 
@@ -253,7 +255,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   this->resize(tempFaceToNodeMap.size());
 
   // set m_FaceToNodeMap
-  array< localIndex_array > & faceToNodes = m_nodeList;
+  array1d< localIndex_array > & faceToNodes = m_nodeList;
   faceToNodes = tempFaceToNodeMap;
 
   auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
@@ -262,8 +264,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   for( auto const & setWrapper : nodeSets )
   {
     std::string const & setName = setWrapper.second->getName();
-    const lSet& set = nodeManager->GetGroup(keys::sets)->getReference<lSet>( setName );
-    this->ConstructSetFromSetAndMap( set, faceToNodes, setName );
+    const set<localIndex>& targetSet = nodeManager->GetGroup(keys::sets)->getReference<set<localIndex>>( setName );
+    this->ConstructSetFromSetAndMap( targetSet, faceToNodes, setName );
   }
 
 
@@ -271,7 +273,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   SortAllFaceNodes(*nodeManager,*elementManager);
 
   SetDomainBoundaryObjects( nodeManager );
-//  array<R1Tensor>& faceCenter = this->GetFieldData<R1Tensor>( "FaceCenter" );
+//  array1d<R1Tensor>& faceCenter = this->GetFieldData<R1Tensor>( "FaceCenter" );
 //  for( localIndex k=0 ; k<DataLengths() ; ++k )
 //  {
 //    FaceCenter( nodeManager, k , faceCenter[k] );
@@ -304,9 +306,9 @@ void FaceManager::AddNewFace( localIndex const & kReg,
                               localIndex const & ke,
                               localIndex const & kelf,
                               localIndex & numFaces,
-                              array<localIndex_array>& facesByLowestNode,
+                              array1d<localIndex_array>& facesByLowestNode,
                               localIndex_array& tempNodeList,
-                              array<localIndex_array>& tempFaceToNodeMap,
+                              array1d<localIndex_array>& tempFaceToNodeMap,
                               CellBlockSubRegion & elementRegion )
 {
   // and add the face to facesByLowestNode[]
@@ -354,9 +356,9 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   integer_array & faceDomainBoundaryIndicator = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
   faceDomainBoundaryIndicator = 0;
 
-  Array2dT<localIndex> const & elemRegionList = this->elementRegionList();
-  Array2dT<localIndex> const & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<localIndex> const & elemList = this->elementList();
+  array2d<localIndex> const & elemRegionList = this->elementRegionList();
+  array2d<localIndex> const & elemSubRegionList = this->elementSubRegionList();
+  array2d<localIndex> const & elemList = this->elementList();
 
   for( localIndex kf=0 ; kf<size() ; ++kf )
   {
@@ -405,7 +407,7 @@ void FaceManager::SetIsExternal()
 //FaceManager::
 //SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject )
 //{
-//  array< localIndex_array > const & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList );
+//  array1d< localIndex_array > const & faceToNodes = this->getReference< array1d< localIndex_array > >( viewKeys.nodeList );
 //  globalIndex_array const & nodalGlobalIndex = compositionalObject->m_localToGlobalMap;
 //  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.isDomainBoundary);
 //
@@ -431,9 +433,9 @@ void FaceManager::SetIsExternal()
 void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
                                     ElementRegionManager const & elemManager )
 {
-  Array2dT<localIndex> & elemRegionList = this->elementRegionList();
-  Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<localIndex> & elemList = this->elementList();
+  array2d<localIndex> & elemRegionList = this->elementRegionList();
+  array2d<localIndex> & elemSubRegionList = this->elementSubRegionList();
+  array2d<localIndex> & elemList = this->elementList();
 
   for(localIndex kf =0 ; kf < size() ; ++kf )
   {
@@ -458,7 +460,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   r1_array const & X = nodeManager.referencePosition();
 
   // get face center (average vertex location) and store node coordinates
-  array<R1Tensor> faceCoords(numFaceNodes);
+  array1d<R1Tensor> faceCoords(numFaceNodes);
   R1Tensor fc;
   for( localIndex n =0 ; n < numFaceNodes ; ++n)
   {
@@ -530,7 +532,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   if (numFaceNodes > 2)
   {
     /// Sort nodes counterclockwise around face center
-    array< std::pair<realT,int> > thetaOrder(numFaceNodes);
+    array1d< std::pair<realT,int> > thetaOrder(numFaceNodes);
     for( localIndex n =0 ; n < numFaceNodes ; ++n)
     {
       R1Tensor v = faceCoords[n];
@@ -583,7 +585,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
 
 
 void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
-                                                                   array<globalIndex_array>& faceToNodes )
+                                                                   array1d<globalIndex_array>& faceToNodes )
 {
 
   OrderedVariableOneToManyRelation const & faceNodes = this->nodeList();
