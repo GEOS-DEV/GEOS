@@ -32,17 +32,30 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
-  CellBlock( name, parent )
+  CellBlock( name, parent ),
+  m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this)
 {
   RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
       setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::constitutiveMapString, &m_constitutiveMapView, 0);
+  RegisterViewWrapper( viewKeyStruct::constitutiveMapString,
+                       &m_constitutiveMapView, 0);
+
+  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
+
+//  RegisterViewWrapper( viewKeyStruct::constitutiveRelationIndexString,
+//                       &m_constitutiveRelationIndex, 0);
+//
+//  RegisterViewWrapper( viewKeyStruct::constitutivePointIndexString,
+//                       &m_constitutivePointIndex, 0);
+
+  RegisterViewWrapper( viewKeyStruct::constitutivePointVolumeFraction,
+                       &m_constitutivePointVolumeFraction, 0);
 
   RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
 
 
-
+  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 );
 }
 
 CellBlockSubRegion::~CellBlockSubRegion()
@@ -154,7 +167,7 @@ void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 
 void CellBlockSubRegion::MaterialPassThru( string const & matName,
                                            string const & setName,
-                                           lSet & materialSet,
+                                           set<localIndex> & materialSet,
                                            ManagedGroup * material )
 {}
 

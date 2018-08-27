@@ -26,6 +26,7 @@
 
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
+#include "../dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
@@ -56,7 +57,7 @@ string const maxDt   = "maxDt";
 }
 }
 
-class SolverBase : public dataRepository::ManagedGroup
+class SolverBase : public ExecutableGroup
 {
 public:
 
@@ -80,14 +81,19 @@ public:
 
 
   /**
+   * This method is called when it's host event is triggered
+   */
+  virtual void Execute( real64 const & time_n,
+                        real64 const & dt,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override;
+
+  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-
-
-
 
   /**
    * @brief entry function to perform a solver step
@@ -103,7 +109,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
-                         dataRepository::ManagedGroup * domain );
+                         DomainPartition * domain );
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -214,13 +220,15 @@ public:
   /**
    * @brief calculate the norm of the global system residual
    * @param blockSystem the entire block system
+   * @param domain the domain partition
    * @return norm of the residual
    *
    * This function returns the norm of global residual vector, which is suitable for comparison with
    * a tolerance.
    */
   virtual real64
-  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem );
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                         DomainPartition * const domain );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.

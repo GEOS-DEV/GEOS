@@ -69,7 +69,7 @@ public:
   ///@{
 
 //  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-//                                            array< array<localIndex> > & matchedPartitionBoundaryObjects );
+//                                            array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects );
 
   void SetMpiComm( MPI_Comm comm )
   {

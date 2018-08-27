@@ -54,7 +54,7 @@ public:
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) override;
+                         DomainPartition * domain ) override;
 
 private:
   NewComponent() = delete;

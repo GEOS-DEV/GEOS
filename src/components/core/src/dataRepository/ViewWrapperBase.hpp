@@ -86,10 +86,24 @@ public:
   virtual void clear() = 0;
   virtual void insert() = 0;
   virtual void resize(localIndex newsize) = 0;
+
+  /**
+   * @brief  function to create a clone of *this ViewWrapperBase
+   * @param name name of the clone
+   * @param parent parent ManagedGroup that will hold this clone
+   * @return
+   *
+   * The overridden function will create a copy of the derived ViewWrapper<T> the using the provided
+   * values of name and parent to differentiate itself from the source.
+   */
+  virtual std::unique_ptr<ViewWrapperBase> clone( string const & name,
+                                                  ManagedGroup * const parent ) = 0;
+
   virtual bool shouldResize() const = 0;
 
   virtual size_t sizeOfType() const = 0;
 
+  virtual bool shouldRegisterDataPtr() const = 0;
   virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
   virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
   virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;

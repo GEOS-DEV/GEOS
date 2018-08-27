@@ -16,17 +16,12 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * EventManager.hpp
- *
- *  Created on: Oct 5, 2016
- *      Author: sherman
- */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "managers/Events/EventBase.hpp"
 
 
 namespace geosx
@@ -39,33 +34,54 @@ string const Events("Events");
 }
 }
 
+/**
+ * @class EventManager
+ *
+ * A class for managing code events.
+ */
 class EventManager : public dataRepository::ManagedGroup
 {
 public:
+  /// Main constructor
   EventManager( std::string const & name,
                 ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~EventManager() override;
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// XML post processing
+  virtual void ReadXML_PostProcess() override;
+
+  /// A method to add child events
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
-  void CheckEventTiming();
+  /**
+   * The main execution loop for the code.  During each cycle, it will:
+   *   - Calculate the event forecast (number of cycles until its expected execution)
+   *   - Signal an event to prepare (forecast == 1)
+   *   - Execute an event (forecast == 0)
+   *   - Determine dt for the next cycle
+   *   - Advance time, cycle, etc.
+   */
+  void Run(dataRepository::ManagedGroup * domain);
 
-};
+  struct viewKeyStruct
+  {
+    dataRepository::ViewKey time = { "time" };
+    dataRepository::ViewKey dt = { "dt" };
+    dataRepository::ViewKey cycle = { "cycle" };
+    dataRepository::ViewKey maxTime = { "maxTime" };
+    dataRepository::ViewKey maxCycle = { "maxCycle" };
+    dataRepository::ViewKey verbosity = { "verbosity" };
+  } viewKeys;
 
-class SolverApplication : public dataRepository::ManagedGroup
-{
-public:
-  SolverApplication( std::string const & name,
-                     ManagedGroup * const parent );
+  /// Catalog interface
+  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
 
-  virtual ~SolverApplication() override;
-
-  static string CatalogName() { return "EventManager"; }
-
-  virtual void FillDocumentationNode() override;
 };
 
 } /* namespace geosx */

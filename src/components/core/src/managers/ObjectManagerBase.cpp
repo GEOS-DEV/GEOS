@@ -47,7 +47,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 
   this->RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
 
-  m_sets.RegisterViewWrapper<lSet>( this->m_ObjectManagerBaseViewKeys.externalSet );
+  m_sets.RegisterViewWrapper<set<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
@@ -60,7 +60,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //
 //
 //  this->RegisterGroup<ManagedGroup>("Sets");
-//  this->RegisterViewWrapper< array<integer> >("isExternal");
+//  this->RegisterViewWrapper< array1d<integer> >("isExternal");
 //}
 
 
@@ -142,13 +142,13 @@ void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 }
 
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
-                                                   const lArray2d& map,
+void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+                                                   const array2d<localIndex>& map,
                                                    const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
+  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
   newset.clear();
 
   localIndex mapSize = map.size(1);
@@ -170,13 +170,13 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   }
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
-                                                   const array<localIndex_array>& map,
+void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+                                                   const array1d<localIndex_array>& map,
                                                    const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
+  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
   newset.clear();
 
   for( localIndex ka=0 ; ka<size() ; ++ka )
@@ -199,7 +199,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  const array1d<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -211,7 +211,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& o
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  const array1d<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -237,7 +237,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 
 
-localIndex ObjectManagerBase::PackSize( array<string> const & wrapperNames,
+localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
@@ -255,7 +255,7 @@ localIndex ObjectManagerBase::PackSize( array<string> const & wrapperNames,
 
 
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
-                             array<string> const & wrapperNames,
+                             string_array const & wrapperNames,
                              localIndex_array const & packList,
                              integer const recursive ) const
 {
@@ -271,7 +271,7 @@ localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
-                                    array<string> const & wrapperNames,
+                                    string_array const & wrapperNames,
                                     localIndex_array const & packList,
                                     integer const recursive ) const
 {
@@ -289,7 +289,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
-  array<string> wrapperNamesForPacking;
+  string_array wrapperNamesForPacking;
   if( wrapperNames.size()==0 )
   {
     set<localIndex> exclusionList;
@@ -353,8 +353,8 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-//template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,array<string> const & , localIndex_array const &, integer const ) const;
-//template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,array<string> const & , localIndex_array const &, integer const ) const;
+//template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,string_array const & , localIndex_array const &, integer const ) const;
+//template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,string_array const & , localIndex_array const &, integer const ) const;
 
 
 
@@ -729,10 +729,10 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
 
   for( localIndex i=0 ; i<m_sets.wrappers().size() ; ++i )
   {
-    lSet& set = m_sets.getReference<lSet>(i);
-    if( set.count(source) > 0 )
+    set<localIndex> & targetSet = m_sets.getReference< set<localIndex> >(i);
+    if( targetSet.count(source) > 0 )
     {
-      set.insert(destination);
+      targetSet.insert(destination);
     }
   }
 }

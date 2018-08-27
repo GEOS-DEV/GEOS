@@ -88,12 +88,14 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
-                           map<string,localIndex> & counts );
+//  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
+//                           map<string,localIndex> & counts );
+
+  void HangConstitutiveRelations( ManagedGroup const * problemManager );
 
   virtual ~ElementRegion() override;
 
-//  Array2dT<integer> & m_toNodesRelation;
+//  array2d<integer> & m_toNodesRelation;
 
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
@@ -130,6 +132,8 @@ public:
   {
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups().size();
   }
+
+
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {
@@ -139,17 +143,6 @@ public:
       {
         lambda( subRegion );
       });
-
-//    set<string> names;
-//    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
-//    {
-//      names.insert(iterCellBlocks.first);
-//    }
-//    for( auto & name : names )
-//    {
-//      lambda( cellBlockSubRegions->GetGroup<CellBlockSubRegion>(name) );
-//    }
-
   }
 
 
@@ -162,18 +155,26 @@ public:
       {
         lambda( subRegion );
       });
+  }
 
-//        set<string> names;
-//    for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
-//    {
-//      names.insert(iterCellBlocks.first);
-//    }
-//
-//    for( auto const & name : names )
-//    {
-//      lambda( cellBlockSubRegions->GetGroup<CellBlockSubRegion>(name) );
-//    }
+  template< typename LAMBDA >
+  void forCellBlocksIndex( LAMBDA lambda ) const
+  {
+    for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * cellBlock = this->GetSubRegion(esr);
+      lambda( esr, cellBlock );
+    }
+  }
 
+  template< typename LAMBDA >
+  void forCellBlocksIndex( LAMBDA lambda )
+  {
+    for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion * cellBlock = this->GetSubRegion(esr);
+      lambda( esr, cellBlock );
+    }
   }
 
 
@@ -183,8 +184,18 @@ public:
   }
 
 
-private:
+  struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
+  {
+    static constexpr auto materialListString = "materialList";
+
+  } m_regionViewKeys;
+
+  string_array & getMaterialList() {return m_materialList;}
+  string_array const & getMaterialList() const {return m_materialList;}
+
+  private:
   ElementRegion& operator=(const ElementRegion& rhs);
+  string_array m_materialList;
 //  string & m_elementType;
 
 };

@@ -91,7 +91,7 @@ PolynomialFunction::PolynomialFunction(TICPP::HierarchicalDataNode* hdn,
 /// XML: <PolynomialFunction name="halfXSquared" coeffs="0.0 0.0 0.5">
 void PolynomialFunction::ReadXML(TICPP::HierarchicalDataNode* hdn){
   std::string coeffsStr = hdn->GetAttributeString("coeffs");
-  array<string> csv = Tokenize(coeffsStr," ");
+  string_array csv = Tokenize(coeffsStr," ");
   coeffs.resize(csv.size() );
   for( size_t i =0 ; i < csv.size() ; ++i )
     coeffs[i] = fromString<realT>(csv[i]);

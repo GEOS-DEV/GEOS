@@ -23,7 +23,7 @@ namespace computationalGeometry
  * @return area of the convex 3D polygon
  */
 real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array<R1Tensor>& points,
+                         const array1d<R1Tensor>& points,
                          R1Tensor& center,
                          R1Tensor& normal )
 {
@@ -111,8 +111,8 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
  * @return area of the convex 3D polygon
  */
 real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array<R1Tensor>& pointReferences,
-                         const array<R1Tensor>& pointDisplacements,
+                         const array1d<R1Tensor>& pointReferences,
+                         const array1d<R1Tensor>& pointDisplacements,
                          R1Tensor& center,
                          R1Tensor& normal )
 {
@@ -250,7 +250,7 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
   return area;
 }
 
-real64 HexVolume( array<R1Tensor> const & X )
+real64 HexVolume( R1Tensor const * const X )
 {
   R1Tensor X7_X1( X[7] );
   X7_X1 -= X[1];

@@ -29,6 +29,8 @@
 namespace geosx
 {
 
+using namespace dataRepository;
+
 NeighborCommunicator::NeighborCommunicator():
   m_neighborRank(-1),
   m_sendBufferSize(),
@@ -486,7 +488,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 }
 
 
-void NeighborCommunicator::PackBufferForSync( std::map<string, array<string> > const & fieldNames,
+void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > const & fieldNames,
                                               MeshLevel * const mesh,
                                               int const commID )
 {

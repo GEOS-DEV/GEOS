@@ -21,6 +21,10 @@ if( ATK_FOUND )
   set( dependencyList ${dependencyList} slic )
 endif()
 
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper )
+endif()
+
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )
 #    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )

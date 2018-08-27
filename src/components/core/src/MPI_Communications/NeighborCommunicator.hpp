@@ -108,17 +108,17 @@ public:
 
 
   template<typename T>
-  void MPI_iSendReceive( array<T> const & sendBuffer,
+  void MPI_iSendReceive( array1d<T> const & sendBuffer,
                          MPI_Request& sendReq,
-                         array<T> & recvBuffer,
+                         array1d<T> & recvBuffer,
                          MPI_Request& recvReq,
                          int const commID,
                          MPI_Comm mpiComm  );
 
 
   template<typename T>
-  void MPI_iSendReceive( array<T> const & sendBuffer,
-                         array<T> & recvBuffer,
+  void MPI_iSendReceive( array1d<T> const & sendBuffer,
+                         array1d<T> & recvBuffer,
                          int const commID,
                          MPI_Comm mpiComm )
   {
@@ -131,8 +131,8 @@ public:
   }
 
   template<typename T>
-  void MPI_iSendReceiveWait( array<T> const & sendBuffer,
-                             array<T> & recvBuffer,
+  void MPI_iSendReceiveWait( array1d<T> const & sendBuffer,
+                             array1d<T> & recvBuffer,
                              int const commID,
                              MPI_Comm mpiComm  )
   {
@@ -166,7 +166,7 @@ public:
   void RebuildSyncLists( MeshLevel * const meshLevel,
                          int const commID );
 
-  void PackBufferForSync( std::map<string, array<string> > const & fieldNames,
+  void PackBufferForSync( std::map<string, string_array > const & fieldNames,
                           MeshLevel * const meshLevel,
                           int const commID );
 
@@ -222,9 +222,9 @@ private:
 
 
 template<typename T>
-void NeighborCommunicator::MPI_iSendReceive( array<T> const & sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive( array1d<T> const & sendBuffer,
                                              MPI_Request& sendReq,
-                                             array<T> & recvBuffer,
+                                             array1d<T> & recvBuffer,
                                              MPI_Request& recvReq,
                                              int const commID,
                                              MPI_Comm mpiComm  )

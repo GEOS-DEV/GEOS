@@ -25,7 +25,10 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
+
+#include <type_traits>
 #include "common/DataTypes.hpp"
+
 namespace geosx
 {
 
@@ -37,8 +40,6 @@ struct is_string : std::false_type {};
 
 template<>
 struct is_string< string > : std::true_type {};
-
-
 
 
 template<typename>
@@ -88,6 +89,13 @@ struct is_tensorT< R2TensorT<3> > : std::true_type{};
 
 template<>
 struct is_tensorT< R2SymTensorT<3> > : std::true_type{};
+
+template< typename T >
+struct is_chaiable
+{
+  static constexpr bool value = std::is_arithmetic<T>::value ||
+                                is_tensorT<T>::value;
+};
 
 }
 
