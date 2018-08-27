@@ -21,14 +21,9 @@
  */
 
 #include "EventManager.hpp"
-
-#include "managers/DomainPartition.hpp"
 #include "managers/Events/EventBase.hpp"
 
 #include "DocumentationNode.hpp"
-
-#include "mesh/MeshLevel.hpp"
-#include "mesh/MeshBody.hpp"
 
 #include "coupling/TribolCoupling.hpp"
 
@@ -148,29 +143,6 @@ void EventManager::CreateChild( string const & childKey, string const & childNam
 
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
-
-  MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->getMeshBody(0)->getMeshLevel(0);
-
-  CellBlockSubRegion * const
-  subRegion = meshLevel->getElemManager()->GetRegion(0)->GetSubRegion(0);
-
-  FixedOneToManyRelation & elemsToNodes = subRegion->nodeList();
-  elemsToNodes.data();
-//  elemsToNodes[elemIndex][localNodeIndex];
-
-  FaceManager * const faceManager = meshLevel->getFaceManager();
-  OrderedVariableOneToManyRelation & facesToNodes = faceManager->nodeList();
-//  facesToNodes[faceIndex][localNodeIndex];
-  faceManager->m_isExternal;
-
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
-  array1d< R1Tensor > & X = nodeManager->referencePosition();
-  array1d< R1Tensor > & u = nodeManager->getReference< array1d< R1Tensor > >("TotalDisplacement");
-  array1d< R1Tensor > & a = nodeManager->getReference< array1d< R1Tensor > >( keys::Acceleration );
-  array1d< real64 > & nodalMass = nodeManager->getReference< array1d< real64 > >( keys::Mass );
-
-
-
   real64& time = *(this->getData<real64>(viewKeys.time));
   real64& dt = *(this->getData<real64>(viewKeys.dt));
   integer& cycle = *(this->getData<integer>(viewKeys.cycle));
@@ -180,19 +152,17 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
   integer exitFlag = 0;
 
-
-
-
   // Setup event targets
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
   {
     subEvent->GetTargetReferences();
   });
 
+  TribolCoupling::Initialize(this, domain) ;
+
   // Run problem
   real64 epsilon = std::numeric_limits<real64>::epsilon();
   while(1) {
-  {
     int terminate = (((maxTime < 0) || (maxTime - time > epsilon)) && ((maxCycle < 0) || (cycle < maxCycle)) && (exitFlag == 0)) ? 0 : 1 ;
 
     TribolCoupling::SyncTermination(&terminate) ;
@@ -201,7 +171,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
        break ;
     }
 
-    real64 newDt ;
+    real64 newDt = dt ;
     TribolCoupling::SyncTimestep(&newDt) ;
 
     if (newDt < dt)
