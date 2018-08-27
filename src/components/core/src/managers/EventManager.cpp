@@ -229,13 +229,6 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     dt = (time + dt > maxTime) ? (maxTime - time) : dt;
 
     #if USE_MPI
-      if (rank == 0)
-      {
-        std::cout << "Cycle " << cycle << " dt requests (pre_mpi):" << std::endl;
-      }
-      std::cout << rank << ", " << cycle << ", " << dt <<  " (pre_mpi)" << std::endl;
-
-
       real64 dt_global;
       MPI_Allreduce(&dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
       dt = dt_global;
@@ -243,13 +236,6 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       integer exitFlag_global;
       MPI_Allreduce(&exitFlag, &exitFlag_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
       exitFlag = exitFlag_global;
-
-
-      if (rank == 0)
-      {
-        std::cout << "Cycle " << cycle << " dt requests (post_mpi):" << std::endl;
-      }
-      std::cout << rank << ", " << cycle << ", " << dt << " (post_mpi)" << std::endl;
     #endif
   }
 
