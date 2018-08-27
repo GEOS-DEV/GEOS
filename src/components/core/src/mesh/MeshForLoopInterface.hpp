@@ -37,22 +37,22 @@ namespace geosx
 //Heavy Computation
 //================
 #define FORALL( INDEX, begin, end )  \
-    geosx::raja::forall_in_range<RAJA::omp_parallel_for_exec>(begin, end, \
+    ::geosx::raja::forall_in_range<RAJA::omp_parallel_for_exec>(begin, end, \
     GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 #define FORALL_IN_SET(INDEX, arr, arrLen)                 \
-  raja::forall_in_set<RAJA::omp_parallel_for_exec> (arr, arrLen, \
+    ::geosx::raja::forall_in_set<RAJA::omp_parallel_for_exec> (arr, arrLen, \
   GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 //======================
 //Streaming Computations
 //======================
 #define FORALL_NODES(INDEX, begin, end) \
-  raja::forall_in_range<RAJA::loop_exec>(begin, end,   \
+    ::geosx::raja::forall_in_range<RAJA::loop_exec>(begin, end,   \
   GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 #define FORALL_NODES_IN_SET(INDEX, arr, arrLen) \
-    raja::forall_in_set<RAJA::loop_exec> (arr, arrLen,  \
+    ::geosx::raja::forall_in_set<RAJA::loop_exec> (arr, arrLen,  \
   GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
   
@@ -64,12 +64,12 @@ template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_nodes( MeshLevel const * const mesh, LAMBDA && body)
 {  
   NodeManager const * const nodeManager = mesh->getNodeManager();  
-  raja::forall_in_range<POLICY> (0, nodeManager->size(), body);
+  ::geosx::raja::forall_in_range<POLICY> (0, nodeManager->size(), body);
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_nodes( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
-  raja::forall_in_set<POLICY> (setList, listLen, body);
+  ::geosx::raja::forall_in_set<POLICY> (setList, listLen, body);
 }
 
 
@@ -77,12 +77,12 @@ template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_faces( MeshLevel const * const mesh, LAMBDA && body)
 {
   FaceManager const * const faceManager = mesh->getFaceManager();
-  raja::forall_in_range<POLICY> (0, faceManager->size(), body);
+  ::geosx::raja::forall_in_range<POLICY> (0, faceManager->size(), body);
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_faces( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
-  raja::forall_in_set<POLICY> (setList, listLen, body);
+  ::geosx::raja::forall_in_set<POLICY> (setList, listLen, body);
 }
 
 
@@ -99,7 +99,7 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
       
-      raja::forall_in_range<POLICY>(0,cellBlock->size(), body);
+      ::geosx::raja::forall_in_range<POLICY>(0,cellBlock->size(), body);
 
     }
   }
@@ -118,7 +118,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
 
-      raja::forall_in_set<POLICY>(setList, listLen, body);
+      ::geosx::raja::forall_in_set<POLICY>(setList, listLen, body);
     }
   }
 }
@@ -126,7 +126,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems_in_subRegion( CellBlockSubRegion const * const subRegion, LAMBDA && body)
 {
-  raja::forall_in_range<POLICY>(0,subRegion->size(), body);
+  ::geosx::raja::forall_in_range<POLICY>(0,subRegion->size(), body);
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
@@ -201,7 +201,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
                 ); };
 
         
-        raja::forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
+        ::geosx::raja::forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
 
       }
     }
@@ -246,7 +246,7 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
         lambdaBody(er,esr,index);
       };
 
-      raja::forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
+      ::geosx::raja::forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
     }
   }
 }
@@ -257,7 +257,7 @@ NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body
 {
   RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
   
-  raja::forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  ::geosx::raja::forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
   {      
       sum += body(index);
   });
@@ -271,7 +271,7 @@ template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY
 NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
   RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  raja::forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+  ::geosx::raja::forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
    {
      sum += body(index);
    });
