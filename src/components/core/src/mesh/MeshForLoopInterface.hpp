@@ -37,22 +37,22 @@ namespace geosx
 //Heavy Computation
 //================
 #define FORALL( INDEX, begin, end )  \
-    ::geosx::raja::forall_in_range<RAJA::omp_parallel_for_exec>(begin, end, \
+    ::geosx::raja::forall_in_range<onePointPolicy>(begin, end, \
     GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 #define FORALL_IN_SET(INDEX, arr, arrLen)                 \
-    ::geosx::raja::forall_in_set<RAJA::omp_parallel_for_exec> (arr, arrLen, \
+    ::geosx::raja::forall_in_set<onePointPolicy> (arr, arrLen, \
   GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 //======================
 //Streaming Computations
 //======================
 #define FORALL_NODES(INDEX, begin, end) \
-    ::geosx::raja::forall_in_range<RAJA::loop_exec>(begin, end,   \
+    ::geosx::raja::forall_in_range<onePointPolicy>(begin, end,   \
   GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 #define FORALL_NODES_IN_SET(INDEX, arr, arrLen) \
-    ::geosx::raja::forall_in_set<RAJA::loop_exec> (arr, arrLen,  \
+    ::geosx::raja::forall_in_set<onePointPolicy> (arr, arrLen,  \
   GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
   
