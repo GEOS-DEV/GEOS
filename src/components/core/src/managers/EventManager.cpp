@@ -166,6 +166,11 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
   integer exitFlag = 0;
 
+  integer rank = 0;
+  #if USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  #endif
+
   // Setup event targets
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
   {
@@ -176,19 +181,18 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
     real64 nextDt = std::numeric_limits<real64>::max();
-    std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-
+    if (rank == 0)
+    {
+      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+    }
+    
     this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
     {
       // Calculate the event and sub-event forecasts
+      // Note: because events can be nested, the mpi reduce for event
+      // forecasts need to happen in EventBase.
       subEvent->CheckEvents(time, dt, cycle, domain);
       integer eventForecast = subEvent->GetForecast();
-
-      #if USE_MPI
-        integer eventForecast_global;
-        MPI_Reduce(&eventForecast, &eventForecast_global, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-        eventForecast = eventForecast_global;
-      #endif
 
       // Execute, signal events
       if (eventForecast == 1)
@@ -211,15 +215,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
       // Check the exit flag
       exitFlag += subEvent->GetExitFlag();
-
-      #if USE_MPI
-        integer exitFlag_global;
-        MPI_Reduce(&exitFlag, &exitFlag_global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-        exitFlag = exitFlag_global;
-      #endif
-
+    
       // Debug information
-      if (verbosity > 0)
+      if ((verbosity > 0) && (rank == 0))
       {
         std::cout << "     Event: " << subEvent->getName() << ", f=" << eventForecast << ", dt_r=" << requestedDt << std::endl;
       }      
@@ -231,15 +229,37 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     dt = (time + dt > maxTime) ? (maxTime - time) : dt;
 
     #if USE_MPI
+      if (rank == 0)
+      {
+        std::cout << "Cycle " << cycle << " dt requests (pre_mpi):" << std::endl;
+      }
+      std::cout << rank << ", " << cycle << ", " << dt <<  " (pre_mpi)" << std::endl;
+
+
       real64 dt_global;
-      MPI_Reduce(&dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+      MPI_Allreduce(&dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
       dt = dt_global;
+
+      integer exitFlag_global;
+      MPI_Allreduce(&exitFlag, &exitFlag_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+      exitFlag = exitFlag_global;
+
+
+      if (rank == 0)
+      {
+        std::cout << "Cycle " << cycle << " dt requests (post_mpi):" << std::endl;
+      }
+      std::cout << rank << ", " << cycle << ", " << dt << " (post_mpi)" << std::endl;
     #endif
   }
 
 
   // Cleanup
-  std::cout << "Cleaning up events" << std::endl;
+  if (rank == 0)
+  {
+    std::cout << "Cleaning up events" << std::endl;
+  }
+  
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     subEvent->Cleanup(time, cycle, domain);     
