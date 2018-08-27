@@ -180,9 +180,17 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
     this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
     {
+      // Calculate the event and sub-event forecasts
       subEvent->CheckEvents(time, dt, cycle, domain);
       integer eventForecast = subEvent->GetForecast();
 
+      #if USE_MPI
+        integer eventForecast_global;
+        MPI_Reduce(&eventForecast, &eventForecast_global, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        eventForecast = eventForecast_global;
+      #endif
+
+      // Execute, signal events
       if (eventForecast == 1)
       {
         subEvent->SignalToPrepareForExecution(time, dt, cycle, domain);
@@ -193,6 +201,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
         subEvent->Execute(time, dt, cycle, domain);
       }
 
+      // Estimate the time-step for the next cycle
       real64 requestedDt = 1e6;
       if (eventForecast <= 1)
       {
@@ -200,7 +209,14 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       }
       nextDt = std::min(requestedDt, nextDt);
 
+      // Check the exit flag
       exitFlag += subEvent->GetExitFlag();
+
+      #if USE_MPI
+        integer exitFlag_global;
+        MPI_Reduce(&exitFlag, &exitFlag_global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        exitFlag = exitFlag_global;
+      #endif
 
       // Debug information
       if (verbosity > 0)
@@ -213,6 +229,12 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     ++cycle;
     dt = nextDt;
     dt = (time + dt > maxTime) ? (maxTime - time) : dt;
+
+    #if USE_MPI
+      real64 dt_global;
+      MPI_Reduce(&dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+      dt = dt_global;
+    #endif
   }
 
 
