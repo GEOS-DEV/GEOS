@@ -409,7 +409,7 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
   NodeManager * const nodes = mesh->getNodeManager();
 
 
-  ElementRegionManager * elementRegions = mesh->getElemManager();
+  ElementRegionManager * elementRegionManager = mesh->getElemManager();
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 //  ConstitutiveManager::constitutiveMaps const & constitutiveMaps =
 // constitutiveManager->GetMaps(0);
@@ -417,16 +417,21 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
   ViewWrapper<real64_array>::rtype mass = nodes->getData<real64_array>(keys::Mass);
 //  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+  rho = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >("density",
+                                                                               constitutiveManager);
 
-  // TODO This is wrong. needs to be down in the element loop
-  constitutive::ViewAccessor< real64 >
-  rho = constitutiveManager->GetParameterData<real64>(string("Density"));
-
-  elementRegions->forCellBlocks([&]( CellBlockSubRegion * cellBlock ) -> void
+  for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      auto const & detJ            = cellBlock->RegisterViewWrapper< array2d<real64> >(keys::detJ)->reference();
+      CellBlockSubRegion const * const cellBlock = elemRegion->GetSubRegion(esr);
+
+      auto const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
       auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(cellBlock->viewKeys().constitutiveMap);
       FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+//      array2d<real64> & rho = cellBlock->getReference< array2d<real64> >( string("density"));
 
       for( localIndex k=0 ; k < cellBlock->size() ; ++k )
       {
@@ -434,10 +439,11 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
         arrayView1d<real64 const> detJq = detJ[k];
         for( localIndex q=0 ; q<constitutiveMap.second.size(1) ; ++q )
         {
-          mass[nodeList[q]] += rho[ constitutiveMap.first(k,q) ] * detJq[q];
+          mass[nodeList[q]] += rho[er][esr][0][k][q] * detJq[q];
         }
       }
-    });
+    }
+  }
 
   real64 totalMass = 0;
   for( localIndex a=0 ; a<nodes->size() ; ++a )
@@ -477,9 +483,9 @@ return dtReturn;
 }
 
 real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
-                                                     real64 const& dt,
-                                                     const int cycleNumber,
-                                                     DomainPartition * const domain )
+                                                   real64 const& dt,
+                                                   const int cycleNumber,
+                                                   DomainPartition * const domain )
 {
 
   GEOS_MARK_BEGIN(initialization);
@@ -490,47 +496,44 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-  // ConstitutiveManager::constitutiveMaps const & constitutiveMaps =
-  // constitutiveManager->GetMaps(0);
 
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   localIndex const numNodes = nodes->size();
 
-  view_rtype_const<r1_array>        X = nodes->getData<r1_array>(nodes->viewKeys.referencePosition);
-  view_rtype_const<real64_array> mass = nodes->getWrapper<real64_array>(keys::Mass)->data();
-  view_rtype<r1_array>           vel  = nodes->getData<r1_array>(keys::Velocity);
+  r1_array const &        X = nodes->getReference<r1_array>(nodes->viewKeys.referencePosition);
+  real64_array const & mass = nodes->getReference<real64_array>(keys::Mass);
+  r1_array &           vel  = nodes->getReference<r1_array>(keys::Velocity);
 
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
-  
-  view_rtype<r1_array>              u = nodes->getData<r1_array>(keys::TotalDisplacement);
-  view_rtype<r1_array>           uhat = nodes->getData<r1_array>(keys::IncrementalDisplacement);
-  view_rtype<r1_array>           acc  = nodes->getData<r1_array>(keys::Acceleration);
-  geosxData iacc = static_cast<real64*>(acc[0].Data());
-  
+
+  r1_array &    u = nodes->getReference<r1_array>(keys::TotalDisplacement);
+  r1_array & uhat = nodes->getReference<r1_array>(keys::IncrementalDisplacement);
+  r1_array & acc  = nodes->getReference<r1_array>(keys::Acceleration);
+
 #elif defined(OBJECT_OF_ARRAYS_LAYOUT)
-  
+
   static geosxData acc_x = new double[numNodes];
   static geosxData acc_y = new double[numNodes];
   static geosxData acc_z = new double[numNodes];
-    
+
   static geosxData uhat_x = new double[numNodes]; 
   static geosxData uhat_y = new double[numNodes]; 
   static geosxData uhat_z = new double[numNodes]; 
-  
+
   static geosxData u_x = new double[numNodes]; 
   static geosxData u_y = new double[numNodes]; 
   static geosxData u_z = new double[numNodes];
-  
+
   static bool setIc = true;
   if(setIc){    
     std::memset(acc_x, 0, numNodes*sizeof(double));
     std::memset(acc_y, 0, numNodes*sizeof(double));
     std::memset(acc_z, 0, numNodes*sizeof(double));
-    
+
     std::memset(uhat_x, 0, numNodes*sizeof(double));
     std::memset(uhat_y, 0, numNodes*sizeof(double));
     std::memset(uhat_z, 0, numNodes*sizeof(double));
-    
+
     std::memset(u_x, 0, numNodes*sizeof(double));
     std::memset(u_y, 0, numNodes*sizeof(double));
     std::memset(u_z, 0, numNodes*sizeof(double));
@@ -540,12 +543,15 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #else
   GEOS_ERROR("Invalid data layout");
 #endif
-  
+
   GEOS_MARK_END(initialization);  
 
   GEOS_MARK_BEGIN(BC1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  bcManager->ApplyBoundaryCondition( nodes, keys::Acceleration, time_n);
+  bcManager->ApplyBoundaryConditionToField( time_n,
+                                            domain,
+                                            "nodeManager",
+                                            keys::Acceleration );
 #endif    
   GEOS_MARK_END(BC1);
 
@@ -562,7 +568,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   GEOS_MARK_BEGIN(BC2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
+  //  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
+
+  bcManager->ApplyBoundaryConditionToField( time_n,
+                                            domain,
+                                            "nodeManager",
+                                            keys::Velocity );
+
 #endif  
   GEOS_MARK_END(BC2);
 
@@ -581,15 +593,33 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   GEOS_MARK_BEGIN(BC3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
-                                     nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
+  //  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
+  //                                     nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
+
+  bcManager->ApplyBoundaryConditionToField( time_n+dt,
+                                            domain,
+                                            "nodeManager",
+                                            keys::TotalDisplacement,
+                                            [&]( BoundaryConditionBase const * const bc,
+                                                set<localIndex> const & targetSet )->void
+                                                {
+    integer const component = bc->GetComponent();
+    for( auto a : targetSet )
+    {
+      uhat[a][component] = u[a][component] - u[a][component];
+      vel[a][component]  = uhat[a][component] / dt;
+    }
+                                                });
+
+
 #endif  
   GEOS_MARK_END(BC3);
 
   //Set memory to zero
   GEOS_CXX_MARK_LOOP_BEGIN(memset,memset);
-  
-  forall_in_range(0, numNodes, GEOSX_LAMBDA (localIndex a){
+
+  FORALL_NODES( a, 0, numNodes )
+  {
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
     acc[a] = 0;
 #else
@@ -597,342 +627,326 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     acc_y[a] = 0;
     acc_z[a] = 0; 
 #endif    
-  });
+  } END_FOR
   GEOS_CXX_MARK_LOOP_END(memset);
 
-  //Step 5. Calculate deformation input to contitutive model and update state to
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+  meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64> >("MeanStress",
+                                                                             constitutiveManager);
+
+  ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> >
+  devStress = elemManager->ConstructMaterialViewAccessor< array2d<R2SymTensor> >("DeviatorStress",
+                                                                                 constitutiveManager);
+
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
+
+  //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
-  elemManager->forElementRegions([&](ElementRegion * elementRegion)
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+
+    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
-      auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
-      FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
+      //always needed
+      array3d< R1Tensor > const & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      elementRegion->forCellBlocks([&](CellBlockSubRegion * cellBlock)
-       {         
-         //always needed
-         multidimensionalArray::ManagedArray< R1Tensor, 3 > & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);                  
-                 
-        array2d<real64> const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
+      array2d<real64> const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
-        RAJA::View< double const, RAJA::Layout<2> > detJView( detJ.data(),
-                                                              detJ.size(0),
-                                                              detJ.size(1) );
+      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
 
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-        auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
-        RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
-                                                                             constitutiveMap.second.size(0),
-                                                                             constitutiveMap.second.size(1) );
+      localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
 
-        auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
-        array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
-
-        localIndex const numNodesPerElement = elemsToNodes.size(1);
-
-        for( auto const & constitutiveGroup : constitutiveGrouping )
-        {
-          string const constitutiveName = constitutiveGroup.first;
-          localIndex_array const & elementList = constitutiveGroup.second;
-
-          ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>( constitutiveName );
-
-          //RAJA::TypedListSegment<localIndex> elementList_raja(elementList.data(),elementList.size());          
-
-          localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
-          void * constitutiveModelData;
-          constitutiveModel->SetParamStatePointers(constitutiveModelData);
-          constitutive::ConstitutiveBase::UpdateFunctionPointer
-          constitutiveUpdate = constitutiveModel->GetStateUpdateFunctionPointer();
-          
-          ///Local copies --------
-          ViewWrapper<real64_array>::rtype meanStress    = constitutiveModel->GetGroup(std::string("StateData"))->getData<real64_array>(std::string("MeanStress"));
-          ViewWrapper<r2Sym_array>::rtype devStress    = constitutiveModel->GetGroup(std::string("StateData"))->getData<r2Sym_array>(std::string("DeviatorStress"));
-          
-          real64 bulkModulus   = *(constitutiveModel->GetGroup(std::string("ParameterData"))->getData<real64>(std::string("BulkModulus")));
-          real64 shearModulus  = *(constitutiveModel->GetGroup(std::string("ParameterData"))->getData<real64>(std::string("ShearModulus")));
-
-          //Storage for holding intermediate results
+      //Storage for holding intermediate results
 #if defined(EXTERNAL_KERNELS) && defined(THREE_KERNEL_UPDATE) 
-          static geosxData Dadt = new double[localMatSz*inumQuadraturePoints*elementList.size()];
-          static geosxData Rot  = new double[localMatSz*inumQuadraturePoints*elementList.size()];
-          static geosxData detF = new double[inumQuadraturePoints*elementList.size()];
-          static geosxData inverseF = new double[localMatSz*inumQuadraturePoints*elementList.size()];
+      static geosxData Dadt = new double[localMatSz*inumQuadraturePoints*elementList.size()];
+      static geosxData Rot  = new double[localMatSz*inumQuadraturePoints*elementList.size()];
+      static geosxData detF = new double[inumQuadraturePoints*elementList.size()];
+      static geosxData inverseF = new double[localMatSz*inumQuadraturePoints*elementList.size()];
 #endif
 
-          //
-          //Internal GEOSX Kernel 
-          //
-          GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
+      //
+      //Internal GEOSX Kernel
+      //
+      GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
-          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
-              r1_array uhat_local( numNodesPerElement );
-              r1_array u_local( numNodesPerElement );
-              r1_array f_local( numNodesPerElement );
-              
-              f_local = R1Tensor(0.0);
-              arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
-              
-              CopyGlobalToLocal( nodelist,
-                                 u, uhat,
-                                 u_local.data(), uhat_local.data(), numNodesPerElement );
-              
-              
-              //Compute Quadrature
-              for(auto q = 0 ; q<numQuadraturePoints ; ++q)
-                {
-                  
-                  R2Tensor dUhatdX, dUdX;
-                  CalculateGradient( dUhatdX,uhat_local, dNdX[k][q] );
-                  CalculateGradient( dUdX,u_local, dNdX[k][q] );
-                  
-                  R2Tensor F,L, Finv;
-                  
-                  {
-                    // calculate dv/dX
-                    R2Tensor dvdX = dUhatdX;
-                    dvdX *= 1.0 / dt;
-                    
-                    // calculate du/dX
-                    F = dUhatdX;
-                    F *= 0.5;
-                    F += dUdX;
-                    F.PlusIdentity(1.0);
-                    
-                    // calculate dX/du
-                    Finv.Inverse(F);
-                    
-                    // chain rule: calculate dv/du = dv/dX * dX/du
-                    L.AijBjk(dvdX, Finv);
-                  }
-                  
-                  // calculate gradient (end of step)
-                  F = dUhatdX;
-                  F += dUdX;
-                  F.PlusIdentity(1.0);
-                  real64 detF = F.Det();
-                  
-                  
-                  // calculate element volume
-                  //        detJ_np1(k,q) = detJ(k,q) * detF;
-                  //        volume[k] += detJ_np1(k,q);
-                  //        initVolume += detJ(k,q);
-                  
-                      
-                  Finv.Inverse(F);
-                  
-                  
-                  //-------------------------[Incremental Kinematics]----------------------------------                   
-                  R2Tensor Rot; 
-                  R2SymTensor Dadt;
-                  HughesWinget(Rot, Dadt, L, dt);                                    
-                  //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------                  
-                  constitutiveUpdate( Dadt,
-                                      Rot,
-                                      constitutiveMapView(k,q),
-                                      constitutiveModelData,
-                                      0 );
 
-                  R2SymTensor TotalStress;
-                  TotalStress = devStress[constitutiveMapView(k,q)];
-                  TotalStress.PlusIdentity( meanStress[constitutiveMapView(k,q)] );
 
-                  //----------------------
-   
-                  Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local.size(), f_local.data() );
-                      
-                }//quadrature loop
-                  
-                                    
-              AddLocalToGlobal(nodelist, f_local.data(), acc, numNodesPerElement);
-                          
-            }); //Element loop
+      //          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
+      for( localIndex k=0 ; k<cellBlock->size() ; ++k )
+      {
+        r1_array uhat_local( numNodesPerElement );
+        r1_array u_local( numNodesPerElement );
+        r1_array f_local( numNodesPerElement );
+
+        f_local = R1Tensor(0.0);
+        arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
+
+        CopyGlobalToLocal( nodelist,
+                           u, uhat,
+                           u_local.data(), uhat_local.data(), numNodesPerElement );
+
+
+        //Compute Quadrature
+        for(auto q = 0 ; q<numQuadraturePoints ; ++q)
+        {
+
+          R2Tensor dUhatdX, dUdX;
+          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q] );
+          CalculateGradient( dUdX,u_local, dNdX[k][q] );
+
+          R2Tensor F,L, Finv;
+
+          {
+            // calculate dv/dX
+            R2Tensor dvdX = dUhatdX;
+            dvdX *= 1.0 / dt;
+
+            // calculate du/dX
+            F = dUhatdX;
+            F *= 0.5;
+            F += dUdX;
+            F.PlusIdentity(1.0);
+
+            // calculate dX/du
+            Finv.Inverse(F);
+
+            // chain rule: calculate dv/du = dv/dX * dX/du
+            L.AijBjk(dvdX, Finv);
+          }
+
+          // calculate gradient (end of step)
+          F = dUhatdX;
+          F += dUdX;
+          F.PlusIdentity(1.0);
+          real64 detF = F.Det();
+
+
+          // calculate element volume
+          //        detJ_np1(k,q) = detJ(k,q) * detF;
+          //        volume[k] += detJ_np1(k,q);
+          //        initVolume += detJ(k,q);
+
+
+          Finv.Inverse(F);
+
+
+          //-------------------------[Incremental Kinematics]----------------------------------
+          R2Tensor Rot;
+          R2SymTensor Dadt;
+          HughesWinget(Rot, Dadt, L, dt);
+          //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
+
+          constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
+
+          R2SymTensor TotalStress;
+          TotalStress = devStress[er][esr][0][k][q];
+          TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
+
+          //----------------------
+
+          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local.size(), f_local.data() );
+
+        }//quadrature loop
+
+
+        AddLocalToGlobal(nodelist, f_local.data(), acc, numNodesPerElement);
+
+      } //Element loop
 #else// defined(EXTERNAL_KERNELS) 
 
-          //
-          // Setup for external kernels
-          //
-          
-          //Setup pointers
-          const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
-          geosxData imeanStress   = static_cast<real64*>(&meanStress[0]); //Symmetric tensors
-          geosxData idevStress    = static_cast<real64*>(&devStress[0](0,0));
-          localIndex const *  iconstitutiveMap = reinterpret_cast<localIndex const*>(constitutiveMap.second.data());
-          const real64 * idetJ  = detJ.data();
+      //
+      // Setup for external kernels
+      //
 
-          //Setup pointer for the external constitutive update
-          void (*externConstitutiveUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
-                                           localIndex m, localIndex q, globalIndex k, geosxData devStressData2,
-                                           geosxData meanStress2, real64 shearModulus2, real64 bulkModulus2, localIndex NoElem);
-          externConstitutiveUpdate = UpdateStatePoint;
+      //Setup pointers
+      const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
+      geosxData imeanStress   = static_cast<real64*>(&(meanStress[er][esr][0][0][0])); //Symmetric tensors
+      geosxData idevStress    = devStress[er][esr][0][0][0].Data();
+      localIndex const *  iconstitutiveMap = reinterpret_cast<localIndex const*>(constitutiveMap.second.data());
+      const real64 * idetJ  = detJ.data();
+
+      //Setup pointer for the external constitutive update
+      void (*externConstitutiveUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
+          localIndex m, localIndex q, globalIndex k, geosxData devStressData2,
+          geosxData meanStress2, real64 shearModulus2, real64 bulkModulus2, localIndex NoElem);
+      externConstitutiveUpdate = UpdateStatePoint;
 
 #if defined(COMPUTE_SHAPE_FUN)
-          static bool computeP = true;
-          static P_Wrapper P;
-          if(computeP)
-            {
-              generateP(P, 8, 8);
-              computeP = false;
-            }
+      static bool computeP = true;
+      static P_Wrapper P;
+      if(computeP)
+      {
+        generateP(P, 8, 8);
+        computeP = false;
+      }
 #endif
-          
+
 
 #if defined(ARRAY_OF_OBJECTS_LAYOUT)
 
-          //Setup pointers
-          geosxData  ivel = static_cast<real64*>(vel[0].Data());
-          geosxData iuhat = static_cast<real64*>(uhat[0].Data());
-          geosxData iu = static_cast<real64*>(u[0].Data());
-          geosxData idNdX = static_cast<real64*>(&dNdX[0][0][0][0]); 
-          
-          //Calculation is done in a monolithic kernel
+      //Setup pointers
+      geosxData  ivel = static_cast<real64*>(vel[0].Data());
+      geosxData iuhat = static_cast<real64*>(uhat[0].Data());
+      geosxData iu = static_cast<real64*>(u[0].Data());
+      geosxData idNdX = const_cast<real64*>(dNdX[0][0][0].Data());
+
+      //Calculation is done in a monolithic kernel
 #if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
-          
-          
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<elemPolicy>(elementList.size(),elementList.data(), dt,
-                                                                               elemsToNodes.data(), iu, iuhat, idNdX,
-                                                                               iconstitutiveMap, idevStress, imeanStress,
-                                                                               shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
+
+
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<elemPolicy>(elementList.size(),elementList.data(), dt,
+                                                                           elemsToNodes.data(), iu, iuhat, idNdX,
+                                                                           iconstitutiveMap, idevStress, imeanStress,
+                                                                           shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
 #elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
-          
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<elemPolicy>(elementList.size(),elementList, dt,
-                                                                                     elemsToNodes.data(), iu, iuhat, Xptr, P, 
-                                                                                     iconstitutiveMap, idevStress, imeanStress,
-                                                                                     shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
-          //Calculation is split across three kernels
+
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<elemPolicy>(elementList.size(),elementList, dt,
+                                                                                 elemsToNodes.data(), iu, iuhat, Xptr, P,
+                                                                                 iconstitutiveMap, idevStress, imeanStress,
+                                                                                 shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
+      //Calculation is split across three kernels
 #elif defined(THREE_KERNEL_UPDATE)
 
-          //Kinematic step
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
-                                                                                        iconstitutiveMap, idevStress, imeanStress,
-                                                                                        shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
-          //Constitutive step
-          SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
-                                                                                  imeanStress, shearModulus, bulkModulus);
+      //Kinematic step
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
+                                                                                     iconstitutiveMap, idevStress, imeanStress,
+                                                                                     shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
+      //Constitutive step
+      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
+                                                                               imeanStress, shearModulus, bulkModulus);
 
-          //Integration step
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
-                                                                                          iconstitutiveMap, idevStress, imeanStress,
-                                                                                          shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
+      //Integration step
+      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
+                                                                                       iconstitutiveMap, idevStress, imeanStress,
+                                                                                       shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
 #else
 
-          //Throw error if invalid kernel is asked for
-          GEOS_ERROR("Invalid External Kernel");                    
-          
+      //Throw error if invalid kernel is asked for
+      GEOS_ERROR("Invalid External Kernel");
+
 #endif // THREE_KERNEL UPDATE
-          
+
 
 #elif defined(OBJECT_OF_ARRAYS_LAYOUT)
 
-          //Split the shape function derivatives into three arrays
-          static geosxData dNdX_x = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-          static geosxData dNdX_y = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-          static geosxData dNdX_z = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-          
-          static bool copy = true;
-          if(copy){
+      //Split the shape function derivatives into three arrays
+      static geosxData dNdX_x = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
+      static geosxData dNdX_y = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
+      static geosxData dNdX_z = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
 
-            //Generate shape function derivatives
-            //const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
-            make_dNdX(dNdX_x, dNdX_y, dNdX_z,
-                      Xptr, elemsToNodes.data(),elementList.size(), inumNodesPerElement, inumQuadraturePoints);
+      static bool copy = true;
+      if(copy){
 
-            //Verify correctness
-            for(localIndex k = 0; k < elementList.size(); ++k){
-              for(localIndex a = 0; a < inumNodesPerElement; ++a){
-                for(localIndex q = 0; q < inumQuadraturePoints; ++q){                  
-                  localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
-                  assert( std::abs( dNdX_x[id] - dNdX[k][a][q][0]) < 1e-12);
-                  assert( std::abs( dNdX_y[id] - dNdX[k][a][q][1]) < 1e-12);
-                  assert( std::abs( dNdX_z[id] - dNdX[k][a][q][2]) < 1e-12);
-                }
-              }             
+        //Generate shape function derivatives
+        //const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
+        make_dNdX(dNdX_x, dNdX_y, dNdX_z,
+                  Xptr, elemsToNodes.data(),elementList.size(), inumNodesPerElement, inumQuadraturePoints);
+
+        //Verify correctness
+        for(localIndex k = 0; k < elementList.size(); ++k){
+          for(localIndex a = 0; a < inumNodesPerElement; ++a){
+            for(localIndex q = 0; q < inumQuadraturePoints; ++q){
+              localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+              assert( std::abs( dNdX_x[id] - dNdX[k][a][q][0]) < 1e-12);
+              assert( std::abs( dNdX_y[id] - dNdX[k][a][q][1]) < 1e-12);
+              assert( std::abs( dNdX_z[id] - dNdX[k][a][q][2]) < 1e-12);
             }
-            std::cout<<"Successful copy !"<<std::endl;
-            copy = false;
           }
-         
+        }
+        std::cout<<"Successful copy !"<<std::endl;
+        copy = false;
+      }
+
 #if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
 
-          //Carry out computation in a monolithic kernel
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
-                                                                               u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
-                                                                               iconstitutiveMap, idevStress, imeanStress, shearModulus,
-                                                                               bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
+      //Carry out computation in a monolithic kernel
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
+                                                                           u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
+                                                                           iconstitutiveMap, idevStress, imeanStress, shearModulus,
+                                                                           bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
 #elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
-          
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
-                                                                                     u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, Xptr, P,
-                                                                                     iconstitutiveMap, idevStress, imeanStress, shearModulus,
-                                                                                     bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
-          
-#elif defined(THREE_KERNEL_UPDATE)
-          //Kinematic step
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
-                                                                                        uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
-                                                                                        iconstitutiveMap, idevStress, imeanStress,
-                                                                                        shearModulus, bulkModulus, detJ.data(), 
-                                                                                        acc_x, acc_y, acc_z,
-                                                                                        Dadt, Rot, detF, inverseF);
-          //Constitutive step
-          SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
-                                                                                  imeanStress, shearModulus, bulkModulus);
 
-          //Integration step
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
-                                                                                          uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
-                                                                                          iconstitutiveMap, idevStress, imeanStress,
-                                                                                          shearModulus, bulkModulus, detJ.data(), 
-                                                                                          acc_x, acc_y, acc_z,
-                                                                                          Dadt, Rot, detF, inverseF);           
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
+                                                                                 u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, Xptr, P,
+                                                                                 iconstitutiveMap, idevStress, imeanStress, shearModulus,
+                                                                                 bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
+
+#elif defined(THREE_KERNEL_UPDATE)
+      //Kinematic step
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
+                                                                                     uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
+                                                                                     iconstitutiveMap, idevStress, imeanStress,
+                                                                                     shearModulus, bulkModulus, detJ.data(),
+                                                                                     acc_x, acc_y, acc_z,
+                                                                                     Dadt, Rot, detF, inverseF);
+      //Constitutive step
+      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
+                                                                               imeanStress, shearModulus, bulkModulus);
+
+      //Integration step
+      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
+                                                                                       uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
+                                                                                       iconstitutiveMap, idevStress, imeanStress,
+                                                                                       shearModulus, bulkModulus, detJ.data(),
+                                                                                       acc_x, acc_y, acc_z,
+                                                                                       Dadt, Rot, detF, inverseF);
 #endif //defined THREE_KERNEL_UPDATE
 
-          
+
 #else
 
-          GEOS_ERROR("Invalid External Kernel");
-          
+      GEOS_ERROR("Invalid External Kernel");
+
 #endif //if defined(OBJECT_OF_ARRAYS_LAYOUT)
-          
-          
-#endif// If !defined(EXTERNAL_KERNELS)                    
-          GEOS_CXX_MARK_LOOP_END(elemLoop);          
-
-        }//Constitutive Grouping
 
 
-      }); //Element Region
+#endif// If !defined(EXTERNAL_KERNELS)
+      GEOS_CXX_MARK_LOOP_END(elemLoop);
+
+    } //Element Region
+
+  } //Element Manager
 
 
-    }); //Element Manager
-
-
-  //Compute Force : Point-wise computations
-  GEOS_CXX_MARK_LOOP_BEGIN(computeForce,computeForce);
-  forall_in_range(0, numNodes, GEOSX_LAMBDA (localIndex a){
+//Compute Force : Point-wise computations
+GEOS_CXX_MARK_LOOP_BEGIN(computeForce,computeForce);
+FORALL_NODES( a, 0, numNodes )
+{
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)    
-    acc[a] /=mass[a];
+  acc[a] /=mass[a];
 #else    
-    acc_x[a] /=mass[a];
-    acc_y[a] /=mass[a];
-    acc_z[a] /=mass[a];
+  acc_x[a] /=mass[a];
+  acc_y[a] /=mass[a];
+  acc_z[a] /=mass[a];
 #endif
-  });
-  GEOS_CXX_MARK_LOOP_END(computeForce);
+} END_FOR
+GEOS_CXX_MARK_LOOP_END(computeForce);
 
 
-  //Integration::OnePoint( acc, vel, dt/2, numNodes );
-  GEOS_CXX_MARK_LOOP_BEGIN(onepointloop3,onepointloop3);
+//Integration::OnePoint( acc, vel, dt/2, numNodes );
+GEOS_CXX_MARK_LOOP_BEGIN(onepointloop3,onepointloop3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)      
-  SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
+SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
 #else  
-  SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
+SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
 #endif  
-  GEOS_CXX_MARK_LOOP_END(onepointloop3);
+GEOS_CXX_MARK_LOOP_END(onepointloop3);
 
 
 GEOS_MARK_BEGIN(BC4);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
-bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
+//bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
+bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+
 #endif
 GEOS_MARK_END(BC4);
 
@@ -943,64 +957,34 @@ return dt;
 }
 
 
-
-void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit( ManagedGroup * object,
-                                                                 BoundaryConditionBase const * const bc,
-                                                                 set<localIndex> const & set,
-                                                                 real64 const time_n,
-                                                                 real64 const dt,
-                                                                 dataRepository::view_rtype<r1_array> & u,
-                                                                 dataRepository::view_rtype<r1_array> & uhat,
-                                                                 dataRepository::view_rtype<r1_array> & vel )
-{
-//  string const & functionName = bc->GetFunctionName();
-//  FunctionBase * function =
-// NewFunctionManager::Instance()->GetGroup<FunctionBase>( bc->GetFunctionName()
-// );
-
-  bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( set, time_n, object, keys::Velocity );
-
-  integer component = bc->GetComponent();
-  for( auto a : set )
-  {
-    uhat[a][component] = u[a][component] - u[a][component];
-    vel[a][component]  = uhat[a][component] / dt;
-  }
-
-}
-
-
-void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( ManagedGroup * object,
-                                                                 BoundaryConditionBase const * const bc,
-                                                                 set<localIndex> const & set,
-                                                                 real64 const time_n,
+void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
+                                                                 DomainPartition & domain,
                                                                  EpetraBlockSystem & blockSystem )
 {
-  bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                      time_n,
-                                                      object,
-                                                      keys::TotalDisplacement,
-                                                      viewKeys.trilinosIndex.Key(),
-                                                      3,
-                                                      &blockSystem,
-                                                      BlockIDs::displacementBlock );
+
+  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+
+  bcManager->ApplyBoundaryCondition( time,
+                                     &domain,
+                                     "nodeManager",
+                                     keys::TotalDisplacement,
+                                     [&]( BoundaryConditionBase const * const bc,
+                                          string const &,
+                                          set<localIndex> const & targetSet,
+                                          ManagedGroup * const targetGroup,
+                                          string const fieldName )->void
+    {
+    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
+                                                 time,
+                                                 targetGroup,
+                                                 fieldName,
+                                                 viewKeys.trilinosIndex.Key(),
+                                                 3,
+                                                 &blockSystem,
+                                                 BlockIDs::displacementBlock );
+  });
 }
 
-void SolidMechanics_LagrangianFEM::ForceBC( ManagedGroup * const object,
-                                            BoundaryConditionBase const * const bc,
-                                            set<localIndex> const & set,
-                                            real64 time,
-                                            systemSolverInterface::EpetraBlockSystem & blockSystem )
-{
-  bc->ApplyDirichletBounaryConditionDefaultMethod<1>( set,
-                                                      time,
-                                                      object,
-                                                      keys::TotalDisplacement,
-                                                      viewKeys.trilinosIndex.Key(),
-                                                      3,
-                                                      &blockSystem,
-                                                      BlockIDs::displacementBlock );
-}
 
 void SolidMechanics_LagrangianFEM::TractionBC( ManagedGroup * const object,
                                                BoundaryConditionBase const * const bc,
@@ -1434,10 +1418,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
   matrix->Scale(0.0);
   rhs->Scale(0.0);
-//
-//  PartitionBase & partition =
-// domain->getReference<PartitionBase>(keys::partitionManager);
-//
+
   real64 maxForce = 0.0;
 
   view_rtype_const<r1_array> disp = nodeManager->getData<r1_array>(keys::TotalDisplacement);
@@ -1448,187 +1429,134 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   view_rtype_const<r1_array> uhattilde = nullptr;
   view_rtype_const<r1_array> vtilde = nullptr;
 
-//  if( this->m_timeIntegrationOption == ImplicitDynamic )
-//  {
-//    uhattilde =
-// domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("inc_disp_tilde");
-//    vtilde =
-// domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("vel_tilde");
-//  }
-
-  // basic nodal data ( = dof data for our problem)
-
   globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.trilinosIndex);
-
-//  if(domain.m_contactManager.m_contact &&
-// domain.m_contactManager.m_implicitContactActive)
-//  {
-//    /////////////////////////////////////////////////////////////////////////////////////////////////////
-//    // @author: Chandra Annavarapu
-//    // @brief: Stiffness contributions to tie fractured faces together
-//    // Penalty/Nitsche's method to enforce contact - choice through a boolean
-// flag in the xml file
-//    // For penalty method, a user-defined penalty parameter needs to be
-// specified in the xml file
-//    /////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//    GetContactStiffnessContribution(domain);
-//  }
-
-
 
   static array1d< R1Tensor > u_local(8);
   static array1d< R1Tensor > uhat_local(8);
   static array1d< R1Tensor > vtilde_local(8);
   static array1d< R1Tensor > uhattilde_local(8);
 
-  constitutive::ViewAccessor< real64 >
-  rho = constitutiveManager->GetParameterData<real64>(string("Density"));
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
+  ElementRegionManager::MaterialViewAccessor< real64 > const
+  density = elemManager->ConstructMaterialViewAccessor< real64 >( "density0",
+                                                                  constitutiveManager );
 
 
   // begin region loop
-  elemManager->forElementRegions([&](ElementRegion * elementRegion)
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
-      auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
-      FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
 
-      elementRegion->forCellBlocks([&](CellBlockSubRegion * cellBlock)
+      multidimensionalArray::ManagedArray<R1Tensor, 3> const &
+      dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
+
+      array2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
+
+      array2d< localIndex > const & elemsToNodes = cellBlock->nodeList();
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      u_local.resize(numNodesPerElement);
+      uhat_local.resize(numNodesPerElement);
+      vtilde_local.resize(numNodesPerElement);
+      uhattilde_local.resize(numNodesPerElement);
+
+
+      // space for element matrix and rhs
+      int dim = 3;
+      Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(numNodesPerElement));
+      Epetra_SerialDenseVector     element_rhs     (dim*static_cast<int>(numNodesPerElement));
+      Epetra_SerialDenseMatrix     element_matrix  (dim*static_cast<int>(numNodesPerElement),
+                                                    dim*static_cast<int>(numNodesPerElement));
+      Epetra_SerialDenseVector     element_dof_np1 (dim*static_cast<int>(numNodesPerElement));
+
+      array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+
+      GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
+
+      for( localIndex k=0 ; k<cellBlock->size() ; ++k )
       {
-        multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
-        array2d<real64> const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
-        RAJA::View< double const, RAJA::Layout<2> > detJView( detJ.data(),
-                                                              detJ.size(0),
-                                                              detJ.size(1) );
+        real64 stiffness[6][6];
+        constitutiveRelations[er][esr][0]->GetStiffness( stiffness );
 
-
-        auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(cellBlock->viewKeys().constitutiveMap);
-        RAJA::View< integer const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<integer const*>(constitutiveMap.second.data()),
-                                                                          constitutiveMap.second.size(0),
-                                                                          constitutiveMap.second.size(1) );
-
-        auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(cellBlock->viewKeys().constitutiveGrouping);
-        array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
-
-        localIndex const numNodesPerElement = elemsToNodes.size(1);
-
-//      array1d<R2SymTensor> const * const refStress =
-// elemRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
-
-        u_local.resize(numNodesPerElement);
-        uhat_local.resize(numNodesPerElement);
-        vtilde_local.resize(numNodesPerElement);
-        uhattilde_local.resize(numNodesPerElement);
-
-
-        // space for element matrix and rhs
-        int dim = 3;
-        Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(numNodesPerElement));
-        Epetra_SerialDenseVector     element_rhs     (dim*static_cast<int>(numNodesPerElement));
-        Epetra_SerialDenseMatrix     element_matrix  (dim*static_cast<int>(numNodesPerElement),
-                                                      dim*static_cast<int>(numNodesPerElement));
-        Epetra_SerialDenseVector     element_dof_np1  (dim*static_cast<int>(numNodesPerElement));
-
-        array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
-
-        for( auto const & constitutiveGroup : constitutiveGrouping )
+        if(elemGhostRank[k] < 0)
         {
-          string const constitutiveName = constitutiveGroup.first;
-          localIndex_array const & elementList = constitutiveGroup.second;
+          arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
 
-          ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>( constitutiveName );
-          ManagedGroup const * const constitutiveParameters = constitutiveModel->GetParameterData();
-          ManagedGroup const * const constitutiveState      = constitutiveModel->GetStateData();
-
-          view_rtype_const<real64> density = constitutiveParameters->getData<real64>( string("Density") );
-
-          real64 stiffness[6][6];
-          constitutiveModel->GetStiffness( stiffness );
-          //Create a RAJA list segment
-//          RAJA::TypedListSegment<integer>
-// elementList(elementList.data(),elementList.size());
-          //std::cout<<"No of Elements: "<<elementList.size()<<std::endl;
-
-
-          GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-
-          // begin element loop, skipping ghost elements
-//        RAJA::forall<elemPolicy> (elementList, [=] (integer_t k)
-          for( auto k : elementList )
+          for( localIndex a=0 ; a<numNodesPerElement ; ++a)
           {
-            //      const array1d<integer>& elem_is_physical =
-            // elemRegion.GetFieldData<int>("isPhysical");
-            if(elemGhostRank[k] < 0)
+
+            localIndex localNodeIndex = localNodeIndices[a];
+
+            for( int i=0 ; i<dim ; ++i )
             {
-              arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
+              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*static_cast<int>(trilinos_index[localNodeIndex])+i;
 
-              for( localIndex a=0 ; a<numNodesPerElement ; ++a)
-              {
-
-                localIndex localNodeIndex = localNodeIndices[a];
-
-                for( int i=0 ; i<dim ; ++i )
-                {
-                  elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*static_cast<int>(trilinos_index[localNodeIndex])+i;
-
-                  // TODO must add last solution estimate for this to be valid
-                  element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];
-                }
-              }
-
-              if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
-              {
-                CopyGlobalToLocal( localNodeIndices,
-                                   disp, uhat, vtilde, uhattilde,
-                                   u_local.data(), uhat_local.data(), vtilde_local.data(), uhattilde_local.data(),
-                                   numNodesPerElement );
-              }
-              else
-              {
-                CopyGlobalToLocal( localNodeIndices,
-                                   disp, uhat,
-                                   u_local.data(), uhat_local.data(),
-                                   numNodesPerElement );
-              }
-
-//            // assemble into global system
-//            const localIndex paramIndex =
-// elemRegion.m_mat->NumParameterIndex0() > 1 ? element : 0 ;
-//
-//            constitutiveModel->GetGroup(keys::parameterData)->getgroup
-//            R2SymTensor const * const referenceStress = refStress==nullptr ?
-// nullptr : &((*refStress)[element]);
-
-
-              real64 maxElemForce = CalculateElementResidualAndDerivative( *density,
-                                                                           feSpace->m_finiteElement,
-                                                                           dNdX[k],
-                                                                           detJ[k],
-                                                                           nullptr,
-                                                                           u_local,
-                                                                           uhat_local,
-                                                                           uhattilde_local,
-                                                                           vtilde_local,
-                                                                           dt,
-                                                                           element_matrix,
-                                                                           element_rhs,
-                                                                           stiffness);
-
-
-//            if( maxElemForce > maxForce )
-//              maxForce = maxElemForce;
-
-              matrix->SumIntoGlobalValues( elementLocalDofIndex,
-                                           element_matrix);
-
-
-              rhs->SumIntoGlobalValues( elementLocalDofIndex,
-                                        element_rhs);
+              // TODO must add last solution estimate for this to be valid
+              element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];
             }
           }
+
+          if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+          {
+            CopyGlobalToLocal( localNodeIndices,
+                               disp, uhat, vtilde, uhattilde,
+                               u_local.data(), uhat_local.data(), vtilde_local.data(), uhattilde_local.data(),
+                               numNodesPerElement );
+          }
+          else
+          {
+            CopyGlobalToLocal( localNodeIndices,
+                               disp, uhat,
+                               u_local.data(), uhat_local.data(),
+                               numNodesPerElement );
+          }
+
+          //            // assemble into global system
+          //            const localIndex paramIndex =
+          // elemRegion.m_mat->NumParameterIndex0() > 1 ? element : 0 ;
+          //
+          //            constitutiveModel->GetGroup(keys::parameterData)->getgroup
+          //            R2SymTensor const * const referenceStress = refStress==nullptr ?
+          // nullptr : &((*refStress)[element]);
+
+
+          real64 maxElemForce = CalculateElementResidualAndDerivative( density[er][esr][0],
+                                                                       feSpace->m_finiteElement,
+                                                                       dNdX[k],
+                                                                       detJ[k],
+                                                                       nullptr,
+                                                                       u_local,
+                                                                       uhat_local,
+                                                                       uhattilde_local,
+                                                                       vtilde_local,
+                                                                       dt,
+                                                                       element_matrix,
+                                                                       element_rhs,
+                                                                       stiffness);
+
+
+          //            if( maxElemForce > maxForce )
+          //              maxForce = maxElemForce;
+
+          matrix->SumIntoGlobalValues( elementLocalDofIndex,
+                                       element_matrix);
+
+
+          rhs->SumIntoGlobalValues( elementLocalDofIndex,
+                                    element_rhs);
         }
-      });
-    });
+      }
+    }
+  }
 
 
   // Global assemble
@@ -1657,11 +1585,32 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   ManagedGroup * const nodeManager = mesh->getNodeManager();
 
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
-                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
+//  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
+//                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
 
-  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit,
-                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
+  bcManager->ApplyBoundaryCondition( time_n+dt,
+                                     domain,
+                                     "nodeManager",
+                                     keys::Force,
+                                     [&]( BoundaryConditionBase const * const bc,
+                                          string const &,
+                                          set<localIndex> const & targetSet,
+                                          ManagedGroup * const targetGroup,
+                                          string const fieldName )->void
+  {
+    bc->ApplyBoundaryConditionToSystem<BcAdd>( targetSet,
+                                               time_n+dt,
+                                               targetGroup,
+                                               keys::TotalDisplacement, // TODO fix use of dummy name for
+                                               viewKeys.trilinosIndex.Key(),
+                                               3,
+                                               blockSystem,
+                                               BlockIDs::displacementBlock );
+  });
+
+  ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
+//  bcManager->ApplyBoundaryCondition( this, &,
+//                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,

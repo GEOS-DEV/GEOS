@@ -76,15 +76,27 @@ public:
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
+    static constexpr auto constitutivePointVolumeFraction = "ConstitutivePointVolumeFraction";
+    static constexpr auto dNdXString = "dNdX";
+
     static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
     static constexpr auto constitutiveMapString = "ConstitutiveMap";
-    static constexpr auto dNdXString = "dNdX";
+
+
 
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
     dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
     dataRepository::ViewKey dNdX                  = { dNdXString };
 
   } m_CellBlockSubRegionViewKeys;
+
+  struct groupKeyStruct : public CellBlock::groupKeyStruct
+  {
+    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
+//    constitutiveModelsString = constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString;
+
+
+  } m_CellBlockSubRegionGroupKeys;
 
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
@@ -94,10 +106,23 @@ public:
 
 
   map< string, localIndex_array > m_constitutiveGrouping;
+
+  array3d< real64 > m_constitutivePointVolumeFraction;
+
+  // TODO this needs to be stored by the FiniteElementManager!!
   std::pair< array2d< localIndex >, array2d< localIndex > > m_constitutiveMapView;
+
   multidimensionalArray::ManagedArray< R1Tensor, 3 > m_dNdX;
 
+  dataRepository::ManagedGroup const * GetConstitutiveModels() const
+  { return &m_constitutiveModels; }
+
+  dataRepository::ManagedGroup * GetConstitutiveModels()
+  { return &m_constitutiveModels; }
+
 private:
+  dataRepository::ManagedGroup m_constitutiveModels;
+
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                              localIndex_array const & packList ) const;
