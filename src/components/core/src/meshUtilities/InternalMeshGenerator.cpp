@@ -389,7 +389,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 //    ExpandMultipleTokens(m_regionNames);
   {
-    localIndex numBlocks = 1;
+    string_array::size_type numBlocks = 1;
     for( int i=0 ; i<m_dim ; ++i )
     {
       numBlocks *= m_nElems[i].size();

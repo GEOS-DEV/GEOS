@@ -156,7 +156,7 @@ TEST(singlePhaseFlow,analyticalTest)
   ASSERT_TRUE(fn != nullptr);
 
   real64 const err = computeErrorNorm(problemManager.getDomainPartition(),
-                                      SinglePhaseFlow::viewKeyStruct::fluidPressureString,
+                                      SinglePhaseFlow::viewKeyStruct::pressureString,
                                       [&](R1Tensor const &pt) -> real64
                                       {
                                         return fn->Evaluate(pt.Data());
