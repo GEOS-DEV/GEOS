@@ -59,24 +59,18 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
-      <LinearElasticIsotropic name="granite">
-        <ParameterData Density="2700"
-                       BulkModulus="5.5556e9"
-                       ShearModulus="4.16667e9"/>
-      </LinearElasticIsotropic>
-      <LinearElasticIsotropic name="shale">
-        <ParameterData Density="2700"
-                       BulkModulus="5.5556e9"
-                       ShearModulus="4.16667e9"/>
-      </LinearElasticIsotropic>
-      <LinearElasticIsotropic name="water">
-        <ParameterData Density="1000"
-                              BulkModulus="2.0e9"
-                              ShearModulus="0.0"/>
+      <LinearElasticIsotropic name="granite"
+                              Density="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"/>
+      <LinearElasticIsotropic name="shale" 
+                              Density="2700"
+                              BulkModulus0="5.5556e9"
+                             ShearModulus0="4.16667e9"/>
       </LinearElasticIsotropic>
   </Constitutive>
 

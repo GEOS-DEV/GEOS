@@ -187,6 +187,16 @@ public:
   }
 
   /**
+   * @brief const accessor for m_ref
+   * @return const reference to wrapped value
+   */
+  inline T const * getPtr() const
+  {
+    return m_ref;
+  }
+
+
+  /**
    * @brief a pass thru square bracket operator which calls underlying T::operator[]
    * @tparam U dummy type to allow for SFINAE evaluation of availability of T::operator[]
    * @param i index to pass into the T::operator[]

@@ -207,7 +207,7 @@ ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const s
   EXPECT_EQ(view->byteSize(), expected_size);
 
   view_rtype<string_array> view_data = view->data();
-  for (localIndex i = 0; i < arr.size(); ++i)
+  for (string_array::size_type i = 0; i < arr.size(); ++i)
   {
     view_data[i] = arr[i];
   }

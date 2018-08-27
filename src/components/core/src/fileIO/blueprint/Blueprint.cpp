@@ -61,7 +61,7 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
 #ifdef USE_ATK
   m_node_manager( node_manager ),
   m_elem_reg_manager( elem_reg_manager ),
-  m_comm( comm ),
+//  m_comm( comm ),
 #endif
   m_output_path( output_path ),
   m_coord_name( coord_name ),
