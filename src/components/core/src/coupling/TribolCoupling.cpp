@@ -31,6 +31,7 @@
 #define GLOBALID_IS_64BIT 1
 #include "SlideWorldAdapter.h"
 
+#include <algorithm>
 #include "tribol/tribol.hpp"
 #include "mint/CellTypes.hpp"
 
@@ -89,27 +90,37 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   const integer_array isExternalFace = faceManager->m_isExternal ;
 
   globalID *extFaceMap ;
+  int *slideNodeMap ;
   int *extFacesToNodes ;
   int *extFacesToElement ;
+  vista::MemAlloc(numNodes, &slideNodeMap) ;
   vista::MemAlloc(numFaces, &extFaceMap) ;
   vista::MemAlloc(numFaces*4, &extFacesToNodes) ;
   vista::MemAlloc(numFaces*2, &extFacesToElement) ;
 
+  int numSlideNodes = 0 ;
   int numExtFaces = 0 ;
 
   for (int i = 0 ; i < numFaces ; ++i) {
      if (isExternalFace[i]) {
         extFaceMap[numExtFaces] = globalID((GIDTYPE)faceMap[i]) ;
         for (int j = 0 ; j < 4 ; ++j) {
-           extFacesToNodes[numExtFaces*4+j] = facesToNodes[i][j] ;
+           int nodeIdx = facesToNodes[i][j] ;
+           extFacesToNodes[numExtFaces*4+j] = nodeIdx ;
+           slideNodeMap[numSlideNodes++] = nodeIdx ;
         }
         for (int j = 0 ; j < 2 ; ++j) {
            extFacesToElement[numExtFaces*2+j] = facesToElems[i][j] ;
         }
+
         ++numExtFaces ;
      }
   }
+  std::sort(slideNodeMap, slideNodeMap + numSlideNodes) ;
+  int * newEnd = std::unique(slideNodeMap, slideNodeMap + numSlideNodes) ;
 
+  numSlideNodes = newEnd - slideNodeMap ;
+  vista::MemRealloc(numSlideNodes, &slideNodeMap) ;
   vista::MemRealloc(numExtFaces, &extFaceMap) ;
   vista::MemRealloc(numExtFaces*4, &extFacesToNodes) ;
   vista::MemRealloc(numExtFaces*2, &extFacesToElement) ;
@@ -122,9 +133,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
   // We mimic the ALE3D slide data structure for convenience here.
   // This could be optimized by creating a more generic SetSourceData call.
-  // Include all nodes for now, this could be just the external nodes.
-  int numSlideNodes = numNodes ;
-  s_slideWorldSourceNodes = s_srcNodes->attach(new vista::View("LSslaveNodes0", 1, &numSlideNodes, new vista::IndexSet(numSlideNodes))) ;
+  s_slideWorldSourceNodes = s_srcNodes->attach(new vista::View("LSslaveNodes0", 1, &numSlideNodes, new vista::IndexSet(numSlideNodes, slideNodeMap, vista::VISTA_ACQUIRES))) ;
 
   s_slideWorldSourceFaces = s_srcFaces->attach(new vista::View("LSslaveFaces0", 1, &numExtFaces, new vista::IndexSet(numExtFaces))) ;
   // since we are including all extFaces, we can just copy the extFacesToNodes relation for our slide facesToDomainNodes relation.
@@ -153,10 +162,11 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
   const int *slideMap = s_slideWorldSourceNodes->map() ;
 
-  for (int i = 0 ; i < numNodes ; ++i) {
-     x0[i] = X[i][0] ;
-     y0[i] = X[i][1] ;
-     z0[i] = X[i][2] ;
+  for (int i = 0 ; i < numSlideNodes ; ++i) {
+     int nodeIdx = slideMap[i] ;
+     x0[nodeIdx] = X[nodeIdx][0] ;
+     y0[nodeIdx] = X[nodeIdx][1] ;
+     z0[nodeIdx] = X[nodeIdx][2] ;
   }
 
   s_srcNodes->fieldCreateReal("fx") ;
