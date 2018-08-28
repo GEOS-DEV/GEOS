@@ -28,6 +28,9 @@
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
 
+#include <functional>
+#include "coupling/TribolCoupling.hpp"
+
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -52,7 +55,20 @@ int main( int argc, char *argv[] )
   int rank;
   MPI_Init(&argc,&argv);
 
+#if 1
+  std::string cmdline ;
+  // Combine the command line arguments into a single string.
+  for (int i = 0 ; i < argc ; ++i) {
+      cmdline += argv[i] ;
+  }
+  // Hash the command line.
+  int codeID = std::hash<std::string>{}(cmdline) ;
+
+  MPI_Comm MPI_OTHER_COMM ;
+  TribolCoupling::InitCommSubset(MPI_COMM_WORLD, &MPI_COMM_GEOSX, &MPI_OTHER_COMM, codeID) ;
+#else
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
+#endif
 
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif

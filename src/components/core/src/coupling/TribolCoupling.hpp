@@ -47,6 +47,10 @@ public:
    static void SyncTermination(int* terminate) ;
    static void SyncTimestep(real64* newDt) ;
    static void Cleanup() ;
+
+#ifdef USE_MPI
+   static void InitCommSubset(MPI_Comm const mpiComm, MPI_Comm *myComm, MPI_Comm *otherComm, int myCode) ;
+#endif
 };
 
 } /* namespace geosx */

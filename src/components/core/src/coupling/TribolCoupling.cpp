@@ -26,7 +26,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/MeshBody.hpp"
 
-#define PARALLEL 1
+#define PARALLEL USE_MPI
 #define HAVE_LLNL_GLOBALID 1
 #define GLOBALID_IS_64BIT 1
 #include "SlideWorldAdapter.h"
@@ -34,6 +34,18 @@
 #include "tribol/tribol.hpp"
 #include "mint/CellTypes.hpp"
 
+static void GEOSXSlideWorldErrorHandler(const char* msg, int etype, int)
+{
+   switch (etype) {
+      default: // undefined values default to VERR_WARN
+      case VERR_WARN:
+         std::cout<<"***** TRIBOL COUPLING WARNING " << std::endl << msg << std::endl ;
+         break ;
+      case VERR_FATAL:
+         GEOS_ERROR(msg);
+         break ;
+   }
+}
 
 namespace geosx
 {
@@ -48,6 +60,9 @@ vista::View *s_slideWorldSourceFaces = nullptr ;
 
 void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dataRepository::ManagedGroup * domain)
 {
+  vista::ErrSetMask(VERR_CONVERSION | VERR_TRUNCATION | VERR_NOTCREATED | VERR_INTERNAL | VERR_NILNAME | VERR_INVALID_INDEXSET) ;
+  vista::ErrHandler(GEOSXSlideWorldErrorHandler) ;
+
   real64& currentTime = *(eventManager->getData<real64>("time"));
   real64& dt = *(eventManager->getData<real64>("dt"));
   integer& cycle = *(eventManager->getData<integer>("cycle"));
@@ -151,7 +166,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   CopyPositionsToTribolSourceData(nodeManager) ;
   CopyForcesToTribolSourceData(nodeManager) ;
 
-  s_srcBricks->relationCreateFixed("bricksToNodes", 8, (int*)subRegion->nodeList().data(), s_srcNodes, vista::VISTA_SHARES) ;
+  s_srcBricks->relationCreateFixed("bricksToNodes", 8, (int*)subRegion->nodeList().data(), s_srcNodes, vista::VISTA_COPIES) ;
 
   SlideWorldAdapter::CreateWorld(MPI_COMM_GEOSX, MPI_COMM_WORLD,
                                  4000, // comm tag 
@@ -434,5 +449,54 @@ void TribolCoupling::Cleanup()
    s_slideWorldSourceNodes = nullptr ;
    s_slideWorldSourceFaces = nullptr ;
 }
+
+#ifdef USE_MPI
+// @author Tony De Groot
+void TribolCoupling::InitCommSubset(MPI_Comm const mpiComm,
+                                    MPI_Comm *myComm,
+                                    MPI_Comm *otherComm,
+                                    int myCode)
+{
+   int numProcs, myProcNum ;
+   MPI_Group mpiGroup, myGroup, otherGroup;
+
+   // Each processor sends an identification message to processor 0
+   // Processor 0 determines which code is on which processor
+
+   MPI_Comm_rank(mpiComm, &myProcNum);
+   MPI_Comm_size(mpiComm, &numProcs);
+   MPI_Comm_group(mpiComm, &mpiGroup);
+
+   // Create list of code identities
+   int *myCodes = new int[numProcs] ;
+   int *allCodes = new int[numProcs] ;
+
+   MPI_Allgather(&myCode, 1, MPI_INT, allCodes, 1, MPI_INT, mpiComm);
+
+   // Make a list of ALE3D procs from the list of all procs
+   int numMyProcs = 0;
+   bool otherGroupNeeded = false;
+   for (int i=0; i<numProcs; ++i) {
+      if (allCodes[i]==myCode) {
+         myCodes[numMyProcs] = i;
+         ++numMyProcs;
+      }
+      else {
+         otherGroupNeeded = true;
+      }
+   }
+   if (otherGroupNeeded) {
+      // Create the communicators
+      MPI_Group_excl(mpiGroup, numMyProcs, myCodes, &otherGroup);
+      MPI_Comm_create(mpiComm, otherGroup, otherComm);
+   }
+
+   MPI_Group_incl(mpiGroup, numMyProcs, myCodes, &myGroup);
+   MPI_Comm_create(mpiComm, myGroup, myComm);
+
+   delete [] allCodes ;
+   delete [] myCodes ;
+}
+#endif
 
 } /* namespace geosx */
