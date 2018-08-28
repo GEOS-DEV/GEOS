@@ -114,7 +114,7 @@ void CompositeFunction::InitializeFunction()
 {
   // Register variables
   string_array const & variables = getReference<string_array>(keys::variableNames);
-  for (localIndex ii=0 ; ii<variables.size() ; ++ii)
+  for (string_array::size_type ii=0 ; ii<variables.size() ; ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), static_cast<int>(ii * sizeof(double)));
   }

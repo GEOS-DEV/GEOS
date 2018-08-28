@@ -86,6 +86,8 @@ public:
 
   void FillDocumentationNode() override;
 
+  void FinalInitialization(ManagedGroup * const rootGroup) override;
+
   FluxApproximationBase() = delete;
 
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
