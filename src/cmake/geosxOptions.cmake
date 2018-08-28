@@ -9,7 +9,6 @@ message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
 # OPTIONS
-
 option( ENABLE_CALIPER "" OFF )
 set( CALIPER_INSTALL "" CACHE PATH "")
 
