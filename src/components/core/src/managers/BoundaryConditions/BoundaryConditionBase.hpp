@@ -655,14 +655,14 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
       dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
       dataRepository::view_rtype<fieldType> field = view.data();
 
-      ApplyBoundaryConditionToSystem<BC_OP>( targetSet,
-                                             time,
-                                             dataGroup,
-                                             dofMap,
-                                             dofDim,
-                                             blockSystem,
-                                             blockID,
-                                             [&]( localIndex const a )->real64
+      this->ApplyBoundaryConditionToSystem<BC_OP>( targetSet,
+                                                   time,
+                                                   dataGroup,
+                                                   dofMap,
+                                                   dofDim,
+                                                   blockSystem,
+                                                   blockID,
+                                                   [&]( localIndex const a )->real64
       {
         return static_cast<real64>(rtTypes::value( field[a], component ));
       });
