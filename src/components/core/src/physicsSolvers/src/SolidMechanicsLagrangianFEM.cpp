@@ -43,6 +43,7 @@
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 
+#include "coupling/TribolCoupling.hpp"
 
 //#define verbose 0 //Need to move this somewhere else
 
@@ -548,6 +549,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   bcManager->ApplyBoundaryCondition( nodes, keys::Acceleration, time_n);
 #endif    
   GEOS_MARK_END(BC1);
+
+  TribolCoupling::ApplyTribolForces(domain, time_n, dt, cycleNumber) ;
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   GEOS_CXX_MARK_LOOP_BEGIN(onepointloop,onepointloop1);

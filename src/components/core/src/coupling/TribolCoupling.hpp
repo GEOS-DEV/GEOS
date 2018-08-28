@@ -23,11 +23,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "mesh/NodeManager.hpp"
 
-#define PARALLEL 1
-#define HAVE_LLNL_GLOBALID 1
-#define GLOBALID_IS_64BIT 1
-#include "SlideWorldAdapter.h"
-
 namespace geosx
 {
 
@@ -40,17 +35,18 @@ class TribolCoupling
 {
 public:
    static void Initialize(dataRepository::ManagedGroup * eventManager, dataRepository::ManagedGroup * domain) ;
+
+   static void ApplyTribolForces(dataRepository::ManagedGroup * domain,
+                                 real64 const& time_n, real64 const& dt, const int cycleNumber) ;
    static void CopyPositionsToTribolSourceData(NodeManager const * const nodeManager) ;
+   static void CopyVelocitiesToTribolSourceData(NodeManager const * const nodeManager) ;
+   static void CopyAccelerationsToTribolSourceData(NodeManager const * const nodeManager) ;
    static void CopyForcesToTribolSourceData(NodeManager const * const nodeManager) ;
    static void CopyAccelerationsFromTribolSourceData(NodeManager * const nodeManager) ;
 
    static void SyncTermination(int* terminate) ;
    static void SyncTimestep(real64* newDt) ;
    static void Cleanup() ;
-   static vista::View *s_tribolProblem ;
-   static vista::View *s_tribolDomain ;
-   static vista::View *s_slideWorldSourceNodes ;
-   static vista::View *s_slideWorldSourceFaces ;
 };
 
 } /* namespace geosx */

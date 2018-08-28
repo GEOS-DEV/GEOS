@@ -26,16 +26,29 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/MeshBody.hpp"
 
+#define PARALLEL 1
+#define HAVE_LLNL_GLOBALID 1
+#define GLOBALID_IS_64BIT 1
+#include "SlideWorldAdapter.h"
+
+#include "tribol/tribol.hpp"
+#include "mint/CellTypes.hpp"
+
+
 namespace geosx
 {
 
-vista::View *TribolCoupling::s_tribolProblem = nullptr ;
-vista::View *TribolCoupling::s_tribolDomain = nullptr ;
-vista::View *TribolCoupling::s_slideWorldSourceNodes = nullptr ;
-vista::View *TribolCoupling::s_slideWorldSourceFaces = nullptr ;
+vista::View *s_tribolProblem = nullptr ;
+vista::View *s_tribolDomain = nullptr ;
+vista::View *s_srcNodes = nullptr ;
+vista::View *s_srcFaces = nullptr ;
+vista::View *s_srcBricks = nullptr ;
+vista::View *s_slideWorldSourceNodes = nullptr ;
+vista::View *s_slideWorldSourceFaces = nullptr ;
 
 void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dataRepository::ManagedGroup * domain)
 {
+  real64& currentTime = *(eventManager->getData<real64>("time"));
   real64& dt = *(eventManager->getData<real64>("dt"));
   integer& cycle = *(eventManager->getData<integer>("cycle"));
 
@@ -86,24 +99,42 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   vista::MemRealloc(numExtFaces*4, &extFacesToNodes) ;
   vista::MemRealloc(numExtFaces*2, &extFacesToElement) ;
 
-  vista::View *srcFaces = s_tribolDomain->viewCreate("extFaces", 1, &numExtFaces, new vista::IndexSet(vista::VISTA_ACQUIRES, numExtFaces, extFaceMap)) ;
-  vista::View *srcNodes = s_tribolDomain->viewCreate("nodes", 1, &numNodes, new vista::IndexSet(vista::VISTA_COPIES, numNodes, (globalID*) nodeMap.data())) ;
-  vista::View *srcBricks = s_tribolDomain->viewCreate("bricks", 1, &numBricks, new vista::IndexSet(vista::VISTA_COPIES, numBricks, (globalID*) brickMap.data())) ;
+  s_srcFaces = s_tribolDomain->viewCreate("extFaces", 1, &numExtFaces, new vista::IndexSet(vista::VISTA_ACQUIRES, numExtFaces, extFaceMap)) ;
+  s_srcNodes = s_tribolDomain->viewCreate("nodes", 1, &numNodes, new vista::IndexSet(vista::VISTA_COPIES, numNodes, (globalID*) nodeMap.data())) ;
+  s_srcBricks = s_tribolDomain->viewCreate("bricks", 1, &numBricks, new vista::IndexSet(vista::VISTA_COPIES, numBricks, (globalID*) brickMap.data())) ;
 
-  // include all nodes for now, this could be just the external nodes.
+  vista::View* localNodes = s_srcNodes->viewCreate("local", 1) ;
+
+  // We mimic the ALE3D slide data structure for convenience here.
+  // This could be optimized by creating a more generic SetSourceData call.
+  // Include all nodes for now, this could be just the external nodes.
   int numSlideNodes = numNodes ;
-  s_slideWorldSourceNodes = srcNodes->attach(new vista::View("LSslaveNodes0", 1, &numSlideNodes, new vista::IndexSet(numSlideNodes))) ;
+  s_slideWorldSourceNodes = s_srcNodes->attach(new vista::View("LSslaveNodes0", 1, &numSlideNodes, new vista::IndexSet(numSlideNodes))) ;
 
-  s_slideWorldSourceFaces = srcFaces->attach(new vista::View("LSslaveFaces0", 1, &numExtFaces, new vista::IndexSet(numExtFaces))) ;
+  s_slideWorldSourceFaces = s_srcFaces->attach(new vista::View("LSslaveFaces0", 1, &numExtFaces, new vista::IndexSet(numExtFaces))) ;
+  // since we are including all extFaces, we can just copy the extFacesToNodes relation for our slide facesToDomainNodes relation.
+  s_slideWorldSourceFaces->relationCreateFixed("facesToDomainNodes", 4, extFacesToNodes, s_srcNodes, vista::VISTA_COPIES) ;
 
-  srcFaces->relationCreateFixed("facesToNodes", 4, extFacesToNodes, srcNodes, vista::VISTA_ACQUIRES) ;
-  srcFaces->relationCreateFixed("facesToElement", 2, extFacesToElement, srcBricks, vista::VISTA_ACQUIRES) ;
+  s_srcFaces->relationCreateFixed("facesToNodes", 4, extFacesToNodes, s_srcNodes, vista::VISTA_ACQUIRES) ;
+  s_srcFaces->relationCreateFixed("facesToElement", 2, extFacesToElement, s_srcBricks, vista::VISTA_ACQUIRES) ;
 
   const array1d< R1Tensor > & X = nodeManager->referencePosition();
   
-  real64 *x0 = srcNodes->fieldCreateReal("x0")->Real() ;
-  real64 *y0 = srcNodes->fieldCreateReal("y0")->Real() ;
-  real64 *z0 = srcNodes->fieldCreateReal("z0")->Real() ;
+  real64 *x0 = s_srcNodes->fieldCreateReal("x0")->Real() ;
+  real64 *y0 = s_srcNodes->fieldCreateReal("y0")->Real() ;
+  real64 *z0 = s_srcNodes->fieldCreateReal("z0")->Real() ;
+
+  // These are used directly on the srcNodes by the slide decomposition,
+  // so they need to have the proper tree structure.
+  s_srcNodes->fieldCreateReal("x") ;
+  s_srcNodes->fieldCreateReal("y") ;
+  s_srcNodes->fieldCreateReal("z") ;
+  s_srcNodes->fieldCreateReal("xd") ;
+  s_srcNodes->fieldCreateReal("yd") ;
+  s_srcNodes->fieldCreateReal("zd") ;
+  s_srcNodes->fieldCreateReal("local:xdd") ;
+  s_srcNodes->fieldCreateReal("local:ydd") ;
+  s_srcNodes->fieldCreateReal("local:zdd") ;
 
   const int *slideMap = s_slideWorldSourceNodes->map() ;
 
@@ -113,17 +144,14 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
      z0[i] = X[i][2] ;
   }
 
-  s_slideWorldSourceNodes->fieldCreateReal("x") ;
-  s_slideWorldSourceNodes->fieldCreateReal("y") ;
-  s_slideWorldSourceNodes->fieldCreateReal("z") ;
-  s_slideWorldSourceNodes->fieldCreateReal("fx") ;
-  s_slideWorldSourceNodes->fieldCreateReal("fy") ;
-  s_slideWorldSourceNodes->fieldCreateReal("fz") ;
+  s_srcNodes->fieldCreateReal("fx") ;
+  s_srcNodes->fieldCreateReal("fy") ;
+  s_srcNodes->fieldCreateReal("fz") ;
 
   CopyPositionsToTribolSourceData(nodeManager) ;
   CopyForcesToTribolSourceData(nodeManager) ;
 
-  srcBricks->relationCreateFixed("bricksToNodes", 8, (int*)subRegion->nodeList().data(), srcNodes, vista::VISTA_SHARES) ;
+  s_srcBricks->relationCreateFixed("bricksToNodes", 8, (int*)subRegion->nodeList().data(), s_srcNodes, vista::VISTA_SHARES) ;
 
   SlideWorldAdapter::CreateWorld(MPI_COMM_GEOSX, MPI_COMM_WORLD,
                                  4000, // comm tag 
@@ -141,21 +169,193 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   SlideWorldAdapter::SetSourceData(s_tribolProblem) ;
 }
 
+void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
+                                       real64 const& time_n,
+                                       real64 const& dt,
+                                       const int cycleNumber)
+{
+   MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->getMeshBody(0)->getMeshLevel(0);
+   NodeManager * const nodeManager = meshLevel->getNodeManager();
+
+   CopyPositionsToTribolSourceData(nodeManager) ;
+   CopyVelocitiesToTribolSourceData(nodeManager) ;
+   CopyAccelerationsToTribolSourceData(nodeManager) ;
+   CopyForcesToTribolSourceData(nodeManager) ;
+
+   const int dim = 3 ;
+   int nodesPerFace = 4 ;
+
+   // set the cellType
+   const int cellType = (dim == 2) ? (int)axom::mint::CellType::SEGMENT : (int)axom::mint::CellType::QUAD;
+
+   SlideWorldAdapter::Setup(0) ;
+   SlideWorldAdapter::TransferToWorld() ;
+
+   vista::View *slideWorldData = SlideWorldAdapter::GetWorldData() ;
+
+   // Just handling one slide for now.
+   vista::View *slideWorldNodesSlave = slideWorldData->view("slidenodes0s") ;
+   vista::View *slideWorldFacesSlave = slideWorldData->view("slidefaces0s") ;
+
+   int numSlaveFaces = slideWorldFacesSlave->length() ;
+
+   const vista::FixedSizeRelation *facesToNodesSlave = slideWorldFacesSlave->relationFixed("facesToNodes") ;
+   const int* facesToNodesSlaveData = facesToNodesSlave->data() ;
+
+   real64 *fxs = slideWorldNodesSlave->fieldReal("fx") ;
+   real64 *fys = slideWorldNodesSlave->fieldReal("fy") ;
+   real64 *fzs = slideWorldNodesSlave->fieldReal("fz") ;
+   const real64 *xs = slideWorldNodesSlave->fieldReal("x") ;
+   const real64 *ys = slideWorldNodesSlave->fieldReal("y") ;
+   const real64 *zs = slideWorldNodesSlave->fieldReal("z") ;
+
+   // initialize the contact library
+   tribol::initialize(dim, MPI_COMM_WORLD);
+
+   // set penalty stiffness, set to negative to account for flipped sign in the
+   // contact nodal forces. This should be corrected in the normal that is
+   // used in tribol penalty.
+   tribol::setPenaltyStiffness(1.0);
+
+   // register the current configuration mesh
+   const int slaveMesh = 0 ;
+   tribol::registerMesh(slaveMesh, numSlaveFaces, nodesPerFace,
+                        facesToNodesSlaveData, cellType, xs, ys, zs);
+
+   // register nodal response (i.e. contact forces)
+   tribol::registerNodalResponse(slaveMesh, fxs, fys, fzs);
+
+   // register faces in contact
+   int maxNumPairs = numSlaveFaces*(numSlaveFaces-1) ;
+   int *meshId1 = new int [maxNumPairs] ;
+   int *meshId2 = new int [maxNumPairs] ;
+   int *pairType = new int [maxNumPairs] ;
+   int *pairIndex1 = new int [maxNumPairs] ;
+   int *pairIndex2 = new int [maxNumPairs] ;
+
+   int numPairs = 0 ;
+
+   for (int i = 0 ; i < numSlaveFaces ; ++i) {
+      // Ensure only faces with all nodes defined are included.
+      // We need this because the faces and nodes are decomposed separately.
+      bool validFace = true ;
+      const int * faceNodesSlave = (*facesToNodesSlave)[i] ;
+      for (int k = 0 ; k < nodesPerFace ; ++k) {
+         if (faceNodesSlave[k] == -1) {
+            validFace = false ;
+            break ;
+         }
+      }
+
+      if (validFace) {
+         int startIdx = i + 1 ;
+         int endIdx = numSlaveFaces ;
+         int jMesh = slaveMesh ;
+         const vista::FixedSizeRelation *facesToNodes = facesToNodesSlave ;
+
+         for (int j = startIdx ; j < endIdx; ++j) {
+            bool validFace2 = true ;
+            const int * faceNodes2 = (*facesToNodes)[j] ;
+            for (int k = 0 ; k < nodesPerFace ; ++k) {
+               if (faceNodes2[k] == -1) {
+                  validFace2 = false ;
+                  break ;
+               }
+            }
+
+            if (validFace2) {
+               meshId1[numPairs] = slaveMesh ;
+               meshId2[numPairs] = jMesh ;
+               pairType[numPairs] = cellType ;
+               pairIndex1[numPairs] = i ;
+               pairIndex2[numPairs] = j ;
+               ++numPairs ;
+            }
+         }
+      }
+   }
+
+   tribol::setInterfacePairs(numPairs, meshId1, pairType, pairIndex1, meshId2, pairType, pairIndex2) ;
+
+   // register the coupling scheme
+   tribol::registerCouplingScheme(slaveMesh, slaveMesh, tribol::SURFACE_TO_SURFACE,
+                                  tribol::SINGLE_MORTAR,
+                                  tribol::FRICTIONLESS_MODEL,
+                                  tribol::PENALTY_ENFORCEMENT);
+
+   // call the contact update routine. For the serial problem it doesn't matter if this is
+   // in the domain loop or outside
+   bool outputCycle = false ;
+   int err = tribol::update(cycleNumber, time_n, dt, outputCycle);
+
+   if (err) {
+      GEOS_ERROR( "TRIBOL update error" );
+   }
+
+   tribol::finalize();
+
+   delete[] meshId1 ;
+   delete[] meshId2 ;
+   delete[] pairType ;
+   delete[] pairIndex1 ;
+   delete[] pairIndex2 ;
+
+   SlideWorldAdapter::TransferFromWorld() ;
+
+   SlideWorldAdapter::Cleanup() ;
+
+   CopyAccelerationsFromTribolSourceData(nodeManager) ;
+}
+
 void TribolCoupling::CopyPositionsToTribolSourceData(NodeManager const * const nodeManager)
 {
   const array1d< R1Tensor > & X = nodeManager->referencePosition();
   const array1d< R1Tensor > & u = nodeManager->getReference< array1d< R1Tensor > >("TotalDisplacement");
   const int numSlideNodes = s_slideWorldSourceNodes->length() ;
   const int *slideMap = s_slideWorldSourceNodes->map() ;
-  real64 *x = s_slideWorldSourceNodes->fieldReal("x") ;
-  real64 *y = s_slideWorldSourceNodes->fieldReal("y") ;
-  real64 *z = s_slideWorldSourceNodes->fieldReal("z") ;
+  real64 *x = s_srcNodes->fieldReal("x") ;
+  real64 *y = s_srcNodes->fieldReal("y") ;
+  real64 *z = s_srcNodes->fieldReal("z") ;
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
-     x[i] = X[nodeIdx][0] + u[nodeIdx][0] ;
-     y[i] = X[nodeIdx][1] + u[nodeIdx][1] ;
-     z[i] = X[nodeIdx][2] + u[nodeIdx][2] ;
+     x[nodeIdx] = X[nodeIdx][0] + u[nodeIdx][0] ;
+     y[nodeIdx] = X[nodeIdx][1] + u[nodeIdx][1] ;
+     z[nodeIdx] = X[nodeIdx][2] + u[nodeIdx][2] ;
+  }
+}
+
+void TribolCoupling::CopyVelocitiesToTribolSourceData(NodeManager const * const nodeManager)
+{
+  const array1d< R1Tensor > & v = nodeManager->getReference< array1d< R1Tensor > >("Velocity");
+  const int numSlideNodes = s_slideWorldSourceNodes->length() ;
+  const int *slideMap = s_slideWorldSourceNodes->map() ;
+  real64 *xd = s_srcNodes->fieldReal("xd") ;
+  real64 *yd = s_srcNodes->fieldReal("yd") ;
+  real64 *zd = s_srcNodes->fieldReal("zd") ;
+
+  for (int i = 0 ; i < numSlideNodes ; ++i) {
+     int nodeIdx = slideMap[i] ;
+     xd[nodeIdx] = v[nodeIdx][0] ;
+     yd[nodeIdx] = v[nodeIdx][1] ;
+     zd[nodeIdx] = v[nodeIdx][2] ;
+  }
+}
+
+void TribolCoupling::CopyAccelerationsToTribolSourceData(NodeManager const * const nodeManager)
+{
+  const array1d< R1Tensor > & a = nodeManager->getReference< array1d< R1Tensor > >("Acceleration");
+  const int numSlideNodes = s_slideWorldSourceNodes->length() ;
+  const int *slideMap = s_slideWorldSourceNodes->map() ;
+  real64 *xdd = s_srcNodes->fieldReal("local:xdd") ;
+  real64 *ydd = s_srcNodes->fieldReal("local:ydd") ;
+  real64 *zdd = s_srcNodes->fieldReal("local:zdd") ;
+
+  for (int i = 0 ; i < numSlideNodes ; ++i) {
+     int nodeIdx = slideMap[i] ;
+     xdd[nodeIdx] = a[nodeIdx][0] ;
+     ydd[nodeIdx] = a[nodeIdx][1] ;
+     zdd[nodeIdx] = a[nodeIdx][2] ;
   }
 }
 
@@ -165,16 +365,16 @@ void TribolCoupling::CopyForcesToTribolSourceData(NodeManager const * const node
   const array1d< real64 > & nodalMass = nodeManager->getReference< array1d< real64 > >( dataRepository::keys::Mass );
   const int numSlideNodes = s_slideWorldSourceNodes->length() ;
   const int *slideMap = s_slideWorldSourceNodes->map() ;
-  real64 *fx = s_slideWorldSourceNodes->fieldReal("fx") ;
-  real64 *fy = s_slideWorldSourceNodes->fieldReal("fy") ;
-  real64 *fz = s_slideWorldSourceNodes->fieldReal("fz") ;
+  real64 *fx = s_srcNodes->fieldReal("fx") ;
+  real64 *fy = s_srcNodes->fieldReal("fy") ;
+  real64 *fz = s_srcNodes->fieldReal("fz") ;
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
      real64 nmass = nodalMass[nodeIdx] ;
-     fx[i] = a[nodeIdx][0]*nmass ;
-     fy[i] = a[nodeIdx][1]*nmass ;
-     fz[i] = a[nodeIdx][2]*nmass ;
+     fx[nodeIdx] = a[nodeIdx][0]*nmass ;
+     fy[nodeIdx] = a[nodeIdx][1]*nmass ;
+     fz[nodeIdx] = a[nodeIdx][2]*nmass ;
   }
 }
 
@@ -184,16 +384,16 @@ void TribolCoupling::CopyAccelerationsFromTribolSourceData(NodeManager * const n
   const array1d< real64 > & nodalMass = nodeManager->getReference< array1d< real64 > >( dataRepository::keys::Mass );
   const int numSlideNodes = s_slideWorldSourceNodes->length() ;
   const int *slideMap = s_slideWorldSourceNodes->map() ;
-  const real64 *fx = s_slideWorldSourceNodes->fieldReal("fx") ;
-  const real64 *fy = s_slideWorldSourceNodes->fieldReal("fy") ;
-  const real64 *fz = s_slideWorldSourceNodes->fieldReal("fz") ;
+  const real64 *fx = s_srcNodes->fieldReal("fx") ;
+  const real64 *fy = s_srcNodes->fieldReal("fy") ;
+  const real64 *fz = s_srcNodes->fieldReal("fz") ;
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
      real64 nmass = nodalMass[nodeIdx] ;
-     a[nodeIdx][0] = fx[i]/nmass ;
-     a[nodeIdx][1] = fy[i]/nmass ;
-     a[nodeIdx][2] = fz[i]/nmass ;
+     a[nodeIdx][0] = fx[nodeIdx]/nmass ;
+     a[nodeIdx][1] = fy[nodeIdx]/nmass ;
+     a[nodeIdx][2] = fz[nodeIdx]/nmass ;
   }
 }
 
@@ -228,6 +428,9 @@ void TribolCoupling::Cleanup()
    delete s_tribolProblem ;
    s_tribolProblem = nullptr ;
    s_tribolDomain = nullptr ;
+   s_srcNodes = nullptr ;
+   s_srcFaces = nullptr ;
+   s_srcBricks = nullptr ;
    s_slideWorldSourceNodes = nullptr ;
    s_slideWorldSourceFaces = nullptr ;
 }

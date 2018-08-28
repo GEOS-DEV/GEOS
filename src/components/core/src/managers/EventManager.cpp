@@ -171,13 +171,13 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
        break ;
     }
 
-    real64 newDt = dt ;
+    real64 newDt ;
     TribolCoupling::SyncTimestep(&newDt) ;
 
     if (newDt < dt)
     {
         std::cout << "     dt: " << dt << ", coupled dt=" << newDt << std::endl;
-        GEOS_ERROR( "coupling error" );
+        GEOS_ERROR( "TRIBOL coupling error" );
     }
 
     real64 nextDt = 1e6;
