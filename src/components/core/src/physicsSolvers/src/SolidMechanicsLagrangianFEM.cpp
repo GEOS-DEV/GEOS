@@ -951,6 +951,14 @@ bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::V
 GEOS_MARK_END(BC4);
 
 
+std::map<string, string_array > fieldNames;
+fieldNames["node"].push_back("Velocity");
+
+CommunicationTools::SynchronizeFields( fieldNames,
+                                       mesh,
+                                       domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
 (void) cycleNumber;
 
 return dt;
