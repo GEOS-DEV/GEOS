@@ -165,19 +165,21 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   while(1) {
     int terminate = (((maxTime < 0) || (maxTime - time > epsilon)) && ((maxCycle < 0) || (cycle < maxCycle)) && (exitFlag == 0)) ? 0 : 1 ;
 
-    TribolCoupling::SyncTermination(&terminate) ;
+    if (dt > 0.0) {
+       TribolCoupling::SyncTermination(&terminate) ;
 
-    if (terminate) {
-       break ;
-    }
+       if (terminate) {
+          break ;
+       }
 
-    real64 newDt ;
-    TribolCoupling::SyncTimestep(&newDt) ;
+       real64 newDt ;
+       TribolCoupling::SyncTimestep(&newDt) ;
 
-    if (newDt < dt)
-    {
-        std::cout << "     dt: " << dt << ", coupled dt=" << newDt << std::endl;
-        GEOS_ERROR( "TRIBOL coupling error" );
+       if (newDt < dt)
+       {
+           std::cout << "     dt: " << dt << ", coupled dt=" << newDt << std::endl;
+           GEOS_ERROR( "TRIBOL coupling error" );
+       }
     }
 
     real64 nextDt = 1e6;
