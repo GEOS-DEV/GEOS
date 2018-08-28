@@ -656,13 +656,13 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
       dataRepository::view_rtype<fieldType> field = view.data();
 
       this->ApplyBoundaryConditionToSystem<BC_OP>( targetSet,
-                                             time,
-                                             dataGroup,
-                                             dofMap,
-                                             dofDim,
-                                             blockSystem,
-                                             blockID,
-                                             [&]( localIndex const a )->real64
+                                                   time,
+                                                   dataGroup,
+                                                   dofMap,
+                                                   dofDim,
+                                                   blockSystem,
+                                                   blockID,
+                                                   [&]( localIndex const a )->real64
       {
         return static_cast<real64>(rtTypes::value( field[a], component ));
       });
