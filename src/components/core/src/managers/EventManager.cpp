@@ -206,12 +206,11 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       }
 
       // Estimate the time-step for the next cycle
-      real64 requestedDt = 1e6;
       if (eventForecast <= 1)
       {
-        requestedDt = subEvent->GetTimestepRequest(time + dt);
+        real64 requestedDt = subEvent->GetTimestepRequest(time + dt);
+        nextDt = std::min(requestedDt, nextDt);
       }
-      nextDt = std::min(requestedDt, nextDt);
 
       // Check the exit flag
       exitFlag += subEvent->GetExitFlag();
@@ -219,7 +218,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       // Debug information
       if ((verbosity > 0) && (rank == 0))
       {
-        std::cout << "     Event: " << subEvent->getName() << ", f=" << eventForecast << ", dt_r=" << requestedDt << std::endl;
+        std::cout << "     Event: " << subEvent->getName() << ", f=" << eventForecast << std::endl;
       }      
     });
 
