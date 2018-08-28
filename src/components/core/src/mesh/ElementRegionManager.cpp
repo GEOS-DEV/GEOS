@@ -23,12 +23,14 @@
  *      Author: settgast1
  */
 
+#include <map>
+#include <vector>
+
 #include "ElementRegion.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
 //#include "legacy/IO/BinStream.h"
-#include <map>
-#include <vector>
+#include "constitutive/ConstitutiveManager.hpp"
 //#include "legacy/Constitutive/Material/MaterialFactory.h"
 //#include "legacy/ArrayT/ArrayT.h"
 
@@ -142,27 +144,34 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
 {
   ObjectManagerBase::InitializePostSubGroups(nullptr);
 
-  map<string,localIndex> constitutiveSizes;
-  ManagedGroup * domain = problemManager->GetGroup(keys::domain);
-  forElementRegions([&]( ElementRegion * elementRegion ) -> void
-    {
-//      map<string,localIndex> sizes;
-      elementRegion->SetConstitutiveMap(problemManager, constitutiveSizes);
-//      for( auto& entry : sizes )
-//      {
-//        constitutiveSizes[entry.first] += entry.second;
-//      }
-    });
+//  map<string,localIndex> constitutiveSizes;
+//  ManagedGroup * domain = problemManager->GetGroup(keys::domain);
+//  forElementRegions([&]( ElementRegion * elementRegion ) -> void
+//    {
+////      map<string,localIndex> sizes;
+//      elementRegion->SetConstitutiveMap(problemManager, constitutiveSizes);
+////      for( auto& entry : sizes )
+////      {
+////        constitutiveSizes[entry.first] += entry.second;
+////      }
+//    });
+//
+//  constitutive::ConstitutiveManager *
+//  constitutiveManager = domain->GetGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
+//  for( auto & material : constitutiveManager->GetSubGroups() )
+//  {
+//    string name = material.first;
+//    if( constitutiveSizes.count(name) > 0 )
+//    {
+//      material.second->resize(constitutiveSizes.at(name));
+//    }
+//  }
 
-  ManagedGroup * constitutiveManager = domain->GetGroup(keys::ConstitutiveManager);
-  for( auto & material : constitutiveManager->GetSubGroups() )
+  this->forElementRegions( [&]( ElementRegion * elemRegion )->void
   {
-    string name = material.first;
-    if( constitutiveSizes.count(name) > 0 )
-    {
-      material.second->resize(constitutiveSizes.at(name));
-    }
-  }
+    elemRegion->HangConstitutiveRelations( problemManager );
+  });
+
 }
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
