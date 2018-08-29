@@ -494,15 +494,16 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
   }
 
   // loop over all elements and set the dof number if the element is not a ghost
-  integer localCount = 0;
-  forAllElemsInMesh( meshLevel, [&]( localIndex const er,
+//  integer localCount = 0;
+  raja::ReduceSum< reducePolicy, localIndex  > localCount(0);
+  forAllElemsInMesh( meshLevel, [=]( localIndex const er,
                                      localIndex const esr,
-                                     localIndex const k)->void
+                                     localIndex const k) mutable ->void
   {
     if( ghostRank[er][esr][k] < 0 )
     {
       blockLocalDofNumber[er][esr][k] = firstLocalRow+localCount+offset;
-      ++localCount;
+      localCount += 1;
     }
     else
     {

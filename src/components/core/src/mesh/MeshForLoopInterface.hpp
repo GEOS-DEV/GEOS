@@ -241,12 +241,11 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
     {
       CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
-      auto ebody = [=](localIndex index) mutable -> void
-      {
-        lambdaBody(er,esr,index);
-      };
-
-      ::geosx::raja::forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
+      raja::forall_in_range<POLICY>(0, cellBlockSubRegion->size(),
+                              [=](localIndex index) mutable -> void
+                              {
+                                lambdaBody(er,esr,index);
+                              });
     }
   }
 }

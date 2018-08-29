@@ -45,9 +45,9 @@ if [[ "$DO_BUILD" == "yes" ]] ; then
 #    else
       or_die make -j 2 VERBOSE=1
 #    fi
-#    if [[ "${DO_TEST}" == "yes" ]] ; then
-#      or_die ctest -V
-#    fi
+    if [[ "${DO_TEST}" == "yes" ]] ; then
+      or_die ctest -V
+    fi
 fi
 
 exit 0

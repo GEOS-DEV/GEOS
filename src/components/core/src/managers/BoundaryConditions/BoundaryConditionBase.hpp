@@ -604,26 +604,26 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
       else
       {
         FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-        if( function!=nullptr )
+
+        GEOS_ASSERT( function != nullptr, "Function '" << functionName << "' not found" );
+
+        if( function->isFunctionOfTime()==2 )
         {
-          if( function->isFunctionOfTime()==2 )
+          real64 value = m_scale * function->Evaluate( &time );
+          for( auto a : targetSet )
           {
-            real64 value = m_scale * function->Evaluate( &time );
-            for( auto a : targetSet )
-            {
-              BC_OP::ApplyBcValue( field, a, component, value );
-            }
+            BC_OP::ApplyBcValue( field, a, component, value );
           }
-          else
+        }
+        else
+        {
+          real64_array result( static_cast<localIndex>(targetSet.size()) );
+          function->Evaluate( dataGroup, time, targetSet, result );
+          integer count=0;
+          for( auto a : targetSet )
           {
-            real64_array result( static_cast<localIndex>(targetSet.size()));
-            function->Evaluate( dataGroup, time, targetSet, result );
-            integer count=0;
-            for( auto a : targetSet )
-            {
-              BC_OP::ApplyBcValue( field, a, component, m_scale*result[count] );
-              ++count;
-            }
+            BC_OP::ApplyBcValue( field, a, component, m_scale*result[count] );
+            ++count;
           }
         }
       }
@@ -655,14 +655,14 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
       dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
       dataRepository::view_rtype<fieldType> field = view.data();
 
-      ApplyBoundaryConditionToSystem<BC_OP>( targetSet,
-                                             time,
-                                             dataGroup,
-                                             dofMap,
-                                             dofDim,
-                                             blockSystem,
-                                             blockID,
-                                             [&]( localIndex const a )->real64
+      this->ApplyBoundaryConditionToSystem<BC_OP>( targetSet,
+                                                   time,
+                                                   dataGroup,
+                                                   dofMap,
+                                                   dofDim,
+                                                   blockSystem,
+                                                   blockID,
+                                                   [&]( localIndex const a )->real64
       {
         return static_cast<real64>(rtTypes::value( field[a], component ));
       });
@@ -800,44 +800,44 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   else
   {
     FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-    if( function!=nullptr )
+
+    GEOS_ASSERT( function != nullptr, "Function '" << functionName << "' not found" );
+
+    if( function->isFunctionOfTime()==2 )
     {
-      if( function->isFunctionOfTime()==2 )
+      real64 value = m_scale * function->Evaluate( &time );
+      integer counter=0;
+      for( auto a : targetSet )
       {
-        real64 value = m_scale * function->Evaluate( &time );
-        integer counter=0;
-        for( auto a : targetSet )
-        {
-          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-          BC_OP::ApplyBcValue( dof( counter ),
-                               blockSystem,
-                               blockID,
-                               rhsContribution( counter ),
-                               value,
-                               lambda( a ) );
-          ++counter;
-        }
-        BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        BC_OP::ApplyBcValue( dof( counter ),
+                             blockSystem,
+                             blockID,
+                             rhsContribution( counter ),
+                             value,
+                             lambda( a ) );
+        ++counter;
       }
-      else
+      BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+    }
+    else
+    {
+      real64_array result;
+      result.resize( integer_conversion<localIndex>( targetSet.size()));
+      function->Evaluate( dataGroup, time, targetSet, result );
+      integer counter=0;
+      for( auto a : targetSet )
       {
-        real64_array result;
-        result.resize( integer_conversion<localIndex>( targetSet.size()));
-        function->Evaluate( dataGroup, time, targetSet, result );
-        integer counter=0;
-        for( auto a : targetSet )
-        {
-          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-          BC_OP::ApplyBcValue( dof( counter ),
-                               blockSystem,
-                               blockID,
-                               rhsContribution( counter ),
-                               m_scale*result[counter],
-                               lambda( a ) );
-          ++counter;
-        }
-        BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        BC_OP::ApplyBcValue( dof( counter ),
+                             blockSystem,
+                             blockID,
+                             rhsContribution( counter ),
+                             m_scale*result[counter],
+                             lambda( a ) );
+        ++counter;
       }
+      BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
     }
   }
 }
