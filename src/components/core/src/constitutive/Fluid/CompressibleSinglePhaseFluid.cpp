@@ -163,7 +163,7 @@ void CompressibleSinglePhaseFluid::FillDocumentationNode()
 
 void CompressibleSinglePhaseFluid::ReadXML_PostProcess()
 {
-  if( m_compressibility <= 0.0 )
+  if( m_compressibility < 0.0 )
   {
     string const message = "An invalid value of fluid compressibility ("+std::to_string( m_compressibility )+") is specified";
     GEOS_ERROR( message );

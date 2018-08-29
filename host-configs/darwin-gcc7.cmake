@@ -14,6 +14,8 @@ set(MPIEXEC "mpirun-openmpi-gcc7" CACHE PATH "")
 set(SPHINX_EXECUTABLE "/opt/local/bin/sphinx-build-2.7" CACHE PATH "" FORCE)
 set(DOXYGEN_EXECUTABLE "/opt/local/bin/doxygen" CACHE PATH "" FORCE )
 
+set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################
