@@ -10,7 +10,7 @@
 // x in [0,1]
 //
 RAJA_HOST_DEVICE
-RAJA_INLINE real64 shapefun_prime(Index_type ix, real64 ay, real64 by, real64 y,
+RAJA_INLINE real64 shapefun_prime(localIndex ix, real64 ay, real64 by, real64 y,
                           real64 az, real64 bz, real64 z)
 {  
   return ix*(ay-by*y)*(az-bz*z);
@@ -22,29 +22,29 @@ RAJA_INLINE real64 shapefun_prime(Index_type ix, real64 ay, real64 by, real64 y,
 //at the quadrature points w.r.t to the parent coordinate system
 //
 RAJA_HOST_DEVICE
-RAJA_INLINE void generateP(P_Wrapper &P, Index_type nQpts, Index_type nDofs)
+RAJA_INLINE void generateP(P_Wrapper &P, localIndex nQpts, localIndex nDofs)
 {
 
-  Index_type sign[2] = {-1,1};
+  localIndex sign[2] = {-1,1};
   real64 a_val[2] = {1.0,0.0};
   real64 b_val[2] = {1,-1};
   real64 intPoints[2]  = {0.211324865405187, 0.788675134594813};
   
-  for(Index_type a=0; a < nQpts; ++a)
+  for(localIndex a=0; a < nQpts; ++a)
     {
       //Index for quadrature point (8 different combinations)
-      Index_type ix = a % 2;
-      Index_type iy = (a / 2) % 2;
-      Index_type iz = a / (2 * 2);
+      localIndex ix = a % 2;
+      localIndex iy = (a / 2) % 2;
+      localIndex iz = a / (2 * 2);
       //dNi/dxi ..... 
       //dNi/nu  .....
       //dNi/mu  .....
       //Evaluate point across all basis functions
-      for(Index_type q=0; q < 8; ++q)
+      for(localIndex q=0; q < 8; ++q)
         {
-          Index_type qx = q % 2;
-          Index_type qy = (q / 2) % 2;
-          Index_type qz = q / (2 * 2);
+          localIndex qx = q % 2;
+          localIndex qy = (q / 2) % 2;
+          localIndex qz = q / (2 * 2);
                     
           P(a,0,q) = shapefun_prime(sign[qx],a_val[qy],b_val[qy],intPoints[iy],
                                     a_val[qz],b_val[qz],intPoints[iz]);
@@ -65,10 +65,10 @@ RAJA_HOST_DEVICE //x,y,z, format
 RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
                            U dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim],
                            P_Wrapper P, 
-                           Index_type nQpts, Index_type nDofs)
+                           localIndex nQpts, localIndex nDofs)
 {
     real64 xyz_loc[24];
-  for(Index_type i=0; i<nDofs; ++i)
+  for(localIndex i=0; i<nDofs; ++i)
     {
       xyz_loc[0 + local_dim*i] = X[0 + local_dim * nodeList[i]];
       xyz_loc[1 + local_dim*i] = X[1 + local_dim * nodeList[i]];
@@ -76,7 +76,7 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
     }
     
   //loop over quadrature points
-  for(Index_type a=0; a < nQpts; ++a)
+  for(localIndex a=0; a < nQpts; ++a)
     {
       
       //dNi/dxi ..... 
@@ -130,16 +130,16 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
 template<typename T, typename U>
 RAJA_HOST_DEVICE //x,y,z, format
 RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
-                           U dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim], Index_type nQpts, Index_type nDofs)
+                           U dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim], localIndex nQpts, localIndex nDofs)
 {
   
-  Index_type sign[2] = {-1,1};
+  localIndex sign[2] = {-1,1};
   real64 a_val[2] = {1.0,0.0};
   real64 b_val[2] = {1,-1};
   real64 intPoints[2]  = {0.211324865405187, 0.788675134594813};
 
   real64 xyz_loc[24];
-  for(Index_type i=0; i<nDofs; ++i)
+  for(localIndex i=0; i<nDofs; ++i)
     {
       xyz_loc[0 + local_dim*i] = X[0 + local_dim * nodeList[i]];
       xyz_loc[1 + local_dim*i] = X[1 + local_dim * nodeList[i]];
@@ -147,12 +147,12 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
     }
     
   //loop over quadrature points
-  for(Index_type a=0; a < nQpts; ++a)
+  for(localIndex a=0; a < nQpts; ++a)
     {
       //Index for quadrature point (8 different combinations)
-      Index_type ix = a % 2;
-      Index_type iy = (a / 2) % 2;
-      Index_type iz = a / (2 * 2);
+      localIndex ix = a % 2;
+      localIndex iy = (a / 2) % 2;
+      localIndex iz = a / (2 * 2);
       
       real64 P[3][8];   //store evaluation of points at all basis functions
       //dNi/dxi ..... 
@@ -161,11 +161,11 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
       //Evaluate point across all basis functions
       
       //Evaluate point across all basis functions
-      for(Index_type q=0; q < 8; ++q)
+      for(localIndex q=0; q < 8; ++q)
         {
-          Index_type qx = q % 2;
-          Index_type qy = (q / 2) % 2;
-          Index_type qz = q / (2 * 2);
+          localIndex qx = q % 2;
+          localIndex qy = (q / 2) % 2;
+          localIndex qz = q / (2 * 2);
                     
           P[0][q] = shapefun_prime(sign[qx],a_val[qy],b_val[qy],intPoints[iy],
                              a_val[qz],b_val[qz],intPoints[iz]);                    
@@ -225,10 +225,10 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
                            U dNdX_x[inumQuadraturePoints][inumNodesPerElement],
                            U dNdX_y[inumQuadraturePoints][inumNodesPerElement],
                            U dNdX_z[inumQuadraturePoints][inumNodesPerElement],
-                           Index_type nQpts, Index_type nDofs)
+                           localIndex nQpts, localIndex nDofs)
 {
 
-  Index_type sign[2] = {-1,1};
+  localIndex sign[2] = {-1,1};
   real64 a_val[2] = {1.0,0.0};
   real64 b_val[2] = {1,-1};
   real64 intPoints[2]  = {0.211324865405187, 0.788675134594813};
@@ -237,7 +237,7 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
   real64 y_loc[8];
   real64 z_loc[8];
 
-  for(Index_type i=0; i<nDofs; ++i)
+  for(localIndex i=0; i<nDofs; ++i)
     {
       x_loc[i]  = X[0 + local_dim * nodeList[i]];
       y_loc[i]  = X[1 + local_dim * nodeList[i]];
@@ -245,12 +245,12 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
     }
   
   //loop over quadrature points
-  for(Index_type a=0; a < nQpts; ++a)
+  for(localIndex a=0; a < nQpts; ++a)
     {
       //Index for quadrature point (8 different combinations)
-      Index_type ix = a % 2;
-      Index_type iy = (a / 2) % 2;
-      Index_type iz = a / (2 * 2);
+      localIndex ix = a % 2;
+      localIndex iy = (a / 2) % 2;
+      localIndex iz = a / (2 * 2);
       
       real64 P[3][8];   //store evaluation of points at all basis functions
       //dNi/dxi ..... 
@@ -259,11 +259,11 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
       //Evaluate point across all basis functions
       
       //Evaluate point across all basis functions
-      for(Index_type q=0; q < 8; ++q)
+      for(localIndex q=0; q < 8; ++q)
         {
-          Index_type qx = q % 2;
-          Index_type qy = (q / 2) % 2;
-          Index_type qz = q / (2 * 2);
+          localIndex qx = q % 2;
+          localIndex qy = (q / 2) % 2;
+          localIndex qz = q / (2 * 2);
           
           P[0][q] = shapefun_prime(sign[qx],a_val[qy],b_val[qy],intPoints[iy],
                              a_val[qz],b_val[qz],intPoints[iz]);                    
@@ -321,14 +321,14 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
                            U dNdX_y[inumQuadraturePoints][inumNodesPerElement],
                            U dNdX_z[inumQuadraturePoints][inumNodesPerElement],
                            P_Wrapper P,
-                           Index_type nQpts, Index_type nDofs)
+                           localIndex nQpts, localIndex nDofs)
 {
 
   real64 x_loc[8];
   real64 y_loc[8];
   real64 z_loc[8];
 
-  for(Index_type i=0; i<nDofs; ++i)
+  for(localIndex i=0; i<nDofs; ++i)
     {
       x_loc[i]  = X[0 + local_dim * nodeList[i]];
       y_loc[i]  = X[1 + local_dim * nodeList[i]];
@@ -336,7 +336,7 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
     }
   
   //loop over quadrature points
-  for(Index_type a=0; a < nQpts; ++a)
+  for(localIndex a=0; a < nQpts; ++a)
     {
       //dNi/dxi ..... 
       //dNi/nu  .....
@@ -385,37 +385,37 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
 }
 
 RAJA_HOST_DEVICE
-RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const Index_type * elemsToNodes,
-                           Index_type NoElem, Index_type nQpts, Index_type nDofs)
+RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const localIndex * elemsToNodes,
+                           localIndex NoElem, localIndex nQpts, localIndex nDofs)
 {
 
-  Index_type sign[2] = {-1,1};
+  localIndex sign[2] = {-1,1};
   real64 a_val[2] = {1.0,0.0};
   real64 b_val[2] = {1,-1};
   real64 intPoints[2]  = {0.211324865405187, 0.788675134594813};
 
-  for(Index_type k=0; k < NoElem; ++k){
+  for(localIndex k=0; k < NoElem; ++k){
 
     real64 x_loc[8];
     real64 y_loc[8];
     real64 z_loc[8];
     
     //Copy local dofs
-    for(Index_type a=0; a<nDofs; ++a)
+    for(localIndex a=0; a<nDofs; ++a)
       {
-        Index_type id = elemsToNodes[a + inumNodesPerElement*k];
+        localIndex id = elemsToNodes[a + inumNodesPerElement*k];
         x_loc[a] = X[0 + local_dim * id];
         y_loc[a] = X[1 + local_dim * id];
         z_loc[a] = X[2 + local_dim * id]; 
       }
 
     //loop over quadrature points
-    for(Index_type a=0; a < nQpts; ++a)
+    for(localIndex a=0; a < nQpts; ++a)
       {
         //Index for quadrature point (8 different combinations)
-        Index_type ix = a % 2;
-        Index_type iy = (a / 2) % 2;
-        Index_type iz = a / (2 * 2);
+        localIndex ix = a % 2;
+        localIndex iy = (a / 2) % 2;
+        localIndex iz = a / (2 * 2);
 
         real64 P[3][8];   //store evaluation of points at all basis functions
         //dNi/dxi ..... 
@@ -424,11 +424,11 @@ RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const Index_type *
         //Evaluate point across all basis functions
         
         //Evaluate point across all basis functions
-        for(Index_type q=0; q < 8; ++q)
+        for(localIndex q=0; q < 8; ++q)
           {
-            Index_type qx = q % 2;
-            Index_type qy = (q / 2) % 2;
-            Index_type qz = q / (2 * 2);
+            localIndex qx = q % 2;
+            localIndex qy = (q / 2) % 2;
+            localIndex qz = q / (2 * 2);
             
             P[0][q] = shapefun_prime(sign[qx],a_val[qy],b_val[qy],intPoints[iy],
                              a_val[qz],b_val[qz],intPoints[iz]);                    
@@ -469,7 +469,7 @@ RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const Index_type *
             }
           }
           
-          Index_type id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+          localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
           dNdX[0 + local_dim*id] = dX[0];
           dNdX[1 + local_dim*id] = dX[1];
           dNdX[2 + local_dim*id] = dX[2];
@@ -484,48 +484,48 @@ RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const Index_type *
 
 RAJA_HOST_DEVICE
 RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z,
-                           const real64 * X, const Index_type * elemsToNodes,
-                           Index_type NoElem, Index_type nQpts, Index_type nDofs)
+                           const real64 * X, const localIndex * elemsToNodes,
+                           localIndex NoElem, localIndex nQpts, localIndex nDofs)
 {
 
-  Index_type sign[2] = {-1,1};
+  localIndex sign[2] = {-1,1};
   real64 a_val[2] = {1.0,0.0};
   real64 b_val[2] = {1,-1};
   real64 intPoints[2]  = {0.211324865405187, 0.788675134594813};
 
-  for(Index_type k=0; k < NoElem; ++k){
+  for(localIndex k=0; k < NoElem; ++k){
 
     real64 x_loc[8];
     real64 y_loc[8];
     real64 z_loc[8];
     
     //Copy local dofs
-    for(Index_type a=0; a<nDofs; ++a)
+    for(localIndex a=0; a<nDofs; ++a)
       {
-        Index_type id = elemsToNodes[a + inumNodesPerElement*k];
+        localIndex id = elemsToNodes[a + inumNodesPerElement*k];
         x_loc[a] = X[0 + local_dim * id];
         y_loc[a] = X[1 + local_dim * id];
         z_loc[a] = X[2 + local_dim * id]; 
       }
 
     //loop over quadrature points
-    for(Index_type a=0; a < nQpts; ++a)
+    for(localIndex a=0; a < nQpts; ++a)
       {
         //Index for quadrature point (8 different combinations)
-        Index_type ix = a % 2;
-        Index_type iy = (a / 2) % 2;
-        Index_type iz = a / (2 * 2);
+        localIndex ix = a % 2;
+        localIndex iy = (a / 2) % 2;
+        localIndex iz = a / (2 * 2);
 
         real64 P[3][8];   //store evaluation of points at all basis functions
         //dNi/dxi ..... 
         //dNi/nu  .....
         //dNi/mu  .....
         //Evaluate point across all basis functions       
-        for(Index_type q=0; q < 8; ++q)
+        for(localIndex q=0; q < 8; ++q)
           {
-            Index_type qx = q % 2;
-            Index_type qy = (q / 2) % 2;
-            Index_type qz = q / (2 * 2);
+            localIndex qx = q % 2;
+            localIndex qy = (q / 2) % 2;
+            localIndex qz = q / (2 * 2);
             
             P[0][q] = shapefun_prime(sign[qx],a_val[qy],b_val[qy],intPoints[iy],
                              a_val[qz],b_val[qz],intPoints[iz]);                    
@@ -566,7 +566,7 @@ RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z
             }
           }
           
-          Index_type id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+          localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
           dNdX_x[id] = dX[0];
           dNdX_y[id] = dX[1];
           dNdX_z[id] = dX[2];

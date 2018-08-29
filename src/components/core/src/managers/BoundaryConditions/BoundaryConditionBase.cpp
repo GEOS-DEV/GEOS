@@ -23,10 +23,9 @@ namespace geosx
 using namespace dataRepository;
 
 BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup * parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 );
-  RegisterViewWrapper( viewKeyStruct::constitutivePathString, &m_constitutivePath, 0 );
   RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, 0 );
   RegisterViewWrapper( viewKeyStruct::fieldNameString, &m_fieldName, 0 );
   RegisterViewWrapper( viewKeyStruct::componentString, &m_component, 0 );
@@ -35,13 +34,16 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
   RegisterViewWrapper( viewKeyStruct::bcApplicationTableNameString, &m_bcApplicationFunctionName, 0 );
   RegisterViewWrapper( viewKeyStruct::scaleString, &m_scale, 0 );
   RegisterViewWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, 0 );
+  RegisterViewWrapper( viewKeyStruct::beginTimeString, &m_beginTime, 0 );
+  RegisterViewWrapper( viewKeyStruct::endTimeString, &m_endTime, 0 );
 }
 
 
 BoundaryConditionBase::~BoundaryConditionBase()
 {}
 
-BoundaryConditionBase::CatalogInterface::CatalogType& BoundaryConditionBase::GetCatalog()
+BoundaryConditionBase::CatalogInterface::CatalogType&
+BoundaryConditionBase::GetCatalog()
 {
   static BoundaryConditionBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -77,20 +79,6 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-
-  docNode->AllocateChildNode( viewKeyStruct::constitutivePathString,
-                              viewKeyStruct::constitutivePathString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of field that boundary condition is applied to.",
-                              "",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
   docNode->AllocateChildNode( viewKeyStruct::objectPathString,
                               viewKeyStruct::objectPathString,
                               -1,
@@ -117,18 +105,18 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeyStruct::dataTypeString,
-                              viewKeyStruct::dataTypeString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of field that boundary condition is applied to.",
-                              "",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
+//  docNode->AllocateChildNode( viewKeyStruct::dataTypeString,
+//                              viewKeyStruct::dataTypeString,
+//                              -1,
+//                              "string",
+//                              "string",
+//                              "Name of field that boundary condition is applied to.",
+//                              "",
+//                              "REQUIRED",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 
   docNode->AllocateChildNode( viewKeyStruct::componentString,
                               viewKeyStruct::componentString,
@@ -194,127 +182,37 @@ void BoundaryConditionBase::FillDocumentationNode()
                               0,
                               1,
                               0 );
+
+
+  docNode->AllocateChildNode( viewKeyStruct::beginTimeString,
+                              viewKeyStruct::beginTimeString,
+                              -1,
+                              "real64",
+                              "real64",
+                              "time at which BC will start being applied",
+                              "",
+                              "-1.0e99",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::endTimeString,
+                              viewKeyStruct::endTimeString,
+                              -1,
+                              "real64",
+                              "real64",
+                              "time at which bc will stop being applied",
+                              "",
+                              "1.0e99",
+                              "",
+                              0,
+                              1,
+                              0 );
 }
 
 void BoundaryConditionBase::ReadXML_PostProcess()
-{
-}
-
-//real64 BoundaryConditionBase::GetValue( realT time ) const
-//{
-//
-//  real64 rval = m_scale;
-//  if (!(m_functionName.empty()))
-//  {
-//    array1d<real64> t(1);
-//    t[0] = time;
-//    real64 const tableval =
-// TableManager::Instance().LookupTable<1>(m_functionName, t);
-//    rval = m_scale * tableval;
-//  }
-////  else if (!(m_spaceFunctionName.empty()))
-////  {
-//////    rval = m_scale * (*m_function)(time);
-////  }
-//  return rval;
-//}
-//
-//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const &
-// set,
-//                                                                real64 const
-// time,
-//                                                                array1d<R1Tensor>
-// const & X,
-//                                                                array1d<R1Tensor>
-// & field )
-//{
-//
-//  integer const component = GetComponent();
-//  string const functionName =
-// getData<string>(dataRepository::keys::functionName);
-//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-//
-//  FunctionBase const * const function  =
-// functionManager->GetGroup<FunctionBase>(functionName);
-//
-//  if( function!=nullptr )
-//  {
-//    real64 const factor = m_scale * ( timeFunction->Evaluate( &time ) );
-//    for( auto a : set )
-//    {
-//      field[a][component] = factor;
-//    }
-//  }
-//  else
-//  {
-//    for( auto a : set )
-//    {
-//      field[a][component] = m_scale;
-//    }
-//  }
-//}
-//
-//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const &
-// set,
-//                                                                real64 const
-// time,
-//                                                                ManagedGroup *
-// dataGroup,
-//                                                                string const &
-// fieldName ) const
-//{
-//
-//  integer const component = GetComponent();
-//  string const functionName =
-// getData<string>(dataRepository::keys::functionName);
-//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-//
-//  ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-//  std::type_index typeIndex = std::type_index(vw->get_typeid());
-//
-//  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type
-// ) -> void
-//  {
-//    using fieldType = decltype(type);
-//    ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> &
-// >(*vw);
-//    view_rtype<fieldType> field = view.data();
-//    if( functionName.empty() )
-//    {
-//      for( auto a : set )
-//      {
-//        rtTypes::equate( field[a], component, m_scale );
-//      }
-//    }
-//    else
-//    {
-//      FunctionBase const * const function  =
-// functionManager->GetGroup<FunctionBase>(functionName);
-//      if( function!=nullptr)
-//      {
-//        if( function->isFunctionOfTime()==2 )
-//        {
-//          real64 value = m_scale * function->Evaluate( &time );
-//          for( auto a : set )
-//          {
-//            rtTypes::equate( field[a], component, value );
-//          }
-//        }
-//        else
-//        {
-//          real64_array result(set.size());
-//          function->Evaluate( dataGroup, time, set, result );
-//          integer count=0;
-//          for( auto a : set )
-//          {
-//            rtTypes::equate( field[a], component, result[count] );
-//            ++count;
-//          }
-//        }
-//      }
-//    }
-//  });
-//}
+{}
 
 
 

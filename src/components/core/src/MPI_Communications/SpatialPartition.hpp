@@ -215,7 +215,7 @@ public:
 
 //	struct PeriodicSet {
 //		int m_dimension;
-//		array1d<string> m_setNames;
+//		string_array m_setNames;
 //		void ReadXML(TICPP::HierarchicalDataNode& hdn) {
 //			m_dimension = hdn.GetAttributeValue<int>("dimension");
 //			m_setNames = hdn.GetStringVector("setnames");

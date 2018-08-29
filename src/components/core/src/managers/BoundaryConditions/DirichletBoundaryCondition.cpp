@@ -30,7 +30,7 @@ namespace geosx
 using namespace dataRepository;
 
 DirichletBoundaryCondition::DirichletBoundaryCondition( string const & name, ManagedGroup *const parent ):
-  BoundaryConditionBase(name,parent)
+  BoundaryConditionBase( name, parent )
 {
   // TODO Auto-generated constructor stub
 

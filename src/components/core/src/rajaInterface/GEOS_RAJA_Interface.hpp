@@ -66,28 +66,41 @@ typedef RAJA::seq_reduce reducePolicy;
 #define GEOSX_LAMBDA [=]
 #endif
 
-using localIndex = RAJA::Index_type;
+namespace geosx
+{  
 
-//RAJA wrapper of loops over ranges
+namespace raja
+{
+  
+//
+template<typename POLICY=atomicPolicy, typename T>
+RAJA_INLINE void atomicAdd(T *acc, T value)
+{
+  RAJA::atomic::atomicAdd<POLICY>(acc, value);
+}
+
+//RAJA wrapper for loops over ranges - local index
 template<class POLICY=elemPolicy, typename LAMBDA=void>
-void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body){
+RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), body);
+}
 
-  RAJA::forall<POLICY>(RAJA::RangeSegment(begin, end), body);  
+//RAJA wrapper for loops over ranges - local index
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end, LAMBDA && body)
+{
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<globalIndex>(begin, end), body);
 }
 
 //RAJA wrapper for loops over sets
-//A RAJA list segment won't own the data
-template<typename T, class POLICY=elemPolicy, typename LAMBDA=void>
-void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body){
-
-  RAJA::forall<POLICY>(RAJA::ListSegment(indexList, len, RAJA::Unowned), body);
+template<class POLICY=elemPolicy, typename T, typename LAMBDA=void>
+RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), body);
 }
 
-
-//RAJA wrapper for list segments
-template<class POLICY=elemPolicy, typename LAMBDA=void>
-void forall_in_set(RAJA::TypedListSegment<localIndex> iList, LAMBDA && body){
-  RAJA::forall<POLICY>(iList, body);
 }
-
+}
+  
 #endif
