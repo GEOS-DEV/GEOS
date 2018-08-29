@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 #ifdef USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 
   global_argc = argc;
