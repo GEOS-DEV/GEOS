@@ -50,10 +50,14 @@ void testLaplaceOperator()
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Set the MPI communicator
-  MPI_Comm comm = MPI_COMM_WORLD;
+  // MPI_Comm comm = MPI_COMM_WORLD;
+
+  MPI_Comm test_comm;
+  MPI_Comm_dup(MPI_COMM_WORLD,&test_comm);
+  MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 300;
+  globalIndex n = 10;
   globalIndex N = n*n;
 
   ParallelMatrix testMatrix;
@@ -153,29 +157,25 @@ void testLaplaceOperator()
     EXPECT_TRUE( vecIndicesRown[4] == 2*n );
       }
   // Fill standard vectors
-  std::vector<real64> ones, zer1, zer2, zer3, zer4, zer5;
+  std::vector<real64> ones, zer;
   for (int j = 0; j < N; j++)
   {
-    zer1.push_back(0);
-    zer2.push_back(0);
-    zer3.push_back(0);
-    zer4.push_back(0);
-    zer5.push_back(0);
+    zer.push_back(0);
     ones.push_back(1);
   }
 
   // Define vectors
-  ParallelVector x, b, r, solIterative, solIterativeML, solDirect;
+  ParallelVector x, b;
   // Right hand side for multiplication (b)
-  b.create(zer1);
+  b.create(zer);
   // Vector of ones for multiplication (x)
   x.create(ones);
   // Vector of zeros for iterative and direct solutions
-  solIterative.create(zer3);
-  solIterativeML.create(zer4);
-  solDirect.create(zer5);
+  ParallelVector solIterative(b);
+  ParallelVector solIterativeML(b);
+  ParallelVector solDirect(b);
   // Residual vector
-  r.create(zer2);
+  ParallelVector r(b);
 
   // Matrix/vector multiplication
   testMatrix.multiply(x, b);
@@ -237,7 +237,43 @@ void testLaplaceOperator()
 
   BlockMatrixView<TrilinosInterface> testBlockMatrix;
 
-  array1d<ParallelMatrix> * MatArray;
+  ParallelMatrix testMatrix2(testMatrix);
+  ParallelVector solDirect2(solDirect);
+
+  testMatrix2.scale(2.);
+  solDirect2.scale(-0.5);
+
+  ParallelMatrix * testMatrix00 = nullptr;
+  ParallelMatrix * testMatrix01 = nullptr;
+  ParallelVector * testsol0 = nullptr;
+  ParallelVector * testsol1 = nullptr;
+  ParallelVector * testrhs0 = nullptr;
+
+  testBlockMatrix.setBlock(0,0,&testMatrix);
+  testBlockMatrix.setBlock(0,1,&testMatrix2);
+
+  testBlockMatrix.setSolution(0,&solDirect);
+  testBlockMatrix.setSolution(1,&solDirect2);
+
+  testBlockMatrix.setRhs(0,&r);
+
+  testBlockMatrix.apply();
+
+  testMatrix00 = testBlockMatrix.getBlock(0,0);
+  testMatrix01 = testBlockMatrix.getBlock(0,1);
+  testsol0 = testBlockMatrix.getSolution(0);
+  testsol1 = testBlockMatrix.getSolution(1);
+  testrhs0 = testBlockMatrix.getRhs(0);
+
+  testMatrix00->print();
+  testMatrix01->print();
+
+  testsol0->print();
+  testsol1->print();
+
+  testrhs0->print();
+
+
 
   MPI_Finalize();
 

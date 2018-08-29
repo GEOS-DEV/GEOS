@@ -33,6 +33,11 @@ public:
   EpetraVector();
 
   /**
+   * @brief Copy constructor.
+   */
+  EpetraVector(EpetraVector const & vector);
+
+  /**
    * @brief Virtual destructor.
    */
   virtual ~EpetraVector() = default;
@@ -77,14 +82,14 @@ public:
    * @brief Dot product with the vector vec.
    */
   void dot( EpetraVector const &vec,
-            real64 *dst );
+            real64 *dst);
 
   /**
    * @brief Update (name to be changed) vector as this = alpha*vec + beta*this.
    */
   void update( real64 const alpha,
                EpetraVector const &vec,
-               real64 const beta );
+               real64 const beta);
 
   /**
    * @brief 1-norm of the vector.

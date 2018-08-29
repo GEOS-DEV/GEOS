@@ -42,7 +42,7 @@ public:
    *
    * Create a block matrix from an array of matrices.
    */
-  BlockMatrixView(array1d<ParallelMatrix> * Mats);
+  //BlockMatrixView(array1d<ParallelMatrix> * Mats);
 
   /**
    * @brief Virtual destructor.
@@ -54,7 +54,6 @@ public:
   //@{
   /**
    * @brief Apply the block matrix to a block vector.
-   *
    */
   void apply();
 
@@ -69,20 +68,49 @@ public:
   void clearRow(globalIndex rowIndex, real64 factor);
   //@}
 
-  //! @name Accessors
+  //! @name Accessors/Setters
   //@{
   /**
-   * @brief Get the matrix corresponding to block (<tt>i</tt>,<tt>j</tt>).
-   *
+   * @brief Get the matrix corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
    */
-  void getBlock(integer blockRowIndex, integer blockColIndex);
+  ParallelMatrix * getBlock(integer blockRowIndex, integer blockColIndex);
+
+  /**
+   * @brief Get the solution vector corresponding to block (<tt>j</tt>).
+   */
+  ParallelVector * getSolution(integer blockColIndex);
+
+  /**
+   * @brief Get the rhs vector corresponding to block (<tt>j</tt>).
+   */
+  ParallelVector * getRhs(integer blockRowIndex);
 
   /**
    * @brief Get the matrix corresponding to block <tt>name</tt>.
-   *
    */
-  void getBlock(std::string blockName);
+  ParallelMatrix * getBlock(std::string blockName);
+
+  /**
+   * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
+   */
+  void setBlock(integer blockRowIndex, integer blockColIndex, ParallelMatrix * matrix);
+
+  /**
+   * @brief Get the solution vector corresponding to block (<tt>j</tt>).
+   */
+  void setSolution(integer blockColIndex, ParallelVector * vector);
+
+  /**
+   * @brief Get the rhs vector corresponding to block (<tt>j</tt>).
+   */
+  void setRhs(integer blockRowIndex, ParallelVector * vector);
+
   //@}
+
+private:
+  ParallelMatrix * m_matrices[2][2];
+  ParallelVector * m_solution[2];
+  ParallelVector * m_rhs[2];
 
 };
 
@@ -93,17 +121,22 @@ BlockMatrixView<LAI>::BlockMatrixView()
 {
 }
 
-template< typename LAI >
-inline
-BlockMatrixView<LAI>::BlockMatrixView(array1d<ParallelMatrix> * Mats)
-{
-}
+//template< typename LAI >
+//inline
+//BlockMatrixView<LAI>::BlockMatrixView(array1d<ParallelMatrix> * Mats)
+//{
+//}
 
 // Apply the block matrix to a block vector.
 template< typename LAI >
 inline
 void BlockMatrixView<LAI>::apply()
-{}
+{
+  ParallelVector temp(*m_rhs[0]);
+  m_matrices[0][0]->multiply(*m_solution[0],temp);
+  m_matrices[0][1]->multiply(*m_solution[1],*m_rhs[0]);
+  m_rhs[0]->update(1.0,temp,1.0);
+}
 
 // Set to residual form.
 template< typename LAI >
@@ -120,15 +153,49 @@ void BlockMatrixView<LAI>::clearRow(globalIndex rowIndex, real64 factor)
 // Accessor for block.
 template< typename LAI >
 inline
-void BlockMatrixView<LAI>::getBlock(integer blockRowIndex, integer blockColIndex)
-{}
+typename LAI::ParallelMatrix * BlockMatrixView<LAI>::getBlock(integer blockRowIndex, integer blockColIndex)
+{
+  return m_matrices[blockRowIndex][blockColIndex];
+}
+
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::setBlock(integer blockRowIndex, integer blockColIndex, typename LAI::ParallelMatrix * matrix)
+{
+  m_matrices[blockRowIndex][blockColIndex] = matrix;
+}
 
 // Accessor for block.
 template< typename LAI >
 inline
-void BlockMatrixView<LAI>::getBlock(std::string blockName)
-{}
+typename LAI::ParallelVector * BlockMatrixView<LAI>::getSolution(integer blockColIndex)
+{
+  return m_solution[blockColIndex];
+}
 
+// Accessor for block.
+template< typename LAI >
+inline
+typename LAI::ParallelVector * BlockMatrixView<LAI>::getRhs(integer blockRowIndex)
+{
+  return m_rhs[blockRowIndex];
+}
+
+// Setter for solution.
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::setSolution(integer blockColIndex, typename LAI::ParallelVector * vector)
+{
+  m_solution[blockColIndex] = vector;
+}
+
+// Setter for rhs.
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::setRhs(integer blockRowIndex, typename LAI::ParallelVector * vector)
+{
+  m_rhs[blockRowIndex] = vector;
+}
 
 }
 
