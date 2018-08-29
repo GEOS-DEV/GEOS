@@ -79,7 +79,7 @@ namespace systemSolverInterface
 {
 
 LinearSolverWrapper::LinearSolverWrapper():
-#if USE_MPI
+#ifdef USE_MPI
   m_epetraComm(MPI_COMM_GEOSX)
 #else
   m_epetraComm()
