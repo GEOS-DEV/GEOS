@@ -257,6 +257,7 @@ void checkScalarView(const ViewWrapper<T> * view, int sfp, const T value) {
 
 TEST(testSidreExtended, testSidreExtended) {
   MPI_Init(0, nullptr);
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_extended";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
