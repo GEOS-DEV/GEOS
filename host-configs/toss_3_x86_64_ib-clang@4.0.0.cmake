@@ -20,6 +20,7 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
 set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
 
+set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
 #######################################
 # RAJA/CHAI SETUP
