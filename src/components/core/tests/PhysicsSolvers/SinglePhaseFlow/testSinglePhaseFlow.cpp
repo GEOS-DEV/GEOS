@@ -173,6 +173,7 @@ int main(int argc, char** argv)
 #ifdef USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 

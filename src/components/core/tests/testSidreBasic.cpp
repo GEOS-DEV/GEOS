@@ -30,6 +30,7 @@ namespace dataRepository {
 #ifdef USE_ATK
 TEST(testSidreBasic, testSidreBasic) {
   MPI_Init(0, nullptr);
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_basic";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
