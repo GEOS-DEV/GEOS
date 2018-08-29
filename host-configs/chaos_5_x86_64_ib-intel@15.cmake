@@ -23,6 +23,8 @@ include("${TPL_DIR}/${CONFIG_NAME}.cmake")
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
 
+set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################

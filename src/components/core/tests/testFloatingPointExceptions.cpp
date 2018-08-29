@@ -47,36 +47,43 @@
 // API coverage tests
 // Each test should be documented with the interface functions being tested
 
+const char IGNORE_OUTPUT[] = ".*";
+
 //------------------------------------------------------------------------------
 // getName()
 //------------------------------------------------------------------------------
 
-void func3()
+void func3(double divisor)
 {
-  std::cout<<"Perform 1.0/0.0"<<std::endl;
-  double a = 1.0/0.0;
-  std::cout<<"1.0/0.0 didn't kill program, result is "<<a<<std::endl<<std::endl;
+  double a = 1.0 / divisor;
+  EXPECT_TRUE(false) << "1.0/0.0 didn't kill program, result is " << a;
 }
 
-void func2()
+void func2(double divisor)
 {
-  func3();
+  func3(divisor);
 }
 
-void func1()
+void func1(double divisor)
 {
-  func2();
+  func2(divisor);
 }
 
-void func0()
+void func0(double divisor)
 {
-  func1();
+  func1(divisor);
 }
-TEST(testStackTrace,stackTrace)
-{
 
+void testStackTrace(double divisor)
+{
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
-  func0();
+  func0(divisor);
+}
 
-//  exit(0);
+TEST(testStackTrace_DeathTest, stackTrace)
+{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wused-but-marked-unused"
+  EXPECT_DEATH_IF_SUPPORTED(testStackTrace(0), IGNORE_OUTPUT);
+#pragma GCC diagnostic pop
 }
