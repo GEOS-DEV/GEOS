@@ -291,7 +291,7 @@ real64 TetVolume( R1Tensor const * const X ) {
     X2_X0 -= X[0];
     R1Tensor X3_X0( X[3] );
     X3_X0 -= X[0];
-    return Dot(X1_X0, Cross(X2_X0, X3_X0)) / 6.0;
+    return std::fabs(Dot(X1_X0, Cross(X2_X0, X3_X0)) / 6.0);
 }
 
 real64 WedgeVolume( R1Tensor const * const X ) {
