@@ -4,6 +4,7 @@
 
 set(gtest_geosx_tests
    testXML.cpp
+   testVTM.cpp
    )
 
 #
