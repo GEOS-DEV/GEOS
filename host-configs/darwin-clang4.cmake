@@ -18,6 +18,8 @@ set(MPIEXEC "mpirun-openmpi-clang40" CACHE PATH "")
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
 
+set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+
 
 #######################################
 # RAJA/CHAI SETUP
