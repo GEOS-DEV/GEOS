@@ -87,9 +87,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
   const array2d<localIndex> & facesToElems = faceManager->elementSubRegionList();
   const OrderedVariableOneToManyRelation & facesToNodes = faceManager->nodeList();
-  //const integer_array isExternalFace = faceManager->m_isExternal ;
-  // isExternal is not yet set
-  const integer_array isExternalFace = faceManager->getReference<integer_array>("domainBoundaryIndicator");
+  const integer_array isExternalFace = faceManager->m_isExternal ;
 
   globalID *extFaceMap ;
   int *slideNodeMap ;
