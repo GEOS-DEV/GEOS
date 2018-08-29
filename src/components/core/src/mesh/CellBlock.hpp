@@ -159,7 +159,7 @@ public:
 
 //protected:
 
-private:
+//private:
   localIndex m_numNodesPerElement;
   localIndex m_numEdgesPerElement;
   localIndex m_numFacesPerElement;

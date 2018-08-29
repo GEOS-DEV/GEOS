@@ -778,8 +778,8 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
   domain->SetupCommunications();
 
-
-
+  faceManager->SetIsExternal();
+  edgeManager->SetIsExternal( faceManager );
 
 }
 

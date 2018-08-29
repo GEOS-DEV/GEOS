@@ -52,7 +52,7 @@ class LaplaceFEM : public SolverBase
 {
 public:
   LaplaceFEM( const std::string& name,
-                                ManagedGroup * const parent );
+              ManagedGroup * const parent );
 
 
   virtual ~LaplaceFEM() override;
