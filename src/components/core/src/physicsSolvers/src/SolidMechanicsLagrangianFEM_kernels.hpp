@@ -78,7 +78,7 @@
 
 namespace SolidMechanicsLagrangianFEMKernels{
 
-using namespace SolidMechanicsLagrangianFEMKernels;
+//using namespace SolidMechanicsLagrangianFEMKernels;
 
 ///
 ///Solid mechanics update kernel with nodal degrees of freedom and

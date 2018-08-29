@@ -9,7 +9,6 @@ message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
 # OPTIONS
-
 option( ENABLE_CALIPER "" OFF )
 set( CALIPER_INSTALL "" CACHE PATH "")
 
@@ -59,6 +58,11 @@ endif()
 
 set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
 
+message( "GEOSX_TPL_ROOT_DIR = ${GEOSX_TPL_ROOT_DIR}" )
+get_filename_component(GEOSX_TPL_ROOT_DIR ${GEOSX_TPL_ROOT_DIR} ABSOLUTE)
+message( "Absolute GEOSX_TPL_ROOT_DIR = ${GEOSX_TPL_ROOT_DIR}" )
+
+
 #set(SPHINX_EXECUTABLE "sphinx-build" CACHE PATH "")
 #include(cmake/blt/cmake/thirdparty/FindSphinx.cmake)
 #message( "SPHINX_FOUND = ${SPHINX_FOUND}" )
@@ -80,6 +84,16 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
                                  GNU "" 
                                  CLANG "-fstandalone-debug" 
                                 )
+
+blt_append_custom_compiler_flag(FLAGS_VAR GEOSX_NINJA_FLAGS
+                  DEFAULT     " "
+                  GNU         "-fdiagnostics-color=always"
+                  CLANG       "-fcolor-diagnostics"
+                  )
+
+if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}")
+endif()
 
 if( CMAKE_HOST_APPLE )
     set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)

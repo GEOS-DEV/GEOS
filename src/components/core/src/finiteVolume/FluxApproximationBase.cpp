@@ -98,58 +98,21 @@ void FluxApproximationBase::compute(DomainPartition * domain)
 {
   computeMainStencil(domain, getStencil());
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  FaceManager * const faceManager = mesh->getFaceManager();
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
 
-  dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
-
-  bcManager->forSubGroups<BoundaryConditionBase>([&] (BoundaryConditionBase * bc) -> void
+  bcManager->ApplyBoundaryCondition( 0.0,
+                                     domain,
+                                     "faceManager",
+                                     m_boundaryFieldName,
+                                     [&] ( BoundaryConditionBase const * bc,
+                                           string const & setName,
+                                           set<localIndex> const & targetSet,
+                                           ManagedGroup * targetGroup,
+                                           string const & targetName) -> void
   {
-    if (bc->initialCondition())
-      return;
-
-    string_array const objectPath = stringutilities::Tokenize(bc->GetObjectPath(), "/");
-
-    if (objectPath.size() < 1 || objectPath[0] != MeshLevel::groupStructKeys::faceManagerString)
-      return;
-
-    // TODO this validation should really be in BoundaryConditionBase::ReadXML_Postprocess
-    string fieldName = bc->GetFieldName();
-    if (objectPath.size() > 1)
-    {
-      GEOS_ASSERT(fieldName.empty() || objectPath[1].empty(),
-                  "field name specified in both fieldName (" << fieldName
-                                                             << ") and objectPath (" << objectPath[1] << ")");
-
-      GEOS_ASSERT(!(bc->GetFieldName().empty() && objectPath[3].empty()),
-                  "field name not specified in either fieldName or objectPath");
-
-      if (!objectPath[1].empty())
-        fieldName = objectPath[1];
-    }
-    else
-    {
-      GEOS_ASSERT(!fieldName.empty(), "field name not specified in either fieldName or objectPath");
-    }
-
-    if (fieldName != m_boundaryFieldName)
-      return;
-
-    string_array setNames = bc->GetSetNames();
-    for (auto & setName : setNames)
-    {
-      dataRepository::ViewWrapper< set<localIndex> > const * const
-      setWrapper = sets->getWrapper< set<localIndex> >(setName);
-
-      if (setWrapper != nullptr)
-      {
-        set<localIndex> const & lset = setWrapper->reference();
-        ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
-        stencil->setRestartFlags(RestartFlags::NO_WRITE);
-        computeBoundaryStencil(domain, lset, stencil->reference());
-      }
-    }
+    ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
+    stencil->setRestartFlags(RestartFlags::NO_WRITE);
+    computeBoundaryStencil(domain, targetSet, stencil->reference());
   });
 }
 
@@ -182,4 +145,10 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
   return this->hasView(setName);
 }
 
+void FluxApproximationBase::FinalInitialization(ManagedGroup * const rootGroup)
+{
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  compute(domain);
 }
+
+} //namespace geosx

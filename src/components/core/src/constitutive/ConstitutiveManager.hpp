@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ConstitutiveManager.hpp
- *
- *  Created on: Aug 4, 2016
- *      Author: rrsettgast
+/**
+ * @file ConstitutiveManager.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
@@ -35,39 +32,74 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @typedef This is an alias for array of reference wrappers which are used to provide a
+ * multidimensional array like interface via the operator[].
+ */
 template< typename VIEWTYPE >
-using ViewAccessor = array1d < ReferenceWrapper< VIEWTYPE > > ;
+using ViewAccessor = array1d < ReferenceWrapper< VIEWTYPE > >;
 
-
+/**
+ * @class ConstitutiveManager
+ * @brief Class to manage the allocation and access to constitutive relations
+ */
 class ConstitutiveManager : public dataRepository::ManagedGroup
 {
 public:
   ConstitutiveManager() = delete;
 
-  ConstitutiveManager( std::string const & name,
+  ConstitutiveManager( string const & name,
                        ManagedGroup * const parent );
 
   void FillDocumentationNode() override final;
   virtual void CreateChild( string const & childKey, string const & childName ) override final;
 
-  ~ConstitutiveManager() override;
+  ConstitutiveBase *
+  HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+                            dataRepository::ManagedGroup * const parent,
+                            localIndex const numConstitutivePointsPerParentIndex ) const;
 
-//  using constitutiveMaps = std::pair< array1d<ManagedGroup const *> ,
-// map<string,integer> > ;
-//  constitutiveMaps & GetMaps( integer const reinit ) const;
+  ~ConstitutiveManager();
 
+  template< typename T = ConstitutiveBase >
+  T const * GetConstitituveRelation( string const & constitutiveRelationInstanceName ) const
+  {
+    return this->GetGroup<T>( constitutiveRelationInstanceName );
+  }
+
+  template< typename T = ConstitutiveBase >
+  T * GetConstitituveRelation( string const & constitutiveRelationInstanceName )
+  {
+    return this->GetGroup<T>( constitutiveRelationInstanceName );
+  }
+
+  template< typename T = ConstitutiveBase >
+  T const * GetConstitituveRelation( localIndex const index ) const
+  {
+    return this->GetGroup<T>( index );
+  }
+
+  template< typename T = ConstitutiveBase >
+  T * GetConstitituveRelation( localIndex const index )
+  {
+    return this->GetGroup<T>( index );
+  }
 
   template< typename T >
-  ViewAccessor< T > GetParameterData( string const & name );
+  ViewAccessor< T >
+  GetConstitutiveData( string const & name,
+                       dataRepository::ManagedGroup * const relationGroup );
 
   template< typename T >
-  ViewAccessor< T const > GetParameterData( string const & name ) const;
+  ViewAccessor< T const >
+  GetConstitutiveData( string const & name,
+                       dataRepository::ManagedGroup const * const relationGroup ) const;
 
-  template< typename T >
-  ViewAccessor< T > GetStateData( string const & name );
 
-  template< typename T >
-  ViewAccessor< T const > GetStateData( string const & name ) const;
+  struct groupKeyStruct
+  {
+    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
+  } m_ConstitutiveManagerGroupKeys;
 
 
 };
@@ -75,88 +107,35 @@ public:
 
 
 template< typename T >
-ViewAccessor< T > ConstitutiveManager::GetParameterData( string const & name )
+ViewAccessor< T const >
+ConstitutiveManager::GetConstitutiveData( string const & name,
+                                          dataRepository::ManagedGroup const * const relationGroup ) const
 {
-  ViewAccessor< T > rval;
+  ViewAccessor< T const > rval( relationGroup->numSubGroups() );
 
-  rval.resize( this->GetSubGroups().size() );
+  rval.resize( relationGroup->numSubGroups() );
   for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
-    ConstitutiveBase * const material = GetGroup<ConstitutiveBase>(a);
-    if( material->GetParameterData()->hasView(name) )
+    ConstitutiveBase const * const material = relationGroup->GetGroup<ConstitutiveBase>( a );
+    if( material->hasView( name ) )
     {
-      rval[a].set(material->GetParameterData()->getReference<T>(name));
+      rval[a].set( material->getReference<T>( name ));
     }
     else
     {
-      rval[a].set(nullptr);
+      rval[a].set( nullptr );
     }
   }
   return rval;
 }
-
-template< typename T >
-ViewAccessor< T const > ConstitutiveManager::GetParameterData( string const & name ) const
-{
-  ViewAccessor< T const > rval;
-
-  rval.resize( this->GetSubGroups().size() );
-  for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
-  {
-    ConstitutiveBase const * const material = GetGroup<ConstitutiveBase>(a);
-    if( material->GetParameterData()->hasView(name) )
-    {
-      rval[a].set(material->GetParameterData()->getReference<T>(name));
-    }
-    else
-    {
-      rval[a].set(nullptr);
-    }
-  }
-  return rval;
-}
-
 
 template< typename T >
 ViewAccessor< T >
-ConstitutiveManager::GetStateData( string const & name )
+ConstitutiveManager::GetConstitutiveData( string const & name,
+                                          dataRepository::ManagedGroup * const relationGroup )
 {
-  ViewAccessor< T > rval;
-  rval.resize( this->GetSubGroups().size() );
-  for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
-  {
-    ConstitutiveBase * const material = GetGroup<ConstitutiveBase>(a);
-    if( material->GetStateData()->hasView(name) )
-    {
-      rval[a].set(material->GetStateData()->getReference<T>(name));
-    }
-    else
-    {
-      rval[a].set(nullptr);
-    }
-  }
-  return rval;
-}
-
-template< typename T >
-ViewAccessor< T const >
-ConstitutiveManager::GetStateData( string const & name ) const
-{
-  ViewAccessor< T const > rval;
-  rval.resize( this->GetSubGroups().size() );
-  for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
-  {
-    ConstitutiveBase const * const material = GetGroup<ConstitutiveBase>(a);
-    if( material->GetStateData()->hasView(name) )
-    {
-      rval[a].set(material->GetStateData()->getReference<T>(name));
-    }
-    else
-    {
-      rval[a].set(nullptr);
-    }
-  }
-  return rval;
+  return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this)->
+                                       GetConstitutiveData<T>( name, relationGroup ) );
 }
 
 }

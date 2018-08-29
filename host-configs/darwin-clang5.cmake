@@ -12,6 +12,8 @@ set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-openmpi-clang50" CACHE PATH "")
 set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-openmpi-clang50" CACHE PATH "")
 set(MPIEXEC "mpirun-openmpi-clang50" CACHE PATH "")
 
+set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################

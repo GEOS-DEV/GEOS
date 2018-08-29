@@ -137,8 +137,8 @@ void runProblem(ProblemManager & problemManager, int argc, char** argv)
   problemManager.ParseInputFile();
 
   problemManager.Initialize(&problemManager);
-  problemManager.FinalInitializationRecursive(&problemManager);
   problemManager.ApplyInitialConditions();
+  problemManager.FinalInitializationRecursive(&problemManager);
 
   std::cout << std::endl << "Running simulation:" << std::endl;
   problemManager.RunSimulation();
@@ -156,7 +156,7 @@ TEST(singlePhaseFlow,analyticalTest)
   ASSERT_TRUE(fn != nullptr);
 
   real64 const err = computeErrorNorm(problemManager.getDomainPartition(),
-                                      SinglePhaseFlow::viewKeyStruct::fluidPressureString,
+                                      SinglePhaseFlow::viewKeyStruct::pressureString,
                                       [&](R1Tensor const &pt) -> real64
                                       {
                                         return fn->Evaluate(pt.Data());

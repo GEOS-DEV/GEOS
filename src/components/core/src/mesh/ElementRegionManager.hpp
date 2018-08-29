@@ -29,6 +29,7 @@
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "CellBlock.hpp"
 #include "CellBlockSubRegion.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 //#include "legacy/ArrayT/bufvector.h"
@@ -53,8 +54,21 @@ class ElementRegionManager : public ObjectManagerBase
 {
 public:
 
+  constexpr static int maxNumNodesPerElem = 8;
+
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > > ;
+
+  /**
+   * The MaterialViewAccessor at the ElementRegionManager level is an 3d array that contains a
+   * ReferenceWrapper around the VIEWTYPE. The dimensions are denoted as follows:
+   * var[elementRegionIndex][elementSubRegionIndex][materialIndexInRegion]
+   */
+  template< typename VIEWTYPE >
+  using MaterialViewAccessor = array1d< array1d< array1d < ReferenceWrapper< VIEWTYPE > > > > ;
+
+  template< typename CONSTITUTIVE_TYPE >
+  using ConstitutiveRelationAccessor = array1d< array1d< array1d< CONSTITUTIVE_TYPE * > > >;
 
   /**
    * @name Static Factory Catalog Functions
@@ -177,6 +191,37 @@ public:
     }
   }
 
+  template< typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda )
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion * elementRegion = this->GetRegion(er);
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
+      {
+        CellBlockSubRegion * cellBlock = elementRegion->GetSubRegion(esr);
+        lambda( er, esr, elementRegion, cellBlock );
+      }
+    }
+  }
+
+  template< typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda ) const
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion const * elementRegion = this->GetRegion(er);
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
+      {
+        CellBlockSubRegion const * cellBlock = elementRegion->GetSubRegion(esr);
+        lambda( er, esr, elementRegion, cellBlock );
+      }
+    }
+  }
+
+
   template< typename VIEWTYPE >
   ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
                                                        string const & neighborName = string() );
@@ -185,6 +230,20 @@ public:
   ElementViewAccessor<VIEWTYPE const> ConstructViewAccessor( string const & name,
                                                              string const & neighborName = string() ) const;
 
+
+  template< typename VIEWTYPE >
+  MaterialViewAccessor<VIEWTYPE const>
+  ConstructMaterialViewAccessor( string const & name,
+                                 constitutive::ConstitutiveManager const * const cm ) const;
+
+  template< typename VIEWTYPE >
+  MaterialViewAccessor<VIEWTYPE>
+  ConstructMaterialViewAccessor( string const & name,
+                                 constitutive::ConstitutiveManager const * const cm  );
+
+  template< typename CONSTITUTIVE_TYPE >
+  ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE>
+  ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
 
   using ManagedGroup::PackSize;
   using ManagedGroup::Pack;
@@ -197,11 +256,11 @@ public:
 
 
 
-  int PackSize( array1d<string> const & wrapperNames,
+  int PackSize( string_array const & wrapperNames,
                 ElementViewAccessor<localIndex_array> const & packList ) const;
 
   int Pack( buffer_unit_type * & buffer,
-            array1d<string> const & wrapperNames,
+            string_array const & wrapperNames,
             ElementViewAccessor<localIndex_array> const & packList ) const;
 
   using ObjectManagerBase::Unpack;
@@ -234,7 +293,7 @@ public:
 private:
   template< bool DOPACK >
   int PackPrivate( buffer_unit_type * & buffer,
-                   array1d<string> const & wrapperNames,
+                   string_array const & wrapperNames,
                    ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
 
   template< bool DOPACK >
@@ -317,6 +376,132 @@ ConstructViewAccessor( string const & viewName,
   return viewAccessor;
 }
 
+
+
+
+template< typename VIEWTYPE  >
+ElementRegionManager::MaterialViewAccessor<VIEWTYPE const>
+ElementRegionManager::
+ConstructMaterialViewAccessor( string const & viewName,
+                               constitutive::ConstitutiveManager const * const cm  ) const
+{
+  MaterialViewAccessor<VIEWTYPE const> accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    accessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      dataRepository::ManagedGroup const * const
+      constitutiveGroup = subRegion->GetConstitutiveModels();
+      accessor[kReg][kSubReg].resize( cm->numSubGroups() );
+
+      for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
+      {
+        dataRepository::ManagedGroup const * const
+        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
+        if( constitutiveRelation != nullptr )
+        {
+          dataRepository::ViewWrapper<VIEWTYPE> const * const
+          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
+
+          if( wrapper != nullptr )
+          {
+            accessor[kReg][kSubReg][matIndex].set(wrapper->reference() );
+          }
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+/**
+ * @tparam VIEWTYPE is the type that you would like to return inside the MaterialViewAccessor
+ * @tparam REPOTYPE is the type that the data is stored as inside the repository
+ * @param viewName The name of the material data field
+ * @return a ElementRegionManager::MaterialViewAccessor<VIEWTYPE> that contains the data
+ *
+ * This function extracts data from the material arrays and provides multi-dimensional array-like
+ * access to the data. The resulting return type is dereferenced using square bracket operators with
+ * each level being, accessor[elementRegionIndex][elementSubRegionIndex][materialTypeIndex].
+ *
+ *
+ */
+template< typename VIEWTYPE >
+ElementRegionManager::MaterialViewAccessor<VIEWTYPE>
+ElementRegionManager::
+ConstructMaterialViewAccessor( string const & viewName,
+                               constitutive::ConstitutiveManager const * const cm  )
+{
+  MaterialViewAccessor<VIEWTYPE> accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion * const elemRegion = GetRegion(kReg);
+    accessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      dataRepository::ManagedGroup * const
+      constitutiveGroup = subRegion->GetConstitutiveModels();
+      accessor[kReg][kSubReg].resize( cm->numSubGroups() );
+
+      for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
+      {
+        dataRepository::ManagedGroup * const
+        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
+        if( constitutiveRelation != nullptr )
+        {
+          dataRepository::ViewWrapper<VIEWTYPE> * const
+          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
+
+          if( wrapper != nullptr )
+          {
+            accessor[kReg][kSubReg][matIndex].set(constitutiveRelation->getReference<VIEWTYPE>(viewName));
+          }
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+template< typename CONSTITUTIVE_TYPE >
+ElementRegionManager::ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE>
+ElementRegionManager::ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm )
+{
+  ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE> accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion * const elemRegion = GetRegion(kReg);
+    accessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      dataRepository::ManagedGroup * const
+      constitutiveGroup = subRegion->GetConstitutiveModels();
+      accessor[kReg][kSubReg].resize( cm->numSubGroups() );
+
+      for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
+      {
+        CONSTITUTIVE_TYPE * const
+        constitutiveRelation = constitutiveGroup->GetGroup<CONSTITUTIVE_TYPE>(matIndex);
+        if( constitutiveRelation != nullptr )
+        {
+          accessor[kReg][kSubReg][matIndex] = constitutiveRelation;
+        }
+      }
+    }
+  }
+  return accessor;
+}
 
 }
 #endif /* ZONEMANAGER_H */

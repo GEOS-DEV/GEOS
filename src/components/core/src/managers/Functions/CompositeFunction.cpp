@@ -114,9 +114,9 @@ void CompositeFunction::InitializeFunction()
 {
   // Register variables
   string_array const & variables = getReference<string_array>(keys::variableNames);
-  for (int ii=0 ; ii<variables.size() ; ++ii)
+  for (string_array::size_type ii=0 ; ii<variables.size() ; ++ii)
   {
-    parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));
+    parserContext.addVariable(variables[ii].c_str(), static_cast<int>(ii * sizeof(double)));
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
