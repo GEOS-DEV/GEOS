@@ -35,12 +35,13 @@ using localIndex = geosx::localIndex;
 using globalIndex = geosx::globalIndex;
 using real64 = geosx::real64;
 using geosxData   = double* const RAJA_RESTRICT;
+using geosxData_const   = double const * const RAJA_RESTRICT;
 using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 //#define STRUCTURED_GRID
 
 //
-#define EXTERNAL_KERNELS
+//#define EXTERNAL_KERNELS
 
 //#define OBJECT_OF_ARRAYS_LAYOUT
 #define ARRAY_OF_OBJECTS_LAYOUT
