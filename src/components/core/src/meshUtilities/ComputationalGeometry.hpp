@@ -50,6 +50,12 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
 
 real64 HexVolume( R1Tensor const * const points );
 
+real64 TetVolume( R1Tensor const * const points );
+
+real64 WedgeVolume( R1Tensor const * const points );
+
+real64 PyramidVolume( R1Tensor const * const points );
+
 
 }
 } /* namespace geosx */
