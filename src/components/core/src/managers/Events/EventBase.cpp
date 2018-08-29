@@ -240,13 +240,6 @@ void EventBase::CheckEvents(real64 const time,
     {
       subEvent->CheckEvents(time, dt, cycle, domain);
     });
-
-    // Synchronize
-    #if USE_MPI
-      integer eventForecast_global;
-      MPI_Allreduce(&m_eventForecast, &eventForecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-      m_eventForecast = eventForecast_global;
-    #endif
   }
 }
 

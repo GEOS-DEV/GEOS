@@ -167,8 +167,14 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   integer exitFlag = 0;
 
   integer rank = 0;
+  integer comm_size = 1;
+  real64 *send_buffer = nullptr;
+  real64 *receive_buffer = nullptr;
   #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+    send_buffer = static_cast<real64 *>(malloc(2 * sizeof(real64)));
+    receive_buffer = static_cast<real64 *>(malloc(2 * sizeof(real64) * comm_size));
   #endif
 
   // Setup event targets
@@ -228,13 +234,25 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     dt = (time + dt > maxTime) ? (maxTime - time) : dt;
 
     #if USE_MPI
-      real64 dt_global;
-      MPI_Allreduce(&dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-      dt = dt_global;
+      send_buffer[0] = dt;
+      send_buffer[1] = static_cast<real64>(exitFlag);
+      MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-      integer exitFlag_global;
-      MPI_Allreduce(&exitFlag, &exitFlag_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-      exitFlag = exitFlag_global;
+      if (rank == 0)
+      {
+        for (integer ii=0; ii<comm_size; ii++)
+        {
+          send_buffer[0] = std::min(send_buffer[0], receive_buffer[2*ii]);
+          send_buffer[1] += receive_buffer[2*ii + 1]; 
+        }
+      }
+
+      MPI_Bcast(send_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      dt = send_buffer[0];
+      if (send_buffer[1] > 0.5)
+      {
+        exitFlag = 1;
+      }
     #endif
   }
 
