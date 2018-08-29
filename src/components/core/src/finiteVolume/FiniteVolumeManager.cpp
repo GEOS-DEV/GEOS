@@ -111,7 +111,26 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
     center /= nodeList.size();
 
     // TODO proper volumes for all shapes
-    elemVolume[er][esr][k] = computationalGeometry::HexVolume(Xlocal);
+    if( nodeList.size() == 8 )
+    {
+        elemVolume[er][esr][k] = computationalGeometry::HexVolume(Xlocal);
+    }
+    else if( nodeList.size() == 4)
+    {
+        elemVolume[er][esr][k] = computationalGeometry::TetVolume(Xlocal);
+    }
+    else if(nodeList.size() == 6)
+    {
+        elemVolume[er][esr][k] = computationalGeometry::WedgeVolume(Xlocal);
+    }
+    else if (nodeList.size() == 5)
+    {
+        elemVolume[er][esr][k] = computationalGeometry::PyramidVolume(Xlocal);
+    }
+    else
+    {
+        GEOS_ERROR("GEOX does not support cells with " << nodeList.size() << " nodes");
+    }
   });
 
   r1_array & faceCenter = faceManager->getReference<r1_array>(FaceManager::viewKeyStruct::faceCenterString);

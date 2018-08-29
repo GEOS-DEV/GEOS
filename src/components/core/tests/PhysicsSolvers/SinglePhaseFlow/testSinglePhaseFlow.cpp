@@ -137,8 +137,8 @@ void runProblem(ProblemManager & problemManager, int argc, char** argv)
   problemManager.ParseInputFile();
 
   problemManager.Initialize(&problemManager);
-  problemManager.FinalInitializationRecursive(&problemManager);
   problemManager.ApplyInitialConditions();
+  problemManager.FinalInitializationRecursive(&problemManager);
 
   std::cout << std::endl << "Running simulation:" << std::endl;
   problemManager.RunSimulation();
