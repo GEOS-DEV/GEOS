@@ -75,8 +75,7 @@ using indexType = localIndex;
  * @author Randolph R. Settgast
  *
  * class that encapsulates and manages a collection of DataObjects. Can be
- * considered a "node" in a
- * hierarchy of managers that represent physical groupings of data.
+ * considered a "node" in a hierarchy of managers that represent physical groupings of data/
  *
  */
 class ManagedGroup
@@ -100,16 +99,18 @@ public:
 //                         ManagedGroup * const parent,
 //                         cxx_utilities::DocumentationNode * docNode );
 
+
+  /**
+   * @brief move constructor
+   * @param source source ManagedGroup
+   */
+  ManagedGroup( ManagedGroup&& source );
+
   /**
    *
    */
   virtual ~ManagedGroup();
 
-  /**
-   *
-   * @param source source WrapperCollection
-   */
-  ManagedGroup( ManagedGroup&& source );
 
 
   ManagedGroup() = delete;
@@ -327,6 +328,12 @@ public:
     return m_subGroups;
   }
 
+  /**
+   * @brief return the number of sub groups in this ManagedGroup
+   * @return number of sub groups in this ManagedGroup
+   */
+  localIndex numSubGroups() const { return m_subGroups.size(); }
+
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
@@ -443,6 +450,15 @@ public:
                                         T * newObject,
                                         bool takeOwnership );
 
+  /**
+   * @brief Register a ViewWrapper into this ManagedGroup
+   * @param name the key name to use for this new wrapper
+   * @param wrapper a pointer to the new wrapper
+   * @return a ViewWrapperBase pointer that holds the address of the new wrapper
+   */
+  ViewWrapperBase * RegisterViewWrapper( string const & name,
+                                         ViewWrapperBase * const wrapper );
+
 //  template< typename T >
 //  void RegisterViewWrapperRecursive( string const & name );
 //
@@ -469,7 +485,7 @@ public:
   ///
 
 
-  void PrintDataHierarchy();
+  void PrintDataHierarchy(integer indent = 0);
 
   virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
 
@@ -479,31 +495,45 @@ public:
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
+  /**
+   * This function provides a mechanism by which to post process any values that were read into the
+   * xml file prior to initialization.
+   */
   virtual void ReadXML_PostProcess() {}
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 
   void SetDocumentationNodes();
 
+  /**
+   * Function to generate documentation nodes for each variable in this object. The documentation
+   * nodes are then used to register variables and read xml input into variables.
+   */
   virtual void FillDocumentationNode();
 
+
+  /**
+   * @param rootGroup The group for which to register new documentation node to.
+   * Function to generate documentation nodes for each variable in this an object. The documentation
+   * nodes are then used to register variables and read xml input into variables.
+   */
   void SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup);
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
-  virtual localIndex PackSize( array1d<string> const & wrapperNames,
+  virtual localIndex PackSize( string_array const & wrapperNames,
                         integer const recursive ) const;
 
-  virtual localIndex PackSize( array1d<string> const & wrapperNames,
+  virtual localIndex PackSize( string_array const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array1d<string> const & wrapperNames,
+                    string_array const & wrapperNames,
                     integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array1d<string> const & wrapperNames,
+                    string_array const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive ) const;
 
@@ -748,6 +778,12 @@ public:
 
     return m_parent;
   }
+
+  localIndex getIndexInParent() const
+  {
+    return m_parent->GetSubGroups().getIndex( this->m_name );
+  }
+
 
   viewWrapperMap const & wrappers() const
   {

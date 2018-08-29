@@ -147,26 +147,28 @@ set( thirdPartyLibs ${thirdPartyLibs} raja )
 ################################
 # CHAI
 ################################
-if(ENABLE_CHAI)
-if( EXISTS ${CHAI_DIR})
-    message("Using system CHAI found at ${CHAI_DIR}")
-    set(CHAI_FOUND TRUE)
+if( ${ENABLE_CHAI})
+  if( EXISTS ${CHAI_DIR})
+      message("Using system CHAI found at ${CHAI_DIR}")
+      set(CHAI_FOUND TRUE)
+  else()
+      message(INFO ": Using CHAI from thirdPartyLibs")
+      set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
+  endif()
+
+  include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
+  if ( NOT CHAI_FOUND)
+      message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
+  endif()    
+
+  blt_register_library( NAME chai
+                        INCLUDES ${CHAI_INCLUDE_DIRS}
+                        LIBRARIES ${CHAI_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  set( thirdPartyLibs ${thirdPartyLibs} chai )
 else()
-    message(INFO ": Using CHAI from thirdPartyLibs")
-    set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
-endif()
-
-include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
-if (NOT CHAI_FOUND)
-    message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
-endif()    
-
-blt_register_library( NAME chai
-                      INCLUDES ${CHAI_INCLUDE_DIRS}
-                      LIBRARIES ${CHAI_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
-
-set( thirdPartyLibs ${thirdPartyLibs} chai )  
+  message("Not using CHAI")
 endif()
 
 

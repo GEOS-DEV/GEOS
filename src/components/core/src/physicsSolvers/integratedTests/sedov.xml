@@ -34,8 +34,8 @@
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e-4"
-                   targetExactTimestep="1"
+                   timeFrequency="1e-6"
+                   targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
   </Events>
 
@@ -57,25 +57,24 @@
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
-      <LinearElasticIsotropic name="granite">
-        <ParameterData Density="2700"
-                       BulkModulus="5.5556e9"
-                       ShearModulus="4.16667e9"/>
-      </LinearElasticIsotropic>
-      <LinearElasticIsotropic name="shale">
-        <ParameterData Density="2700"
-                       BulkModulus="5.5556e9"
-                       ShearModulus="4.16667e9"/>
-      </LinearElasticIsotropic>
-      <LinearElasticIsotropic name="water">
-        <ParameterData Density="1000"
-                              BulkModulus="2.0e9"
-                              ShearModulus="0.0"/>
-      </LinearElasticIsotropic>
+      <LinearElasticIsotropic name="granite"
+                              density0="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"/>
+
+      <LinearElasticIsotropic name="shale"
+                              density0="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"/>
+
+      <LinearElasticIsotropic name="water"
+                              density0="1000"
+                              BulkModulus0="2.0e9"
+                              ShearModulus0="0.0"/>
   </Constitutive>
 
 
@@ -87,25 +86,45 @@
     <Dirichlet name="source"  
                initialCondition="1"  
                setNames="source"
-               objectPath="ElementRegion/Region2/cb1"
-               constitutivePath="shale/StateData"
-               fieldName="MeanStress"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="shale_MeanStress"
                dataType="real64" 
                scale="-1.0e6"
                function="spaceFunction"/>
                
-    <Dirichlet name="xpos"  
+    <!--Dirichlet name="xpos"  
                initialCondition="1"  
                setNames="xpos"
-               objectPath="nodeManager/Velocity"
+               objectPath="nodeManager"
+               fieldName="Velocity"
                dataType="r1Tensor" 
                component="1"
-               scale="1.0"/>
+               scale="1.0"/-->
 
-    <!--Dirichlet name="v0"          component="0" fieldName="Velocity"          dataType="Vector" functionName="timeFunction" object="Node" scale="1.0" setNames="xneg"/-->
-    <Dirichlet name="xconstraint" component="0" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="xneg"/>
-    <Dirichlet name="yconstraint" component="1" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="yneg"/>
-    <Dirichlet name="zconstraint" component="2" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="zneg"/>
+    <Dirichlet name="xconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               dataType="Vector"
+               component="0"  
+               scale="0.0" 
+               setNames="xneg"/>
+               
+    <Dirichlet name="yconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               dataType="Vector"
+               component="1"  
+               scale="0.0" 
+               setNames="yneg"/>
+               
+    <Dirichlet name="zconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               dataType="Vector"
+               component="2"  
+               scale="0.0" 
+               setNames="zneg"/>
+
   </BoundaryConditions>
 
 

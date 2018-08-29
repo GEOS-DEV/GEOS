@@ -235,7 +235,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 
 
-localIndex ObjectManagerBase::PackSize( array1d<string> const & wrapperNames,
+localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
@@ -253,7 +253,7 @@ localIndex ObjectManagerBase::PackSize( array1d<string> const & wrapperNames,
 
 
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
-                             array1d<string> const & wrapperNames,
+                             string_array const & wrapperNames,
                              localIndex_array const & packList,
                              integer const recursive ) const
 {
@@ -269,7 +269,7 @@ localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
-                                    array1d<string> const & wrapperNames,
+                                    string_array const & wrapperNames,
                                     localIndex_array const & packList,
                                     integer const recursive ) const
 {
@@ -287,7 +287,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
-  array1d<string> wrapperNamesForPacking;
+  string_array wrapperNamesForPacking;
   if( wrapperNames.size()==0 )
   {
     set<localIndex> exclusionList;
@@ -351,8 +351,8 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-//template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,array1d<string> const & , localIndex_array const &, integer const ) const;
-//template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,array1d<string> const & , localIndex_array const &, integer const ) const;
+//template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,string_array const & , localIndex_array const &, integer const ) const;
+//template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,string_array const & , localIndex_array const &, integer const ) const;
 
 
 

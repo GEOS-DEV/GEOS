@@ -31,9 +31,9 @@ RAJA_INLINE void HughesWinget(T Rot[local_dim][local_dim], T Dadt[local_dim][loc
   //Omega = 0.5*(L-LT)
   //Dadt  = 0.5*(L+LT)*dt
 
-  for(Index_type ty=0; ty<local_dim; ++ty)
+  for(localIndex ty=0; ty<local_dim; ++ty)
     {
-      for(Index_type tx=0; tx<local_dim; ++tx)
+      for(localIndex tx=0; tx<local_dim; ++tx)
         {
           Dadt[ty][tx] = 0.5*(L[ty][tx] + L[tx][ty])*dt;
           Omega[ty][tx] = 0.5*(L[ty][tx] - L[tx][ty]);
@@ -44,16 +44,16 @@ RAJA_INLINE void HughesWinget(T Rot[local_dim][local_dim], T Dadt[local_dim][loc
   double ImR[local_dim][local_dim];
   double ImRinv[local_dim][local_dim];
   
-  for(Index_type ty=0; ty<local_dim; ++ty)
+  for(localIndex ty=0; ty<local_dim; ++ty)
     {
-      for(Index_type tx=0; tx<local_dim; ++tx)
+      for(localIndex tx=0; tx<local_dim; ++tx)
         {
           IpR[ty][tx] =  0.5*Omega[ty][tx];
           ImR[ty][tx] = -0.5*Omega[ty][tx];
         }
     }
   
-  for(Index_type tx=0; tx<local_dim; ++tx)
+  for(localIndex tx=0; tx<local_dim; ++tx)
     {
       IpR[tx][tx] = 1.0 + IpR[tx][tx];
       ImR[tx][tx] = 1.0 + ImR[tx][tx];
@@ -71,9 +71,9 @@ RAJA_INLINE void HughesWinget(T Rot[local_dim][local_dim], T Dadt[local_dim][loc
 ///Const update
 RAJA_HOST_DEVICE
 RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
-                                  Index_type m, Index_type q, Index_type k, real64 * const RAJA_RESTRICT idevStressData,
-                                  real64 * const RAJA_RESTRICT imeanStress,
-                                  real64 shearModulus, real64 bulkModulus, Index_type noElem)
+                                  localIndex m, localIndex q, globalIndex k, geosxData idevStressData,
+                                  geosxData imeanStress,
+                                  real64 shearModulus, real64 bulkModulus, localIndex noElem)
 {
 
   real64 volumeStrain = D[0][0] + D[1][1] + D[2][2];
@@ -81,18 +81,18 @@ RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[loc
   imeanStress[m] += volumeStrain * bulkModulus;
   
   real64 temp[local_dim][local_dim];
-  for(Index_type i=0; i<3; ++i)
+  for(localIndex i=0; i<3; ++i)
     {
-      for(Index_type j=0; j<3; ++j)
+      for(localIndex j=0; j<3; ++j)
         {
           temp[i][j] = D[i][j];
         }
       temp[i][i] -= volumeStrain / 3.0;
     }
 
-  for(Index_type ty=0; ty<3; ++ty)
+  for(localIndex ty=0; ty<3; ++ty)
     {
-      for(Index_type tx=0; tx<3; ++tx)
+      for(localIndex tx=0; tx<3; ++tx)
         {
           temp[ty][tx] *= 2.0 * shearModulus;
         }
@@ -134,13 +134,13 @@ RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[loc
 
 //----------
 RAJA_HOST_DEVICE
-RAJA_INLINE void structuredElemToNodes(Index_type nodeList[8], Index_type k, Index_type nx, Index_type ny, Index_type nz)
+RAJA_INLINE void structuredElemToNodes(localIndex nodeList[8], localIndex k, localIndex nx, localIndex ny, localIndex nz)
 {
   
   //Convert 1D Index to 3D                                                                                    
-  Index_type x = k % nx;
-  Index_type y = (k / nx) % ny;
-  Index_type z = k / (nx * ny);
+  globalIndex x = k % nx;
+  globalIndex y = (k / nx) % ny;
+  globalIndex z = k / (nx * ny);
   
   //Compute node ids
   nodeList[0] = x + nx*(y + z*nx);
@@ -160,9 +160,9 @@ RAJA_INLINE void structuredElemToNodes(Index_type nodeList[8], Index_type k, Ind
 
 //Created a type 
 typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
-                            Index_type m, Index_type q, Index_type k, real64 * const RAJA_RESTRICT devStressData,
-                            real64 * const RAJA_RESTRICT meanStress,
-                            real64 shearModulus, real64 bulkModulus, Index_type NoElem);
+                            localIndex m, localIndex q, globalIndex k, geosxData devStressData,
+                            geosxData meanStress,
+                            real64 shearModulus, real64 bulkModulus, localIndex NoElem);
 #if defined (USE_CUDA)
 __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #endif

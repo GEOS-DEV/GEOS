@@ -424,7 +424,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
 
 
 
-void CommunicationTools::SynchronizeFields( const std::map<string, array1d<string> >& fieldNames,
+void CommunicationTools::SynchronizeFields( const std::map<string, string_array >& fieldNames,
                                             MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors )
 {

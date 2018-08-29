@@ -158,30 +158,30 @@ template<> int GetNumberOfVariablesInField<string> ()
 }
 
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, array1d<string>& varnamestring, char const* varnames[])
+void SetVariableNames(string const & fieldName, string_array& varnamestring, char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
   varnamestring[0] = fieldName;
   varnames[0] = varnamestring[0].c_str();
 }
 template void SetVariableNames<int> ( string const & fieldName,
-                                      array1d<string>& varnamestring,
+                                      string_array& varnamestring,
                                       char const* varnames[]);
 template void SetVariableNames<unsigned long>( string const & fieldName,
-                                               array1d<string>& varnamestring,
+                                               string_array& varnamestring,
                                                char const* varnames[]);
 template void SetVariableNames<real64>( string const & fieldName,
-                                        array1d<string>& varnamestring,
+                                        string_array& varnamestring,
                                         char const* varnames[]);
 template void SetVariableNames<long long unsigned int>( string const & fieldName,
-                                                        array1d<string>& varnamestring,
+                                                        string_array& varnamestring,
                                                         char const* varnames[]);
 
 
 
 template<>
 void SetVariableNames<R1Tensor> ( string const & fieldName,
-                                  array1d<string>& varnamestring,
+                                  string_array& varnamestring,
                                   char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R1Tensor> ());
@@ -195,7 +195,7 @@ void SetVariableNames<R1Tensor> ( string const & fieldName,
 
 template<>
 void SetVariableNames<R2Tensor> ( string const & fieldName,
-                                  array1d<string>& varnamestring,
+                                  string_array& varnamestring,
                                   char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -221,7 +221,7 @@ void SetVariableNames<R2Tensor> ( string const & fieldName,
 
 template<>
 void SetVariableNames<R2SymTensor> ( string const & fieldName,
-                                     array1d<string>& varnamestring,
+                                     string_array& varnamestring,
                                      char const * varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -510,6 +510,8 @@ void SiloFile::WriteMeshObject(string const & meshName,
                                const localIndex nnodes,
                                real64* coords[3],
                                globalIndex const * const globalNodeNum,
+                               char const * const ghostNodeFlag,
+                               char const * const ghostZoneFlag,
                                int const numShapes,
                                int const * shapecnt,
                                const localIndex* const * const meshConnectivity,
@@ -523,7 +525,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
   const DBdatatype datatype = DB_DOUBLE;
   int const one = 1;
 
-  DBoptlist* optlist = DBMakeOptlist(4);
+  DBoptlist* optlist = DBMakeOptlist(5);
   if( globalNodeNum!=nullptr )
   {
     if( std::is_same<globalIndex,int>::value || std::is_same<globalIndex,long long>::value )
@@ -537,6 +539,8 @@ void SiloFile::WriteMeshObject(string const & meshName,
   }
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
+  DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
+
 
   int numTotZones = 0;
   int lnodelist = 0;
@@ -620,6 +624,9 @@ void SiloFile::WriteMeshObject(string const & meshName,
     }
 
     int hi_offset = 0;
+
+
+    DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
                     hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize2.data()),
@@ -761,7 +768,7 @@ void SiloFile::WritePointMesh( string const & meshName,
  * @param cycleNumber
  * @param problemTime
  */
-void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementManager,
+void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * const elementManager,
                                           ConstitutiveManager const * const constitutiveManager,
                                           string const & meshName,
                                           int const cycleNumber,
@@ -851,7 +858,7 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
     MPI_Comm_size(MPI_COMM_GEOSX, &size);
 #endif
 
-    array1d<string> vBlockNames(size);
+    string_array vBlockNames(size);
     std::vector<char*> BlockNames(size);
     char tempBuffer[1024];
     char currentDirectory[256];
@@ -898,6 +905,257 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
 
 }
 
+
+
+
+void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const elementManager,
+                                             ConstitutiveManager const * const constitutiveManager,
+                                             string const & meshName,
+                                             int const cycleNumber,
+                                             real64 const problemTime)
+{
+
+
+  string name = "materials";
+  int const nmat = constitutiveManager->GetSubGroups().size();
+  array1d<int> matnos(nmat);
+  std::vector<string> materialNameStrings(nmat);
+  array1d<char const*> materialNames(nmat+1);
+  materialNames.back() = nullptr;
+
+  for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
+  {
+    matnos[matIndex] = matIndex;
+
+    materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
+    materialNames[matIndex] = materialNameStrings[matIndex].c_str();
+  }
+
+
+  int ndims = 1;
+  int dims = 0;
+  int mixlen=0;
+
+  for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+    int const numMatInRegion = elemRegion->getMaterialList().size();
+
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+      if( numMatInRegion > 1 )
+      {
+        mixlen += subRegion->size() * numMatInRegion;
+      }
+      dims += subRegion->size();
+    }
+  }
+
+  array1d<integer> matlist( dims );
+  array1d<integer> mix_zone( mixlen );
+  array1d<integer> mix_mat( mixlen );
+  array1d<integer> mix_next( mixlen );
+  array1d<real64> mix_vf( mixlen );
+
+  int elemCount = 0;
+  int mixCount = 0;
+  for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+    int const numMatInRegion = elemRegion->getMaterialList().size();
+
+    array1d<localIndex> matIndices(numMatInRegion);
+
+    for( localIndex a=0 ; a<numMatInRegion ; ++a )
+    {
+      matIndices[a] = constitutiveManager->
+                      GetConstitituveRelation( elemRegion->getMaterialList()[a] )->
+                      getIndexInParent();
+    }
+
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+
+      if( numMatInRegion == 1 )
+      {
+        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        {
+          matlist[elemCount++] = matIndices[0];
+        }
+      }
+      else if( numMatInRegion > 1 )
+      {
+        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        {
+          matlist[elemCount++] = -(mixCount+1);
+          for( localIndex a=0 ; a<numMatInRegion ; ++a )
+          {
+            mix_zone[mixCount] = k;
+            mix_mat[mixCount] = matIndices[a];
+            mix_vf[mixCount] = 1.0/numMatInRegion;
+            if( a == numMatInRegion-1 )
+            {
+              mix_next[mixCount] = 0;
+            }
+            else
+            {
+              mix_next[mixCount] = mixCount+2;
+            }
+            ++mixCount;
+          }
+        }
+      }
+    }
+  }
+
+  {
+    DBoptlist* optlist = DBMakeOptlist(3);
+    DBAddOption(optlist, DBOPT_MATNAMES, materialNames.data());
+    DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+    DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
+
+    DBPutMaterial( m_dbFilePtr,
+                   name.c_str(),
+                   meshName.c_str(),
+                   nmat,
+                   matnos.data(),
+                   matlist.data(),
+                   &dims,
+                   ndims,
+                   mix_next.data(),
+                   mix_mat.data(),
+                   mix_zone.data(),
+                   mix_vf.data(),
+                   mixlen,
+                   DB_DOUBLE,
+                   optlist);
+
+    DBFreeOptlist(optlist);
+  }
+  // write multimesh object
+  int rank = 0;
+#if USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+  if( rank == 0 )
+  {
+
+    int size = 1;
+#if USE_MPI
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
+
+    array1d<string> vBlockNames(size);
+    std::vector<char*> BlockNames(size);
+    char tempBuffer[1024];
+    char currentDirectory[256];
+
+    DBGetDir(m_dbBaseFilePtr, currentDirectory);
+    DBSetDir(m_dbBaseFilePtr, "/");
+
+    for( int i = 0 ; i < size ; ++i )
+    {
+      int groupRank = PMPIO_GroupRank(m_baton, i);
+
+      /* this mesh block is another file */
+      sprintf( tempBuffer,
+               "%s%s%s.%03d:/domain_%05d/%s",
+               m_siloDataSubDirectory.c_str(),
+               "/",
+               m_baseFileName.c_str(),
+               groupRank,
+               i,
+               name.c_str() );
+
+      vBlockNames[i] = tempBuffer;
+      BlockNames[i] = const_cast<char*>( vBlockNames[i].c_str() );
+    }
+
+    {
+      DBoptlist* optlist = DBMakeOptlist(5);
+      DBAddOption(optlist, DBOPT_MATNAMES, materialNames.data());
+      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+      DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
+      DBAddOption(optlist, DBOPT_NMATNOS, const_cast<int*>(&nmat) );
+      DBAddOption(optlist, DBOPT_MATNOS, matnos.data() );
+
+      DBPutMultimat(m_dbBaseFilePtr, name.c_str(), size, BlockNames.data(),
+                    const_cast<DBoptlist*> (optlist));
+      DBFreeOptlist(optlist);
+
+    }
+
+    DBSetDir(m_dbBaseFilePtr, currentDirectory);
+
+  }
+
+
+  string subDirectory = "Materials";
+  string rootDirectory = "/" + subDirectory;
+
+  {
+    string shortsubdir(subDirectory);
+    string::size_type pos = subDirectory.find_last_of("//");
+
+    if( pos != shortsubdir.npos )
+    {
+      shortsubdir.erase(0,pos+1);
+    }
+
+
+    MakeSubDirectory( shortsubdir, rootDirectory );
+    DBSetDir(m_dbFilePtr, shortsubdir.c_str());
+  }
+
+
+
+  set<string> fieldNames;
+  for( localIndex matI=0 ; matI<nmat ; ++matI )
+  {
+    ConstitutiveBase const * const
+    constitutiveModel = constitutiveManager->GetConstitituveRelation(matI);
+
+    for( auto const & wrapperIter : constitutiveModel->wrappers() )
+    {
+      auto const & wrapper = wrapperIter.second;
+
+      if( wrapper->getPlotLevel() < dataRepository::PlotLevel::LEVEL_1 )
+      {
+        std::type_info const & typeID = wrapper->get_typeid();
+
+        if( typeID==typeid( array2d<real64> ) )
+        {
+          fieldNames.insert( wrapper->getName() );
+        }
+      }
+    }
+  }
+
+  for( auto fieldName : fieldNames )
+  {
+    ElementRegionManager::MaterialViewAccessor< array2d<real64> const >
+    field = elementManager->ConstructMaterialViewAccessor< array2d<real64>  >( fieldName,
+                                                                               constitutiveManager);
+
+    WriteMaterialDataField< real64 >( meshName,
+                                      fieldName,
+                                      field,
+                                      elementManager,
+                                      constitutiveManager,
+                                      DB_ZONECENT,
+                                      cycleNumber,
+                                      problemTime,
+                                      rootDirectory,
+                                      string_array() );
+
+  }
+
+  DBSetDir(m_dbFilePtr, "..");
+
+}
+
 void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 {
 
@@ -911,13 +1169,13 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   if( rank != 0 )
   {
-    for( array1d<string>::const_iterator emptyObject=m_emptyVariables.begin() ;
+    for( string_array::const_iterator emptyObject=m_emptyVariables.begin() ;
          emptyObject!=m_emptyVariables.end() ; ++emptyObject )
     {
       sendbufferVars += *emptyObject + ' ';
     }
 
-    for( array1d<string>::const_iterator emptyObject=m_emptyMeshes.begin() ;
+    for( string_array::const_iterator emptyObject=m_emptyMeshes.begin() ;
          emptyObject!=m_emptyMeshes.end() ; ++emptyObject )
     {
       sendbufferMesh += *emptyObject + ' ';
@@ -968,12 +1226,12 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     std::istringstream iss(receiveBufferVars);
     copy(std::istream_iterator<string>(iss),
          std::istream_iterator<string>(),
-         std::back_inserter< array1d<string> >(m_emptyVariables));
+         std::back_inserter< string_array >(m_emptyVariables));
 
     std::istringstream issm(receiveBufferMesh);
     copy(std::istream_iterator<string>(issm),
          std::istream_iterator<string>(),
-         std::back_inserter< array1d<string> >(m_emptyMeshes));
+         std::back_inserter< string_array >(m_emptyMeshes));
   }
 
   if( rank == 0 )
@@ -982,7 +1240,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     DBfile *siloFile = DBOpen(baseFilePathAndName.c_str(), DB_UNKNOWN, DB_APPEND);
     string empty("EMPTY");
 
-    for( array1d<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
+    for( string_array::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
          != m_emptyVariables.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
@@ -1029,7 +1287,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     }
 
 
-    for( array1d<string>::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
+    for( string_array::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
          != m_emptyMeshes.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
@@ -1169,8 +1427,6 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                       int const cycleNum,
                                       real64 const problemTime,
                                       bool const isRestart,
-                                      string const & materialName,
-                                      array1d<localIndex> const & zoneToMatMap,
                                       const localIndex_array& mask )
 {
 
@@ -1197,8 +1453,6 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                    problemTime,
                                    isRestart,
                                    rootDirectory,
-                                   materialName,
-                                   zoneToMatMap,
                                    mask);
 
 
@@ -1245,6 +1499,18 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     NodeManager const * const nodeManager = meshLevel->getNodeManager();
     localIndex const numNodes = nodeManager->size();
 
+
+    string const ghostNodeName = "ghostNodeFlag";
+    string const ghostZoneName = "ghostZoneFlag";
+
+    integer_array const & nodeGhostRank = nodeManager->GhostRank();
+    array1d<char> ghostNodeFlag( nodeGhostRank.size() );
+    array1d<char> ghostZoneFlag;
+
+
+
+
+
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
 
     bool writeArbitraryPolygon(false);
@@ -1263,6 +1529,11 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       xcoords[a] = nodePosition(0);
       ycoords[a] = nodePosition(1);
       zcoords[a] = nodePosition(2);
+
+      if( nodeGhostRank[a] >=0 )
+      {
+        ghostNodeFlag[a] = 1;
+      }
     }
 
     coords[0] = xcoords.data();
@@ -1298,6 +1569,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         // size this temp array.(pfu)
         elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
 
+        integer_array const & elemGhostRank = cellBlock->GhostRank();
+
+
+
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
           arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
@@ -1307,6 +1582,11 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
             elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+          }
+
+          if( elemGhostRank[k] >= 0 )
+          {
+            ghostZoneFlag.push_back( 1 );
           }
         }
 
@@ -1356,17 +1636,22 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       }
     }
 
+
+
     WriteMeshObject(meshName,
                     numNodes,
                     coords,
-                    nullptr,
+                    nodeManager->m_localToGlobalMap.data(),
+                    ghostNodeFlag.data(),
+                    ghostZoneFlag.data(),
                     integer_conversion<int>(numElementRegions),
                     shapecnt.data(),
                     meshConnectivity.data(),
                     nullptr /*globalElementNumbers.data()*/,
                     shapetype.data(),
                     shapesize.data(),
-                    cycleNum, problemTime);
+                    cycleNum,
+                    problemTime);
 
 
     // write node fields in silo mesh, and all restart data as unassociated
@@ -1378,34 +1663,44 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                            cycleNum,
                            problemTime,
                            isRestart,
-                           "none",
-                           localIndex_array(),
                            localIndex_array());
 
 
 
-    {
-      array1d<array1d<localIndex> > materialOrder;
-      array1d<localIndex> materialOrderCounter;
-      materialOrder.resize( constitutiveManager->GetSubGroups().size() );
-      materialOrderCounter.resize( constitutiveManager->GetSubGroups().size() );
-      for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
-      {
-        ConstitutiveBase const * const
-        constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
+//    DBSetDir(m_dbFilePtr, "NodalFields" );
+//    WriteDataField<int>( meshName,
+//                         ghostNodeName,
+//                         ghostNodeFlag,
+//                         DB_NODECENT,
+//                         cycleNum,
+//                         problemTime,
+//                         "/NodalFields" );
+//    DBSetDir(m_dbFilePtr, "..");
 
-        materialOrder[matIndex].resize( constitutiveModel->size() );
-        materialOrder[matIndex] = -1;
-        materialOrderCounter[matIndex] = 0;
-      }
+
+
+    {
+//      array1d<array1d<localIndex> > materialOrder;
+//      array1d<localIndex> materialOrderCounter;
+//      materialOrder.resize( constitutiveManager->GetSubGroups().size() );
+//      materialOrderCounter.resize( constitutiveManager->GetSubGroups().size() );
+//      for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
+//      {
+//        ConstitutiveBase const * const
+//        constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
+//
+//        materialOrder[matIndex].resize( constitutiveModel->size() );
+//        materialOrder[matIndex] = -1;
+//        materialOrderCounter[matIndex] = 0;
+//      }
       ElementRegionManager const * const elemManager = meshLevel->getElemManager();
 
 
-      this->WriteMaterialMaps( elemManager,
-                                       constitutiveManager,
-                                       meshName,
-                                       cycleNum,
-                                       problemTime );
+      this->WriteMaterialMapsFullStorage( elemManager,
+                                          constitutiveManager,
+                                          meshName,
+                                          cycleNum,
+                                          problemTime );
 
       for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
       {
@@ -1423,38 +1718,22 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                  cycleNum,
                                  problemTime,
                                  isRestart,
-                                 "none",
-                                 localIndex_array(),
                                  localIndex_array());
 
-          auto const & constitutiveMap =
-            subRegion->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
-          for( localIndex k=0 ; k<subRegion->size() ; ++k )
-          {
-            localIndex const matTypeIndex = constitutiveMap.first[k][0];
-            localIndex const matArrayIndex = constitutiveMap.second[k][0];
-            materialOrder[matTypeIndex][materialOrderCounter[matTypeIndex]] = matArrayIndex;
-            ++materialOrderCounter[matTypeIndex];
-          }
+//          DBSetDir(m_dbFilePtr, regionName.c_str() );
+//          string temp = "/" + regionName;
+//          WriteDataField<int>( meshName,
+//                               ghostZoneName,
+//                               ghostZoneFlag,
+//                               DB_ZONECENT,
+//                               cycleNum,
+//                               problemTime,
+//                               temp.c_str() );
+//          DBSetDir(m_dbFilePtr, "..");
+
+
         }
       }
-      for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
-      {
-        ConstitutiveBase const * const
-        constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
-
-        WriteManagedGroupSilo( constitutiveModel->GetStateData(),
-                               constitutiveModel->getName(),
-                               meshName,
-                               DB_ZONECENT,
-                               cycleNum,
-                               problemTime,
-                               isRestart,
-                               constitutiveModel->getName(),
-                               materialOrder[matIndex],
-                               localIndex_array());
-      }
-
     }
 //    m_feElementManager->WriteSilo( siloFile, meshName, cycleNum, problemTime,
 // isRestart );

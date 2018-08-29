@@ -310,7 +310,7 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 displacementIndices,
                                 0 );
 
-  std::map<string, array1d<string> > fieldNames;
+  std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("blockLocalDofNumber_LaplaceFEM");
 
   CommunicationTools::SynchronizeFields(fieldNames,
@@ -548,12 +548,7 @@ void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
 
-  bcManager->ApplyBoundaryCondition( this,
-                                     &LaplaceFEM::ApplyDirichletBC_implicit,
-                                     nodeManager,
-                                     "Temperature",
-                                     time_n + dt,
-                                     *blockSystem );
+  ApplyDirichletBC_implicit( time_n + dt, *domain, *blockSystem );
 
   if( verboseLevel() >= 2 )
   {
@@ -572,20 +567,32 @@ void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
   SolverBase::SolveSystem( blockSystem, params, BlockIDs::dummyScalarBlock );
 }
 
-void LaplaceFEM::ApplyDirichletBC_implicit( ManagedGroup * object,
-                                            BoundaryConditionBase const * const bc,
-                                            set<localIndex> const & set,
-                                            real64 const time_n,
+void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
+                                            DomainPartition & domain,
                                             EpetraBlockSystem & blockSystem )
 {
-  bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                      time_n,
-                                                      object,
-                                                      "Temperature",
-                                                      viewKeys.blockLocalDofNumber.Key(),
-                                                      1,
-                                                      &blockSystem,
-                                                      BlockIDs::dummyScalarBlock );
+
+  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+
+  bcManager->ApplyBoundaryCondition( time,
+                                     &domain,
+                                     "nodeManager",
+                                     "Temperature",
+                                     [&]( BoundaryConditionBase const * const bc,
+                                         string const &,
+                                         set<localIndex> const & targetSet,
+                                         ManagedGroup * const targetGroup,
+                                         string const fieldName )->void
+  {
+    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
+                                                        time,
+                                                        targetGroup,
+                                                        "Temperature",
+                                                        viewKeys.blockLocalDofNumber.Key(),
+                                                        1,
+                                                        &blockSystem,
+                                                        BlockIDs::dummyScalarBlock );
+  });
 }
 
 

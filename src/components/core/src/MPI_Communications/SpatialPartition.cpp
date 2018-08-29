@@ -202,7 +202,7 @@ int SpatialPartition::GetColor()
 //       // Reset global id numbers
 //       ///////////////////////////
 //
-//       array1d<string>& setnames = m_periodicSets[i].m_setNames;
+//       string_array& setnames = m_periodicSets[i].m_setNames;
 //       set<localIndex>* theSets[2];
 //       theSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //       theSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -407,7 +407,7 @@ int SpatialPartition::GetColor()
 //    // single partition
 //    if(m_Partitions[dimension]==1){
 //
-//      array1d<string>& setnames = m_periodicSets[ps].m_setNames;
+//      string_array& setnames = m_periodicSets[ps].m_setNames;
 //      set<localIndex>* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -600,7 +600,7 @@ int SpatialPartition::GetColor()
 //      realT myMid = 0.5*(myMax+myMin);
 //      realT gridLength = m_gridSize[dimension];
 //
-//      array1d<string>& setnames = m_periodicSets[ps].m_setNames;
+//      string_array& setnames = m_periodicSets[ps].m_setNames;
 //      set<localIndex>* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);

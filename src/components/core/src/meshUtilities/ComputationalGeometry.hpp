@@ -48,7 +48,7 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          R1Tensor& normal );
 
 
-real64 HexVolume( array1d<R1Tensor> const & points );
+real64 HexVolume( R1Tensor const * const points );
 
 
 }

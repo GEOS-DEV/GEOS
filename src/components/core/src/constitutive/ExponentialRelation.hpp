@@ -30,8 +30,8 @@ namespace constitutive
 {
 
 /**
-   * @enum enumeration describing available approximations of the exponent
-   */
+ * @enum enumeration describing available approximations of the exponent
+ */
 enum class ExponentApproximationType
 {
   Full,
@@ -71,41 +71,41 @@ public:
 
   explicit ExponentialRelation();
 
-  explicit ExponentialRelation(ExponentApproximationType type);
+  explicit ExponentialRelation( ExponentApproximationType type );
 
-  explicit ExponentialRelation(ExponentApproximationType type, RealType x0, RealType y0, RealType alpha);
+  explicit ExponentialRelation( ExponentApproximationType type, RealType x0, RealType y0, RealType alpha );
 
   // *** setters ***
 
-  void SetApproximationType(ExponentApproximationType type);
+  void SetApproximationType( ExponentApproximationType type );
 
-  void SetCoefficients(RealType x0, RealType y0, RealType alpha);
+  void SetCoefficients( RealType x0, RealType y0, RealType alpha );
 
-  void SetParameters(ExponentApproximationType type, RealType x0, RealType y0, RealType alpha);
+  void SetParameters( ExponentApproximationType type, RealType x0, RealType y0, RealType alpha );
 
   // *** no-derivative computes ***
 
-  void Compute(const RealType & x, RealType & y);
+  void Compute( const RealType & x, RealType & y );
 
-  void Inverse(const RealType & y, RealType & x);
-
-  template<typename Policy>
-  void BatchCompute(IndexType size, ConstPtrType x_ptr, PtrType y_ptr);
+  void Inverse( const RealType & y, RealType & x );
 
   template<typename Policy>
-  void BatchInverse(IndexType size, ConstPtrType y_ptr, PtrType x_ptr);
+  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr );
+
+  template<typename Policy>
+  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr );
 
   // *** derivative computes ***
 
-  void Compute(const RealType & x, RealType & y, RealType & dy_dx);
+  void Compute( const RealType & x, RealType & y, RealType & dy_dx );
 
-  void Inverse(const RealType & y, RealType & x, RealType & dx_dy);
-
-  template<typename Policy>
-  void BatchCompute(IndexType size, ConstPtrType x_ptr, PtrType y_ptr, PtrType dy_dx_ptr);
+  void Inverse( const RealType & y, RealType & x, RealType & dx_dy );
 
   template<typename Policy>
-  void BatchInverse(IndexType size, ConstPtrType y_ptr, PtrType x_ptr, PtrType dx_dy_ptr);
+  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr, PtrType dy_dx_ptr );
+
+  template<typename Policy>
+  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr, PtrType dx_dy_ptr );
 
 private:
 

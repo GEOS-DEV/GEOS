@@ -159,10 +159,8 @@ public:
                                                Epetra_SerialDenseVector& R,
                                                real64 c[6][6] );
 
-  void ApplyDirichletBC_implicit( ManagedGroup * object,
-                                  BoundaryConditionBase const * const bc,
-                                  set<localIndex> const & set,
-                                  real64 const time_n,
+  void ApplyDirichletBC_implicit( real64 const time,
+                                  DomainPartition & domain,
                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
 
