@@ -88,6 +88,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   const array2d<localIndex> & facesToElems = faceManager->elementSubRegionList();
   const OrderedVariableOneToManyRelation & facesToNodes = faceManager->nodeList();
   const integer_array isExternalFace = faceManager->m_isExternal ;
+  const integer_array faceGhostRank = faceManager->m_ghostRank ;
 
   globalID *extFaceMap ;
   int *slideNodeMap ;
@@ -102,7 +103,8 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   int numExtFaces = 0 ;
 
   for (int i = 0 ; i < numFaces ; ++i) {
-     if (isExternalFace[i]) {
+     // Only include external, non-ghost faces/nodes.
+     if (isExternalFace[i] && faceGhostRank[i] < 0) {
         extFaceMap[numExtFaces] = globalID((GIDTYPE)faceMap[i]) ;
         for (int j = 0 ; j < 4 ; ++j) {
            int nodeIdx = facesToNodes[i][j] ;
