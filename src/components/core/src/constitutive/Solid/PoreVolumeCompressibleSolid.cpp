@@ -109,7 +109,7 @@ void PoreVolumeCompressibleSolid::FillDocumentationNode()
 
 void PoreVolumeCompressibleSolid::ReadXML_PostProcess()
 {
-  if( m_compressibility <= 0.0 )
+  if( m_compressibility < 0.0 )
   {
     string const message = "An invalid value of fluid bulk modulus (" + std::to_string(m_compressibility) + ") is specified";
     GEOS_ERROR(message);

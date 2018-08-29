@@ -12,8 +12,10 @@ ENV MPICC=mpicc
 ENV MPICXX=mpicxx
 
 ADD setup.sh /home/geosx/setup.sh
+ADD buildtpl.sh /home/geosx/buildtpl.sh
 
 RUN /home/geosx/setup.sh
+RUN /home/geosx/buildtpl.sh
 
 USER geosx
 WORKDIR /home/geosx
