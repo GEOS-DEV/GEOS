@@ -9,6 +9,8 @@
     <SinglePhaseFlow name="SinglePhaseFlow"
                           verboseLevel="0"
                           gravityFlag="1"
+                          fluidName="water"
+                          solidName="rock"
                           discretization="singlePhaseTPFA">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -18,31 +20,30 @@
   </Solvers>
   
   <Mesh>
-      <MeshFile name="TestMeshVTM"
-                file="cube10x10x10.vtm"/>
+      <MeshFile name="CubeTet"
+                file="cube_tet.vtm"/>
   </Mesh>
 
   <Geometry>
     <Box name="all"    type="0" xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
-    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01,  1.01,  1.01"/>
-    <Box name="sink"   type="0" xMin=" 8.99,  8.99,  8.99" xMax="10.01, 10.01, 10.01"/>
+    <Box name="left" type="0" xMin="-1, -1, -1" xMax=" 0.9, 11, 11"/>
   </Geometry>
 
 
-  <Events maxTime="5000.0">
+  <Events maxTime="100">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="20.0"
+                   forceDt="1"
                    target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="100.0"
+                   timeFrequency="1"
                    targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloWellPump" />
   </Events>
 
 
@@ -61,7 +62,8 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="fluidPressure"
+                                 fieldName="pressure"
+                                 boundaryFieldName="facePressure"
                                  coefficientName="permeability"
                                  cellLocation="center"
                                  faceLocation="center"/>
@@ -71,18 +73,19 @@
 
 
   <ElementRegions>
-    <ElementRegion name="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1" cellBlocks="HEX" numericalMethod="FE1" material="water" helo="toto"/>
+    <ElementRegion name="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1" cellBlocks="TETRA" numericalMethod="FE1" material="water" materialList="water rock"/>
   </ElementRegions>
 
   <Constitutive>
-      <LinearEOS name="water">
-        <ParameterData referencePressure="0.0"
-                       referenceDensity="1000"
-                       fluidBulkModulus="2.0e9"
-                       referenceViscosity="0.001"
-                       fluidViscosibility="0.0"
-                       solidBulkModulus="1.0e9"/>
-      </LinearEOS>
+    <CompressibleSinglePhaseFluid name="water"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="1e-9"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <InitialConditions>
@@ -94,45 +97,50 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegion/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/HEX"
+               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/TETRA"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="2.0e-16"/>
+               scale="2.0e-14"/>
 
     <Dirichlet name="permy"
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/HEX"
+               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/TETRA"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="2.0e-16"/>
+               scale="2.0e-14"/>
 
     <Dirichlet name="permz"
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/HEX"
+               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/TETRA"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="2.0e-16"/>
+               scale="2.0e-14"/>
 
     <Dirichlet name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/HEX/referencePorosity"
+               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/TETRA"
+               fieldName="referencePorosity"
                dataType="real64"
                scale="0.05"/>
 
     <Dirichlet name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/HEX/fluidPressure"
+               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/TETRA"
+               fieldName="pressure"
                dataType="real64"
-               scale="5e6"/>
-  
-    <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1e7" setNames="source"/>
-    <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0" setNames="sink"/>
+               scale="1e3"/>
+    <Dirichlet name="boundaryPressure"
+               objectPath="faceManager"
+               fieldName="facePressure"
+               dataType="Scalar"
+               scale="1.1e3"
+               setNames="left"/>
   </BoundaryConditions>
 
   <Functions>
@@ -144,6 +152,6 @@
   </Partition>
 
   <Outputs>
-      <Silo name="siloOutput"/>
+      <Silo name="siloWellPump"/>
   </Outputs>
 </Problem>
