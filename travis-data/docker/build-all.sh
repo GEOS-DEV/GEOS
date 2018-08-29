@@ -14,7 +14,7 @@ function build-tag () {
 }
 
 build-tag geosx/compiler:ubuntu-clang-base ubuntu-clang-base
-docker push geosx/compiler:ubuntu-clang-base
+#docker push geosx/compiler:ubuntu-clang-base
 
 echo ${dockerfiles}
 for df in ${dockerfiles} ; do
@@ -23,10 +23,10 @@ for df in ${dockerfiles} ; do
   echo $imgname
   echo $imgpath
   [[ ${imgname} == 'ubuntu-clang-base' ]] && continue
-  build-tag $imgpath $imgname
+#  build-tag $imgpath $imgname
 
   echo pushing $imgpath
-  docker push $imgpath
+#  docker push $imgpath
 done
 
 #for img in $all_images ; do

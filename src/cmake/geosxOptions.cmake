@@ -9,7 +9,6 @@ message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
 # OPTIONS
-
 option( ENABLE_CALIPER "" OFF )
 set( CALIPER_INSTALL "" CACHE PATH "")
 
@@ -86,6 +85,16 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
                                  GNU "" 
                                  CLANG "-fstandalone-debug" 
                                 )
+
+blt_append_custom_compiler_flag(FLAGS_VAR GEOSX_NINJA_FLAGS
+                  DEFAULT     " "
+                  GNU         "-fdiagnostics-color=always"
+                  CLANG       "-fcolor-diagnostics"
+                  )
+
+if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}")
+endif()
 
 if( CMAKE_HOST_APPLE )
     set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)

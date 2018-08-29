@@ -102,7 +102,7 @@ void InitialConditionBase::ReadXML( TICPP::HierarchicalDataNode*  hdn)
   }
 
   {
-    array1d<string> tempSetName;
+    string_array tempSetName;
     tempSetName = hdn->GetStringVector("setname");
     if (!tempSetName.empty())
       throw GPException("ERROR!!! 'setname' is no longer supported for initial conditions.  Use 'setnames' instead.");
@@ -181,7 +181,7 @@ void ReadInitialConditionFromFile::Apply( PhysicalDomainT& domain )
     }
     else
     {
-      for( array1d<string>::size_type i =0 ; i < setNames_.size() ; ++i)
+      for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
       {
         set<localIndex>& set = objectManager.GetSet(setNames_[i]);
         objectManager.ReadAsciiFieldData(fieldType_, fieldName_, filename_, set);
@@ -236,7 +236,7 @@ void ConstantInitialCondition::Apply( PhysicalDomainT& domain )
   }
   else
   {
-    for( array1d<string>::size_type i =0 ; i < setNames_.size() ; ++i)
+    for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
     {
       set<localIndex>& set = objectManager.GetSet(setNames_[i]);
       objectManager.SetFieldToConstantFromString( fieldType_,  fieldName_, valueStr_, set, m_additive);
@@ -331,7 +331,7 @@ void InitialConditionTable::Apply(PhysicalDomainT& domain)
 
   //fill the sets
   array1d<set<localIndex>> sets(setNames_.size());
-  for (array1d<string>::const_iterator ss = setNames_.begin() ; ss != setNames_.end() ; ++ss)
+  for (string_array::const_iterator ss = setNames_.begin() ; ss != setNames_.end() ; ++ss)
     sets.push_back(objectManager.GetSet(*ss));
 
   //now that we know what's going on, let's call the right function template ...
@@ -442,13 +442,13 @@ void InitialConditionFunction::ReadXML( TICPP::HierarchicalDataNode*  hdn){
   }
   else
   {
-    array1d<string> vTypesVect = Tokenize(varTypesStr," ");
+    string_array vTypesVect = Tokenize(varTypesStr," ");
     variableTypes_.resize(vTypesVect.size());
 
     if(variableTypes_.size() != variableNames_.size())
       throw GPException("Error InitialConditionFunction: Number of variable types not equal to number of variables.");
 
-    for( array1d<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
+    for( string_array::size_type i=0 ; i < vTypesVect.size() ; ++i )
       variableTypes_[i] = fromString<FieldType>(vTypesVect[i]);
 
   }
@@ -471,7 +471,7 @@ void InitialConditionFunction::Apply( PhysicalDomainT& domain ){
   }
   else
   {
-    for( array1d<string>::size_type i =0 ; i < setNames_.size() ; ++i)
+    for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
     {
       set<localIndex>& set = objectManager.GetSet(setNames_[i]);
       objectManager.SetFieldEqualToFunction(fieldType_,  fieldName_, functionName_, variableNames_, variableTypes_,set,component_);
@@ -601,7 +601,7 @@ void CalculateFaceCenters::Apply( PhysicalDomainT& domain )
   else
   {
 
-    for( array1d<string>::size_type i =0 ; i < setNames_.size() ; ++i)
+    for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
     {
       set<localIndex>& subset = domain.m_feFaceManager.GetSet(setNames_[i]);
       for( set<localIndex>::const_iterator si=subset.begin() ; si!=subset.end() ; ++si )
@@ -674,7 +674,7 @@ void CalculateElementCenters::Apply( PhysicalDomainT& domain)
     }
     else
     {
-      for( array1d<string>::size_type i =0 ; i < setNames_.size() ; ++i)
+      for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
       {
         set<localIndex>& subset = elementRegion.GetSet(setNames_[i]);
         for( set<localIndex>::const_iterator si=subset.begin() ; si!=subset.end() ; ++si )
@@ -732,7 +732,7 @@ void CalculateFaceNormals::Apply( PhysicalDomainT& domain )
   else
   {
 
-    for( array1d<string>::size_type i =0 ; i < setNames_.size() ; ++i)
+    for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
     {
       set<localIndex>& subset = domain.m_feFaceManager.GetSet(setNames_[i]);
       for( set<localIndex>::const_iterator si=subset.begin() ; si!=subset.end() ; ++si )
@@ -837,7 +837,7 @@ void CalculateAperture::Apply( PhysicalDomainT& domain )
   else
   {
 
-    for( array1d<string>::size_type i =0 ; i < setNames_.size() ; ++i)
+    for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
     {
       set<localIndex>& subset = domain.m_feFaceManager.GetSet(setNames_[i]);
       for( set<localIndex>::const_iterator si=subset.begin() ; si!=subset.end() ; ++si )

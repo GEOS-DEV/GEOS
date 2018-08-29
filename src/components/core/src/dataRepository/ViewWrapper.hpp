@@ -175,6 +175,16 @@ public:
     return std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject));
   }
 
+  virtual std::unique_ptr<ViewWrapperBase> clone( string const & name,
+                                                  ManagedGroup * const parent ) override
+  {
+    std::unique_ptr<ViewWrapperBase>
+    clonedWrapper = std::make_unique<ViewWrapper<T> >( name, parent, this->m_data, false );
+
+    return clonedWrapper;
+  }
+
+
 
   /**
    * Virtual function to return the typeid of T. Not so sure this does what we
@@ -195,9 +205,7 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
-#ifdef USE_ATK
       GEOS_ERROR("invalid cast attempt");
-#endif
     }
     return static_cast< ViewWrapper<T>& >(base);
   }
@@ -206,9 +214,7 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
-#ifdef USE_ATK
       GEOS_ERROR("invalid cast attempt");
-#endif
     }
     return static_cast< ViewWrapper<T> const & >(base);
   }

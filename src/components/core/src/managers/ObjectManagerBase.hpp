@@ -75,13 +75,13 @@ public:
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
 
-  virtual localIndex PackSize( array1d<string> const & wrapperNames,
+  virtual localIndex PackSize( string_array const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array1d<string> const & wrapperNames,
+                    string_array const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive )  const override;
 
@@ -127,7 +127,7 @@ public:
 private:
   template< bool DOPACK >
   localIndex PackPrivate( buffer_unit_type * & buffer,
-                   array1d<string> const & wrapperNames,
+                   string_array const & wrapperNames,
                    localIndex_array const & packList,
                    integer const recursive ) const;
 
