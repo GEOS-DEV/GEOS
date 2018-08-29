@@ -12,7 +12,6 @@ set( linearAlgebraInterface_headers
 # Specify all sources
 #
 set( linearAlgebraInterface_sources
-     BlockMatrixView.cpp
      EpetraSparseMatrix.cpp
      EpetraVector.cpp
      TrilinosSolver.cpp

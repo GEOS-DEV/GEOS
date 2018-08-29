@@ -14,9 +14,9 @@ namespace geosx
 {
 
 /**
- * \class EpetraSparseMatrix
- * \brief This class creates and provides basic support for the Epetra_CrsMatrix
- *        matrix object type used in Trilinos.
+ * \class BlockMatrixView
+ * \brief This class creates and provides basic support for Trilinos-based block
+ *        matrices objects.
  */
 
 template< typename LAI >
@@ -40,7 +40,7 @@ public:
   /**
    * @brief Empty matrix constructor.
    *
-   * Create an empty block matrix.
+   * Create a block matrix from an array of matrices.
    */
   BlockMatrixView(array1d<ParallelMatrix> * Mats);
 
@@ -85,6 +85,50 @@ public:
   //@}
 
 };
+
+// Empty constructor (inlined)
+template< typename LAI >
+inline
+BlockMatrixView<LAI>::BlockMatrixView()
+{
+}
+
+template< typename LAI >
+inline
+BlockMatrixView<LAI>::BlockMatrixView(array1d<ParallelMatrix> * Mats)
+{
+}
+
+// Apply the block matrix to a block vector.
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::apply()
+{}
+
+// Set to residual form.
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::residual()
+{}
+
+// Clear row and multiply the diagonal entry by <tt>factor</tt>.
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::clearRow(globalIndex rowIndex, real64 factor)
+{}
+
+// Accessor for block.
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::getBlock(integer blockRowIndex, integer blockColIndex)
+{}
+
+// Accessor for block.
+template< typename LAI >
+inline
+void BlockMatrixView<LAI>::getBlock(std::string blockName)
+{}
+
 
 }
 
