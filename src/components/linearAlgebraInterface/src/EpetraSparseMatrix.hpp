@@ -37,6 +37,11 @@ public:
   EpetraSparseMatrix();
 
   /**
+   * @brief Copy constructor.
+   */
+  EpetraSparseMatrix( EpetraSparseMatrix const &in_matrix );
+
+  /**
    * @brief Virtual destructor.
    */
   virtual ~EpetraSparseMatrix() = default;
@@ -261,7 +266,7 @@ public:
                  EpetraVector &res );
 
   /**
-   * @brief Compute gaxpy b = alpha*A*x + beta*b.
+   * @brief Compute "gaxpy" res = alpha*A*x + beta*b.
    */
   void gaxpy( real64 alpha,
               EpetraVector const &x,

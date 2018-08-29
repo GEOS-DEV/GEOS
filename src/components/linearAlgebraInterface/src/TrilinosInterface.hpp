@@ -18,10 +18,6 @@ class TrilinosInterface
 {
 public:
 
-  // Legacy Epetra types (don't seem to need them)
-  using ParallelMap = Epetra_Map;
-  using ParallelGraph = Epetra_CrsGraph;
-
   // Epetra matrix and vector wrappers
   using ParallelMatrix = EpetraSparseMatrix;
   using ParallelVector = EpetraVector;

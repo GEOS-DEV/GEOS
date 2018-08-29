@@ -14,6 +14,12 @@ namespace geosx
 EpetraSparseMatrix::EpetraSparseMatrix()
 {}
 
+// Copy constructor
+EpetraSparseMatrix::EpetraSparseMatrix( EpetraSparseMatrix const &in_mat )
+{
+  m_matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(*in_mat.getPointer()));
+}
+
 // -----------------------------------------------------------------------------------
 // ------------------------------ Create/Finalize ------------------------------------
 // -----------------------------------------------------------------------------------
