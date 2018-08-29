@@ -1588,6 +1588,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
           {
             ghostZoneFlag.push_back( 1 );
           }
+          else
+          {
+            ghostZoneFlag.push_back( 0 );
+          }
         }
 
 
