@@ -87,13 +87,15 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
   const array2d<localIndex> & facesToElems = faceManager->elementSubRegionList();
   const OrderedVariableOneToManyRelation & facesToNodes = faceManager->nodeList();
-  const integer_array isExternalFace = faceManager->m_isExternal ;
+  //const integer_array isExternalFace = faceManager->m_isExternal ;
+  // isExternal is not yet set
+  const integer_array isExternalFace = faceManager->getReference<integer_array>("domainBoundaryIndicator");
 
   globalID *extFaceMap ;
   int *slideNodeMap ;
   int *extFacesToNodes ;
   int *extFacesToElement ;
-  vista::MemAlloc(numNodes, &slideNodeMap) ;
+  vista::MemAlloc(numFaces*4, &slideNodeMap) ;
   vista::MemAlloc(numFaces, &extFaceMap) ;
   vista::MemAlloc(numFaces*4, &extFacesToNodes) ;
   vista::MemAlloc(numFaces*2, &extFacesToElement) ;
@@ -207,11 +209,11 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    CopyAccelerationsToTribolSourceData(nodeManager) ;
    CopyForcesToTribolSourceData(nodeManager) ;
 
-   const int dim = 3 ;
+   int meshDim = 3 ;
    int nodesPerFace = 4 ;
 
    // set the cellType
-   const int cellType = (dim == 2) ? (int)axom::mint::CellType::SEGMENT : (int)axom::mint::CellType::QUAD;
+   const int cellType = (meshDim == 2) ? (int)axom::mint::CellType::SEGMENT : (int)axom::mint::CellType::QUAD;
 
    SlideWorldAdapter::Setup(0) ;
    SlideWorldAdapter::TransferToWorld() ;
@@ -235,7 +237,7 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    const real64 *zs = slideWorldNodesSlave->fieldReal("z") ;
 
    // initialize the contact library
-   tribol::initialize(dim, MPI_COMM_WORLD);
+   tribol::initialize(meshDim, MPI_COMM_WORLD);
 
    // set penalty stiffness, set to negative to account for flipped sign in the
    // contact nodal forces. This should be corrected in the normal that is
