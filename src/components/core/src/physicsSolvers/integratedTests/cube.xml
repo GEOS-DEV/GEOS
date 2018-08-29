@@ -63,9 +63,17 @@
   </Constitutive>
 
 
-  <InitialConditions>
-  </InitialConditions>
+  <BoundaryConditions>
+    <Dirichlet name="initVel"  
+               initialCondition="1"  
+               setNames="all"
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               dataType="r1Tensor" 
+               component="0"
+               scale="1.0e3"/>
 
+  </BoundaryConditions>
   <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
   </Partition>
