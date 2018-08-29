@@ -1285,9 +1285,9 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back(viewKeys.trilinosIndex.Key());
 
-  CommunicationTools::SynchronizeFields(fieldNames,
-                              mesh,
-                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   // create epetra map
 
@@ -1506,7 +1506,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
             for( int i=0 ; i<dim ; ++i )
             {
-              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*static_cast<int>(trilinos_index[localNodeIndex])+i;
+              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*trilinos_index[localNodeIndex]+i;
 
               // TODO must add last solution estimate for this to be valid
               element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];
@@ -1903,6 +1903,15 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 //  m_maxDofVal = maxpos;
 //  std::cout<<"Maximum DeltaDisplacement, Position = "<<maxinc<<",
 // "<<maxpos<<", "<<maxinc/maxpos<<std::endl;
+
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back(keys::TotalDisplacement);
+
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         domain->getMeshBody(0)->getMeshLevel(0),
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
 
 }
 
