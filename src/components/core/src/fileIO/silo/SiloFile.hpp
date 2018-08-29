@@ -156,8 +156,8 @@ public:
                        const localIndex nnodes,
                        real64* coords[3],
                        const globalIndex* globalNodeNum,
-                       string const ghostNodeName,
-                       string const ghostZoneName,
+                       char const * const ghostNodeName,
+                       char const * const ghostZoneName,
                        int const numShapes,
                        int const * shapecnt,
                        const localIndex* const * const meshConnectivity,
@@ -763,6 +763,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
 
+  char * regionpnames[ 100 ];
 
   // if the number of elements is zero, then record the path to the var. This
   // will be used later to delete the entry
@@ -882,9 +883,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
         }
       }
     }
-
-
-    char * regionpnames[ 100 ];
+    
     for( string_array::size_type a=0 ; a<activeMaterialNames.size() ; ++a )
     {
       regionpnames[a] = const_cast<char*> (activeMaterialNames[a].c_str());

@@ -510,8 +510,8 @@ void SiloFile::WriteMeshObject(string const & meshName,
                                const localIndex nnodes,
                                real64* coords[3],
                                globalIndex const * const globalNodeNum,
-                               string const ghostNodeName,
-                               string const ghostZoneName,
+                               char const * const ghostNodeFlag,
+                               char const * const ghostZoneFlag,
                                int const numShapes,
                                int const * shapecnt,
                                const localIndex* const * const meshConnectivity,
@@ -539,7 +539,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
   }
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-  DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeName.c_str()) );
+  DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
 
 
   int numTotZones = 0;
@@ -626,7 +626,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
     int hi_offset = 0;
 
 
-    DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneName.c_str()) );
+    DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
                     hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize2.data()),
@@ -1504,8 +1504,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     string const ghostZoneName = "ghostZoneFlag";
 
     integer_array const & nodeGhostRank = nodeManager->GhostRank();
-    array1d<int> ghostNodeFlag( nodeGhostRank.size() );
-    array1d<int> ghostZoneFlag;
+    array1d<char> ghostNodeFlag( nodeGhostRank.size() );
+    array1d<char> ghostZoneFlag;
 
 
 
@@ -1584,7 +1584,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
             elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
           }
 
-          ghostZoneFlag.push_back( elemGhostRank[k] );
+          if( elemGhostRank[k] >= 0 )
+          {
+            ghostZoneFlag.push_back( 1 );
+          }
         }
 
 
@@ -1639,8 +1642,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                     numNodes,
                     coords,
                     nodeManager->m_localToGlobalMap.data(),
-                    ghostNodeName,
-                    ghostZoneName,
+                    ghostNodeFlag.data(),
+                    ghostZoneFlag.data(),
                     integer_conversion<int>(numElementRegions),
                     shapecnt.data(),
                     meshConnectivity.data(),
@@ -1664,15 +1667,15 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-    DBSetDir(m_dbFilePtr, "NodalFields" );
-    WriteDataField<int>( meshName,
-                         ghostNodeName,
-                         ghostNodeFlag,
-                         DB_NODECENT,
-                         cycleNum,
-                         problemTime,
-                         "/NodalFields" );
-    DBSetDir(m_dbFilePtr, "..");
+//    DBSetDir(m_dbFilePtr, "NodalFields" );
+//    WriteDataField<int>( meshName,
+//                         ghostNodeName,
+//                         ghostNodeFlag,
+//                         DB_NODECENT,
+//                         cycleNum,
+//                         problemTime,
+//                         "/NodalFields" );
+//    DBSetDir(m_dbFilePtr, "..");
 
 
 
@@ -1717,16 +1720,16 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                  isRestart,
                                  localIndex_array());
 
-          DBSetDir(m_dbFilePtr, regionName.c_str() );
-          string temp = "/" + regionName;
-          WriteDataField<int>( meshName,
-                               ghostZoneName,
-                               ghostZoneFlag,
-                               DB_ZONECENT,
-                               cycleNum,
-                               problemTime,
-                               temp.c_str() );
-          DBSetDir(m_dbFilePtr, "..");
+//          DBSetDir(m_dbFilePtr, regionName.c_str() );
+//          string temp = "/" + regionName;
+//          WriteDataField<int>( meshName,
+//                               ghostZoneName,
+//                               ghostZoneFlag,
+//                               DB_ZONECENT,
+//                               cycleNum,
+//                               problemTime,
+//                               temp.c_str() );
+//          DBSetDir(m_dbFilePtr, "..");
 
 
         }
