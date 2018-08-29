@@ -29,6 +29,7 @@
 #include <mpi.h>
 
 #include "TrilinosInterface.hpp"
+#include "BlockMatrixView.hpp"
 
 #include "common/DataTypes.hpp"
 
@@ -233,6 +234,10 @@ void testLaplaceOperator()
   {
     EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
   }
+
+  BlockMatrixView<TrilinosInterface> testBlockMatrix;
+
+  array1d<ParallelMatrix> * MatArray;
 
   MPI_Finalize();
 
