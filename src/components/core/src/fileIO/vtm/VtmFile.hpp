@@ -37,6 +37,19 @@
 namespace geosx{
 class MeshLevel;
 
+class DumbPropertyManager {
+    public:
+        void SetName(string const & name);
+        void SetValue(globalIndex const elementIndex, double const value);
+        void SetSize(globalIndex const size);
+
+        string GetName() const;
+        double GetValue(globalIndex const elementIndex) const;
+    private:
+    string m_name;
+    std::vector< double > m_values;
+};
+
 /*!
  * @brief This class may be temporary and stock a mesh with vertices, polygons (triangles
  * and quads) and cells (pyramids,  prisms, tetraedrons, hexahedrons)
@@ -323,6 +336,7 @@ class DumbMesh {
 
 };
 
+
 /*!
  * @brief this class stands for the I/O of vtu file
  * @details vtu(p) files is an extension fully supported by the VTK/Paraview
@@ -339,7 +353,8 @@ class VtuFile {
          * @brief load a .vtu file
          * @param[in] fileName the name of the XML pvtu file to be loaded
          */
-        void Load( string const & fileName, DumbMesh & mesh);
+        void Load( string const & fileName, DumbMesh & mesh,
+        std::vector< DumbPropertyManager> & properties);
 
         /*!
          * @brief save a .vtu file
@@ -365,10 +380,18 @@ class VtuFile {
                 string const & fileName) const;
 
         /*!
-         * @brief load the mesh part form the XML document
+         * @brief load the mesh part from the XML document
          * @param[in] pvtuDoc the XML document
          */
         void LoadMesh(pugi::xml_document const & pvtuDoc, DumbMesh& mesh);
+
+        /*!
+         * @brief load the properties from the XML document
+         * @param[in] pvtuDoc the XML document
+         */
+        void LoadProperties(pugi::xml_document const & pvtuDoc,
+                DumbMesh const &  mesh,
+                std::vector< DumbPropertyManager>& properties);
 
 
         /*!
@@ -383,6 +406,7 @@ class VtuFile {
                     Lambda && stringConvertor) const;
 };
 
+
 class MeshBlock {
     public:
         MeshBlock( string fileName,
@@ -395,6 +419,7 @@ class MeshBlock {
         string m_blockName;
         VtuFile m_vtuFile;
         DumbMesh m_mesh;
+        std::vector <DumbPropertyManager> m_properties;
 };
 
 class RankBlock {

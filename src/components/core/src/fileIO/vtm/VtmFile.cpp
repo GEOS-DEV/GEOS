@@ -34,6 +34,28 @@
 
 namespace geosx{
 
+void DumbPropertyManager::SetName(string const & name ) {
+    m_name = name;
+}
+
+void DumbPropertyManager::SetSize(globalIndex const size) {
+    m_values.resize(size);
+}
+
+void DumbPropertyManager::SetValue(globalIndex const elementIndex, double const value) {
+    assert(elementIndex < static_cast<globalIndex>(m_values.size()));
+    m_values[elementIndex] = value;
+}
+
+string DumbPropertyManager::GetName() const {
+    return m_name;
+}
+
+double DumbPropertyManager::GetValue(globalIndex const elementIndex) const {
+    assert(elementIndex < static_cast<globalIndex>(m_values.size()));
+    return m_values[elementIndex];
+}
+
 MeshBlock::MeshBlock( string fileName,
         string blockName ) :
     m_vtuFileName(fileName),
@@ -46,7 +68,7 @@ bool MeshBlock::IsARegionBlock() const  {
 }
 
 void MeshBlock::Load() {
-    m_vtuFile.Load(m_vtuFileName,m_mesh);    
+    m_vtuFile.Load(m_vtuFileName,m_mesh,m_properties);    
     m_mesh.SetName(m_blockName);
 }
 
@@ -148,11 +170,15 @@ void VtmFile::FromVtmToGEOS(MeshLevel * const meshLevel) {
     }
 }
 
-void VtuFile::Load( string const &filename, DumbMesh &mesh) {
+void VtuFile::Load( string const &filename, DumbMesh &mesh,
+        std::vector< DumbPropertyManager> & properties) {
     pugi::xml_document vtmDoc;
     vtmDoc.load_file(filename.c_str());
     CheckXmlChildFileConsistency(vtmDoc,filename);
     LoadMesh(vtmDoc, mesh);
+    if( mesh.NumCells() > 0 ) { //TODO for the moment, we only load properties on cells
+        LoadProperties(vtmDoc, mesh, properties);
+    }
 }
 
 void VtuFile::Save( string const &filename) {
@@ -483,6 +509,31 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
 }
 
 
+void VtuFile::LoadProperties(pugi::xml_document const & vtmDoc,
+        DumbMesh const& mesh,
+        std::vector< DumbPropertyManager>& properties){
+    pugi::xml_node cellDataNode =
+        vtmDoc.child("VTKFile").child("UnstructuredGrid").child("Piece").child("CellData");
+    for( auto& property : cellDataNode.children()) {
+        std::string propertyName = property.attribute("Name").as_string();
+        std::string propertyType = property.attribute("type").as_string();
+        if(propertyName != "globalIndex") {
+            if(propertyType == "Float64" || propertyType == "Float32") {
+                properties.emplace_back(DumbPropertyManager());
+                auto& curProperty = properties[properties.size()-1];
+                curProperty.SetSize(mesh.NumCells());
+                std::vector< double > propertyValues; // convenient to have 0 as first offset
+                propertyValues.reserve(mesh.NumCells());
+                SplitNodeTextString( property.text().as_string(), propertyValues,
+                        [](string str)-> double {return std::stod(str);});
+                assert(static_cast<globalIndex >(propertyValues.size()) == mesh.NumCells());
+                for( globalIndex elementIndex = 0 ; elementIndex < mesh.NumCells(); elementIndex++) {
+                    curProperty.SetValue(elementIndex, propertyValues[elementIndex]);
+                }
+            }
+        }
+    }
+}
 
     ////////////////
     /// MESH PART //
