@@ -454,6 +454,15 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
     totalMass += mass[a];
   }
   std::cout<<"totalMass = "<<totalMass<<std::endl;
+
+
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back("Velocity");
+
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
 }
 
 real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
