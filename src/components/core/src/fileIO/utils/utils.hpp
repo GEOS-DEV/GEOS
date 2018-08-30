@@ -64,12 +64,14 @@ inline void splitPath(const std::string& path, std::string& dirname, std::string
   {
     dirname = std::string(".");
     basename = path;
+    return;
   }
 
   if( pos == 0 )
   {
     dirname = std::string("/");
     basename = path.substr(1);
+    return;
   }
 
   dirname = path.substr(0, pos);

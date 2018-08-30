@@ -33,7 +33,9 @@ EventBase::EventBase( const std::string& name,
                       ManagedGroup * const parent ):
   ExecutableGroup(name, parent),
   m_target(nullptr)
-{}
+{
+  setRestartFlags( RestartFlags::WRITE );
+}
 
 
 EventBase::~EventBase()
