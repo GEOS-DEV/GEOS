@@ -88,7 +88,7 @@ void EventBase::FillDocumentationNode()
                               "real64",
                               "end time",
                               "end time",
-                              "1.0e9",
+                              "1.0e100",
                               "",
                               0,
                               1,
