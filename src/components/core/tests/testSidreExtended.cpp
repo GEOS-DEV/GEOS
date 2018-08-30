@@ -257,6 +257,7 @@ void checkScalarView(const ViewWrapper<T> * view, int sfp, const T value) {
 
 TEST(testSidreExtended, testSidreExtended) {
   MPI_Init(0, nullptr);
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_extended";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
@@ -439,7 +440,7 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Save the sidre tree */
   root->prepareToWrite();
-  SidreWrapper::writeTree(1, path, protocol, MPI_COMM_WORLD);
+  SidreWrapper::writeTree(1, path, protocol, MPI_COMM_GEOSX);
   root->finishWriting();
 
   /* Delete geos tree and reset sidre tree. */
@@ -449,7 +450,7 @@ TEST(testSidreExtended, testSidreExtended) {
   ds.getRoot()->destroyGroups();
 
   /* Restore the sidre tree */
-  SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_WORLD);
+  SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_GEOSX);
   root = new ManagedGroup(std::string("data"), nullptr);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
@@ -478,7 +479,7 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Load the data */
   root->prepareToRead();
-  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_WORLD);
+  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_GEOSX);
   root->finishReading();
 
   /* Group sizes should have carried over. */
