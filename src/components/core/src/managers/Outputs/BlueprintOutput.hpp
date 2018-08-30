@@ -56,6 +56,11 @@ public:
                         int const cycleNumber,
                         dataRepository::ManagedGroup * domain ) override;
 
+  /// Write one final output as the code exits
+  virtual void Cleanup( real64 const & time_n,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override { Execute(time_n, 0.0, cycleNumber, domain); }
+
   
   struct viewKeyStruct
   {

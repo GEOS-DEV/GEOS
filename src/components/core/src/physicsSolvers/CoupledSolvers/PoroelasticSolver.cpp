@@ -166,6 +166,33 @@ void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGrou
                                     0,
                                     0 );
 
+
+        docNode->AllocateChildNode( viewKeyStruct::deltaPorosityString,
+                                    viewKeyStruct::deltaPorosityString,
+                                    -1,
+                                    "real64_array",
+                                    "real64_array",
+                                    "Change in Porosity",
+                                    "Change in Porosity",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
+        docNode->AllocateChildNode( viewKeyStruct::dPorosity_dPressureString,
+                                    viewKeyStruct::dPorosity_dPressureString,
+                                    -1,
+                                    "real64_array",
+                                    "real64_array",
+                                    "Derivative of Porosity wrt Pressure",
+                                    "Derivative of Porosity wrt Pressure",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
       });
   }
 }
@@ -290,15 +317,14 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   auto dVolumetricStrain = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumetricStrainString);
 
   auto dPres = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
-                                                                 viewKeyStruct::
-                                                                 deltaFluidPressureString);
+                                                                 viewKeyStruct::deltaPressureString);
+
 
   auto poro = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
                                                                 viewKeyStruct::
                                                                 porosityString);
 
-  auto dPoro = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
-                                                                 viewKeyStruct::
+  auto dPoro = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::
                                                                  deltaPorosityString);
 
   auto volume    = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
@@ -309,14 +335,21 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
                                                                      viewKeyStruct::
                                                                      deltaVolumeString);
 
-  constitutive::ViewAccessor< real64_array >
-  meanStress = constitutiveManager->GetStateData<real64_array>(string("meanStress"));
+  auto dPoro_dPres = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::
+                                                                       dPorosity_dPressureString);
 
-  constitutive::ViewAccessor< real64 >
-  bulkModulus = constitutiveManager->GetParameterData<real64>(string("BulkModulus"));
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  meanStress = elemManager->
+               ConstructMaterialViewAccessor< array2d<real64> >( "meanStress",
+                                                                 constitutiveManager);
 
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  bulkModulus = elemManager->
+                ConstructMaterialViewAccessor< array2d<real64> >( "BulkModulus",
+                                                                  constitutiveManager);
 
-  array1d<array1d<array1d<real64>>> & dPoro_dPres = fluidSolver.dPorosity_dPressure();
+  localIndex const solidIndex = fluidSolver.solidIndex();
+
   // TODO
   //   dVolumetricStrain[er][esr][k] += dUhatdX.trace() / numQuadraturePoints;
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -350,16 +383,17 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
           CalculateGradient( dUhatdX, uhat_local, dNdX[ei][q] );
 
           dVolumetricStrain[er][esr][ei] += dUhatdX.Trace();
-          dEffStresss[er][esr][ei] += ( meanStress[constitutiveMap.first(ei,q)][constitutiveMap.second(ei,q)]
+          dEffStresss[er][esr][ei] += ( meanStress[er][esr][solidIndex][ei][0]
                                       - effectiveStress[er][esr][ei] ) ;
         }
         dVolumetricStrain[er][esr][ei] /= numQuadraturePoints;
         dEffStresss[er][esr][ei] /= numQuadraturePoints;
 
         dPoro[er][esr][ei] = (m_biotCoef - poro[er][esr][ei])
-                          / bulkModulus[constitutiveMap.first(ei,0)]
+                          / bulkModulus[er][esr][solidIndex][ei][0]
                           * (dEffStresss[er][esr][ei] + (1 - m_biotCoef) * dPres[er][esr][ei]);
-        dPoro_dPres[er][esr][ei] = (m_biotCoef - poro[er][esr][ei]) / bulkModulus[constitutiveMap.first(ei,0)];
+
+        dPoro_dPres[er][esr][ei] = (m_biotCoef - poro[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei][0];
 
 
       }

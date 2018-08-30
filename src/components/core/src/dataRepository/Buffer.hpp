@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 #include "ManagedArray.hpp"
 #include <vector>
 #include <cstdlib>
@@ -208,6 +209,17 @@ public:
     return byte_size;
   }
 
+  template <typename T>
+  static localIndex packed_size(const string_array & arr)
+  {
+    localIndex byte_size = 2 * sizeof(localIndex);
+    for (const T & elem : arr)
+    {
+      byte_size += packed_size(elem);
+    }
+
+    return byte_size;
+  }
 
   template <typename T>
   static void * pack(const array1d<T> & arr, localIndex & byte_size, void * buffer=nullptr)
@@ -266,6 +278,73 @@ public:
     return bytes_read;
   }
 
+
+
+
+  static inline localIndex packed_size(const string_array & arr)
+  {
+    localIndex byte_size = 2 * sizeof(localIndex);
+    for (const string & elem : arr)
+    {
+      byte_size += packed_size(elem);
+    }
+
+    return byte_size;
+  }
+
+  static inline void * pack(const string_array & arr, localIndex & byte_size, void * buffer=nullptr)
+  {
+    byte_size = packed_size(arr);
+    localIndex * buff = reinterpret_cast<localIndex *>(buffer);
+    if (buff == nullptr)
+    {
+      buff = allocBuffer<localIndex>(byte_size);
+    }
+
+    buff[0] = byte_size;
+    buff[1] = arr.size();
+    char * c_buff = reinterpret_cast<char *>(buff + 2);
+
+    localIndex offset = 0;
+    localIndex bytes_written;
+    for (const string & elem : arr)
+    {
+      pack(elem, bytes_written, c_buff + offset);
+      offset += bytes_written;
+    }
+
+    return buff;
+  }
+
+  static inline localIndex unpack( string_array & arr, const void * buffer, localIndex byte_size=-1)
+  {
+    const localIndex * buff = reinterpret_cast<const localIndex *>(buffer);
+    localIndex bytes_recorded = buff[0];
+    localIndex num_arrays = buff[1];
+    arr.resize(num_arrays);
+
+    if (bytes_recorded != byte_size && byte_size >= 0)
+    {
+      GEOS_ERROR("Number of bytes recorded not equal to number of bytes in buffer: " <<
+                 bytes_recorded << " " << byte_size);
+    }
+
+    const char * c_buff = reinterpret_cast<const char *>(buff + 2);
+    localIndex offset = 0;
+    for (localIndex i = 0 ; i < num_arrays; ++i)
+    {
+      offset += unpack(arr[i], c_buff + offset);
+    }
+
+    localIndex bytes_read = offset + 2 * sizeof(localIndex);
+    if (bytes_read != bytes_recorded)
+    {
+      GEOS_ERROR("Number of bytes read not equal to number of bytes in recorded: " <<
+                 bytes_read << " " << bytes_recorded);
+    }
+
+    return bytes_read;
+  }
 
 
 

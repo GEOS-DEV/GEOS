@@ -55,6 +55,21 @@ public:
                         dataRepository::ManagedGroup * domain ) = 0;
 
   /*
+   * This method will inform the object that it expects to execute
+   * during the next timestep
+   */
+  virtual void SignalToPrepareForExecution(real64 const time,
+                                           real64 const dt,  
+                                           integer const cycle,
+                                           dataRepository::ManagedGroup * domain) {}
+  /*
+   * This method is called as the code exits the main run loop
+   */
+  virtual void Cleanup( real64 const & time_n,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) {}
+
+  /*
    * This supplies the timestep request for each executable
    * target to the event manager
    */

@@ -141,6 +141,9 @@ public:
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
+
+    constexpr static auto deltaPorosityString = "deltaPorosity";
+    constexpr static auto dPorosity_dPressureString = "dPorosity_dPressure";
   } viewKeys;
 
 
