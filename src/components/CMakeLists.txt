@@ -21,13 +21,18 @@ add_subdirectory(core)
 
 add_subdirectory(cxx-utilities/src)
 
+if( ENABLE_PVT_PACKAGE )
+    add_subdirectory(PVTPackage/PVTPackage)
+endif()
+
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
     if( NOT ( ${child} STREQUAL "core" OR 
               ${child} STREQUAL "docs" OR 
-              ${child} STREQUAL "cxx-utilities" OR 
-              ${child} STREQUAL "ConstitutivePackage" OR 
+              ${child} STREQUAL "cxx-utilities" OR
+              ${child} STREQUAL "PVTPackage" OR
+              ${child} STREQUAL "ConstitutivePackage" OR
               ${child} STREQUAL "MeshRefinementPackage" OR 
               ${child} STREQUAL "PhysicsSolverPackage2" OR 
               ${child} STREQUAL "ReservoirSimulationPackage" ) )
