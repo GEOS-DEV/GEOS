@@ -440,7 +440,7 @@ void CommunicationTools::SynchronizeFields( const std::map<string, string_array 
   for( auto & neighbor : neighbors )
   {
     neighbor.MPI_WaitAll( commID );
-    neighbor.UnpackBufferForSync(mesh,commID);
+    neighbor.UnpackBufferForSync( fieldNames, mesh,commID);
   }
   CommunicationTools::releaseCommID(commID);
 

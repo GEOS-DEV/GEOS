@@ -270,7 +270,7 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
+    cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
 
     docNode->AllocateChildNode( viewKeys.vTilde.Key(),
                                 viewKeys.vTilde.Key(),
@@ -375,6 +375,25 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
                                 1,
                                 0,
                                 1 );
+
+
+
+
+    FaceManager * const faces = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getFaceManager();
+    docNode = faces->getDocumentationNode();
+
+    docNode->AllocateChildNode( "junk",
+                                "junk",
+                                -1,
+                                "integer_array",
+                                "integer_array",
+                                "junk",
+                                "junk",
+                                "-1",
+                                NodeManager::CatalogName(),
+                                1,
+                                0,
+                                1 );
   }
 
 }
@@ -452,6 +471,16 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
     totalMass += mass[a];
   }
   std::cout<<"totalMass = "<<totalMass<<std::endl;
+
+
+
+  FaceManager * const faceManager = mesh->getFaceManager();
+  integer_array & junk = faceManager->getReference<integer_array>("junk");
+
+  int rank=-1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  junk = rank;
 }
 
 real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
@@ -1906,6 +1935,7 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back(keys::TotalDisplacement);
+  fieldNames["face"].push_back("junk");
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody(0)->getMeshLevel(0),

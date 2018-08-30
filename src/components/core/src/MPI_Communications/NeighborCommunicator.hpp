@@ -170,7 +170,8 @@ public:
                           MeshLevel * const meshLevel,
                           int const commID );
 
-  void UnpackBufferForSync( MeshLevel * const meshLevel,
+  void UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
+                            MeshLevel * const meshLevel,
                             int const commID );
 
   int Rank();
