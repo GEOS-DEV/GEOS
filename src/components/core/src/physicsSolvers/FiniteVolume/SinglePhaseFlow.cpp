@@ -27,7 +27,6 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
@@ -52,91 +51,30 @@ using namespace multidimensionalArray;
 
 
 SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
-                                            ManagedGroup * const parent ):
-  SolverBase(name, parent),
-  m_gravityFlag(1)
+                                  ManagedGroup * const parent ):
+  FlowSolverBase(name, parent)
 {
   // set the blockID for the block system interface
-  getLinearSystemRepository()->
-  SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
-
-  this->RegisterViewWrapper(viewKeyStruct::gravityFlagString, &m_gravityFlag, false);
-  this->RegisterViewWrapper(viewKeyStruct::discretizationString, &m_discretizationName, false);
-
-  this->RegisterViewWrapper(viewKeyStruct::fluidNameString, &m_fluidName, false);
-  this->RegisterViewWrapper(viewKeyStruct::fluidIndexString, &m_fluidIndex, false);
-
-  this->RegisterViewWrapper(viewKeyStruct::solidNameString, &m_solidName, false);
-  this->RegisterViewWrapper(viewKeyStruct::solidIndexString, &m_solidIndex, false);
+  getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }
 
 
 void SinglePhaseFlow::FillDocumentationNode(  )
 {
+  FlowSolverBase::FillDocumentationNode();
+
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
 
-  docNode->setName(CatalogName());
+  docNode->setName(SinglePhaseFlow::CatalogName());
   docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example single phase flow solver");
-
-  docNode->AllocateChildNode( viewKeyStruct::gravityFlagString,
-                              viewKeyStruct::gravityFlagString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "Flag that enables/disables gravity",
-                              "Flag that enables/disables gravity",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::discretizationString,
-                              viewKeyStruct::discretizationString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the finite volume discretization to use",
-                              "Name of the finite volume discretization to use",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::fluidNameString,
-                              viewKeyStruct::fluidNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the fluid constitutive model to use",
-                              "Name of the fluid constitutive model to use",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::solidNameString,
-                              viewKeyStruct::solidNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the solid constitutive model to use",
-                              "Name of the solid constitutive model to use",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
+  docNode->setShortDescription("A single phase flow solver");
 }
 
 void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
-  SolverBase::FillOtherDocumentationNodes( rootGroup );
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  FlowSolverBase::FillOtherDocumentationNodes( rootGroup );
+
+  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>( keys::domain );
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
@@ -197,45 +135,6 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
-
-        docNode->AllocateChildNode( viewKeyStruct::referencePorosityString,
-                                    viewKeyStruct::referencePorosityString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Reference porosity",
-                                    "Reference porosity",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    1 );
-
-        docNode->AllocateChildNode( viewKeyStruct::permeabilityString,
-                                    viewKeyStruct::permeabilityString,
-                                    -1,
-                                    "r1_array",
-                                    "r1_array",
-                                    "Permeability (principal values)",
-                                    "Permeability (principal values)",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    1 );
-
-        docNode->AllocateChildNode( viewKeyStruct::gravityDepthString,
-                                    viewKeyStruct::gravityDepthString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Precomputed (gravity dot depth)",
-                                    "Precomputed (gravity dot depth)",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
                                     3 );
 
         docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
@@ -268,7 +167,7 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  1 );
+                                  3 );
 
       docNode->AllocateChildNode( viewKeyStruct::densityString,
                                   viewKeyStruct::densityString,
@@ -281,7 +180,7 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  1 );
+                                  3 );
 
       docNode->AllocateChildNode( viewKeyStruct::viscosityString,
                                   viewKeyStruct::viscosityString,
@@ -294,38 +193,14 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  1 );
-
-      docNode->AllocateChildNode( viewKeyStruct::gravityDepthString,
-                                  viewKeyStruct::gravityDepthString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Precomputed (gravity dot depth)",
-                                  "Precomputed (gravity dot depth)",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
+                                  3 );
     }
-
   }
 }
 
 void SinglePhaseFlow::FinalInitialization( ManagedGroup * const rootGroup )
 {
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  // Precompute solver-specific constant data (e.g. gravity-depth)
-  PrecomputeData(domain);
-
-  ConstitutiveManager * const cm = domain->getConstitutiveManager();
-
-  ConstitutiveBase * const fluidRelation = cm->GetConstitituveRelation( this->m_fluidName );
-  m_fluidIndex = fluidRelation->getIndexInParent();
-  m_solidIndex = cm->GetConstitituveRelation( this->m_solidName )->getIndexInParent();
-
+  FlowSolverBase::FinalInitialization( rootGroup );
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -1404,38 +1279,6 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
     constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint( new_pres, ei, 0 );
     constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint( new_pres, ei, 0 );
   });
-}
-
-void SinglePhaseFlow::PrecomputeData(DomainPartition * const domain)
-{
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  FaceManager * const faceManager = mesh->getFaceManager();
-
-  R1Tensor const & gravityVector = getGravityVector();
-
-  auto elemCenter = elemManager->ConstructViewAccessor< r1_array >( CellBlock::
-                                                                    viewKeyStruct::
-                                                                    elementCenterString );
-
-  auto gravityDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
-
-  // Loop over all the elements and calculate element centers, and element volumes
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const k )->void
-  {
-    gravityDepth[er][esr][k] = Dot(elemCenter[er][esr][k], gravityVector);
-  });
-
-
-  r1_array & faceCenter = faceManager->getReference<r1_array>(FaceManager::viewKeyStruct::faceCenterString);
-  real64_array & gravityDepthFace = faceManager->getReference<real64_array>(viewKeyStruct::gravityDepthString);
-
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
-  {
-    gravityDepthFace[kf] = Dot(faceCenter[kf], gravityVector);
-  }
 }
 
 void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,

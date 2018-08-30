@@ -17,13 +17,13 @@
  */
 
 /**
- * @file SinglePhaseFlow_TPFA.hpp
+ * @file CompositionalMultiphaseFlow.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 class Epetra_FECrsGraph;
 
@@ -43,7 +43,7 @@ class DomainPartition;
  *
  * A compositional multiphase solver
  */
-class CompositionalMultiphaseFlow : public SolverBase
+class CompositionalMultiphaseFlow : public FlowSolverBase
 {
 public:
 
@@ -52,7 +52,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  CompositionalMultiphaseFlow( const std::string& name,
+  CompositionalMultiphaseFlow( const string& name,
                                ManagedGroup * const parent );
 
   /// deleted default constructor
@@ -81,11 +81,11 @@ public:
    */
   static string CatalogName() { return "CompositionalMultiphaseFlow"; }
 
-  virtual void FillDocumentationNode() override final;
+  virtual void FillDocumentationNode() override;
 
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override final;
+  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override final;
+  virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -133,56 +133,26 @@ public:
                                       real64 const & dt,
                                       DomainPartition * const domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
-    /* primary variables */
+    // primary solution field
+    constexpr static auto pressureString = "pressure";
+    constexpr static auto deltaPressureString = "deltaPressure";
+    constexpr static auto facePressureString = "facePressure";
 
-    constexpr static auto fluidPressureString = "fluidPressure";
-    constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+    constexpr static auto globalComponentDensityString = "globalComponentDensity";
+    constexpr static auto deltaGlobalComponentDensityString = "deltaGlobalComponentDensity";
 
-    constexpr static auto componentMassDensityString = "componentMassDensity";
-    constexpr static auto deltaComponentMasslDensityString = "deltaComponentMassDensity";
-
-    constexpr static auto totalMassDensityString = "totalMassDensity";
-    constexpr static auto deltaTotalMassDensityString = "deltaTotalMassDensity";
-
-    /* dependent variables */
-
-    constexpr static auto componentMoleFractionString = "componentMoleFraction";
-
-    constexpr static auto phaseComponentMassFractionString = "phaseComponentMassFraction";
-    constexpr static auto deltaPhaseComponentMassFractionString = "deltaPhaseComponentMassFraction";
-
+    // these are used to store last converged time step values
     constexpr static auto phaseVolumeFractionString = "phaseVolumeFraction";
-    constexpr static auto deltaPhaseVolumeFractionString = "deltaPhaseVolumeFraction";
-
-    constexpr static auto phaseMassDensityString = "phaseMassDensityString";
-    constexpr static auto deltaPhaseMassDensityString = "deltaPhaseMassDensityString";
-
+    constexpr static auto phaseDensityString = "phaseDensity";
+    constexpr static auto phaseComponentDensityString = "phaseComponentDensity";
     constexpr static auto phaseViscosityString = "phaseViscosity";
-    constexpr static auto deltaPhaseViscosityString = "deltaPhaseViscosity";
-
     constexpr static auto phaseRelativePermeabilityString = "phaseRelativePermeability";
-    constexpr static auto deltaPhaseRelativePermeabilityString = "deltaPhaseRelativePermeability";
-
     constexpr static auto porosityString = "porosity";
-    constexpr static auto deltaPorosityString = "deltaPorosity";
 
-    /* other data */
-
-    constexpr static auto referencePorosityString = "referencePorosity";
-
-    constexpr static auto gravityFlagString = "gravityFlag";
-    constexpr static auto gravityDepthString = "gravityDepth";
-
-    constexpr static auto permeabilityString = "permeability";
-
-    constexpr static auto discretizationString = "discretization";
-
-    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-    dataRepository::ViewKey functionalSpace = { "functionalSpace" };
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -230,7 +200,7 @@ private:
    */
   void ApplyDirichletBC_implicit( DomainPartition * object,
                                   real64 const time, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
@@ -238,31 +208,13 @@ private:
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
-                                     real64 const time, real64 const dt,
-                                     systemSolverInterface::EpetraBlockSystem * const blockSystem);
+  void ApplyFaceDirichletBC_implicit( DomainPartition * domain,
+                                      real64 const time, real64 const dt,
+                                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
-  /**
-   * @brief This function generates various discretization information for later use.
-   * @param domain the domain parition
-   */
-  void PrecomputeData(DomainPartition *const domain);
-
-  /**
-   * @brief This function allocates additional storage (e.g. for derivatives)
-   * @param domain the domain partition
-   */
-  void AllocateAuxStorage(DomainPartition *const domain);
-
-  /// flag indicating whether FV precompute has been performed
-  bool m_precomputeDone;
-
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
-
-  /// name of the FV discretization object in the data repository
-  std::string m_discretizationName;
-
+  integer m_numPhases;
+  integer m_numComponents;
+  integer m_numDofPerCell;
 };
 
 } // namespace geosx

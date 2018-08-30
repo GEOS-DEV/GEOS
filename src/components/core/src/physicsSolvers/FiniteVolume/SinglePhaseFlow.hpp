@@ -17,18 +17,19 @@
  */
 
 /**
- * @file SinglePhaseFlow_TPFA.hpp
+ * @file SinglePhaseFlow.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 class Epetra_FECrsGraph;
 
 namespace geosx
 {
+
 namespace dataRepository
 {
 class ManagedGroup;
@@ -42,7 +43,7 @@ class DomainPartition;
  *
  * class to perform a single phase finite volume solve.
  */
-class SinglePhaseFlow : public SolverBase
+class SinglePhaseFlow : public FlowSolverBase
 {
 public:
   /**
@@ -81,11 +82,11 @@ public:
   static string CatalogName() { return "SinglePhaseFlow"; }
 
 
-  virtual void FillDocumentationNode() override final;
+  virtual void FillDocumentationNode() override;
 
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override final;
+  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override final;
+  virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -100,9 +101,9 @@ public:
   /**@{*/
 
   virtual void ImplicitStepSetup( real64 const& time_n,
-                              real64 const& dt,
-                              DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+                                  real64 const& dt,
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
 
   virtual void AssembleSystem( DomainPartition * const domain,
@@ -133,6 +134,31 @@ public:
                                       real64 const & dt,
                                       DomainPartition * const domain ) override;
   /**@}*/
+
+
+  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
+  {
+    // dof numbering
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
+
+    // primary solution field
+    constexpr static auto pressureString = "pressure";
+    constexpr static auto deltaPressureString = "deltaPressure";
+    constexpr static auto facePressureString = "facePressure";
+
+    // these are used to store last converged time step values
+    constexpr static auto densityString = "density";
+    constexpr static auto viscosityString = "viscosity";
+    constexpr static auto porosityString = "porosity";
+
+  } viewKeys;
+
+  struct groupKeyStruct : SolverBase::groupKeyStruct
+  {
+  } groupKeys;
+
+
+private:
 
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
@@ -172,7 +198,7 @@ public:
    */
   void ApplyDirichletBC_implicit( DomainPartition * object,
                                   real64 const time, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
@@ -180,74 +206,9 @@ public:
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
-                                     real64 const time, real64 const dt,
-                                     systemSolverInterface::EpetraBlockSystem * const blockSystem);
-
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    // dof numbering
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
-
-    // primary solution field
-    constexpr static auto pressureString = "pressure";
-    constexpr static auto deltaPressureString = "deltaPressure";
-    constexpr static auto facePressureString = "facePressure";
-
-    // these are used to store last converged time step values
-    constexpr static auto densityString = "density";
-    constexpr static auto viscosityString = "viscosity";
-    constexpr static auto porosityString = "porosity";
-
-    // input data
-    constexpr static auto referencePorosityString = "referencePorosity";
-    constexpr static auto permeabilityString = "permeability";
-
-    // gravity term precomputed values
-    constexpr static auto gravityFlagString = "gravityFlag";
-    constexpr static auto gravityDepthString = "gravityDepth";
-
-    // misc inputs
-    constexpr static auto discretizationString = "discretization";
-    constexpr static auto fluidNameString = "fluidName";
-    constexpr static auto solidNameString = "solidName";
-
-    constexpr static auto fluidIndexString = "fluidIndex";
-    constexpr static auto solidIndexString = "solidIndex";
-
-  } viewKeys;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeys;
-
-
-private:
-
-  /**
-   * @brief This function generates various discretization information for later use.
-   * @param domain the domain parition
-   */
-  void PrecomputeData(DomainPartition *const domain);
-
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
-
-  /// name of the FV discretization object in the data repository
-  string m_discretizationName;
-
-  /// name of the fluid constitutive model
-  string m_fluidName;
-
-  /// name of the solid constitutive model
-  string m_solidName;
-
-  /// index of the fluid constitutive model
-  localIndex m_fluidIndex;
-
-  /// index of the solid constitutive model
-  localIndex m_solidIndex;
+  void ApplyFaceDirichletBC_implicit( DomainPartition * domain,
+                                      real64 const time, real64 const dt,
+                                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
 };
 

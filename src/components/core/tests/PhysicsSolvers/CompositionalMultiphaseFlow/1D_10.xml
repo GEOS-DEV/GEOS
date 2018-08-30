@@ -9,7 +9,9 @@
     <SinglePhaseFlow name="CompositionalMultiphaseFlow"
                           verboseLevel="1"
                           gravityFlag="1"
-                          discretization="fluidTPFA">
+                          discretization="fluidTPFA"
+                          fluidName="fluid1"
+                          solidName="rock">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -78,22 +80,25 @@
   </ElementRegions>
 
   <Constitutive>
-      <CompositionalFluid name="fluid1"
-                          phases="gas oil water"
-                          numComponents="3">
-        <ParameterData equationOfState="PR"
-                       componentNames="c1 co2 water"
-                       componentCriticalPressure="1 2 3"
-                       componentCriticalTemperature="1 2 3"
-                       componentAcentricFactor="1 2 3"
-                       componentMolarWeight="1 2 3"
-                       componentBinaryCoeff="0 0 0
-                                               0 0
-                                                 0"
-                       componentCriticalCompressibility="1 2 3"
-                       componentCriticalVolume="1 2 3"
-                       componentVolumeShift="1 2 3"/>
-      </CompositionalFluid>
+    <CompositionalFluid name="fluid1"
+                        phases="gas oil water"
+                        numComponents="3"
+                        equationOfState="PR"
+                        componentNames="c1 co2 water"
+                        componentCriticalPressure="1 2 3"
+                        componentCriticalTemperature="1 2 3"
+                        componentAcentricFactor="1 2 3"
+                        componentMolarWeight="1 2 3"
+                        componentBinaryCoeff="0 0 0
+                                                0 0
+                                                  0"
+                        componentCriticalCompressibility="1 2 3"
+                        componentCriticalVolume="1 2 3"
+                        componentVolumeShift="1 2 3"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <InitialConditions>

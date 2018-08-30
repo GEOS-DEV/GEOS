@@ -24,9 +24,8 @@
 #include <string>
 #include <limits>
 
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
-#include "../dataRepository/ManagedGroup.hpp"
-#include "../dataRepository/ExecutableGroup.hpp"
+#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
@@ -359,6 +358,8 @@ public:
   {
     return &m_systemSolverParameters;
   }
+
+  void FinalInitialization(ManagedGroup * const group) override;
 
 //  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
 //  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
