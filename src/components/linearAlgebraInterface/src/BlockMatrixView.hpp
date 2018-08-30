@@ -129,7 +129,6 @@ BlockMatrixView<LAI>::BlockMatrixView()
 
 // Apply the block matrix to a block vector.
 template< typename LAI >
-inline
 void BlockMatrixView<LAI>::apply()
 {
   ParallelVector temp(*m_rhs[0]);

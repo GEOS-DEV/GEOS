@@ -57,7 +57,7 @@ void testLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 10;
+  globalIndex n = 300;
   globalIndex N = n*n;
 
   ParallelMatrix testMatrix;
@@ -243,10 +243,6 @@ void testLaplaceOperator()
   testMatrix2.scale(2.);
   solDirect2.scale(-0.5);
 
-  ParallelMatrix * testMatrix00 = nullptr;
-  ParallelMatrix * testMatrix01 = nullptr;
-  ParallelVector * testsol0 = nullptr;
-  ParallelVector * testsol1 = nullptr;
   ParallelVector * testrhs0 = nullptr;
 
   testBlockMatrix.setBlock(0,0,&testMatrix);
@@ -259,21 +255,11 @@ void testLaplaceOperator()
 
   testBlockMatrix.apply();
 
-  testMatrix00 = testBlockMatrix.getBlock(0,0);
-  testMatrix01 = testBlockMatrix.getBlock(0,1);
-  testsol0 = testBlockMatrix.getSolution(0);
-  testsol1 = testBlockMatrix.getSolution(1);
   testrhs0 = testBlockMatrix.getRhs(0);
 
-  testMatrix00->print();
-  testMatrix01->print();
-
-  testsol0->print();
-  testsol1->print();
-
-  testrhs0->print();
-
-
+  real64 normBlockProduct;
+  testrhs0->normInf(normBlockProduct);
+  EXPECT_TRUE( std::fabs(normBlockProduct) <= 1e-8 );
 
   MPI_Finalize();
 
