@@ -178,6 +178,15 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, r
       } );
 }
 
+ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
+                                                     ViewWrapperBase * const wrapper )
+{
+  return m_wrappers.insert( name,
+                            wrapper,
+                            true );
+}
+
+
 void ManagedGroup::resize( indexType const newsize )
 {
   for( auto&& i : this->wrappers() )
@@ -353,16 +362,17 @@ void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
-void ManagedGroup::PrintDataHierarchy()
+void ManagedGroup::PrintDataHierarchy(integer indent)
 {
   for( auto& view : this->wrappers() )
   {
-    std::cout<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
+    std::cout<<string(indent, '\t')<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
   }
 
   for( auto& group : this->m_subGroups )
   {
-    group.second->PrintDataHierarchy();
+    std::cout<<string(indent, '\t')<<group.first<<':'<<std::endl;
+    group.second->PrintDataHierarchy(indent + 1);
   }
 }
 
@@ -410,7 +420,7 @@ void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 }
 
 
-localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
+localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
@@ -466,7 +476,7 @@ localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
 }
 
 
-localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
+localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
                             integer const recursive ) const
 {
   localIndex_array nullArray;
@@ -475,7 +485,7 @@ localIndex ManagedGroup::PackSize( array1d<string> const & wrapperNames,
 
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
-                               array1d<string> const & wrapperNames,
+                               string_array const & wrapperNames,
                                localIndex_array const & packList,
                                integer const recursive ) const
 {
@@ -533,7 +543,7 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
 }
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
-                            array1d<string> const & wrapperNames,
+                            string_array const & wrapperNames,
                             integer const recursive ) const
 {
   localIndex_array nullArray;

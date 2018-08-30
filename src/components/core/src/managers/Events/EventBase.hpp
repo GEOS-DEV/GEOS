@@ -60,7 +60,7 @@ public:
   virtual void SignalToPrepareForExecution(real64 const time,
                                            real64 const dt,  
                                            integer const cycle,
-                                           dataRepository::ManagedGroup * domain);
+                                           dataRepository::ManagedGroup * domain) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
    * There are three types of time-steps that are allowed:
@@ -81,6 +81,14 @@ public:
             real64 const dt,  
             integer const cycle,
             dataRepository::ManagedGroup * domain );
+
+  /*
+   * This method is called as the code exits the main run loop
+   */
+  virtual void Cleanup( real64 const & time_n,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override;
+
 
   /// Documentation assignment
   virtual void FillDocumentationNode() override;
