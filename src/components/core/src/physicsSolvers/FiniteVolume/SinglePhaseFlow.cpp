@@ -619,7 +619,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   constexpr localIndex numElems = 2;
-  stencilCollection.forAll([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil) -> void
+  stencilCollection.forAll<RAJA::seq_exec>([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil) -> void
   {
     elementLocalDofIndexRow.resize(numElems);
     stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
@@ -641,7 +641,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   });
 
   // loop over all elements and add all locals just in case the above connector loop missed some
-  forAllElemsInMesh(meshLevel, [&] (localIndex const er,
+  forAllElemsInMesh<RAJA::seq_exec>(meshLevel, [&] (localIndex const er,
                                     localIndex const esr,
                                     localIndex const k) -> void
   {
@@ -659,7 +659,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   // add additional connectivity resulting from boundary stencils
   fluxApprox->forBoundaryStencils([&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection) -> void
   {
-    boundaryStencilCollection.forAll([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
+    boundaryStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
     {
       elementLocalDofIndexRow.resize(1);
       stencil.forConnected([&] (PointDescriptor const & point, localIndex const i) -> void
@@ -810,7 +810,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
   real64 dMobility_dP[numElems] = { 0.0, 0.0 };
   real64_array dDensMean_dP, dFlux_dP;
 
-  stencilCollection.forAll([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
+  stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
   {
     localIndex const stencilSize = stencil.size();
 
