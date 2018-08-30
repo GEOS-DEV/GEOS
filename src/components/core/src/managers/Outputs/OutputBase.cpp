@@ -92,7 +92,7 @@ void OutputBase::SetupDirectoryStructure()
   string slaveDirectory = this->getReference<string>(viewKeys.slaveDirectory);
 
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   if (rank  == 0)
   {
     if (!slaveDirectory.empty())

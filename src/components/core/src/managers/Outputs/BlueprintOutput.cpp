@@ -61,7 +61,7 @@ void BlueprintOutput::Execute(real64 const& time_n,
   const MeshLevel * meshLevel = domainPartition->getMeshBody(0)->getMeshLevel(0);
   Blueprint bpWriter(*meshLevel->getNodeManager(),
                      *meshLevel->getElemManager(),
-                     "bp_plot", MPI_COMM_WORLD);
+                     "bp_plot", MPI_COMM_GEOSX);
   
   bpWriter.write(cycleNumber);
 }
