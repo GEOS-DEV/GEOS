@@ -101,7 +101,8 @@ void EventManager::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              RestartFlags::WRITE );
 
   docNode->AllocateChildNode( viewKeys.maxCycle.Key(),
                               viewKeys.maxCycle.Key(),
@@ -114,7 +115,8 @@ void EventManager::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              RestartFlags::WRITE );
 
   docNode->AllocateChildNode( viewKeys.verbosity.Key(),
                               viewKeys.verbosity.Key(),
@@ -127,7 +129,8 @@ void EventManager::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              RestartFlags::WRITE );
 }
 
 

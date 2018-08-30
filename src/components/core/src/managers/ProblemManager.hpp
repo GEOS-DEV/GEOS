@@ -155,6 +155,9 @@ public:
   DomainPartition * getDomainPartition();
   DomainPartition const * getDomainPartition() const;
 
+  const std::string& getProblemName() const
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getData<std::string>(viewKeys.problemName); }
+
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
   xmlWrapper::xmlNode xmlProblemNode;

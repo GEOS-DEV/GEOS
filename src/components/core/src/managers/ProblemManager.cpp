@@ -120,7 +120,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.restartFileName.Key(),
                                      viewKeys.restartFileName.Key(),
@@ -133,7 +134,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.beginFromRestart.Key(),
                                      viewKeys.beginFromRestart.Key(),
@@ -146,7 +148,9 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
+
   commandDocNode->AllocateChildNode( viewKeys.problemName.Key(),
                                      viewKeys.problemName.Key(),
                                      -1,
@@ -158,7 +162,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.outputDirectory.Key(),
                                      viewKeys.outputDirectory.Key(),
@@ -171,7 +176,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.xPartitionsOverride.Key(),
                                      viewKeys.xPartitionsOverride.Key(),
@@ -236,7 +242,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.schemaLevel.Key(),
                                      viewKeys.schemaLevel.Key(),
@@ -249,7 +256,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   // // Mesh node documentation
   // ManagedGroup * meshGenerators =
@@ -746,10 +754,6 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
-
-  SiloFile siloFile;
-  siloFile.MakeSiloDirectories();
-
   this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 

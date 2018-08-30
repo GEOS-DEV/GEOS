@@ -661,8 +661,11 @@ void ManagedGroup::prepareToRead()
   }
 
   axom::sidre::View* temp = m_sidreGroup->getView("__size__");
-  m_size = temp->getScalar();
-  m_sidreGroup->destroyView("__size__");
+  if ( temp != nullptr )
+  {
+    m_size = temp->getScalar();
+    m_sidreGroup->destroyView("__size__");
+  }
 
   for (auto & pair : m_wrappers)
   {
