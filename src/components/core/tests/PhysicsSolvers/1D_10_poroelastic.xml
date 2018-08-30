@@ -8,11 +8,11 @@
 
     <Poroelastic name="poroSolve" 
                  solidSolverName="lagsolve"
-                 fluidSolverName="SinglePhaseFlow_TPFA"
-                 couplingType="FixedStress"
+                 fluidSolverName="SinglePhaseFlow"
+                 couplingTypeOption="FixedStress"
                  BiotCoe="1"
                  verboseLevel="1"
-     >
+                 >
       <SystemSolverParameters name="SystemSolverParameters"
                               maxIterNewton="40"
                               verbosityFlag="2"/>
@@ -30,14 +30,17 @@
                               verbosityFlag="2"/>
     </SolidMechanics_LagrangianFEM>
   
-    <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
-                          verboseLevel="0"
-                          gravityFlag="1">
+    <SinglePhaseFlow name="SinglePhaseFlow"
+                     verboseLevel="1"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-    </SinglePhaseFlow_TPFA>
+    </SinglePhaseFlow>
   </Solvers>
   
   <Mesh>
@@ -63,7 +66,7 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="20.0"
-                   target="/Solvers/Poroelastic" />
+                   target="/Solvers/poroSolve" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -86,28 +89,37 @@
     <FiniteElements>
       <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
+    
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" materialList="shale water rock" />
   </ElementRegions>
 
   <Constitutive>
   
-      <LinearElasticIsotropic name="shale">
-        <ParameterData Density="2700"
-                       BulkModulus="5.5556e9"
-                       ShearModulus="4.16667e9"/>
-      </LinearElasticIsotropic>
+      <LinearElasticIsotropic name="shale"
+                              density0="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"
+                              />
 
-      <LinearEOS name="water">
-        <ParameterData referencePressure="0.0"
-                       referenceDensity="1000"
-                       fluidBulkModulus="2.0e9"
-                       referenceViscosity="0.001"
-                       fluidViscosibility="0.0"
-                       solidBulkModulus="1.0e9"/>
-      </LinearEOS>
+    <CompressibleSinglePhaseFluid name="water"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"
+                                  />
+                                  
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <InitialConditions>
@@ -119,7 +131,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -128,7 +140,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -137,7 +149,7 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -145,19 +157,53 @@
     <Dirichlet name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/referencePorosity"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="referencePorosity"
                dataType="real64"
                scale="0.05"/>
 
     <Dirichlet name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/fluidPressure"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
                dataType="real64"
                scale="5e6"/>
   
-    <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1e7" setNames="source"/>
-    <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0" setNames="sink"/>
+  
+  
+    <Dirichlet name="xnegconstraint" 
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="0" 
+               scale="0.0" 
+               setNames="xneg"/>
+
+    <Dirichlet name="yconstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="1" 
+               scale="0.0" 
+               setNames="yneg ypos"/>
+               
+    <Dirichlet name="zconstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="2" 
+               scale="0.0" 
+               setNames="zneg zpos"/>
+               
+    <Dirichlet name="xposconstraint" 
+               objectPath="faceManager" 
+               fieldName="Traction" 
+               dataType="Vector" 
+               component="1" 
+               scale="-1.0e6" 
+               setNames="xpos"/>
+  
   </BoundaryConditions>
 
   <Functions>

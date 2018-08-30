@@ -133,7 +133,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto couplingTypeOptionString = "couplingTypeOption";
-    constexpr static auto biotCoefficienttring = "BiotCoe";
+    constexpr static auto biotCoefficientString = "BiotCoef";
 
     constexpr static auto effectiveStressString = "effectiveStress";
     constexpr static auto deltaEffectiveStressString = "deltaEffectiveStress";

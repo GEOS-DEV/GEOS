@@ -7,7 +7,7 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="3"
+                                  verboseLevel="0"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -119,8 +119,8 @@
                setNames="zneg zpos"/>
                
     <Dirichlet name="xposconstraint" 
-               objectPath="nodeManager" 
-               fieldName="Tractoin" 
+               objectPath="faceManager" 
+               fieldName="Traction" 
                dataType="Vector" 
                component="1" 
                scale="1.0e6" 
