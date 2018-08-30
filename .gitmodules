@@ -4,3 +4,6 @@
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
 	url = ../../LLNL/blt.git
+[submodule "src/components/PVTPackage"]
+	path = src/components/PVTPackage
+	url = ../PVTPackage.git
