@@ -207,7 +207,7 @@ void NeighborCommunicator::MPI_WaitAll( int const commID )
 int NeighborCommunicator::Rank()
 {
   int rank = -1;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
   return rank;
 }
 
@@ -354,7 +354,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
 
   GEOS_ASSERT( bufferSize == packedSize, "Allocated Buffer Size is not equal to packed buffer size")
 
-  this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
+  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
 
 }
 
@@ -470,7 +470,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
   GEOS_ASSERT( bufferSize == packedSize, "Allocated Buffer Size is not equal to packed buffer size")
 
-  this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
+  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
   this->MPI_WaitAll(commID);
 
   buffer_type const & receiveBuffer = ReceiveBuffer(commID);
@@ -526,7 +526,7 @@ void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > co
 //  packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
 
   GEOS_ASSERT( bufferSize == packedSize, "Allocated Buffer Size is not equal to packed buffer size")
-  this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
+  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
 
 
 //  MPI_WaitAll( commID );
