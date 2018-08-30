@@ -329,6 +329,13 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
   m_fluidIndex = fluidRelation->getIndexInParent();
   m_solidIndex = cm->GetConstitituveRelation( this->m_solidName )->getIndexInParent();
 
+  //TODO this is a hack until the sets are fixed to include ghosts!!
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeyStruct::pressureString);
+  CommunicationTools::SynchronizeFields(fieldNames,
+                              domain->getMeshBody(0)->getMeshLevel(0),
+                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -494,9 +501,8 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
   }
 
   // loop over all elements and set the dof number if the element is not a ghost
-//  integer localCount = 0;
   raja::ReduceSum< reducePolicy, localIndex  > localCount(0);
-  forAllElemsInMesh( meshLevel, [=]( localIndex const er,
+  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [=]( localIndex const er,
                                      localIndex const esr,
                                      localIndex const k) mutable ->void
   {
@@ -543,14 +549,13 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                 0 );
 
   //TODO element sync doesn't work yet
-//  std::map<string, string_array > fieldNames;
-//  fieldNames["element"].push_back(viewKeys.blockLocalDofNumber.Key());
-//
-//  CommunicationTools::
-//  SynchronizeFields(fieldNames,
-//                    mesh,
-//                    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-//
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeyStruct::blockLocalDofNumberString);
+  CommunicationTools::
+  SynchronizeFields(fieldNames,
+                    mesh,
+                    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
 
   // construct row map, and set a pointer to the row map
   Epetra_Map * const
@@ -619,7 +624,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   constexpr localIndex numElems = 2;
-  stencilCollection.forAll([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil) -> void
+  stencilCollection.forAll<RAJA::seq_exec>([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil) -> void
   {
     elementLocalDofIndexRow.resize(numElems);
     stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
@@ -641,7 +646,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   });
 
   // loop over all elements and add all locals just in case the above connector loop missed some
-  forAllElemsInMesh(meshLevel, [&] (localIndex const er,
+  forAllElemsInMesh<RAJA::seq_exec>(meshLevel, [&] (localIndex const er,
                                     localIndex const esr,
                                     localIndex const k) -> void
   {
@@ -774,28 +779,30 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
       for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
-  {
-    if (elemGhostRank[er][esr][ei]<0)
-    {
-      globalIndex const elemDOF = blockLocalDofNumber[er][esr][ei];
+      {
+        if (elemGhostRank[er][esr][ei]<0)
+        {
+          globalIndex const elemDOF = blockLocalDofNumber[er][esr][ei];
 
-      real64 const densNew = dens[er][esr][m_fluidIndex][ei][0];
-      real64 const poroNew = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
-      real64 const vol     = volume[er][esr][ei];
+          real64 const densNew = dens[er][esr][m_fluidIndex][ei][0];
+          real64 const poroNew = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
+          real64 const vol     = volume[er][esr][ei];
 
-      // Residual contribution is mass conservation in the cell
-      real64 const localAccum = poroNew              * densNew              * vol
-                              - poroOld[er][esr][ei] * densOld[er][esr][ei] * vol;
+          // Residual contribution is mass conservation in the cell
+          real64 const localAccum = poroNew              * densNew              * vol
+                                  - poroOld[er][esr][ei] * densOld[er][esr][ei] * vol;
 
-      // Derivative of residual wrt to pressure in the cell
-      real64 const localAccumJacobian = (dPVMult_dPres[er][esr][m_solidIndex][ei][0] * poroRef[er][esr][ei] * densNew * vol)
-                                      + (dDens_dPres[er][esr][m_fluidIndex][ei][0]                          * poroNew * vol);
+          // Derivative of residual wrt to pressure in the cell
+          real64 const localAccumJacobian = (dPVMult_dPres[er][esr][m_solidIndex][ei][0] * poroRef[er][esr][ei] * densNew * vol)
+                                          + (dDens_dPres[er][esr][m_fluidIndex][ei][0]                          * poroNew * vol);
 
-      // add contribution to global residual and dRdP
-      residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
-      jacobian->SumIntoGlobalValues(1, &elemDOF, 1, &elemDOF, &localAccumJacobian);
+          // add contribution to global residual and dRdP
+          residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
+          jacobian->SumIntoGlobalValues(1, &elemDOF, 1, &elemDOF, &localAccumJacobian);
+        }
+      }
     }
-  }}}//);
+  }//);
 
 
   constexpr localIndex numElems = 2;
@@ -1390,11 +1397,11 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
 
 
   // TODO Sync dP once element field syncing is reimplemented.
-  //std::map<string, string_array > fieldNames;
-  //fieldNames["element"].push_back(viewKeyStruct::deltaFluidPressureString);
-  //CommunicationTools::SynchronizeFields(fieldNames,
-  //                            mesh,
-  //                            domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeyStruct::deltaPressureString);
+  CommunicationTools::SynchronizeFields(fieldNames,
+                              mesh,
+                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elementRegionManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
