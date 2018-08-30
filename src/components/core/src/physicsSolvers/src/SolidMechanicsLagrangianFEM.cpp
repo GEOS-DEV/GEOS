@@ -548,6 +548,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   GEOS_MARK_END(initialization);  
 
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, -dt/2, numNodes );
+
   GEOS_MARK_BEGIN(BC1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   bcManager->ApplyBoundaryConditionToField( time_n,
