@@ -27,4 +27,9 @@
 #include "DataTypes.hpp"
 
 namespace geosx
-{}
+{
+#ifdef USE_MPI
+  MPI_Comm MPI_COMM_GEOSX;
+#endif
+
+}

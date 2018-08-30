@@ -3291,7 +3291,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //  int localNumNeighbors = integer_conversion<int>(localNeighborList.size());
 //  int maxLocalNumNeighbors = 0;
-//  MPI_Allreduce(&localNumNeighbors, &maxLocalNumNeighbors, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+//  MPI_Allreduce(&localNumNeighbors, &maxLocalNumNeighbors, 1, MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
 //
 //  array1d<integer> allNeighborList;
 //  allNeighborList.resize(maxLocalNumNeighbors * m_size);
@@ -3301,7 +3301,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //    localNeighborList.push_back(-1);
 //  }
 //
-//  MPI_Gather( localNeighborList.data(), maxLocalNumNeighbors, MPI_INT, allNeighborList.data(), maxLocalNumNeighbors, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Gather( localNeighborList.data(), maxLocalNumNeighbors, MPI_INT, allNeighborList.data(), maxLocalNumNeighbors, MPI_INT, 0, MPI_COMM_GEOSX);
 //
 //  array1d<integer> colorByRank(m_size);
 //
@@ -3385,9 +3385,9 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //  }
 //
-//  MPI_Bcast(colorByRank.data(), m_size, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(colorByRank.data(), m_size, MPI_INT, 0, MPI_COMM_GEOSX);
 //  m_color = colorByRank[m_rank];
 //
-//  MPI_Bcast(&m_numColors, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&m_numColors, 1, MPI_INT, 0, MPI_COMM_GEOSX);
 //}
 //}
