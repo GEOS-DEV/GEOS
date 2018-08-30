@@ -30,6 +30,7 @@ namespace dataRepository {
 #ifdef USE_ATK
 TEST(testSidreBasic, testSidreBasic) {
   MPI_Init(0, nullptr);
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_basic";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
@@ -68,7 +69,7 @@ TEST(testSidreBasic, testSidreBasic) {
 
   /* Save the sidre tree */
   root->prepareToWrite();
-  SidreWrapper::writeTree(1, path, protocol, MPI_COMM_WORLD);
+  SidreWrapper::writeTree(1, path, protocol, MPI_COMM_GEOSX);
   root->finishWriting();
 
   /* Delete geos tree and reset sidre tree. */
@@ -78,7 +79,7 @@ TEST(testSidreBasic, testSidreBasic) {
   ds.getRoot()->destroyGroups();
 
   /* Restore the sidre tree */
-  SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_WORLD);
+  SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_GEOSX);
   root = new ManagedGroup(std::string("data"), nullptr);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
@@ -86,7 +87,7 @@ TEST(testSidreBasic, testSidreBasic) {
 
   /* Load the data */
   root->prepareToRead();
-  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_WORLD);
+  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_GEOSX);
   root->finishReading();
 
   /* Should be the same as stored. */

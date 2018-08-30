@@ -72,7 +72,7 @@ void RestartOutput::Execute(real64 const& time_n,
   //   domainPartition->getParent()->prepareToWrite();
   //   functionManager->prepareToWrite();
   //   bcManager->prepareToWrite();
-  //   SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+  //   SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
   //   domainPartition->getParent()->finishWriting();
   //   functionManager->finishWriting();
   //   bcManager->finishWriting();
@@ -86,7 +86,7 @@ void RestartOutput::Execute(real64 const& time_n,
   domainPartition->getParent()->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
   BoundaryConditionManager::get()->prepareToWrite();
-  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
   domainPartition->getParent()->finishWriting();
   NewFunctionManager::Instance()->finishWriting();
   BoundaryConditionManager::get()->finishWriting();
