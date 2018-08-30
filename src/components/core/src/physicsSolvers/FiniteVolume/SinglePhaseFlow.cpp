@@ -177,6 +177,19 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     0,
                                     1 );
 
+        docNode->AllocateChildNode( viewKeyStruct::deltaVolumeString,
+                                    viewKeyStruct::deltaVolumeString,
+                                    -1,
+                                    "real64_array",
+                                    "real64_array",
+                                    "Change in fluid volume",
+                                    "Change in fluid volume",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    1 );
+
         docNode->AllocateChildNode( viewKeyStruct::densityString,
                                     viewKeyStruct::densityString,
                                     -1,

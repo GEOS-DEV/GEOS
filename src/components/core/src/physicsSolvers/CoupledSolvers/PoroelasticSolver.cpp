@@ -45,6 +45,8 @@ PoroelasticSolver::PoroelasticSolver( const std::string& name,
 {
   this->RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0);
   this->RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0);
+  this->RegisterViewWrapper(viewKeyStruct::biotCoefficientString, &m_biotCoef, 0);
+
 }
 
 
@@ -97,8 +99,8 @@ void PoroelasticSolver::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeyStruct::biotCoefficienttring,
-                              viewKeyStruct::biotCoefficienttring,
+  docNode->AllocateChildNode( viewKeyStruct::biotCoefficientString,
+                              viewKeyStruct::biotCoefficientString,
                               -1,
                               "real64",
                               "real64",
@@ -130,8 +132,8 @@ void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGrou
         docNode->AllocateChildNode( viewKeyStruct::effectiveStressString,
                                     viewKeyStruct::effectiveStressString,
                                     -1,
-                                    "r2Sym_array",
-                                    "r2Sym_array",
+                                    "real64_array",
+                                    "real64_array",
                                     "Effective Stress",
                                     "Effective Stress",
                                     "",
@@ -143,8 +145,8 @@ void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGrou
         docNode->AllocateChildNode( viewKeyStruct::deltaEffectiveStressString,
                                     viewKeyStruct::deltaEffectiveStressString,
                                     -1,
-                                    "r2Sym_array",
-                                    "r2Sym_array",
+                                    "real64_array",
+                                    "real64_array",
                                     "Change in Effective Stress",
                                     "Change in Effective Stress",
                                     "",
@@ -156,8 +158,8 @@ void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGrou
         docNode->AllocateChildNode( viewKeyStruct::deltaVolumetricStrainString,
                                     viewKeyStruct::deltaVolumetricStrainString,
                                     -1,
-                                    "r2Sym_array",
-                                    "r2Sym_array",
+                                    "real64_array",
+                                    "real64_array",
                                     "Change in Volumetric Strain",
                                     "Change in Volumetric Strain",
                                     "",
@@ -205,8 +207,8 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const& time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  auto dEffStresss = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::deltaEffectiveStressString);
-  auto dVolumetricStrain = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::deltaVolumetricStrainString);
+  auto dEffStresss = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaEffectiveStressString);
+  auto dVolumetricStrain = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumetricStrainString);
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -225,8 +227,8 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  auto effectiveStress = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::effectiveStressString);
-  auto dEffStresss = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::deltaEffectiveStressString);
+  auto effectiveStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::effectiveStressString);
+  auto dEffStresss = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaEffectiveStressString);
 
   //***** loop over all elements and update the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -257,7 +259,6 @@ void PoroelasticSolver::ReadXML_PostProcess()
 
 void PoroelasticSolver::FinalInitialization( ManagedGroup * const problemManager )
 {
-  m_biotCoef = this->getReference<integer>(viewKeyStruct::biotCoefficienttring);
 }
 
 PoroelasticSolver::~PoroelasticSolver()
@@ -340,7 +341,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
   meanStress = elemManager->
-               ConstructMaterialViewAccessor< array2d<real64> >( "meanStress",
+               ConstructMaterialViewAccessor< array2d<real64> >( "MeanStress",
                                                                  constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
@@ -348,7 +349,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
                 ConstructMaterialViewAccessor< array2d<real64> >( "BulkModulus",
                                                                   constitutiveManager);
 
-  localIndex const solidIndex = fluidSolver.solidIndex();
+  localIndex const solidIndex = 0;
 
   // TODO
   //   dVolumetricStrain[er][esr][k] += dUhatdX.trace() / numQuadraturePoints;
