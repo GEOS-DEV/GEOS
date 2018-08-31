@@ -14,8 +14,7 @@ set( linearAlgebraInterface_headers
 set( linearAlgebraInterface_sources
      EpetraSparseMatrix.cpp
      EpetraVector.cpp
-     TrilinosSolver.cpp
-     TrilinosInterface.cpp)
+     TrilinosSolver.cpp)
 
 set( dependencyList common trilinos hypre mpi)
 

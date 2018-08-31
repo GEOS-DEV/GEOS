@@ -46,7 +46,7 @@ void testLaplaceOperator()
   MPI_Init(nullptr,nullptr);
 
   // Get the MPI rank
-  int rank;
+  integer rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Set the MPI communicator
@@ -70,7 +70,7 @@ void testLaplaceOperator()
   // Construct a dummy Laplace matrix (5 points stencil)
   for (globalIndex i = testMatrix.ilower(); i < testMatrix.iupper(); i++)
   {
-    int nnz = 0;
+    integer nnz = 0;
     /* The left -n: position i-n */
     if (i-n >= 0)
     {
@@ -110,7 +110,7 @@ void testLaplaceOperator()
 
   testMatrix.close();
 
-  int numValRow0,numValRow1,numValRown;
+  integer numValRow0,numValRow1,numValRown;
   std::vector<real64> vecValuesRow0(5),vecValuesRow1(5),vecValuesRown(5);
   std::vector<localIndex> vecIndicesRow0(5),vecIndicesRow1(5),vecIndicesRown(5);
   testMatrix.getLocalRow(0,numValRow0,vecValuesRow0,vecIndicesRow0);
@@ -158,7 +158,7 @@ void testLaplaceOperator()
       }
   // Fill standard vectors
   std::vector<real64> ones, zer;
-  for (int j = 0; j < N; j++)
+  for (integer j = 0; j < N; j++)
   {
     zer.push_back(0);
     ones.push_back(1);
@@ -244,6 +244,7 @@ void testLaplaceOperator()
   solDirect2.scale(-0.5);
 
   ParallelVector * testrhs0 = nullptr;
+  ParallelMatrix * testBlock00 = nullptr;
 
   testBlockMatrix.setBlock(0,0,&testMatrix);
   testBlockMatrix.setBlock(0,1,&testMatrix2);
@@ -254,6 +255,7 @@ void testLaplaceOperator()
   testBlockMatrix.setRhs(0,&r);
 
   testBlockMatrix.apply();
+  ParallelVector testres0(testBlockMatrix.residual());
 
   testrhs0 = testBlockMatrix.getRhs(0);
 

@@ -39,7 +39,7 @@ public:
    * @brief Copy constructor.
    *
    */
-  TrilinosSolver(const TrilinosSolver &Solver);
+  TrilinosSolver( const TrilinosSolver &Solver );
 
   /**
    * @brief Virtual destructor.
