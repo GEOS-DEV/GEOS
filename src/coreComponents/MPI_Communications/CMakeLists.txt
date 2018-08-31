@@ -27,6 +27,5 @@ blt_add_library( NAME                  MPI_Communications
                )
                
 target_include_directories( MPI_Communications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
-target_include_directories( MPI_Communications PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
 
 geosx_add_code_checks(PREFIX MPI_Communications )

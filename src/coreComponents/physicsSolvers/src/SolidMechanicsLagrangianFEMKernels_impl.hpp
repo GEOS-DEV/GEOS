@@ -22,7 +22,7 @@
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ShapeFun_impl.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ConstitutiveUpdate_impl.hpp"
-#include "../../../src/rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
 
 /*
   Collection of Solid Mechanics Kernels

@@ -23,7 +23,7 @@
 #include <cmath>
 #include <iostream>
 #include <sys/time.h>
-#include "../dataRepository/SidreWrapper.hpp"
+//#include "coreCompdataRepository/SidreWrapper.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"

@@ -28,7 +28,6 @@ blt_add_library( NAME                  physicsSolvers
                  DEPENDS_ON            dataRepository systemSolverInterface
                )
                
-target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX physicsSolvers )
