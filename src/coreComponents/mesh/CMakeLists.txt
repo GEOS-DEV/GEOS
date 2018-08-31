@@ -43,5 +43,7 @@ blt_add_library( NAME                  mesh
                  DEPENDS_ON            managers
                )
                
+target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+
 geosx_add_code_checks(PREFIX mesh )

@@ -53,6 +53,8 @@ blt_add_library( NAME                  dataRepository
                  DEPENDS_ON            ${dependencyList}
                )
 
-target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+
 
 geosx_add_code_checks(PREFIX dataRepository )

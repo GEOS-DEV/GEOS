@@ -25,7 +25,7 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
-#include "../dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 
 namespace geosx

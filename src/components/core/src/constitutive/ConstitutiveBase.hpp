@@ -25,7 +25,7 @@
 
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
+//#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx

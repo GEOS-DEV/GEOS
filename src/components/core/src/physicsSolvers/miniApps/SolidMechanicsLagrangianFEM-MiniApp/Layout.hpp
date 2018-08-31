@@ -22,7 +22,7 @@
 #include "RAJA/RAJA.hpp"
 #include <iostream>
 
-#include "../../../common/DataTypes.hpp"
+#include "common/DataTypes.hpp"
 
 //compile time constants
 #define local_dim 3

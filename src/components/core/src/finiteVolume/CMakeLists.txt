@@ -23,4 +23,6 @@ blt_add_library( NAME                  finiteVolume
                )
                
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )
+target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
 geosx_add_code_checks( PREFIX finiteVolume )
