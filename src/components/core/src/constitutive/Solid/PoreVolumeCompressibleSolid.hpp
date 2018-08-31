@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file PoreVolumeCompressibleSolid.hpp
+ */
+
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
 
