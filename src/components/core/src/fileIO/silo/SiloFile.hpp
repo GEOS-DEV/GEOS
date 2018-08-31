@@ -27,7 +27,7 @@
 #include "silo.h"
 #include <vector>
 
-#if USE_MPI
+#ifdef USE_MPI
 #include <mpi.h>
 #endif
 
@@ -78,7 +78,7 @@ public:
    * @brief Initializes silo for input/output
    * @param readwrite input/output specifier
    */
-  void Initialize( const PMPIO_iomode_t readwrite );
+  void Initialize( const PMPIO_iomode_t readwrite, int const numGroups=1 );
 
   /**
    * @brief finishes/closes up the silo interface
@@ -117,18 +117,16 @@ public:
   void MakeSubDirectory( string const & subdir, string const & rootdir )
   {
     int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
     char dirname[100];
-    DBGetDir (m_dbBaseFilePtr, dirname );
-
     if( rank == 0 )
     {
+//      DBGetDir(m_dbBaseFilePtr, dirname );
       DBMkDir(m_dbBaseFilePtr, rootdir.c_str());
     }
 
-    DBGetDir (m_dbFilePtr, dirname );
-
+//    DBGetDir (m_dbFilePtr, dirname );
     DBMkDir(m_dbFilePtr, subdir.c_str());
   }
 
@@ -387,6 +385,12 @@ public:
    * to the multivar or multimesh objects and replace their path with "EMPTY"
    */
   void ClearEmptiesFromMultiObjects(int const cycleNum);
+
+
+  void setNumGroups( int const numGroups )
+  {
+    m_numGroups = numGroups;
+  }
 
 private:
 
@@ -704,8 +708,8 @@ void SiloFile::WriteDataField( string const & meshName,
 
   // write multimesh object
   int rank = 0;
-#if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#ifdef USE_MPI
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
   {
@@ -937,8 +941,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
   // write multimesh object
   int rank = 0;
-#if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#ifdef USE_MPI
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
   {
@@ -987,8 +991,8 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   (void)centering;
 
   int size = 1;
-#if USE_MPI
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+#ifdef USE_MPI
+  MPI_Comm_size(MPI_COMM_GEOSX, &size);
 #endif
 
   string_array vBlockNames(size);

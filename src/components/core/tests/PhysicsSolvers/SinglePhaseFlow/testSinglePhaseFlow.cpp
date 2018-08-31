@@ -71,7 +71,7 @@ real64 computeL2Norm(DomainPartition const *domain,
 
   // compute global norm
   real64 globalNorm;
-  MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalNorm);
 }
@@ -173,7 +173,8 @@ int main(int argc, char** argv)
 #ifdef USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 
 #ifdef USE_ATK

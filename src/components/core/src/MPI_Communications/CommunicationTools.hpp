@@ -28,7 +28,7 @@
 
 #include "common/DataTypes.hpp"
 #include "mpi.h"
-#include<set>
+#include <set>
 namespace geosx
 {
 
@@ -58,7 +58,7 @@ public:
   static void releaseCommID( int & ID );
 
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                            array1d<NeighborCommunicator> & allNeighbors );
+                                                   array1d<NeighborCommunicator> & allNeighbors );
 
   static void SynchronizeFields( const std::map<string, string_array >& fieldNames,
                                  MeshLevel * const mesh,

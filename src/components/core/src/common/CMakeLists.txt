@@ -12,13 +12,14 @@ set(common_headers
 # Specify all sources
 #
 set(common_sources
-    Logger.cpp )
+    Logger.cpp
+    DataTypes.cpp )
 
 
 set( dependencyList cxx-utilities mpi )
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} slic )
+  set( dependencyList ${dependencyList} slic conduit )
 endif()
 
 if( ENABLE_CALIPER )

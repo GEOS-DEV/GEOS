@@ -24,6 +24,7 @@
  */
 
 #include "Logger.hpp"
+#include "DataTypes.hpp"
 #include <mpi.h>
 #include <stdlib.h>
 #include "stackTrace.hpp"
@@ -41,7 +42,7 @@ void geos_abort( std::string message )
   MPI_Initialized( &mpi );
   if ( mpi )
   {
-    MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
+    MPI_Abort( MPI_COMM_GEOSX, EXIT_FAILURE );
   }
   else
 #endif
