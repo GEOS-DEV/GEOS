@@ -67,7 +67,6 @@ blt_add_library( NAME                  managers
 #                 SHARED FALSE
                )
                
-target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks( PREFIX managers )

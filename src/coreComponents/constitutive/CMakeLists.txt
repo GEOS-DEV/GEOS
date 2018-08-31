@@ -28,7 +28,6 @@ blt_add_library( NAME                  constitutive
                  DEPENDS_ON            dataRepository
                )
                
-target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX constitutive )

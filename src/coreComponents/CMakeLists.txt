@@ -3,19 +3,19 @@
 set( subdirs
      codingUtilities
      common
-     oldSrc/constitutive
+     constitutive
      dataRepository
      fileIO
-     oldSrc/finiteElement
-     oldSrc/finiteVolume
+     finiteElement
+     finiteVolume
      math
      mesh
-     oldSrc/managers
-     oldSrc/meshUtilities
+     managers
+     meshUtilities
      MPI_Communications
-     oldSrc/physicsSolvers
+     physicsSolvers
      python
-     oldSrc/systemSolverInterface
+     systemSolverInterface
      )
 
 
@@ -50,12 +50,12 @@ if( USE_ATK )
   set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
-  blt_combine_static_libraries( NAME          geosx_core
-                                SOURCE_LIBS   ${coreLibs}
-                                LIB_TYPE SHARED
-                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG} 
-                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
-                              )
+blt_combine_static_libraries( NAME          geosx_core
+                              SOURCE_LIBS   ${coreLibs}
+                              LIB_TYPE SHARED
+                              LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG} 
+                              LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
+                            )
 set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
 
 geosx_add_code_checks(PREFIX core )
