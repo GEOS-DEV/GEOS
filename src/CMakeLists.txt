@@ -24,7 +24,9 @@ set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
 ################################
 add_subdirectory(components)
 
+add_subdirectory(coreComponents)
 
+add_subdirectory(externalComponents)
 
 ################################
 # Add docs
@@ -52,5 +54,12 @@ add_subdirectory(thirdparty)
 # Create header of configuration options
 ################################s
 include(cmake/GeosxConfig.cmake)
+
+
+
+blt_add_executable(NAME geosx
+                   SOURCES main/main.cpp
+                   DEPENDS_ON geosx_core cxx_utilities
+                  ) 
 
 message( "Exiting /src/CMakeLists.txt")
