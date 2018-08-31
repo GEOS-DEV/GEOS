@@ -8,6 +8,7 @@ set( constitutive_headers
      ExponentialRelation_impl.hpp
      LinearElasticIsotropic.hpp
      Fluid/CompressibleSinglePhaseFluid.hpp
+     Fluid/CompositionalMultiphaseFluid.hpp
      Solid/PoreVolumeCompressibleSolid.hpp
    )
 #
@@ -18,6 +19,7 @@ set( constitutive_sources
      ConstitutiveBase.cpp
      LinearElasticIsotropic.cpp
      Fluid/CompressibleSinglePhaseFluid.cpp
+     Fluid/CompositionalMultiphaseFluid.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
    )
 
