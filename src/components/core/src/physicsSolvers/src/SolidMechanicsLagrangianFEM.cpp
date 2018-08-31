@@ -573,10 +573,10 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   GEOS_CXX_MARK_LOOP_BEGIN(onepointloop,onepointloop1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc_x, acc_y, acc_z,
-                                                vel, dt/2, numNodes );
+                                                vel, dt, numNodes );
 #endif  
   GEOS_CXX_MARK_LOOP_END(onepointloop);
 
