@@ -22,7 +22,7 @@
 
 #include "DomainPartition.hpp"
 
-#include "../MPI_Communications/SpatialPartition.hpp"
+#include "MPI_Communications/SpatialPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "fileIO/silo/SiloFile.hpp"

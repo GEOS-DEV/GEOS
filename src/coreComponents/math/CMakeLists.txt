@@ -25,5 +25,7 @@ blt_add_library( NAME                  math
                  SHARED FALSE
                )
                
+target_include_directories( math INTERFACE ${CMAKE_SOURCE_DIR}/coreComponents)
 target_include_directories( math INTERFACE ${CMAKE_SOURCE_DIR}/components/core/src)
+
 geosx_add_code_checks(PREFIX math )

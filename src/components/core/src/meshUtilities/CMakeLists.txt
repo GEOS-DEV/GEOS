@@ -35,4 +35,6 @@ blt_add_library( NAME                  meshUtilities
                )
                
 target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
 geosx_add_code_checks(PREFIX meshUtilities )

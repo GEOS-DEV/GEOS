@@ -24,9 +24,9 @@
 #include <string>
 #include <limits>
 
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
-#include "../dataRepository/ManagedGroup.hpp"
-#include "../dataRepository/ExecutableGroup.hpp"
+#include "../../../../externalComponents/cxx-utilities/src/src/DocumentationNode.hpp"
+#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
