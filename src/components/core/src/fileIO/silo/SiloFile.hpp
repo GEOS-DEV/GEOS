@@ -78,7 +78,7 @@ public:
    * @brief Initializes silo for input/output
    * @param readwrite input/output specifier
    */
-  void Initialize( const PMPIO_iomode_t readwrite );
+  void Initialize( const PMPIO_iomode_t readwrite, int const numGroups=1 );
 
   /**
    * @brief finishes/closes up the silo interface
@@ -120,15 +120,13 @@ public:
     MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
     char dirname[100];
-    DBGetDir (m_dbBaseFilePtr, dirname );
-
     if( rank == 0 )
     {
+//      DBGetDir(m_dbBaseFilePtr, dirname );
       DBMkDir(m_dbBaseFilePtr, rootdir.c_str());
     }
 
-    DBGetDir (m_dbFilePtr, dirname );
-
+//    DBGetDir (m_dbFilePtr, dirname );
     DBMkDir(m_dbFilePtr, subdir.c_str());
   }
 
@@ -387,6 +385,12 @@ public:
    * to the multivar or multimesh objects and replace their path with "EMPTY"
    */
   void ClearEmptiesFromMultiObjects(int const cycleNum);
+
+
+  void setNumGroups( int const numGroups )
+  {
+    m_numGroups = numGroups;
+  }
 
 private:
 

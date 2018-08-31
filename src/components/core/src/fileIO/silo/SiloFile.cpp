@@ -344,11 +344,11 @@ void SiloFile::MakeSiloDirectories()
 /**
  *
  */
-void SiloFile::Initialize( const PMPIO_iomode_t readwrite )
+void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
 {
 #ifdef USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
-  m_numGroups = 2;
+  m_numGroups = numGroups;
 
   MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_GEOSX);
   MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
@@ -1587,6 +1587,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
           if( elemGhostRank[k] >= 0 )
           {
             ghostZoneFlag.push_back( 1 );
+          }
+          else
+          {
+            ghostZoneFlag.push_back( 0 );
           }
         }
 

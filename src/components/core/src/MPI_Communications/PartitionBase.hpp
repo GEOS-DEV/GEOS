@@ -61,14 +61,14 @@ public:
 
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
-                                   const int numDistPartition) = 0;
-  virtual bool IsCoordInPartition(const realT& coord, const int dir) = 0;
+                                   const int numDistPartition ) = 0;
+  virtual bool IsCoordInPartition( const realT& coord, const int dir ) = 0;
 
-  virtual void setSizes(const R1Tensor& min, const R1Tensor& max) = 0;
+  virtual void setSizes( const R1Tensor& min, const R1Tensor& max ) = 0;
 
   virtual void setPartitions( unsigned int xPartitions,
                               unsigned int yPartitions,
-                              unsigned int zPartitions) = 0;
+                              unsigned int zPartitions ) = 0;
 
   virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter ) = 0;
 
@@ -97,7 +97,7 @@ public:
 //                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
   void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
-                       std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership);
+                       std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership );
 
   void SetGhostArrays( DomainPartition * domain );
 
@@ -158,7 +158,8 @@ public:
   int m_ghostDepth;
 
 private:
-//  virtual void AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT& compositionObject );
+//  virtual void AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT&
+// compositionObject );
 
   void CommunicateRequiredObjectIndices();
 
