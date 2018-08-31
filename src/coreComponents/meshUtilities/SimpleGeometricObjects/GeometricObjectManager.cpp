@@ -25,7 +25,7 @@
 
 #include "GeometricObjectManager.hpp"
 
-#include "../../../../cxx-utilities/src/src/DocumentationNode.hpp"
+#include "DocumentationNode.hpp"
 #include "SimpleGeometricObjectBase.hpp"
 
 namespace geosx
