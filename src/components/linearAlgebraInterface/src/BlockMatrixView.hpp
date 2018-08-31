@@ -128,9 +128,9 @@ void BlockMatrixView<LAI>::apply()
   integer numRows = 1;
   integer numCols = 2;
 
-  for (integer row = 0; row < numRows; row++)
+  for( integer row = 0 ; row < numRows ; row++ )
   {
-    for (integer col = 0; col < numCols - 1; col++)
+    for( integer col = 0 ; col < numCols - 1 ; col++ )
     {
       ParallelVector temp( *m_rhs[row] );
       m_matrices[row][col]->multiply( *m_solution[col], temp );
@@ -149,9 +149,9 @@ typename LAI::ParallelVector BlockMatrixView<LAI>::residual()
 
   ParallelVector res( *m_rhs[0] );
 
-  for (integer row = 0; row < numRows; row++)
+  for( integer row = 0 ; row < numRows ; row++ )
   {
-    for (integer col = 0; col < numCols - 1; col++)
+    for( integer col = 0 ; col < numCols - 1 ; col++ )
     {
       ParallelVector temp( *m_rhs[row] );
       m_matrices[row][col]->multiply( *m_solution[col], temp );
