@@ -20,12 +20,12 @@ endforeach()
 
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/components/core/src/common/GeosxConfig.hpp.in
+    ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp
 )
 configure_file(
-    ${CMAKE_SOURCE_DIR}/components/core/src/common/GeosxConfig.hpp.in
-    ${CMAKE_SOURCE_DIR}/components/core/src/common/GeosxConfig.hpp
+    ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
+    ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp
 )
 
 install( FILES ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp
