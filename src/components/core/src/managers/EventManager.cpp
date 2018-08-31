@@ -166,16 +166,15 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
   integer exitFlag = 0;
 
+  // Setup MPI communication
   integer rank = 0;
   integer comm_size = 1;
-  real64 *send_buffer = nullptr;
-  real64 *receive_buffer = nullptr;
   #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-    send_buffer = static_cast<real64 *>(malloc(2 * sizeof(real64)));
-    receive_buffer = static_cast<real64 *>(malloc(2 * sizeof(real64) * comm_size));
   #endif
+  real64 send_buffer[2];
+  array1d<real64> receive_buffer(2 * comm_size);
 
   // Setup event targets
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -236,7 +235,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     #if USE_MPI
       send_buffer[0] = dt;
       send_buffer[1] = static_cast<real64>(exitFlag);
-      MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
       if (rank == 0)
       {
