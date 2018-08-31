@@ -271,7 +271,7 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
+    cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
 
     docNode->AllocateChildNode( viewKeys.vTilde.Key(),
                                 viewKeys.vTilde.Key(),
@@ -371,6 +371,25 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
                                 "globalIndex_array",
                                 "Acceleration",
                                 "Acceleration",
+                                "-1",
+                                NodeManager::CatalogName(),
+                                1,
+                                0,
+                                1 );
+
+
+
+
+    FaceManager * const faces = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getFaceManager();
+    docNode = faces->getDocumentationNode();
+
+    docNode->AllocateChildNode( "junk",
+                                "junk",
+                                -1,
+                                "integer_array",
+                                "integer_array",
+                                "junk",
+                                "junk",
                                 "-1",
                                 NodeManager::CatalogName(),
                                 1,
@@ -972,6 +991,14 @@ bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::V
 GEOS_MARK_END(BC4);
 
 
+std::map<string, string_array > fieldNames;
+fieldNames["node"].push_back("Velocity");
+
+CommunicationTools::SynchronizeFields( fieldNames,
+                                       mesh,
+                                       domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
 (void) cycleNumber;
 
 return dt;
@@ -1227,10 +1254,10 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
   int dim = 3;
 
   int n_mpi_processes;
-  MPI_Comm_size( MPI_COMM_WORLD, &n_mpi_processes );
+  MPI_Comm_size( MPI_COMM_GEOSX, &n_mpi_processes );
 
   int this_mpi_process = 0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &this_mpi_process );
+  MPI_Comm_rank( MPI_COMM_GEOSX, &this_mpi_process );
 
   std::vector<int> gather(n_mpi_processes);
 
@@ -1312,9 +1339,9 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back(viewKeys.trilinosIndex.Key());
 
-  CommunicationTools::SynchronizeFields(fieldNames,
-                              mesh,
-                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   // create epetra map
 
@@ -1536,7 +1563,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
             for( int i=0 ; i<dim ; ++i )
             {
-              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*static_cast<int>(trilinos_index[localNodeIndex])+i;
+              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*trilinos_index[localNodeIndex]+i;
 
               // TODO must add last solution estimate for this to be valid
               element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];
@@ -1683,7 +1710,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
     localResidual += residualData[i]*residualData[i];
   }
   realT globalResidualNorm;
-  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_WORLD);
+  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
 
 
   return sqrt(globalResidualNorm);
@@ -1934,6 +1961,16 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 //  m_maxDofVal = maxpos;
 //  std::cout<<"Maximum DeltaDisplacement, Position = "<<maxinc<<",
 // "<<maxpos<<", "<<maxinc/maxpos<<std::endl;
+
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back(keys::TotalDisplacement);
+  fieldNames["face"].push_back("junk");
+
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         domain->getMeshBody(0)->getMeshLevel(0),
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
 
 }
 

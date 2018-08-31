@@ -52,6 +52,7 @@ void SiloOutput::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Outputs SILO format files");
 
+
 //  docNode->AllocateChildNode( viewKeys.plotFileRoot.Key(),
 //                              viewKeys.plotFileRoot.Key(),
 //                              -1,
@@ -88,10 +89,12 @@ void SiloOutput::Execute(real64 const& time_n,
   SiloFile silo;
 
   integer rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Barrier( MPI_COMM_WORLD );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  MPI_Barrier( MPI_COMM_GEOSX );
 
-  silo.Initialize(PMPIO_WRITE);
+  integer numFiles = this->getReference<integer>( siloOutputViewKeys.parallelThreads);
+
+  silo.Initialize(PMPIO_WRITE , numFiles );
   silo.WaitForBatonWrite(rank, cycleNumber, false );
   silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n, 0);
   silo.HandOffBaton();

@@ -319,7 +319,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 //  if (maxNodePerFace != minNodePerFace || maxNodePerFace > 4)
 // writeArbitraryPolygonLocal = 1;
 //  MPI_Allreduce(&writeArbitraryPolygonLocal, &m_writeArbitraryPolygon, 1,
-// MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+// MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
 
 }
 

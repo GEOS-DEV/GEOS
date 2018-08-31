@@ -53,8 +53,8 @@ void OutputBase::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Outputs Base Class");
 
-  docNode->AllocateChildNode( viewKeys.slaveDirectory.Key(),
-                              viewKeys.slaveDirectory.Key(),
+  docNode->AllocateChildNode( outputBaseViewKeys.slaveDirectory.Key(),
+                              outputBaseViewKeys.slaveDirectory.Key(),
                               -1,
                               "string",
                               "string",
@@ -66,8 +66,8 @@ void OutputBase::FillDocumentationNode()
                               1,
                               0 );
 
-    docNode->AllocateChildNode( viewKeys.parallelThreads.Key(),
-                              viewKeys.parallelThreads.Key(),
+    docNode->AllocateChildNode( outputBaseViewKeys.parallelThreads.Key(),
+                                outputBaseViewKeys.parallelThreads.Key(),
                               -1,
                               "integer",
                               "integer",
@@ -89,10 +89,10 @@ void OutputBase::Initialize( ManagedGroup * const group )
 
 void OutputBase::SetupDirectoryStructure()
 {
-  string slaveDirectory = this->getReference<string>(viewKeys.slaveDirectory);
+  string slaveDirectory = this->getReference<string>(outputBaseViewKeys.slaveDirectory);
 
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   if (rank  == 0)
   {
     if (!slaveDirectory.empty())

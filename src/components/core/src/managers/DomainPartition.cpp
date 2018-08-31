@@ -45,7 +45,7 @@ DomainPartition::DomainPartition( std::string const & name,
 
 
   this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
-  MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
+  MPI_Comm_dup( MPI_COMM_GEOSX, &m_mpiComm );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
@@ -198,11 +198,11 @@ void DomainPartition::SetupCommunications()
   MPI_Comm cartcomm;
   {
     int reorder = 0;
-    MPI_Cart_create(MPI_COMM_WORLD, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+    MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
   }
   int rank = -1;
   int nsdof = 3;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 
   MPI_Comm_rank(cartcomm, &rank);
   MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());

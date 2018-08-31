@@ -830,7 +830,7 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
   this->prepareToRead();
   m_functionManager->prepareToRead();
   BoundaryConditionManager::get()->prepareToRead();
-  SidreWrapper::loadExternalData(restartFileName, MPI_COMM_WORLD);
+  SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
   this->finishReading();
   m_functionManager->finishReading();
   BoundaryConditionManager::get()->finishReading();

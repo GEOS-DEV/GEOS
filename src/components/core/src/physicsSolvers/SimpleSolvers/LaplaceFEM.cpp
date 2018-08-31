@@ -240,10 +240,10 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
 
   int n_mpi_processes;
-  MPI_Comm_size( MPI_COMM_WORLD, &n_mpi_processes );
+  MPI_Comm_size( MPI_COMM_GEOSX, &n_mpi_processes );
 
   int this_mpi_process = 0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &this_mpi_process );
+  MPI_Comm_rank( MPI_COMM_GEOSX, &this_mpi_process );
 
   std::vector<int> gather(n_mpi_processes);
 

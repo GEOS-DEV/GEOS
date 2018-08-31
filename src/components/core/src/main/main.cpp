@@ -21,7 +21,6 @@
 #include "common/Logger.hpp"
 #include "common/TimingMacros.hpp"
 #include <cmath>
-#include <mpi.h>
 #include <iostream>
 #include <sys/time.h>
 #include "../dataRepository/SidreWrapper.hpp"
@@ -40,6 +39,8 @@ using namespace geosx;
 using namespace axom;
 #endif
 
+
+
 int main( int argc, char *argv[] )
 {
   timeval tim;
@@ -50,7 +51,10 @@ int main( int argc, char *argv[] )
 #ifdef USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
+
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 
   std::cout<<"starting main"<<std::endl;
@@ -88,7 +92,7 @@ int main( int argc, char *argv[] )
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
   if (restart) {
     std::cout << "Loading restart file " << restartFileName << std::endl;
-    dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_WORLD );
+    dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_GEOSX );
   }
 
   ProblemManager problemManager( "ProblemManager", nullptr );
