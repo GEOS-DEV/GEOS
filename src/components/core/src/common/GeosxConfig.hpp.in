@@ -16,6 +16,7 @@
 #cmakedefine USE_MATHPRESSO
 #cmakedefine USE_PYTHON
 #cmakedefine USE_RAJA
+#cmakedefine USE_PVT_PACKAGE
 
 #cmakedefine USE_CONTAINERARRAY_RETURN_PTR
 
