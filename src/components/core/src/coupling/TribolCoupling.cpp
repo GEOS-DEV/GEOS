@@ -20,6 +20,8 @@
  * @file TribolCoupling.cpp
  */
 
+#if HAVE_TRIBOLCOUPLING
+
 #include "TribolCoupling.hpp"
 #include "dataRepository/KeyNames.hpp"
 #include "managers/DomainPartition.hpp"
@@ -512,3 +514,5 @@ void TribolCoupling::InitCommSubset(MPI_Comm const mpiComm,
 #endif
 
 } /* namespace geosx */
+
+#endif

@@ -6,7 +6,7 @@ set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0" CACHE PATH "")
 #include("${TPL_DIR}/${CONFIG_NAME}.cmake")
 
 #set(ATK_DIR "/usr/gapps/GEOS/geosx/axom/toss_3_x86_64_ib-gcc@7.1.0-release" CACHE PATH "")
-set(TRIBOL_WORLD_DIR "/usr/workspace/wsrzc/benliu/git/ale3dalt3/build-toss3_intel18.0.2-gid64-debug/bin/tribolworld" CACHE PATH "")
+set(TRIBOL_WORLD_DIR "/usr/workspace/wsrzc/benliu/git/ale3dalt3/build-toss3_intel18.0.2-gid64-relwithdebinfo/bin/tribolworld" CACHE PATH "")
 
 set(CMAKE_C_COMPILER "/usr/tce/packages/intel/intel-18.0.2/bin/icc" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/tce/packages/intel/intel-18.0.2/bin/icpc" CACHE PATH "")
@@ -18,6 +18,8 @@ set(MPI_HOME             "/usr/tce/packages/mvapich2/mvapich2-2.2-intel-18.0.2" 
 set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpicc"   CACHE PATH "")
 set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpicxx"  CACHE PATH "")
 set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpifort" CACHE PATH "")
+
+set(CMAKE_CXX_FLAGS "-mavx -fp-model strict -fp-model source -prec-div -prec-sqrt -no-ftz" CACHE PATH "")
 
 set(MPIEXEC              "/usr/bin/srun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")

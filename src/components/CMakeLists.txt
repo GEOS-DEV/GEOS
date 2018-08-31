@@ -1,5 +1,8 @@
 message( "Entering /src/components/CMakeLists.txt")
 
+if(TRIBOL_WORLD_DIR)
+   add_definitions(-DHAVE_TRIBOLCOUPLING)
+endif()
 
 # Python config
 set(ENABLE_PYTHON OFF CACHE BOOL  "Disables Python Plugin")

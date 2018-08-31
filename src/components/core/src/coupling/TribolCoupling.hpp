@@ -20,6 +20,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_TRIBOLCOUPLING_HPP_
 #define SRC_COMPONENTS_CORE_SRC_TRIBOLCOUPLING_HPP_
 
+#if HAVE_TRIBOLCOUPLING
+
 #include "dataRepository/ManagedGroup.hpp"
 #include "mesh/NodeManager.hpp"
 
@@ -54,5 +56,6 @@ public:
 };
 
 } /* namespace geosx */
+#endif
 
 #endif /* SRC_COMPONENTS_CORE_SRC_TRIBOLCOUPLING_HPP_ */

@@ -174,19 +174,24 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     subEvent->GetTargetReferences();
   });
 
+#if HAVE_TRIBOLCOUPLING
   TribolCoupling::Initialize(this, domain) ;
+#endif
 
   // Run problem
   while(1) {
     int terminate = ((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0)) ? 0 : 1 ;
 
     if (dt > 0.0) {
+#if HAVE_TRIBOLCOUPLING
        TribolCoupling::SyncTermination(&terminate) ;
+#endif
 
        if (terminate) {
           break ;
        }
 
+#if HAVE_TRIBOLCOUPLING
        real64 newDt ;
        TribolCoupling::SyncTimestep(&newDt) ;
 
@@ -195,6 +200,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
            std::cout << "     dt: " << dt << ", coupled dt=" << newDt << std::endl;
            GEOS_ERROR( "TRIBOL coupling error" );
        }
+#endif
     }
 
     real64 nextDt = std::numeric_limits<real64>::max();
@@ -245,7 +251,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     subEvent->Cleanup(time, cycle, domain);     
   });
 
+#if HAVE_TRIBOLCOUPLING
   TribolCoupling::Cleanup() ;
+#endif
 }
 
 } /* namespace geosx */
