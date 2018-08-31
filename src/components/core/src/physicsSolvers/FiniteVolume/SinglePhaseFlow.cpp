@@ -465,10 +465,10 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
               ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   int numMpiProcesses;
-  MPI_Comm_size( MPI_COMM_WORLD, &numMpiProcesses );
+  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
 
   int thisMpiProcess = 0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &thisMpiProcess );
+  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
 
   localIndex numLocalRowsToSend = numLocalRows;
   array1d<localIndex> gather(numMpiProcesses);
@@ -503,8 +503,8 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
   // loop over all elements and set the dof number if the element is not a ghost
   raja::ReduceSum< reducePolicy, localIndex  > localCount(0);
   forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [=]( localIndex const er,
-                                     localIndex const esr,
-                                     localIndex const k) mutable ->void
+                                                     localIndex const esr,
+                                                     localIndex const k) mutable ->void
   {
     if( ghostRank[er][esr][k] < 0 )
     {
@@ -664,7 +664,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   // add additional connectivity resulting from boundary stencils
   fluxApprox->forBoundaryStencils([&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection) -> void
   {
-    boundaryStencilCollection.forAll([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
+    boundaryStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
     {
       elementLocalDofIndexRow.resize(1);
       stencil.forConnected([&] (PointDescriptor const & point, localIndex const i) -> void
@@ -817,7 +817,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
   real64 dMobility_dP[numElems] = { 0.0, 0.0 };
   real64_array dDensMean_dP, dFlux_dP;
 
-  stencilCollection.forAll([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
+  stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
   {
     localIndex const stencilSize = stencil.size();
 
@@ -1347,7 +1347,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
 
   // compute global residual norm
   realT globalResidualNorm;
-  MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalResidualNorm);
 }

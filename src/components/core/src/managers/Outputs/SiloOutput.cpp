@@ -89,8 +89,8 @@ void SiloOutput::Execute(real64 const& time_n,
   SiloFile silo;
 
   integer rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Barrier( MPI_COMM_WORLD );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  MPI_Barrier( MPI_COMM_GEOSX );
 
   integer numFiles = this->getReference<integer>( siloOutputViewKeys.parallelThreads);
 
