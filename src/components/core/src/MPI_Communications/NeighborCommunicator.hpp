@@ -26,9 +26,9 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
-#include<set>
-#include<mpi.h>
-#include<vector>
+#include <set>
+#include <mpi.h>
+#include <vector>
 #include "common/DataTypes.hpp"
 #include "common/integer_conversion.hpp"
 
@@ -63,28 +63,28 @@ public:
 
 
   void MPI_iSendReceiveBufferSizes( int const commID,
-                                    MPI_Comm mpiComm  );
+                                    MPI_Comm mpiComm );
 
   void MPI_iSendReceiveBufferSizes( int const commID,
                                     MPI_Request& mpiSendRequest,
                                     MPI_Request& mpiRecvRequest,
-                                    MPI_Comm mpiComm  );
+                                    MPI_Comm mpiComm );
 
   void MPI_iSendReceiveBuffers( int const commID,
-                                MPI_Comm mpiComm  );
+                                MPI_Comm mpiComm );
 
   void MPI_iSendReceiveBuffers( int const commID,
                                 MPI_Request& mpiSendRequest,
                                 MPI_Request& mpiRecvRequest,
-                                MPI_Comm mpiComm  );
+                                MPI_Comm mpiComm );
 
   void MPI_iSendReceive( int const commID,
-                         MPI_Comm mpiComm  );
+                         MPI_Comm mpiComm );
 
   void MPI_iSendReceive( int const commID,
                          MPI_Request& mpiSendRequest,
                          MPI_Request& mpiRecvRequest,
-                         MPI_Comm mpiComm  );
+                         MPI_Comm mpiComm );
 
   template<typename T>
   void MPI_iSendReceive( T const * const sendBuffer,
@@ -94,7 +94,7 @@ public:
                          int const recvSize,
                          MPI_Request& recvReq,
                          int const commID,
-                         MPI_Comm mpiComm  )
+                         MPI_Comm mpiComm )
   {
     MPI_iSendReceive( reinterpret_cast<char const*>( sendBuffer ),
                       sendSize * sizeof(T),
@@ -113,7 +113,7 @@ public:
                          array1d<T> & recvBuffer,
                          MPI_Request& recvReq,
                          int const commID,
-                         MPI_Comm mpiComm  );
+                         MPI_Comm mpiComm );
 
 
   template<typename T>
@@ -127,24 +127,24 @@ public:
                       recvBuffer,
                       m_mpiRecvBufferRequest[commID],
                       commID,
-                      mpiComm  );
+                      mpiComm );
   }
 
   template<typename T>
   void MPI_iSendReceiveWait( array1d<T> const & sendBuffer,
                              array1d<T> & recvBuffer,
                              int const commID,
-                             MPI_Comm mpiComm  )
+                             MPI_Comm mpiComm )
   {
     MPI_iSendReceive( sendBuffer, recvBuffer, commID, mpiComm );
-    MPI_WaitAll(commID);
+    MPI_WaitAll( commID );
   }
 
 
   void MPI_iSendReceive( char const * const sendBuffer,
                          int const sendSize,
                          int const commID,
-                         MPI_Comm mpiComm  );
+                         MPI_Comm mpiComm );
 
   void MPI_WaitAll( int const commID,
                     MPI_Request& mpiSendRequest,
@@ -221,16 +221,15 @@ private:
 
 
 
-
 template<typename T>
 void NeighborCommunicator::MPI_iSendReceive( array1d<T> const & sendBuffer,
                                              MPI_Request& sendReq,
                                              array1d<T> & recvBuffer,
                                              MPI_Request& recvReq,
                                              int const commID,
-                                             MPI_Comm mpiComm  )
+                                             MPI_Comm mpiComm )
 {
-  m_sendBufferSize[commID] = integer_conversion<int>(sendBuffer.size());
+  m_sendBufferSize[commID] = integer_conversion<int>( sendBuffer.size());
 
   MPI_iSendReceive( &m_sendBufferSize[commID],
                     1,

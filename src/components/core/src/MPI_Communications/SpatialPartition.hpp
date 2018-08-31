@@ -108,52 +108,52 @@ public:
 
   void InitializePostSubGroups( dataRepository::ManagedGroup * const );
   virtual void InitializeMetis();
-  void AddNeighborsMetis(set<globalIndex>& neighborList);
-  virtual bool IsCoordInPartition(const realT& coord, const int dir);
-  virtual bool IsCoordInPartition(const R1Tensor& elemCenter);
-  virtual bool IsCoordInPartition(const R1Tensor& elemCenter,
-                                  const int numDistPartition);
-  virtual bool IsCoordInPartitionClosed(const R1Tensor& elemCenter);
-  virtual bool IsCoordInPartitionBoundingBox(const R1Tensor& elemCenter);
+  void AddNeighborsMetis( set<globalIndex>& neighborList );
+  virtual bool IsCoordInPartition( const realT& coord, const int dir );
+  virtual bool IsCoordInPartition( const R1Tensor& elemCenter );
+  virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
+                                   const int numDistPartition );
+  virtual bool IsCoordInPartitionClosed( const R1Tensor& elemCenter );
+  virtual bool IsCoordInPartitionBoundingBox( const R1Tensor& elemCenter );
 
-  virtual bool IsCoordInContactGhostRange(const R1Tensor& elemCenter);
+  virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter );
 
-  void setSizes(const R1Tensor& min, const R1Tensor& max);
-  void setGlobalDomainSizes(const R1Tensor& min, const R1Tensor& max);
-  void getSizes(R1Tensor& min, R1Tensor& max) const;
-  void getPartitionSizes(R1Tensor& min, R1Tensor& max) const;
-  void getPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max) const;
+  void setSizes( const R1Tensor& min, const R1Tensor& max );
+  void setGlobalDomainSizes( const R1Tensor& min, const R1Tensor& max );
+  void getSizes( R1Tensor& min, R1Tensor& max ) const;
+  void getPartitionSizes( R1Tensor& min, R1Tensor& max ) const;
+  void getPartitionGeometricalBoundary( R1Tensor& min, R1Tensor& max ) const;
 //  void UpdatePartitionBoundingBox(NodeManager& nodeManager);
-  void GetPartitionBoundingBox(R1Tensor& xmin, R1Tensor& xmax);
-  void SetPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max);
+  void GetPartitionBoundingBox( R1Tensor& xmin, R1Tensor& xmax );
+  void SetPartitionGeometricalBoundary( R1Tensor& min, R1Tensor& max );
 
-  void setPartitions(unsigned int xPartitions, unsigned int yPartitions,
-                     unsigned int zPartitions) {
-    m_Partitions.resize(3);
-    m_Partitions(0) = xPartitions;
-    m_Partitions(1) = yPartitions;
-    m_Partitions(2) = zPartitions;
+  void setPartitions( unsigned int xPartitions, unsigned int yPartitions,
+                      unsigned int zPartitions ) {
+    m_Partitions.resize( 3 );
+    m_Partitions( 0 ) = xPartitions;
+    m_Partitions( 1 ) = yPartitions;
+    m_Partitions( 2 ) = zPartitions;
     m_size = 1;
-    for (unsigned int i = 0 ; i < nsdof ; i++)
-      m_size *= m_Partitions(i);
-    SetContactGhostRange(0.0);
+    for( unsigned int i = 0 ; i < nsdof ; i++ )
+      m_size *= m_Partitions( i );
+    SetContactGhostRange( 0.0 );
   }
 
-  void setPeriodic(unsigned int xPeriodic, unsigned int yPeriodic,
-                   unsigned int zPeriodic) {
-    m_Periodic(0) = xPeriodic;
-    m_Periodic(1) = yPeriodic;
-    m_Periodic(2) = zPeriodic;
+  void setPeriodic( unsigned int xPeriodic, unsigned int yPeriodic,
+                    unsigned int zPeriodic ) {
+    m_Periodic( 0 ) = xPeriodic;
+    m_Periodic( 1 ) = yPeriodic;
+    m_Periodic( 2 ) = zPeriodic;
   }
 
-  void setRadialPeriodic( unsigned int rPeriodic)
+  void setRadialPeriodic( unsigned int rPeriodic )
   {
-    m_Periodic(1) = rPeriodic;
+    m_Periodic( 1 ) = rPeriodic;
   }
 
 //  virtual void ReadXMLInput(TICPP::HierarchicalDataNode& hdn);
 
-  virtual void SetContactGhostRange(const realT bufferSize);
+  virtual void SetContactGhostRange( const realT bufferSize );
 
 //  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
 
@@ -182,10 +182,10 @@ public:
     return m_max;
   }
 
-  realT xMin(const int i) const {
+  realT xMin( const int i ) const {
     return m_min[i];
   }
-  realT xMax(const int i) const {
+  realT xMax( const int i ) const {
     return m_max[i];
   }
 
@@ -223,8 +223,8 @@ public:
 //	};
 //	std::vector<PeriodicSet> m_periodicSets;
 
-  void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm,
-                    int* ncoords);
+  void AddNeighbors( const unsigned int idim, MPI_Comm& cartcomm,
+                     int* ncoords );
 
 //	std::map<array1d<int>, unsigned int> neighborCommPtrIndx;
 
