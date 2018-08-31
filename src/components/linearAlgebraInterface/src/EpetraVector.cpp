@@ -8,27 +8,26 @@ namespace geosx
 {
 // Create an empty vector
 EpetraVector::EpetraVector()
-{
-}
+{}
 
 // Copy a vector
-EpetraVector::EpetraVector(EpetraVector const &in_vec )
+EpetraVector::EpetraVector( EpetraVector const &in_vec )
 {
-  m_vector = std::unique_ptr<Epetra_Vector>(new Epetra_Vector(*in_vec.getPointer()));
+  m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( *in_vec.getPointer()));
 }
 
 // Create a vector from array
 void EpetraVector::create( const globalIndex size, double *V )
 {
   Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
-  m_vector = std::unique_ptr<Epetra_Vector>(new Epetra_Vector( View, map, V ));
+  m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
 // Create a vector from array
 void EpetraVector::create( const Epetra_Map& Map, double *V )
 {
   Epetra_Map map = Epetra_Map( Map );
-  m_vector = std::unique_ptr<Epetra_Vector>(new Epetra_Vector( View, map, V ));
+  m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
 // Create a vector from vector
@@ -36,44 +35,44 @@ void EpetraVector::create( std::vector<double> &vec )
 {
   globalIndex m_size = vec.size();
   Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
-  m_vector = std::unique_ptr<Epetra_Vector>(new Epetra_Vector( View, map, vec.data()));
+  m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
 }
 
 // Multiply all elements by scalingFactor.
 void EpetraVector::scale( real64 const scalingFactor )
 {
-  m_vector.get()->Scale(scalingFactor);
+  m_vector.get()->Scale( scalingFactor );
 }
 // Dot product with the vector vec.
 void EpetraVector::dot( EpetraVector const &vec,
-                        real64 *dst)
+                        real64 *dst )
 {
-  m_vector.get()->Dot(*vec.getPointer(),dst);
+  m_vector.get()->Dot( *vec.getPointer(), dst );
 }
 // Update (name to be changed) vector as this = alpha*vec + beta*this..
 void EpetraVector::update( real64 const alpha,
                            EpetraVector const &vec,
-                           real64 const beta)
+                           real64 const beta )
 {
-  m_vector.get()->Update(alpha,*vec.getPointer(),beta);
+  m_vector.get()->Update( alpha, *vec.getPointer(), beta );
 }
 
 // 1-norm of the vector.
-void EpetraVector::norm1(real64 &dst) const
+void EpetraVector::norm1( real64 &dst ) const
 {
-  m_vector.get()->Norm1(&dst);
+  m_vector.get()->Norm1( &dst );
 }
 
 // 2-norm of the vector.
-void EpetraVector::norm2(real64 &dst) const
+void EpetraVector::norm2( real64 &dst ) const
 {
-  m_vector.get()->Norm2(&dst);
+  m_vector.get()->Norm2( &dst );
 }
 
 // Inf-norm of the vector.
-void EpetraVector::normInf(real64 &dst) const
+void EpetraVector::normInf( real64 &dst ) const
 {
-  m_vector.get()->NormInf(&dst);
+  m_vector.get()->NormInf( &dst );
 }
 
 

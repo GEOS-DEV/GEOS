@@ -17,7 +17,7 @@ EpetraSparseMatrix::EpetraSparseMatrix()
 // Copy constructor
 EpetraSparseMatrix::EpetraSparseMatrix( EpetraSparseMatrix const &in_mat )
 {
-  m_matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(*in_mat.getPointer()));
+  m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( *in_mat.getPointer() ) );
 }
 
 // -----------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
                                  globalIndex const in_m_nRowGlobal,
                                  integer const     nMaxEntriesPerRow )
 {
-  Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
+  Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ) );
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, nMaxEntriesPerRow, false ) );
 }
 
@@ -44,26 +44,6 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
   Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, nMaxEntriesPerRow, false ) );
 }
-
-//// Create a matrix from number of elements
-//void EpetraSparseMatrix::create( MPI_Comm const comm,
-//                                 integer const in_m_nRowGlobal,
-//                                 std::vector<integer> const nMaxEntriesPerRow )
-//{
-//  Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
-//  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
-//}
-//
-//// Create a matrix from number of elements
-//void EpetraSparseMatrix::create( MPI_Comm const comm,
-//                                 globalIndex const in_m_nRowGlobal,
-//                                 globalIndex const in_m_nColGlobal,
-//                                 std::vector<integer> const nMaxEntriesPerRow )
-//{
-//  Epetra_Map rowMap = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
-//  Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
-//  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
-//}
 
 // Create a matrix from Epetra_Map
 void EpetraSparseMatrix::create( Epetra_Map const &input_map,
@@ -276,7 +256,7 @@ void EpetraSparseMatrix::insert( globalIndex const iRow,
 void EpetraSparseMatrix::multiply( EpetraVector const &src,
                                    EpetraVector &dst )
 {
-  m_matrix->Multiply( false, *src.getPointer(), *dst.getPointer());
+  m_matrix->Multiply( false, *src.getPointer(), *dst.getPointer() );
 }
 
 // Compute res = b - Ax (residual form).
@@ -284,7 +264,7 @@ void EpetraSparseMatrix::residual( EpetraVector const &x,
                                    EpetraVector const &b,
                                    EpetraVector &res )
 {
-  m_matrix->Multiply( false, *x.getPointer(), *res.getPointer());
+  m_matrix->Multiply( false, *x.getPointer(), *res.getPointer() );
   res.update( -1.0, b, 1.0 );
 }
 
@@ -294,10 +274,10 @@ void EpetraSparseMatrix::gaxpy( real64 alpha,
                                 real64 beta,
                                 EpetraVector const &b,
                                 EpetraVector &res,
-                                bool useTranspose)
+                                bool useTranspose )
 {
-  m_matrix->Multiply( useTranspose, *x.getPointer(), *res.getPointer());
-  res.update(alpha,b,beta);
+  m_matrix->Multiply( useTranspose, *x.getPointer(), *res.getPointer() );
+  res.update( alpha, b, beta );
 }
 
 // Multiply all elements by scalingFactor.
@@ -309,13 +289,13 @@ void EpetraSparseMatrix::scale( real64 scalingFactor )
 // Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
 void EpetraSparseMatrix::leftScale( EpetraVector const &vec )
 {
-  m_matrix->LeftScale( *vec.getPointer());
+  m_matrix->LeftScale( *vec.getPointer() );
 }
 
 // Post-multiplies (right) with diagonal matrix consisting of the values in vec.
 void EpetraSparseMatrix::rightScale( EpetraVector const &vec )
 {
-  m_matrix->RightScale( *vec.getPointer());
+  m_matrix->RightScale( *vec.getPointer() );
 }
 
 // Pre-multiplies (left) with diagonal matrix consisting of the values in vecLeft and
@@ -323,33 +303,33 @@ void EpetraSparseMatrix::rightScale( EpetraVector const &vec )
 void EpetraSparseMatrix::leftRightScale( EpetraVector const &vecLeft,
                                          EpetraVector const &vecRight )
 {
-  m_matrix->RightScale(*vecRight.getPointer());
-  m_matrix->LeftScale(*vecLeft.getPointer());
+  m_matrix->RightScale( *vecRight.getPointer() );
+  m_matrix->LeftScale( *vecLeft.getPointer() );
 }
 
 // Clear row and multiply diagonal term by factor.
 void EpetraSparseMatrix::clearRow( globalIndex const row,
-                                   real64 const factor)
-  {
+                                   real64 const factor )
+{
   //long long int rowTmp = static_cast<long long int>(row);
-  int local_row = m_matrix->LRID(row);
+  int local_row = m_matrix->LRID( row );
 
-  if (local_row >= 0)
+  if( local_row >= 0 )
   {
     double *values = nullptr;
     int *col_indices = nullptr;
     int num_entries;
 
-    m_matrix->ExtractMyRowView( local_row, num_entries, values, col_indices);
+    m_matrix->ExtractMyRowView( local_row, num_entries, values, col_indices );
 
     if( values!=nullptr && col_indices!=nullptr && num_entries>0 )
     {
-      int* diag_find = std::find(col_indices,col_indices+num_entries-1, local_row);
+      int* diag_find = std::find( col_indices, col_indices+num_entries-1, local_row );
       long int diag_index = (diag_find - col_indices);
 
-      for (int j=0 ; j<num_entries ; ++j)
+      for( int j=0 ; j<num_entries ; ++j )
       {
-        if (diag_index != j )
+        if( diag_index != j )
         {
           values[j] = 0.;
         }
@@ -357,7 +337,7 @@ void EpetraSparseMatrix::clearRow( globalIndex const row,
       values[diag_index] *= factor;
     }
   }
-  }
+}
 
 void EpetraSparseMatrix::getRow( globalIndex GlobalRow,
                                  integer &NumEntries,
@@ -473,9 +453,9 @@ int EpetraSparseMatrix::myCols() const
 }
 
 // Accessor for the number of local columns
-localIndex EpetraSparseMatrix::rowMapLID(globalIndex GID) const
+localIndex EpetraSparseMatrix::rowMapLID( globalIndex GID ) const
 {
-  return m_matrix->RowMap().LID(GID);
+  return m_matrix->RowMap().LID( GID );
 }
 
 // Wrapper to print the trilinos output of the matrix

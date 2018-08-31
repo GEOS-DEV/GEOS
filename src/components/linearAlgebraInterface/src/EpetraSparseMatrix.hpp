@@ -273,7 +273,7 @@ public:
               real64 beta,
               EpetraVector const &b,
               EpetraVector &res,
-              bool useTranspose=false);
+              bool useTranspose=false );
 
   /**
    * @brief Multiply all elements by scalingFactor.
@@ -295,13 +295,13 @@ public:
    * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
    */
   void leftRightScale( EpetraVector const &vecLeft,
-                       EpetraVector const &vecRight);
+                       EpetraVector const &vecRight );
 
   /**
    * @brief Clear a row and multiplies the diagonal term by <tt>factor</tt>.
    */
   void clearRow( globalIndex const row,
-                 real64 const factor);
+                 real64 const factor );
 
   //@}
 
@@ -403,7 +403,7 @@ public:
    * @brief Wrapper for LID function. Returns the local map of the corresponding global index.
    * Returns -1 if the global row is not owned by the processor.
    */
-  localIndex rowMapLID(globalIndex GID) const;
+  localIndex rowMapLID( globalIndex GID ) const;
 
   /**
    * @brief Returns the infinity norm of the matrix.
