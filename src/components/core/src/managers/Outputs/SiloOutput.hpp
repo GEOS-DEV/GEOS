@@ -61,11 +61,11 @@ public:
                         int const cycleNumber,
                         dataRepository::ManagedGroup * domain ) override { Execute(time_n, 0.0, cycleNumber, domain); }
 
-  struct viewKeyStruct
+  struct viewKeyStruct : OutputBase::viewKeyStruct
   {
     dataRepository::ViewKey plotFileRoot = { "plotFileRoot" };
     dataRepository::ViewKey writeFEMFaces = { "writeFEMFaces" };
-  } viewKeys;
+  } siloOutputViewKeys;
 
 };
 

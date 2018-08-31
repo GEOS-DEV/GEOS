@@ -90,9 +90,9 @@ void CommunicationTools::releaseCommID( int & ID )
 {
   std::set<int> & commIDs = getFreeCommIDs();
 
-  if( commIDs.count(ID) > 0 )
+  if( commIDs.count( ID ) > 0 )
   {
-    GEOS_ERROR("Attempting to release commID that is already free");
+    GEOS_ERROR( "Attempting to release commID that is already free" );
   }
   commIDs.insert( ID );
   ID = -1;
@@ -103,7 +103,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               array1d<NeighborCommunicator> & neighbors )
 {
 
-  integer_array & ghostRank = object.getReference<integer_array>(object.m_ObjectManagerBaseViewKeys.ghostRank);
+  integer_array & ghostRank = object.getReference<integer_array>( object.m_ObjectManagerBaseViewKeys.ghostRank );
   ghostRank = -2;
 
   int const commSize = MPI_Size( MPI_COMM_GEOSX );
@@ -138,7 +138,8 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   object.ExtractMapFromObjectForAssignGlobalIndexNumbers( compositionObject, objectToCompositionObject );
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
-  // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with the
+  // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
+  // the
   // array being the remaining composition object global indices, and the second being the global index of the object
   // itself.
   map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > > indexByFirstCompositionIndex;
@@ -189,7 +190,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   // send the composition buffers
   {
-    int const sendSize = integer_conversion<int const>(objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex));
+    int const sendSize = integer_conversion<int const>( objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex));
 
     for( localIndex in = 0 ; in < neighbors.size() ; ++in )
     {
@@ -210,7 +211,8 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   // the local arrays
 
   // object to receive the neighbor data
-  // this baby is and Array (for each neighbor) of maps, with the key of lowest composition index, and a value containing
+  // this baby is and Array (for each neighbor) of maps, with the key of lowest composition index, and a value
+  // containing
   // an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
   array1d<map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > > >
   neighborCompositionObjects( neighbors.size() );
@@ -221,7 +223,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
       globalIndex const * recBuffer = reinterpret_cast<globalIndex const *>( neighbor.ReceiveBuffer( commID ).data() );
-      localIndex recBufferSize = integer_conversion<localIndex>(neighbor.ReceiveBuffer( commID ).size() / sizeof(globalIndex));
+      localIndex recBufferSize = integer_conversion<localIndex>( neighbor.ReceiveBuffer( commID ).size() / sizeof(globalIndex));
       globalIndex const * endBuffer = recBuffer + recBufferSize;
       // iterate over data that was just received
       while( recBuffer < endBuffer )
@@ -248,7 +250,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       }
     }
   }
-  releaseCommID(commID);
+  releaseCommID( commID );
 
   // now check to see if the global index is valid. We do this by checking the contents of neighborCompositionObjects
   // with indexByFirstCompositionIndex
@@ -262,9 +264,9 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       // Set iterators to the beginning of each indexByFirstCompositionIndex,
       // and neighborCompositionObjects[neighborNum].
       map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator
-      iter_local = indexByFirstCompositionIndex.begin();
+        iter_local = indexByFirstCompositionIndex.begin();
       map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > >::const_iterator
-      iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
+        iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
 
       // now we continue the while loop as long as both of our iterators are in range.
       while( iter_local != indexByFirstCompositionIndex.end() &&
@@ -280,9 +282,9 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
           {
             // and loop over all of the neighbor composition arrays (objects with the matched key)
             for( array1d<std::pair<globalIndex_array, globalIndex> >::const_iterator
-            iter_neighbor2 = iter_neighbor->second.begin() ;
-                iter_neighbor2 != iter_neighbor->second.end() ;
-                ++iter_neighbor2 )
+                 iter_neighbor2 = iter_neighbor->second.begin() ;
+                 iter_neighbor2 != iter_neighbor->second.end() ;
+                 ++iter_neighbor2 )
             {
               // now compare the composition arrays
               if( iter_local2->first.size() == iter_neighbor2->first.size() &&
@@ -330,17 +332,18 @@ void
 CommunicationTools::
 FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                      array1d<NeighborCommunicator> & allNeighbors )//,
-                                     //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
+//array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
 {
   integer_array const & ghostRank = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.ghostRank );
-  integer_array & domainBoundaryIndicator = group->getReference<integer_array>(group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  integer_array & domainBoundaryIndicator = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
   globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->m_ObjectManagerBaseViewKeys.localToGlobalMap );
 
   array1d<globalIndex> globalPartitionBoundaryObjectsIndices;
-  group->ConstructGlobalListOfBoundaryObjects(globalPartitionBoundaryObjectsIndices);
+  group->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
 
 
-//  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
+//  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >(
+// viewKeys.neighbors );
 
   // send the size of the partitionBoundaryObjects to neighbors
   {
@@ -360,11 +363,11 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
     {
       NeighborCommunicator const & neighbor = allNeighbors[i];
       localIndex_array &
-      matchedPartitionBoundaryObjects = group->GetGroup(group->m_ObjectManagerBaseGroupKeys.neighborData)->
-                                        GetGroup(std::to_string(neighbor.NeighborRank()))->
+      matchedPartitionBoundaryObjects = group->GetGroup( group->m_ObjectManagerBaseGroupKeys.neighborData )->
+                                        GetGroup( std::to_string( neighbor.NeighborRank()))->
                                         getReference<localIndex_array>( group->m_ObjectManagerBaseViewKeys.matchedPartitionBoundaryObjects );
 
-      allNeighbors[i].MPI_WaitAll(commID);
+      allNeighbors[i].MPI_WaitAll( commID );
       localIndex localCounter = 0;
       localIndex neighborCounter = 0;
       while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
@@ -372,7 +375,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
       {
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
-          localIndex const localMatchedIndex = group->m_globalToLocalMap.at(globalPartitionBoundaryObjectsIndices[localCounter]);
+          localIndex const localMatchedIndex = group->m_globalToLocalMap.at( globalPartitionBoundaryObjectsIndices[localCounter] );
           matchedPartitionBoundaryObjects.push_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;
@@ -388,10 +391,9 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
         }
       }
     }
-    releaseCommID(commID);
+    releaseCommID( commID );
   }
 }
-
 
 
 
@@ -402,13 +404,13 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
 
   for( auto & neighbor : neighbors )
   {
-    neighbor.FindAndPackGhosts(false,2,meshLevel,commID);
+    neighbor.FindAndPackGhosts( false, 2, meshLevel, commID );
   }
 
   for( auto & neighbor : neighbors )
   {
     neighbor.MPI_WaitAll( commID );
-    neighbor.UnpackGhosts(meshLevel,commID);
+    neighbor.UnpackGhosts( meshLevel, commID );
   }
   meshLevel->getNodeManager()->SetReceiveLists();
   meshLevel->getEdgeManager()->SetReceiveLists();
@@ -419,7 +421,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.RebuildSyncLists( meshLevel, commID );
   }
 
-  CommunicationTools::releaseCommID(commID);
+  CommunicationTools::releaseCommID( commID );
 }
 
 
@@ -440,9 +442,9 @@ void CommunicationTools::SynchronizeFields( const std::map<string, string_array 
   for( auto & neighbor : neighbors )
   {
     neighbor.MPI_WaitAll( commID );
-    neighbor.UnpackBufferForSync(mesh,commID);
+    neighbor.UnpackBufferForSync( fieldNames, mesh, commID );
   }
-  CommunicationTools::releaseCommID(commID);
+  CommunicationTools::releaseCommID( commID );
 
 //
 //  // send and receive buffers
@@ -459,7 +461,8 @@ void CommunicationTools::SynchronizeFields( const std::map<string, string_array 
 //  for( int count=0 ; count<m_neighbors.size() ; ++count )
 //  {
 //    int neighborIndex;
-//    MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
+//    MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data()
+// );
 //
 //    NeighborCommunication& neighbor = this->m_neighbors[neighborIndex];
 //    neighbor.UnpackBuffer( fieldNames );

@@ -270,7 +270,7 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
+    cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
 
     docNode->AllocateChildNode( viewKeys.vTilde.Key(),
                                 viewKeys.vTilde.Key(),
@@ -375,6 +375,25 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
                                 1,
                                 0,
                                 1 );
+
+
+
+
+    FaceManager * const faces = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getFaceManager();
+    docNode = faces->getDocumentationNode();
+
+    docNode->AllocateChildNode( "junk",
+                                "junk",
+                                -1,
+                                "integer_array",
+                                "integer_array",
+                                "junk",
+                                "junk",
+                                "-1",
+                                NodeManager::CatalogName(),
+                                1,
+                                0,
+                                1 );
   }
 
 }
@@ -452,6 +471,16 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
     totalMass += mass[a];
   }
   std::cout<<"totalMass = "<<totalMass<<std::endl;
+
+
+
+  FaceManager * const faceManager = mesh->getFaceManager();
+  integer_array & junk = faceManager->getReference<integer_array>("junk");
+
+  int rank=-1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  junk = rank;
 }
 
 real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
@@ -951,6 +980,14 @@ bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::V
 GEOS_MARK_END(BC4);
 
 
+std::map<string, string_array > fieldNames;
+fieldNames["node"].push_back("Velocity");
+
+CommunicationTools::SynchronizeFields( fieldNames,
+                                       mesh,
+                                       domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
 (void) cycleNumber;
 
 return dt;
@@ -1277,9 +1314,9 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back(viewKeys.trilinosIndex.Key());
 
-  CommunicationTools::SynchronizeFields(fieldNames,
-                              mesh,
-                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   // create epetra map
 
@@ -1498,7 +1535,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
             for( int i=0 ; i<dim ; ++i )
             {
-              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*static_cast<int>(trilinos_index[localNodeIndex])+i;
+              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*trilinos_index[localNodeIndex]+i;
 
               // TODO must add last solution estimate for this to be valid
               element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];
@@ -1895,6 +1932,16 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 //  m_maxDofVal = maxpos;
 //  std::cout<<"Maximum DeltaDisplacement, Position = "<<maxinc<<",
 // "<<maxpos<<", "<<maxinc/maxpos<<std::endl;
+
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back(keys::TotalDisplacement);
+  fieldNames["face"].push_back("junk");
+
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         domain->getMeshBody(0)->getMeshLevel(0),
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
 
 }
 

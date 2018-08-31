@@ -70,7 +70,7 @@ public:
   {
     dataRepository::ViewKey slaveDirectory = { "slaveDirectory" };
     dataRepository::ViewKey parallelThreads = { "parallelThreads" };
-  } viewKeys;
+  } outputBaseViewKeys;
 
 };
 
