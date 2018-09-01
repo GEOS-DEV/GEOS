@@ -58,5 +58,8 @@ blt_combine_static_libraries( NAME          geosx_core
                             )
 set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
 
+target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
+
 geosx_add_code_checks(PREFIX core )
 
