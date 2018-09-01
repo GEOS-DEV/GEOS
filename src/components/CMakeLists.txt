@@ -19,18 +19,14 @@ endif()
 
 add_subdirectory(core)
 
-add_subdirectory(cxx-utilities/src)
+#add_subdirectory(cxx-utilities/src)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
     if( NOT ( ${child} STREQUAL "core" OR 
               ${child} STREQUAL "docs" OR 
-              ${child} STREQUAL "cxx-utilities" OR 
-              ${child} STREQUAL "ConstitutivePackage" OR 
-              ${child} STREQUAL "MeshRefinementPackage" OR 
-              ${child} STREQUAL "PhysicsSolverPackage2" OR 
-              ${child} STREQUAL "ReservoirSimulationPackage" ) )
+              ${child} STREQUAL "cxx-utilities" ) )
       add_subdirectory(${child})
       set(componentlist ${componentlist} ${child} )  
     endif()
@@ -52,17 +48,14 @@ endif()
 
 #message("componentlistlink = ${componentlistlink}")
 #message("componentlistlink = ${extraComponentsListLink}")
-blt_add_executable(NAME geosx
-                   SOURCES core/src/main/main.cpp
-                   DEPENDS_ON 
-                              ${componentlistlink} 
-                              ${geosx_core_libs}
-                              ${extraComponentsListLink}
-                  ) 
+#blt_add_executable(NAME geosx
+#                   SOURCES coreComponents/main/main.cpp
+#                   DEPENDS_ON 
+#                              ${componentlistlink} 
+#                              ${geosx_core_libs}
+#                              ${extraComponentsListLink}
+#                  ) 
 
                    
-if (ENABLE_DOCS)
-  add_subdirectory(docs)
-endif()
 
 message( "Leaving /src/components/CMakeLists.txt")
