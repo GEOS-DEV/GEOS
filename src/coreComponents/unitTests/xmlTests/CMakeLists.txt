@@ -9,7 +9,7 @@ set(gtest_geosx_tests
 #
 # Add gtest C++ based tests
 #
-set(componentlist  )
+set(componentlist ${geosx_core_libs} )
 set(componentlistlink "")
 foreach(component ${componentlist})
   set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
@@ -22,7 +22,7 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON geosx_core ${componentlistlink} gtest ${thirdPartyLibs}  "-lz"
+                        DEPENDS_ON geosx_core gtest optionparser  "-lz"
                         )
 
     blt_add_test( NAME ${test_name} 

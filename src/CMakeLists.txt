@@ -82,9 +82,12 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON ${geosx_core_libs}
+                   DEPENDS_ON geosx_core slic
                               ${extraComponentsLinkList}
                   )
+
+
+
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
