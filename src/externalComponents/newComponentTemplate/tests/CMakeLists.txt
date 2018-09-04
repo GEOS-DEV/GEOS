@@ -14,7 +14,7 @@ foreach(test ${newComponentTests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${geosx_core_libs} gtest )
+                        DEPENDS_ON geosx_core gtest )
                         
     blt_add_test( NAME ${test_name} 
                   COMMAND ${test_name}
