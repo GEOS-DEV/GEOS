@@ -15,7 +15,7 @@
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-
+#include <iostream>
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "SolidMechanicsLagrangianFEMKernels_impl.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
@@ -708,29 +708,28 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
       GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
 
+      ::geosx::raja::forall_in_range<elemPolicy>
+        (0, cellBlock->size(), GEOSX_LAMBDA ( globalIndex k) mutable {
 
-      //          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
-      for( localIndex k=0 ; k<cellBlock->size() ; ++k )
-      {
-        r1_array uhat_local( numNodesPerElement );
-        r1_array u_local( numNodesPerElement );
-        r1_array f_local( numNodesPerElement );
+          R1Tensor uhat_local[inumNodesPerElement];
+          R1Tensor u_local[inumNodesPerElement];
+          R1Tensor f_local[inumNodesPerElement];
+                    
+          for(localIndex i=0; i<inumNodesPerElement; ++i) f_local[i] = 0.0;
 
-        f_local = R1Tensor(0.0);
-        arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
+          arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
 
-        CopyGlobalToLocal( nodelist,
-                           u, uhat,
-                           u_local.data(), uhat_local.data(), numNodesPerElement );
-
-
-        //Compute Quadrature
+          CopyGlobalToLocal( nodelist,
+                             u, uhat,
+                             u_local, uhat_local, numNodesPerElement );
+          
         for(auto q = 0 ; q<numQuadraturePoints ; ++q)
         {
 
           R2Tensor dUhatdX, dUdX;
-          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q] );
-          CalculateGradient( dUdX,u_local, dNdX[k][q] );
+
+          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q], inumNodesPerElement);
+          CalculateGradient( dUdX,u_local, dNdX[k][q], inumNodesPerElement);
 
           R2Tensor F,L, Finv;
 
@@ -773,23 +772,23 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           R2SymTensor Dadt;
           HughesWinget(Rot, Dadt, L, dt);
           //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
-
+          
           constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
 
           R2SymTensor TotalStress;
           TotalStress = devStress[er][esr][0][k][q];
           TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
 
-          //----------------------
-
-          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local.size(), f_local.data() );
-
+          //----------------------         
+          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, inumNodesPerElement, f_local);
+          
         }//quadrature loop
 
+        
+        AddLocalToGlobal(nodelist, f_local, acc, numNodesPerElement);
 
-        AddLocalToGlobal(nodelist, f_local.data(), acc, numNodesPerElement);
 
-      } //Element loop
+      }); //Element loop
 #else// defined(EXTERNAL_KERNELS) 
 
       //
@@ -978,7 +977,6 @@ bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::V
 
 #endif
 GEOS_MARK_END(BC4);
-
 
 std::map<string, string_array > fieldNames;
 fieldNames["node"].push_back("Velocity");

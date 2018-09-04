@@ -404,6 +404,29 @@ inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localInde
 }
 #endif
 
+template<typename atomicPol=atomicPolicy, typename T, typename U> 
+inline void AddLocalToGlobal(const arrayView1d<const T> globalToLocalRelation,
+                             R1Tensor const * __restrict__ localField,
+                             array1d<U>& globalField,
+                             localIndex const N)
+{
+
+  for( typename array1d<R1Tensor>::size_type a=0 ; a<N ; ++a )
+    {
+      double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
+      double const * const rhs = localField[a].Data();
+      for( int i=0; i<3; ++i )
+        {          
+          geosx::raja::atomicAdd<RAJA::atomic::omp_atomic>(&lhs[i],rhs[i]);
+        }
+    }
+  
+}
+                             
+                             
+                             
+                             
+
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               const array1d< T >& localField1,
