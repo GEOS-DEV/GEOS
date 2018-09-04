@@ -45,3 +45,5 @@ blt_add_library( NAME                  common
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
                
 geosx_add_code_checks(PREFIX common )
+
+add_subdirectory( unitTests )
