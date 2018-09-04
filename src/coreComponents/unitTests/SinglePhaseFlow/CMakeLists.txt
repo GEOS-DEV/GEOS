@@ -9,7 +9,7 @@ message("processing test_name ${exec_name}")
 blt_add_executable(NAME ${exec_name}
                    SOURCES ${gtest_geosx_test}
                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                   DEPENDS_ON ${geosx_core_libs} ${thirdPartyLibs} gtest
+                   DEPENDS_ON geosx_core gtest
                    )
 
 set(gtest_geosx_inputs
