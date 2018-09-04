@@ -38,7 +38,7 @@ endif()
 
 
 
-set( dependencyList common cxx-utilities codingUtilities pugixml )
+set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
 endif()
@@ -57,3 +57,5 @@ target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreCompon
 
 
 geosx_add_code_checks(PREFIX dataRepository )
+
+add_subdirectory( unitTests )
