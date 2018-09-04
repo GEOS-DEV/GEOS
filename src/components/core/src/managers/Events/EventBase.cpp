@@ -21,6 +21,7 @@
  */
 
 #include "EventBase.hpp"
+#include "common/Logger.hpp"
 #include <cstring>
 
 namespace geosx
@@ -198,7 +199,7 @@ void EventBase::GetTargetReferences()
     }
     else
     {
-      throw std::invalid_argument("The target of an event must be executable!");
+      GEOS_ERROR("The target of an event must be executable: " << eventTarget );
     }    
   }
 
