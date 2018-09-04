@@ -3,13 +3,18 @@ message( "Entering /src/externalComponents/CMakeLists.txt")
 
 add_subdirectory(cxx-utilities/src)
 
+if( ENABLE_PVT_PACKAGE )
+  add_subdirectory(PVTPackage/PVTPackage/source)
+endif()
+
 
 set(externalComponentsList "" )
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
-    if( NOT ( ${child} STREQUAL "cxx-utilities" ) )
+    if( NOT ( ${child} STREQUAL "cxx-utilities" OR
+              ${child} STREQUAL "PVTPackage" ) )
       add_subdirectory(${child})
       set(externalComponentsList ${externalComponentsList} ${child} )  
     endif()
