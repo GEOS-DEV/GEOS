@@ -19,7 +19,7 @@ message("adding newComponentTemplate library")
 blt_add_library( NAME             newComponentTemplate
                  SOURCES          ${componentSources}
                  HEADERS          ${componentHeaders}
-                 DEPENDS_ON       ${geosx_core_libs}
+                 DEPENDS_ON       geosx_core
                )
 
 target_include_directories( newComponentTemplate PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
