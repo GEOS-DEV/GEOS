@@ -422,6 +422,10 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   int iter = 0;
   while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
   {
+    if (this->verboseLevel() >= 1)
+    {
+      std::cout << "\tIteration: " << iter+1  << ", FlowSolver: "<< std::endl;
+    }
     dtReturn = fluidSolver.NonlinearImplicitStep( time_n,
                                                   dtReturn,
                                                   cycleNumber,
@@ -433,6 +437,10 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       break;
     }
 
+    if (this->verboseLevel() >= 1)
+    {
+      std::cout << "\tIteration: " << iter+1  << ", MechanicsSolver: "<< std::endl;
+    }
     dtReturn = solidSolver.NonlinearImplicitStep( time_n,
                                                   dtReturn,
                                                   cycleNumber,
