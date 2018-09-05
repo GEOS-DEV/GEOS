@@ -10,7 +10,7 @@
 
 #cmakedefine GEOSX_USE_MPI
 #cmakedefine GEOSX_USE_ATK
-#cmakedefine USE_CALIPER
+#cmakedefine GEOSX_USE_CALIPER
 #cmakedefine USE_CHAI
 #cmakedefine USE_FPARSER
 #cmakedefine USE_MATHPRESSO
