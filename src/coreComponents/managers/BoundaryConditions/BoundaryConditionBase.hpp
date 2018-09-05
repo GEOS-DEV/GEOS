@@ -596,7 +596,6 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
                                                            ManagedGroup * dataGroup,
                                                            string const & fieldName ) const
 {
-  std::cout << fieldName << "  " << GetFieldName() << std::endl;
   integer const component = GetComponent();
   string const functionName = getData<string>( viewKeyStruct::functionNameString );
   string const fieldNameInFile = GetFieldNameInFile();
@@ -611,8 +610,6 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
       fieldType & field = view.reference();
-      std::cout << "fieldNameInFile : " << fieldNameInFile << std::endl;
-      std::cout << "propertyFileName : " << propertyFileName << std::endl;
       if( functionName.empty() )
       {
         if( !fieldNameInFile.empty() && !propertyFileName.empty()) {
@@ -622,7 +619,6 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
         vtmFile.Load(propertyFileName,false,true);
         const auto & propertyMap = vtmFile.GetRankBlock(0).GetMeshBlock(0).PropertyMap();
         const auto & property = propertyMap.find(fieldNameInFile)->second;
-        std::cout << "property " << fieldNameInFile << " is going to be written" << std::endl;
         for( auto a : targetSet )
         {
           if( fieldNameInFile == "PERMX" || fieldNameInFile == "PERMY" || fieldNameInFile == "PERMZ") {
