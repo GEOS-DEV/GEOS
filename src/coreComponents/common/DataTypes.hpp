@@ -50,7 +50,7 @@
 #include "sidre/SidreTypes.hpp"
 #endif
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -80,7 +80,7 @@ namespace geosx
 {
 
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #endif
 

@@ -48,7 +48,7 @@ int main( int argc, char *argv[] )
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
   real64 t_initialize, t_run;
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
 
@@ -142,7 +142,7 @@ int main( int argc, char *argv[] )
 #endif
 
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Finalize();
 #endif
 
