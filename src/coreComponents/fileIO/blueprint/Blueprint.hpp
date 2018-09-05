@@ -62,7 +62,7 @@ private:
 
   const static std::unordered_map<localIndex, const std::string> numNodesToElemName;
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   const NodeManager& m_node_manager;
   const ElementRegionManager& m_elem_reg_manager;
 //  const MPI_Comm m_comm;
