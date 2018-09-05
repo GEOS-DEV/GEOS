@@ -11,7 +11,7 @@
 #cmakedefine GEOSX_USE_MPI
 #cmakedefine GEOSX_USE_ATK
 #cmakedefine GEOSX_USE_CALIPER
-#cmakedefine USE_CHAI
+#cmakedefine GEOSX_USE_CHAI
 #cmakedefine USE_FPARSER
 #cmakedefine USE_MATHPRESSO
 #cmakedefine USE_PYTHON
