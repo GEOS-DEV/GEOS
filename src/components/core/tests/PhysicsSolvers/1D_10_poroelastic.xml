@@ -25,7 +25,7 @@
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
+                              newtonTol="1.0e-6"
                               maxIterNewton="8"
                               verbosityFlag="2"/>
     </SolidMechanics_LagrangianFEM>
@@ -56,23 +56,31 @@
   </Mesh>
 
   <Geometry>
-    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+    <Box name="boundaryBot" type="0" xMin="-0.1, -0.01, -0.01" xMax=" 1.1, 1.01, 1.01"/>
+    <Box name="boundaryTop" type="0" xMin="8.9, -0.01, -0.01" xMax=" 10.1, 1.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="5000.0">
+  <Events maxTime="3.2e4">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent name="solverApplications"
-                   forceDt="20.0"
+    <PeriodicEvent name="solverApplication0"
+                   beginTime="0"
+                   endTime="500"   
+                   forceDt="100.0"
+                   target="/Solvers/poroSolve" />
+
+    <PeriodicEvent name="solverApplication1"
+                   beginTime="500"
+                   endTime="3.2e4"   
+                   forceDt="1000.0"
                    target="/Solvers/poroSolve" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="100.0"
+                   timeFrequency="3000.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
   </Events>
@@ -105,21 +113,21 @@
   
       <LinearElasticIsotropic name="shale"
                               density0="2700"
-                              BulkModulus0="5.5556e9"
-                              ShearModulus0="4.16667e9"
+                              BulkModulus0="61.9e6"
+                              ShearModulus0="28.57e6"
                               />
 
     <CompressibleSinglePhaseFluid name="water"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-10"
+                                  compressibility="1e-19"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"
                                   />
                                   
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
-                                 compressibility="1e-9"/>
+                                 compressibility="3e-10"/>
   </Constitutive>
 
   <InitialConditions>
@@ -134,7 +142,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="2.0e-16"/>
+               scale="4.963e-17"/>
 
     <Dirichlet name="permy"
                component="1"
@@ -143,7 +151,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="2.0e-16"/>
+               scale="4.963e-17"/>
 
     <Dirichlet name="permz"
                component="2"
@@ -152,7 +160,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="2.0e-16"/>
+               scale="4.963e-17"/>
 
     <Dirichlet name="referencePorosity"
                initialCondition="1"
@@ -160,7 +168,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
                dataType="real64"
-               scale="0.05"/>
+               scale="0.3"/>
 
     <Dirichlet name="initialPressure"
                initialCondition="1"
@@ -168,9 +176,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="real64"
-               scale="5e6"/>
-  
-  
+               scale="2.125e6"/>
   
     <Dirichlet name="xnegconstraint" 
                objectPath="nodeManager" 
@@ -200,10 +206,17 @@
                objectPath="faceManager" 
                fieldName="Traction" 
                dataType="Vector" 
-               component="1" 
-               scale="-1.0e6" 
+               component="0" 
+               scale="-3e6" 
                setNames="xpos"/>
-  
+
+    <Dirichlet name="boundaryPressure"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
+               dataType="real64"
+               scale="3e6"
+               setNames="boundaryBot boundaryTop"/>  
+
   </BoundaryConditions>
 
   <Functions>
@@ -217,7 +230,7 @@
   </Partition>
 
   <Outputs>
-    <Silo name="siloOutput"/>
+    <Silo name="siloOutput" plotFileRoot="plot_largerStep"/>
     <!-- Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/ >-->
   </Outputs>
 

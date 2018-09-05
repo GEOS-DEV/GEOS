@@ -176,7 +176,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
     real64 nextDt = std::numeric_limits<real64>::max();
-    std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+    std::cout << "\nTime: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
 
     this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
     {
