@@ -46,7 +46,7 @@
 
 
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "sidre/SidreTypes.hpp"
 #endif
 
@@ -406,7 +406,7 @@ public:
     return type_names.at(typeIndex);
   }
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 
   static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
   {
@@ -461,7 +461,7 @@ public:
     return it->second;
   }
 
-#endif /* USE_ATK */
+#endif /* GEOSX_USE_ATK */
 
 
   // Matching regex for data types in xml

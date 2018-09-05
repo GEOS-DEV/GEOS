@@ -826,7 +826,7 @@ void ProblemManager::ApplyInitialConditions()
 
 void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   this->prepareToRead();
   m_functionManager->prepareToRead();
   BoundaryConditionManager::get()->prepareToRead();

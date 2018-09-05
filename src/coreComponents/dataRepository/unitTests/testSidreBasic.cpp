@@ -27,7 +27,7 @@
 namespace geosx {
 namespace dataRepository {
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 TEST(testSidreBasic, testSidreBasic) {
   MPI_Init(0, nullptr);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
@@ -105,7 +105,7 @@ TEST(testSidreBasic, testSidreBasic) {
   MPI_Finalize();
 }
 
-#endif /* USE_ATK */
+#endif /* GEOSX_USE_ATK */
 
 
 int main(int argc, char* argv[]) {

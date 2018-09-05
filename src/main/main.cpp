@@ -35,7 +35,7 @@
 
 using namespace geosx;
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 using namespace axom;
 #endif
 
@@ -69,7 +69,7 @@ int main( int argc, char *argv[] )
 
 
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   slic::initialize();
   std::string format =  std::string( "***********************************\n" )+
                        std::string( "* <TIMESTAMP>\n\n" ) +
@@ -137,7 +137,7 @@ int main( int argc, char *argv[] )
 
   problemManager.ClosePythonInterpreter();
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   slic::finalize();
 #endif
 
