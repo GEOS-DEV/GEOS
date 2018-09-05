@@ -3,8 +3,11 @@ message( "Entering /src/externalComponents/CMakeLists.txt")
 
 add_subdirectory(cxx-utilities/src)
 
+set(externalComponentsList "" )
+
 if( ENABLE_PVT_PACKAGE )
-  add_subdirectory(PVTPackage/PVTPackage/source)
+  add_subdirectory( PVTPackage/PVTPackage/source )
+  set( externalComponentsList ${externalComponentsList} PVTPackage )
 endif()
 
 

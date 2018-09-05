@@ -82,7 +82,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void FinalInitialization( ManagedGroup * const parent ) override final;
+  virtual void InitializePostSubGroups(ManagedGroup * const group) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {

@@ -68,10 +68,8 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation name="fluidTPFA"
-                                 fieldName="fluidPressure"
-                                 coefficientName="permeability"
-                                 cellLocation="center"
-                                 faceLocation="center"/>
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -81,20 +79,17 @@
 
   <Constitutive>
     <CompositionalFluid name="fluid1"
-                        phases="gas oil water"
-                        numComponents="3"
-                        equationOfState="PR"
-                        componentNames="c1 co2 water"
-                        componentCriticalPressure="1 2 3"
-                        componentCriticalTemperature="1 2 3"
-                        componentAcentricFactor="1 2 3"
-                        componentMolarWeight="1 2 3"
+                        phases="oil gas water"
+                        equationsOfState="PR PR PR"
+                        componentNames="N2 C10 C20 H2O"
+                        componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"
+                        componentCriticalTemperature="126.2,622.0,782.0,647.0"
+                        componentAcentricFactor="0.04,0.443,0.816,0.344"
+                        componentMolarWeight="28e-3,134e-3,275e-3,18e-3"
+                        componentVolumeShift="0 0 0"
                         componentBinaryCoeff="0 0 0
-                                                0 0
-                                                  0"
-                        componentCriticalCompressibility="1 2 3"
-                        componentCriticalVolume="1 2 3"
-                        componentVolumeShift="1 2 3"/>
+                                              0 0 0
+                                              0 0 0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"

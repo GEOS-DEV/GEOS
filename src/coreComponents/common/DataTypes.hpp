@@ -148,6 +148,18 @@ template< typename T >
 using arrayView3d = multidimensionalArray::ArrayView<T,3,localIndex>;
 
 template< typename T >
+using array4d = multidimensionalArray::ManagedArray<T,4,localIndex>;
+
+template< typename T >
+using arrayView4d = multidimensionalArray::ArrayView<T,4,localIndex>;
+
+template< typename T >
+using array5d = multidimensionalArray::ManagedArray<T,5,localIndex>;
+
+template< typename T >
+using arrayView5d = multidimensionalArray::ArrayView<T,5,localIndex>;
+
+template< typename T >
 using set = SortedArray<T>;
 
 template< typename TKEY, typename TVAL >
