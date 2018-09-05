@@ -34,6 +34,7 @@
 
 namespace geosx{
 
+    /*
 void DumbPropertyManager::SetName(string const & name ) {
     m_name = name;
 }
@@ -55,6 +56,7 @@ double DumbPropertyManager::GetValue(globalIndex const elementIndex) const {
     assert(elementIndex < static_cast<globalIndex>(m_values.size()));
     return m_values[elementIndex];
 }
+*/
 
 MeshBlock::MeshBlock( string fileName,
         string blockName ) :
@@ -67,9 +69,18 @@ bool MeshBlock::IsARegionBlock() const  {
     return m_mesh.NumCells() > 0;
 }
 
-void MeshBlock::Load() {
-    m_vtuFile.Load(m_vtuFileName,m_mesh,m_properties);    
+void MeshBlock::Load(bool loadMesh, bool loadProperties) {
+    if( loadMesh ) {
+    m_vtuFile.Load(m_vtuFileName,m_mesh);    
     m_mesh.SetName(m_blockName);
+    }
+    if( loadProperties ) {
+    m_vtuFile.Load(m_vtuFileName,m_properties);    
+    }
+}
+
+std::map< string, std::vector< double > > const & MeshBlock::PropertyMap() const {
+    return m_properties;
 }
 
 DumbMesh const & MeshBlock::mesh() const {
@@ -80,9 +91,9 @@ void RankBlock::AddMeshBlock( const MeshBlock& block) {
     m_block.emplace_back(block);
 }
 
-void RankBlock::Load() {
+void RankBlock::Load(bool loadMesh, bool loadProperties) {
     for( auto& block : m_block) {
-        block.Load();
+        block.Load(loadMesh, loadProperties);
     }
 }
 localIndex RankBlock::NumMeshBlocks() const {
@@ -102,7 +113,7 @@ RankBlock const & VtmFile::GetRankBlock(localIndex const rankBlockIndex) const {
 localIndex VtmFile::NumRankBlocks() const{
     return static_cast< localIndex >(m_rankBlocks.size());
 }
-void VtmFile::Load( string const &filename) {
+void VtmFile::Load( string const &filename, bool loadMesh, bool loadProperties) {
     int mpiSize = 0;
     int mpiRank = 0;
 #if USE_MPI
@@ -159,7 +170,7 @@ void VtmFile::Load( string const &filename) {
     if( mpiRank < numFiles ) {
         for(int p_index = 0; p_index < 
                 static_cast< int >(m_rankBlocks.size()); ++p_index) {
-            m_rankBlocks[p_index].Load();
+            m_rankBlocks[p_index].Load(loadMesh, loadProperties);
         }
     }
 }
@@ -170,15 +181,19 @@ void VtmFile::FromVtmToGEOS(MeshLevel * const meshLevel) {
     }
 }
 
-void VtuFile::Load( string const &filename, DumbMesh &mesh,
-        std::vector< DumbPropertyManager> & properties) {
+void VtuFile::Load( string const &filename, DumbMesh &mesh) {
     pugi::xml_document vtmDoc;
     vtmDoc.load_file(filename.c_str());
     CheckXmlChildFileConsistency(vtmDoc,filename);
     LoadMesh(vtmDoc, mesh);
-    if( mesh.NumCells() > 0 ) { //TODO for the moment, we only load properties on cells
-        LoadProperties(vtmDoc, mesh, properties);
-    }
+}
+
+void VtuFile::Load( string const &filename,
+        std::map< string, std::vector< double > > & properties) {
+    pugi::xml_document vtmDoc;
+    vtmDoc.load_file(filename.c_str());
+    CheckXmlChildFileConsistency(vtmDoc,filename);
+    LoadProperties(vtmDoc, properties);
 }
 
 void VtuFile::Save( string const &filename) {
@@ -510,8 +525,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
 
 
 void VtuFile::LoadProperties(pugi::xml_document const & vtmDoc,
-        DumbMesh const& mesh,
-        std::vector< DumbPropertyManager>& properties){
+        std::map< string, std::vector< double > >& properties){
     pugi::xml_node cellDataNode =
         vtmDoc.child("VTKFile").child("UnstructuredGrid").child("Piece").child("CellData");
     for( auto& property : cellDataNode.children()) {
@@ -519,16 +533,15 @@ void VtuFile::LoadProperties(pugi::xml_document const & vtmDoc,
         std::string propertyType = property.attribute("type").as_string();
         if(propertyName != "globalIndex") {
             if(propertyType == "Float64" || propertyType == "Float32") {
-                properties.emplace_back(DumbPropertyManager());
-                auto& curProperty = properties[properties.size()-1];
-                curProperty.SetSize(mesh.NumCells());
+                properties.insert(std::pair< string,std::vector<double> >(propertyName,0));
+                auto& curProperty = properties.find(propertyName)->second;
                 std::vector< double > propertyValues; // convenient to have 0 as first offset
-                propertyValues.reserve(mesh.NumCells());
                 SplitNodeTextString( property.text().as_string(), propertyValues,
                         [](string str)-> double {return std::stod(str);});
-                assert(static_cast<globalIndex >(propertyValues.size()) == mesh.NumCells());
-                for( globalIndex elementIndex = 0 ; elementIndex < mesh.NumCells(); elementIndex++) {
-                    curProperty.SetValue(elementIndex, propertyValues[elementIndex]);
+                curProperty.resize(propertyValues.size());
+                for( globalIndex elementIndex = 0 ;
+                        elementIndex < static_cast< globalIndex > (propertyValues.size()); elementIndex++) {
+                    curProperty[elementIndex] = propertyValues[elementIndex];
                 }
             }
         }

@@ -28,6 +28,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
+#include "fileIO/vtm/VtmFile.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace geosx
@@ -463,6 +464,8 @@ public:
     constexpr static auto constitutivePathString = "constitutivePath";
     constexpr static auto objectPathString = "objectPath";
     constexpr static auto fieldNameString = "fieldName";
+    constexpr static auto fieldNameInFileString = "fieldNameInFile";
+    constexpr static auto propertyFileNameString = "propertyFileName";
     constexpr static auto dataTypeString = "dataType";
     constexpr static auto componentString = "component";
     constexpr static auto directionString = "direction";
@@ -524,12 +527,18 @@ public:
     return m_setNames;
   }
 
+  string const & GetFieldNameInFile() const {
+      return m_fieldNameInFile;
+  }
+
+  string const & GetPropertyFileName() const {
+      return m_propertyFileName;
+  }
+
   int initialCondition() const
   {
     return m_initialCondition;
   }
-
-
 
 private:
 
@@ -554,6 +563,12 @@ private:
 
   /// Whether or not the boundary condition is an initial condition.
   int m_initialCondition;
+
+  /// If not empty, link the boundary condition with an existing property supported in a file
+  string m_fieldNameInFile;
+
+  /// Path to the file containing the property
+  string m_propertyFileName;
 
   /// The name of the function used to generate values for application.
   string m_functionName;
@@ -581,9 +596,11 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
                                                            ManagedGroup * dataGroup,
                                                            string const & fieldName ) const
 {
-
+  std::cout << fieldName << "  " << GetFieldName() << std::endl;
   integer const component = GetComponent();
   string const functionName = getData<string>( viewKeyStruct::functionNameString );
+  string const fieldNameInFile = GetFieldNameInFile();
+  string const propertyFileName = GetPropertyFileName();
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
@@ -594,11 +611,33 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
       fieldType & field = view.reference();
+      std::cout << "fieldNameInFile : " << fieldNameInFile << std::endl;
+      std::cout << "propertyFileName : " << propertyFileName << std::endl;
       if( functionName.empty() )
       {
+        if( !fieldNameInFile.empty() && !propertyFileName.empty()) {
+        // TODO work only for properties which are handled by a vtm file. We should
+        // abstract this for other file format.
+        VtmFile vtmFile;
+        vtmFile.Load(propertyFileName,false,true);
+        const auto & propertyMap = vtmFile.GetRankBlock(0).GetMeshBlock(0).PropertyMap();
+        const auto & property = propertyMap.find(fieldNameInFile)->second;
+        std::cout << "property " << fieldNameInFile << " is going to be written" << std::endl;
+        for( auto a : targetSet )
+        {
+          if( fieldNameInFile == "PERMX" || fieldNameInFile == "PERMY" || fieldNameInFile == "PERMZ") {
+          BC_OP::ApplyBcValue( field, a, component, property[a]/1000 );
+          }
+          else {
+          BC_OP::ApplyBcValue( field, a, component, property[a] );
+          }
+        }
+        }
+        else {
         for( auto a : targetSet )
         {
           BC_OP::ApplyBcValue( field, a, component, m_scale );
+        }
         }
       }
       else

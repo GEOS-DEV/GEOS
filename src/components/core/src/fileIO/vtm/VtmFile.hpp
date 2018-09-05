@@ -37,6 +37,7 @@
 namespace geosx{
 class MeshLevel;
 
+/*
 class DumbPropertyManager {
     public:
         void SetName(string const & name);
@@ -49,6 +50,7 @@ class DumbPropertyManager {
     string m_name;
     std::vector< double > m_values;
 };
+*/
 
 /*!
  * @brief This class may be temporary and stock a mesh with vertices, polygons (triangles
@@ -353,8 +355,14 @@ class VtuFile {
          * @brief load a .vtu file
          * @param[in] fileName the name of the XML pvtu file to be loaded
          */
-        void Load( string const & fileName, DumbMesh & mesh,
-        std::vector< DumbPropertyManager> & properties);
+        void Load( string const & fileName,
+        std::map<string, std::vector< double > > & properties);
+
+        /*!
+         * @brief load a .vtu file
+         * @param[in] fileName the name of the XML pvtu file to be loaded
+         */
+        void Load( string const & fileName, DumbMesh & mesh);
 
         /*!
          * @brief save a .vtu file
@@ -390,8 +398,7 @@ class VtuFile {
          * @param[in] pvtuDoc the XML document
          */
         void LoadProperties(pugi::xml_document const & pvtuDoc,
-                DumbMesh const &  mesh,
-                std::vector< DumbPropertyManager>& properties);
+                std::map<string, std::vector< double > >& properties);
 
 
         /*!
@@ -411,21 +418,22 @@ class MeshBlock {
     public:
         MeshBlock( string fileName,
                 string blockName);
-        void Load();
+        void Load(bool loadMesh, bool loadProperties);
         DumbMesh const & mesh() const;
         bool IsARegionBlock() const;
+        std::map< string, std::vector< double > > const & PropertyMap() const;
     private:
         string m_vtuFileName;
         string m_blockName;
         VtuFile m_vtuFile;
         DumbMesh m_mesh;
-        std::vector <DumbPropertyManager> m_properties;
+        std::map< string, std::vector< double > > m_properties;
 };
 
 class RankBlock {
     public:
         void AddMeshBlock( const MeshBlock& block);
-        void Load();
+        void Load(bool loadMesh, bool loadProperties);
         void TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const;
         localIndex NumMeshBlocks() const;
         MeshBlock const & GetMeshBlock(localIndex const meshBlockIndex) const;
@@ -444,7 +452,7 @@ class VtmFile {
          * @brief load a .vtm file
          * @param[in] fileName the name of the XML vtm file to be loaded
          */
-         void Load( string const & fileName);
+         void Load( string const & fileName, bool loadMesh, bool loadProperties);
 
          void FromVtmToGEOS(MeshLevel * const meshLevel);
 

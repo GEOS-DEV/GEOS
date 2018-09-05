@@ -28,6 +28,8 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 );
   RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, 0 );
   RegisterViewWrapper( viewKeyStruct::fieldNameString, &m_fieldName, 0 );
+  RegisterViewWrapper( viewKeyStruct::fieldNameInFileString, &m_fieldNameInFile, 0 );
+  RegisterViewWrapper( viewKeyStruct::propertyFileNameString, &m_propertyFileName, 0 );
   RegisterViewWrapper( viewKeyStruct::componentString, &m_component, 0 );
   RegisterViewWrapper( viewKeyStruct::directionString, &m_direction, 0 );
   RegisterViewWrapper( viewKeyStruct::functionNameString, &m_functionName, 0 );
@@ -98,6 +100,31 @@ void BoundaryConditionBase::FillDocumentationNode()
                               "string",
                               "string",
                               "Name of field that boundary condition is applied to.",
+                              "",
+                              "",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::fieldNameInFileString,
+                              viewKeyStruct::fieldNameInFileString,
+                              -1,
+                              "string",
+                              "string",
+                              "Name of the field in an external file",
+                              "",
+                              "",
+                              "",
+                              0,
+                              1,
+                              0 );
+  docNode->AllocateChildNode( viewKeyStruct::propertyFileNameString,
+                              viewKeyStruct::propertyFileNameString,
+                              -1,
+                              "string",
+                              "string",
+                              "Path to the filed containing the field/property",
                               "",
                               "",
                               "",

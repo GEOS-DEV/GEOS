@@ -62,7 +62,7 @@ TEST(testVTM,testVTM)
     MPI_Init(0, nullptr);
 #endif
     VtmFile vtmFile;
-    vtmFile.Load("out.vtm");
+    vtmFile.Load("out.vtm", true, true);
 #if USE_MPI
     MPI_Finalize();
 #endif
