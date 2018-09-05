@@ -18,12 +18,15 @@ set( subdirs
      systemSolverInterface
      )
 
+add_subdirectory(cxx-utilities/src)
+
+
 
 set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
 set( geosx_core_defines "" )
 
-set( coreLibs "" )
+set( coreLibs "cxx-utilities" )
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
     if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )

@@ -19,6 +19,13 @@ include(cmake/blt/SetupBLT.cmake)
 include(cmake/CMakeBasics.cmake)
 set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
 
+
+################################
+# Add Thirdparty Builtin Libs
+################################
+add_subdirectory(thirdparty)
+
+
 ################################
 # Add components
 ################################
@@ -46,10 +53,6 @@ endif()
 install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
 
-################################
-# Add Thirdparty Builtin Libs
-################################
-add_subdirectory(thirdparty)
 
 ################################
 # Create header of configuration options
@@ -83,7 +86,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core
+                   DEPENDS_ON geosx_core 
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
