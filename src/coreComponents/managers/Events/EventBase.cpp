@@ -88,7 +88,7 @@ void EventBase::FillDocumentationNode()
                               "real64",
                               "end time",
                               "end time",
-                              "1.0e9",
+                              "1.0e100",
                               "",
                               0,
                               1,
@@ -306,6 +306,8 @@ void EventBase::Step(real64 const time,
                      integer const cycle,
                      dataRepository::ManagedGroup * domain )
 {
+  // Note: do we need an mpi barrier here?
+
   if (m_target != nullptr)
   {
     m_target->Execute(time, dt, cycle, domain);
@@ -375,6 +377,17 @@ void EventBase::Cleanup(real64 const& time_n,
   });
 }
 
+
+
+integer EventBase::GetExitFlag()
+{
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    m_exitFlag += subEvent->GetExitFlag();
+  });
+
+  return m_exitFlag;
+}
 
 
 } /* namespace geosx */
