@@ -137,7 +137,7 @@ public:
 
   void setRestartFlags( RestartFlags flags) { m_restart_flags = flags; } 
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   axom::sidre::View * getSidreView() const
   {
     return m_sidreView;
@@ -168,7 +168,7 @@ private:
   int m_sizedFromParent;
   RestartFlags m_restart_flags;
   PlotLevel m_plotLevel;
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   axom::sidre::View* m_sidreView;
 #endif
 

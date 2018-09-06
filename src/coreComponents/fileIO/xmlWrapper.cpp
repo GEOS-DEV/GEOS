@@ -30,7 +30,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include <slic/slic.hpp>
 #endif
 
@@ -78,7 +78,7 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
         if( defVal == "REQUIRED" )
         {
           string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
           SLIC_ERROR( message );
 #endif
         }
