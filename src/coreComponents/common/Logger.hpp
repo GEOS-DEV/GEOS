@@ -29,7 +29,7 @@
 #include <string>
 #include "GeosxConfig.hpp"
 #include <sstream>
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
 #include "slic/GenericOutputStream.hpp"
 #endif

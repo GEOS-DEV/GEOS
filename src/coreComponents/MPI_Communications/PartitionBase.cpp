@@ -30,7 +30,7 @@
 //#include "ObjectManagers/DomainPartition.h"
 #include <limits.h>
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -583,7 +583,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //
 //  if( sendArray.size() != m_neighbors.size() || recvArray.size() != m_neighbors.size() )
 //  {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //    SLIC_ERROR("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
 //#endif
 //  }
@@ -818,7 +818,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //// bufvector>::iterator itmp =
 //// neighbor->tempNeighborData.objectsToSend.find(*it);
 ////        if(itmp == neighbor->tempNeighborData.objectsToSend.end())
-////#ifdef USE_ATK
+////#ifdef GEOSX_USE_ATK
 ////          SLIC_ERROR("Cannot find name " + toString<int>(*it) + " in
 //// objectsToSend");
 ////#endif
@@ -1106,7 +1106,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //        {
 //          st<< *failed <<"\n";
 //        }
-////#ifdef USE_ATK
+////#ifdef GEOSX_USE_ATK
 ////        SLIC_ERROR(st.str().c_str());
 ////#endif
 //
@@ -3395,7 +3395,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //      {
 //        if (colorByRank[listNeighbors[rank][i]] ==  colorByRank[rank])
 //        {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //          SLIC_ERROR("ERROR: Two neighbors were assigned the same color.");
 //#endif
 //        }

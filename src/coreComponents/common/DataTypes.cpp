@@ -28,7 +28,7 @@
 
 namespace geosx
 {
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm MPI_COMM_GEOSX;
 #endif
 
