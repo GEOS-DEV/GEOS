@@ -33,7 +33,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "MeshGeneratorBase.hpp"
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include <slic/slic.hpp>
 #endif
 
@@ -210,7 +210,7 @@ private:
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
         {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
           SLIC_ERROR("Mesh bias must between -1 and 1!");
 #endif
         }

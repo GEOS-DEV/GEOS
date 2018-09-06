@@ -18,12 +18,15 @@ set( subdirs
      systemSolverInterface
      )
 
+add_subdirectory(cxx-utilities/src)
+
+
 
 set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
 set( geosx_core_defines "" )
 
-set( coreLibs "" )
+set( coreLibs "cxx-utilities" )
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
     if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
@@ -46,7 +49,7 @@ if( ENABLE_MPI )
   set( extraComponentsListLink ${extraComponentsListLink} mpi )
 endif()
 
-if( USE_ATK )
+if( GEOSX_USE_ATK )
   set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
@@ -56,7 +59,13 @@ blt_combine_static_libraries( NAME          geosx_core
                               LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG} 
                               LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                             )
-set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
+                            
+#set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
+
+target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
 
 geosx_add_code_checks(PREFIX core )
 
+
+add_subdirectory( unitTests )

@@ -29,7 +29,7 @@
 #include "common/GeosxConfig.hpp"
 #include <string>
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "sidre/DataStore.hpp"
 #include "sidre/IOManager.hpp"
 #endif
@@ -46,7 +46,7 @@ public:
   SidreWrapper();
   ~SidreWrapper();
   
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   static axom::sidre::DataStore& dataStore();
 #endif
 
