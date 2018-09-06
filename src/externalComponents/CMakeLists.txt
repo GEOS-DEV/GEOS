@@ -1,8 +1,6 @@
 message( "Entering /src/externalComponents/CMakeLists.txt")
 
 
-add_subdirectory(cxx-utilities/src)
-
 
 set(externalComponentsList "" )
 

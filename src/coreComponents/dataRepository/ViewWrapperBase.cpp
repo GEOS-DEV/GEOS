@@ -28,7 +28,7 @@
 #include "ManagedGroup.hpp"
 #include "RestartFlags.hpp"
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -45,11 +45,11 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
   m_sizedFromParent(1),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_plotLevel(PlotLevel::LEVEL_3)
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   ,m_sidreView(nullptr)
 #endif
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   SLIC_ERROR_IF(parent==nullptr,"parameter WrapperCollection * const parent must not be nullptr");
 
   if( parent->getSidreGroup()->hasView(name) )
@@ -73,7 +73,7 @@ ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ):
   m_parent( source.m_parent),
   m_sizedFromParent( source.m_sizedFromParent),
   m_restart_flags(RestartFlags::WRITE_AND_READ)
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   ,m_sidreView( source.m_sidreView )
 #endif
 
