@@ -525,7 +525,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
 
 void ProblemManager::InitializePythonInterpreter()
 {
-#if USE_PYTHON==1
+#ifdef GEOSX_USE_PYTHON
   // Initialize python and numpy
   std::cout << "Loading python interpreter" << std::endl;
 
@@ -553,7 +553,7 @@ void ProblemManager::InitializePythonInterpreter()
 
 void ProblemManager::ClosePythonInterpreter()
 {
-#if USE_PYTHON==1
+#ifdef GEOSX_USE_PYTHON
   // Add any other cleanup here
   std::cout << "Closing python interpreter" << std::endl;
   Py_Finalize();
@@ -569,7 +569,7 @@ void ProblemManager::ParseInputFile()
   ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
 
 
-#if USE_PYTHON==1
+#ifdef GEOSX_USE_PYTHON
   // Load the pygeos module
   PyObject *pModule = PyImport_ImportModule("pygeos");
   if (pModule == NULL)
