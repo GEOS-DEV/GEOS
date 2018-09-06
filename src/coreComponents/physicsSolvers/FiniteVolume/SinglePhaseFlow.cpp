@@ -267,8 +267,8 @@ ImplicitStepSetup( real64 const& time_n,
                                 localIndex const ei)->void
   {
     dPres[er][esr][ei] = 0.0;
-    constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // fluid
-    constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // solid
+    constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointPressure(pres[er][esr][ei], ei, 0); // fluid
+    constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure(pres[er][esr][ei], ei, 0); // solid
 
     densOld[er][esr][ei] = dens[er][esr][m_fluidIndex][ei][0];
     poroOld[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
@@ -1285,8 +1285,8 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
                                 localIndex const ei)->void
   {
     real64 const new_pres = pres[er][esr][ei] + dPres[er][esr][ei];
-    constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint( new_pres, ei, 0 );
-    constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint( new_pres, ei, 0 );
+    constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointPressure( new_pres, ei, 0 );
+    constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( new_pres, ei, 0 );
   });
 }
 
@@ -1332,8 +1332,8 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
                                 localIndex const ei )->void
   {
     dPres[er][esr][ei] = 0.0;
-    constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint( pres[er][esr][ei], ei, 0 );
-    constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint( pres[er][esr][ei], ei, 0 );
+    constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointPressure( pres[er][esr][ei], ei, 0 );
+    constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( pres[er][esr][ei], ei, 0 );
   });
 
 }

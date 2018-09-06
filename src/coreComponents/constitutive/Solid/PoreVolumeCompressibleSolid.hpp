@@ -69,9 +69,9 @@ public:
                                            real64 & poro,
                                            real64 & dPVMult_dPres) override final;
 
-  virtual void PressureUpdatePoint(real64 const & pres,
-                                   localIndex const k,
-                                   localIndex const q) override final;
+  virtual void StateUpdatePointPressure(real64 const & pres,
+                                        localIndex const k,
+                                        localIndex const q) override final;
 
   virtual void FillDocumentationNode() override;
 
@@ -100,9 +100,9 @@ private:
   ExponentialRelation<localIndex, real64> m_poreVolumeRelation;
 };
 
-inline void PoreVolumeCompressibleSolid::PressureUpdatePoint(real64 const & pres,
-                                                             localIndex const k,
-                                                             localIndex const q)
+inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const & pres,
+                                                                  localIndex const k,
+                                                                  localIndex const q)
 {
   m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
 }

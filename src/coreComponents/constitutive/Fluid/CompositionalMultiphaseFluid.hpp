@@ -77,6 +77,12 @@ public:
 
   localIndex numFluidPhases();
 
+  virtual void StateUpdatePointMultiphaseFluid(real64 const & pres,
+                                               real64 const & temp,
+                                               real64 const * composition,
+                                               localIndex const k,
+                                               localIndex const q) override;
+
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -95,12 +101,15 @@ public:
     ViewKey componentBinaryCoeff         = { "componentBinaryCoeff" };
 
     // constitutive data
-    ViewKey phaseVolumeFraction          = { "phaseVolumeFraction" };         // S_p
-    ViewKey phaseDensity                 = { "phaseDensity" };                // rho_p
-    ViewKey phaseComponentMoleFraction   = { "phaseComponentMoleFraction" };  // x_cp
-    ViewKey phaseComponentDensity        = { "phaseComponentDensity" };       // rho_cp
+    ViewKey phaseMoleFraction            = { "phaseMoleFraction" };          // xi_p
+    ViewKey phaseVolumeFraction          = { "phaseVolumeFraction" };        // S_p
+    ViewKey phaseDensity                 = { "phaseDensity" };               // rho_p
+    ViewKey phaseComponentMoleFraction   = { "phaseComponentMoleFraction" }; // x_cp
+    ViewKey phaseComponentDensity        = { "phaseComponentDensity" };      // rho_cp
 
     // derivatives
+    ViewKey dPhaseMoleFraction_dPhasePressure              = { "dPhaseMoleFraction_dPhasePressure" };              // dXi_p/dP_p
+    ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction     = { "dPhaseMoleFraction_dGlobalCompMoleFraction" };     // dXi_p/dz_c
     ViewKey dPhaseVolumeFraction_dPhasePressure            = { "dPhaseVolumeFraction_dPhasePressure" };            // dS_p/dP_p
     ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction   = { "dPhaseVolumeFraction_dGlobalCompMoleFraction" };   // dS_p/dz_c
     ViewKey dPhaseDensity_dPhasePressure                   = { "dPhaseDensity_dPhasePressure" };                   // dRho_p/dP_p
@@ -130,12 +139,16 @@ private:
   array2d<real64> m_componentBinaryCoeff;
 
   // data storage
+  array3d<real64> m_phaseMoleFraction;
   array3d<real64> m_phaseVolumeFraction;
   array3d<real64> m_phaseDensity;
   array4d<real64> m_phaseCompMoleFraction;
   array4d<real64> m_phaseCompDensity;
 
   // derivatives
+  array3d<real64> m_dPhaseMoleFraction_dPhasePressure;
+  array4d<real64> m_dPhaseMoleFraction_dGlobalCompMoleFraction;
+
   array3d<real64> m_dPhaseVolumeFraction_dPhasePressure;
   array4d<real64> m_dPhaseVolumeFraction_dGlobalCompMoleFraction;
 
