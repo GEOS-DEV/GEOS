@@ -15,6 +15,7 @@ set( PREPROCESSOR_DEFINES ATK CALIPER CHAI FPARSER MATHPRESSO PYTHON RAJA CONTAI
 foreach( DEP in ${PREPROCESSOR_DEFINES})
     if( ${DEP}_FOUND OR ENABLE_${DEP} )
         set(USE_${DEP} TRUE  )
+        set(GEOSX_USE_${DEP} TRUE  )
     endif()
 endforeach()
 
