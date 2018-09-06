@@ -20,7 +20,7 @@
 #ifndef __TABLE__
 #define __TABLE__
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -71,7 +71,7 @@ public:
         for( int j = 0; j < x[i].size(); j++)
         {
           if(x[i][j] <= xlast) {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
             SLIC_ERROR("Table:SetGrid - ticks for axis " + std::to_string(i) +" must be a monotonic increasing vector of values");
 #endif
           }
@@ -106,7 +106,7 @@ public:
   {
     m_p = p;
     if(m_size == 0 || m_p.size() != m_size)
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
       SLIC_ERROR("Table:SetValues - Must set axes before attempting to set data");
 #endif
     m_set = true;
@@ -130,7 +130,7 @@ public:
   unsigned int Dimension(const unsigned dim) const
   {
     if(dim >= T_dim) {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
       SLIC_ERROR("Table dimension out of range");
 #endif
     }
@@ -140,7 +140,7 @@ public:
   const std::vector<realT>& AxisValues(const unsigned int dim) const
   {
     if(dim >= T_dim) {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
       SLIC_ERROR("Table dimension out of range");
 #endif
     }
@@ -150,7 +150,7 @@ public:
   unsigned int ValuesPerBlock(const unsigned int dim) const
   {
     if(dim >= T_dim) {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
       SLIC_ERROR("Table dimension out of range");
 #endif
     }
@@ -310,7 +310,7 @@ private:
     if(m_zeroGradient || !m_set || T_dim < 1)
       return ret;
     if(gradientDimension >= T_dim) {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
       SLIC_ERROR("Table:Gradient - cannot have gradient dimension >= dimension");
 #endif
     }

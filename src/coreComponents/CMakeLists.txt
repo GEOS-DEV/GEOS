@@ -46,7 +46,7 @@ if( ENABLE_MPI )
   set( extraComponentsListLink ${extraComponentsListLink} mpi )
 endif()
 
-if( USE_ATK )
+if( GEOSX_USE_ATK )
   set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
