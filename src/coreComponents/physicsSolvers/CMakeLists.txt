@@ -33,3 +33,5 @@ blt_add_library( NAME                  physicsSolvers
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX physicsSolvers )
+
+add_subdirectory( unitTests )

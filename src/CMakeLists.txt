@@ -19,6 +19,13 @@ include(cmake/blt/SetupBLT.cmake)
 include(cmake/CMakeBasics.cmake)
 set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
 
+
+################################
+# Add Thirdparty Builtin Libs
+################################
+add_subdirectory(thirdparty)
+
+
 ################################
 # Add components
 ################################
@@ -26,6 +33,7 @@ set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
 
 add_subdirectory(coreComponents)
 
+set( externalComponentsLinkList "" ) 
 add_subdirectory(externalComponents)
 
 ################################
@@ -45,10 +53,6 @@ endif()
 install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
 
-################################
-# Add Thirdparty Builtin Libs
-################################
-add_subdirectory(thirdparty)
 
 ################################
 # Create header of configuration options
@@ -67,13 +71,13 @@ set( extraComponentsListLink "")
 if( ENABLE_PYTHON )
   if( PYTHON_DIR )
     set( extraComponentsListLink ${extraComponentsListLink} python_interp )
-    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=1)
+#    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=1)
     blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
   else()
     MESSAGE(FATAL_ERROR "ENABLE_PYTHON is true, but PYTHON_DIR is not defined.")
   endif()
 else()
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=0)
+#  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=0)
 endif()
 
 if( ENABLE_OPENMP)
@@ -82,9 +86,13 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON ${geosx_core_libs}
+                   DEPENDS_ON geosx_core 
                               ${extraComponentsLinkList}
+                              ${externalComponentsLinkList}
                   )
+
+
+
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 

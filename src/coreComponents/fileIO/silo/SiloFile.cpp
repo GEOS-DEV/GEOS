@@ -319,7 +319,7 @@ void SiloFile::MakeSiloDirectories()
 {
 
   int rank=0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 
@@ -346,7 +346,7 @@ void SiloFile::MakeSiloDirectories()
  */
 void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
 {
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
   m_numGroups = numGroups;
 
@@ -394,7 +394,7 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
 {
 
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   int const groupRank = PMPIO_GroupRank(m_baton, rank);
@@ -441,7 +441,7 @@ void SiloFile::WaitForBaton( int const domainNumber, string const & restartFileN
 {
 
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   int const groupRank = PMPIO_GroupRank(m_baton, rank);
@@ -481,7 +481,7 @@ void SiloFile::HandOffBaton()
   PMPIO_HandOffBaton(m_baton, m_dbFilePtr);
 
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank==0 )
@@ -638,7 +638,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
 
   // write multimesh object
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
@@ -717,7 +717,7 @@ void SiloFile::WriteBeamMesh(string const & meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #ifdef USE_MPI
+  #ifdef GEOSX_USE_MPI
     MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   #endif
     if( rank == 0 )
@@ -750,7 +750,7 @@ void SiloFile::WritePointMesh( string const & meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #ifdef USE_MPI
+  #ifdef GEOSX_USE_MPI
     MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   #endif
     if( rank == 0 )
@@ -847,14 +847,14 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
   }
   // write multimesh object
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
   {
 
     int size = 1;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
     MPI_Comm_size(MPI_COMM_GEOSX, &size);
 #endif
 
@@ -1036,14 +1036,14 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
   // write multimesh object
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
   {
 
     int size = 1;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
     MPI_Comm_size(MPI_COMM_GEOSX, &size);
 #endif
 
@@ -1488,7 +1488,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                bool const isRestart )
 {
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 

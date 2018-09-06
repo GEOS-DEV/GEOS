@@ -8,14 +8,14 @@
 #define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
 
 
-#cmakedefine USE_MPI
-#cmakedefine USE_ATK
-#cmakedefine USE_CALIPER
-#cmakedefine USE_CHAI
+#cmakedefine GEOSX_USE_MPI
+#cmakedefine GEOSX_USE_ATK
+#cmakedefine GEOSX_USE_CALIPER
+#cmakedefine GEOSX_USE_CHAI
 #cmakedefine USE_FPARSER
-#cmakedefine USE_MATHPRESSO
-#cmakedefine USE_PYTHON
-#cmakedefine USE_RAJA
+#cmakedefine GEOSX_USE_MATHPRESSO
+#cmakedefine GEOSX_USE_PYTHON
+#cmakedefine GEOSX_USE_RAJA
 
 #cmakedefine USE_CONTAINERARRAY_RETURN_PTR
 
