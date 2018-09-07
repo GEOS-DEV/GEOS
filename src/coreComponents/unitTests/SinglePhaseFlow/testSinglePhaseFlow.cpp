@@ -39,7 +39,7 @@
 
 using namespace geosx;
 using namespace dataRepository;
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 using namespace axom;
 #endif
 
@@ -170,14 +170,14 @@ int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   slic::initialize();
   std::string format =  std::string( "***********************************\n" )+
                        std::string( "* <TIMESTAMP>\n\n" ) +
@@ -205,11 +205,11 @@ int main(int argc, char** argv)
 
   delete[] global_argv;
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   slic::finalize();
 #endif
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Finalize();
 #endif
 

@@ -1,12 +1,9 @@
 [submodule "src/components/cxx-utilities"]
-	path = src/externalComponents/cxx-utilities
+	path = src/coreComponents/cxx-utilities
 	url = ../cxx-utilities.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
 	url = ../../LLNL/blt.git
-[submodule "src/components/PVTPackage"]
-	path = src/components/PVTPackage
-	url = ../PVTPackage.git
 [submodule "src/externalComponents/PVTPackage"]
 	path = src/externalComponents/PVTPackage
 	url = ../PVTPackage.git

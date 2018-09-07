@@ -9,7 +9,9 @@ set( physicsSolvers_headers
      FiniteVolume/FlowSolverBase.hpp
      FiniteVolume/SinglePhaseFlow.hpp
      FiniteVolume/CompositionalMultiphaseFlow.hpp
-     src/SolidMechanicsLagrangianFEM.hpp )
+     src/SolidMechanicsLagrangianFEM.hpp
+     src/DummySolver.hpp
+     )
 
 #
 # Specify all sources
@@ -21,7 +23,9 @@ set( physicsSolvers_sources
      FiniteVolume/FlowSolverBase.cpp
      FiniteVolume/SinglePhaseFlow.cpp
      FiniteVolume/CompositionalMultiphaseFlow.cpp
-     src/SolidMechanicsLagrangianFEM.cpp )
+     src/SolidMechanicsLagrangianFEM.cpp
+     src/DummySolver.cpp
+     )
 
 
 blt_add_library( NAME                  physicsSolvers

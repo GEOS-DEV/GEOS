@@ -1,7 +1,6 @@
 message( "Entering /src/externalComponents/CMakeLists.txt")
 
 
-add_subdirectory(cxx-utilities/src)
 
 set(externalComponentsList "" )
 
@@ -9,9 +8,6 @@ if( ENABLE_PVT_PACKAGE )
   add_subdirectory( PVTPackage/PVTPackage/source )
   set( externalComponentsList ${externalComponentsList} PVTPackage )
 endif()
-
-
-set(externalComponentsList "" )
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 foreach(child ${children})

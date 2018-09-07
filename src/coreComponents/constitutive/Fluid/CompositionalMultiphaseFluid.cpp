@@ -22,7 +22,7 @@
 
 #include "CompositionalMultiphaseFluid.hpp"
 
-#ifdef USE_PVT_PACKAGE
+#ifdef GEOSX_USE_PVT_PACKAGE
 #include "MultiphaseSystem/CompositionalMultiphaseSystem.hpp"
 #endif
 
@@ -39,7 +39,7 @@ namespace constitutive
 
 namespace
 {
-#ifdef USE_PVT_PACKAGE
+#ifdef GEOSX_USE_PVT_PACKAGE
 static std::unordered_map<string, PHASE_TYPE> const phaseNameDict =
   {
     { "gas",   PHASE_TYPE::GAS },
@@ -327,7 +327,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
 
 void CompositionalMultiphaseFluid::createFluid()
 {
-#ifdef USE_PVT_PACKAGE
+#ifdef GEOSX_USE_PVT_PACKAGE
   localIndex const numComp  = numFluidComponents();
   localIndex const numPhase = numFluidPhases();
 
@@ -390,7 +390,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
                                                                    localIndex const k,
                                                                    localIndex const q)
 {
-#ifdef USE_PVT_PACKAGE
+#ifdef GEOSX_USE_PVT_PACKAGE
   // 0. set array views to the element/point data to avoid awkward quadruple indexing
   VarContainer<1> phaseMoleFrac {
     m_phaseMoleFraction[k][q],
