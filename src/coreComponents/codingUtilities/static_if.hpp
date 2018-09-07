@@ -50,8 +50,8 @@ struct static_if_wrapper<true>
 }
 
 #define static_if( condition ) \
-  geosx::static_if_wrapper<condition>::if_function( [&] () -> void
+  geosx::static_if_wrapper<condition>::if_function( [&] () -> void {
 
-#define end_static_if );
+#define end_static_if });
 
 #endif /* SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_STATIC_IF_HPP_ */

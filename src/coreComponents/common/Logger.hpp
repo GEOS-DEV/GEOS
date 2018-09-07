@@ -49,15 +49,17 @@ void geos_abort( std::string message );
 
 #define GEOS_CHECK(EXP, msg) SLIC_CHECK_MSG(EXP, msg)
 
-#else
+#define GEOS_INFO_IF(EXP, msg) SLIC_INFO_IF(EXP, msg)
+
+#else /* GEOSX_USE_ATK */
 
 #define GEOS_ERROR_IF(EXP, msg)
   do {                                                        \
-    if (EXP)                                                  \  
+    if (EXP)                                                  \
     {                                                         \
       std::cerr<< "***** GEOS_ERROR "<<std::endl;             \
-      std::cerr<< "***** FILE: " <<__FILE__ << std::endl;     \
-      std::cerr<< "***** LINE: " <<__LINE__ << std::endl;     \
+      std::cerr<< "***** FILE: " << __FILE__ << std::endl;    \
+      std::cerr<< "***** LINE: " << __LINE__ << std::endl;    \
       std::ostringstream oss;                                 \
       oss << msg;                                             \
       geosx::geos_abort(oss.str());                           \
@@ -66,29 +68,49 @@ void geos_abort( std::string message );
 
 #define GEOS_WARNING_IF(EXP, msg)
   do {                                                        \
-    if (EXP)                                                  \  
+    if (EXP)                                                  \
     {                                                         \
       std::cerr<< "***** GEOS_WARNING "<<std::endl;           \
-      std::cerr<< "***** FILE: " <<__FILE__ << std::endl;     \
-      std::cerr<< "***** LINE: " <<__LINE__ << std::endl;     \
+      std::cerr<< "***** FILE: " << __FILE__ << std::endl;    \
+      std::cerr<< "***** LINE: " << __LINE__ << std::endl;    \
+      std::ostringstream oss;                                 \
+      oss << msg;                                             \
+    }                                                         \
+  } while ( false )
+
+#define GEOS_INFO_IF(EXP, msg)
+  do {                                                        \
+    if (EXP)                                                  \
+    {                                                         \
+      std::cerr<< "***** GEOS_INFO "<<std::endl;              \
+      std::cerr<< "***** FILE: " << __FILE__ << std::endl;    \
+      std::cerr<< "***** LINE: " << __LINE__ << std::endl;    \
       std::ostringstream oss;                                 \
       oss << msg;                                             \
     }                                                         \
   } while ( false )
 
 #ifdef GEOSX_DEBUG
-#define GEOS_ASSERT(EXP, msg) GEOS_ERROR_IF(EXP, msg)
-#define GEOS_CHECK(EXP, msg) GEOS_WARNING_IF(EXP, msg)
-#else
-#define GEOS_ASSERT(EXP, msg) ((void) 0)
-#define GEOS_CHECK(EXP, msg) ((void) 0)
-#endif
 
-#endif
+#define GEOS_ASSERT(EXP, msg) GEOS_ERROR_IF(EXP, msg)
+
+#define GEOS_CHECK(EXP, msg) GEOS_WARNING_IF(EXP, msg)
+
+#else /* #ifdef GEOSX_DEBUG */
+
+#define GEOS_ASSERT(EXP, msg) ((void) 0)
+
+#define GEOS_CHECK(EXP, msg) ((void) 0)
+
+#endif /* #ifdef GEOSX_DEBUG */
+
+#endif /* #ifdef GEOSX_USE_ATK */
 
 #define GEOS_ERROR(msg) GEOS_ERROR_IF(true, msg)
 
 #define GEOS_WARNING(msg) GEOS_WARNING_IF(true, msg)
+
+#define GEOS_INFO(msg) GEOS_INFO_IF(true, msg)
 
 }
 
