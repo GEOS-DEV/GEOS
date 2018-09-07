@@ -66,7 +66,7 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid(std::string const & n
   RegisterViewWrapper( viewKeys.componentCriticalPressure.Key(), &m_componentCriticalPressure, false );
   RegisterViewWrapper( viewKeys.componentCriticalTemperature.Key(), &m_componentCriticalTemperature, false );
   RegisterViewWrapper( viewKeys.componentAcentricFactor.Key(), &m_componentAcentricFactor, false );
-  RegisterViewWrapper( viewKeys.componentMolarWeight.Key(), &m_componentMolarWeigth, false );
+  RegisterViewWrapper( viewKeys.componentMolarWeight.Key(), &m_componentMolarWeight, false );
   RegisterViewWrapper( viewKeys.componentVolumeShift.Key(), &m_componentVolumeShift, false );
   RegisterViewWrapper( viewKeys.componentBinaryCoeff.Key(), &m_componentBinaryCoeff, false );
 
@@ -114,7 +114,7 @@ CompositionalMultiphaseFluid::DeliverClone(string const & name, ManagedGroup * c
   clone->m_componentCriticalPressure    = this->m_componentCriticalPressure;
   clone->m_componentCriticalTemperature = this->m_componentCriticalTemperature;
   clone->m_componentAcentricFactor      = this->m_componentAcentricFactor;
-  clone->m_componentMolarWeigth         = this->m_componentMolarWeigth;
+  clone->m_componentMolarWeight         = this->m_componentMolarWeight;
   clone->m_componentVolumeShift         = this->m_componentVolumeShift;
   clone->m_componentBinaryCoeff         = this->m_componentBinaryCoeff;
 
@@ -301,7 +301,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
   COMPFLUID_CHECK_INPUT_LENGTH(m_componentAcentricFactor.size(), numFluidComponents(),
                                viewKeys.componentAcentricFactor.Key())
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeigth.size(), numFluidComponents(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeight.size(), numFluidComponents(),
                                viewKeys.componentMolarWeight.Key())
 
   if (m_componentVolumeShift.empty())
@@ -358,7 +358,7 @@ void CompositionalMultiphaseFluid::createFluid()
   std::vector<std::string> components(m_componentNames.begin(), m_componentNames.end());
   std::vector<double> Pc(m_componentCriticalPressure.begin(), m_componentCriticalPressure.end());
   std::vector<double> Tc(m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end());
-  std::vector<double> Mw(m_componentMolarWeigth.begin(), m_componentMolarWeigth.end());
+  std::vector<double> Mw(m_componentMolarWeight.begin(), m_componentMolarWeight.end());
   std::vector<double> Omega(m_componentAcentricFactor.begin(), m_componentAcentricFactor.end());
 
   const ComponentProperties CompProps(numComp, components, Mw, Tc, Pc, Omega);
@@ -526,7 +526,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
 
     for (localIndex ic = 0; ic < numComp; ++ic)
     {
-      real64 const mw = m_componentMolarWeigth[ic];
+      real64 const mw = m_componentMolarWeight[ic];
 
       real64 const phaseCompMassDens = phaseCompMoleFrac.value[ip][ic] * mw / props->MolecularWeight;
       real64 const dPhaseCompMassDens_dPres =

@@ -151,7 +151,7 @@ private:
   array1d<real64> m_componentCriticalPressure;
   array1d<real64> m_componentCriticalTemperature;
   array1d<real64> m_componentAcentricFactor;
-  array1d<real64> m_componentMolarWeigth;
+  array1d<real64> m_componentMolarWeight;
   array1d<real64> m_componentVolumeShift;
   array2d<real64> m_componentBinaryCoeff;
 
