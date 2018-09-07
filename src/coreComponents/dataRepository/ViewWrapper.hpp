@@ -385,7 +385,7 @@ public:
     localIndex unpackedSize = 0;
     string name;
     unpackedSize += bufferOps::Unpack( buffer, name );
-    GEOS_ASSERT( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
+    GEOS_ERROR_IF( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" );
     unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
@@ -396,7 +396,7 @@ public:
     {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOS_ASSERT( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
+      GEOS_ERROR_IF( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" );
       unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
     });
     return unpackedSize;

@@ -89,7 +89,7 @@ Unpack( char const *& buffer,
   INDEX_TYPE length;
   sizeOfUnpackedChars += Unpack( buffer, length );
 
-  GEOS_ASSERT( length==expectedLength, "CommBufferOps::Unpack(): expected length != length" )
+  GEOS_ERROR_IF( length==expectedLength, "CommBufferOps::Unpack(): expected length != length" );;
 
 //  char * const ptr_var = reinterpret_cast<char *>(var);
   memcpy( var, buffer, length * sizeof(T) );
@@ -110,9 +110,9 @@ Unpack( char const *& buffer,
   INDEX_TYPE length;
   sizeOfUnpackedChars += Unpack( buffer, length );
 
-  GEOS_ASSERT( length==expectedLength,
+  GEOS_ERROR_IF( length==expectedLength,
                "CommBufferOps::Unpack(): expected length != length ("
-               <<expectedLength<<"!="<<length<<")"<<std::endl; )
+               <<expectedLength<<"!="<<length<<")"<<std::endl; );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
@@ -496,7 +496,7 @@ Unpack( char const *& buffer,
   INDEX_TYPE const * const existingStrides = var.strides();
   for( int i=0 ; i<NDIM ; ++i )
   {
-    GEOS_ASSERT( strides[i]==existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." )
+    GEOS_ERROR_IF( strides[i]==existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." );
   }
 
   sizeOfUnpackedChars += Unpack( buffer, var.data(), var.size() );
@@ -627,7 +627,7 @@ localIndex Unpack( char const *& buffer,
   localIndex lengthUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, lengthUnpacked );
 
-  GEOS_ASSERT( length==lengthUnpacked, "CommBufferOps::Unpack(): length incorrect." )
+  GEOS_ERROR_IF( length==lengthUnpacked, "CommBufferOps::Unpack(): length incorrect." );
 
   for( localIndex a=0 ; a<length ; ++a )
   {
@@ -788,7 +788,7 @@ localIndex Unpack( char const *& buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ASSERT( numIndicesUnpacked==indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." )
+  GEOS_ERROR_IF( numIndicesUnpacked==indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
@@ -838,7 +838,7 @@ localIndex Unpack( char const *& buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ASSERT( numIndicesUnpacked==indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." )
+  GEOS_ERROR_IF( numIndicesUnpacked==indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
