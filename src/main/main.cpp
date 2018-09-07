@@ -35,7 +35,7 @@
 
 using namespace geosx;
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 using namespace axom;
 #endif
 
@@ -48,7 +48,7 @@ int main( int argc, char *argv[] )
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
   real64 t_initialize, t_run;
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
 
@@ -69,7 +69,7 @@ int main( int argc, char *argv[] )
 
 
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   slic::initialize();
   std::string format =  std::string( "***********************************\n" )+
                        std::string( "* <TIMESTAMP>\n\n" ) +
@@ -137,12 +137,12 @@ int main( int argc, char *argv[] )
 
   problemManager.ClosePythonInterpreter();
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   slic::finalize();
 #endif
 
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Finalize();
 #endif
 

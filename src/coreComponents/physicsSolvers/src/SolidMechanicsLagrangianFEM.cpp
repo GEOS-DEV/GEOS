@@ -1454,8 +1454,6 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   matrix->Scale(0.0);
   rhs->Scale(0.0);
 
-  real64 maxForce = 0.0;
-
   view_rtype_const<r1_array> disp = nodeManager->getData<r1_array>(keys::TotalDisplacement);
   view_rtype_const<r1_array> uhat = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
   view_rtype_const<r1_array> vel  = nodeManager->getData<r1_array>(keys::Velocity);
@@ -1579,8 +1577,10 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
                                                                        stiffness);
 
 
-          //            if( maxElemForce > maxForce )
-          //              maxForce = maxElemForce;
+          if( maxElemForce > m_maxForce )
+          {
+            m_maxForce = maxElemForce;
+          }
 
           matrix->SumIntoGlobalValues( elementLocalDofIndex,
                                        element_matrix);
@@ -1658,6 +1658,10 @@ ApplyBoundaryConditions( DomainPartition * const domain,
     rhs->Print(std::cout);
   }
 
+  matrix->GlobalAssemble(true);
+  rhs->GlobalAssemble();
+
+
 }
 
 real64
@@ -1668,7 +1672,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
   Epetra_FEVector const * const
   residual = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
 
-  real64 localResidual = 0.0;
+  real64 localResidual[2] = {0.0, this->m_maxForce};
 //  residual->Norm2(&scalarResidual);
 
   real64 * residualData = nullptr;
@@ -1676,13 +1680,45 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
   residual->ExtractView(&residualData,&length);
   for( localIndex i=0 ; i<length ; ++i )
   {
-    localResidual += residualData[i]*residualData[i];
+    localResidual[0] += residualData[i]*residualData[i];
   }
-  realT globalResidualNorm;
-  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
 
 
-  return sqrt(globalResidualNorm);
+  real64 globalResidualNorm[2] = {0,0};
+//  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
+
+
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  MPI_Comm_size(MPI_COMM_GEOSX, &size);
+  array1d<real64> globalValues( size * 2 );
+  MPI_Gather( localResidual,
+              2,
+              MPI_DOUBLE,
+              globalValues.data(),
+              2,
+              MPI_DOUBLE,
+              0,
+              MPI_COMM_GEOSX );
+
+  if( rank==0 )
+  {
+    for( int r=0 ; r<size ; ++r )
+    {
+      globalResidualNorm[0] += globalValues[r*2];
+
+      if( globalResidualNorm[1] < globalValues[r*2+1] )
+      {
+        globalResidualNorm[1] = globalValues[r*2+1];
+      }
+    }
+  }
+
+  MPI_Bcast( globalResidualNorm, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX );
+
+
+
+  return sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1);
 
 }
 
@@ -1932,8 +1968,8 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 // "<<maxpos<<", "<<maxinc/maxpos<<std::endl;
 
   std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back(keys::IncrementalDisplacement);
   fieldNames["node"].push_back(keys::TotalDisplacement);
-  fieldNames["face"].push_back("junk");
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody(0)->getMeshLevel(0),

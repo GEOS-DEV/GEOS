@@ -66,7 +66,34 @@ blt_add_library( NAME                  managers
                  DEPENDS_ON            dataRepository fileIO optionparser mathpresso RAJA trilinos
 #                 SHARED FALSE
                )
-               
+
+
+#get_target_property( id managers INCLUDE_DIRECTORIES )
+#message("managers INCLUDE_DIRECTORIES = ${id}")
+#
+#get_target_property( iid managers INTERFACE_INCLUDE_DIRECTORIES )
+#message("managers INTERFACE_INCLUDE_DIRECTORIES = ${iid}")
+#
+#get_target_property( isid managers INTERFACE_SYSTEM_INCLUDE_DIRECTORIES )
+#message("managers INTERFACE_SYSTEM_INCLUDE_DIRECTORIES = ${isid}")
+#
+#
+#
+#get_target_property( ill managers INTERFACE_LINK_LIBRARIES )
+#message("managers INTERFACE_LINK_LIBRARIES = ${ill}")
+#
+#foreach( dependency ${ill} )
+#    get_target_property( depList ${dependency} INTERFACE_INCLUDE_DIRECTORIES )
+#    message( "    ${dependency} iid = ${depList} ")
+#    list( APPEND _expanded_DEPENDS_ON ${depList} )
+#endforeach()
+ 
+
+
+
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
+
 geosx_add_code_checks( PREFIX managers )
+
+#add_subdirectory( unitTests/xmlTests )
