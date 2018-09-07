@@ -75,9 +75,9 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
-  localIndex numFluidComponents();
+  localIndex numFluidComponents() const;
 
-  localIndex numFluidPhases();
+  localIndex numFluidPhases() const;
 
   virtual void StateUpdatePointMultiphaseFluid(real64 const & pres,
                                                real64 const & temp,

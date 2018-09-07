@@ -374,12 +374,12 @@ void CompositionalMultiphaseFluid::InitializePostSubGroups(ManagedGroup * const 
   createFluid();
 }
 
-localIndex CompositionalMultiphaseFluid::numFluidComponents()
+localIndex CompositionalMultiphaseFluid::numFluidComponents() const
 {
   return integer_conversion<localIndex>(m_componentNames.size());
 }
 
-localIndex CompositionalMultiphaseFluid::numFluidPhases()
+localIndex CompositionalMultiphaseFluid::numFluidPhases() const
 {
   return integer_conversion<localIndex>(m_phases.size());
 }

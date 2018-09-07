@@ -227,11 +227,10 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 
 
 
-void SinglePhaseFlow::
-ImplicitStepSetup( real64 const& time_n,
-                   real64 const& dt,
-                   DomainPartition * const domain,
-                   systemSolverInterface::EpetraBlockSystem * const blockSystem)
+void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
+                                         real64 const& dt,
+                                         DomainPartition * const domain,
+                                         EpetraBlockSystem * const blockSystem )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -797,26 +796,18 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
 
 void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
-                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                              EpetraBlockSystem * const blockSystem,
                                               real64 const time_n,
                                               real64 const dt)
 {
-
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
   if (verboseLevel() >= 2)
   {
-    Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
-                                                              BlockIDs::fluidPressureBlock );
-    Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
-
-    dRdP->Print(std::cout);
-    residual->Print(std::cout);
+    blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock )->Print( std::cout );
+    blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock )->Print( std::cout );
   }
 
 }
@@ -826,7 +817,7 @@ void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
  * hold the DOF. Futher work will need to be done to apply a Dirichlet bc to the connectors (faces)
  */
 void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
-                                                 real64 const time, real64 const dt,
+                                                 real64 const time_n, real64 const dt,
                                                  EpetraBlockSystem * const blockSystem )
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
@@ -857,7 +848,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
 
       // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
       // if the boundary condition should be applied to this subregion
-      bcManager->ApplyBoundaryCondition( time + dt,
+      bcManager->ApplyBoundaryCondition( time_n + dt,
                                          domain,
                                          "ElementRegions",
                                          viewKeyStruct::pressureString,
@@ -869,7 +860,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
       {
         // call the application of the boundary condition to alter the matrix and rhs
         bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
-                                                     time + dt,
+                                                     time_n + dt,
                                                      subRegion,
                                                      blockLocalDofNumber[er][esr].get(),
                                                      1,
@@ -885,7 +876,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
 }
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
-                                                    real64 const time, real64 const dt,
+                                                    real64 const time_n, real64 const dt,
                                                     EpetraBlockSystem * const blockSystem)
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
@@ -961,8 +952,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
 
   // first, evaluate BC to get primary field values (pressure)
-//  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::facePressureString, time + dt);
-  bcManager->ApplyBoundaryCondition( time + dt,
+//  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::facePressureString, time_n + dt);
+  bcManager->ApplyBoundaryCondition( time_n + dt,
                                      domain,
                                      "faceManager",
                                      viewKeyStruct::facePressureString,
@@ -972,12 +963,12 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                           ManagedGroup * const targetGroup,
                                           string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToField<BcEqual>(targetSet,time + dt, targetGroup, fieldName);
+    bc->ApplyBoundaryConditionToField<BcEqual>(targetSet,time_n + dt, targetGroup, fieldName);
   });
 
 
   // call constitutive models to get dependent quantities needed for flux (density, viscosity)
-  bcManager->ApplyBoundaryCondition(time + dt,
+  bcManager->ApplyBoundaryCondition(time_n + dt,
                                     domain,
                                     "faceManager",
                                     viewKeyStruct::facePressureString,
@@ -1016,7 +1007,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   real64_array dDensMean_dP, dFlux_dP;
 
 
-  bcManager->ApplyBoundaryCondition(time + dt,
+  bcManager->ApplyBoundaryCondition(time_n + dt,
                                     domain,
                                     "faceManager",
                                     viewKeyStruct::facePressureString,
@@ -1180,8 +1171,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
 real64
 SinglePhaseFlow::
-CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                      DomainPartition * const domain)
+CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
+                       DomainPartition * const domain )
 {
 
   Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );

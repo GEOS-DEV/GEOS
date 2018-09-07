@@ -107,12 +107,12 @@ public:
 
   virtual void AssembleSystem( DomainPartition * const domain,
                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time,
+                               real64 const time_n,
                                real64 const dt ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time,
+                                        real64 const time_n,
                                         real64 const dt ) override;
 
   virtual real64
@@ -135,23 +135,25 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_CompositionalMultiphaseFlow";
+    using ViewKey = dataRepository::ViewKey;
+
+    ViewKey blockLocalDofNumber = { "blockLocalDofNumber_CompositionalMultiphaseFlow" };
 
     // primary solution field
-    constexpr static auto pressureString = "pressure";
-    constexpr static auto deltaPressureString = "deltaPressure";
-    constexpr static auto facePressureString = "facePressure";
+    ViewKey pressure      = { "pressure" };
+    ViewKey deltaPressure = { "deltaPressure" };
+    ViewKey facePressure  = { "facePressure" };
 
-    constexpr static auto globalComponentDensityString = "globalComponentDensity";
-    constexpr static auto deltaGlobalComponentDensityString = "deltaGlobalComponentDensity";
+    ViewKey globalComponentDensity      = { "globalComponentDensity" };
+    ViewKey deltaGlobalComponentDensity = { "deltaGlobalComponentDensity" };
 
     // these are used to store last converged time step values
-    constexpr static auto phaseVolumeFractionString = "phaseVolumeFraction";
-    constexpr static auto phaseDensityString = "phaseDensity";
-    constexpr static auto phaseComponentDensityString = "phaseComponentDensity";
-    constexpr static auto phaseViscosityString = "phaseViscosity";
-    constexpr static auto phaseRelativePermeabilityString = "phaseRelativePermeability";
-    constexpr static auto porosityString = "porosity";
+    ViewKey phaseVolumeFraction       = { "phaseVolumeFraction" };
+    ViewKey phaseDensity              = { "phaseDensity" };
+    ViewKey phaseComponentDensity     = { "phaseComponentDensity" };
+    ViewKey phaseViscosity            = { "phaseViscosity" };
+    ViewKey phaseRelativePermeability = { "phaseRelativePermeability" };
+    ViewKey porosity                  = { "porosity" };
 
   } viewKeys;
 
@@ -212,9 +214,9 @@ private:
                                       real64 const time, real64 const dt,
                                       systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
-  integer m_numPhases;
-  integer m_numComponents;
-  integer m_numDofPerCell;
+  localIndex m_numPhases;
+  localIndex m_numComponents;
+  localIndex m_numDofPerCell;
 };
 
 } // namespace geosx
