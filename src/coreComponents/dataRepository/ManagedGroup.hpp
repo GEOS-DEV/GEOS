@@ -747,7 +747,7 @@ public:
 
   axom::sidre::Group * getSidreGroup()              
   { 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     return m_sidreGroup;
 #else
     return nullptr;
@@ -756,7 +756,7 @@ public:
 
   axom::sidre::Group const * getSidreGroup() const  
   { 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     return m_sidreGroup;
 #else
     return nullptr;
@@ -772,7 +772,7 @@ public:
   ManagedGroup * setParent( ManagedGroup * const parent )
   {
     m_parent = parent;
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     m_sidreGroup = m_parent->getSidreGroup();
 #endif
 
@@ -817,7 +817,7 @@ private:
   viewWrapperMap m_wrappers;
   subGroupMap m_subGroups;
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   axom::sidre::Group* m_sidreGroup;
 #endif
 
