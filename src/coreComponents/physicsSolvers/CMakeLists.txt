@@ -8,6 +8,7 @@ set(physicsSolvers_headers
     FiniteVolume/SinglePhaseFlow.hpp
     SimpleSolvers/LaplaceFEM.hpp
     src/SolidMechanicsLagrangianFEM.hpp
+    src/DummySolver.hpp
     )
 
 #
@@ -19,6 +20,7 @@ set(physicsSolvers_sources
     FiniteVolume/SinglePhaseFlow.cpp
     SimpleSolvers/LaplaceFEM.cpp
     src/SolidMechanicsLagrangianFEM.cpp
+    src/DummySolver.cpp
     )
 
 

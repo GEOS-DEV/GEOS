@@ -1,5 +1,5 @@
 [submodule "src/components/cxx-utilities"]
-	path = src/externalComponents/cxx-utilities
+	path = src/coreComponents/cxx-utilities
 	url = ../cxx-utilities.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt

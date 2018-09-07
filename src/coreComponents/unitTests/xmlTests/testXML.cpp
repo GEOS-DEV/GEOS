@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   int rank;
   MPI_Init(&argc,&argv);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
   int const result = RUN_ALL_TESTS();
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Finalize();
 #endif
 

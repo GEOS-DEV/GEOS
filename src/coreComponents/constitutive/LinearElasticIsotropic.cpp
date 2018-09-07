@@ -25,7 +25,7 @@
 
 #include "LinearElasticIsotropic.hpp"
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
 #endif
 
