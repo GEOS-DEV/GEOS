@@ -57,6 +57,7 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     ######################################################
     if( CMAKE_BUILD_TYPE MATCHES "(Debug|RelWithDebInfo)" )
         add_definitions(-DGEOSX_DEBUG)
+        add_definitions(-DAXOM_DEBUG)
     endif()
 else ()
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS

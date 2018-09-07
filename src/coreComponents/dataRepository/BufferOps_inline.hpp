@@ -47,10 +47,9 @@ Pack( char*&  buffer,
 
   sizeOfPackedChars += length*sizeof(T);
   static_if( DO_PACKING )
-  {
     memcpy( buffer, var, length*sizeof(T) );
     buffer += length*sizeof(T);
-  });
+  end_static_if
 
   return sizeOfPackedChars;
 }
@@ -89,7 +88,7 @@ Unpack( char const *& buffer,
   INDEX_TYPE length;
   sizeOfUnpackedChars += Unpack( buffer, length );
 
-  GEOS_ERROR_IF( length==expectedLength, "CommBufferOps::Unpack(): expected length != length" );;
+  GEOS_ERROR_IF( length != expectedLength, "CommBufferOps::Unpack(): expected length != length" );
 
 //  char * const ptr_var = reinterpret_cast<char *>(var);
   memcpy( var, buffer, length * sizeof(T) );
@@ -110,7 +109,7 @@ Unpack( char const *& buffer,
   INDEX_TYPE length;
   sizeOfUnpackedChars += Unpack( buffer, length );
 
-  GEOS_ERROR_IF( length==expectedLength,
+  GEOS_ERROR_IF( length != expectedLength,
                "CommBufferOps::Unpack(): expected length != length ("
                <<expectedLength<<"!="<<length<<")"<<std::endl; );
 
@@ -181,10 +180,9 @@ Pack( char*&  buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
   static_if( DO_PACKING )
-  {
     memcpy( buffer, &var, sizeOfPackedChars );
     buffer += sizeOfPackedChars;
-  });
+  end_static_if
   return sizeOfPackedChars;
 }
 
@@ -215,13 +213,12 @@ localIndex Pack( char*& buffer,  const std::string& var )
   Pack<DO_PACKING>( buffer, sizeOfPackedChars );
 
   static_if( DO_PACKING )
-  {
     for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
     {
       *buffer = var[i];
       buffer++;
     }
-  });
+  end_static_if
 
   sizeOfPackedChars += sizeof( localIndex );
   return integer_conversion<localIndex>(sizeOfPackedChars);
@@ -496,7 +493,7 @@ Unpack( char const *& buffer,
   INDEX_TYPE const * const existingStrides = var.strides();
   for( int i=0 ; i<NDIM ; ++i )
   {
-    GEOS_ERROR_IF( strides[i]==existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." );
+    GEOS_ERROR_IF( strides[i] != existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." );
   }
 
   sizeOfUnpackedChars += Unpack( buffer, var.data(), var.size() );
@@ -579,13 +576,12 @@ localIndex Pack( char*& buffer,
 
   sizeOfPackedChars += length*sizeof(globalIndex);
   static_if( DO_PACKING )
-  {
     for( localIndex a=0 ; a<length ; ++a )
     {
       memcpy( buffer, &(localToGlobalMap[var[a]]), sizeof(globalIndex) );
       buffer += sizeof(globalIndex);
     }
-  });
+  end_static_if
 
   return sizeOfPackedChars;
 }
@@ -627,7 +623,7 @@ localIndex Unpack( char const *& buffer,
   localIndex lengthUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, lengthUnpacked );
 
-  GEOS_ERROR_IF( length==lengthUnpacked, "CommBufferOps::Unpack(): length incorrect." );
+  GEOS_ERROR_IF( length != lengthUnpacked, "CommBufferOps::Unpack(): length incorrect." );
 
   for( localIndex a=0 ; a<length ; ++a )
   {
@@ -788,7 +784,7 @@ localIndex Unpack( char const *& buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked==indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
+  GEOS_ERROR_IF( numIndicesUnpacked != indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
@@ -838,7 +834,7 @@ localIndex Unpack( char const *& buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked==indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
+  GEOS_ERROR_IF( numIndicesUnpacked != indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
