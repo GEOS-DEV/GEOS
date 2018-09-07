@@ -80,7 +80,7 @@ localIndex Unpack( char const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ASSERT( numIndicesUnpacked==packList.size(), "")
+  GEOS_ERROR_IF( numIndicesUnpacked==packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
@@ -89,7 +89,7 @@ localIndex Unpack( char const * & buffer,
     var.m_toElementRegion[index].resize( numIndicesUnpacked );
     var.m_toElementSubRegion[index].resize( numIndicesUnpacked );
     var.m_toElementIndex[index].resize( numIndicesUnpacked );
-//    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+//    GEOS_ERROR_IF( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
 
     for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
     {
@@ -110,7 +110,7 @@ localIndex Unpack( char const * & buffer,
                                                       globalElementIndex,
                                                       localIndex(-1) );
     }
-  }
+  ;}
 
   return sizeOfUnpackedChars;
 }
@@ -187,13 +187,13 @@ localIndex Unpack( char const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ASSERT( numIndicesUnpacked==packList.size(), "")
+  GEOS_ERROR_IF( numIndicesUnpacked==packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
     sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+    GEOS_ERROR_IF( numIndicesUnpacked==var.m_toElementRegion[index].size(), "");
 
     for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
     {

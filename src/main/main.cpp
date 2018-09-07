@@ -37,6 +37,7 @@ using namespace geosx;
 
 #ifdef GEOSX_USE_ATK
 using namespace axom;
+#include "slic/GenericOutputStream.hpp"
 #endif
 
 
