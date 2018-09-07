@@ -66,25 +66,34 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid(std::string const & n
   RegisterViewWrapper( viewKeys.componentCriticalPressure.Key(), &m_componentCriticalPressure, false );
   RegisterViewWrapper( viewKeys.componentCriticalTemperature.Key(), &m_componentCriticalTemperature, false );
   RegisterViewWrapper( viewKeys.componentAcentricFactor.Key(), &m_componentAcentricFactor, false );
-  RegisterViewWrapper( viewKeys.componentMolarWeigth.Key(), &m_componentMolarWeigth, false );
+  RegisterViewWrapper( viewKeys.componentMolarWeight.Key(), &m_componentMolarWeigth, false );
   RegisterViewWrapper( viewKeys.componentVolumeShift.Key(), &m_componentVolumeShift, false );
   RegisterViewWrapper( viewKeys.componentBinaryCoeff.Key(), &m_componentBinaryCoeff, false );
 
-  RegisterViewWrapper( viewKeys.phaseMoleFraction.Key(), &m_phaseMoleFraction, false );
-  RegisterViewWrapper( viewKeys.phaseVolumeFraction.Key(), &m_phaseVolumeFraction, false );
-  RegisterViewWrapper( viewKeys.phaseDensity.Key(), &m_phaseDensity, false );
-  RegisterViewWrapper( viewKeys.phaseComponentMoleFraction.Key(), &m_phaseCompMoleFraction, false );
-  RegisterViewWrapper( viewKeys.phaseComponentDensity.Key(), &m_phaseCompDensity, false );
 
-  RegisterViewWrapper( viewKeys.dPhaseMoleFraction_dPhasePressure.Key(), &m_dPhaseMoleFraction_dPhasePressure, false );
+  RegisterViewWrapper( viewKeys.phaseMoleFraction.Key(), &m_phaseMoleFraction, false );
+  RegisterViewWrapper( viewKeys.dPhaseMoleFraction_dPressure.Key(), &m_dPhaseMoleFraction_dPressure, false );
+  RegisterViewWrapper( viewKeys.dPhaseMoleFraction_dTemperature.Key(), &m_dPhaseMoleFraction_dTemperature, false );
   RegisterViewWrapper( viewKeys.dPhaseMoleFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseMoleFraction_dGlobalCompMoleFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseVolumeFraction_dPhasePressure.Key(), &m_dPhaseVolumeFraction_dPhasePressure, false );
+
+  RegisterViewWrapper( viewKeys.phaseVolumeFraction.Key(), &m_phaseVolumeFraction, false );
+  RegisterViewWrapper( viewKeys.dPhaseVolumeFraction_dPressure.Key(), &m_dPhaseVolumeFraction_dPressure, false );
+  RegisterViewWrapper( viewKeys.dPhaseVolumeFraction_dTemperature.Key(), &m_dPhaseVolumeFraction_dTemperature, false );
   RegisterViewWrapper( viewKeys.dPhaseVolumeFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseVolumeFraction_dGlobalCompMoleFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseDensity_dPhasePressure.Key(), &m_dPhaseDensity_dPhasePressure, false );
+
+  RegisterViewWrapper( viewKeys.phaseDensity.Key(), &m_phaseDensity, false );
+  RegisterViewWrapper( viewKeys.dPhaseDensity_dPressure.Key(), &m_dPhaseDensity_dPressure, false );
+  RegisterViewWrapper( viewKeys.dPhaseDensity_dTemperature.Key(), &m_dPhaseDensity_dTemperature, false );
   RegisterViewWrapper( viewKeys.dPhaseDensity_dGlobalCompMoleFraction.Key(), &m_dPhaseDensity_dGlobalCompMoleFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompMoleFraction_dPhasePressure.Key(), &m_dPhaseCompMoleFraction_dPhasePressure, false );
+
+  RegisterViewWrapper( viewKeys.phaseComponentMoleFraction.Key(), &m_phaseCompMoleFraction, false );
+  RegisterViewWrapper( viewKeys.dPhaseCompMoleFraction_dPressure.Key(), &m_dPhaseCompMoleFraction_dPressure, false );
+  RegisterViewWrapper( viewKeys.dPhaseCompMoleFraction_dTemperature.Key(), &m_dPhaseCompMoleFraction_dTemperature, false );
   RegisterViewWrapper( viewKeys.dPhaseCompMoleFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseCompMoleFraction_dGlobalCompMoleFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompDensity_dPhasePressure.Key(), &m_dPhaseCompDensity_dPhasePressure, false );
+
+  RegisterViewWrapper( viewKeys.phaseComponentDensity.Key(), &m_phaseCompDensity, false );
+  RegisterViewWrapper( viewKeys.dPhaseCompDensity_dPressure.Key(), &m_dPhaseCompDensity_dPressure, false );
+  RegisterViewWrapper( viewKeys.dPhaseCompDensity_dTemperature.Key(), &m_dPhaseCompDensity_dTemperature, false );
   RegisterViewWrapper( viewKeys.dPhaseCompDensity_dGlobalCompMoleFraction.Key(), &m_dPhaseCompDensity_dGlobalCompMoleFraction, false );
 }
 
@@ -126,20 +135,28 @@ void CompositionalMultiphaseFluid::AllocateConstitutiveData(dataRepository::Mana
   this->resize( size );
 
   m_phaseMoleFraction.resize( size, numPts, numPhase );
-  m_phaseVolumeFraction.resize( size, numPts, numPhase );
-  m_phaseDensity.resize( size, numPts, numPhase );
-  m_phaseCompMoleFraction.resize( size, numPts, numPhase, numComp );
-  m_phaseCompDensity.resize( size, numPts, numPhase, numComp );
-
-  m_dPhaseMoleFraction_dPhasePressure.resize( size, numPts, numPhase );
+  m_dPhaseMoleFraction_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseMoleFraction_dTemperature.resize( size, numPts, numPhase );
   m_dPhaseMoleFraction_dGlobalCompMoleFraction.resize( size, numPts, numPhase, numComp );
-  m_dPhaseVolumeFraction_dPhasePressure.resize( size, numPts, numPhase );
+
+  m_phaseVolumeFraction.resize( size, numPts, numPhase );
+  m_dPhaseVolumeFraction_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseVolumeFraction_dTemperature.resize( size, numPts, numPhase );
   m_dPhaseVolumeFraction_dGlobalCompMoleFraction.resize( size, numPts, numPhase, numComp );
-  m_dPhaseDensity_dPhasePressure.resize( size, numPts, numPhase );
+
+  m_phaseDensity.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dTemperature.resize( size, numPts, numPhase );
   m_dPhaseDensity_dGlobalCompMoleFraction.resize( size, numPts, numPhase, numComp );
-  m_dPhaseCompMoleFraction_dPhasePressure.resize( size, numPts, numPhase, numComp );
+
+  m_phaseCompMoleFraction.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompMoleFraction_dPressure.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompMoleFraction_dTemperature.resize( size, numPts, numPhase, numComp );
   m_dPhaseCompMoleFraction_dGlobalCompMoleFraction.resize( size, numPts, numPhase, numComp, numComp );
-  m_dPhaseCompDensity_dPhasePressure.resize( size, numPts, numPhase, numComp );
+
+  m_phaseCompDensity.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompDensity_dPressure.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompDensity_dTemperature.resize( size, numPts, numPhase, numComp );
   m_dPhaseCompDensity_dGlobalCompMoleFraction.resize( size, numPts, numPhase, numComp, numComp );
 }
 
@@ -229,8 +246,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.componentMolarWeigth.Key(),
-                              viewKeys.componentMolarWeigth.Key(),
+  docNode->AllocateChildNode( viewKeys.componentMolarWeight.Key(),
+                              viewKeys.componentMolarWeight.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -258,6 +275,11 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
 
 void CompositionalMultiphaseFluid::ReadXML_PostProcess()
 {
+  if (numFluidComponents() > MAX_NUM_COMPONENTS)
+  {
+    GEOS_ERROR("Number of components exceeds the maximum of " << MAX_NUM_COMPONENTS);
+  }
+
 #define COMPFLUID_CHECK_INPUT_LENGTH(len, expected, attr) \
   if (integer_conversion<localIndex>(len) != integer_conversion<localIndex>(expected)) \
   { \
@@ -280,7 +302,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
                                viewKeys.componentAcentricFactor.Key())
 
   COMPFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeigth.size(), numFluidComponents(),
-                               viewKeys.componentMolarWeigth.Key())
+                               viewKeys.componentMolarWeight.Key())
 
   if (m_componentVolumeShift.empty())
   {
@@ -368,25 +390,36 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
                                                                    localIndex const k,
                                                                    localIndex const q)
 {
-  // 0. set array views to the element/point data to avoid awkward quadruple indexing
-  arrayView1d<real64> phaseMoleFrac          = m_phaseMoleFraction[k][q];
-  arrayView1d<real64> dPhaseMoleFrac_dPres   = m_dPhaseMoleFraction_dPhasePressure[k][q];
-  arrayView2d<real64> dPhaseMoleFrac_dFeed   = m_dPhaseMoleFraction_dGlobalCompMoleFraction[k][q];
-
-  arrayView1d<real64> phaseDens        = m_phaseDensity[k][q];
-  arrayView1d<real64> dPhaseDens_dPres = m_dPhaseDensity_dPhasePressure[k][q];
-  arrayView2d<real64> dPhaseDens_dFeed = m_dPhaseDensity_dGlobalCompMoleFraction[k][q];
-
-  arrayView1d<real64> phaseVolFrac        = m_phaseVolumeFraction[k][q];
-  arrayView1d<real64> dPhaseVolFrac_dPres = m_dPhaseVolumeFraction_dPhasePressure[k][q];
-  arrayView2d<real64> dPhaseVolFrac_dFeed = m_dPhaseVolumeFraction_dGlobalCompMoleFraction[k][q];
-
-  arrayView2d<real64> phaseCompMoleFrac        = m_phaseCompMoleFraction[k][q];
-  arrayView2d<real64> dPhaseCompMoleFrac_dPres = m_dPhaseCompMoleFraction_dPhasePressure[k][q];
-  arrayView3d<real64> dPhaseCompMoleFrac_dFeed = m_dPhaseCompMoleFraction_dGlobalCompMoleFraction[k][q];
-
-
 #ifdef USE_PVT_PACKAGE
+  // 0. set array views to the element/point data to avoid awkward quadruple indexing
+  VarContainer<1> phaseMoleFrac {
+    m_phaseMoleFraction[k][q],
+    m_dPhaseMoleFraction_dPressure[k][q],
+    m_dPhaseMoleFraction_dTemperature[k][q],
+    m_dPhaseMoleFraction_dGlobalCompMoleFraction[k][q]
+  };
+
+  VarContainer<1> phaseDens {
+    m_phaseDensity[k][q],
+    m_dPhaseDensity_dPressure[k][q],
+    m_dPhaseDensity_dTemperature[k][q],
+    m_dPhaseDensity_dGlobalCompMoleFraction[k][q]
+  };
+
+  VarContainer<1> phaseVolFrac {
+    m_phaseVolumeFraction[k][q],
+    m_dPhaseVolumeFraction_dPressure[k][q],
+    m_dPhaseVolumeFraction_dTemperature[k][q],
+    m_dPhaseVolumeFraction_dGlobalCompMoleFraction[k][q]
+  };
+
+  VarContainer<2> phaseCompMoleFrac {
+    m_phaseCompMoleFraction[k][q],
+    m_dPhaseCompMoleFraction_dPressure[k][q],
+    m_dPhaseCompMoleFraction_dTemperature[k][q],
+    m_dPhaseCompMoleFraction_dGlobalCompMoleFraction[k][q]
+  };
+
   localIndex const numPhase = numFluidPhases();
   localIndex const numComp = numFluidComponents();
 
@@ -400,7 +433,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
   m_fluid->Update(pres, temp, feed);
   MultiphaseSystemProperties const * split = m_fluid->get_MultiphaseSystemProperties();
 
-  // 2. Extract phase split and properties from PVTPackage and compute volume fractions
+  // 2. Extract phase split, phase properties and derivatives from PVTPackage
 
   for (localIndex ip = 0; ip < numPhase; ++ip)
   {
@@ -408,71 +441,117 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
     PhaseProperties const * props = m_fluid->get_PhaseProperties(phase);
     std::vector<double> const & xcp = split->MoleComposition.at(phase);
 
-    phaseMoleFrac[ip] = split->MoleFraction.at(phase);
-    dPhaseMoleFrac_dPres[ip] = 0.0; // TODO
+    phaseMoleFrac.value[ip] = split->MoleFraction.at(phase);
+    phaseMoleFrac.dPres[ip] = 0.0; // TODO
+    phaseMoleFrac.dTemp[ip] = 0.0; // TODO
 
-    phaseDens[ip] = props->MassDensity;
-    dPhaseDens_dPres[ip] = 0.0; // TODO
+    phaseDens.value[ip] = props->MassDensity;
+    phaseDens.dPres[ip] = 0.0; // TODO
+    phaseDens.dTemp[ip] = 0.0; // TODO
 
     for (localIndex ic = 0; ic < numComp; ++ic)
     {
-      dPhaseMoleFrac_dFeed[ip][ic] = 0.0; // TODO
-      dPhaseDens_dFeed[ip][ic] = 0.0; // TODO
+      phaseMoleFrac.dComp[ip][ic] = 0.0; // TODO
+      phaseDens.dComp[ip][ic] = 0.0; // TODO
 
-      phaseCompMoleFrac[ip][ic] = xcp[ic];
-      dPhaseCompMoleFrac_dPres[ip][ic] = 0.0; // TODO
+      phaseCompMoleFrac.value[ip][ic] = xcp[ic];
+      phaseCompMoleFrac.dPres[ip][ic] = 0.0; // TODO
+      phaseCompMoleFrac.dTemp[ip][ic] = 0.0; // TODO
 
       for (localIndex jc = 0; jc < numComp; ++jc)
-        dPhaseCompMoleFrac_dFeed[ip][ic][jc] = 0.0; // TODO
+        phaseCompMoleFrac.dComp[ip][ic][jc] = 0.0; // TODO
     }
   }
 
-  // 3. Compute phase volume fractions (saturations) and derivatives, requires two passes for normalization
+  // 3. Compute phase volume fractions and derivatives, requires two passes for normalization
 
-  real64 volumeFractionSum = 0.0;
-  real64 dVolumeFractionSum_dPressure = 0.0;
-  real64 dVolumeFractionSum_dCompMoleFrac[32]{}; // TODO limit number of components?
+  real64 volFracSum = 0.0;
+  real64 dVolFracSum_dPres = 0.0;
+  real64 dVolFracSum_dTemp = 0.0;
+  real64 dVolFracSum_dComp[MAX_NUM_COMPONENTS]{}; // TODO limit number of components or invert loop structure?
 
   for (localIndex ip = 0; ip < numPhase; ++ip)
   {
     PHASE_TYPE phase = phaseNameDict.at(m_phases[ip]);
     PhaseProperties const * props = m_fluid->get_PhaseProperties(phase);
 
-    phaseVolFrac[ip] = phaseMoleFrac[ip] / props->MoleDensity;
+    phaseVolFrac.value[ip] = phaseMoleFrac.value[ip] / props->MoleDensity;
 
-    real64 const dPhaseMolarDensity_dPressure = 0.0; // TODO
+    real64 const dPhaseMolarDens_dPres = 0.0; // TODO
+    real64 const dPhaseMolarDens_dTemp = 0.0; // TODO
 
-    dPhaseVolFrac_dPres[ip] =
-      (dPhaseMoleFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseMolarDensity_dPressure) / props->MoleDensity;
+    phaseVolFrac.dPres[ip] =
+      (phaseMoleFrac.dPres[ip] - phaseVolFrac.value[ip] * dPhaseMolarDens_dPres) / props->MoleDensity;
 
-    volumeFractionSum += phaseVolFrac[ip];
-    dVolumeFractionSum_dPressure += dPhaseVolFrac_dPres[ip];
+    phaseVolFrac.dTemp[ip] =
+      (phaseMoleFrac.dTemp[ip] - phaseVolFrac.value[ip] * dPhaseMolarDens_dTemp) / props->MoleDensity;
+
+    volFracSum += phaseVolFrac.value[ip];
+    dVolFracSum_dPres += phaseVolFrac.dPres[ip];
+    dVolFracSum_dTemp += phaseVolFrac.dTemp[ip];
 
     for (localIndex ic = 0; ic < numComp; ++ic)
     {
       real64 const dPhaseMolarDens_dFeed = 0.0; // TODO
 
-      dPhaseVolFrac_dFeed[ip][ic] =
-        (dPhaseMoleFrac_dFeed[ip][ic] - phaseVolFrac[ip] * dPhaseMolarDens_dFeed) / props->MoleDensity;
+      phaseVolFrac.dComp[ip][ic] =
+        (phaseMoleFrac.dComp[ip][ic] - phaseVolFrac.value[ip] * dPhaseMolarDens_dFeed) / props->MoleDensity;
 
-      dVolumeFractionSum_dCompMoleFrac[ic] += dPhaseVolFrac_dFeed[ip][ic];
+      dVolFracSum_dComp[ic] += phaseVolFrac.dComp[ip][ic];
     }
   }
   // normalization pass
   for (localIndex ip = 0; ip < numPhase; ++ip)
   {
-    phaseVolFrac[ip] /= volumeFractionSum;
-    dPhaseVolFrac_dPres[ip] -= phaseVolFrac[ip] * dVolumeFractionSum_dPressure;
-    dPhaseVolFrac_dPres[ip] /= volumeFractionSum;
+    phaseVolFrac.value[ip] /= volFracSum;
+    phaseVolFrac.dPres[ip] = (phaseVolFrac.dPres[ip] - phaseVolFrac.value[ip] * dVolFracSum_dPres) / volFracSum;
+    phaseVolFrac.dTemp[ip] = (phaseVolFrac.dTemp[ip] - phaseVolFrac.value[ip] * dVolFracSum_dTemp) / volFracSum;
 
     for (localIndex ic = 0; ic < numComp; ++ic)
     {
-      dPhaseVolFrac_dFeed[ip][ic] -= phaseVolFrac[ip] * dVolumeFractionSum_dCompMoleFrac[ic];
-      dPhaseVolFrac_dFeed[ip][ic] /= volumeFractionSum;
+      phaseVolFrac.dComp[ip][ic] -= phaseVolFrac.value[ip] * dVolFracSum_dComp[ic];
+      phaseVolFrac.dComp[ip][ic] /= volFracSum;
     }
   }
 
   // 4. Compute component-in-phase densities and derivatives
+
+  for (localIndex ip = 0; ip < numPhase; ++ip)
+  {
+    PHASE_TYPE phase = phaseNameDict.at(m_phases[ip]);
+    PhaseProperties const * props = m_fluid->get_PhaseProperties(phase);
+
+    real64 const dPhaseMolarWeight_dPres = 0.0; // TODO
+    real64 const dPhaseMolarWeight_dTemp = 0.0; // TODO
+
+    for (localIndex ic = 0; ic < numComp; ++ic)
+    {
+      real64 const mw = m_componentMolarWeigth[ic];
+
+      real64 const phaseCompMassDens = phaseCompMoleFrac.value[ip][ic] * mw / props->MolecularWeight;
+      real64 const dPhaseCompMassDens_dPres =
+        (phaseCompMoleFrac.dPres[ip][ic] * mw - phaseCompMassDens * dPhaseMolarWeight_dPres) / props->MolecularWeight;
+      real64 const dPhaseCompMassDens_dTemp =
+        (phaseCompMoleFrac.dTemp[ip][ic] * mw - phaseCompMassDens * dPhaseMolarWeight_dTemp) / props->MolecularWeight;
+
+      phaseCompMoleFrac.value[ip][ic] = phaseCompMassDens * phaseDens.value[ip];
+      phaseCompMoleFrac.dPres[ip][ic] =
+        dPhaseCompMassDens_dPres * phaseDens.value[ip] + phaseCompMassDens * phaseDens.dPres[ip];
+      phaseCompMoleFrac.dTemp[ip][ic] =
+        dPhaseCompMassDens_dTemp * phaseDens.value[ip] + phaseCompMassDens * phaseDens.dTemp[ip];
+
+      for (localIndex jc = 0; jc < numComp; ++jc)
+      {
+        real64 const dPhaseMolarWeight_dComp = 0.0; // TODO
+
+        real64 const dPhaseCompMassDens_dComp =
+          (phaseCompMoleFrac.dComp[ip][ic][jc] * mw - phaseCompMassDens * dPhaseMolarWeight_dComp) / props->MolecularWeight;
+
+        phaseCompMoleFrac.dComp[ip][ic][jc] =
+          dPhaseCompMassDens_dComp * phaseDens.value[ip] + phaseCompMassDens * phaseDens.dComp[ip][jc];
+      }
+    }
+  }
 
 #endif
 }
