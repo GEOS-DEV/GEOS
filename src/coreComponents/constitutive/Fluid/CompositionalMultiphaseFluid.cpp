@@ -475,16 +475,17 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
     PHASE_TYPE phase = phaseNameDict.at(m_phases[ip]);
     PhaseProperties const * props = m_fluid->get_PhaseProperties(phase);
 
-    phaseVolFrac.value[ip] = phaseMoleFrac.value[ip] / props->MoleDensity;
-
+    real64 const phaseMolarDens = props->MoleDensity;
     real64 const dPhaseMolarDens_dPres = 0.0; // TODO
     real64 const dPhaseMolarDens_dTemp = 0.0; // TODO
 
+    phaseVolFrac.value[ip] = phaseMoleFrac.value[ip] / phaseMolarDens;
+
     phaseVolFrac.dPres[ip] =
-      (phaseMoleFrac.dPres[ip] - phaseVolFrac.value[ip] * dPhaseMolarDens_dPres) / props->MoleDensity;
+      (phaseMoleFrac.dPres[ip] - phaseVolFrac.value[ip] * dPhaseMolarDens_dPres) / phaseMolarDens;
 
     phaseVolFrac.dTemp[ip] =
-      (phaseMoleFrac.dTemp[ip] - phaseVolFrac.value[ip] * dPhaseMolarDens_dTemp) / props->MoleDensity;
+      (phaseMoleFrac.dTemp[ip] - phaseVolFrac.value[ip] * dPhaseMolarDens_dTemp) / phaseMolarDens;
 
     volFracSum += phaseVolFrac.value[ip];
     dVolFracSum_dPres += phaseVolFrac.dPres[ip];
@@ -495,7 +496,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
       real64 const dPhaseMolarDens_dFeed = 0.0; // TODO
 
       phaseVolFrac.dComp[ip][ic] =
-        (phaseMoleFrac.dComp[ip][ic] - phaseVolFrac.value[ip] * dPhaseMolarDens_dFeed) / props->MoleDensity;
+        (phaseMoleFrac.dComp[ip][ic] - phaseVolFrac.value[ip] * dPhaseMolarDens_dFeed) / phaseMolarDens;
 
       dVolFracSum_dComp[ic] += phaseVolFrac.dComp[ip][ic];
     }
@@ -521,6 +522,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
     PHASE_TYPE phase = phaseNameDict.at(m_phases[ip]);
     PhaseProperties const * props = m_fluid->get_PhaseProperties(phase);
 
+    real64 const phaseMolarWeight = props->MolecularWeight;
     real64 const dPhaseMolarWeight_dPres = 0.0; // TODO
     real64 const dPhaseMolarWeight_dTemp = 0.0; // TODO
 
@@ -528,11 +530,11 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
     {
       real64 const mw = m_componentMolarWeight[ic];
 
-      real64 const phaseCompMassDens = phaseCompMoleFrac.value[ip][ic] * mw / props->MolecularWeight;
+      real64 const phaseCompMassDens = phaseCompMoleFrac.value[ip][ic] * mw / phaseMolarWeight;
       real64 const dPhaseCompMassDens_dPres =
-        (phaseCompMoleFrac.dPres[ip][ic] * mw - phaseCompMassDens * dPhaseMolarWeight_dPres) / props->MolecularWeight;
+        (phaseCompMoleFrac.dPres[ip][ic] * mw - phaseCompMassDens * dPhaseMolarWeight_dPres) / phaseMolarWeight;
       real64 const dPhaseCompMassDens_dTemp =
-        (phaseCompMoleFrac.dTemp[ip][ic] * mw - phaseCompMassDens * dPhaseMolarWeight_dTemp) / props->MolecularWeight;
+        (phaseCompMoleFrac.dTemp[ip][ic] * mw - phaseCompMassDens * dPhaseMolarWeight_dTemp) / phaseMolarWeight;
 
       phaseCompMoleFrac.value[ip][ic] = phaseCompMassDens * phaseDens.value[ip];
       phaseCompMoleFrac.dPres[ip][ic] =
@@ -545,7 +547,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid(real64 const 
         real64 const dPhaseMolarWeight_dComp = 0.0; // TODO
 
         real64 const dPhaseCompMassDens_dComp =
-          (phaseCompMoleFrac.dComp[ip][ic][jc] * mw - phaseCompMassDens * dPhaseMolarWeight_dComp) / props->MolecularWeight;
+          (phaseCompMoleFrac.dComp[ip][ic][jc] * mw - phaseCompMassDens * dPhaseMolarWeight_dComp) / phaseMolarWeight;
 
         phaseCompMoleFrac.dComp[ip][ic][jc] =
           dPhaseCompMassDens_dComp * phaseDens.value[ip] + phaseCompMassDens * phaseDens.dComp[ip][jc];
