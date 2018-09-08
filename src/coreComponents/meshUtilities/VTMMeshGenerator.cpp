@@ -160,9 +160,9 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                 /// Cell blocks registrations
                 if( mesh.NumHex() > 0) {
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("HEX");
+                    cellBlock -> SetElementType("C3D8");
                     auto & cellToVertex = cellBlock->nodeList();
                     cellBlock->resize( mesh.NumCells() );
-                    cellBlock->numNodesPerElement() = mesh.NumVerticesInCell(0);
                     cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
@@ -184,9 +184,9 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                 }
                 if( mesh.NumTetra() > 0) {
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("TETRA");
+                    cellBlock -> SetElementType("C3D4");
                     auto & cellToVertex = cellBlock->nodeList();
                     cellBlock->resize( mesh.NumCells() );
-                    cellBlock->numNodesPerElement() = mesh.NumVerticesInCell(0);
                     cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
