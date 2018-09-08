@@ -86,21 +86,22 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    using ViewKey = dataRepository::ViewKey;
 
     // input data
-    constexpr static auto referencePorosityString = "referencePorosity";
-    constexpr static auto permeabilityString      = "permeability";
+    ViewKey referencePorosity = { "referencePorosity" };
+    ViewKey permeability      = { "permeability" };
 
     // gravity term precomputed values
-    constexpr static auto gravityFlagString  = "gravityFlag";
-    constexpr static auto gravityDepthString = "gravityDepth";
+    ViewKey gravityFlag  = { "gravityFlag" };
+    ViewKey gravityDepth = { "gravityDepth" };
 
     // misc inputs
-    constexpr static auto discretizationString = "discretization";
-    constexpr static auto fluidNameString      = "fluidName";
-    constexpr static auto solidNameString      = "solidName";
-    constexpr static auto fluidIndexString     = "fluidIndex";
-    constexpr static auto solidIndexString     = "solidIndex";
+    ViewKey discretization = { "discretization" };
+    ViewKey fluidName      = { "fluidName" };
+    ViewKey solidName      = { "solidName" };
+    ViewKey fluidIndex     = { "fluidIndex" };
+    ViewKey solidIndex     = { "solidIndex" };
 
   } viewKeys;
 

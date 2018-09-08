@@ -140,18 +140,20 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
+    using ViewKey = dataRepository::ViewKey;
+
     // dof numbering
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
+    ViewKey blockLocalDofNumber = { "blockLocalDofNumber_SinglePhaseFlow" };
 
     // primary solution field
-    constexpr static auto pressureString = "pressure";
-    constexpr static auto deltaPressureString = "deltaPressure";
-    constexpr static auto facePressureString = "facePressure";
+    ViewKey pressure      = { "pressure" };
+    ViewKey deltaPressure = { "deltaPressure" };
+    ViewKey facePressure  = { "facePressure" };
 
     // these are used to store last converged time step values
-    constexpr static auto densityString = "density";
-    constexpr static auto viscosityString = "viscosity";
-    constexpr static auto porosityString = "porosity";
+    ViewKey density   = { "density" };
+    ViewKey viscosity = { "viscosity" };
+    ViewKey porosity  = { "porosity" };
 
   } viewKeys;
 
