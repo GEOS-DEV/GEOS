@@ -85,6 +85,8 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
   virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override;
 
   virtual real64 SolverStep( real64 const& time_n,
@@ -163,6 +165,8 @@ public:
 
 
 private:
+
+  void resizeFields( DomainPartition * domain );
 
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );

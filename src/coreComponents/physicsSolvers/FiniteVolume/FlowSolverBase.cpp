@@ -183,7 +183,18 @@ void FlowSolverBase::FillOtherDocumentationNodes(dataRepository::ManagedGroup * 
   }
 }
 
-void FlowSolverBase::FinalInitialization(dataRepository::ManagedGroup * const rootGroup)
+void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
+{
+  SolverBase::InitializePreSubGroups(rootGroup);
+
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  ConstitutiveManager * const cm = domain->getConstitutiveManager();
+
+  m_fluidIndex = cm->GetConstitituveRelation( this->m_fluidName )->getIndexInParent();
+  m_solidIndex = cm->GetConstitituveRelation( this->m_solidName )->getIndexInParent();
+}
+
+void FlowSolverBase::FinalInitialization(ManagedGroup * const rootGroup)
 {
   SolverBase::FinalInitialization(rootGroup);
 
@@ -191,10 +202,6 @@ void FlowSolverBase::FinalInitialization(dataRepository::ManagedGroup * const ro
 
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
-
-  ConstitutiveManager * const cm = domain->getConstitutiveManager();
-  m_fluidIndex = cm->GetConstitituveRelation( this->m_fluidName )->getIndexInParent();
-  m_solidIndex = cm->GetConstitituveRelation( this->m_solidName )->getIndexInParent();
 }
 
 void FlowSolverBase::PrecomputeData(DomainPartition * const domain)

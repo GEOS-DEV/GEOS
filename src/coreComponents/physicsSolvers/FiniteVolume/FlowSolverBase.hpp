@@ -80,7 +80,9 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
+  virtual void FinalInitialization(ManagedGroup * const rootGroup) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

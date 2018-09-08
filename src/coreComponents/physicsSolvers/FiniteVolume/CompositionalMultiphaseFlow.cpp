@@ -277,9 +277,9 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
   }
 }
 
-void CompositionalMultiphaseFlow::FinalInitialization(ManagedGroup * const rootGroup)
+void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
-  FlowSolverBase::FinalInitialization( rootGroup );
+  FlowSolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
@@ -293,6 +293,56 @@ void CompositionalMultiphaseFlow::FinalInitialization(ManagedGroup * const rootG
 
   // compute number of DOF per cell
   m_numDofPerCell = m_numComponents + 1;
+
+  resizeFields( domain );
+}
+
+void CompositionalMultiphaseFlow::resizeFields( DomainPartition * domain )
+{
+  for (auto & mesh : domain->getMeshBodies()->GetSubGroups())
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
+    {
+      cellBlock->getReference<array2d<real64>>(viewKeys.globalComponentDensity).resizeDimension<1>(m_numComponents);
+      cellBlock->getReference<array2d<real64>>(viewKeys.deltaGlobalComponentDensity).resizeDimension<1>(m_numComponents);
+      cellBlock->getReference<array2d<real64>>(viewKeys.phaseVolumeFraction).resizeDimension<1>(m_numPhases);
+      cellBlock->getReference<array2d<real64>>(viewKeys.phaseDensity).resizeDimension<1>(m_numPhases);
+
+      array3d<real64> & phaseCompDens = cellBlock->getReference<array3d<real64>>(viewKeys.phaseComponentDensity);
+      phaseCompDens.resize(phaseCompDens.size(0), m_numPhases, m_numComponents);
+
+      cellBlock->getReference<array2d<real64>>(viewKeys.blockLocalDofNumber).resizeDimension<1>(m_numDofPerCell);
+    });
+
+    {
+      FaceManager * const faceManager = meshLevel->getFaceManager();
+
+      faceManager->getReference<array2d<real64>>(viewKeys.phaseDensity).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array2d<real64>>(viewKeys.phaseViscosity).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array2d<real64>>(viewKeys.phaseRelativePermeability).resizeDimension<1>(m_numPhases);
+
+      array3d<real64> & phaseCompDens = faceManager->getReference<array3d<real64>>(viewKeys.phaseComponentDensity);
+      phaseCompDens.resize(phaseCompDens.size(0), m_numPhases, m_numComponents);
+    }
+  }
+}
+
+void CompositionalMultiphaseFlow::FinalInitialization(ManagedGroup * const rootGroup)
+{
+  FlowSolverBase::FinalInitialization( rootGroup );
+
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+
+  //TODO this is a hack until the sets are fixed to include ghosts!!
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeys.pressure.Key());
+  fieldNames["elems"].push_back(viewKeys.globalComponentDensity.Key());
+  CommunicationTools::SynchronizeFields(fieldNames,
+                                        domain->getMeshBody(0)->getMeshLevel(0),
+                                        domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 }
 
 real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
