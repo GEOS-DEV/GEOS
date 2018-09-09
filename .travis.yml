@@ -26,6 +26,22 @@ matrix:
     env:
     - IMG=clang6
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: gcc7-ubuntu18
+    env:
+    - IMG=gcc7-ubuntu18
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: gcc8-ubuntu18
+    env:
+    - IMG=gcc8-ubuntu18
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: clang5-ubuntu18
+    env:
+    - IMG=clang5-ubuntu18
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: clang6-ubuntu18
+    env:
+    - IMG=clang6-ubuntu18
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
 script: 
 - docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
 - docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh
