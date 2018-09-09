@@ -1,4 +1,4 @@
-FROM ubuntu:18.10
+FROM ubuntu:18.04
 
 LABEL maintainer="Randolph Settgast <settgast1@llnl.gov>"
 

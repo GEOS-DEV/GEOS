@@ -2,11 +2,10 @@ FROM geosx/compiler:ubuntu18
 
 LABEL maintainer="Randolph Settgast <settgast1@llnl.gov>"
 
-ENV gccver=8
-ENV CC=gcc
-ENV CXX=g++
-ENV OMPI_CC=gcc
-ENV OMPI_CXX=g++
+ENV CC=clang-6.0
+ENV CXX=clang++-6.0
+ENV OMPI_CC=clang-6.0
+ENV OMPI_CXX=clang++-6.0
 ENV MPICC=mpicc
 ENV MPICXX=mpicxx
 
