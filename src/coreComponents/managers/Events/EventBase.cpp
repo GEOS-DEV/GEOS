@@ -261,7 +261,8 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 
 void EventBase::Execute(real64 const& time_n,
                         real64 const& dt,
-                        const int cycleNumber,
+                        const integer cycleNumber,
+                        real64 const & eventPosition,
                         ManagedGroup * domain)
 {
   real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
@@ -305,14 +306,14 @@ void EventBase::Step(real64 const time,
 
   if (m_target != nullptr)
   {
-    m_target->Execute(time, dt, cycle, domain);
+    m_target->Execute(time, dt, cycle, m_eventPosition, domain);
   }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     if (subEvent->GetForecast() <= 0)
     {
-      subEvent->Execute(time, dt, cycle, domain);
+      subEvent->Execute(time, dt, cycle, m_eventPosition, domain);
     }
   });
 }
@@ -359,16 +360,17 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
 void EventBase::Cleanup(real64 const& time_n,
                         const int cycleNumber,
+                        real64 const & eventPosition,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)
   {
-    m_target->Cleanup(time_n, cycleNumber, domain);
+    m_target->Cleanup(time_n, cycleNumber, m_eventPosition, domain);
   }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time_n, cycleNumber, domain);
+    subEvent->Cleanup(time_n, cycleNumber, m_eventPosition, domain);
   });
 }
 
@@ -382,6 +384,39 @@ integer EventBase::GetExitFlag()
   });
 
   return m_exitFlag;
+}
+
+
+
+integer EventBase::GetExecutionOrder(integer lastCount)
+{
+  m_eventCount = lastCount;
+  ++lastCount;
+
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    lastCount = subEvent->GetExecutionOrder(lastCount);
+  });  
+
+  return lastCount;
+}
+
+
+void EventBase::SetExecutionPosition(integer maxCount)
+{ 
+  if (maxCount <= 1)
+  {
+    m_eventPosition = 0.0;
+  }
+  else
+  {
+    m_eventPosition = 100.0 * m_eventCount / (maxCount - 1);
+  }
+  
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->SetExecutionPosition(maxCount);
+  });
 }
 
 

@@ -146,7 +146,7 @@ void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
 
 real64 SolverBase::SolverStep( real64 const& time_n,
                            real64 const& dt,
-                           const int cycleNumber,
+                           const integer cycleNumber,
                            DomainPartition * domain )
 {
   return 0;
@@ -155,7 +155,8 @@ real64 SolverBase::SolverStep( real64 const& time_n,
 
 void SolverBase::Execute( real64 const& time_n,
                           real64 const& dt,
-                          const int cycleNumber,
+                          const integer cycleNumber,
+                          real64 const & eventPosition,
                           ManagedGroup * domain )
 {
   if ( dt > 0 )

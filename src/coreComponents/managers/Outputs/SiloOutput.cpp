@@ -82,7 +82,8 @@ void SiloOutput::FillDocumentationNode()
 
 void SiloOutput::Execute(real64 const& time_n,
                          real64 const& dt,
-                         const int cycleNumber,
+                         const integer cycleNumber,
+                         real64 const & eventPosition,
                          ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
@@ -95,7 +96,7 @@ void SiloOutput::Execute(real64 const& time_n,
   integer numFiles = this->getReference<integer>( siloOutputViewKeys.parallelThreads);
 
   silo.Initialize(PMPIO_WRITE , numFiles );
-  silo.WaitForBatonWrite(rank, cycleNumber, false );
+  silo.WaitForBatonWrite(rank, cycleNumber, eventPosition, false );
   silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n, 0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
