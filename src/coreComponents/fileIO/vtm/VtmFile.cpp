@@ -676,7 +676,7 @@ void DumbMesh::SetVertex(globalIndex const vertexIndex,
 
 void DumbMesh::SetNumVertices(globalIndex const numVertices) {
     m_numVertices = numVertices;
-    m_vertices.resize( numVertices*3);
+    m_vertices.resize( static_cast<size_t>(numVertices*3));
 }
 
 void DumbMesh::SetNumCellAndPolygons(globalIndex numTetra,
@@ -812,7 +812,8 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
           subRegion->resize( mesh.NumCells() );
           auto & cellToVertex = subRegion->nodeList();
-          cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+          cellToVertex.resize(static_cast<int>(mesh.NumCells()),
+                  static_cast<int>(mesh.NumVerticesInCell(0)) );
 
           for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
           {
