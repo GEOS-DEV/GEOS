@@ -6,7 +6,8 @@ set( linearAlgebraInterface_headers
      EpetraSparseMatrix.hpp
      EpetraVector.hpp
      TrilinosSolver.hpp
-     TrilinosInterface.hpp )
+     TrilinosInterface.hpp
+     HypreInterface.hpp )
 
 #
 # Specify all sources

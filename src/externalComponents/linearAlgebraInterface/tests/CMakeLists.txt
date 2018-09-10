@@ -3,7 +3,7 @@
 #
 
 set( linearAlgebraInterface_tests
-     testEpetraLAOperations.cpp )
+     testLAOperations.cpp )
 
 #
 # Add gtest C++ based tests
