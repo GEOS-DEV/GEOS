@@ -23,7 +23,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "sidre/sidre.hpp"
 #include "sidre/DataStore.hpp"
 #include "sidre/SidreTypes.hpp"
@@ -58,7 +58,7 @@ const std::unordered_map< localIndex, const std::string > Blueprint::numNodesToE
 Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager,
                       const std::string& output_path, MPI_Comm comm, const std::string& coord_name,
                       const std::string& topo_name):
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   m_node_manager( node_manager ),
   m_elem_reg_manager( elem_reg_manager ),
 //  m_comm( comm ),
@@ -72,7 +72,7 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
 
 void Blueprint::write(int cycle) const
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   const string mesh_name = "bp_mesh";
 
   DataStore ds;
@@ -124,13 +124,13 @@ void Blueprint::write(int cycle) const
 
   conduit::relay::io::save( root_node, root_output_path, "hdf5" );
   conduit::relay::io::save( mesh_node, output_path );
-#endif /* USE_ATK */
+#endif /* GEOSX_USE_ATK */
 }
 
 
 void Blueprint::addNodes( Group* coords, Group* fields ) const
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   coords->createView( "type" )->setString( "explicit" );
 
   const r1_array& position = m_node_manager.referencePosition();
@@ -165,13 +165,13 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
       view->registerDataPtr( data_view );
     }
   }
-#endif /* USE_ATK */
+#endif /* GEOSX_USE_ATK */
 }
 
 
 void Blueprint::addCells( Group* topo, Group* fields ) const
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   if ( m_elem_reg_manager.numCellBlocks() != 1 )
   {
     GEOS_ERROR( "Blueprint IO currently only works in problems with one cell block." );
@@ -214,7 +214,7 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
   //     view->registerDataPtr( data_view );
   //   }
   // }
-#endif /* USE_ATK */
+#endif /* GEOSX_USE_ATK */
 }
 
 
