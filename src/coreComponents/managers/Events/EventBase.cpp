@@ -190,15 +190,8 @@ void EventBase::GetTargetReferences()
   if (!eventTarget.empty())
   {
     ManagedGroup * tmp = this->GetGroupByPath(eventTarget);
-    // std::cout << "Type of target = " << cxx_utilities::demangle(tmp->get_typeid().name()) << std::endl;
-    if (dynamic_cast<ExecutableGroup *>(tmp) != nullptr)
-    {
-      m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
-    }
-    else
-    {
-      GEOS_ERROR("The target of an event must be executable: " << eventTarget );
-    }    
+    m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
+    GEOS_ASSERT( m_target != nullptr, "The target of an event must be executable!");
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
