@@ -62,7 +62,7 @@ void RestartOutput::Execute(real64 const& time_n,
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
   
-  // #ifdef USE_ATK
+  // #ifdef GEOSX_USE_ATK
   //   char fileName[200] = {0};
   //   sprintf(fileName, "%s_%09d", "restart", cycle);
 
@@ -78,7 +78,7 @@ void RestartOutput::Execute(real64 const& time_n,
   //   bcManager->finishWriting();
   // #endif
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   string const problemName = this->getName();
   char fileName[200] = {0};
   sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);

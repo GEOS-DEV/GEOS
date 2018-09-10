@@ -44,7 +44,7 @@ public:
                                SystemSolverParameters const * const params,
                                BlockIDs const blockID );
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   Epetra_MpiComm m_epetraComm;
 #else
   Epetra_SerialComm m_epetraComm;
