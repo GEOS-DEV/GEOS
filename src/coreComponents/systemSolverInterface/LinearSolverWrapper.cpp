@@ -104,11 +104,6 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
   int dummy;
   double* local_solution = nullptr;
 
-  //  if(m_numerics.m_verbose)
-  //  {
-  //    EpetraExt::RowMatrixToMatlabFile("umatrix.dat",*m_matrix);
-  //    EpetraExt::MultiVectorToMatlabFile("urhs.dat",*m_rhs);
-  //  }
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( blockID,
                                                               blockID );
@@ -118,11 +113,8 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
 
   solution->ExtractView(&local_solution,&dummy);
 
-//    SetInitialGuess( domain, local_solution  );
-
   if(params->scalingOption())
   {
-    //      printf("Scaling matrix/rhs in place\n");
     Epetra_Vector scaling(matrix->RowMap());
     matrix->InvRowSums(scaling);
     matrix->LeftScale(scaling);
@@ -130,18 +122,13 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
     Epetra_MultiVector tmp (*rhs);
     rhs->Multiply(1.0,scaling,tmp,0.0);
   }
-//  matrix->Print(std::cout);
-//  rhs->Print(std::cout);
 
   Epetra_LinearProblem problem( matrix,
                                 solution,
                                 rhs );
 
 
-  // @annavarapusr1: Needed to use direct solver without changing it for
-  // everyone else
-  if(params->useDirectSolver())   // If Chandra's test problems, use direct
-                                  // solver
+  if(params->useDirectSolver())
   {
     Amesos_BaseSolver* Solver;
     Amesos Factory;
@@ -182,43 +169,47 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
       //MLList.set("aggregation: type", "MIS");
       MLList.set("prec type", "MGW");
       MLList.set("smoother: type","ILU");
-      MLList.set("ML output",1);
       MLList.set("PDE equations",3);
-      MLList.set("ML output", 0);
+      MLList.set("ML output", params->verbose());
       MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList);
       solver.SetPrecOperator(MLPrec.get());
+
+
+
+
+//      Teuchos::ParameterList list;
+//                             ML_Epetra::SetDefaults("SA",list);
+//                             list.set("ML output",0);
+//                             list.set("max levels",parameters.uu.max_levels);
+//                             list.set("aggregation: type",parameters.uu.aggregation_type);
+//                             list.set("smoother: type",parameters.uu.smoother_type);
+//                             list.set("coarse: type",parameters.uu.coarse_type);
+//                             list.set("smoother: sweeps",parameters.uu.smoother_sweeps); // Chebyshev polynomial order
+//                             list.set("coarse: sweeps",parameters.uu.coarse_sweeps);
+//                             list.set("aggregation: threshold",parameters.uu.aggregation_threshold);
+//                             list.set("PDE equations",3);
+//                             list.set("prec type",parameters.uu.cycle_type);
+//                             list.set("coarse: max size",parameters.uu.max_coarse_size);
+//                             list.set("smoother: damping factor",parameters.uu.damping);
+//                             list.set("coarse: damping factor",parameters.uu.damping);
+//
+//                             list.set("null space: type","pre-computed");
+//                             list.set("null space: vectors",&rigid_body_modes[0]);
+//                             list.set("null space: dimension", n_rbm);
     }
     else   // use ILUT preconditioner with domain decomp
     {
       solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
       solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
-      solver.SetAztecOption(AZ_output,0);
       solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
       solver.SetAztecParam(AZ_drop,params->ilut_drop());
     }
 
-//    std::cout<<params->numKrylovIter()<<std::endl;
-//    std::cout<<params->krylovTol()<<std::endl;
-
+    solver.SetAztecOption(AZ_output,params->verbose());
     solver.Iterate(params->numKrylovIter(),
                    params->krylovTol() );
 
   }
-
-//    // copy vector solution into geos data structures
-//
-//    realT scalingFactor = CheckSolution( local_solution, domain, 0 );
-//    PropagateSolution( local_solution, scalingFactor, domain, 0 );
-//
-//    // re-sync ghost nodes
-//
-//    partition.SynchronizeFields(m_syncedFields,
-// CommRegistry::lagrangeSolver02);
-//
-//    // copy vector solution into geos data structures
-//
-//    PostSyncConsistency( domain, partition );
-
 }
 
 
