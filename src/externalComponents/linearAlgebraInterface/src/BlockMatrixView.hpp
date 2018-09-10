@@ -15,8 +15,8 @@ namespace geosx
 
 /**
  * \class BlockMatrixView
- * \brief This class creates and provides basic support for Trilinos-based block
- *        matrices objects.
+ * \brief This class creates and provides basic support for block
+ *        matrices objects (templated on the LA interface).
  */
 
 template< typename LAI >

@@ -267,10 +267,16 @@ void testLaplaceOperator()
 
 }
 
-TEST(testEpetraLAOperations,testLaplaceOperator)
+TEST(testLAOperations,testEpetraLAOperations)
 {
 
   testLaplaceOperator<TrilinosInterface>();
 
 }
 
+TEST(testLAOperations,testHypreLAOperations)
+{
+
+  //testLaplaceOperator<HypreInterface>();
+
+}
