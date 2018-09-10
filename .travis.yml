@@ -10,22 +10,22 @@ env:
   - DO_TEST=yes
 matrix:
   include:
-  - compiler: gcc7
-    env:
-    - IMG=gcc7
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+#  - compiler: gcc7
+#    env:
+#    - IMG=gcc7
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
   - compiler: clang4
     env:
     - IMG=clang4
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-  - compiler: clang5
-    env:
-    - IMG=clang5
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-  - compiler: clang6
-    env:
-    - IMG=clang6
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+#  - compiler: clang5
+#    env:
+#    - IMG=clang5
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+#  - compiler: clang6
+#    env:
+#    - IMG=clang6
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
   - compiler: gcc7-ubuntu18
     env:
     - IMG=gcc7-ubuntu18

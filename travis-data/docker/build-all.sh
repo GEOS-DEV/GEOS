@@ -14,7 +14,7 @@ function build-tag () {
 }
 
 build-tag geosx/compiler:ubuntu18 ubuntu18
-#docker push geosx/compiler:ubuntu18
+docker push geosx/compiler:ubuntu18
 
 echo ${dockerfiles}
 for df in ${dockerfiles} ; do
@@ -25,8 +25,8 @@ for df in ${dockerfiles} ; do
   [[ ${imgname} == 'ubuntu18' ]] && continue
   build-tag $imgpath $imgname
 
-#  echo pushing $imgpath
-#  docker push $imgpath
+  echo pushing $imgpath
+  docker push $imgpath
 done
 
 #for img in $all_images ; do
