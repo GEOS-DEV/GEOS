@@ -310,7 +310,6 @@ real64 WedgeVolume( R1Tensor const * const X ) {
     tet3[1] = X[3];
     tet3[2] = X[4];
     tet3[3] = X[5];
-    tet2[3] = X[4];
     return TetVolume(tet1) + TetVolume(tet2) + TetVolume(tet3);
 }
 
