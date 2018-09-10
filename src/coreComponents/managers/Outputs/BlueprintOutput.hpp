@@ -53,13 +53,15 @@ public:
   /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        real64 const & eventPosition,
                         dataRepository::ManagedGroup * domain ) override;
 
   /// Write one final output as the code exits
   virtual void Cleanup( real64 const & time_n,
                         int const cycleNumber,
-                        dataRepository::ManagedGroup * domain ) override { Execute(time_n, 0.0, cycleNumber, domain); }
+                        real64 const & eventPosition,
+                        dataRepository::ManagedGroup * domain ) override { Execute(time_n, 0, cycleNumber, eventPosition, domain); }
 
   
   struct viewKeyStruct

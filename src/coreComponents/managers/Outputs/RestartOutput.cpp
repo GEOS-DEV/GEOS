@@ -57,7 +57,8 @@ void RestartOutput::FillDocumentationNode()
 
 void RestartOutput::Execute(real64 const& time_n,
                             real64 const& dt,
-                            const int cycleNumber,
+                            const integer cycleNumber,
+                            real64 const & eventPosition,
                             ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
@@ -79,9 +80,11 @@ void RestartOutput::Execute(real64 const& time_n,
   // #endif
 
 #ifdef GEOSX_USE_ATK
+  integer eventPositionPercent = static_cast<integer>(eventPosition);
+
   string const problemName = this->getName();
   char fileName[200] = {0};
-  sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);
+  sprintf(fileName, "%s_%s__%03d_%09d", problemName.data(), "restart", eventPositionPercent, cycleNumber);
 
   domainPartition->getParent()->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();

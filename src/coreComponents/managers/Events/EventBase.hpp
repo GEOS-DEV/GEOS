@@ -70,7 +70,8 @@ public:
    */
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        int const cycleNumber,
+                        const integer cycleNumber,
+                        real64 const & eventPosition,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -87,6 +88,7 @@ public:
    */
   virtual void Cleanup( real64 const & time_n,
                         int const cycleNumber,
+                        real64 const & eventPosition,
                         dataRepository::ManagedGroup * domain ) override;
 
 
@@ -135,6 +137,15 @@ public:
    */
   virtual real64 GetTimestepRequest(real64 const time) override;
 
+
+  /// This method is used to count the number of events/sub-events
+  integer GetExecutionOrder(integer lastCount);
+
+
+  /// This method sets the expected sub-event order
+  void SetExecutionPosition(integer maxCount);
+
+
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
 
@@ -166,6 +177,8 @@ public:
 private:
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
+  integer m_eventCount = 0;
+  real64 m_eventPosition = 0;
 };
 
 } /* namespace geosx */

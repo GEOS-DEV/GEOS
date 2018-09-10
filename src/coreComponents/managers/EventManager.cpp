@@ -176,10 +176,18 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   real64 send_buffer[2];
   array1d<real64> receive_buffer(2 * comm_size);
 
-  // Setup event targets
-  this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
+  // Setup event targets, sequence indicators
+  integer eventCount = 0;
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     subEvent->GetTargetReferences();
+    eventCount = subEvent->GetExecutionOrder(eventCount);
+  });
+
+  // Set the maximum number of sub-events
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->SetExecutionPosition(eventCount);
   });
 
   // Run problem
@@ -207,7 +215,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
       if (eventForecast <= 0)
       {
-        subEvent->Execute(time, dt, cycle, domain);
+        subEvent->Execute(time, dt, cycle, 0, domain);
       }
 
       // Estimate the time-step for the next cycle
@@ -264,7 +272,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time, cycle, domain);     
+    subEvent->Cleanup(time, cycle, 0, domain);     
   });
 
 }
