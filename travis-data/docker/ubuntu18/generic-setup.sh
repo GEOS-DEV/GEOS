@@ -7,6 +7,7 @@ apt-get -qq update
 apt-get install -y tzdata
 
 apt-get -qq install -y --no-install-recommends python-dev build-essential sudo git dh-autoreconf ninja-build ca-certificates libtbb-dev zlib1g-dev libblas-dev liblapack-dev python-sphinx uncrustify
+apt-get -qq install -y --no-install-recommends openssh-server
 apt-get -qq install -y --no-install-recommends wget
 #wget "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60C317803A41BA51845E371A1E9377A2BA9EF27F" -O out && apt-key add out && rm out
 #echo deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu xenial main >> /etc/apt/sources.list
