@@ -190,7 +190,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.yPartitionsOverride.Key(),
                                      viewKeys.yPartitionsOverride.Key(),
@@ -203,7 +204,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.zPartitionsOverride.Key(),
                                      viewKeys.zPartitionsOverride.Key(),
@@ -216,7 +218,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.overridePartitionNumbers.Key(),
                                      viewKeys.overridePartitionNumbers.Key(),
@@ -229,7 +232,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( keys::schema,
                                      keys::schema,
