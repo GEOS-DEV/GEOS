@@ -113,9 +113,10 @@ RankBlock const & VtmFile::GetRankBlock(localIndex const rankBlockIndex) const {
 localIndex VtmFile::NumRankBlocks() const{
     return static_cast< localIndex >(m_rankBlocks.size());
 }
-void VtmFile::Load( string const &filename, bool loadMesh, bool loadProperties) {
+void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) {
     int mpiSize = 0;
     int mpiRank = 0;
+    m_fileName = fileName;
 #if USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -125,10 +126,10 @@ void VtmFile::Load( string const &filename, bool loadMesh, bool loadProperties) 
     int remainderFiles = 0;
     // XML file parsing using pugixml tool
     pugi::xml_document vtmDoc;
-    vtmDoc.load_file(filename.c_str());
+    vtmDoc.load_file(fileName.c_str());
 
     if( mpiRank == 0) {
-        CheckXmlFileConsistency(vtmDoc,filename);
+        CheckXmlFileConsistency(vtmDoc,fileName);
     }
     std::vector< RankBlock > rankBlocks;
     SetRanksAndBlocks(vtmDoc,rankBlocks);
@@ -264,6 +265,7 @@ void VtmFile::SetRanksAndBlocks(
                 std::vector< RankBlock >& rankBlocks) {
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     auto const & vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
+    string dirPath = m_fileName.substr(0, m_fileName.rfind("/"));
     
     for(auto const & rank : vtkMultiBlockDataSetNode.children()) {
         if( rank.name() == static_cast< string > ("Block") )
@@ -271,8 +273,10 @@ void VtmFile::SetRanksAndBlocks(
             RankBlock curRankBlock;
             for( auto const & block : rank.children() ) {
                 if( block.name() == static_cast< string > ("DataSet")) {
+                    string filename =  dirPath+"/"+block.attribute("file").as_string();
+                    std::cout << filename << std::endl;
                     MeshBlock curMeshBlock(
-                            block.attribute("file").as_string(),
+                            dirPath+"/"+block.attribute("file").as_string(),
                             block.attribute("name").as_string());
                     curRankBlock.AddMeshBlock(curMeshBlock);
                 }
@@ -340,7 +344,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
         }
     }
     if (!cellsHasGlobalIndexProperty) {
-        GEOS_ERROR("Can't find any DataArray which contains the property originalIndex in  CellData in "+filename);
+        //GEOS_ERROR("Can't find any DataArray which contains the property originalIndex in  CellData in "+filename);
     }
 
     auto const & pointDataArray = pieceNode.child("Points").find_child_by_attribute("DataArray","Name","Points");
@@ -462,6 +466,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     mesh.SetNumCellAndPolygons(numTetra,numHex,numPrism,numPyr,numTri,numQuad);
 
     /// Parse elements globalIndex
+    /*
     pugi::xml_node elements_original_indexes_array =
         pieceNode.child("CellData").find_child_by_attribute("DataArray","Name",
                 "globalIndex");
@@ -472,6 +477,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
             allElementsOriginalIndexes,
             [](string str)-> localIndex {return std::stoi(str);});
     assert(static_cast< globalIndex> (allElementsOriginalIndexes.size()) == numElements);
+    */
 
     /// Parse elements offsets
     std::vector< globalIndex> elementsOffsets(numElements);
@@ -506,14 +512,18 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
                 allElementsTypes[elementIndex] ==12 ||
                 allElementsTypes[elementIndex] == 13 ) {
             mesh.AddCell(connectivity);
+            /*
             mesh.SetCellOriginalIndex(elementIndex,
                     allElementsOriginalIndexes[elementIndex]);
+                    */
         }
         else if( allElementsTypes[elementIndex] == 5 ||
                 allElementsTypes[elementIndex] == 9) {
             mesh.AddPolygon(connectivity);
+            /*
             mesh.SetPolygonOriginalIndex(elementIndex,
                    allElementsOriginalIndexes[elementIndex]);
+                   */
         }
         else {
             GEOS_ERROR("Element not recognised");
@@ -750,8 +760,6 @@ void DumbMesh::Finish() {
     assert(static_cast<globalIndex>(m_cellsPtr.size()) == m_numCells +1);
     assert(static_cast<globalIndex>(m_polygonsPtr.size()) == m_numPolygons +1);
     assert(static_cast<globalIndex>(m_tetIndexToCellIndex.size()) == m_numTetra);
-    std::cout << "m_numHex " << m_numHex << std::endl;
-    std::cout << "m_hexIndexToCellIndex.size()) " << m_hexIndexToCellIndex.size() <<std::endl;
     assert(static_cast<globalIndex>(m_hexIndexToCellIndex.size()) == m_numHex);
     assert(static_cast<globalIndex>(m_prismIndexToCellIndex.size()) == m_numPrism);
     assert(static_cast<globalIndex>(m_pyrIndexToCellIndex.size()) == m_numPyr);

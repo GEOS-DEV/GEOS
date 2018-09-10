@@ -479,6 +479,7 @@ class VtmFile {
                 std::vector< RankBlock >& rankBlocks);
     private:
         std::vector< RankBlock > m_rankBlocks;
+        string m_fileName {""};
 };
 
 }

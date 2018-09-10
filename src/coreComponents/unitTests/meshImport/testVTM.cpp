@@ -49,7 +49,6 @@ int main(int argc, char** argv)
   for( int i=0 ; i<argc ; ++i )
   {
     global_argv[i] = argv[i];
-    std::cout<<argv[i]<<std::endl;
   }
 
   return RUN_ALL_TESTS();
@@ -62,7 +61,9 @@ TEST(testVTM,testVTM)
     MPI_Init(0, nullptr);
 #endif
     VtmFile vtmFile;
-    vtmFile.Load("out.vtm", true, true);
+    string file_path = __FILE__;
+    string dir_path = file_path.substr(0, file_path.rfind("/"));
+    vtmFile.Load(dir_path + "/sampleMesh.vtm", true, true);
 #if USE_MPI
     MPI_Finalize();
 #endif
