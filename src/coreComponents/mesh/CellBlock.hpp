@@ -156,8 +156,16 @@ public:
   FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
+  string GetElementType() const
+  { return m_elementType; }
 
-//protected:
+  void SetElementType( string const & elementType);
+
+
+
+
+protected:
+string m_elementType ;
 
 private:
   localIndex m_numNodesPerElement;
@@ -172,7 +180,6 @@ private:
 
 
   CellBlock& operator=(const CellBlock& rhs);
-//  string & m_elementType;
 
 };
 

@@ -153,12 +153,13 @@ void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
 void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
 {
   ObjectManagerBase::InitializePostSubGroups(nullptr);
-  this->numNodesPerElement() = 8;
-  this->numFacesPerElement() = 6;
 }
 
 void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
+  this->SetElementType(source->GetElementType());
+  this->numNodesPerElement() = source->numNodesPerElement();
+  this->numFacesPerElement() = source->numFacesPerElement();
   this->resize(source->size());
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
