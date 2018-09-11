@@ -347,8 +347,10 @@ public:
     localIndex packedSize = 0;
 
     static_if( bufferOps::is_packable_by_index<T>::value )
+    {
       packedSize += bufferOps::Pack<true>( buffer, this->getName() );
       packedSize += bufferOps::Pack<true>( buffer, *m_data, packList);
+    }
     end_static_if
     return packedSize;
   }
@@ -371,8 +373,10 @@ public:
     localIndex packedSize = 0;
 
     static_if( bufferOps::is_packable_by_index<T>::value )
+    {
       packedSize += bufferOps::Pack<false>( buffer, this->getName() );
       packedSize += bufferOps::Pack<false>( buffer, *m_data, packList);
+    }
     end_static_if
 
     return packedSize;
@@ -391,10 +395,12 @@ public:
   {
     localIndex unpackedSize = 0;
     static_if( bufferOps::is_packable_by_index<T>::value )
+    {
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
       GEOS_ERROR_IF( name != this->getName(),"buffer unpack leads to viewWrapper names that don't match" );
       unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
+    }
     end_static_if
 
     return unpackedSize;

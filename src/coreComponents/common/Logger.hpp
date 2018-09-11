@@ -33,11 +33,13 @@
 #include "slic/slic.hpp"
 #endif
 
-
-namespace geosx
-{
-
-void geos_abort( std::string message );
+#define GEOS_LOG_RANK_0(msg)                                  \
+  do {                                                        \
+    if (geosx::logger::rank == 0)                             \
+    {                                                         \
+      std::cout << msg << std::endl;                          \
+    }                                                         \
+  } while (false)
 
 #ifdef GEOSX_USE_ATK
 
@@ -53,48 +55,45 @@ void geos_abort( std::string message );
 
 #else /* GEOSX_USE_ATK */
 
-#define GEOS_ERROR_IF(EXP, msg)
+#define GEOS_ERROR_IF(EXP, msg)                               \
   do {                                                        \
     if (EXP)                                                  \
     {                                                         \
-      std::cerr<< "***** GEOS_ERROR "<<std::endl;             \
-      std::cerr<< "***** FILE: " << __FILE__ << std::endl;    \
-      std::cerr<< "***** LINE: " << __LINE__ << std::endl;    \
-      std::ostringstream oss;                                 \
-      oss << msg;                                             \
-      geosx::geos_abort(oss.str());                           \
+      std::cout << "***** GEOS_ERROR "<<std::endl;            \
+      std::cout << "***** FILE: " << __FILE__ << std::endl;   \
+      std::cout << "***** LINE: " << __LINE__ << std::endl;   \
+      std::cout << msg << std::endl;                          \
+      geosx::logger::geos_abort();                            \
     }                                                         \
-  } while ( false )
+  } while (false)
 
-#define GEOS_WARNING_IF(EXP, msg)
+#define GEOS_WARNING_IF(EXP, msg)                             \
   do {                                                        \
     if (EXP)                                                  \
     {                                                         \
-      std::cerr<< "***** GEOS_WARNING "<<std::endl;           \
-      std::cerr<< "***** FILE: " << __FILE__ << std::endl;    \
-      std::cerr<< "***** LINE: " << __LINE__ << std::endl;    \
-      std::ostringstream oss;                                 \
-      oss << msg;                                             \
+      std::cout << "***** GEOS_WARNING "<<std::endl;          \
+      std::cout << "***** FILE: " << __FILE__ << std::endl;   \
+      std::cout << "***** LINE: " << __LINE__ << std::endl;   \
+      std::cout << msg << std::endl;                          \
     }                                                         \
-  } while ( false )
+  } while (false)
 
-#define GEOS_INFO_IF(EXP, msg)
+#define GEOS_INFO_IF(EXP, msg)                                \
   do {                                                        \
     if (EXP)                                                  \
     {                                                         \
-      std::cerr<< "***** GEOS_INFO "<<std::endl;              \
-      std::cerr<< "***** FILE: " << __FILE__ << std::endl;    \
-      std::cerr<< "***** LINE: " << __LINE__ << std::endl;    \
-      std::ostringstream oss;                                 \
-      oss << msg;                                             \
+      std::cout << "***** GEOS_INFO "<<std::endl;             \
+      std::cout << "***** FILE: " << __FILE__ << std::endl;   \
+      std::cout << "***** LINE: " << __LINE__ << std::endl;   \
+      std::cout << msg << std::endl;                          \
     }                                                         \
-  } while ( false )
+  } while (false)
 
 #ifdef GEOSX_DEBUG
 
-#define GEOS_ASSERT(EXP, msg) GEOS_ERROR_IF(EXP, msg)
+#define GEOS_ASSERT(EXP, msg) GEOS_ERROR_IF(!(EXP), msg)
 
-#define GEOS_CHECK(EXP, msg) GEOS_WARNING_IF(EXP, msg)
+#define GEOS_CHECK(EXP, msg) GEOS_WARNING_IF(!(EXP), msg)
 
 #else /* #ifdef GEOSX_DEBUG */
 
@@ -112,6 +111,18 @@ void geos_abort( std::string message );
 
 #define GEOS_INFO(msg) GEOS_INFO_IF(true, msg)
 
-}
+namespace geosx
+{
+
+namespace logger
+{
+
+extern int rank;
+
+void geos_abort();
+
+} /* namespace logger */
+
+} /* namespace geosx */
 
 #endif /* SRC_COMPONENTS_CORE_SRC_COMMON_LOGGER_HPP_ */
