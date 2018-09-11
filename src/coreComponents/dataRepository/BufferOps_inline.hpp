@@ -47,8 +47,10 @@ Pack( char*&  buffer,
 
   sizeOfPackedChars += length*sizeof(T);
   static_if( DO_PACKING )
+  {
     memcpy( buffer, var, length*sizeof(T) );
     buffer += length*sizeof(T);
+  }
   end_static_if
 
   return sizeOfPackedChars;
@@ -111,7 +113,7 @@ Unpack( char const *& buffer,
 
   GEOS_ERROR_IF( length != expectedLength,
                "CommBufferOps::Unpack(): expected length != length ("
-               <<expectedLength<<"!="<<length<<")"<<std::endl; );
+               <<expectedLength<<"!="<<length<<")" );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
@@ -180,8 +182,10 @@ Pack( char*&  buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
   static_if( DO_PACKING )
+  {
     memcpy( buffer, &var, sizeOfPackedChars );
     buffer += sizeOfPackedChars;
+  }
   end_static_if
   return sizeOfPackedChars;
 }
@@ -213,11 +217,13 @@ localIndex Pack( char*& buffer,  const std::string& var )
   Pack<DO_PACKING>( buffer, sizeOfPackedChars );
 
   static_if( DO_PACKING )
+  {
     for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
     {
       *buffer = var[i];
       buffer++;
     }
+  }
   end_static_if
 
   sizeOfPackedChars += sizeof( localIndex );
@@ -576,11 +582,13 @@ localIndex Pack( char*& buffer,
 
   sizeOfPackedChars += length*sizeof(globalIndex);
   static_if( DO_PACKING )
+  {
     for( localIndex a=0 ; a<length ; ++a )
     {
       memcpy( buffer, &(localToGlobalMap[var[a]]), sizeof(globalIndex) );
       buffer += sizeof(globalIndex);
     }
+  }
   end_static_if
 
   return sizeOfPackedChars;

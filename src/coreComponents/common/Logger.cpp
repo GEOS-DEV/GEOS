@@ -33,9 +33,13 @@
 namespace geosx
 {
 
-void geos_abort( std::string message )
+namespace logger
 {
-  std::cerr<<message<<std::endl;
+
+int rank = 0;
+
+void geos_abort()
+{
   cxx_utilities::handler1(EXIT_FAILURE);
 #ifdef GEOSX_USE_MPI
   int mpi = 0;
@@ -51,4 +55,6 @@ void geos_abort( std::string message )
   }
 }
 
-}
+} /* namespace logger */
+
+} /* namespace geosx */
