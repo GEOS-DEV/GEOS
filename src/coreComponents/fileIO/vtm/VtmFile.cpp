@@ -553,7 +553,8 @@ void VtuFile::LoadProperties(pugi::xml_document const & vtmDoc,
         std::string propertyType = property.attribute("type").as_string();
         if(propertyName != "globalIndex") {
             if(propertyType == "Float64" || propertyType == "Float32") {
-                properties.insert(std::pair< string,std::vector<double> >(propertyName,0));
+                std::vector<double> propertyToBeInserted;
+                properties.insert(std::pair< string,std::vector<double> >(propertyName,propertyToBeInserted));
                 auto& curProperty = properties.find(propertyName)->second;
                 std::vector< double > propertyValues; // convenient to have 0 as first offset
                 SplitNodeTextString( property.text().as_string(), propertyValues,
