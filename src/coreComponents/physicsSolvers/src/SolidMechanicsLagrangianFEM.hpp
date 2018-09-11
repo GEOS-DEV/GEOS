@@ -207,6 +207,7 @@ public:
 
 private:
 
+  real64 m_maxForce;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   SolidMechanics_LagrangianFEM();
