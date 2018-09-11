@@ -10,22 +10,44 @@ env:
   - DO_TEST=yes
 matrix:
   include:
-  - compiler: gcc7
-    env:
-    - IMG=gcc7
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+#  - compiler: gcc7
+#    env:
+#    - IMG=gcc7
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
   - compiler: clang4
     env:
     - IMG=clang4
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-  - compiler: clang5
+#  - compiler: clang5
+#    env:
+#    - IMG=clang5
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+#  - compiler: clang6
+#    env:
+#    - IMG=clang6
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: gcc7-ubuntu18
     env:
-    - IMG=clang5
+    - IMG=gcc7-ubuntu18
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-  - compiler: clang6
+  - compiler: gcc8-ubuntu18
     env:
-    - IMG=clang6
+    - IMG=gcc8-ubuntu18
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: clang5-ubuntu18
+    env:
+    - IMG=clang5-ubuntu18
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: clang6-ubuntu18
+    env:
+    - IMG=clang6-ubuntu18
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: clang5-centos
+    env:
+    - IMG=clang5-centos
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+    - PATHMOD="/opt/rh/llvm-toolset-7/root/usr/bin:/opt/rh/llvm-toolset-7/root/usr/sbin:/usr/lib64/openmpi/bin"
+
 script: 
 - docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
-- docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh
+- docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh
