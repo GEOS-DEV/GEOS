@@ -27,7 +27,7 @@
 namespace geosx {
 namespace dataRepository {
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 template<typename T> 
 ViewWrapper<array1d<T>> * createArrayView(ManagedGroup * parent, const string & name,
                                         int sfp, const array1d<T> & data)
@@ -510,7 +510,7 @@ TEST(testSidreExtended, testSidreExtended) {
   MPI_Finalize();
 }
 
-#endif /* USE_ATK */
+#endif /* GEOSX_USE_ATK */
 
 int main(int argc, char* argv[]) {
   int result = 0;

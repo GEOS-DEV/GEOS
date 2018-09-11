@@ -71,7 +71,6 @@
                               Density="2700"
                               BulkModulus0="5.5556e9"
                              ShearModulus0="4.16667e9"/>
-      </LinearElasticIsotropic>
   </Constitutive>
 
 
@@ -80,8 +79,19 @@
   </InitialConditions>
 
   <BoundaryConditions>
-    <Dirichlet name="sourceTerm" fieldName="Temperature" dataType="Scalar" object="Node" scale="1000.0" setNames="source"/>
-    <Dirichlet name="sinkTerm"   fieldName="Temperature" dataType="Scalar" object="Node" scale="0.0"    setNames="sink"/>
+    <Dirichlet name="sourceTerm" 
+               fieldName="Temperature" 
+               dataType="Scalar" 
+               objectPath="nodeManager" 
+               scale="1000.0" 
+               setNames="source"/>
+               
+    <Dirichlet name="sinkTerm"   
+               fieldName="Temperature" 
+               dataType="Scalar" 
+               objectPath="nodeManager" 
+               scale="0.0"    
+               setNames="sink"/>
   </BoundaryConditions>
 
 
@@ -97,7 +107,7 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot"/>
   </Outputs>
   
 
