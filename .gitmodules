@@ -1,4 +1,4 @@
-[submodule "src/components/cxx-utilities"]
+[submodule "src/coreComponents/cxx-utilities"]
 	path = src/coreComponents/cxx-utilities
 	url = ../cxx-utilities.git
 [submodule "src/cmake/blt"]
