@@ -46,11 +46,11 @@
 
 
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "sidre/SidreTypes.hpp"
 #endif
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -80,7 +80,7 @@ namespace geosx
 {
 
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #endif
 
@@ -407,7 +407,7 @@ public:
     return type_names.at(typeIndex);
   }
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 
   static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
   {
@@ -462,7 +462,7 @@ public:
     return it->second;
   }
 
-#endif /* USE_ATK */
+#endif /* GEOSX_USE_ATK */
 
 
   // Matching regex for data types in xml

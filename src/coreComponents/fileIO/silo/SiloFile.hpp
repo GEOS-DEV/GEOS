@@ -27,7 +27,7 @@
 #include "silo.h"
 #include <vector>
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -708,7 +708,7 @@ void SiloFile::WriteDataField( string const & meshName,
 
   // write multimesh object
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
@@ -941,7 +941,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
   // write multimesh object
   int rank = 0;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 #endif
   if( rank == 0 )
@@ -991,7 +991,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   (void)centering;
 
   int size = 1;
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_size(MPI_COMM_GEOSX, &size);
 #endif
 

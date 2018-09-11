@@ -44,7 +44,7 @@
 #include "common/GeosxConfig.hpp"
 
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "sidre/sidre.hpp"
 #include "sidre/SidreTypes.hpp"
 #include "SidreWrapper.hpp"
@@ -975,7 +975,7 @@ public:
   
   void registerDataPtr(axom::sidre::View * view) const override
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     view = (view != nullptr) ? view : getSidreView();
 
     localIndex num_elements = size();
@@ -1016,7 +1016,7 @@ public:
   /* Register the pointer to data with the associated sidre::View. */
   void registerToWrite(axom::sidre::View * view=nullptr) const override
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
@@ -1070,7 +1070,7 @@ public:
   /* Register the pointer to data with the associated sidre::View. */
   void finishWriting(axom::sidre::View * view=nullptr) const override
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
@@ -1099,7 +1099,7 @@ public:
 
   void registerToRead(axom::sidre::View * view=nullptr) override
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
       unregisterDataPtr(view);
@@ -1133,7 +1133,7 @@ public:
 
   void finishReading(axom::sidre::View * view) override
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
       view = (view != nullptr) ? view : getSidreView();
@@ -1162,7 +1162,7 @@ public:
 
   void unregisterDataPtr(axom::sidre::View* view = nullptr) const
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     view = (view != nullptr) ? view : getSidreView();
     view->setExternalDataPtr(AXOM_NULLPTR);
 #endif
@@ -1170,7 +1170,7 @@ public:
 
   void storeSizedFromParent(axom::sidre::View* view = nullptr) const
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     if (SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
     {
       view = (view != nullptr) ? view : getSidreView();
@@ -1181,7 +1181,7 @@ public:
 
   void loadSizedFromParent(axom::sidre::View* view = nullptr)
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     if (SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
     {
       view = (view != nullptr) ? view : getSidreView();
@@ -1193,7 +1193,7 @@ public:
 
   void resizeFromSidre(axom::sidre::View* view = nullptr)
   {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
     view = (view != nullptr) ? view : getSidreView();
     if (view->isExternal()) 
     { 

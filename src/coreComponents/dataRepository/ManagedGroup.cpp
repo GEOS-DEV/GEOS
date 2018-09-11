@@ -28,7 +28,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include <mpi.h>
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
 #include "sidre/IOManager.hpp"
 #endif
@@ -44,7 +44,7 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
 
   axom::sidre::Group * sidreParent = nullptr;
   axom::sidre::Group * sidreGroup  = nullptr;
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   if( parent==nullptr )
   {
     sidreParent = SidreWrapper::dataStore().getRoot();
@@ -75,7 +75,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_parent(parent),
   m_wrappers(),
   m_subGroups(),
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
   m_size(0),
@@ -153,7 +153,7 @@ ManagedGroup::~ManagedGroup()
 ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_parent( std::move(source.m_parent) ),
   m_wrappers( std::move(source.m_wrappers) ),
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   m_sidreGroup( std::move(source.m_sidreGroup) ),
 #endif
   m_size( source.m_size ),
@@ -620,7 +620,7 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
 
 void ManagedGroup::prepareToWrite() const
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   if (getRestartFlags() == RestartFlags::NO_WRITE)
   {
     return;
@@ -652,7 +652,7 @@ void ManagedGroup::prepareToWrite() const
 
 void ManagedGroup::finishWriting() const
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   if (getRestartFlags() == RestartFlags::NO_WRITE)
   {
     return;
@@ -676,7 +676,7 @@ void ManagedGroup::finishWriting() const
 
 void ManagedGroup::prepareToRead()
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
   {
     return;
@@ -701,7 +701,7 @@ void ManagedGroup::prepareToRead()
 
 void ManagedGroup::finishReading()
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
   {
     return;

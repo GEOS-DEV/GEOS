@@ -29,7 +29,7 @@
 //#include "Common/intrinsic_typedefs.h"
 #include <cmath>
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -225,7 +225,7 @@ int SpatialPartition::GetColor()
 //         int nbrSetId = 1-mySetId;
 //         if(theSets[nbrSetId]->size() > 0)
 //         {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: " +
 // setnames[0] + " and " + setnames[1] + " present on same partition\n");
 //#endif
@@ -284,7 +284,7 @@ int SpatialPartition::GetColor()
 //         // should have same number of nodes in both sets
 //         if(nbrSortedGlobalIds.size() !=  mySortedGlobalIds.size() )
 //         {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
 // Size of " + setnames[mySetId] + " does not match size of " +
 // setnames[nbrSetId] + " on neighboring partition\n");
@@ -325,7 +325,7 @@ int SpatialPartition::GetColor()
 //           if(setLocalAndGlobalIds[0].size() !=
 //  setLocalAndGlobalIds[1].size() )
 //           {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //             SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
 // Size of " + setnames[0] + " does not match size of " + setnames[1] + " on
 // process " +toString(m_rank) +  "\n");
@@ -1223,7 +1223,7 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //      if( !(m_PartitionLocations[0].empty()) && (m_Partitions(0)-1) !=
 // static_cast<int>( m_PartitionLocations[0].size() ) )
 //      {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of x-partition
 // locations does not equal number of partitions - 1\n");
 //#endif
@@ -1235,7 +1235,7 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //      if( !(m_PartitionLocations[1].empty()) && (m_Partitions(1)-1) !=
 // static_cast<int>( m_PartitionLocations[1].size() ) )
 //      {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of y-partition
 // locations does not equal number of partitions - 1\n");
 //#endif
@@ -1247,7 +1247,7 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //      if( !(m_PartitionLocations[2].empty()) && (m_Partitions(2)-1) !=
 // static_cast<int>( m_PartitionLocations[2].size() ) )
 //      {
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of z-partition
 // locations does not equal number of partitions - 1\n");
 //#endif
@@ -1277,7 +1277,7 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //        m_periodicSets.push_back(periodicSet);
 //
 //        if( m_Periodic( periodicSet.m_dimension ) != 1 ){
-//#ifdef USE_ATK
+//#ifdef GEOSX_USE_ATK
 //          SLIC_ERROR( "SpatialPartition::ReadXMLInput(): Periodic set
 // requested for non-periodic dimension " + toString(periodicSet.m_dimension) +
 // " \n");
@@ -1433,7 +1433,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     }
     else
     {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
       SLIC_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
 #endif
     }

@@ -25,7 +25,7 @@
 #include "SidreWrapper.hpp"
 #include "dataRepository/Buffer.hpp"
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -39,7 +39,7 @@ namespace geosx
 namespace dataRepository
 {
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 using namespace axom::sidre;
 #endif
 
@@ -49,7 +49,7 @@ SidreWrapper::SidreWrapper()
 SidreWrapper::~SidreWrapper()
 {}
 
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
 DataStore& SidreWrapper::dataStore()
 {
   static DataStore * datastore = new DataStore();
@@ -61,7 +61,7 @@ DataStore& SidreWrapper::dataStore()
 /* Write out a restart file. */
 void SidreWrapper::writeTree(int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm) 
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   axom::sidre::IOManager ioManager(comm);
   ioManager.write(SidreWrapper::dataStore().getRoot(), num_files, path, protocol);
 #endif
@@ -70,7 +70,7 @@ void SidreWrapper::writeTree(int num_files, const std::string & path, const std:
 
 void SidreWrapper::reconstructTree(const std::string & root_path, const std::string & protocol, MPI_Comm comm) 
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
   {
     SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
@@ -85,7 +85,7 @@ void SidreWrapper::reconstructTree(const std::string & root_path, const std::str
 /* Load sidre external data. */
 void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm)
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   axom::sidre::IOManager ioManager(comm);
   ioManager.loadExternalData(SidreWrapper::dataStore().getRoot(), root_path);
 #endif
