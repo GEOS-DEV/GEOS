@@ -27,6 +27,8 @@ fi
 
 
 pwd
+export PATH=${PATHMOD}:$PATH
+echo $PATH
 echo $(ls)
 or_die mkdir travis-build
 cd travis-build
@@ -37,7 +39,7 @@ if [[ "$DO_BUILD" == "yes" ]] ; then
            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
            -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_EXEC=mpirun \
            -DGEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release \
-           -DSPHINX_EXECUTABLE=/usr/bin/sphinx-build \
+           -DENABLE_SPHINX=OFF \
            ${CMAKE_EXTRA_FLAGS} ../src
 
 #    if [[ ${CMAKE_EXTRA_FLAGS} == *COVERAGE* ]] ; then

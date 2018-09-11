@@ -21,6 +21,7 @@
  */
 
 #include "EventBase.hpp"
+#include "common/Logger.hpp"
 #include <cstring>
 
 namespace geosx
@@ -189,8 +190,6 @@ void EventBase::GetTargetReferences()
   if (!eventTarget.empty())
   {
     ManagedGroup * tmp = this->GetGroupByPath(eventTarget);
-    // std::cout << "Type of target = " << cxx_utilities::demangle(tmp->get_typeid().name()) << std::endl;
-
     m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
     GEOS_ASSERT( m_target != nullptr, "The target of an event must be executable!");
   }
