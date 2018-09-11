@@ -27,6 +27,8 @@ fi
 
 
 pwd
+export PATH=${PATHMOD}:$PATH
+echo $PATH
 echo $(ls)
 or_die mkdir travis-build
 cd travis-build
