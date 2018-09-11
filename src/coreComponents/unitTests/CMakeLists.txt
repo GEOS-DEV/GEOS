@@ -1,4 +1,5 @@
 add_subdirectory( xmlTests )
 add_subdirectory( meshImport )
-add_subdirectory( SinglePhaseFlow )
+add_subdirectory( SinglePhaseFlowStructured )
+add_subdirectory( SinglePhaseFlowUnstructured )
 add_subdirectory( geometry )

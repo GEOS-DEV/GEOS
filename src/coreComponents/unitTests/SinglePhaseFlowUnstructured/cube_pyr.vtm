@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <vtkMultiBlockDataSet>
+    <Block name="RANK_0" index="0">
+      <DataSet index="0" name="PART00001_POLYHEDRON_POLYHEDRON_GROUP_0" file="cube_pyr/cube_pyr_0.vtu"/>
+    </Block>
+  </vtkMultiBlockDataSet>
+</VTKFile>

@@ -23,7 +23,7 @@
 #endif
 
 #include "gtest/gtest.h"
-#if USE_MPI
+#ifdef GEOSX_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -57,14 +57,14 @@ int main(int argc, char** argv)
 
 TEST(testVTM,testVTM)
 {
-#if USE_MPI
+#ifdef GEOSX_USE_MPI
     MPI_Init(0, nullptr);
 #endif
     VtmFile vtmFile;
     string file_path = __FILE__;
     string dir_path = file_path.substr(0, file_path.rfind("/"));
     vtmFile.Load(dir_path + "/sampleMesh.vtm", true, true);
-#if USE_MPI
+#ifdef GEOSX_USE_MPI
     MPI_Finalize();
 #endif
 }

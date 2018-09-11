@@ -28,7 +28,7 @@
 #include "common/Logger.hpp"
 #include "mesh/MeshBody.hpp"
 
-#if USE_MPI
+#ifdef GEOSX_USE_MPI
 #include <mpi.h>
 #endif
 
@@ -117,7 +117,7 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
     int mpiSize = 0;
     int mpiRank = 0;
     m_fileName = fileName;
-#if USE_MPI
+#ifdef GEOSX_USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 #endif
