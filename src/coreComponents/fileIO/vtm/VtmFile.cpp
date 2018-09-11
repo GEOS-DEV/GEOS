@@ -265,7 +265,11 @@ void VtmFile::SetRanksAndBlocks(
                 std::vector< RankBlock >& rankBlocks) {
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     auto const & vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
-    string dirPath = m_fileName.substr(0, m_fileName.rfind("/"));
+    string dirPath;
+    if( m_fileName.rfind("/") != std::string::npos) {
+        dirPath = m_fileName.substr(0, m_fileName.rfind("/"));
+    }
+    std::cout << "dirpath " << dirPath << std::endl;
     
     for(auto const & rank : vtkMultiBlockDataSetNode.children()) {
         if( rank.name() == static_cast< string > ("Block") )
@@ -273,10 +277,16 @@ void VtmFile::SetRanksAndBlocks(
             RankBlock curRankBlock;
             for( auto const & block : rank.children() ) {
                 if( block.name() == static_cast< string > ("DataSet")) {
-                    string filename =  dirPath+"/"+block.attribute("file").as_string();
+                    string filename;
+                    if( dirPath.empty() ) {
+                        filename = block.attribute("file").as_string();
+                    }
+                    else {
+                        filename = dirPath+"/"+block.attribute("file").as_string();
+                    }
                     std::cout << filename << std::endl;
                     MeshBlock curMeshBlock(
-                            dirPath+"/"+block.attribute("file").as_string(),
+                            filename,
                             block.attribute("name").as_string());
                     curRankBlock.AddMeshBlock(curMeshBlock);
                 }

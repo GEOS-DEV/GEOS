@@ -167,7 +167,6 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
-
                       cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
                       cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
                       cellToVertex[k][2] = mesh.CellVertexIndex(k,3);
@@ -191,7 +190,6 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
-
                       cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
                       cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
                       cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
@@ -199,10 +197,38 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                     }
                 }
                 if( mesh.NumPrism() > 0) {
+                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("WEDGE");
+                    cellBlock -> SetElementType("C3D6");
+                    auto & cellToVertex = cellBlock->nodeList();
+                    cellBlock->resize( mesh.NumCells() );
+                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+
+                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
+                    {
+                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
+                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
+                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
+                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
+                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
+                      cellToVertex[k][5] = mesh.CellVertexIndex(k,5);
+                    }
                 }
                 if( mesh.NumPyr() > 0) {
-                }
+                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("PYR");
+                    cellBlock -> SetElementType("C3D5");
+                    auto & cellToVertex = cellBlock->nodeList();
+                    cellBlock->resize( mesh.NumCells() );
+                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
 
+                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
+                    {
+                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
+                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
+                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
+                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
+                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
+                    }
+                }
             }
         }
     }

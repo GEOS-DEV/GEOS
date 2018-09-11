@@ -1356,7 +1356,7 @@ integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
     nodeOrdering[2] = 2;
     nodeOrdering[3] = 3;
   }
-  else if (!elementType.compare(0, 4, "C3D8"))  //||!m_elementGeometryID.compare(0, 4, "C3D6"))
+  else if (!elementType.compare(0, 4, "C3D8"))
   {
     nodeOrdering.resize(8);
     nodeOrdering[0] = 0;
@@ -1367,6 +1367,25 @@ integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
     nodeOrdering[5] = 5;
     nodeOrdering[6] = 7;
     nodeOrdering[7] = 6;
+  }
+  else if (!elementType.compare(0, 4, "C3D6"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 4;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 2;
+    nodeOrdering[5] = 5;
+  }
+  else if (!elementType.compare(0, 4, "C3D5"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 4;
   }
 
 //  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
@@ -1607,14 +1626,19 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       {
         shapetype[count] = DB_ZONETYPE_HEX;
       }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D6") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_HEX;
-//        writeArbitraryPolygon = true;
-//      }
       else if ( !elementType.compare(0, 4, "C3D4") )
       {
         shapetype[count] = DB_ZONETYPE_TET;
+      }
+      else if ( !elementType.compare(0, 4, "C3D6") )
+      {
+        shapetype[count] = DB_ZONETYPE_PRISM;
+        //writeArbitraryPolygon = true; TODO What is it ?
+      }
+      else if ( !elementType.compare(0, 4, "C3D5") )
+      {
+        shapetype[count] = DB_ZONETYPE_PYRAMID;
+        //writeArbitraryPolygon = true; TODO What is it ?
       }
 //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
 // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
