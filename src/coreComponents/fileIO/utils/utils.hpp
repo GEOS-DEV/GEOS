@@ -60,24 +60,24 @@ inline void getAbsolutePath(const std::string & path, std::string & absolute_pat
 inline void splitPath(const std::string& path, std::string& dirname, std::string& basename)
 {
   size_t pos = path.find_last_of('/');
+  
   if( pos == string::npos )
   {
     dirname = std::string(".");
     basename = path;
-    return;
   }
-
-  if( pos == 0 )
+  else if( pos == 0 )
   {
     dirname = std::string("/");
     basename = path.substr(1);
     return;
   }
-
-  dirname = path.substr(0, pos);
-  basename = path.substr(pos + 1);
+  else
+  {
+    dirname = path.substr(0, pos);
+    basename = path.substr(pos + 1);
+  }
 }
-
 
 template <typename REGEX>
 inline bool regexMatch(const std::string & str, REGEX regex)
