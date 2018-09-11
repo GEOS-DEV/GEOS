@@ -500,6 +500,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
     cellBlock->SetDocumentationNodes();
     cellBlock->RegisterDocumentationNodes();
     cellBlock->ReadXML_PostProcess();
+    cellBlock->SetElementType("C3D8");
   }
 
 
