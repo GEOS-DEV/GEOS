@@ -102,29 +102,26 @@ public:
     ViewKey componentVolumeShift         = { "componentVolumeShift" };
     ViewKey componentBinaryCoeff         = { "componentBinaryCoeff" };
 
-    // constitutive data
-    ViewKey phaseMoleFraction            = { "phaseMoleFraction" };          // xi_p
-    ViewKey phaseVolumeFraction          = { "phaseVolumeFraction" };        // S_p
-    ViewKey phaseDensity                 = { "phaseDensity" };               // rho_p
-    ViewKey phaseComponentMoleFraction   = { "phaseComponentMoleFraction" }; // x_cp
-    ViewKey phaseComponentDensity        = { "phaseComponentDensity" };      // rho_cp
-
-    // derivatives
+    // constitutive data and derivatives
+    ViewKey phaseMoleFraction                              = { "phaseMoleFraction" };                              // xi_p
     ViewKey dPhaseMoleFraction_dPressure                   = { "dPhaseMoleFraction_dPressure" };                   // dXi_p/dP
     ViewKey dPhaseMoleFraction_dTemperature                = { "dPhaseMoleFraction_dTemperature" };                // dXi_p/dT
     ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction     = { "dPhaseMoleFraction_dGlobalCompMoleFraction" };     // dXi_p/dz_c
+
+    ViewKey phaseVolumeFraction                            = { "phaseVolumeFraction" };                            // S_p
     ViewKey dPhaseVolumeFraction_dPressure                 = { "dPhaseVolumeFraction_dPressure" };                 // dS_p/dP
     ViewKey dPhaseVolumeFraction_dTemperature              = { "dPhaseVolumeFraction_dTemperature" };              // dS_p/dT
     ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction   = { "dPhaseVolumeFraction_dGlobalCompMoleFraction" };   // dS_p/dz_c
+
+    ViewKey phaseDensity                                   = { "phaseDensity" };                                   // rho_p
     ViewKey dPhaseDensity_dPressure                        = { "dPhaseDensity_dPressure" };                        // dRho_p/dP
     ViewKey dPhaseDensity_dTemperature                     = { "dPhaseDensity_dTemperature" };                     // dRho_p/dT
     ViewKey dPhaseDensity_dGlobalCompMoleFraction          = { "dPhaseDensity_dGlobalCompMoleFraction" };          // dRho_p/dz_c
-    ViewKey dPhaseCompMoleFraction_dPressure               = { "dPhaseCompMoleFraction_dPressure" };               // dx_cp/dP
-    ViewKey dPhaseCompMoleFraction_dTemperature            = { "dPhaseCompMoleFraction_dTemperature" };            // dx_cp/dT
-    ViewKey dPhaseCompMoleFraction_dGlobalCompMoleFraction = { "dPhaseCompMoleFraction_dGlobalCompMoleFraction" }; // dx_cp/dz_c
-    ViewKey dPhaseCompDensity_dPressure                    = { "dPhaseCompDensity_dPressure" };                    // dRho_cp/dP
-    ViewKey dPhaseCompDensity_dTemperature                 = { "dPhaseCompDensity_dTemperature" };                 // dRho_cp/dT
-    ViewKey dPhaseCompDensity_dGlobalCompMoleFraction      = { "dPhaseCompDensity_dGlobalCompMoleFraction" };      // dRho_cp/dz_c
+
+    ViewKey phaseComponentMassFraction                     = { "phaseComponentMassFraction" };                     // x_cp
+    ViewKey dPhaseCompMassFraction_dPressure               = { "dPhaseCompMassFraction_dPressure" };               // dx_cp/dP
+    ViewKey dPhaseCompMassFraction_dTemperature            = { "dPhaseCompMassFraction_dTemperature" };            // dx_cp/dT
+    ViewKey dPhaseCompMassFraction_dGlobalCompMoleFraction = { "dPhaseCompMassFraction_dGlobalCompMoleFraction" }; // dx_cp/dz_c
 
   } viewKeys;
 
@@ -170,15 +167,10 @@ private:
   array3d<real64> m_dPhaseDensity_dTemperature;
   array4d<real64> m_dPhaseDensity_dGlobalCompMoleFraction;
 
-  array4d<real64> m_phaseCompMoleFraction;
-  array4d<real64> m_dPhaseCompMoleFraction_dPressure;
-  array4d<real64> m_dPhaseCompMoleFraction_dTemperature;
-  array5d<real64> m_dPhaseCompMoleFraction_dGlobalCompMoleFraction;
-
-  array4d<real64> m_phaseCompDensity;
-  array4d<real64> m_dPhaseCompDensity_dPressure;
-  array4d<real64> m_dPhaseCompDensity_dTemperature;
-  array5d<real64> m_dPhaseCompDensity_dGlobalCompMoleFraction;
+  array4d<real64> m_phaseCompMassFraction;
+  array4d<real64> m_dPhaseCompMassFraction_dPressure;
+  array4d<real64> m_dPhaseCompMassFraction_dTemperature;
+  array5d<real64> m_dPhaseCompMassFraction_dGlobalCompMoleFraction;
 
   // PVTPackage fluid object
   PVTPackage::CompositionalMultiphaseSystem * m_fluid;
