@@ -346,6 +346,8 @@ void SiloFile::MakeSiloDirectories()
  */
 void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
 {
+  MakeSiloDirectories();
+
 #ifdef GEOSX_USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
   m_numGroups = numGroups;

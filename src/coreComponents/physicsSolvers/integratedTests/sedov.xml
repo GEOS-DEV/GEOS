@@ -37,6 +37,11 @@
                    timeFrequency="1e-6"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="5.0e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"/>
   </Events>
 
 
@@ -140,6 +145,8 @@
   
   <Outputs>
     <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Restart name="sidreRestart"/>
+
   </Outputs>
 
   <Geometry>
