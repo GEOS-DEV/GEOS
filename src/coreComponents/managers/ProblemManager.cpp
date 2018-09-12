@@ -120,7 +120,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.restartFileName.Key(),
                                      viewKeys.restartFileName.Key(),
@@ -133,7 +134,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.beginFromRestart.Key(),
                                      viewKeys.beginFromRestart.Key(),
@@ -146,7 +148,9 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
+
   commandDocNode->AllocateChildNode( viewKeys.problemName.Key(),
                                      viewKeys.problemName.Key(),
                                      -1,
@@ -158,7 +162,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.outputDirectory.Key(),
                                      viewKeys.outputDirectory.Key(),
@@ -171,7 +176,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.xPartitionsOverride.Key(),
                                      viewKeys.xPartitionsOverride.Key(),
@@ -184,7 +190,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.yPartitionsOverride.Key(),
                                      viewKeys.yPartitionsOverride.Key(),
@@ -197,7 +204,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.zPartitionsOverride.Key(),
                                      viewKeys.zPartitionsOverride.Key(),
@@ -210,7 +218,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.overridePartitionNumbers.Key(),
                                      viewKeys.overridePartitionNumbers.Key(),
@@ -223,7 +232,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( keys::schema,
                                      keys::schema,
@@ -236,7 +246,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.schemaLevel.Key(),
                                      viewKeys.schemaLevel.Key(),
@@ -249,7 +260,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   // // Mesh node documentation
   // ManagedGroup * meshGenerators =
@@ -525,7 +537,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
 
 void ProblemManager::InitializePythonInterpreter()
 {
-#if USE_PYTHON==1
+#ifdef GEOSX_USE_PYTHON
   // Initialize python and numpy
   std::cout << "Loading python interpreter" << std::endl;
 
@@ -553,7 +565,7 @@ void ProblemManager::InitializePythonInterpreter()
 
 void ProblemManager::ClosePythonInterpreter()
 {
-#if USE_PYTHON==1
+#ifdef GEOSX_USE_PYTHON
   // Add any other cleanup here
   std::cout << "Closing python interpreter" << std::endl;
   Py_Finalize();
@@ -569,7 +581,7 @@ void ProblemManager::ParseInputFile()
   ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
 
 
-#if USE_PYTHON==1
+#ifdef GEOSX_USE_PYTHON
   // Load the pygeos module
   PyObject *pModule = PyImport_ImportModule("pygeos");
   if (pModule == NULL)
@@ -746,10 +758,6 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
-
-  SiloFile siloFile;
-  siloFile.MakeSiloDirectories();
-
   this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 
@@ -826,7 +834,7 @@ void ProblemManager::ApplyInitialConditions()
 
 void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
-#ifdef USE_ATK
+#ifdef GEOSX_USE_ATK
   this->prepareToRead();
   m_functionManager->prepareToRead();
   BoundaryConditionManager::get()->prepareToRead();

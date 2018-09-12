@@ -7,13 +7,15 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="3"
+                                  verboseLevel="1"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
+                              useMLPrecond="1"
+                              scalingOption="0"
+                              krylovTol="1.0e-8"
+                              newtonTol="1.0e-4"
                               maxIterNewton="8"
-                              verbosityFlag="2"/>
+                              verbosityFlag="0"/>
      </SolidMechanics_LagrangianFEM>
   </Solvers>
 
@@ -21,30 +23,36 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 50"
-                  yCoords="0, 5"
-                  zCoords="0, 1"
-                  nx="50"
-                  ny="5"
-                  nz="1"
+                  xCoords="0, 80"
+                  yCoords="0, 8"
+                  zCoords="0, 4"
+                  nx="160"
+                  ny="16"
+                  nz="8"
                   cellBlockNames="cb1"/>
   </Mesh>
 
 
-  <Events maxTime="1.0e-4">
+  <Events maxTime="10.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="5.0e-5"
+                   forceDt="1.0"
                    target="/Solvers/lagsolve" />
 
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="5.0e-5"
+                   timeFrequency="1.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="1e99"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidre_restart"
+                   endTime="-1" />
   </Events>
 
 
@@ -124,14 +132,13 @@
                dataType="Vector" 
                component="1" 
                scale="1.0e6" 
+               functionName="timeFunction"
                setNames="xpos"/>
   </BoundaryConditions>
 
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
+    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="real64" coordinates="0.0 10.0" values="0.0 10.0" />
   </Functions>
 
   <Partition>
@@ -141,12 +148,11 @@
  
   <Outputs>
     <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Restart name="sidre_restart"/>
   </Outputs>
   
 
   <Nodesets>
-    <Box name="perf"   type="0" xMin="0, 0, 0" xMax="1, 1, 1"/>
-    <Box name="source" type="0" xMin="0, 0, 0" xMax="1, 1, 1"/>
   </Nodesets>
 
 

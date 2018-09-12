@@ -5,10 +5,12 @@
 
 import sys
 import os
+import stat
 import subprocess
 import argparse
 import platform
 import shutil
+
 
 def extract_cmake_location(file_path):
     print "Extracting cmake entry from host config file ", file_path
@@ -22,6 +24,28 @@ def extract_cmake_location(file_path):
         print "Could not find a cmake entry in host config file."
     return None
 
+
+def setup_ats(scriptsdir, buildpath):
+    bin_dir = os.path.join(buildpath, "bin")
+    atsdir = os.path.abspath(os.path.join(scriptsdir, "..", "integratedTests"))
+    ats_update_dir = os.path.join(atsdir, "update", "run")
+    geosxats_path = os.path.join(atsdir, "geosxats", "geosxats")
+
+    # Create a symbolic link to test directory
+    os.symlink(ats_update_dir, os.path.join(buildpath, "integratedTests"))
+    
+    # Write the bash script to run ats.
+    ats_script_path = os.path.join(buildpath, "geosxats.sh")
+    with open(ats_script_path, "w") as f:
+        contents = ("#!/bin/bash\n"
+                    "{} {} --workingDir {} \"$@\"")
+        contents = contents.format(geosxats_path, bin_dir, ats_update_dir)
+        
+        f.write(contents)
+
+    # Make the script executable
+    st = os.stat(ats_script_path)
+    os.chmod(ats_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH )
 
 
 parser = argparse.ArgumentParser(description="Configure cmake build.")
@@ -108,11 +132,13 @@ buildpath = os.path.abspath(buildpath)
 
 if os.path.exists(buildpath):
 #    sys.exit("Build directory '%s' already exists, exiting...")
-     print "Build directory '%s' already exists.  Deleting..." % buildpath
-     shutil.rmtree(buildpath)
+    print "Build directory '%s' already exists.  Deleting..." % buildpath
+    shutil.rmtree(buildpath)
 
 print "Creating build directory '%s'..." % buildpath
 os.makedirs(buildpath)
+
+setup_ats(scriptsdir, buildpath)
 
 #####################
 # Setup Install Dir

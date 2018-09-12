@@ -24,7 +24,7 @@
 #include <string>
 #include <limits>
 
-#include "../../../../externalComponents/cxx-utilities/src/src/DocumentationNode.hpp"
+#include "cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"

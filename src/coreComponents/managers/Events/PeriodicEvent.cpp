@@ -245,6 +245,14 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     // Find the function (min, average, max)
     real64_array stats = function->EvaluateStats(m_functionTarget, time, mySet);
     result = stats[functionStatOption];
+
+    // Because the function applied to an object may differ by rank, synchronize
+    // (Note: this shouldn't occur very often, since it is only called if the base forecast <= 0)
+    #if USE_MPI
+      real64 result_global;
+      MPI_Allreduce(&result, &result_global, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+      result = result_global;
+    #endif
   }
   
   // Forcast event

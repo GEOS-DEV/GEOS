@@ -160,13 +160,12 @@ public:
   integer GetForecast(){ return m_eventForecast; }
   void SetForecast(integer forecast){ m_eventForecast = forecast; }
 
-  integer GetExitFlag(){ return m_exitFlag; }
+  integer GetExitFlag();
   void SetExitFlag(integer flag){ m_exitFlag = flag; }
 
 private:
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
-
 };
 
 } /* namespace geosx */
