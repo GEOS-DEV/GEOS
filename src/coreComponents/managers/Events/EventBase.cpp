@@ -21,6 +21,7 @@
  */
 
 #include "EventBase.hpp"
+#include "common/Logger.hpp"
 #include <cstring>
 
 namespace geosx
@@ -88,7 +89,7 @@ void EventBase::FillDocumentationNode()
                               "real64",
                               "end time",
                               "end time",
-                              "1.0e9",
+                              "1.0e100",
                               "",
                               0,
                               1,
@@ -189,15 +190,8 @@ void EventBase::GetTargetReferences()
   if (!eventTarget.empty())
   {
     ManagedGroup * tmp = this->GetGroupByPath(eventTarget);
-    // std::cout << "Type of target = " << cxx_utilities::demangle(tmp->get_typeid().name()) << std::endl;
-    if (dynamic_cast<ExecutableGroup *>(tmp) != nullptr)
-    {
-      m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
-    }
-    else
-    {
-      throw std::invalid_argument("The target of an event must be executable!");
-    }    
+    m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
+    GEOS_ASSERT( m_target != nullptr, "The target of an event must be executable!");
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -306,6 +300,8 @@ void EventBase::Step(real64 const time,
                      integer const cycle,
                      dataRepository::ManagedGroup * domain )
 {
+  // Note: do we need an mpi barrier here?
+
   if (m_target != nullptr)
   {
     m_target->Execute(time, dt, cycle, domain);
@@ -375,6 +371,17 @@ void EventBase::Cleanup(real64 const& time_n,
   });
 }
 
+
+
+integer EventBase::GetExitFlag()
+{
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    m_exitFlag += subEvent->GetExitFlag();
+  });
+
+  return m_exitFlag;
+}
 
 
 } /* namespace geosx */

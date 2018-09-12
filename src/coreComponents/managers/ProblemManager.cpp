@@ -120,7 +120,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.restartFileName.Key(),
                                      viewKeys.restartFileName.Key(),
@@ -133,7 +134,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.beginFromRestart.Key(),
                                      viewKeys.beginFromRestart.Key(),
@@ -146,7 +148,9 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
+
   commandDocNode->AllocateChildNode( viewKeys.problemName.Key(),
                                      viewKeys.problemName.Key(),
                                      -1,
@@ -158,7 +162,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.outputDirectory.Key(),
                                      viewKeys.outputDirectory.Key(),
@@ -171,7 +176,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.xPartitionsOverride.Key(),
                                      viewKeys.xPartitionsOverride.Key(),
@@ -184,7 +190,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.yPartitionsOverride.Key(),
                                      viewKeys.yPartitionsOverride.Key(),
@@ -197,7 +204,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.zPartitionsOverride.Key(),
                                      viewKeys.zPartitionsOverride.Key(),
@@ -210,7 +218,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.overridePartitionNumbers.Key(),
                                      viewKeys.overridePartitionNumbers.Key(),
@@ -223,7 +232,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( keys::schema,
                                      keys::schema,
@@ -236,7 +246,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   commandDocNode->AllocateChildNode( viewKeys.schemaLevel.Key(),
                                      viewKeys.schemaLevel.Key(),
@@ -249,7 +260,8 @@ void ProblemManager::FillDocumentationNode()
                                      "CommandLine",
                                      0,
                                      0,
-                                     0 );
+                                     0,
+                                     RestartFlags::WRITE );
 
   // // Mesh node documentation
   // ManagedGroup * meshGenerators =
@@ -746,10 +758,6 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
-
-  SiloFile siloFile;
-  siloFile.MakeSiloDirectories();
-
   this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 
@@ -786,15 +794,15 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 void ProblemManager::RunSimulation()
 {
 
-  GEOS_MARK_FUNCTION;
+  GEOSX_MARK_FUNCTION;
 
-  GEOS_MARK_BEGIN("Get domain partition");
+  GEOSX_MARK_BEGIN("Get domain partition");
   DomainPartition * domain  = getDomainPartition();
-  GEOS_MARK_END("Get domain partition");
+  GEOSX_MARK_END("Get domain partition");
 
-  GEOS_MARK_BEGIN("Event Manager");
+  GEOSX_MARK_BEGIN("Event Manager");
   m_eventManager->Run(domain);
-  GEOS_MARK_END("Event Manager");
+  GEOSX_MARK_END("Event Manager");
 
 }
 

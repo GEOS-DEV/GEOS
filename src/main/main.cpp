@@ -59,12 +59,12 @@ int main( int argc, char *argv[] )
 
   std::cout<<"starting main"<<std::endl;
 
-#ifdef USE_OPENMP
+#if defined(RAJA_ENABLE_OPENMP)
   {
-    int noThreads = omp_get_max_threads();
+    int noThreads = omp_get_max_threads(); 
     std::cout<<"No of threads: "<<noThreads<<std::endl;
   }
-#endif
+#endif  
 
 
 
@@ -86,7 +86,7 @@ int main( int argc, char *argv[] )
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
   // Mark begin of "initialization" phase
-  GEOS_MARK_BEGIN("Initialization");
+  GEOSX_MARK_BEGIN("Initialization");
 
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
@@ -108,7 +108,7 @@ int main( int argc, char *argv[] )
   problemManager.Initialize( &problemManager );
 
 
-  GEOS_MARK_END("Initialization");
+  GEOSX_MARK_END("Initialization");
 
   problemManager.ApplyInitialConditions();
 
@@ -120,7 +120,7 @@ int main( int argc, char *argv[] )
 
   std::cout << std::endl << "Running simulation:" << std::endl;
 
-  GEOS_MARK_BEGIN("RunSimulation");
+  GEOSX_MARK_BEGIN("RunSimulation");
   gettimeofday(&tim, nullptr);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
@@ -128,7 +128,7 @@ int main( int argc, char *argv[] )
   gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  GEOS_MARK_END("RunSimulation");
+  GEOSX_MARK_END("RunSimulation");
 
   gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
