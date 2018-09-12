@@ -6,18 +6,18 @@
   <Solvers
     gravityVector="0.0,0.0,-9.81">
   
-    <SinglePhaseFlow name="CompositionalMultiphaseFlow"
-                          verboseLevel="1"
-                          gravityFlag="1"
-                          discretization="fluidTPFA"
-                          fluidName="fluid1"
-                          solidName="rock"
-                          temperature="297.15">
+    <CompositionalMultiphaseFlow name="compflow"
+                                 verboseLevel="1"
+                                 gravityFlag="1"
+                                 discretization="fluidTPFA"
+                                 fluidName="fluid1"
+                                 solidName="rock"
+                                 temperature="297.15">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-    </SinglePhaseFlow>
+    </CompositionalMultiphaseFlow>
   </Solvers>
   
   <Mesh>
@@ -43,7 +43,7 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="20.0"
-                   target="/Solvers/SinglePhaseFlow" />
+                   target="/Solvers/compflow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -107,7 +107,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -116,7 +116,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -125,7 +125,7 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -133,49 +133,65 @@
     <Dirichlet name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/referencePorosity"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="referencePorosity"
                dataType="real64"
                scale="0.05"/>
 
     <Dirichlet name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/fluidPressure"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
                dataType="real64"
                scale="5e6"/>
 
-    <Dirichlet name="initialCompositionC1"
+    <Dirichlet name="initialComposition_N2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/componentMoleFraction"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMoleFraction"
                component="0"
                dataType="real64"
                scale="0.25"/>
 
-    <Dirichlet name="initialCompositionCO2"
+    <Dirichlet name="initialComposition_C10"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/componentMoleFraction"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMoleFraction"
                component="1"
                dataType="real64"
                scale="0.25"/>
 
-    <Dirichlet name="initialCompositionWater"
+    <Dirichlet name="initialComposition_C20"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/componentMoleFraction"
-               component="1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMoleFraction"
+               component="2"
                dataType="real64"
-               scale="0.5"/>
-  
+               scale="0.25"/>
+
+    <Dirichlet name="initialComposition_H20"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMoleFraction"
+               component="3"
+               dataType="real64"
+               scale="0.25"/>
+
     <Dirichlet name="sourceTerm"
-               fieldName="fluidPressure"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
                dataType="Scalar"
                scale="1e7"
                setNames="source"/>
 
     <Dirichlet name="sinkTerm"
-               fieldName="fluidPressure"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
                dataType="Scalar"
                scale="0.0"
                setNames="sink"/>

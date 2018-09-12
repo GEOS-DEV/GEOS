@@ -64,7 +64,7 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow(const string & name,
 
 void CompositionalMultiphaseFlow::FillDocumentationNode()
 {
-  SolverBase::FillDocumentationNode();
+  FlowSolverBase::FillDocumentationNode();
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
