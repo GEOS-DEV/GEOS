@@ -585,14 +585,14 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOSX_MARK_END(BC1);
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  GEOSX_CXX_MARK_LOOP_BEGIN(onepointloop,onepointloop1);
+  GEOSX_MARK_LOOP_BEGIN(onepointloop,onepointloop1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc_x, acc_y, acc_z,
                                                 vel, dt/2, numNodes );
 #endif  
-  GEOSX_CXX_MARK_LOOP_END(onepointloop);
+  GEOSX_MARK_LOOP_END(onepointloop);
 
 
   GEOSX_MARK_BEGIN(BC2);
@@ -610,14 +610,14 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   //                     dydx, dy,   y, dx, length
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-  GEOSX_CXX_MARK_LOOP_BEGIN(onepointloop2,onepointloop2);
+  GEOSX_MARK_LOOP_BEGIN(onepointloop2,onepointloop2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint(vel,uhat_x,uhat_y,uhat_z,
                                                u_x, u_y, u_z, dt, numNodes );
 #endif  
-  GEOSX_CXX_MARK_LOOP_END(onepointloop2);
+  GEOSX_MARK_LOOP_END(onepointloop2);
 
 
   GEOSX_MARK_BEGIN(BC3);
@@ -645,7 +645,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOSX_MARK_END(BC3);
 
   //Set memory to zero
-  GEOSX_CXX_MARK_LOOP_BEGIN(memset,memset);
+  GEOSX_MARK_LOOP_BEGIN(memset,memset);
 
   FORALL_NODES( a, 0, numNodes )
   {
@@ -657,7 +657,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     acc_z[a] = 0; 
 #endif    
   } END_FOR
-  GEOSX_CXX_MARK_LOOP_END(memset);
+  GEOSX_MARK_LOOP_END(memset);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
   meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64> >("MeanStress",
@@ -705,7 +705,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
       //
       //Internal GEOSX Kernel
       //
-      GEOSX_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
+      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
 
 
@@ -939,7 +939,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 #endif// If !defined(EXTERNAL_KERNELS)
-      GEOSX_CXX_MARK_LOOP_END(elemLoop);
+      GEOSX_MARK_LOOP_END(elemLoop);
 
     } //Element Region
 
@@ -947,7 +947,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 //Compute Force : Point-wise computations
-GEOSX_CXX_MARK_LOOP_BEGIN(computeForce,computeForce);
+GEOSX_MARK_LOOP_BEGIN(computeForce,computeForce);
 FORALL_NODES( a, 0, numNodes )
 {
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)    
@@ -958,17 +958,17 @@ FORALL_NODES( a, 0, numNodes )
   acc_z[a] /=mass[a];
 #endif
 } END_FOR
-GEOSX_CXX_MARK_LOOP_END(computeForce);
+GEOSX_MARK_LOOP_END(computeForce);
 
 
 //Integration::OnePoint( acc, vel, dt/2, numNodes );
-GEOSX_CXX_MARK_LOOP_BEGIN(onepointloop3,onepointloop3);
+GEOSX_MARK_LOOP_BEGIN(onepointloop3,onepointloop3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)      
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
 #else  
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
 #endif  
-GEOSX_CXX_MARK_LOOP_END(onepointloop3);
+GEOSX_MARK_LOOP_END(onepointloop3);
 
 
 GEOSX_MARK_BEGIN(BC4);
@@ -1514,7 +1514,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
       array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
 
-      GEOSX_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
+      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 
       for( localIndex k=0 ; k<cellBlock->size() ; ++k )
       {
