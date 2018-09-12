@@ -32,22 +32,22 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-  RegisterViewWrapper<integer>( viewKeys.verbosity );
-  RegisterViewWrapper<real64>( viewKeys.krylovTol );
-  RegisterViewWrapper<integer>( viewKeys.numKrylovIter );
-  RegisterViewWrapper<integer>( viewKeys.kspace );
-  RegisterViewWrapper<real64>( viewKeys.ilut_fill );
-  RegisterViewWrapper<real64>( viewKeys.ilut_drop )->data();
-  RegisterViewWrapper<integer>( viewKeys.useMLPrecond );
-  RegisterViewWrapper<integer>( viewKeys.useInnerSolver );
-  RegisterViewWrapper<integer>( viewKeys.scalingOption );
-  RegisterViewWrapper<integer>( viewKeys.useBicgstab );
-  RegisterViewWrapper<integer>( viewKeys.useDirectSolver );
-  RegisterViewWrapper<real64>( viewKeys.KrylovResidualInit );
-  RegisterViewWrapper<real64>( viewKeys.KrylovResidualFinal );
-  RegisterViewWrapper<integer>( viewKeys.useNewtonSolve );
-  RegisterViewWrapper<real64>( viewKeys.newtonTol );
-  RegisterViewWrapper<integer>( viewKeys.maxIterNewton );
+//  RegisterViewWrapper<integer>( viewKeys.verbosity );
+//  RegisterViewWrapper<real64>( viewKeys.krylovTol );
+//  RegisterViewWrapper<integer>( viewKeys.numKrylovIter );
+//  RegisterViewWrapper<integer>( viewKeys.kspace );
+//  RegisterViewWrapper<real64>( viewKeys.ilut_fill );
+//  RegisterViewWrapper<real64>( viewKeys.ilut_drop )->data();
+//  RegisterViewWrapper<integer>( viewKeys.useMLPrecond );
+//  RegisterViewWrapper<integer>( viewKeys.useInnerSolver );
+//  RegisterViewWrapper<integer>( viewKeys.scalingOption );
+//  RegisterViewWrapper<integer>( viewKeys.useBicgstab );
+//  RegisterViewWrapper<integer>( viewKeys.useDirectSolver );
+//  RegisterViewWrapper<real64>( viewKeys.KrylovResidualInit );
+//  RegisterViewWrapper<real64>( viewKeys.KrylovResidualFinal );
+//  RegisterViewWrapper<integer>( viewKeys.useNewtonSolve );
+//  RegisterViewWrapper<real64>( viewKeys.newtonTol );
+//  RegisterViewWrapper<integer>( viewKeys.maxIterNewton );
 }
 
 void SystemSolverParameters::FillDocumentationNode()
@@ -178,6 +178,44 @@ void SystemSolverParameters::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.scalingOption.Key(),
+                              viewKeys.scalingOption.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "",
+                              "",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.useMLPrecond.Key(),
+                              viewKeys.useMLPrecond.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "",
+                              "",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.useDirectSolver.Key(),
+                              viewKeys.useDirectSolver.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "",
+                              "",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
 //  real64 m_krylovTol;          // Solver convergence criteria
 //  integer  m_numKrylovIter;
 //  integer  m_kspace;             // Number of krylov vectors before GMRES
