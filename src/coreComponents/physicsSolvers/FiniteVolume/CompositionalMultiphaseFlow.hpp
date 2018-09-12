@@ -139,6 +139,9 @@ public:
   {
     using ViewKey = dataRepository::ViewKey;
 
+    // inputs
+    ViewKey temperature = { "temperature" };
+
     ViewKey blockLocalDofNumber = { "blockLocalDofNumber_CompositionalMultiphaseFlow" };
 
     // primary solution field
@@ -146,16 +149,20 @@ public:
     ViewKey deltaPressure = { "deltaPressure" };
     ViewKey facePressure  = { "facePressure" };
 
-    ViewKey globalComponentDensity      = { "globalComponentDensity" };
-    ViewKey deltaGlobalComponentDensity = { "deltaGlobalComponentDensity" };
+    ViewKey globalCompDensity      = { "globalCompDensity" };
+    ViewKey deltaGlobalCompDensity = { "deltaGlobalCompDensity" };
+
+    // intermediate values for constitutive model input
+    ViewKey globalCompMoleFraction                     = { "globalCompMoleFraction" };
+    ViewKey dGlobalCompMoleFraction_dGlobalCompDensity = { "dGlobalCompMoleFraction_dGlobalCompDensity" };
 
     // these are used to store last converged time step values
-    ViewKey phaseVolumeFraction       = { "phaseVolumeFraction" };
-    ViewKey phaseDensity              = { "phaseDensity" };
-    ViewKey phaseComponentDensity     = { "phaseComponentDensity" };
-    ViewKey phaseViscosity            = { "phaseViscosity" };
-    ViewKey phaseRelativePermeability = { "phaseRelativePermeability" };
-    ViewKey porosity                  = { "porosity" };
+    ViewKey phaseVolumeFraction        = { "phaseVolumeFraction" };
+    ViewKey phaseDensity               = { "phaseDensity" };
+    ViewKey phaseComponentMassFraction = { "phaseComponentMassFraction" };
+    ViewKey phaseViscosity             = { "phaseViscosity" };
+    ViewKey phaseRelativePermeability  = { "phaseRelativePermeability" };
+    ViewKey porosity                   = { "porosity" };
 
   } viewKeys;
 
@@ -167,6 +174,8 @@ public:
 private:
 
   void resizeFields( DomainPartition * domain );
+
+  void updateComponentFraction( DomainPartition * domain );
 
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
@@ -221,6 +230,8 @@ private:
   localIndex m_numPhases;
   localIndex m_numComponents;
   localIndex m_numDofPerCell;
+
+  real64 m_temperature;
 };
 
 } // namespace geosx

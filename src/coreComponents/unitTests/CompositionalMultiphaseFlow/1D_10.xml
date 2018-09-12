@@ -11,7 +11,8 @@
                           gravityFlag="1"
                           discretization="fluidTPFA"
                           fluidName="fluid1"
-                          solidName="rock">
+                          solidName="rock"
+                          temperature="297.15">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -74,22 +75,23 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" materialList="fluid1 rock" />
   </ElementRegions>
 
   <Constitutive>
-    <CompositionalFluid name="fluid1"
-                        phases="oil gas water"
-                        equationsOfState="PR PR PR"
-                        componentNames="N2 C10 C20 H2O"
-                        componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"
-                        componentCriticalTemperature="126.2,622.0,782.0,647.0"
-                        componentAcentricFactor="0.04,0.443,0.816,0.344"
-                        componentMolarWeight="28e-3,134e-3,275e-3,18e-3"
-                        componentVolumeShift="0 0 0"
-                        componentBinaryCoeff="0 0 0
-                                              0 0 0
-                                              0 0 0"/>
+    <CompositionalMultiphaseFluid name="fluid1"
+                                  phases="oil gas water"
+                                  equationsOfState="PR PR PR"
+                                  componentNames="N2 C10 C20 H2O"
+                                  componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"
+                                  componentCriticalTemperature="126.2,622.0,782.0,647.0"
+                                  componentAcentricFactor="0.04,0.443,0.816,0.344"
+                                  componentMolarWeight="28e-3,134e-3,275e-3,18e-3"
+                                  componentVolumeShift="0 0 0 0"
+                                  componentBinaryCoeff="0 0 0 0
+                                                        0 0 0 0
+                                                        0 0 0 0
+                                                        0 0 0 0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"

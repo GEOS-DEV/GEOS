@@ -831,7 +831,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
 
   ElementRegionManager::ElementViewAccessor<globalIndex_array>
   blockLocalDofNumber = elemManager->
-                        ConstructViewAccessor<globalIndex_array>( viewKeyStruct::blockLocalDofNumberString );
+                        ConstructViewAccessor<globalIndex_array>( viewKeys.blockLocalDofNumber.Key() );
 
   ElementRegionManager::ElementViewAccessor<real64_array>
     pres = elemManager->ConstructViewAccessor<real64_array>( viewKeys.pressure.Key() );

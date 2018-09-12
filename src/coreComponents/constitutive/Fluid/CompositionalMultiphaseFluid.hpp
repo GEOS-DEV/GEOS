@@ -88,40 +88,69 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
+    static constexpr auto phasesString           = "phases";
+    static constexpr auto equationsOfStateString = "equationsOfState";
+    static constexpr auto componentNamesString   = "componentNames";
+
+    static constexpr auto componentCriticalPressureString    = "componentCriticalPressure";
+    static constexpr auto componentCriticalTemperatureString = "componentCriticalTemperature";
+    static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
+    static constexpr auto componentMolarWeightString         = "componentMolarWeight";
+    static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
+    static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
+
+    static constexpr auto phaseMoleFractionString                          = "phaseMoleFraction";                          // xi_p
+    static constexpr auto dPhaseMoleFraction_dPressureString               = "dPhaseMoleFraction_dPressure";               // dXi_p/dP
+    static constexpr auto dPhaseMoleFraction_dTemperatureString            = "dPhaseMoleFraction_dTemperature";            // dXi_p/dT
+    static constexpr auto dPhaseMoleFraction_dGlobalCompMoleFractionString = "dPhaseMoleFraction_dGlobalCompMoleFraction"; // dXi_p/dz_c
+
+    static constexpr auto phaseVolumeFractionString                          = "phaseVolumeFraction";                          // S_p
+    static constexpr auto dPhaseVolumeFraction_dPressureString               = "dPhaseVolumeFraction_dPressure";               // dS_p/dP
+    static constexpr auto dPhaseVolumeFraction_dTemperatureString            = "dPhaseVolumeFraction_dTemperature";            // dS_p/dT
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompMoleFractionString = "dPhaseVolumeFraction_dGlobalCompMoleFraction"; // dS_p/dz_c
+
+    static constexpr auto phaseDensityString                          = "phaseDensity";                          // rho_p
+    static constexpr auto dPhaseDensity_dPressureString               = "dPhaseDensity_dPressure";               // dRho_p/dP
+    static constexpr auto dPhaseDensity_dTemperatureString            = "dPhaseDensity_dTemperature";            // dRho_p/dT
+    static constexpr auto dPhaseDensity_dGlobalCompMoleFractionString = "dPhaseDensity_dGlobalCompMoleFraction"; // dRho_p/dz_c
+
+    static constexpr auto phaseComponentMassFractionString                     = "phaseComponentMassFraction";                     // x_cp
+    static constexpr auto dPhaseCompMassFraction_dPressureString               = "dPhaseCompMassFraction_dPressure";               // dx_cp/dP
+    static constexpr auto dPhaseCompMassFraction_dTemperatureString            = "dPhaseCompMassFraction_dTemperature";            // dx_cp/dT
+    static constexpr auto dPhaseCompMassFraction_dGlobalCompMoleFractionString = "dPhaseCompMassFraction_dGlobalCompMoleFraction"; // dx_cp/dz_c
+    
     using ViewKey = dataRepository::ViewKey;
 
-    // inputs
-    ViewKey phases           = { "phases" };
-    ViewKey equationsOfState = { "equationsOfState" };
-    ViewKey componentNames   = { "componentNames" };
+    ViewKey phases           = { phasesString };
+    ViewKey equationsOfState = { equationsOfStateString };
+    ViewKey componentNames   = { componentNamesString };
 
-    ViewKey componentCriticalPressure    = { "componentCriticalPressure" };
-    ViewKey componentCriticalTemperature = { "componentCriticalTemperature" };
-    ViewKey componentAcentricFactor      = { "componentAcentricFactor" };
-    ViewKey componentMolarWeight         = { "componentMolarWeight" };
-    ViewKey componentVolumeShift         = { "componentVolumeShift" };
-    ViewKey componentBinaryCoeff         = { "componentBinaryCoeff" };
+    ViewKey componentCriticalPressure    = { componentCriticalPressureString };
+    ViewKey componentCriticalTemperature = { componentCriticalTemperatureString };
+    ViewKey componentAcentricFactor      = { componentAcentricFactorString };
+    ViewKey componentMolarWeight         = { componentMolarWeightString };
+    ViewKey componentVolumeShift         = { componentVolumeShiftString };
+    ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
 
-    // constitutive data and derivatives
-    ViewKey phaseMoleFraction                              = { "phaseMoleFraction" };                              // xi_p
-    ViewKey dPhaseMoleFraction_dPressure                   = { "dPhaseMoleFraction_dPressure" };                   // dXi_p/dP
-    ViewKey dPhaseMoleFraction_dTemperature                = { "dPhaseMoleFraction_dTemperature" };                // dXi_p/dT
-    ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction     = { "dPhaseMoleFraction_dGlobalCompMoleFraction" };     // dXi_p/dz_c
+    ViewKey phaseMoleFraction                              = { phaseMoleFractionString };                              // xi_p
+    ViewKey dPhaseMoleFraction_dPressure                   = { dPhaseMoleFraction_dPressureString };                   // dXi_p/dP
+    ViewKey dPhaseMoleFraction_dTemperature                = { dPhaseMoleFraction_dTemperatureString };                // dXi_p/dT
+    ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction     = { dPhaseMoleFraction_dGlobalCompMoleFractionString };     // dXi_p/dz_c
 
-    ViewKey phaseVolumeFraction                            = { "phaseVolumeFraction" };                            // S_p
-    ViewKey dPhaseVolumeFraction_dPressure                 = { "dPhaseVolumeFraction_dPressure" };                 // dS_p/dP
-    ViewKey dPhaseVolumeFraction_dTemperature              = { "dPhaseVolumeFraction_dTemperature" };              // dS_p/dT
-    ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction   = { "dPhaseVolumeFraction_dGlobalCompMoleFraction" };   // dS_p/dz_c
+    ViewKey phaseVolumeFraction                            = { phaseVolumeFractionString };                            // S_p
+    ViewKey dPhaseVolumeFraction_dPressure                 = { dPhaseVolumeFraction_dPressureString };                 // dS_p/dP
+    ViewKey dPhaseVolumeFraction_dTemperature              = { dPhaseVolumeFraction_dTemperatureString };              // dS_p/dT
+    ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction   = { dPhaseVolumeFraction_dGlobalCompMoleFractionString };   // dS_p/dz_c
 
-    ViewKey phaseDensity                                   = { "phaseDensity" };                                   // rho_p
-    ViewKey dPhaseDensity_dPressure                        = { "dPhaseDensity_dPressure" };                        // dRho_p/dP
-    ViewKey dPhaseDensity_dTemperature                     = { "dPhaseDensity_dTemperature" };                     // dRho_p/dT
-    ViewKey dPhaseDensity_dGlobalCompMoleFraction          = { "dPhaseDensity_dGlobalCompMoleFraction" };          // dRho_p/dz_c
+    ViewKey phaseDensity                                   = { phaseDensityString };                                   // rho_p
+    ViewKey dPhaseDensity_dPressure                        = { dPhaseDensity_dPressureString };                        // dRho_p/dP
+    ViewKey dPhaseDensity_dTemperature                     = { dPhaseDensity_dTemperatureString };                     // dRho_p/dT
+    ViewKey dPhaseDensity_dGlobalCompMoleFraction          = { dPhaseDensity_dGlobalCompMoleFractionString };          // dRho_p/dz_c
 
-    ViewKey phaseComponentMassFraction                     = { "phaseComponentMassFraction" };                     // x_cp
-    ViewKey dPhaseCompMassFraction_dPressure               = { "dPhaseCompMassFraction_dPressure" };               // dx_cp/dP
-    ViewKey dPhaseCompMassFraction_dTemperature            = { "dPhaseCompMassFraction_dTemperature" };            // dx_cp/dT
-    ViewKey dPhaseCompMassFraction_dGlobalCompMoleFraction = { "dPhaseCompMassFraction_dGlobalCompMoleFraction" }; // dx_cp/dz_c
+    ViewKey phaseComponentMassFraction                     = { phaseComponentMassFractionString };                     // x_cp
+    ViewKey dPhaseCompMassFraction_dPressure               = { dPhaseCompMassFraction_dPressureString };               // dx_cp/dP
+    ViewKey dPhaseCompMassFraction_dTemperature            = { dPhaseCompMassFraction_dTemperatureString };            // dx_cp/dT
+    ViewKey dPhaseCompMassFraction_dGlobalCompMoleFraction = { dPhaseCompMassFraction_dGlobalCompMoleFractionString }; // dx_cp/dz_c
 
   } viewKeys;
 

@@ -161,8 +161,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.phases.Key(),
                               viewKeys.phases.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "string_array",
+                              "string_array",
                               "List of fluid phases",
                               "List of fluid phases",
                               "REQUIRED",
@@ -174,8 +174,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.equationsOfState.Key(),
                               viewKeys.equationsOfState.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "string_array",
+                              "string_array",
                               "List of equation of state types for each phase",
                               "List of equation of state types for each phase",
                               "REQUIRED",
@@ -187,8 +187,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.componentNames.Key(),
                               viewKeys.componentNames.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "string_array",
+                              "string_array",
                               "List of component names",
                               "List of component names",
                               "REQUIRED",
@@ -200,8 +200,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.componentCriticalPressure.Key(),
                               viewKeys.componentCriticalPressure.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "Component critical pressures",
                               "Component critical pressures",
                               "REQUIRED",
@@ -213,8 +213,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.componentCriticalTemperature.Key(),
                               viewKeys.componentCriticalTemperature.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "Component critical temperatures",
                               "Component critical temperatures",
                               "REQUIRED",
@@ -226,8 +226,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.componentAcentricFactor.Key(),
                               viewKeys.componentAcentricFactor.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "Component acentric factors",
                               "Component acentric factors",
                               "REQUIRED",
@@ -239,8 +239,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.componentMolarWeight.Key(),
                               viewKeys.componentMolarWeight.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "Component molar weights",
                               "Component molar weights",
                               "REQUIRED",
@@ -252,8 +252,8 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
   docNode->AllocateChildNode( viewKeys.componentVolumeShift.Key(),
                               viewKeys.componentVolumeShift.Key(),
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "Component volume shifts",
                               "Component volume shifts",
                               "",
@@ -303,9 +303,9 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
   COMPFLUID_CHECK_INPUT_LENGTH(m_componentVolumeShift.size(), numFluidComponents(),
                                viewKeys.componentVolumeShift.Key())
 
-  if (m_componentBinaryCoeff.empty())
+  //if (m_componentBinaryCoeff.empty()) TODO
   {
-    m_componentBinaryCoeff.resize(numFluidComponents() * numFluidComponents());
+    m_componentBinaryCoeff.resize(numFluidComponents(), numFluidComponents());
     m_componentBinaryCoeff = 0.0;
   }
 
@@ -328,7 +328,7 @@ void CompositionalMultiphaseFluid::createFluid()
   {
     if (phaseNameDict.find(m_phases[ip]) != phaseNameDict.end())
     {
-      phases.push_back(phaseNameDict.at(m_phases[ip]));
+      phases[ip] = phaseNameDict.at(m_phases[ip]);
     }
     else
     {
@@ -337,7 +337,7 @@ void CompositionalMultiphaseFluid::createFluid()
 
     if (eosNameDict.find(m_equationsOfState[ip]) != eosNameDict.end())
     {
-      eos.push_back(eosNameDict.at(m_equationsOfState[ip]));
+      eos[ip] = eosNameDict.at(m_equationsOfState[ip]);
     }
     else
     {
