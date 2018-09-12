@@ -93,3 +93,25 @@ To execute a serial run enter the following command from a working directory:
     path-to-geosx-bin/geosx -i path-to-xml/LaplaceFEM.xml
 
 
+    Caliper Timers
+=================================
+
+GEOSX is equipped with Caliper timers, `<https://github.com/LLNL/Caliper>`.
+We integrate Caliper into GEOSX by marking source-code sections of interest such as compuational kernels or initialization steps.
+Caliper is included in the GEOSX TPL library and is built by adding the following cmake configuration to host-config file.
+
+.. code-block:: sh
+
+   option( ENABLE_CALIPER "Enables CALIPER" On )
+
+
+The following macros may be used to annotate GEOSX
+
+
+*  GEOS_CXX_MARK_LOOP_BEGIN(loop, loopName)
+
+*  GEOS_CXX_MARK_LOOP_END(loop) CALI
+
+* GEOS_MARK_BEGIN(name)
+
+* GEOS_MARK_END(name)  
