@@ -26,11 +26,7 @@
 #ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 #define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 
-#ifndef USE_PYTHON
-#define USE_PYTHON 0
-#endif
-
-#if USE_PYTHON==1
+#ifdef GEOSX_USE_PYTHON
 // Note: the python header must be included first to avoid conflicting
 // definitions of _posix_c_source
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -154,6 +150,9 @@ public:
 
   DomainPartition * getDomainPartition();
   DomainPartition const * getDomainPartition() const;
+
+  const std::string& getProblemName() const
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getData<std::string>(viewKeys.problemName); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;

@@ -22,7 +22,7 @@
 
 #include "CompositionalMultiphaseFluid.hpp"
 
-#ifdef USE_PVT_PACKAGE
+#ifdef GEOSX_USE_PVT_PACKAGE
 #include "MultiphaseSystem/CompositionalMultiphaseSystem.hpp"
 #endif
 
@@ -54,7 +54,7 @@ CompositionalMultiphaseFluid::DeliverClone(string const & name, ManagedGroup * c
 {
   auto clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
   // TODO actually clone
-#ifdef USE_PVT_PACKAGE
+#ifdef GEOSX_USE_PVT_PACKAGE
   //clone->m_fluid = new CompositionalMultiphaseSystem(...);
 #endif
   return clone;
@@ -75,7 +75,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
 {
   // TODO read input
 
-#ifdef USE_PVT_PACKAGE
+#ifdef GEOSX_USE_PVT_PACKAGE
   std::vector<std::string> Labels = { "N2","C10","C20","H2O" };
   auto Pc = { 34e5,25.3e5,14.6e5,220.5e5 };
   auto Tc = { 126.2,622.0,782.0,647.0 };
