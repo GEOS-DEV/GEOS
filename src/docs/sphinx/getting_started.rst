@@ -124,31 +124,31 @@ As an example of annotation, we consider the following example:
    
 .. code-block:: sh
 
-void scatter() {
-  GEOSX_CXX_MARK_FUNCTION; // Mark the function. Exports "function"="scatter"
-  // ...
-}
+  void scatter() {
+    GEOSX_CXX_MARK_FUNCTION; // Mark the function. Exports "function"="scatter"
+    // ...
+  }
 
-int main(int argc, const char* argv[]){
+  int main(int argc, const char* argv[]){
 
-GEOSX_CXX_MARK_FUNCTION;
+    GEOSX_CXX_MARK_FUNCTION;
 
-GEOSX_MARK_BEGIN("setup");
-//intialization step
-GEOSX_MARK_END("setup");
+    GEOSX_MARK_BEGIN("setup");
+    //intialization step
+    GEOSX_MARK_END("setup");
 
-GEOSX_CXX_MARK_LOOP_BEGIN(elemLoop, "elemLoop");
-for(int elem = 0; i < noElements; ++i){
+    GEOSX_CXX_MARK_LOOP_BEGIN(elemLoop, "elemLoop");
+    for(int elem = 0; i < noElements; ++i){
 
-   GEOSX_CXX_MARK_LOOP_ITERATION(elemLoop,i);
-   //computation...
+       GEOSX_CXX_MARK_LOOP_ITERATION(elemLoop,i);
+       //computation...
 
-   scatter();
-}
-GEOSX_CXX_MARK_LOOP_END(elemLoop, "elemLoop");
-
-return 0;
-}
+       scatter();
+    }
+    GEOSX_CXX_MARK_LOOP_END(elemLoop, "elemLoop");
+    
+    return 0;
+  }
 
 Configuration for CALIPER is done by exporting environment variables, the simplest
 way to get started is setting the following variable
