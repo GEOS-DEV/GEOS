@@ -1,6 +1,6 @@
 message( "Entering /src/components/CMakeLists.txt")
 
-if(TRIBOL_WORLD_DIR)
+if(ENABLE_TRIBOL)
    add_definitions(-DHAVE_TRIBOLCOUPLING)
 endif()
 

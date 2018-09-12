@@ -442,15 +442,48 @@ endif()
 ################################
 # TRIBOL
 ################################
-if (EXISTS ${TRIBOL_WORLD_DIR})
-  message( "TRIBOL_WORLD_DIR = ${TRIBOL_WORLD_DIR}" )
-  include(cmake/thirdparty/FindTribolWorld.cmake)
-  blt_register_library( NAME tribolworld
-                        INCLUDES ${TRIBOL_WORLD_INCLUDE_DIRS} 
-                        LIBRARIES  ${TRIBOL_WORLD_LIBRARIES}
+if (ENABLE_TRIBOL)
+  set(TRIBOL_DIR ${GEOSX_TPL_DIR}/tribol)
+  set(VISTA_DIR ${GEOSX_TPL_DIR}/vista)
+  set(RXB_DIR ${GEOSX_TPL_DIR}/rxb)
+  set(WORLDS_CORE_DIR ${GEOSX_TPL_DIR}/worlds_core)
+  set(LLNL_GLOBALID_DIR ${GEOSX_TPL_DIR}/LLNL_GlobalID)
+
+  include(cmake/thirdparty/FindLLNL_GlobalID.cmake)
+  blt_register_library( NAME llnl_globalid
+                        INCLUDES ${LLNL_GLOBALID_INCLUDE_DIRS} 
                         TREAT_INCLUDES_AS_SYSTEM ON )
+
+  include(cmake/thirdparty/FindTribol.cmake)
+  blt_register_library( NAME tribol
+                        DEPENDS_ON axom
+                        INCLUDES ${TRIBOL_INCLUDE_DIRS} 
+                        LIBRARIES  ${TRIBOL_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  include(cmake/thirdparty/FindVista.cmake)
+  blt_register_library( NAME vista
+                        DEPENDS_ON llnl_globalid chai
+                        INCLUDES ${VISTA_INCLUDE_DIRS} 
+                        LIBRARIES  ${VISTA_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  include(cmake/thirdparty/FindRXB.cmake)
+  blt_register_library( NAME rxb
+                        DEPENDS_ON llnl_globalid mpi
+                        INCLUDES ${RXB_INCLUDE_DIRS} 
+                        LIBRARIES  ${RXB_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  include(cmake/thirdparty/FindWorldsCore.cmake)
+  blt_register_library( NAME worlds_core
+                        DEPENDS_ON llnl_globalid rxb vista mpi
+                        INCLUDES ${WORLDS_CORE_INCLUDE_DIRS} 
+                        LIBRARIES  ${WORLDS_CORE_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
 else()
-  message( "Not using tribolworld" )
+  message( "Not using tribol" )
 endif()
 
 message("Leaving SetupGeosxThirdParty.cmake\n")

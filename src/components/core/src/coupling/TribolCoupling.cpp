@@ -28,8 +28,6 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/MeshBody.hpp"
 
-#define PARALLEL USE_MPI
-#define HAVE_LLNL_GLOBALID 1
 #define GLOBALID_IS_64BIT 1
 #include "SlideWorldAdapter.h"
 
