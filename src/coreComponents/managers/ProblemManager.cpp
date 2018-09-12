@@ -794,15 +794,15 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 void ProblemManager::RunSimulation()
 {
 
-  GEOS_MARK_FUNCTION;
+  GEOSX_MARK_FUNCTION;
 
-  GEOS_MARK_BEGIN("Get domain partition");
+  GEOSX_MARK_BEGIN("Get domain partition");
   DomainPartition * domain  = getDomainPartition();
-  GEOS_MARK_END("Get domain partition");
+  GEOSX_MARK_END("Get domain partition");
 
-  GEOS_MARK_BEGIN("Event Manager");
+  GEOSX_MARK_BEGIN("Event Manager");
   m_eventManager->Run(domain);
-  GEOS_MARK_END("Event Manager");
+  GEOSX_MARK_END("Event Manager");
 
 }
 
