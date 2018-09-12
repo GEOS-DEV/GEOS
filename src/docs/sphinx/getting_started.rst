@@ -151,8 +151,9 @@ As an example of annotation, we consider the following example:
   }
 
 Configuration for CALIPER is done by exporting environment variables, the simplest
-way to get started is setting the following variable
+way to get started is setting the following variables
 
+* ``CALI_SERVICES_ENABLE=event:recorder:timestamp:trace``
 * ``CALI_CONFIG_PROFILE=flat-function-profile``
 
 We refer the reader to the full Caliper tutorial `<https://github.com/LLNL/Caliper>`, for further details.  
