@@ -172,6 +172,8 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        DomainPartition * const domain,
                                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
+
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain, blockSystem );
 
@@ -180,6 +182,7 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
 
   // apply boundary conditions to system
   ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+
 
   // call the default linear solver on the system
   SolveSystem( blockSystem,

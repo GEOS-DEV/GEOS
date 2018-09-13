@@ -951,6 +951,7 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(localIndex noElem, geosxIndex 
                                                   geosxData detF_ptr, geosxData Finv_ptr,
                                                   localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
+  GEOSX_MARK_FUNCTION;
   
   geosx::raja::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
        
@@ -1015,7 +1016,8 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(localIndex noElem, geosxIndex el
                                                 localIndex nx = 2, localIndex ny = 2, localIndex nz=2)
 {
 
-
+  GEOSX_MARK_FUNCTION;
+  
   geosx::raja::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
        
        real64 uhat_local_x[inumNodesPerElement];
@@ -1158,7 +1160,8 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex 
                                                   localIndex nx=2, localIndex ny=2, localIndex nz=2)
                                                   
 {
-
+  GEOSX_MARK_FUNCTION;
+  
   geosx::raja::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
 
 #if defined(STRUCTURED_GRID)

@@ -85,7 +85,7 @@ int main( int argc, char *argv[] )
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
   // Mark begin of "initialization" phase
-  GEOSX_MARK_BEGIN("Initialization");
+  GEOSX_MARK_BEGIN(Initialization);
 
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
@@ -107,7 +107,7 @@ int main( int argc, char *argv[] )
   problemManager.Initialize( &problemManager );
 
 
-  GEOSX_MARK_END("Initialization");
+  GEOSX_MARK_END(Initialization);
 
   problemManager.ApplyInitialConditions();
 

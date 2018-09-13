@@ -91,7 +91,7 @@ inline void HughesWinget(R2Tensor &Rot, R2SymTensor &Dadt, R2Tensor L, real64 dt
 
   real64 *Omega_data = Omega.Data();
 
-  //Omega = 0.5*(L - LT); 
+  //Omega = 0.5*(L - LT);
   Omega_data[0] = 0.5*(L_data[0] - L_data[0]);
   Omega_data[1] = 0.5*(L_data[1] - L_data[3]);
   Omega_data[2] = 0.5*(L_data[2] - L_data[6]);
@@ -107,27 +107,27 @@ inline void HughesWinget(R2Tensor &Rot, R2SymTensor &Dadt, R2Tensor L, real64 dt
 
   //Dadt = 0.5*(L + LT)*dt;
   Dadt_data[0] = L_data[0]*dt;
-  
+
   Dadt_data[1] = 0.5*(L_data[1] + L_data[3])*dt;
   Dadt_data[2] = L_data[4]*dt;
-  
+
   Dadt_data[3] = 0.5*(L_data[6] + L_data[2])*dt;
   Dadt_data[4] = 0.5*(L_data[7] + L_data[5])*dt;
   Dadt_data[5] = L_data[8] *dt;
-  
-  
+
+
   R2Tensor IpR, ImR, ImRinv;
   IpR  = Omega;
   IpR *= 0.5;
   IpR.PlusIdentity(1.0);
-  
+
   ImR  = Omega;
   ImR *= -0.5;
-  ImR.PlusIdentity(1.0);                           
-  
+  ImR.PlusIdentity(1.0);
+
   ImRinv.Inverse(ImR);
-  
-  Rot.AijBjk(ImRinv,ImR);  
+
+  Rot.AijBjk(ImRinv,ImR);
 }
 
 inline void LinearElasticIsotropic_Kernel(R2SymTensor &Dadt, R2SymTensor &TotalStress, R2Tensor &Rot,
@@ -136,18 +136,18 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor &Dadt, R2SymTensor &TotalS
                                           array_view<R2SymTensor,1> devStress)
 {
   real64 volumeStrain = Dadt.Trace();
-  TotalStress = Dadt; 
+  TotalStress = Dadt;
 
   meanStress[i] += volumeStrain * bulkModulus;
   TotalStress *= 2.0 * shearModulus;
-  
+
   devStress[i] += TotalStress;
-  
+
   TotalStress.QijAjkQlk(devStress[i],Rot);
   devStress[i] = TotalStress;
-  
+
   TotalStress.PlusIdentity(meanStress[i]);
-  
+
 }
 
 
@@ -489,7 +489,7 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
                                              DomainPartition * domain )
 {
   GEOSX_MARK_FUNCTION;
-  
+
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
@@ -521,7 +521,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   GEOSX_MARK_FUNCTION;
 
-  
+
   GEOSX_MARK_BEGIN(initialization);
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -550,16 +550,16 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   static geosxData acc_y = new double[numNodes];
   static geosxData acc_z = new double[numNodes];
 
-  static geosxData uhat_x = new double[numNodes]; 
-  static geosxData uhat_y = new double[numNodes]; 
-  static geosxData uhat_z = new double[numNodes]; 
+  static geosxData uhat_x = new double[numNodes];
+  static geosxData uhat_y = new double[numNodes];
+  static geosxData uhat_z = new double[numNodes];
 
-  static geosxData u_x = new double[numNodes]; 
-  static geosxData u_y = new double[numNodes]; 
+  static geosxData u_x = new double[numNodes];
+  static geosxData u_y = new double[numNodes];
   static geosxData u_z = new double[numNodes];
 
   static bool setIc = true;
-  if(setIc){    
+  if(setIc){
     std::memset(acc_x, 0, numNodes*sizeof(double));
     std::memset(acc_y, 0, numNodes*sizeof(double));
     std::memset(acc_z, 0, numNodes*sizeof(double));
@@ -578,18 +578,18 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOS_ERROR("Invalid data layout");
 #endif
 
-  GEOSX_MARK_END(initialization);  
+  GEOSX_MARK_END(initialization);
 
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
   bcManager->ApplyBoundaryConditionToField( time_n,
                                             domain,
                                             "nodeManager",
                                             keys::Acceleration );
-#endif    
+#endif
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
 
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc_x, acc_y, acc_z,
@@ -597,7 +597,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #endif
 
 
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
   //  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
 
   bcManager->ApplyBoundaryConditionToField( time_n,
@@ -609,14 +609,14 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   //                     dydx, dy,   y, dx, length
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
   SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint(vel,uhat_x,uhat_y,uhat_z,
                                                u_x, u_y, u_z, dt, numNodes );
 #endif
 
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
   //  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
   //                                     nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
 
@@ -636,7 +636,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                                 });
 
 
-#endif  
+#endif
 
 
   FORALL_NODES( a, 0, numNodes )
@@ -646,8 +646,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #else
     acc_x[a] = 0;
     acc_y[a] = 0;
-    acc_z[a] = 0; 
-#endif    
+    acc_z[a] = 0;
+#endif
   } END_FOR
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
@@ -686,30 +686,30 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
       localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
 
       //Storage for holding intermediate results
-#if defined(EXTERNAL_KERNELS) && defined(THREE_KERNEL_UPDATE) 
+#if defined(EXTERNAL_KERNELS) && defined(THREE_KERNEL_UPDATE)
       static geosxData Dadt = new double[localMatSz*inumQuadraturePoints*elementList.size()];
       static geosxData Rot  = new double[localMatSz*inumQuadraturePoints*elementList.size()];
       static geosxData detF = new double[inumQuadraturePoints*elementList.size()];
       static geosxData inverseF = new double[localMatSz*inumQuadraturePoints*elementList.size()];
 #endif
-      
+
       //
       //Internal GEOSX Kernel
       //
       GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-#if !defined(EXTERNAL_KERNELS)         
-      
+#if !defined(EXTERNAL_KERNELS)
+
       ::geosx::raja::forall_in_range<elemPolicy>
         (0, cellBlock->size(), GEOSX_LAMBDA ( globalIndex k) mutable {
 
 
           //Does not work inside a lambda
           //GEOSX_MARK_LOOP_ITERATION(elemLoop, i);
-          
+
           R1Tensor uhat_local[inumNodesPerElement];
           R1Tensor u_local[inumNodesPerElement];
           R1Tensor f_local[inumNodesPerElement];
-                    
+
           for(localIndex i=0; i<inumNodesPerElement; ++i) f_local[i] = 0.0;
 
           arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
@@ -717,7 +717,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           CopyGlobalToLocal( nodelist,
                              u, uhat,
                              u_local, uhat_local, numNodesPerElement );
-          
+
         for(auto q = 0 ; q<numQuadraturePoints ; ++q)
         {
 
@@ -767,24 +767,24 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           R2SymTensor Dadt;
           HughesWinget(Rot, Dadt, L, dt);
           //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
-          
+
           constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
 
           R2SymTensor TotalStress;
           TotalStress = devStress[er][esr][0][k][q];
           TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
 
-          //----------------------         
+          //----------------------
           Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, inumNodesPerElement, f_local);
-          
+
         }//quadrature loop
 
-        
+
         AddLocalToGlobal(nodelist, f_local, acc, numNodesPerElement);
 
 
       }); //Element loop
-#else// defined(EXTERNAL_KERNELS) 
+#else// defined(EXTERNAL_KERNELS)
 
       //
       // Setup for external kernels
@@ -944,9 +944,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 GEOSX_MARK_LOOP_BEGIN(computeForce,computeForce);
 FORALL_NODES( a, 0, numNodes )
 {
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)    
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
   acc[a] /=mass[a];
-#else    
+#else
   acc_x[a] /=mass[a];
   acc_y[a] /=mass[a];
   acc_z[a] /=mass[a];
@@ -956,11 +956,11 @@ GEOSX_MARK_LOOP_END(computeForce);
 
 
 //Integration::OnePoint( acc, vel, dt/2, numNodes );
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)      
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
-#else  
+#else
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
-#endif  
+#endif
 
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
 //bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
@@ -1104,7 +1104,7 @@ ImplicitStepSetup( real64 const& time_n,
 {
 
   GEOSX_MARK_FUNCTION;
-  
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
 
@@ -1132,6 +1132,8 @@ ImplicitStepSetup( real64 const& time_n,
         disp[a][i] += uhatTilde[a][i];
       }
     }
+
+
   }
   else if( this->m_timeIntegrationOption == timeIntegrationOption::QuasiStatic  )
   {
@@ -1172,7 +1174,7 @@ void SolidMechanics_LagrangianFEM::ImplicitStepComplete( real64 const & time_n,
 {
 
   GEOSX_MARK_FUNCTION;
-    
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
@@ -1217,6 +1219,7 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
                                                                  localIndex_array& localIndices,
                                                                  localIndex offset )
 {
+  GEOSX_MARK_FUNCTION;
 //  dim =
 // domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
   int dim = 3;
@@ -1278,6 +1281,8 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
 void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domain,
                                                    EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
 
@@ -1313,7 +1318,7 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
 
   // create epetra map
 
-
+  GEOSX_MARK_BEGIN(CreateEpetraMap);
   Epetra_Map * const rowMap = blockSystem->SetRowMap( BlockIDs::displacementBlock,
                                                       std::make_unique<Epetra_Map>( dim*n_global_rows,
                                                                                     dim*n_local_rows,
@@ -1323,6 +1328,7 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
   Epetra_FECrsGraph * const sparsity = blockSystem->SetSparsity( BlockIDs::displacementBlock,
                                                                  BlockIDs::displacementBlock,
                                                                  std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
+  GEOSX_MARK_END(CreateEpetraMap);
 
 
 
@@ -1382,6 +1388,8 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
 void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * const domain,
                                                        Epetra_FECrsGraph * const sparsity )
 {
+  GEOSX_MARK_FUNCTION;
+
   int dim=3;
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
@@ -1434,6 +1442,8 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
                                                 real64 const time_n,
                                                 real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -1919,6 +1929,7 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
                                                         real64 const scalingFactor,
                                                         DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::displacementBlock );
@@ -1977,6 +1988,8 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 void SolidMechanics_LagrangianFEM::SolveSystem( EpetraBlockSystem * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
+  GEOSX_MARK_FUNCTION;
+
   Epetra_FEVector * const
   solution = blockSystem->GetSolutionVector( BlockIDs::displacementBlock );
 
@@ -1986,9 +1999,11 @@ void SolidMechanics_LagrangianFEM::SolveSystem( EpetraBlockSystem * const blockS
 
   solution->Scale(0.0);
 
+  GEOSX_MARK_BEGIN(linearSolve);
   m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
                                                  params,
                                                  BlockIDs::displacementBlock );
+  GEOSX_MARK_END(linearSolve);
 
   if( verboseLevel() >= 2 )
   {
