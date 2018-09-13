@@ -59,7 +59,7 @@ void testLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 300;
+  globalIndex n = 100;
   globalIndex N = n*n;
 
   ParallelMatrix testMatrix;
@@ -109,7 +109,7 @@ void testLaplaceOperator()
       nnz++;
     }
 
-    real64 temp = 1.;
+    real64 temp = 0.25;
 
     // Set the values for row i
     testMatrix.insert(i,nnz,values,cols);
@@ -181,7 +181,6 @@ void testLaplaceOperator()
   // Vector of ones for multiplication (x)
   x.create(ones);
   // Vector of zeros for iterative and direct solutions
-  ParallelVector solIterative(b);
   ParallelVector solIterativeML(b);
   ParallelVector solDirect(b);
   // Residual vector
@@ -190,6 +189,7 @@ void testLaplaceOperator()
   // Matrix/vector multiplication
   testMatrix.multiply(x, b);
 
+  ParallelVector solIterative(b);
   ParallelVector solCG(b);
   ParallelVector bCG(b);
 
@@ -219,7 +219,7 @@ void testLaplaceOperator()
   LinearSolver solver = LinearSolver();
 
   // AztecOO iterative solver
-  solver.solve(testMatrix,solIterative,b,500,1e-8);
+  solver.solve(testMatrix,solIterative,b,1000,1e-8);
   real64 normIterativeSol;
   solIterative.normInf(normIterativeSol);
   EXPECT_TRUE( std::fabs(normIterativeSol - 1) <= 1e-5 );
@@ -279,7 +279,7 @@ void testLaplaceOperator()
   CG<TrilinosInterface>( testMatrix, solCG, bCG, preconditioner );
 
   //solCG.print();
-
+  //solIterative.print();
   MPI_Finalize();
 
 }
