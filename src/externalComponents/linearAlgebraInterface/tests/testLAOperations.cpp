@@ -29,7 +29,9 @@
 #include <mpi.h>
 
 #include "TrilinosInterface.hpp"
+//#include "HypreInterface.hpp"
 #include "BlockMatrixView.hpp"
+#include "../src/BlockLinearSolvers.hpp"
 
 #include "common/DataTypes.hpp"
 
@@ -62,6 +64,9 @@ void testLaplaceOperator()
 
   ParallelMatrix testMatrix;
   testMatrix.create(comm,N,5);
+
+  ParallelMatrix preconditioner;
+  preconditioner.create(comm,N,1);
 
   // Allocate arrays to fill dummy 2D Laplace (cartesian) matrix
   real64 values[5];
@@ -104,11 +109,16 @@ void testLaplaceOperator()
       nnz++;
     }
 
+    real64 temp = 1.;
+
     // Set the values for row i
     testMatrix.insert(i,nnz,values,cols);
+    preconditioner.insert(i,1,&temp,&i);
+
   }
 
   testMatrix.close();
+  preconditioner.close();
 
   integer numValRow0,numValRow1,numValRown;
   std::vector<real64> vecValuesRow0(5),vecValuesRow1(5),vecValuesRown(5);
@@ -180,6 +190,9 @@ void testLaplaceOperator()
   // Matrix/vector multiplication
   testMatrix.multiply(x, b);
 
+  ParallelVector solCG(b);
+  ParallelVector bCG(b);
+
   // Test dot product
   real64 dotTest;
   x.dot(x,&dotTest);
@@ -237,20 +250,20 @@ void testLaplaceOperator()
 
   BlockMatrixView<TrilinosInterface> testBlockMatrix;
 
-  ParallelMatrix testMatrix2(testMatrix);
-  ParallelVector solDirect2(solDirect);
+  ParallelMatrix testMatrix01(testMatrix);
+  ParallelVector solDirect1(solDirect);
 
-  testMatrix2.scale(2.);
-  solDirect2.scale(-0.5);
+  testMatrix01.scale(2.);
+  solDirect1.scale(-0.5);
 
   ParallelVector * testrhs0 = nullptr;
   ParallelMatrix * testBlock00 = nullptr;
 
   testBlockMatrix.setBlock(0,0,&testMatrix);
-  testBlockMatrix.setBlock(0,1,&testMatrix2);
+  testBlockMatrix.setBlock(0,1,&testMatrix01);
 
   testBlockMatrix.setSolution(0,&solDirect);
-  testBlockMatrix.setSolution(1,&solDirect2);
+  testBlockMatrix.setSolution(1,&solDirect1);
 
   testBlockMatrix.setRhs(0,&r);
 
@@ -262,6 +275,10 @@ void testLaplaceOperator()
   real64 normBlockProduct;
   testrhs0->normInf(normBlockProduct);
   EXPECT_TRUE( std::fabs(normBlockProduct) <= 1e-8 );
+
+  CG<TrilinosInterface>( testMatrix, solCG, bCG, preconditioner );
+
+  //solCG.print();
 
   MPI_Finalize();
 

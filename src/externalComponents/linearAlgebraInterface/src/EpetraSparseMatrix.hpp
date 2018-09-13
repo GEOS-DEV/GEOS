@@ -256,14 +256,14 @@ public:
    * @brief Matrix/Vector multiplication.
    */
   void multiply( EpetraVector const &src,
-                 EpetraVector &dst );
+                 EpetraVector &dst ) const;
 
   /**
    * @brief Compute residual r = Ax - b.
    */
   void residual( EpetraVector const &x,
                  EpetraVector const &b,
-                 EpetraVector &res );
+                 EpetraVector &res ) const;
 
   /**
    * @brief Compute "gaxpy" res = alpha*A*x + beta*b.
