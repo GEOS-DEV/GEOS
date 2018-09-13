@@ -87,11 +87,12 @@ public:
 
   virtual ~CellBlock() override;
 
+  template < class ARRAY >
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,
-                     localIndex_array& nodeIndicies) const;
+                     ARRAY& nodeIndicies) const;
 
-  R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
+  R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager) const;
 
 
 
@@ -175,6 +176,232 @@ private:
 //  string & m_elementType;
 
 };
+
+
+template< class ARRAY >
+void CellBlock::GetFaceNodes( const localIndex elementIndex,
+                              const localIndex localFaceIndex,
+                              ARRAY& nodeIndicies) const
+{
+  // get nodelist for this element
+  arrayView1d<localIndex const> const elemToNodeMap = m_toNodesRelation[elementIndex];
+
+  // resize the nodeIndicies based on element type (this is wrong for some types
+  // of elements)
+  nodeIndicies.resize(4);
+
+//  if (!m_elementGeometryID.compare(0, 4, "C3D8"))
+  {
+    if (localFaceIndex == 0)
+    {
+      nodeIndicies[0] = elemToNodeMap[0];
+      nodeIndicies[1] = elemToNodeMap[1];
+      nodeIndicies[2] = elemToNodeMap[5];
+      nodeIndicies[3] = elemToNodeMap[4];
+    }
+    else if (localFaceIndex == 1)
+    {
+      nodeIndicies[0] = elemToNodeMap[0];
+      nodeIndicies[1] = elemToNodeMap[2];
+      nodeIndicies[2] = elemToNodeMap[3];
+      nodeIndicies[3] = elemToNodeMap[1];
+    }
+    else if (localFaceIndex == 2)
+    {
+      nodeIndicies[0] = elemToNodeMap[0];
+      nodeIndicies[1] = elemToNodeMap[4];
+      nodeIndicies[2] = elemToNodeMap[6];
+      nodeIndicies[3] = elemToNodeMap[2];
+    }
+    else if (localFaceIndex == 3)
+    {
+      nodeIndicies[0] = elemToNodeMap[1];
+      nodeIndicies[1] = elemToNodeMap[3];
+      nodeIndicies[2] = elemToNodeMap[7];
+      nodeIndicies[3] = elemToNodeMap[5];
+    }
+    else if (localFaceIndex == 4)
+    {
+      nodeIndicies[0] = elemToNodeMap[3];
+      nodeIndicies[1] = elemToNodeMap[2];
+      nodeIndicies[2] = elemToNodeMap[6];
+      nodeIndicies[3] = elemToNodeMap[7];
+    }
+    else if (localFaceIndex == 5)
+    {
+      nodeIndicies[0] = elemToNodeMap[4];
+      nodeIndicies[1] = elemToNodeMap[5];
+      nodeIndicies[2] = elemToNodeMap[7];
+      nodeIndicies[3] = elemToNodeMap[6];
+    }
+
+  }
+//  else if (!m_elementGeometryID.compare(0, 4, "C3D6"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[5];
+//      nodeIndicies[3] = elemToNodeMap[4];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[3];
+//      nodeIndicies[3] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[4];
+//      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
+//    }
+//    else if (localFaceIndex == 3)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[2] = elemToNodeMap[5];
+//      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
+//    }
+//    else if (localFaceIndex == 4)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[2] = elemToNodeMap[5];
+//      nodeIndicies[3] = elemToNodeMap[4];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "C3D4"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[3];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[2] = elemToNodeMap[2];
+//    }
+//    else if (localFaceIndex == 3)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[3];
+//    }
+//  }
+//
+//  else if ( !m_elementGeometryID.compare(0,4,"CPE2") )
+//  {
+//    if( localFaceIndex == 0 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//  }
+//
+//  else if ( !m_elementGeometryID.compare(0,4,"CPE3") )
+//  {
+//    if( localFaceIndex == 0 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//    else if( localFaceIndex == 1 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//    }
+//    else if( localFaceIndex == 2 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[0];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "CPE4"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[3];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//    }
+//    else if (localFaceIndex == 3)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[0];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[0];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 3, "S4R"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[2];
+//      nodeIndicies[3] = elemToNodeMap[3];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "TRSH"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[2];
+//    }
+//  }
+//
+//  else
+//  {
+//    GEOS_ERROR("Error.  Don't know what kind of element this is and cannot
+// build faces.");
+//  }
+
+}
 
 
 
