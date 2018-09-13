@@ -66,7 +66,7 @@ void RestartOutput::Execute(real64 const& time_n,
 
 #ifdef GEOSX_USE_ATK
   char fileName[200] = {0};
-  sprintf(fileName, "%s_%s__%03d_%09d", problemName.data(), "restart", eventCount, cycleNumber);
+  sprintf(fileName, "%s_%s__%03d_%09d", problemManager->getProblemName().c_str(), "restart", eventCount, cycleNumber);
 
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
