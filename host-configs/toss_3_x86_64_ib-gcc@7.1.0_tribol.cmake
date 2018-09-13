@@ -24,6 +24,9 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
 #set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
 set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
+get_filename_component(ABS_TPL_ROOT_DIR ${GEOSX_TPL_ROOT_DIR} ABSOLUTE)
+get_filename_component( INSTALL_DIR_NAME "${CMAKE_INSTALL_PREFIX}" NAME)
+set(GEOSX_TPL_DIR ${ABS_TPL_ROOT_DIR}/${INSTALL_DIR_NAME} CACHE PATH "")
 set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
 set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
 
