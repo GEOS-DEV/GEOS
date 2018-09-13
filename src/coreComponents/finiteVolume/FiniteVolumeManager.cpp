@@ -97,7 +97,7 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
                                 localIndex const k )->void
   {
     localIndex const * const nodeList = elemsToNodes[er][esr][k];
-    localIndex const nodeListSize = elemsToNodes[er][esr].get().size();
+    localIndex const nodeListSize = elemsToNodes[er][esr].get().size(1);
     R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
 
     R1Tensor & center = elemCenter[er][esr][k];
