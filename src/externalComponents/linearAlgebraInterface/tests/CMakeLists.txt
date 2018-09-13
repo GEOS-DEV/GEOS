@@ -19,6 +19,6 @@ foreach(test ${linearAlgebraInterface_tests})
 
   blt_add_test( NAME ${test_name}
                 COMMAND ${test_name}
-                NUM_MPI_TASKS 2 )
+                NUM_MPI_TASKS 1 )
 
 endforeach()

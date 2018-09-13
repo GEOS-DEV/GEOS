@@ -98,7 +98,7 @@ void CG( typename LAI::ParallelMatrix const &A,
     // Convergence check
     rk.norm2(convCheck);
 
-    if (convCheck < 1e-6)
+    if (convCheck < 1e-8)
     {
       numIt = k;
       break;
@@ -112,6 +112,8 @@ void CG( typename LAI::ParallelMatrix const &A,
 
     // Update pk
     pk.update(1.0,zk,beta);
+
+    std::cout << k << ", " << convCheck << std::endl;
 
   }
 

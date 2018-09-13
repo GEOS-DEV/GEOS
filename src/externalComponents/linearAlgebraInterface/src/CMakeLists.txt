@@ -2,7 +2,7 @@
 # Specify all headers
 #
 set( linearAlgebraInterface_headers
-     LinearSolvers.hpp
+     BlockLinearSolvers.hpp
      BlockMatrixView.hpp
      EpetraSparseMatrix.hpp
      EpetraVector.hpp
