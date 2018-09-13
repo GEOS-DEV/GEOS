@@ -33,10 +33,6 @@
 #include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
-#ifdef USE_OPENMP
-#include <omp.h>
-#endif
-
 using namespace geosx;
 using namespace dataRepository;
 #ifdef GEOSX_USE_ATK

@@ -28,8 +28,7 @@
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
 
-
-#ifdef USE_OPENMP
+#if defined(RAJA_ENABLE_OPENMP)
 #include <omp.h>
 #endif
 
@@ -120,7 +119,6 @@ int main( int argc, char *argv[] )
 
   std::cout << std::endl << "Running simulation:" << std::endl;
 
-  GEOSX_MARK_BEGIN("RunSimulation");
   gettimeofday(&tim, nullptr);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
@@ -128,7 +126,6 @@ int main( int argc, char *argv[] )
   gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  GEOSX_MARK_END("RunSimulation");
 
   gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);

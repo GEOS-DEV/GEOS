@@ -488,6 +488,8 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
                                              const int cycleNumber,
                                              DomainPartition * domain )
 {
+  GEOSX_MARK_FUNCTION;
+  
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
@@ -495,7 +497,7 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
-  {
+    {
 
     ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 
@@ -517,6 +519,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                                    DomainPartition * const domain )
 {
 
+  GEOSX_MARK_FUNCTION;
+
+  
   GEOSX_MARK_BEGIN(initialization);
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -575,27 +580,23 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   GEOSX_MARK_END(initialization);  
 
-  GEOSX_MARK_BEGIN(BC1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   bcManager->ApplyBoundaryConditionToField( time_n,
                                             domain,
                                             "nodeManager",
                                             keys::Acceleration );
 #endif    
-  GEOSX_MARK_END(BC1);
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  GEOSX_MARK_LOOP_BEGIN(onepointloop,onepointloop1);
+
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc_x, acc_y, acc_z,
                                                 vel, dt/2, numNodes );
-#endif  
-  GEOSX_MARK_LOOP_END(onepointloop);
+#endif
 
 
-  GEOSX_MARK_BEGIN(BC2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   //  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
 
@@ -603,24 +604,18 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                             domain,
                                             "nodeManager",
                                             keys::Velocity );
-
-#endif  
-  GEOSX_MARK_END(BC2);
+#endif
 
 
   //                     dydx, dy,   y, dx, length
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-  GEOSX_MARK_LOOP_BEGIN(onepointloop2,onepointloop2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint(vel,uhat_x,uhat_y,uhat_z,
                                                u_x, u_y, u_z, dt, numNodes );
-#endif  
-  GEOSX_MARK_LOOP_END(onepointloop2);
+#endif
 
-
-  GEOSX_MARK_BEGIN(BC3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   //  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
   //                                     nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
@@ -642,10 +637,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 #endif  
-  GEOSX_MARK_END(BC3);
 
-  //Set memory to zero
-  GEOSX_MARK_LOOP_BEGIN(memset,memset);
 
   FORALL_NODES( a, 0, numNodes )
   {
@@ -657,7 +649,6 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     acc_z[a] = 0; 
 #endif    
   } END_FOR
-  GEOSX_MARK_LOOP_END(memset);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
   meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64> >("MeanStress",
@@ -701,16 +692,20 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
       static geosxData detF = new double[inumQuadraturePoints*elementList.size()];
       static geosxData inverseF = new double[localMatSz*inumQuadraturePoints*elementList.size()];
 #endif
-
+      
       //
       //Internal GEOSX Kernel
       //
       GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
-
+      
       ::geosx::raja::forall_in_range<elemPolicy>
         (0, cellBlock->size(), GEOSX_LAMBDA ( globalIndex k) mutable {
 
+
+          //Does not work inside a lambda
+          //GEOSX_MARK_LOOP_ITERATION(elemLoop, i);
+          
           R1Tensor uhat_local[inumNodesPerElement];
           R1Tensor u_local[inumNodesPerElement];
           R1Tensor f_local[inumNodesPerElement];
@@ -961,22 +956,17 @@ GEOSX_MARK_LOOP_END(computeForce);
 
 
 //Integration::OnePoint( acc, vel, dt/2, numNodes );
-GEOSX_MARK_LOOP_BEGIN(onepointloop3,onepointloop3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)      
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
 #else  
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
 #endif  
-GEOSX_MARK_LOOP_END(onepointloop3);
 
-
-GEOSX_MARK_BEGIN(BC4);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
 //bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
 bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
 
 #endif
-GEOSX_MARK_END(BC4);
 
 std::map<string, string_array > fieldNames;
 fieldNames["node"].push_back("Velocity");
@@ -1113,6 +1103,8 @@ ImplicitStepSetup( real64 const& time_n,
                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
 
+  GEOSX_MARK_FUNCTION;
+  
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
 
@@ -1178,6 +1170,9 @@ void SolidMechanics_LagrangianFEM::ImplicitStepComplete( real64 const & time_n,
                                                              real64 const & dt,
                                                              DomainPartition * const domain)
 {
+
+  GEOSX_MARK_FUNCTION;
+    
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();

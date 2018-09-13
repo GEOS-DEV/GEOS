@@ -21,6 +21,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -200,6 +201,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                            DomainPartition * const domain,
                                            systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
   real64 stepDt = dt;

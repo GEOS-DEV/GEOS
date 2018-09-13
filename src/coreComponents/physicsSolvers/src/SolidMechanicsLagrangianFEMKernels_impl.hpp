@@ -23,6 +23,7 @@
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ShapeFun_impl.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ConstitutiveUpdate_impl.hpp"
 #include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/TimingMacros.hpp"
 
 /*
   Collection of Solid Mechanics Kernels
@@ -1215,6 +1216,7 @@ template<typename T, typename U>
 void OnePoint(T const & dydx, U & y,
               real64 const dx,
               localIndex const length){
+  GEOSX_MARK_FUNCTION;
   
   FORALL( a, 0, length )
   {
@@ -1234,9 +1236,10 @@ void OnePoint( T const dydx_0,
                U &  y,
                real64 const dx,
                localIndex const length )
-{  
+{
+  GEOSX_MARK_FUNCTION;
   FORALL( a, 0, length )
-  {
+  {  
     y[a][0] += dx*dydx_0[a];
     y[a][1] += dx*dydx_1[a];
     y[a][2] += dx*dydx_2[a];
@@ -1250,6 +1253,8 @@ template<typename T, typename U>
 void OnePoint(U dydx, T dy, T y,
               real64 const dx, localIndex const length){
 
+  GEOSX_MARK_FUNCTION;
+ 
   FORALL( a, 0, length ) {
       
       dy[a][0] = dydx[a][0] * dx;
@@ -1268,6 +1273,8 @@ void OnePoint(U dydx,
               T y_1, T y_2, T y_3,
               real64 const dx, localIndex const length){
 
+  GEOSX_MARK_FUNCTION;
+  
   geosx::raja::forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
       
     dy_1[a] = dydx[a][0] * dx;

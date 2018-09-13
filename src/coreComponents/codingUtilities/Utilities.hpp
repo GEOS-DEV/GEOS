@@ -383,10 +383,9 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
   }
 }
 
-//01-22-2018 - Hack, we will have to fix. 
-#ifdef USE_OPENMP
+//01-22-2018 - Hack, we will have to fix. - TODO: REMOVE... 
 template<>
-inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localIndex* __restrict__ const globalToLocalRelation,
+inline void AddLocalToGlobal<R1Tensor,atomicPolicy>( const localIndex* __restrict__ const globalToLocalRelation,
                                          R1Tensor const * __restrict__ const localField,
                                          R1Tensor * __restrict__ const globalField,
                                          localIndex const N )
@@ -402,7 +401,6 @@ inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localInde
         }
     }
 }
-#endif
 
 template<typename atomicPol=atomicPolicy, typename T, typename U> 
 inline void AddLocalToGlobal(const arrayView1d<const T> globalToLocalRelation,
