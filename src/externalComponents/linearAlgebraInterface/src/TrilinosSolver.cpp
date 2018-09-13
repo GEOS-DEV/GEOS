@@ -32,19 +32,21 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
 {
   Epetra_LinearProblem problem( Mat.getPointer(), sol.getPointer(), rhs.getPointer());
   AztecOO solver( problem );
-  solver.SetAztecOption( AZ_solver, AZ_gmres );
+  solver.SetAztecOption( AZ_solver, AZ_cg );
   if( Prec != nullptr )
   {
     solver.SetPrecOperator( Prec.get());
   }
   else
   {
-    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
-    solver.SetAztecParam( AZ_ilut_fill, 5.0 );
+    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
+    solver.SetAztecOption( AZ_conv, AZ_noscaled );
+//    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
+//    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
+//    solver.SetAztecParam( AZ_ilut_fill, 5.0 );
   }
-  solver.SetAztecOption( AZ_output, 0 );
-  solver.Iterate( Mat.getPointer(), sol.getPointer(), rhs.getPointer(), max_iter, newton_tol );
+  //solver.SetAztecOption( AZ_output, 0 );
+  solver.Iterate( max_iter, newton_tol );
 }
 
 /**
