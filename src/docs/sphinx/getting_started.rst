@@ -114,7 +114,7 @@ In particular, the following macros may be used to annotate GEOSX.
 
 * ``GEOSX_CXX_MARK_LOOP_BEGIN(loop, loopName)`` - Marks the start of a loop.
 
-* ``GEOSX_CXX_MARK_LOOP_ITERATION`` - Marks a loop iteration.
+* ``GEOSX_CXX_MARK_LOOP_ITERATION`` - Marks a loop iteration. **WARNING: Not supported in RAJA kernels**
 
 *  ``GEOSX_CXX_MARK_LOOP_END(loop)`` - Marks end of a loop.
 
