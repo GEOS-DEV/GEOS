@@ -55,7 +55,7 @@ int main( int argc, char *argv[] )
   int rank;
   MPI_Init(&argc,&argv);
 
-#if 1
+#if HAVE_TRIBOLCOUPLING
   std::string cmdline ;
   // Combine the command line arguments into a single string.
   for (int i = 0 ; i < argc ; ++i) {

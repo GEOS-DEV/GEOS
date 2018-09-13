@@ -56,6 +56,7 @@ public:
 };
 
 } /* namespace geosx */
+
 #endif
 
 #endif /* SRC_COMPONENTS_CORE_SRC_TRIBOLCOUPLING_HPP_ */
