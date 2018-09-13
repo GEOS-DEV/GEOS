@@ -274,9 +274,7 @@ public:
     return 0;
   }
 
-
-
-
+  void CreateSet( const std::string& newSetName );
 
   /// builds a new set on this object given another objects set and the map
   // between them
