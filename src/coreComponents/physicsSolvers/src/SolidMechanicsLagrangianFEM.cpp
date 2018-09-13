@@ -454,8 +454,8 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
 
       for( localIndex k=0 ; k < cellBlock->size() ; ++k )
       {
-        arrayView1d<localIndex const> const nodeList = elemsToNodes[k];
-        arrayView1d<real64 const> detJq = detJ[k];
+        localIndex const * const nodeList = elemsToNodes[k];
+        real64 const * detJq = detJ[k];
         for( localIndex q=0 ; q<constitutiveMap.second.size(1) ; ++q )
         {
           mass[nodeList[q]] += rho[er][esr][0][k][q] * detJq[q];
@@ -717,7 +717,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
         r1_array f_local( numNodesPerElement );
 
         f_local = R1Tensor(0.0);
-        arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
+        localIndex const * const nodelist = elemsToNodes[k];
 
         CopyGlobalToLocal( nodelist,
                            u, uhat,
@@ -1411,7 +1411,7 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
-          arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
+          localIndex const * const localNodeIndices = elemsToNodes[k];
 
           for( localIndex a=0 ; a<numNodesPerElement ; ++a )
           {
@@ -1524,7 +1524,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
         if(elemGhostRank[k] < 0)
         {
-          arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
+          localIndex const * const localNodeIndices = elemsToNodes[k];
 
           for( localIndex a=0 ; a<numNodesPerElement ; ++a)
           {
