@@ -143,7 +143,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
         {
           // get the nodes associated with the local face
           subRegion->GetFaceNodes( ke, kelf, tempNodeList );
-          FixedOneToManyRelation & elems_to_faces = subRegion->faceList();
+          FixedOneToManyRelation & elemsToFaces = subRegion->faceList();
 
           //Special treatment for the triangle faces of prisms.
           if (tempNodeList[tempNodeList.size() - 1] == std::numeric_limits<localIndex>::max())
@@ -193,7 +193,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
               // add the face to the elementToFaceMap for the element
               // region.
-              elems_to_faces[ke][kelf] = existingFaceIndex;
+              elemsToFaces[ke][kelf] = existingFaceIndex;
 
               // break the loop
               break;
@@ -213,14 +213,12 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
             // and add the face to facesByLowestNode[]
             matching_faces.push_back(curFace);
 
-            // omp_unset_lock(&matching_faces_lock);
-
             elemRegionList[curFace][0] = kReg;
             elemSubRegionList[curFace][0] = kSubReg;
             elemList[curFace][0] = ke;
 
             // add the face to the elementToFaceMap
-            elems_to_faces[ke][kelf] = curFace;
+            elemsToFaces[ke][kelf] = curFace;
           }
         }
       }
@@ -363,10 +361,6 @@ void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
   const indexType max_face_nodes = getMaxFaceNodes();
   constexpr int MAX_FACE_NODES = 9;
   GEOS_ASSERT( max_face_nodes <= MAX_FACE_NODES, "More nodes on a face than expected!" );
-
-  // array1d<R1Tensor const*> face_coords(max_face_nodes);
-  // array1d<std::pair<realT, int>> thetaOrder(max_face_nodes);
-  // array1d<localIndex> tempFaceNodes(max_face_nodes);
 
   #pragma omp parallel for
   for(localIndex kf =0 ; kf < size() ; ++kf )
