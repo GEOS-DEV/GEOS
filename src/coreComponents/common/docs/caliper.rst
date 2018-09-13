@@ -21,7 +21,7 @@ In particular, the following macros may be used to annotate GEOSX.
 
 * ``GEOSX_MARK_END(name)`` - Marks end of user defined code region.
 
-* ``GEOSX_CXX_MARK_LOOP_BEGIN(loop, loopName)`` - Marks the start of a loop.
+* ``GEOSX_CXX_MARK_LOOP_BEGIN(loop, loopName)`` - Marks the start of a loop. **Will not work with a lambda which captures by reference**
 
 * ``GEOSX_CXX_MARK_LOOP_ITERATION`` - Marks a loop iteration.
 
