@@ -184,12 +184,6 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     eventCount = subEvent->GetExecutionOrder(eventCount);
   });
 
-  // Set the maximum number of sub-events
-  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
-  {
-    subEvent->SetExecutionPosition(eventCount);
-  });
-
   // Run problem
   while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
