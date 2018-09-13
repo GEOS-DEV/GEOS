@@ -48,6 +48,9 @@ SolverBase::SolverBase( std::string const & name,
     m_gravityVector=*globalGravityVector();
   }
 
+  // This sets a flag to indicate that this object increments time
+  this->SetTimestepBehavior(1);
+
 //  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
 
 }

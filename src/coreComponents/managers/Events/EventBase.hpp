@@ -139,7 +139,15 @@ public:
 
 
   /// This method is used to count the number of events/sub-events
-  integer GetExecutionOrder(integer lastCount);
+  void GetExecutionOrder(array1d<integer> & eventCounters);
+
+  /**
+   * This method is used to determine how to handle the timestamp for an event
+   * If the event occurs after anything targeting a SolverBase object, then
+   * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
+   * will be time + dt.
+   */
+  void SetPostSolverEventFlag(array1d<integer> & eventCounters);
 
 
   /// A pointer to the optional event target
@@ -157,6 +165,8 @@ public:
     dataRepository::ViewKey allowSuperstep = { "allowSuperstep" };
     dataRepository::ViewKey allowSubstep = { "allowSubstep" };
     dataRepository::ViewKey substepFactor = { "substepFactor" };
+
+    dataRepository::ViewKey isPostTimeStep = { "isPostTimeStep" };
   } viewKeys;
 
   ///Catalog interface

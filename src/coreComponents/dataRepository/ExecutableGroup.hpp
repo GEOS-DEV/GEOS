@@ -76,6 +76,16 @@ public:
    * target to the event manager
    */
   virtual real64 GetTimestepRequest(real64 const time) {return std::numeric_limits<integer>::max();}
+
+
+  /// These set and supply the timestep behavior for a target
+  void SetTimestepBehavior(integer behavior){ m_timestepType = behavior; }
+
+  integer GetTimestepBehavior(){ return m_timestepType; }
+
+
+private:
+  integer m_timestepType = 0;
 };
 
 
