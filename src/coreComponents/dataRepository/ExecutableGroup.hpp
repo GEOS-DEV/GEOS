@@ -52,7 +52,7 @@ public:
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
                         int const cycleNumber,
-                        real64 const & eventPosition,
+                        const integer eventCount,
                         dataRepository::ManagedGroup * domain ) = 0;
 
   /*
@@ -68,7 +68,7 @@ public:
    */
   virtual void Cleanup( real64 const & time_n,
                         int const cycleNumber,
-                        real64 const & eventPosition,
+                        const integer eventCount,
                         dataRepository::ManagedGroup * domain ) {}
 
   /*

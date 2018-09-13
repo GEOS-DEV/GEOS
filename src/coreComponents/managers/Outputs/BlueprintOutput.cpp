@@ -54,7 +54,7 @@ void BlueprintOutput::FillDocumentationNode()
 void BlueprintOutput::Execute(real64 const& time_n,
                               real64 const& dt,
                               const integer cycleNumber,
-                              real64 const & eventPosition,
+                              const integer eventCount,
                               ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
@@ -64,7 +64,7 @@ void BlueprintOutput::Execute(real64 const& time_n,
                      *meshLevel->getElemManager(),
                      "bp_plot", MPI_COMM_GEOSX);
   
-  bpWriter.write(cycleNumber, eventPosition);
+  bpWriter.write(cycleNumber, eventCount);
 }
 
 

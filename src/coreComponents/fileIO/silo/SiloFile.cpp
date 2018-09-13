@@ -390,7 +390,7 @@ void SiloFile::Finish()
  */
 void SiloFile::WaitForBatonWrite( int const domainNumber,
                                   int const cycleNum,
-                                  real64 const & eventPosition,
+                                  const integer eventCount,
                                   bool const isRestart )
 {
 
@@ -403,26 +403,24 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   char baseFileName[200] = { 0 };
   char dirName[200] = { 0 };
 
-  integer eventPositionPercent = static_cast<integer>(eventPosition);
-
   if( isRestart )
   {
 
-    sprintf( baseFileName, "%s_%03d_%06d", m_restartFileRoot.c_str(), eventPositionPercent, cycleNum );
+    sprintf( baseFileName, "%s_%03d_%06d", m_restartFileRoot.c_str(), eventCount, cycleNum );
     sprintf( fileName, "%s%s%s_%03d_%06d.%03d",
-             m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), eventPositionPercent, cycleNum, groupRank);
+             m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), eventCount, cycleNum, groupRank);
   }
   else
   {
     sprintf(baseFileName, "%s_%03d_%06d",
             m_plotFileRoot.c_str(),
-            eventPositionPercent,
+            eventCount,
             cycleNum);
 
     sprintf(fileName,
             "%s_%03d_%06d.%03d",
             m_plotFileRoot.c_str(),
-            eventPositionPercent,
+            eventCount,
             cycleNum,
             groupRank);
   }
