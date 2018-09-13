@@ -14,7 +14,7 @@ set( coupling_sources
 blt_add_library( NAME                  coupling
                  SOURCES               ${coupling_sources}
                  HEADERS               ${coupling_headers}
-                 DEPENDS_ON            dataRepository mpi tribol worlds_base
+                 DEPENDS_ON            dataRepository mpi tribol worlds_core
                )
                
 target_include_directories( coupling PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )

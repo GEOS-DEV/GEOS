@@ -29,7 +29,7 @@
 #include "mesh/MeshBody.hpp"
 
 #define GLOBALID_IS_64BIT 1
-#include "SlideWorldAdapter.h"
+#include "worlds/SlideWorldAdapter.h"
 
 #include <algorithm>
 #include "tribol/tribol.hpp"
