@@ -329,7 +329,6 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
 void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                     localIndex & numLocalRows,
                                                     globalIndex & numGlobalRows,
-                                                    localIndex_array& localIndices,
                                                     localIndex offset )
 {
 
@@ -420,12 +419,9 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
       numLocalRows += subRegion->size() - subRegionGhosts;
     });
 
-
-  localIndex_array displacementIndices;
   SetNumRowsAndTrilinosIndices( mesh,
                                 numLocalRows,
                                 numGlobalRows,
-                                displacementIndices,
                                 0 );
 
   //TODO element sync doesn't work yet

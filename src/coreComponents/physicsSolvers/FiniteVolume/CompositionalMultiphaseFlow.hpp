@@ -142,7 +142,7 @@ public:
     // inputs
     ViewKey temperature = { "temperature" };
 
-    ViewKey blockLocalDofNumber = { "blockLocalDofNumber_CompositionalMultiphaseFlow" };
+    ViewKey blockLocalDofNumber    = { "blockLocalDofNumber_CompositionalMultiphaseFlow" };
 
     // primary solution field
     ViewKey pressure      = { "pressure" };
@@ -202,7 +202,6 @@ private:
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex_array& localIndices,
                                      localIndex offset );
 
 

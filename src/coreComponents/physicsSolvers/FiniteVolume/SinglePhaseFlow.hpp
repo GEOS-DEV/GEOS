@@ -202,7 +202,6 @@ private:
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex_array& localIndices,
                                      localIndex offset );
 
 

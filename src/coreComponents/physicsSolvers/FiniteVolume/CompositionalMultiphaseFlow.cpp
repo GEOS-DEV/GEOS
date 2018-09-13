@@ -56,7 +56,7 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow(const string & name,
   m_numComponents(0)
 {
   // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID(BlockIDs::fluidPressureBlock, this->getName());
+  //getLinearSystemRepository()->SetBlockID(BlockIDs::fluidPressureBlock, this->getName());
   getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
   this->RegisterViewWrapper( viewKeys.temperature.Key(), &m_temperature, false );
@@ -236,14 +236,13 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             -1,
                                                             "globalIndex_array2d",
                                                             "globalIndex_array2d",
-                                                            "DOF index",
-                                                            "DOF index",
+                                                            "Pressure DOF index",
+                                                            "Pressure DOF index",
                                                             "0",
                                                             "",
                                                             1,
                                                             0,
                                                             3);
-
                                });
 
     {
@@ -543,25 +542,262 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 co
   SetupSystem( domain, blockSystem );
 }
 
-void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
-                                               EpetraBlockSystem * const blockSystem )
+void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                                                localIndex & numLocalRows,
+                                                                globalIndex & numGlobalRows,
+                                                                localIndex offset )
 {
+  ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
 
+  auto blockLocalDofNumber =
+    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeys.blockLocalDofNumber.Key(), string() );
+
+  ElementRegionManager::ElementViewAccessor< integer_array >
+    ghostRank = elementRegionManager->
+    ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  int numMpiProcesses;
+  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
+
+  int thisMpiProcess = 0;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
+
+  localIndex numLocalRowsToSend = numLocalRows;
+  array1d<localIndex> gather(numMpiProcesses);
+
+  // communicate the number of local rows to each process
+  m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
+                                                gather.data(),
+                                                1 );
+
+  GEOS_ASSERT( numLocalRows == numLocalRowsToSend, "number of local rows inconsistent" );
+
+  // find the first local row on this partition, and find the number of total global rows.
+  localIndex firstLocalRow = 0;
+  numGlobalRows = 0;
+
+  for( integer p=0 ; p<numMpiProcesses ; ++p)
+  {
+    numGlobalRows += gather[p];
+    if (p < thisMpiProcess)
+      firstLocalRow += gather[p];
+  }
+
+  // create trilinos dof indexing, setting initial values to -1 to indicate unset values.
+  for( localIndex er=0 ; er<ghostRank.size() ; ++er )
+  {
+    for( localIndex esr=0 ; esr<ghostRank[er].size() ; ++esr )
+    {
+      blockLocalDofNumber[er][esr] = -1;
+    }
+  }
+
+  // loop over all elements and set the dof number if the element is not a ghost
+  raja::ReduceSum< reducePolicy, localIndex  > localCount(0);
+  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [=]( localIndex const er,
+                                                     localIndex const esr,
+                                                     localIndex const ei ) mutable ->void
+  {
+    if( ghostRank[er][esr][ei] < 0 )
+    {
+      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      {
+        blockLocalDofNumber[er][esr][ei][idof] = firstLocalRow + localCount + offset;
+        localCount += 1;
+      }
+    }
+  });
+
+  GEOS_ASSERT(localCount == numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
 
 void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * const domain,
                                                       Epetra_FECrsGraph * const sparsity )
 {
+  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
 
+  auto blockLocalDofNumber =
+    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeys.blockLocalDofNumber.Key() );
+
+  auto elemGhostRank =
+    elementRegionManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  NumericalMethodsManager const * numericalMethodManager = domain->
+    getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  FiniteVolumeManager const * fvManager = numericalMethodManager->
+    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
+  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
+
+  globalIndex_array elementLocalDofIndexRow;
+  globalIndex_array elementLocalDofIndexCol;
+
+  //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
+  constexpr localIndex numElems = 2;
+  stencilCollection.forAll<RAJA::seq_exec>([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil) -> void
+  {
+    elementLocalDofIndexRow.resize(numElems * m_numDofPerCell);
+    stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
+    {
+      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      {
+        elementLocalDofIndexRow[i * m_numDofPerCell + idof] =
+          blockLocalDofNumber[cell.region][cell.subRegion][cell.index][idof];
+      }
+    });
+
+    localIndex const stencilSize = stencil.size();
+    elementLocalDofIndexCol.resize(stencilSize * m_numDofPerCell);
+    stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
+    {
+      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      {
+        elementLocalDofIndexCol[i * m_numDofPerCell + idof] =
+          blockLocalDofNumber[cell.region][cell.subRegion][cell.index][idof];
+      }
+    });
+
+    sparsity->InsertGlobalIndices( integer_conversion<int>(numElems * m_numDofPerCell),
+                                   elementLocalDofIndexRow.data(),
+                                   integer_conversion<int>(stencilSize * m_numDofPerCell),
+                                   elementLocalDofIndexCol.data() );
+  });
+
+  elementLocalDofIndexRow.resize(m_numDofPerCell);
+
+  // loop over all elements and add all locals just in case the above connector loop missed some
+  forAllElemsInMesh<RAJA::seq_exec>(meshLevel, [&] (localIndex const er,
+                                                    localIndex const esr,
+                                                    localIndex const k) -> void
+  {
+    if (elemGhostRank[er][esr][k] < 0)
+    {
+      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      {
+        elementLocalDofIndexRow[idof] = blockLocalDofNumber[er][esr][k][idof];
+      }
+
+      sparsity->InsertGlobalIndices( integer_conversion<int>(m_numDofPerCell),
+                                     elementLocalDofIndexRow.data(),
+                                     integer_conversion<int>(m_numDofPerCell),
+                                     elementLocalDofIndexRow.data());
+    }
+  });
+
+  // add additional connectivity resulting from boundary stencils
+  fluxApprox->forBoundaryStencils([&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection) -> void
+  {
+    boundaryStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
+    {
+      stencil.forConnected([&] (PointDescriptor const & point, localIndex const i) -> void
+      {
+        if (point.tag == PointDescriptor::Tag::CELL)
+        {
+          CellDescriptor const & c = point.cellIndex;
+          for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+          {
+            elementLocalDofIndexRow[idof] = blockLocalDofNumber[c.region][c.subRegion][c.index][idof];
+          }
+        }
+      });
+
+      localIndex const stencilSize = stencil.size();
+      elementLocalDofIndexCol.resize(stencilSize * m_numDofPerCell);
+      integer counter = 0;
+      stencil.forAll([&] (PointDescriptor const & point, real64 w, localIndex i) -> void
+      {
+        if (point.tag == PointDescriptor::Tag::CELL)
+        {
+          CellDescriptor const & c = point.cellIndex;
+          for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+          {
+            elementLocalDofIndexCol[counter * m_numDofPerCell + idof] =
+              blockLocalDofNumber[c.region][c.subRegion][c.index][idof];
+          }
+          ++counter;
+        }
+      });
+
+      sparsity->InsertGlobalIndices( integer_conversion<int>(m_numDofPerCell),
+                                     elementLocalDofIndexRow.data(),
+                                     integer_conversion<int>(counter * m_numDofPerCell),
+                                     elementLocalDofIndexCol.data() );
+    });
+  });
 }
 
-void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                                localIndex & numLocalRows,
-                                                                globalIndex & numGlobalRows,
-                                                                localIndex_array & localIndices,
-                                                                localIndex offset )
+void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
+                                               EpetraBlockSystem * const blockSystem )
 {
+  // assume that there is only a single MeshLevel for now
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
+  // for this solver, the dof are on the cell center, and the block of rows corresponds to a cell
+  localIndex numLocalRows  = 0;
+  globalIndex numGlobalRows = 0;
+
+  // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
+  elementRegionManager->forCellBlocks( [&]( CellBlockSubRegion * const subRegion )
+  {
+    numLocalRows += subRegion->size() - subRegion->GetNumberOfGhosts();
+  });
+  numLocalRows *= m_numDofPerCell;
+
+  localIndex_array displacementIndices;
+  SetNumRowsAndTrilinosIndices( mesh,
+                                numLocalRows,
+                                numGlobalRows,
+                                0 );
+
+  //TODO element sync doesn't work yet
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeys.blockLocalDofNumber.Key());
+  CommunicationTools::
+  SynchronizeFields(fieldNames,
+                    mesh,
+                    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
+  // construct row map, and set a pointer to the row map
+  Epetra_Map * const
+    rowMap = blockSystem->
+      SetRowMap( BlockIDs::compositionalBlock,
+                 std::make_unique<Epetra_Map>( numGlobalRows,
+                                               numLocalRows,
+                                               0,
+                                               m_linearSolverWrapper.m_epetraComm ) );
+
+  // construct sparsity matrix, set a pointer to the sparsity pattern matrix
+  Epetra_FECrsGraph * const
+    sparsity = blockSystem->SetSparsity( BlockIDs::compositionalBlock,
+                                         BlockIDs::compositionalBlock,
+                                         std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
+
+
+
+  // set the sparsity patter
+  SetSparsityPattern( domain, sparsity );
+
+  // assemble the global sparsity matrix
+  sparsity->GlobalAssemble();
+  sparsity->OptimizeStorage();
+
+  // construct system matrix
+  blockSystem->SetMatrix( BlockIDs::compositionalBlock,
+                          BlockIDs::compositionalBlock,
+                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
+
+  // construct solution vector
+  blockSystem->SetSolutionVector( BlockIDs::compositionalBlock,
+                                  std::make_unique<Epetra_FEVector>(*rowMap) );
+
+  // construct residual vector
+  blockSystem->SetResidualVector( BlockIDs::compositionalBlock,
+                                  std::make_unique<Epetra_FEVector>(*rowMap) );
 }
 
 void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain,
