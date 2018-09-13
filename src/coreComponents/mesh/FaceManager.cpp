@@ -26,6 +26,8 @@
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
 
+#include "common/TimingMacros.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -105,6 +107,9 @@ void FaceManager::FillDocumentationNode()
 //
 void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
 {
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_MARK_BEGIN(Setup);
 
   localIndex_array tempNodeList;
   array1d<localIndex_array> tempFaceToNodeMap;
@@ -126,11 +131,15 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   elemSubRegionList = -1;
   elemList = -1;
 
-  for( typename dataRepository::indexType kReg=0 ; kReg<elementManager->numRegions() ; ++kReg  )
+  GEOSX_MARK_END(Setup);
+
+  GEOSX_MARK_BEGIN(MainLoop);
+
+  for( localIndex kReg=0 ; kReg<elementManager->numRegions() ; ++kReg  )
   {
     ElementRegion * const elemRegion = elementManager->GetRegion(kReg);
 
-    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
 
@@ -249,6 +258,9 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
     }
 
   }
+  GEOSX_MARK_END(MainLoop);
+
+  GEOSX_MARK_BEGIN(Finish);
 
   // resize the data vectors according to the number of faces indicated by the
   // size of tempFaceToNodeMap
@@ -297,6 +309,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 //  MPI_Allreduce(&writeArbitraryPolygonLocal, &m_writeArbitraryPolygon, 1,
 // MPI_INT, MPI_MAX, MPI_COMM_GEOSX);
 
+  GEOSX_MARK_END(Finish);
+
 }
 
 
@@ -325,9 +339,9 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 //  tempFaceToElemEntry.push_back( std::pair<ElementRegionT*, localIndex>(
 // const_cast<ElementRegionT*>(&elementRegion), ke) );
 //  m_toElementsRelation.push_back(tempFaceToElemEntry);
-  auto & toElementRegionList = elementRegionList();
-  auto & toElementSubRegionList = elementSubRegionList();
-  auto & toElementList = elementList();
+  array2d<localIndex> & toElementRegionList = elementRegionList();
+  array2d<localIndex> & toElementSubRegionList = elementSubRegionList();
+  array2d<localIndex> & toElementList = elementList();
 
   if( toElementRegionList[numFaces][0] == -1 )
   {
