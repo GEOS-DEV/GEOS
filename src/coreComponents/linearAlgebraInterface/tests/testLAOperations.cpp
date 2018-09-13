@@ -30,8 +30,6 @@
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
-#include "BlockMatrixView.hpp"
-#include "../src/BlockLinearSolvers.hpp"
 
 #include "common/DataTypes.hpp"
 
@@ -190,8 +188,6 @@ void testLaplaceOperator()
   testMatrix.multiply(x, b);
 
   ParallelVector solIterative(b);
-  ParallelVector solCG(b);
-  ParallelVector bCG(b);
 
   // Test dot product
   real64 dotTest;
@@ -248,38 +244,6 @@ void testLaplaceOperator()
     EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
   }
 
-  BlockMatrixView<TrilinosInterface> testBlockMatrix;
-
-  ParallelMatrix testMatrix01(testMatrix);
-  ParallelVector solDirect1(solDirect);
-
-  testMatrix01.scale(2.);
-  solDirect1.scale(-0.5);
-
-  ParallelVector * testrhs0 = nullptr;
-  ParallelMatrix * testBlock00 = nullptr;
-
-  testBlockMatrix.setBlock(0,0,&testMatrix);
-  testBlockMatrix.setBlock(0,1,&testMatrix01);
-
-  testBlockMatrix.setSolution(0,&solDirect);
-  testBlockMatrix.setSolution(1,&solDirect1);
-
-  testBlockMatrix.setRhs(0,&r);
-
-  testBlockMatrix.apply();
-  ParallelVector testres0(testBlockMatrix.residual());
-
-  testrhs0 = testBlockMatrix.getRhs(0);
-
-  real64 normBlockProduct;
-  testrhs0->normInf(normBlockProduct);
-  EXPECT_TRUE( std::fabs(normBlockProduct) <= 1e-8 );
-
-  CG<TrilinosInterface>( testMatrix, solCG, bCG, preconditioner );
-
-  //solCG.print();
-  //solIterative.print();
   MPI_Finalize();
 
 }
