@@ -180,11 +180,17 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   array1d<real64> receive_buffer(2 * comm_size);
 
   // Setup event targets, sequence indicators
-  integer eventCount = 0;
+  array1d<integer> eventCounters(2);
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     subEvent->GetTargetReferences();
-    eventCount = subEvent->GetExecutionOrder(eventCount);
+    subEvent->GetExecutionOrder(eventCounters);
+  });
+
+  // Set the post solver event flag
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->SetPostSolverEventFlag(eventCounters);
   });
 
   // Run problem

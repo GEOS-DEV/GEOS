@@ -173,6 +173,19 @@ void EventBase::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.isPostTimeStep.Key(),
+                              viewKeys.isPostTimeStep.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "post time-step flag",
+                              "if this flag is set, then it will call targets with time = time+dt (EventManager will attempt to set this if not defined)",
+                              "-1",
+                              "",
+                              0,
+                              1,
+                              0 );
+
 }
 
 
@@ -301,11 +314,18 @@ void EventBase::Step(real64 const time,
                      integer const cycle,
                      dataRepository::ManagedGroup * domain )
 {
-  // Note: do we need an mpi barrier here?
+  integer const isPostTimeStep = this->getReference<integer>(viewKeys.isPostTimeStep);
 
   if (m_target != nullptr)
   {
-    m_target->Execute(time, dt, cycle, m_eventCount, domain);
+    if (isPostTimeStep == 1)
+    {
+      m_target->Execute(time + dt, dt, cycle, m_eventCount, domain);
+    }
+    else
+    {
+      m_target->Execute(time, dt, cycle, m_eventCount, domain);
+    }
   }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
@@ -387,17 +407,42 @@ integer EventBase::GetExitFlag()
 
 
 
-integer EventBase::GetExecutionOrder(integer lastCount)
+void EventBase::GetExecutionOrder(array1d<integer> & eventCounters)
 {
-  m_eventCount = lastCount;
-  ++lastCount;
+  // Set the event count
+  m_eventCount = eventCounters[0];
+  ++eventCounters[0];
+
+  // Check to see if the target is derived from SolverBase
+  if ( m_target != nullptr )
+  {
+    if ( m_target->GetTimestepBehavior() > 0 )
+    {
+      eventCounters[1] = m_eventCount;
+    }
+  }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    lastCount = subEvent->GetExecutionOrder(lastCount);
+    subEvent->GetExecutionOrder(eventCounters);
   });  
+}
 
-  return lastCount;
+
+void EventBase::SetPostSolverEventFlag(array1d<integer> & eventCounters)
+{
+  integer& isPostTimeStep = *(this->getData<integer>(viewKeys.isPostTimeStep));
+
+  // Set the timestep flag if not defined
+  if (isPostTimeStep == -1)
+  {
+    isPostTimeStep = (m_eventCount > eventCounters[1]) ? 1 : 0;
+  }
+
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->SetPostSolverEventFlag(eventCounters);
+  });
 }
 
 
