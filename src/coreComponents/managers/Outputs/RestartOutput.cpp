@@ -62,33 +62,17 @@ void RestartOutput::Execute(real64 const& time_n,
                             ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
-  
-  // #ifdef GEOSX_USE_ATK
-  //   char fileName[200] = {0};
-  //   sprintf(fileName, "%s_%09d", "restart", cycle);
-
-  //   NewFunctionManager * functionManager = NewFunctionManager::Instance();
-  //   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-    
-  //   domainPartition->getParent()->prepareToWrite();
-  //   functionManager->prepareToWrite();
-  //   bcManager->prepareToWrite();
-  //   SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
-  //   domainPartition->getParent()->finishWriting();
-  //   functionManager->finishWriting();
-  //   bcManager->finishWriting();
-  // #endif
+  ProblemManager* problemManager = ManagedGroup::group_cast<ProblemManager*>(domainPartition->getParent());
 
 #ifdef GEOSX_USE_ATK
-  string const problemName = this->getName();
   char fileName[200] = {0};
   sprintf(fileName, "%s_%s__%03d_%09d", problemName.data(), "restart", eventCount, cycleNumber);
 
-  domainPartition->getParent()->prepareToWrite();
+  problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
   BoundaryConditionManager::get()->prepareToWrite();
   SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
-  domainPartition->getParent()->finishWriting();
+  problemManager->finishWriting();
   NewFunctionManager::Instance()->finishWriting();
   BoundaryConditionManager::get()->finishWriting();
 #endif
