@@ -6,7 +6,7 @@ message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
 
-
+option( ENABLE_ARRAY_BOUNDS_CHECK "" OFF )
 
 # OPTIONS
 option( ENABLE_CALIPER "" OFF )

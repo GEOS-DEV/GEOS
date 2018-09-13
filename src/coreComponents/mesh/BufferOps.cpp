@@ -139,8 +139,8 @@ localIndex Pack( char*& buffer,
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.m_toElementRegion[index].size() );
-    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.m_toElementRegion.size(1) );
+    for( localIndex b=0 ; b<var.m_toElementRegion.size(1) ; ++b )
     {
       localIndex elemRegionIndex             = var.m_toElementRegion[index][b];
 
@@ -193,9 +193,9 @@ localIndex Unpack( char const * & buffer,
   {
     localIndex index = packList[a];
     sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion.size(1), "")
 
-    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    for( localIndex b=0 ; b<var.m_toElementRegion.size(1) ; ++b )
     {
       localIndex & elemRegionIndex = var.m_toElementRegion[index][b];
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemRegionIndex );

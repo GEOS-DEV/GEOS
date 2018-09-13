@@ -152,7 +152,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
   localIndex mapSize = map.size(1);
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
-    arrayView1d<localIndex const> const sublist = map[ka];
+    localIndex const * const sublist = map[ka];
     localIndex addToSet = 0;
     for( localIndex a=0 ; a<mapSize ; ++a )
     {
