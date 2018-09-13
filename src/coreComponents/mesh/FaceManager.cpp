@@ -110,21 +110,21 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   localIndex_array tempNodeList;
   array1d<localIndex_array> facesByLowestNode(nodeManager->size());
 
-  array2d<localIndex> & elem_region_list = elementRegionList();
-  array2d<localIndex> & elem_sub_region_list = elementSubRegionList();
-  array2d<localIndex> & elem_list = elementList();
+  array2d<localIndex> & elemRegionList = elementRegionList();
+  array2d<localIndex> & elemSubRegionList = elementSubRegionList();
+  array2d<localIndex> & elemList = elementList();
   OrderedVariableOneToManyRelation & node_list = nodeList();
 
   m_toElements.setElementRegionManager( elementManager );
 
-  elem_region_list.resize( 4*nodeManager->size() );
-  elem_sub_region_list.resize( 4*nodeManager->size() );
-  elem_list.resize( 4*nodeManager->size() );
+  elemRegionList.resize( 4*nodeManager->size() );
+  elemSubRegionList.resize( 4*nodeManager->size() );
+  elemList.resize( 4*nodeManager->size() );
   node_list.resize( 4*nodeManager->size() );
 
-  elem_region_list = -1;
-  elem_sub_region_list = -1;
-  elem_list = -1;
+  elemRegionList = -1;
+  elemSubRegionList = -1;
+  elemList = -1;
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementManager->numRegions() ; ++kReg  )
   {
@@ -187,9 +187,9 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
               duplicate = true;
 
               // add the element to the faceToElement map
-              elem_region_list[existingFaceIndex][1]    = kReg;
-              elem_sub_region_list[existingFaceIndex][1] = kSubReg;
-              elem_list[existingFaceIndex][1]       = ke;
+              elemRegionList[existingFaceIndex][1]    = kReg;
+              elemSubRegionList[existingFaceIndex][1] = kSubReg;
+              elemList[existingFaceIndex][1]          = ke;
 
               // add the face to the elementToFaceMap for the element
               // region.
@@ -215,9 +215,9 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
             // omp_unset_lock(&matching_faces_lock);
 
-            elem_region_list[curFace][0] = kReg;
-            elem_sub_region_list[curFace][0] = kSubReg;
-            elem_list[curFace][0] = ke;
+            elemRegionList[curFace][0] = kReg;
+            elemSubRegionList[curFace][0] = kSubReg;
+            elemList[curFace][0] = ke;
 
             // add the face to the elementToFaceMap
             elems_to_faces[ke][kelf] = curFace;
