@@ -9,6 +9,7 @@
 #define SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLOCKMATRIXVIEW_HPP_
 
 #include "TrilinosInterface.hpp"
+//#include "HypreInterface.hpp"
 
 namespace geosx
 {

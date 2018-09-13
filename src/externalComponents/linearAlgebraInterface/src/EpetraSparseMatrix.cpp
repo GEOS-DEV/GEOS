@@ -254,7 +254,7 @@ void EpetraSparseMatrix::insert( globalIndex const iRow,
 
 // Matrix/vector multiplication with src. Result sent to dst.
 void EpetraSparseMatrix::multiply( EpetraVector const &src,
-                                   EpetraVector &dst )
+                                   EpetraVector &dst ) const
 {
   m_matrix->Multiply( false, *src.getPointer(), *dst.getPointer() );
 }
@@ -262,7 +262,7 @@ void EpetraSparseMatrix::multiply( EpetraVector const &src,
 // Compute res = b - Ax (residual form).
 void EpetraSparseMatrix::residual( EpetraVector const &x,
                                    EpetraVector const &b,
-                                   EpetraVector &res )
+                                   EpetraVector &res ) const
 {
   m_matrix->Multiply( false, *x.getPointer(), *res.getPointer() );
   res.update( -1.0, b, 1.0 );
