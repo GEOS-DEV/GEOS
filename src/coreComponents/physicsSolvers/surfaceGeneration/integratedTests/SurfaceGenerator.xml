@@ -9,13 +9,13 @@
 
     <SolidMechanics_LagrangianFEM name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="3"
+                                  verboseLevel="0"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-3"
                               maxIterNewton="8"
-                              verbosityFlag="2"/>
+                              verbosityFlag="0"/>
      </SolidMechanics_LagrangianFEM>
   
     <SurfaceGenerator name="SurfaceGen"
@@ -28,28 +28,28 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 1"
+                  xCoords="0, 2"
                   yCoords="-1, 1"
                   zCoords="0, 1"
-                  nx="1"
+                  nx="2"
                   ny="2"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="fracPlane" type="0" xMin="-1.00, -0.1, -1.00" xMax="1.01, 0.01, 1.01"/>
+    <Box name="fracPlane" type="0" xMin="-1.00, -0.1, -1.00" xMax="2.01, 0.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="1.0e-3">
+  <Events maxTime="3.0e-5">
     <PeriodicEvent name="solverApplications"
                    forceDt="1.0e-5"
                    target="/Solvers/lagSolve" />
   
-    <PeriodicEvent name="solverApplications"
+    <!-- PeriodicEvent name="solverApplications"
                    forceDt="1.0e-5"
-                   target="/Solvers/SurfaceGen" />
+                   target="/Solvers/SurfaceGen" /-->
   
     <PeriodicEvent name="outputs"
                    timeFrequency="1e-6"
@@ -99,6 +99,23 @@
                dataType="integer" 
                scale="1"/>
   
+  
+    <Dirichlet name="x" 
+               component="0" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               dataType="Vector"  
+               scale="0.0" 
+               setNames="yneg ypos"/>
+
+    <Dirichlet name="z" 
+               component="2" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               dataType="Vector"  
+               scale="0.0" 
+               setNames="yneg ypos"/>
+                              
     <Dirichlet name="bot" 
                component="1" 
                objectPath="nodeManager"
@@ -127,7 +144,7 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="1" plotFileRoot="plot" restartInterval="1e6"/>
+    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot" restartInterval="1e6"/>
   </Outputs>
 
 

@@ -711,10 +711,18 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
     (*childIndex)[indexToSplit] = newIndex;
   }
 
-  m_localToGlobalMap[newIndex] = GLOBALINDEX_MAX;
+  m_localToGlobalMap[newIndex] = -1;
 
-  m_isExternal[indexToSplit] = 1;
-  m_isExternal[newIndex]     = 1;
+  if( m_isExternal[indexToSplit]==1 )
+  {
+    m_isExternal[indexToSplit] = 1;
+    m_isExternal[newIndex]     = 1;
+  }
+  else
+  {
+    m_isExternal[indexToSplit] = 2;
+    m_isExternal[newIndex]     = 2;
+  }
 
   return 1;
 
