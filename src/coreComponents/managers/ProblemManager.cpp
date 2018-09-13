@@ -758,6 +758,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
+  GEOSX_MARK_FUNCTION;
   this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 

@@ -27,12 +27,14 @@
 
 #include "fileIO/silo/SiloFile.hpp"
 
-#include "common/SortedArray.hpp"
 
 #include "common/Logger.hpp"
+#include "common/SortedArray.hpp"
+#include "common/TimingMacros.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "managers/ObjectManagerBase.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -190,6 +192,8 @@ void DomainPartition::GenerateSets(  )
 
 void DomainPartition::SetupCommunications()
 {
+  GEOSX_MARK_FUNCTION;
+
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
