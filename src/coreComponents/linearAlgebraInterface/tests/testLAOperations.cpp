@@ -292,6 +292,14 @@ void testLaplaceOperator()
   real64 testBlockNorm = 0;
   testBlockSolution.norm2(testBlockNorm);
 
+  ParallelVector test1;
+
+  ParallelVector test2(test1);
+
+  test1.print();
+  test2.print();
+
+
   //solCG.print();
   //solIterative.print();
   MPI_Finalize();

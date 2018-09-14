@@ -461,7 +461,8 @@ localIndex EpetraSparseMatrix::rowMapLID( globalIndex GID ) const
 // Wrapper to print the trilinos output of the matrix
 void EpetraSparseMatrix::print() const
 {
-  std::cout << *m_matrix.get() << std::endl;
+  if ( m_matrix.get() != nullptr )
+    std::cout << *m_matrix.get() << std::endl;
 }
 
 // Returns the infinity norm of the matrix.
