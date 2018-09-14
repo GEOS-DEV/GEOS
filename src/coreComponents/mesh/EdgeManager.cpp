@@ -146,14 +146,13 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   }
 
   // Then loop over them in parallel.
-  #pragma omp parallel for
-  for ( localIndex i = 0; i < nodeSets.size(); ++i )
+  raja::forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
     const set<localIndex>& targetSet = nodeManager->GetGroup(dataRepository::keys::sets)->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
-  }
+  } );
 }
 
 

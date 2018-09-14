@@ -293,7 +293,7 @@ public:
   void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & ,
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const ,
                                                                 array1d<globalIndex_array>&  )
   {
 
