@@ -41,10 +41,6 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-
-using integer     = int;
-using localIndex  = int;
-
 class EpetraSparseMatrix
 {
 public:
