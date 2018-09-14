@@ -30,7 +30,7 @@
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-//#include "../../../../PhysicsSolverPackage1/src/SolidMechanicsLagrangianFEM.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 
 
 namespace geosx
@@ -45,8 +45,6 @@ PoroelasticSolver::PoroelasticSolver( const std::string& name,
 {
   this->RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0);
   this->RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0);
-  this->RegisterViewWrapper(viewKeyStruct::biotCoefficientString, &m_biotCoef, 0);
-
 }
 
 
@@ -98,19 +96,6 @@ void PoroelasticSolver::FillDocumentationNode()
                               0,
                               1,
                               0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::biotCoefficientString,
-                              viewKeyStruct::biotCoefficientString,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Biot's Coefficient",
-                              "Biot's Coefficient",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
 }
 
 void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
@@ -129,72 +114,31 @@ void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGrou
       {
         cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
 
-        docNode->AllocateChildNode( viewKeyStruct::effectiveStressString,
-                                    viewKeyStruct::effectiveStressString,
+        docNode->AllocateChildNode( viewKeyStruct::totalMeanStressString,
+                                    viewKeyStruct::totalMeanStressString,
                                     -1,
                                     "real64_array",
                                     "real64_array",
-                                    "Effective Stress",
-                                    "Effective Stress",
+                                    "Total Mean Stress",
+                                    "Total Mean Stress",
                                     "",
                                     elemManager->getName(),
                                     1,
                                     0,
                                     0 );
 
-        docNode->AllocateChildNode( viewKeyStruct::deltaEffectiveStressString,
-                                    viewKeyStruct::deltaEffectiveStressString,
+        docNode->AllocateChildNode( viewKeyStruct::oldTotalMeanStressString,
+                                    viewKeyStruct::oldTotalMeanStressString,
                                     -1,
                                     "real64_array",
                                     "real64_array",
-                                    "Change in Effective Stress",
-                                    "Change in Effective Stress",
+                                    "Old total mean Stress",
+                                    "Old total mean Stress",
                                     "",
                                     elemManager->getName(),
                                     1,
                                     0,
                                     0 );
-
-        docNode->AllocateChildNode( viewKeyStruct::deltaVolumetricStrainString,
-                                    viewKeyStruct::deltaVolumetricStrainString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Change in Volumetric Strain",
-                                    "Change in Volumetric Strain",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
-
-        docNode->AllocateChildNode( viewKeyStruct::deltaPorosityString,
-                                    viewKeyStruct::deltaPorosityString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Change in Porosity",
-                                    "Change in Porosity",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
-        docNode->AllocateChildNode( viewKeyStruct::dPorosity_dPressureString,
-                                    viewKeyStruct::dPorosity_dPressureString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Derivative of Porosity wrt Pressure",
-                                    "Derivative of Porosity wrt Pressure",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
       });
   }
 }
@@ -207,16 +151,21 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const& time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  auto dEffStresss = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaEffectiveStressString);
-  auto dVolumetricStrain = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumetricStrainString);
+  SinglePhaseFlow &
+  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
+  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+
+  auto totalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::totalMeanStressString);
+  auto oldTotalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::oldTotalMeanStressString);
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const k)->void
   {
-    dEffStresss[er][esr][k] = 0.0;
-    dVolumetricStrain[er][esr][k] = 0.0;
+    oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
   });
 }
 
@@ -224,19 +173,6 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
                                               real64 const& dt,
                                               DomainPartition * const domain)
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  auto effectiveStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::effectiveStressString);
-  auto dEffStresss = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaEffectiveStressString);
-
-  //***** loop over all elements and update the derivative arrays *****
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const k)->void
-  {
-    effectiveStress[er][esr][k] += dEffStresss[er][esr][k];
-  });
 }
 
 void PoroelasticSolver::ReadXML_PostProcess()
@@ -255,10 +191,23 @@ void PoroelasticSolver::ReadXML_PostProcess()
   {
     GEOS_ERROR("invalid coupling type option");
   }
+
+  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
 }
 
 void PoroelasticSolver::FinalInitialization( ManagedGroup * const problemManager )
 {
+  // Calculate initial total mean stress
+  this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
+
+  SolverBase &
+  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+
+  SinglePhaseFlow &
+  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  solidSolver.FinalInitialization(problemManager);
+  fluidSolver.FinalInitialization(problemManager);
 }
 
 PoroelasticSolver::~PoroelasticSolver()
@@ -285,7 +234,6 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
 
 void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
 {
-
   SolverBase &
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
@@ -302,7 +250,6 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   FiniteElementSpaceManager const * const
   feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
-
   ConstitutiveManager * const
   constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
@@ -313,46 +260,30 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   auto elemsToNodes = elemManager->
                        ConstructViewAccessor<FixedOneToManyRelation>( CellBlockSubRegion::viewKeyStruct::nodeListString );
 
-  auto effectiveStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::effectiveStressString);
-  auto dEffStresss = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaEffectiveStressString);
-  auto dVolumetricStrain = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumetricStrainString);
+  auto totalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::totalMeanStressString);
+  auto oldTotalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::oldTotalMeanStressString);
 
-  auto dPres = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
-                                                                 viewKeyStruct::deltaPressureString);
-
-
-  auto poro = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
-                                                                viewKeyStruct::
-                                                                porosityString);
-
-  auto dPoro = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::
-                                                                 deltaPorosityString);
-
-  auto volume    = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
-                                                                     viewKeyStruct::
-                                                                     volumeString);
-
-  auto dVol      = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
-                                                                     viewKeyStruct::
-                                                                     deltaVolumeString);
-
-  auto dPoro_dPres = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::
-                                                                       dPorosity_dPressureString);
-
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
-  meanStress = elemManager->
-               ConstructMaterialViewAccessor< array2d<real64> >( "MeanStress",
-                                                                 constitutiveManager);
+  auto pres = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::pressureString);
+  auto dPres = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::viewKeyStruct::deltaPressureString);
+  auto poro = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::porosityString);
+  auto poroOld = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::oldPorosityString);
+  auto volume    = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
+  auto dVol      = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
   bulkModulus = elemManager->
                 ConstructMaterialViewAccessor< array2d<real64> >( "BulkModulus",
                                                                   constitutiveManager);
 
-  localIndex const solidIndex = 0;
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+  pvmult = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
+                                                                          constitutiveManager );
 
-  // TODO
-  //   dVolumetricStrain[er][esr][k] += dUhatdX.trace() / numQuadraturePoints;
+  ElementRegionManager::MaterialViewAccessor<real64> const
+  biotCoefficient = elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+
+  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
+
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
@@ -368,35 +299,37 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
       dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
 
       localIndex const numNodesPerElement = elemsToNodes[er][esr].get().size(1);
+      r1_array u_local( numNodesPerElement );
       r1_array uhat_local( numNodesPerElement );
-      auto const &
-      constitutiveMap = cellBlockSubRegion->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(cellBlockSubRegion->viewKeys().constitutiveMap);
 
       for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
       {
+        arrayView1d<localIndex const> const nodelist = elemsToNodes[er][esr][ei];
+        CopyGlobalToLocal( nodelist, u, uhat, u_local.data(), uhat_local.data(), numNodesPerElement );
 
-        dVolumetricStrain[er][esr][ei] = 0.0;
-        dEffStresss[er][esr][ei] = 0.0;
+        real64 volumetricStrain = 0.0;
         localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points() ;
         for( localIndex q=0 ; q<numQuadraturePoints; ++q )
         {
-          R2Tensor dUhatdX;
-          CalculateGradient( dUhatdX, uhat_local, dNdX[ei][q] );
-
-          dVolumetricStrain[er][esr][ei] += dUhatdX.Trace();
-          dEffStresss[er][esr][ei] += ( meanStress[er][esr][solidIndex][ei][0]
-                                      - effectiveStress[er][esr][ei] ) ;
+          R2Tensor dUdX;
+          CalculateGradient( dUdX, u_local, dNdX[ei][q] );
+          volumetricStrain += dUdX.Trace();
         }
-        dVolumetricStrain[er][esr][ei] /= numQuadraturePoints;
-        dEffStresss[er][esr][ei] /= numQuadraturePoints;
+        volumetricStrain /= numQuadraturePoints;
+        totalMeanStress[er][esr][ei] = volumetricStrain * bulkModulus[er][esr][solidIndex][ei][0] - biotCoefficient[er][esr][solidIndex] * (pres[er][esr][ei] + dPres[er][esr][ei]);
 
-        dPoro[er][esr][ei] = (m_biotCoef - poro[er][esr][ei])
-                          / bulkModulus[er][esr][solidIndex][ei][0]
-                          * (dEffStresss[er][esr][ei] + (1 - m_biotCoef) * dPres[er][esr][ei]);
+        poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei][0]
+                                                 * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
 
-        dPoro_dPres[er][esr][ei] = (m_biotCoef - poro[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei][0];
-
-
+        // update element volume
+        arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][ei];
+        R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
+        for (localIndex a = 0; a < nodeList.size(); ++a)
+        {
+          Xlocal[a] = X[nodeList[a]];
+          Xlocal[a] += u[nodeList[a]] ;
+        }
+        dVol[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
       }
     }
   }

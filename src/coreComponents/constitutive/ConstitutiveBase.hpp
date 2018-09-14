@@ -136,7 +136,6 @@ public:
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
 
-
   } m_ConstitutiveBaseViewKeys;
 
   struct groupKeyStruct

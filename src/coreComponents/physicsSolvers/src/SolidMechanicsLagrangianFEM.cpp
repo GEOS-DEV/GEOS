@@ -1102,7 +1102,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
             for( localIndex a=0 ; a<numNodes ; ++a )
             {
               nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
-              nodeRHS[a] = value;
+              nodeRHS[a] = value * faceArea[kf] / numNodes;
             }
             rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
           }
@@ -1122,7 +1122,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
             for( localIndex a=0 ; a<numNodes ; ++a )
             {
               nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
-              nodeRHS[a] = result[a];
+              nodeRHS[a] = result[a] * faceArea[kf] / numNodes;
             }
             rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
           }
@@ -1473,8 +1473,10 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
-  auto fluidPressure = elemManager->ConstructViewAccessor<real64_array>("fluidPressure");
-
+  ElementRegionManager::MaterialViewAccessor<real64> const
+  biotCoefficient = elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+  auto fluidPres = elemManager->ConstructViewAccessor<real64_array>("pressure");
+  auto dPres = elemManager->ConstructViewAccessor<real64_array>("deltaPressure");
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                               BlockIDs::displacementBlock );
@@ -1586,9 +1588,9 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
           }
 
           R2SymTensor referenceStress;
-          if( fluidPressure[er][esr].isValid() )
+          if( fluidPres[er][esr].isValid() )
           {
-            referenceStress.PlusIdentity( fluidPressure[er][esr][k] );
+            referenceStress.PlusIdentity( - biotCoefficient[er][esr][0] * (fluidPres[er][esr][k] + dPres[er][esr][k]));
           }
           real64 maxElemForce = CalculateElementResidualAndDerivative( density[er][esr][0],
                                                                        feSpace->m_finiteElement,
@@ -1629,8 +1631,6 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
     matrix->Print(std::cout);
     rhs->Print(std::cout);
   }
-
- // return maxForce;
 }
 
 void
@@ -1670,14 +1670,13 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                                                BlockIDs::displacementBlock );
   });
 
-  ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
-//  bcManager->ApplyBoundaryCondition( this, &,
-//                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
-
   ApplyTractionBC( domain,
                    time_n+dt,
                    *blockSystem );
 
+  ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
+//  bcManager->ApplyBoundaryCondition( this, &,
+//                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
   Epetra_FECrsMatrix const * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                                     BlockIDs::displacementBlock );
