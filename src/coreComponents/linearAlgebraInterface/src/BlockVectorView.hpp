@@ -38,9 +38,9 @@ public:
   BlockVectorView();
 
   /**
-   * @brief Empty matrix constructor.
+   * @brief Empty vector constructor.
    *
-   * Create a block matrix of size (<tt>nRows</tt>,<tt>nCols</tt>).
+   * Create a block vector of size (<tt>nRows</tt>,<tt>nCols</tt>).
    */
   BlockVectorView( integer nBlocks );
 

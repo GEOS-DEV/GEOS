@@ -38,8 +38,10 @@ public:
 
   /**
    * @brief Copy constructor.
+   *
+   * Create new matrix from matrix in.
    */
-  EpetraSparseMatrix( EpetraSparseMatrix const &in_matrix );
+  EpetraSparseMatrix( EpetraSparseMatrix const &in_mat );
 
   /**
    * @brief Virtual destructor.
