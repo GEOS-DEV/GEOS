@@ -67,6 +67,7 @@ void EpetraVector::dot( EpetraVector const &vec,
 {
   m_vector.get()->Dot( *vec.getPointer(), dst );
 }
+
 // Update (name to be changed) vector as this = alpha*vec + beta*this..
 void EpetraVector::update( real64 const alpha,
                            EpetraVector const &vec,

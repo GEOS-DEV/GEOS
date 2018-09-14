@@ -42,6 +42,9 @@ namespace geosx
  *        matrix object type used in Trilinos.
  */
 
+using integer     = int;
+using localIndex  = int;
+
 class EpetraSparseMatrix
 {
 public:
@@ -350,9 +353,9 @@ public:
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
   void getLocalRow( trilinosTypes::lid myRow,
-                    trilinosTypes::lid &NumEntries,
-                    real64* Values,
-                    trilinosTypes::lid* Indices );
+                    trilinosTypes::lid & NumEntries,
+                    real64 * & Values,
+                    trilinosTypes::lid * & Indices );
 
   /**
    * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
