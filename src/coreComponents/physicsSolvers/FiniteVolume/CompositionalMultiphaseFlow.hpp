@@ -173,9 +173,13 @@ public:
 
 private:
 
-  void resizeFields( DomainPartition * domain );
+  void ResizeFields(DomainPartition * domain);
 
-  void updateComponentFraction( DomainPartition * domain );
+  void UpdateComponentFraction(DomainPartition * domain);
+
+  void UpdateConstitutiveModels(DomainPartition * domain);
+
+  void BackupFields( DomainPartition * domain );
 
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );

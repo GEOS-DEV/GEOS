@@ -346,10 +346,10 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
   // compute number of DOF per cell
   m_numDofPerCell = m_numComponents + 1;
 
-  resizeFields( domain );
+  ResizeFields(domain);
 }
 
-void CompositionalMultiphaseFlow::resizeFields( DomainPartition * domain )
+void CompositionalMultiphaseFlow::ResizeFields(DomainPartition * domain)
 {
   for (auto & mesh : domain->getMeshBodies()->GetSubGroups())
   {
@@ -407,7 +407,7 @@ real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
                                       getLinearSystemRepository() );
 }
 
-void CompositionalMultiphaseFlow::updateComponentFraction(DomainPartition * domain)
+void CompositionalMultiphaseFlow::UpdateComponentFraction(DomainPartition * domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -450,80 +450,73 @@ void CompositionalMultiphaseFlow::updateComponentFraction(DomainPartition * doma
   });
 }
 
-void
-CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
-                                                DomainPartition * const domain,
-                                                EpetraBlockSystem * const blockSystem )
+void CompositionalMultiphaseFlow::UpdateConstitutiveModels(DomainPartition * domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
-
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
-  auto pres = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.pressure.Key());
-  auto dPres = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.deltaPressure.Key());
+  auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>( constitutiveManager );
 
-  auto compDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.globalCompDensity.Key());
-  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.deltaGlobalCompDensity.Key());
+  auto pres         = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.pressure.Key());
+  auto dPres        = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.deltaPressure.Key());
+  auto compMoleFrac = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.globalCompMoleFraction.Key());
 
-  auto compMoleFrac =
-    elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.globalCompMoleFraction.Key());
-  auto dCompMoleFrac_dCompDens =
-    elemManager->ConstructViewAccessor<array3d<real64>>(viewKeys.dGlobalCompMoleFraction_dGlobalCompDensity.Key());
-
-  auto phaseDensOld = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.phaseDensity.Key());
-  auto phaseVolFracOld = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.phaseVolumeFraction.Key());
-  auto phaseCompMassFracOld = elemManager->ConstructViewAccessor<array3d<real64>>(viewKeys.phaseComponentMassFraction.Key());
-  auto poroOld = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.porosity.Key());
-  auto poroRef = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.referencePorosity.Key());
-
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-    constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>( constitutiveManager );
-
-
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
-    pvmult = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::
-                                                                            viewKeyStruct::
-                                                                            poreVolumeMultiplierString,
-                                                                            constitutiveManager );
-
-
-  ElementRegionManager::MaterialViewAccessor< array3d<real64> > const
-    phaseDens = elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
-                                                                               viewKeyStruct::
-                                                                               phaseDensityString,
-                                                                               constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< array3d<real64> > const
-    phaseVolFrac = elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
-                                                                                  viewKeyStruct::
-                                                                                  phaseVolumeFractionString,
-                                                                                  constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< array4d<real64> > const
-    phaseCompMassFrac = elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
-                                                                                       viewKeyStruct::
-                                                                                       phaseComponentMassFractionString,
-                                                                                       constitutiveManager);
-
-  //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const ei )->void
   {
-    dPres[er][esr][ei] = 0.0;
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
-      dCompDens[er][esr][ei][ic] = 0.0;
-
-    updateComponentFraction( domain );
-
-    constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointMultiphaseFluid( pres[er][esr][ei],
+    constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointMultiphaseFluid( pres[er][esr][ei] + dPres[er][esr][ei],
                                                                                    m_temperature,
                                                                                    compMoleFrac[er][esr][ei].data(),
                                                                                    ei, 0 ); // fluid
 
     constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure(pres[er][esr][ei], ei, 0); // solid
+  });
+}
 
+void CompositionalMultiphaseFlow::BackupFields(DomainPartition * domain)
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+
+  auto phaseDensOld         = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.phaseDensity.Key());
+  auto phaseVolFracOld      = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.phaseVolumeFraction.Key());
+  auto phaseCompMassFracOld = elemManager->ConstructViewAccessor<array3d<real64>>(viewKeys.phaseComponentMassFraction.Key());
+  auto poroOld              = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.porosity.Key());
+  auto poroRef              = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.referencePorosity.Key());
+
+  auto const pvmult =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::
+                                                                   viewKeyStruct::
+                                                                   poreVolumeMultiplierString,
+                                                                   constitutiveManager );
+
+
+  auto const phaseDens =
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   phaseDensityString,
+                                                                   constitutiveManager );
+
+  auto const phaseVolFrac =
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   phaseVolumeFractionString,
+                                                                   constitutiveManager );
+
+  auto const phaseCompMassFrac =
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   phaseComponentMassFractionString,
+                                                                   constitutiveManager );
+
+// backup some fields used in time derivative approximation
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei )->void
+  {
     for (localIndex ip = 0; ip < m_numPhases; ++ip)
     {
       phaseDensOld[er][esr][ei][ip] = phaseDens[er][esr][m_fluidIndex][ei][0][ip];
@@ -537,6 +530,18 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 co
     poroOld[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
 
   });
+}
+
+void
+CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
+                                                DomainPartition * const domain,
+                                                EpetraBlockSystem * const blockSystem )
+{
+  // set deltas to zero and recompute dependent quantities
+  ResetStateToBeginningOfStep( domain );
+
+  // backup fields used in time derivative approximation
+  BackupFields( domain );
 
   // setup dof numbers and linear system
   SetupSystem( domain, blockSystem );
@@ -671,13 +676,13 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   // loop over all elements and add all locals just in case the above connector loop missed some
   forAllElemsInMesh<RAJA::seq_exec>(meshLevel, [&] (localIndex const er,
                                                     localIndex const esr,
-                                                    localIndex const k) -> void
+                                                    localIndex const ei) -> void
   {
-    if (elemGhostRank[er][esr][k] < 0)
+    if (elemGhostRank[er][esr][ei] < 0)
     {
       for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
       {
-        elementLocalDofIndexRow[idof] = blockLocalDofNumber[er][esr][k][idof];
+        elementLocalDofIndexRow[idof] = blockLocalDofNumber[er][esr][ei][idof];
       }
 
       sparsity->InsertGlobalIndices( integer_conversion<int>(m_numDofPerCell),
@@ -753,7 +758,6 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
                                 numGlobalRows,
                                 0 );
 
-  //TODO element sync doesn't work yet
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back(viewKeys.blockLocalDofNumber.Key());
   CommunicationTools::
@@ -817,11 +821,7 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * con
 
   if (verboseLevel() >= 2)
   {
-    blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock )->Print( std::cout );
-    blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::compositionalBlock )->Print( std::cout );
-    blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::fluidPressureBlock )->Print( std::cout );
     blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock )->Print( std::cout );
-    blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock )->Print( std::cout );
     blockSystem->GetResidualVector( BlockIDs::compositionalBlock )->Print( std::cout );
   }
 }
@@ -846,13 +846,73 @@ real64
 CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
                                                     DomainPartition * const domain )
 {
-  return 0;
+  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+  Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  auto elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
+                                                                          viewKeyStruct::
+                                                                          ghostRankString );
+
+  auto blockLocalDofNumber = elemManager->
+    ConstructViewAccessor<array2d<globalIndex>>(viewKeys.blockLocalDofNumber.Key());
+
+  auto refPoro = elemManager->ConstructViewAccessor<real64_array>(viewKeys.referencePorosity.Key());
+  auto volume  = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
+
+  // get a view into local residual vector
+  int localSizeInt;
+  double* localResidual = nullptr;
+  residual->ExtractView(&localResidual, &localSizeInt);
+
+  // compute the norm of local residual scaled by cell pore volume
+  real64 localResidualNorm = sumOverElemsInMesh(mesh, [&] ( localIndex const er,
+                                                            localIndex const esr,
+                                                            localIndex const ei ) -> real64
+  {
+    if (elemGhostRank[er][esr][ei] < 0)
+    {
+      real64 cell_norm = 0.0;
+      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      {
+        int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][ei][idof]));
+        real64 const val = localResidual[lid] / (refPoro[er][esr][ei] * volume[er][esr][ei]);
+        cell_norm += val * val;
+      }
+      return cell_norm;
+    }
+    return 0.0;
+  });
+
+  // compute global residual norm
+  realT globalResidualNorm;
+  MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
+
+  return sqrt(globalResidualNorm);
 }
 
 void CompositionalMultiphaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
                                                SystemSolverParameters const * const params )
 {
+  Epetra_FEVector * const
+    solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
 
+  Epetra_FEVector * const
+    residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+
+  residual->Scale(-1.0);
+  solution->Scale(0.0);
+
+  m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
+                                                params,
+                                                BlockIDs::compositionalBlock );
+
+  if( verboseLevel() >= 2 )
+  {
+    solution->Print(std::cout);
+  }
 }
 
 void
@@ -860,19 +920,99 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
+  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
+  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
+
+  int dummy;
+  double* local_solution = nullptr;
+  solution->ExtractView(&local_solution,&dummy);
+
+  auto blockLocalDofNumber =
+    elemManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeys.blockLocalDofNumber.Key() );
+
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeys.deltaPressure.Key() );
+  auto dCompDens = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeys.deltaGlobalCompDensity.Key() );
+
+  auto elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
+                                                                          viewKeyStruct::
+                                                                          ghostRankString );
+
+  // loop over all elements to update incremental pressure
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei )->void
+  {
+    if( elemGhostRank[er][esr][ei] < 0 )
+    {
+      // extract solution and apply to dP
+      {
+        int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][ei][0]));
+        dPres[er][esr][ei] += scalingFactor * local_solution[lid];
+      }
+
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      {
+        int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][ei][ic+1]));
+        dCompDens[er][esr][ei] += scalingFactor * local_solution[lid];
+      }
+    }
+  });
+
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeys.deltaPressure.Key());
+  fieldNames["elems"].push_back(viewKeys.deltaGlobalCompDensity.Key());
+  CommunicationTools::SynchronizeFields(fieldNames,
+                                        mesh,
+                                        domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+  UpdateComponentFraction(domain);
+  UpdateConstitutiveModels(domain);
 }
 
 void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep(DomainPartition * const domain)
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.deltaPressure.Key());
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.deltaGlobalCompDensity.Key());
+
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei )->void
+  {
+    dPres[er][esr][ei] = 0.0;
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      dCompDens[er][esr][ei][ic] = 0.0;
+  });
+
+  UpdateComponentFraction(domain);
+  UpdateConstitutiveModels(domain);
 }
 
 void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
                                                         real64 const & dt,
                                                         DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
+  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.pressure.Key());
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeys.deltaPressure.Key());
+  auto compDens  = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.globalCompDensity.Key());
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeys.deltaGlobalCompDensity.Key());
+
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei )->void
+  {
+    pres[er][esr][ei] += dPres[er][esr][ei];
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      compDens[er][esr][ei][ic] += dCompDens[er][esr][ei][ic];
+  });
 }
 
 
