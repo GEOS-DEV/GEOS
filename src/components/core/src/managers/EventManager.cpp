@@ -201,6 +201,8 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
            GEOS_ERROR( "TRIBOL coupling error" );
        }
 #endif
+    } else if (terminate) {
+      break ;
     }
 
     real64 nextDt = std::numeric_limits<real64>::max();
