@@ -191,6 +191,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
                                  &dt,
                                  &dt, // prevDt
                                  1, // noParamInput
+                                 true, // sort views
                                  s_tribolProblem) ;
 
   SlideWorldAdapter::SetSourceData(s_tribolProblem) ;
@@ -346,9 +347,11 @@ void TribolCoupling::CopyPositionsToTribolSourceData(NodeManager const * const n
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
-     x[nodeIdx] = X[nodeIdx][0] + u[nodeIdx][0] ;
-     y[nodeIdx] = X[nodeIdx][1] + u[nodeIdx][1] ;
-     z[nodeIdx] = X[nodeIdx][2] + u[nodeIdx][2] ;
+     const R1Tensor & Xi = X[nodeIdx] ;
+     const R1Tensor & ui = u[nodeIdx] ;
+     x[nodeIdx] = Xi[0] + ui[0] ;
+     y[nodeIdx] = Xi[1] + ui[1] ;
+     z[nodeIdx] = Xi[2] + ui[2] ;
   }
 }
 
@@ -363,9 +366,10 @@ void TribolCoupling::CopyVelocitiesToTribolSourceData(NodeManager const * const 
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
-     xd[nodeIdx] = v[nodeIdx][0] ;
-     yd[nodeIdx] = v[nodeIdx][1] ;
-     zd[nodeIdx] = v[nodeIdx][2] ;
+     const R1Tensor & vi = v[nodeIdx] ;
+     xd[nodeIdx] = vi[0] ;
+     yd[nodeIdx] = vi[1] ;
+     zd[nodeIdx] = vi[2] ;
   }
 }
 
@@ -380,9 +384,10 @@ void TribolCoupling::CopyAccelerationsToTribolSourceData(NodeManager const * con
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
-     xdd[nodeIdx] = a[nodeIdx][0] ;
-     ydd[nodeIdx] = a[nodeIdx][1] ;
-     zdd[nodeIdx] = a[nodeIdx][2] ;
+     const R1Tensor & ai = a[nodeIdx] ;
+     xdd[nodeIdx] = ai[0] ;
+     ydd[nodeIdx] = ai[1] ;
+     zdd[nodeIdx] = ai[2] ;
   }
 }
 
@@ -398,10 +403,11 @@ void TribolCoupling::CopyForcesToTribolSourceData(NodeManager const * const node
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
-     real64 nmass = nodalMass[nodeIdx] ;
-     fx[nodeIdx] = a[nodeIdx][0]*nmass ;
-     fy[nodeIdx] = a[nodeIdx][1]*nmass ;
-     fz[nodeIdx] = a[nodeIdx][2]*nmass ;
+     const real64 nmass = nodalMass[nodeIdx] ;
+     const R1Tensor & ai = a[nodeIdx] ;
+     fx[nodeIdx] = ai[0]*nmass ;
+     fy[nodeIdx] = ai[1]*nmass ;
+     fz[nodeIdx] = ai[2]*nmass ;
   }
 }
 
@@ -417,10 +423,11 @@ void TribolCoupling::CopyAccelerationsFromTribolSourceData(NodeManager * const n
 
   for (int i = 0 ; i < numSlideNodes ; ++i) {
      int nodeIdx = slideMap[i] ;
-     real64 nmass = nodalMass[nodeIdx] ;
-     a[nodeIdx][0] = fx[nodeIdx]/nmass ;
-     a[nodeIdx][1] = fy[nodeIdx]/nmass ;
-     a[nodeIdx][2] = fz[nodeIdx]/nmass ;
+     const real64 nmass = nodalMass[nodeIdx] ;
+     R1Tensor & ai = a[nodeIdx] ;
+     ai[0] = fx[nodeIdx]/nmass ;
+     ai[1] = fy[nodeIdx]/nmass ;
+     ai[2] = fz[nodeIdx]/nmass ;
   }
 }
 
