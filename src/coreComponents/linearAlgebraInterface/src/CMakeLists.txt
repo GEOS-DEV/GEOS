@@ -2,10 +2,9 @@
 # Specify all headers
 #
 set( linearAlgebraInterface_headers
-     BlockLinearSolvers.hpp
-     BlockMatrixView.hpp
      EpetraSparseMatrix.hpp
      EpetraVector.hpp
+     InterfaceTypes.hpp
      TrilinosSolver.hpp
      TrilinosInterface.hpp
      HypreInterface.hpp )

@@ -1,3 +1,21 @@
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
 /**
  * @file EpetraSparseMatrix.hpp
  */
@@ -6,6 +24,7 @@
 #define EPETRASPARSEMATRIX_HPP_
 
 #include "EpetraVector.hpp"
+#include "InterfaceTypes.hpp"
 #include <Epetra_Comm.h>
 #include <Epetra_MpiComm.h>
 #include <Epetra_Map.h>
@@ -22,7 +41,6 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-
 class EpetraSparseMatrix
 {
 public:
@@ -58,8 +76,8 @@ public:
    *
    */
   void create( MPI_Comm const comm,
-               globalIndex const m_nRowGlobal,
-               integer const nMaxEntriesPerRow );
+               trilinosTypes::gid const m_nRowGlobal,
+               trilinosTypes::lid const nMaxEntriesPerRow );
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -70,9 +88,9 @@ public:
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    */
   void create( MPI_Comm const comm,
-               globalIndex const m_nRowGlobal,
-               globalIndex const m_nColGlobal,
-               integer const nMaxEntriesPerRow = 0 );
+               trilinosTypes::gid const m_nRowGlobal,
+               trilinosTypes::gid const m_nColGlobal,
+               trilinosTypes::lid const nMaxEntriesPerRow = 0 );
 
   // TODO see if we need a vector of nnz
   //  /**
@@ -83,8 +101,8 @@ public:
   //   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
   //   */
   //  void create( MPI_Comm const comm,
-  //               integer const m_nRowGlobal,
-  //               std::vector<integer> const nMaxEntriesPerRow );
+  //               trilinosTypes::lid const m_nRowGlobal,
+  //               std::vector<trilinosTypes::lid> const nMaxEntriesPerRow );
   //
   //  /**
   //   * @brief Create a square matrix from number of unknowns.
@@ -95,9 +113,9 @@ public:
   //   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
   //   */
   //  void create( MPI_Comm const comm,
-  //               globalIndex const m_nRowGlobal,
-  //               globalIndex const m_nColGlobal,
-  //               std::vector<integer> const nMaxEntriesPerRow );
+  //               trilinosTypes::gid const m_nRowGlobal,
+  //               trilinosTypes::gid const m_nColGlobal,
+  //               std::vector<trilinosTypes::lid> const nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from Epetra_Map.
@@ -111,7 +129,7 @@ public:
    *
    */
   void create( Epetra_Map const &input_map,
-               integer const nMaxEntriesPerRow );
+               trilinosTypes::lid const nMaxEntriesPerRow );
 
   /**
    * @brief Create a rectangular matrix from two existing Epetra_Map, row and column maps.
@@ -122,7 +140,7 @@ public:
    */
   void create( Epetra_Map const &row_map,
                Epetra_Map const &col_map,
-               integer const nMaxEntriesPerRow = 0 );
+               trilinosTypes::lid const nMaxEntriesPerRow = 0 );
 
   /**
    * @brief Create a matrix from an existing Epetra_CrsGraph.
@@ -178,10 +196,10 @@ public:
    * \param values Values to add to prescribed locations.
    * \param cols Global column indices in which to add the values.
    */
-  void add( globalIndex const iRow,
-            integer const nCols,
+  void add( trilinosTypes::gid const iRow,
+            trilinosTypes::lid const nCols,
             real64 const *values,
-            globalIndex const *cols );
+            trilinosTypes::gid const *cols );
 
   /**
    * @brief Add to one element.
@@ -193,8 +211,8 @@ public:
    * \param value Value to add to prescribed locations.
    *
    */
-  void add( globalIndex const iRow,
-            globalIndex const iCol,
+  void add( trilinosTypes::gid const iRow,
+            trilinosTypes::gid const iCol,
             real64 const value );
 
   /**
@@ -210,10 +228,10 @@ public:
    * \param cols Global column indices in which to set the values.
    *
    */
-  void set( globalIndex const iRow,
-            integer const nCols,
+  void set( trilinosTypes::gid const iRow,
+            trilinosTypes::lid const nCols,
             real64 const *values,
-            globalIndex const *cols );
+            trilinosTypes::gid const *cols );
 
   /**
    * @brief Set one element.
@@ -225,8 +243,8 @@ public:
    * \param value Value to set at prescribed locations.
    *
    */
-  void set( globalIndex const iRow,
-            globalIndex const iCol,
+  void set( trilinosTypes::gid const iRow,
+            trilinosTypes::gid const iCol,
             real64 const value );
 
   /**
@@ -243,10 +261,10 @@ public:
    * \param values Values to add to prescribed locations.
    * \param cols Global column indices in which to add the values.
    */
-  void insert( globalIndex const iRow,
-               integer const nCols,
+  void insert( trilinosTypes::gid const iRow,
+               trilinosTypes::lid const nCols,
                real64 const *values,
-               globalIndex const *cols );
+               trilinosTypes::gid const *cols );
 
   //@}
 
@@ -300,7 +318,7 @@ public:
   /**
    * @brief Clear a row and multiplies the diagonal term by <tt>factor</tt>.
    */
-  void clearRow( globalIndex const row,
+  void clearRow( trilinosTypes::gid const row,
                  real64 const factor );
 
   //@}
@@ -312,37 +330,37 @@ public:
    * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
-  void getRow( globalIndex GlobalRow,
-               integer &NumEntries,
+  void getRow( trilinosTypes::gid GlobalRow,
+               trilinosTypes::lid &NumEntries,
                real64* Values,
-               globalIndex* Indices );
+               trilinosTypes::gid* Indices );
 
   /**
    * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
-  void getRow( globalIndex GlobalRow,
-               integer &NumEntries,
+  void getRow( trilinosTypes::gid GlobalRow,
+               trilinosTypes::lid &NumEntries,
                std::vector<real64> &vecValues,
-               std::vector<globalIndex> &vecIndices );
+               std::vector<trilinosTypes::gid> &vecIndices );
 
   /**
    * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
-  void getLocalRow( localIndex myRow,
-                    integer &NumEntries,
-                    real64* Values,
-                    localIndex* Indices );
+  void getLocalRow( trilinosTypes::lid myRow,
+                    trilinosTypes::lid & NumEntries,
+                    real64 * & Values,
+                    trilinosTypes::lid * & Indices );
 
   /**
    * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
-  void getLocalRow( localIndex myRow,
-                    integer &NumEntries,
+  void getLocalRow( trilinosTypes::lid myRow,
+                    trilinosTypes::lid &NumEntries,
                     std::vector<real64> &vecValues,
-                    std::vector<localIndex> &vecIndices );
+                    std::vector<trilinosTypes::lid> &vecIndices );
 
   /**
    * @brief Returns a pointer to the underlying matrix.
@@ -352,27 +370,27 @@ public:
   /**
    * @brief Returns the number of global rows.
    */
-  globalIndex globalRows() const;
+  trilinosTypes::gid globalRows() const;
 
   /**
    * @brief Returns the number of global columns.
    */
-  globalIndex globalCols() const;
+  trilinosTypes::gid globalCols() const;
 
   /**
    * @brief Returns the number of unique columns (can be used to check if matrix is square).
    */
-  globalIndex uniqueCols() const;
+  trilinosTypes::gid uniqueCols() const;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.
    */
-  globalIndex ilower() const;
+  trilinosTypes::gid ilower() const;
 
   /**
    * @brief Returns the index of the last global row owned by that processor.
    */
-  globalIndex iupper() const;
+  trilinosTypes::gid iupper() const;
 
   /**
    * @brief Returns the number of local rows.
@@ -403,7 +421,7 @@ public:
    * @brief Wrapper for LID function. Returns the local map of the corresponding global index.
    * Returns -1 if the global row is not owned by the processor.
    */
-  localIndex rowMapLID( globalIndex GID ) const;
+  trilinosTypes::lid rowMapLID( trilinosTypes::gid GID ) const;
 
   /**
    * @brief Returns the infinity norm of the matrix.
