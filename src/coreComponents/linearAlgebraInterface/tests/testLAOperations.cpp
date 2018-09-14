@@ -249,6 +249,119 @@ void testLaplaceOperator()
     EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
   }
 
+  //MPI_Finalize();
+
+}
+
+template< typename LAI >
+void testBlockLaplaceOperator()
+{
+
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+  using ParallelVector = typename LAI::ParallelVector;
+
+  //MPI_Init(nullptr,nullptr);
+
+  // Get the MPI rank
+  integer rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // Set the MPI communicator
+  // MPI_Comm comm = MPI_COMM_WORLD;
+
+  MPI_Comm test_comm;
+  MPI_Comm_dup(MPI_COMM_WORLD,&test_comm);
+  MPI_Comm comm = test_comm;
+
+  // Create Dummy Laplace matrix (5 points stencil)
+  globalIndex n = 5;
+  globalIndex N = n*n;
+
+  ParallelMatrix testMatrix;
+  testMatrix.create(comm,N,5);
+
+  ParallelMatrix preconditioner;
+  preconditioner.create(comm,N,1);
+
+  // Allocate arrays to fill dummy 2D Laplace (cartesian) matrix
+  real64 values[5];
+  globalIndex cols[5];
+
+  // Construct a dummy Laplace matrix (5 points stencil)
+  for (globalIndex i = testMatrix.ilower(); i < testMatrix.iupper(); i++)
+  {
+    integer nnz = 0;
+    /* The left -n: position i-n */
+    if (i-n >= 0)
+    {
+      cols[nnz] = i-n;
+      values[nnz] = -1.0;
+      nnz++;
+    }
+    /* The left -n: position i-n */
+    if (i-1 >= 0)
+    {
+      cols[nnz] = i-1;
+      values[nnz] = -1.0;
+      nnz++;
+    }
+    /* Set the diagonal: position i */
+    cols[nnz] = i;
+    values[nnz] = 4.0;
+    nnz++;
+    /* The right +1: position i+1 */
+    if (i+1 < N)
+    {
+      cols[nnz] = i+1;
+      values[nnz] = -1.0;
+      nnz++;
+    }
+    /* The right +n: position i-n */
+    if (i+n < N)
+    {
+      cols[nnz] = i+n;
+      values[nnz] = -1.0;
+      nnz++;
+    }
+
+    real64 temp = 0.25;
+
+    // Set the values for row i
+    testMatrix.insert(i,nnz,values,cols);
+    preconditioner.insert(i,1,&temp,&i);
+
+  }
+
+  testMatrix.close();
+  preconditioner.close();
+
+  // Fill standard vectors
+  std::vector<real64> ones, zer;
+  for (integer j = 0; j < N; j++)
+  {
+    zer.push_back(0);
+    ones.push_back(1);
+  }
+
+  // Define vectors
+  ParallelVector x, b;
+  // Right hand side for multiplication (b)
+  b.create(zer);
+  // Vector of ones for multiplication (x)
+  x.create(ones);
+  // Vector of zeros for iterative and direct solutions
+  ParallelVector solution(b);
+  // Residual vector
+  ParallelVector r0(b);
+  ParallelVector r1(b);
+
+  // Matrix/vector multiplication
+  testMatrix.multiply(x, b);
+
+  ParallelVector solCG(b);
+  ParallelVector bCG(b);
+
+
   integer nRows = 1;
   integer nCols = 2;
 
@@ -257,7 +370,7 @@ void testLaplaceOperator()
   BlockVectorView<TrilinosInterface> testBlockRhs(nRows);
 
   ParallelMatrix testMatrix01(testMatrix);
-  ParallelVector solDirect1(solDirect);
+  ParallelVector solDirect1(solution);
 
   testMatrix01.scale(2.);
   solDirect1.scale(-0.5);
@@ -268,7 +381,7 @@ void testLaplaceOperator()
   testBlockMatrix.setBlock(0,0,testMatrix);
   testBlockMatrix.setBlock(0,1,testMatrix01);
 
-  testBlockSolution.setBlock(0,solDirect);
+  testBlockSolution.setBlock(0,solution);
   testBlockSolution.setBlock(1,solDirect1);
 
   testBlockRhs.setBlock(0,r0);
@@ -276,7 +389,7 @@ void testLaplaceOperator()
 
   testBlockMatrix.multiply(testBlockSolution,testBlockRhs);
 
-  testBlockRhs.getBlock(0)->print();
+//  testBlockRhs.getBlock(0)->print();
 
   real64 normBlockProduct = 0;
   testBlockRhs.getBlock(0)->normInf(normBlockProduct);
@@ -286,19 +399,15 @@ void testLaplaceOperator()
 
   testCG.solve( testMatrix, solCG, bCG, preconditioner );
 
-  testBlockSolution.getBlock(0)->print();
-  testBlockSolution.getBlock(1)->print();
-
   real64 testBlockNorm = 0;
   testBlockSolution.norm2(testBlockNorm);
 
-  ParallelVector test1;
+  BlockVectorView<TrilinosInterface> testResidual( nRows );
 
-  ParallelVector test2(test1);
+  testResidual.setBlock(0,r0);
+  testResidual.setBlock(1,r1);
 
-  test1.print();
-  test2.print();
-
+  testBlockMatrix.residual(testBlockSolution,testBlockRhs,testResidual);
 
   //solCG.print();
   //solIterative.print();
@@ -310,6 +419,7 @@ TEST(testLAOperations,testEpetraLAOperations)
 {
 
   testLaplaceOperator<TrilinosInterface>();
+  testBlockLaplaceOperator<TrilinosInterface>();
 
 }
 
