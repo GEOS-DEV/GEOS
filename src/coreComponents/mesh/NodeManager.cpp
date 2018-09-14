@@ -31,6 +31,7 @@
 #include "ElementRegionManager.hpp"
 #include "ToElementRelation.hpp"
 #include "BufferOps.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -136,7 +137,6 @@ void NodeManager::FillDocumentationNode()
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
-
   /// flow of function:
   /// <ol>
   /// <li> Extract edgeToNode map from the edge manager
@@ -169,7 +169,6 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 //**************************************************************************************************
 void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
-
   OrderedVariableOneToManyRelation const & faceToNodes = faceManager->nodeList();
   localIndex const numFaces = faceManager->size();
   for( localIndex ke=0 ; ke<numFaces ; ++ke )

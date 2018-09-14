@@ -516,9 +516,6 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                                    const int cycleNumber,
                                                    DomainPartition * const domain )
 {
-
-  GEOS_MARK_BEGIN(initialization);
-
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
@@ -573,29 +570,20 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOS_ERROR("Invalid data layout");
 #endif
 
-  GEOS_MARK_END(initialization);  
-
-  GEOS_MARK_BEGIN(BC1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   bcManager->ApplyBoundaryConditionToField( time_n,
                                             domain,
                                             "nodeManager",
                                             keys::Acceleration );
 #endif    
-  GEOS_MARK_END(BC1);
-
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  GEOS_CXX_MARK_LOOP_BEGIN(onepointloop,onepointloop1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc_x, acc_y, acc_z,
                                                 vel, dt/2, numNodes );
 #endif  
-  GEOS_CXX_MARK_LOOP_END(onepointloop);
 
-
-  GEOS_MARK_BEGIN(BC2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   //  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
 
@@ -605,22 +593,15 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                             keys::Velocity );
 
 #endif  
-  GEOS_MARK_END(BC2);
-
-
   //                     dydx, dy,   y, dx, length
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-  GEOS_CXX_MARK_LOOP_BEGIN(onepointloop2,onepointloop2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
 #else
   SolidMechanicsLagrangianFEMKernels::OnePoint(vel,uhat_x,uhat_y,uhat_z,
                                                u_x, u_y, u_z, dt, numNodes );
 #endif  
-  GEOS_CXX_MARK_LOOP_END(onepointloop2);
 
-
-  GEOS_MARK_BEGIN(BC3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   //  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
   //                                     nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
@@ -642,11 +623,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 #endif  
-  GEOS_MARK_END(BC3);
 
   //Set memory to zero
-  GEOS_CXX_MARK_LOOP_BEGIN(memset,memset);
-
   FORALL_NODES( a, 0, numNodes )
   {
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
@@ -657,7 +635,6 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     acc_z[a] = 0; 
 #endif    
   } END_FOR
-  GEOS_CXX_MARK_LOOP_END(memset);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
   meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64> >("MeanStress",
@@ -705,9 +682,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
       //
       //Internal GEOSX Kernel
       //
-      GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
-
 
       //          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
       for( localIndex k=0 ; k<cellBlock->size() ; ++k )
@@ -939,7 +914,6 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 #endif// If !defined(EXTERNAL_KERNELS)
-      GEOS_CXX_MARK_LOOP_END(elemLoop);
 
     } //Element Region
 
@@ -947,7 +921,6 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 //Compute Force : Point-wise computations
-GEOS_CXX_MARK_LOOP_BEGIN(computeForce,computeForce);
 FORALL_NODES( a, 0, numNodes )
 {
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)    
@@ -958,27 +931,18 @@ FORALL_NODES( a, 0, numNodes )
   acc_z[a] /=mass[a];
 #endif
 } END_FOR
-GEOS_CXX_MARK_LOOP_END(computeForce);
-
-
 //Integration::OnePoint( acc, vel, dt/2, numNodes );
-GEOS_CXX_MARK_LOOP_BEGIN(onepointloop3,onepointloop3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)      
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
 #else  
 SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
 #endif  
-GEOS_CXX_MARK_LOOP_END(onepointloop3);
 
-
-GEOS_MARK_BEGIN(BC4);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
 //bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
 bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
 
 #endif
-GEOS_MARK_END(BC4);
-
 
 std::map<string, string_array > fieldNames;
 fieldNames["node"].push_back("Velocity");
@@ -1513,8 +1477,6 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
       Epetra_SerialDenseVector     element_dof_np1 (dim*static_cast<int>(numNodesPerElement));
 
       array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
-
-      GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 
       for( localIndex k=0 ; k<cellBlock->size() ; ++k )
       {
