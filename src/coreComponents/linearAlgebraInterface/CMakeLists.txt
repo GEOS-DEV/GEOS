@@ -1,6 +1,6 @@
-message( "Entering /src/externalComponents/linearAlgebraInterface/CMakeLists.txt")
+message( "Entering /src/coreComponents/linearAlgebraInterface/CMakeLists.txt")
 
 add_subdirectory(src)
 add_subdirectory(tests)
 
-message( "Leaving /src/externalComponents/linearAlgebraInterface/CMakeLists.txt")
+message( "Leaving /src/coreComponents/linearAlgebraInterface/CMakeLists.txt")
