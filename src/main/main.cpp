@@ -85,9 +85,6 @@ int main( int argc, char *argv[] )
 #endif
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
-  // Mark begin of "initialization" phase
-  GEOSX_MARK_BEGIN("Initialization");
-
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
   if (restart) {
@@ -104,11 +101,7 @@ int main( int argc, char *argv[] )
 
   problemManager.ParseInputFile();
 
-
   problemManager.Initialize( &problemManager );
-
-
-  GEOSX_MARK_END("Initialization");
 
   problemManager.ApplyInitialConditions();
 
@@ -120,6 +113,7 @@ int main( int argc, char *argv[] )
 
   std::cout << std::endl << "Running simulation:" << std::endl;
 
+
   GEOSX_MARK_BEGIN("RunSimulation");
   gettimeofday(&tim, nullptr);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
@@ -129,7 +123,6 @@ int main( int argc, char *argv[] )
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   GEOSX_MARK_END("RunSimulation");
-
   gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 

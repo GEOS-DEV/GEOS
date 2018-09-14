@@ -27,6 +27,7 @@
 
 #include "fileIO/silo/SiloFile.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/SortedArray.hpp"
 
 #include "common/Logger.hpp"

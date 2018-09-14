@@ -536,7 +536,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
 
 
 void ProblemManager::InitializePythonInterpreter()
-{
+{  
 #ifdef GEOSX_USE_PYTHON
   // Initialize python and numpy
   std::cout << "Loading python interpreter" << std::endl;
@@ -779,30 +779,18 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
   edgeManager->BuildEdges(faceManager, nodeManager );
 
-
   nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
   nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
   nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
   domain->SetupCommunications();
-
-
-
-
 }
 
 void ProblemManager::RunSimulation()
 {
 
-  GEOSX_MARK_FUNCTION;
-
-  GEOSX_MARK_BEGIN("Get domain partition");
   DomainPartition * domain  = getDomainPartition();
-  GEOSX_MARK_END("Get domain partition");
-
-  GEOSX_MARK_BEGIN("Event Manager");
   m_eventManager->Run(domain);
-  GEOSX_MARK_END("Event Manager");
 
 }
 
