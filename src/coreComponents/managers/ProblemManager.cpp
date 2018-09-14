@@ -788,10 +788,8 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
 void ProblemManager::RunSimulation()
 {
-
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run(domain);
-
 }
 
 
