@@ -42,11 +42,13 @@ void testLaplaceOperator()
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
   using LinearSolver = typename LAI::LinearSolver;
+  using laiLID = typename LAI::laiLID;
+  using laiGID = typename LAI::laiGID;
 
   MPI_Init(nullptr,nullptr);
 
   // Get the MPI rank
-  integer rank;
+  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Set the MPI communicator
