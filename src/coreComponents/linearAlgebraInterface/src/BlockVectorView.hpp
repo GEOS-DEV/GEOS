@@ -31,9 +31,9 @@ public:
   //! @name Constructor/Destructor Methods
   //@{
   /**
-   * @brief Empty matrix constructor.
+   * @brief Empty vector constructor.
    *
-   * Create an empty block matrix.
+   * Create an empty block vector.
    */
   BlockVectorView();
 

@@ -63,7 +63,9 @@ public:
   /**
    * @brief Set to residual form.
    */
-  //ParallelVector residual();
+  void residual(BlockVectorView<LAI> &solution,
+                          BlockVectorView<LAI> &rhs,
+                          BlockVectorView<LAI> &res);
 
   /**
    * @brief Clear row and multiply the diagonal entry by <tt>factor</tt>.
@@ -76,7 +78,8 @@ public:
   /**
    * @brief Get the matrix corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
    */
-  ParallelMatrix * getBlock( integer blockRowIndex, integer blockColIndex );
+  ParallelMatrix * getBlock( integer blockRowIndex,
+                             integer blockColIndex );
 
   /**
    * @brief Get the matrix corresponding to block <tt>name</tt>.
@@ -86,7 +89,9 @@ public:
   /**
    * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
    */
-  void setBlock( integer blockRowIndex, integer blockColIndex, ParallelMatrix &matrix );
+  void setBlock( integer blockRowIndex,
+                 integer blockColIndex,
+                 ParallelMatrix &matrix );
 
   //@}
 
@@ -105,7 +110,8 @@ BlockMatrixView<LAI>::BlockMatrixView()
 // Constructor with a size (inlined)
 template< typename LAI >
 inline
-BlockMatrixView<LAI>::BlockMatrixView( integer nRows, integer nCols )
+BlockMatrixView<LAI>::BlockMatrixView( integer nRows,
+                                       integer nCols )
 {
   m_matrices.resize( nRows, nCols );
 }
@@ -132,28 +138,30 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> &solution,
   }
 }
 
-//// Set to residual form.
-//template< typename LAI >
-//typename LAI::ParallelVector BlockMatrixView<LAI>::residual()
-//{
-//  integer numRows = 1;
-//  integer numCols = 2;
-//
-//  ParallelVector res( *m_rhs[0] );
-//
-//  for( integer row = 0 ; row < numRows ; row++ )
-//  {
-//    for( integer col = 0 ; col < numCols - 1 ; col++ )
-//    {
-//      ParallelVector temp( *m_rhs[row] );
-//      m_matrices[row][col]->multiply( *m_solution[col], temp );
-//      m_matrices[row][col+1]->multiply( *m_solution[col+1], *m_rhs[row] );
-//      m_rhs[row]->update( 1.0, temp, 1.0 );
-//      res.update( -1.0, *m_rhs[row], 1.0 );
-//    }
-//    return res;
-//  }
-//}
+// Set to residual form.
+template< typename LAI >
+void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> &solution,
+                                     BlockVectorView<LAI> &rhs,
+                                     BlockVectorView<LAI> &res )
+{
+
+  for( integer row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  {
+    rhs.scale( row, 0. );
+    ParallelVector temp( *rhs.getBlock(row) );
+    for( integer col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    {
+      if (m_matrices[row][col] != nullptr)
+      {
+        m_matrices[row][col]->multiply( *solution.getBlock(col), temp );
+        rhs.update( row, 1.0, temp, 1.0 );
+      }
+    }
+    res.update( row, -1.0, *rhs.getBlock(row), 1.0 );
+    res.scale( row, -1.0 );
+  }
+
+}
 
 // Clear row and multiply the diagonal entry by <tt>factor</tt>.
 template< typename LAI >
