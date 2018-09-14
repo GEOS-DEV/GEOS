@@ -4,6 +4,7 @@
 set( linearAlgebraInterface_headers
      EpetraSparseMatrix.hpp
      EpetraVector.hpp
+     InterfaceTypes.hpp
      TrilinosSolver.hpp
      TrilinosInterface.hpp
      HypreInterface.hpp )

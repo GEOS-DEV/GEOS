@@ -35,7 +35,7 @@ EpetraVector::EpetraVector( EpetraVector const &in_vec )
 }
 
 // Create a vector from array
-void EpetraVector::create( const globalIndex size, double *V )
+void EpetraVector::create( const trilinosTypes::gid size, double *V )
 {
   Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
@@ -51,7 +51,7 @@ void EpetraVector::create( const Epetra_Map& Map, double *V )
 // Create a vector from vector
 void EpetraVector::create( std::vector<double> &vec )
 {
-  globalIndex m_size = vec.size();
+  trilinosTypes::gid m_size = vec.size();
   Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
 }
@@ -95,13 +95,13 @@ void EpetraVector::normInf( real64 &dst ) const
 
 
 // Return the global size of the vector (total number of elements).
-globalIndex EpetraVector::globalSize() const
+trilinosTypes::gid EpetraVector::globalSize() const
 {
   return m_vector.get()->GlobalLength64();
 }
 
 // Return the local size of the vector (total number of local elements).
-localIndex EpetraVector::localSize() const
+trilinosTypes::lid EpetraVector::localSize() const
 {
   return m_vector.get()->MyLength();
 }

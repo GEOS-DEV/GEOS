@@ -23,6 +23,8 @@
 #ifndef EPETRAVECTOR_HPP_
 #define EPETRAVECTOR_HPP_
 
+#include "InterfaceTypes.hpp"
+
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
 #include <Epetra_MpiComm.h>
@@ -77,7 +79,7 @@ public:
    *
    * Create a vector from an Epetra_Map and an array of values.
    */
-  void create( const globalIndex  size,
+  void create( const trilinosTypes::gid  size,
                real64      *values );
 
   /**
@@ -132,12 +134,12 @@ public:
   /**
    * @brief Returns the global of the vector.
    */
-  globalIndex globalSize() const;
+  trilinosTypes::gid globalSize() const;
 
   /**
    * @brief Returns the local of the vector.
    */
-  localIndex localSize() const;
+  trilinosTypes::lid localSize() const;
 
   /**
    * @brief Returns a const pointer to the underlying Epetra_Vector.
