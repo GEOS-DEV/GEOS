@@ -45,7 +45,7 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
 //    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
 //    solver.SetAztecParam( AZ_ilut_fill, 5.0 );
   }
-  //solver.SetAztecOption( AZ_output, 0 );
+  solver.SetAztecOption( AZ_output, 0 );
   solver.Iterate( max_iter, newton_tol );
 }
 
