@@ -366,9 +366,9 @@ void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
 }
 
 void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
-                                      trilinosTypes::lid &NumEntries,
-                                      real64* Values,
-                                      trilinosTypes::lid*    Indices )
+                                      trilinosTypes::lid & NumEntries,
+                                      real64 * & Values,
+                                      trilinosTypes::lid * & Indices )
 {
   m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
 }
