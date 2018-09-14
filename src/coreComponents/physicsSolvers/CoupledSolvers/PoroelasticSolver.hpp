@@ -133,17 +133,12 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto couplingTypeOptionString = "couplingTypeOption";
-    constexpr static auto biotCoefficientString = "BiotCoef";
 
-    constexpr static auto effectiveStressString = "effectiveStress";
-    constexpr static auto deltaEffectiveStressString = "deltaEffectiveStress";
-    constexpr static auto deltaVolumetricStrainString = "deltaVolumetricStrain";
+    constexpr static auto totalMeanStressString = "totalMeanStress";
+    constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
-
-    constexpr static auto deltaPorosityString = "deltaPorosity";
-    constexpr static auto dPorosity_dPressureString = "dPorosity_dPressure";
   } viewKeys;
 
 
@@ -153,7 +148,6 @@ private:
   string m_solidSolverName;
   string m_flowSolverName;
   couplingTypeOption m_couplingTypeOption;
-  real64 m_biotCoef;
 
 };
 

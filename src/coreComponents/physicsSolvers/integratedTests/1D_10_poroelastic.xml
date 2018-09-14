@@ -10,7 +10,6 @@
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
-                 BiotCoe="1"
                  verboseLevel="1"
                  >
       <SystemSolverParameters name="SystemSolverParameters"
@@ -26,7 +25,7 @@
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
-                              maxIterNewton="8"
+                              maxIterNewton="5"
                               verbosityFlag="2"/>
     </SolidMechanics_LagrangianFEM>
   
@@ -35,7 +34,7 @@
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
-                     solidName="rock">
+                     solidName="shale">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -46,43 +45,44 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 10"
+                  xCoords="0, 42"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="10"
+                  nx="21"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="boundaryBot" type="0" xMin="-0.1, -0.01, -0.01" xMax=" 1.1, 1.01, 1.01"/>
-    <Box name="boundaryTop" type="0" xMin="8.9, -0.01, -0.01" xMax=" 10.1, 1.01, 1.01"/>
+    <Box name="boundaryBot" type="0" xMin="-0.1, -0.01, -0.01" xMax="2.1, 1.01, 1.01"/>
+    <Box name="boundaryTop" type="0" xMin="39.9, -0.01, -0.01" xMax="42.1, 1.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="3.2e4">
+  <Events maxTime="8000">
+    <!--This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="600"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplication0"
                    beginTime="0"
-                   endTime="500"   
-                   forceDt="100.0"
+                   endTime="10"   
+                   forceDt="1.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="solverApplication1"
-                   beginTime="500"
-                   endTime="3.2e4"   
-                   forceDt="1000.0"
+                   beginTime="10"
+                   endTime="8000"   
+                   forceDt="600.0"
                    target="/Solvers/poroSolve" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
-                   timeFrequency="3000.0"
-                   targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
   </Events>
 
   <NumericalMethods>
@@ -106,7 +106,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" materialList="shale water rock" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" materialList="shale water" />
   </ElementRegions>
 
   <Constitutive>
@@ -115,19 +115,19 @@
                               density0="2700"
                               BulkModulus0="61.9e6"
                               ShearModulus0="28.57e6"
+                              BiotCoefficient="1"
+                              referencePressure="2.125e6"
+                              compressibility="3e-10"
                               />
 
     <CompressibleSinglePhaseFluid name="water"
-                                  referencePressure="0.0"
+                                  referencePressure="2.125e6"
                                   referenceDensity="1000"
                                   compressibility="1e-19"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"
                                   />
                                   
-    <PoreVolumeCompressibleSolid name="rock"
-                                 referencePressure="0.0"
-                                 compressibility="3e-10"/>
   </Constitutive>
 
   <InitialConditions>
@@ -142,7 +142,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="4.963e-17"/>
+               scale="4.963e-14"/>
 
     <Dirichlet name="permy"
                component="1"
@@ -151,7 +151,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="4.963e-17"/>
+               scale="4.963e-14"/>
 
     <Dirichlet name="permz"
                component="2"
@@ -160,7 +160,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
-               scale="4.963e-17"/>
+               scale="4.963e-14"/>
 
     <Dirichlet name="referencePorosity"
                initialCondition="1"
@@ -207,21 +207,22 @@
                fieldName="Traction" 
                dataType="Vector" 
                component="0" 
-               scale="-3e6" 
-               setNames="xpos"/>
+               scale="-2.125e6" 
+               setNames="xpos"
+               functionName="timeFunction"/>
 
     <Dirichlet name="boundaryPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="real64"
-               scale="3e6"
+               scale="2.125e6"
                setNames="boundaryBot boundaryTop"/>  
 
   </BoundaryConditions>
 
   <Functions>
-    <!--  TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
+    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
@@ -230,7 +231,7 @@
   </Partition>
 
   <Outputs>
-    <Silo name="siloOutput" plotFileRoot="plot_largerStep"/>
+    <Silo name="siloOutput"/>
     <!-- Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/ >-->
   </Outputs>
 
