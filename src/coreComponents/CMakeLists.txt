@@ -16,6 +16,7 @@ set( subdirs
      physicsSolvers
      python
      systemSolverInterface
+     linearAlgebraInterface
      )
 
 add_subdirectory(cxx-utilities/src)

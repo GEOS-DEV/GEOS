@@ -31,7 +31,7 @@
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
 #include "BlockMatrixView.hpp"
-#include "../src/BlockLinearSolvers.hpp"
+#include "CGsolver.hpp"
 
 #include "common/DataTypes.hpp"
 
@@ -59,7 +59,7 @@ void testLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 100;
+  globalIndex n = 5;
   globalIndex N = n*n;
 
   ParallelMatrix testMatrix;
@@ -184,7 +184,8 @@ void testLaplaceOperator()
   ParallelVector solIterativeML(b);
   ParallelVector solDirect(b);
   // Residual vector
-  ParallelVector r(b);
+  ParallelVector r0(b);
+  ParallelVector r1(b);
 
   // Matrix/vector multiplication
   testMatrix.multiply(x, b);
@@ -210,9 +211,9 @@ void testLaplaceOperator()
   x.normInf(norminf);
   EXPECT_TRUE( std::fabs(norminf - 1) <= 1e-6 );
 
-  testMatrix.residual(x,b,r);
+  testMatrix.residual(x,b,r0);
   real64 normRes;
-  r.normInf(normRes);
+  r0.normInf(normRes);
   EXPECT_TRUE( std::fabs(normRes) <= 1e-6 );
 
   // Test solvers
@@ -248,7 +249,12 @@ void testLaplaceOperator()
     EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
   }
 
-  BlockMatrixView<TrilinosInterface> testBlockMatrix;
+  integer nRows = 1;
+  integer nCols = 2;
+
+  BlockMatrixView<TrilinosInterface> testBlockMatrix(nRows,nCols);
+  BlockVectorView<TrilinosInterface> testBlockSolution(nCols);
+  BlockVectorView<TrilinosInterface> testBlockRhs(nRows);
 
   ParallelMatrix testMatrix01(testMatrix);
   ParallelVector solDirect1(solDirect);
@@ -259,24 +265,32 @@ void testLaplaceOperator()
   ParallelVector * testrhs0 = nullptr;
   ParallelMatrix * testBlock00 = nullptr;
 
-  testBlockMatrix.setBlock(0,0,&testMatrix);
-  testBlockMatrix.setBlock(0,1,&testMatrix01);
+  testBlockMatrix.setBlock(0,0,testMatrix);
+  testBlockMatrix.setBlock(0,1,testMatrix01);
 
-  testBlockMatrix.setSolution(0,&solDirect);
-  testBlockMatrix.setSolution(1,&solDirect1);
+  testBlockSolution.setBlock(0,solDirect);
+  testBlockSolution.setBlock(1,solDirect1);
 
-  testBlockMatrix.setRhs(0,&r);
+  testBlockRhs.setBlock(0,r0);
+  testBlockRhs.setBlock(1,r1);
 
-  testBlockMatrix.apply();
-  ParallelVector testres0(testBlockMatrix.residual());
+  testBlockMatrix.multiply(testBlockSolution,testBlockRhs);
 
-  testrhs0 = testBlockMatrix.getRhs(0);
+  testBlockRhs.getBlock(0)->print();
 
-  real64 normBlockProduct;
-  testrhs0->normInf(normBlockProduct);
+  real64 normBlockProduct = 0;
+  testBlockRhs.getBlock(0)->normInf(normBlockProduct);
   EXPECT_TRUE( std::fabs(normBlockProduct) <= 1e-8 );
 
-  CG<TrilinosInterface>( testMatrix, solCG, bCG, preconditioner );
+  CGsolver<TrilinosInterface> testCG;
+
+  testCG.solve( testMatrix, solCG, bCG, preconditioner );
+
+  testBlockSolution.getBlock(0)->print();
+  testBlockSolution.getBlock(1)->print();
+
+  real64 testBlockNorm = 0;
+  testBlockSolution.norm2(testBlockNorm);
 
   //solCG.print();
   //solIterative.print();
