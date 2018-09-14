@@ -39,6 +39,9 @@ template< typename LAI >
 void testLaplaceOperator()
 {
 
+  using integer     = int;
+  using localIndex  = int;
+
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
   using LinearSolver = typename LAI::LinearSolver;
@@ -126,7 +129,7 @@ void testLaplaceOperator()
   testMatrix.getLocalRow(static_cast<localIndex>(n),numValRown,vecValuesRown,vecIndicesRown);
 
   if (rank == 0)
-      {
+  {
     // Check number of values per row
     EXPECT_TRUE( numValRow0 == 3 );
     EXPECT_TRUE( numValRow1 == 4 );
@@ -163,7 +166,7 @@ void testLaplaceOperator()
     EXPECT_TRUE( vecIndicesRown[2] == n );
     EXPECT_TRUE( vecIndicesRown[3] == n+1 );
     EXPECT_TRUE( vecIndicesRown[4] == 2*n );
-      }
+  }
   // Fill standard vectors
   std::vector<real64> ones, zer;
   for (integer j = 0; j < N; j++)

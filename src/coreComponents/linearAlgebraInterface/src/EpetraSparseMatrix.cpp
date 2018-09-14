@@ -367,8 +367,8 @@ void EpetraSparseMatrix::getRow( globalIndex GlobalRow,
 
 void EpetraSparseMatrix::getLocalRow( localIndex localRow,
                                       integer &NumEntries,
-                                      real64* Values,
-                                      localIndex*    Indices )
+                                      real64* &Values,
+                                      localIndex* &Indices )
 {
   m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
 }
