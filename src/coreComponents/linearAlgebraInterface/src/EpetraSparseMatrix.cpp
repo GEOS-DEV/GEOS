@@ -1,3 +1,21 @@
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
 /**
  * @file TrilinosSparseMatrix.cpp
  */
@@ -27,8 +45,8 @@ EpetraSparseMatrix::EpetraSparseMatrix( EpetraSparseMatrix const &in_mat )
 
 // Create a matrix from number of elements
 void EpetraSparseMatrix::create( MPI_Comm const comm,
-                                 globalIndex const in_m_nRowGlobal,
-                                 integer const     nMaxEntriesPerRow )
+                                 trilinosTypes::gid const in_m_nRowGlobal,
+                                 trilinosTypes::lid const     nMaxEntriesPerRow )
 {
   Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ) );
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, nMaxEntriesPerRow, false ) );
@@ -36,9 +54,9 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
 
 // Create a matrix from number of elements
 void EpetraSparseMatrix::create( MPI_Comm const comm,
-                                 globalIndex const in_m_nRowGlobal,
-                                 globalIndex const in_m_nColGlobal,
-                                 integer const nMaxEntriesPerRow )
+                                 trilinosTypes::gid const in_m_nRowGlobal,
+                                 trilinosTypes::gid const in_m_nColGlobal,
+                                 trilinosTypes::lid const nMaxEntriesPerRow )
 {
   Epetra_Map rowMap = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
   Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
@@ -47,7 +65,7 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
 
 // Create a matrix from Epetra_Map
 void EpetraSparseMatrix::create( Epetra_Map const &input_map,
-                                 integer const nMaxEntriesPerRow )
+                                 trilinosTypes::lid const nMaxEntriesPerRow )
 {
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_map, nMaxEntriesPerRow, false ) );
 }
@@ -55,7 +73,7 @@ void EpetraSparseMatrix::create( Epetra_Map const &input_map,
 // Create a matrix from two Epetra_Maps
 void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
                                  Epetra_Map const &input_col_map,
-                                 integer const nMaxEntriesPerRow )
+                                 trilinosTypes::lid const nMaxEntriesPerRow )
 {
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_row_map, input_col_map, nMaxEntriesPerRow, false ) );
 }
@@ -94,18 +112,18 @@ void EpetraSparseMatrix::close()
 // -----------------------------------------------------------------------------------
 
 // Add single value at row iRow and column iCol
-void EpetraSparseMatrix::add( globalIndex const iRow,
-                              globalIndex const iCol,
+void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
+                              trilinosTypes::gid const iCol,
                               real64 const value )
 {
   m_matrix->SumIntoGlobalValues( iRow, 1, &value, &iCol );
 }
 
 // Add values at row iRow and columns cols (size nCols)
-void EpetraSparseMatrix::add( globalIndex const iRow,
-                              integer const nCols,
+void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
+                              trilinosTypes::lid const nCols,
                               real64 const *values,
-                              globalIndex const *cols )
+                              trilinosTypes::gid const *cols )
 {
 
 #if 1
@@ -141,7 +159,7 @@ void EpetraSparseMatrix::add( globalIndex const iRow,
     for( j=0 ; j<NumEntries ; j++ )
     {
       int_type Index = Indices[j];
-      if( Graph_.FindGlobalIndexLoc( locRow, Index, j, Loc ))
+      if( Graph_.FindtrilinosTypes::gidLoc( locRow, Index, j, Loc ))
 //  #ifdef EPETRA_HAVE_OMP
 //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
 //  #pragma omp atomic
@@ -222,28 +240,28 @@ void EpetraSparseMatrix::add( globalIndex const iRow,
 }
 
 // Set single value at row iRow and column iCol
-void EpetraSparseMatrix::set( globalIndex const iRow,
-                              globalIndex const iCol,
+void EpetraSparseMatrix::set( trilinosTypes::gid const iRow,
+                              trilinosTypes::gid const iCol,
                               real64 const value )
 {
   m_matrix->ReplaceGlobalValues( iRow, 1, &value, &iCol );
 }
 
 // Set values at row iRow and columns cols (size nCols)
-void EpetraSparseMatrix::set( globalIndex const iRow,
-                              integer const nCols,
+void EpetraSparseMatrix::set( trilinosTypes::gid const iRow,
+                              trilinosTypes::lid const nCols,
                               real64 const *values,
-                              globalIndex const *cols )
+                              trilinosTypes::gid const *cols )
 {
   m_matrix->ReplaceGlobalValues( iRow, nCols, values, cols );
 }
 
 // Set values at row iRow and columns cols (size nCols)
 // TODO remove the possibility to dynamically construct the sparsity pattern.
-void EpetraSparseMatrix::insert( globalIndex const iRow,
-                                 integer const nCols,
+void EpetraSparseMatrix::insert( trilinosTypes::gid const iRow,
+                                 trilinosTypes::lid const nCols,
                                  real64 const *values,
-                                 globalIndex const *cols )
+                                 trilinosTypes::gid const *cols )
 {
   m_matrix->InsertGlobalValues( iRow, nCols, values, cols );
 }
@@ -308,7 +326,7 @@ void EpetraSparseMatrix::leftRightScale( EpetraVector const &vecLeft,
 }
 
 // Clear row and multiply diagonal term by factor.
-void EpetraSparseMatrix::clearRow( globalIndex const row,
+void EpetraSparseMatrix::clearRow( trilinosTypes::gid const row,
                                    real64 const factor )
 {
   //long long int rowTmp = static_cast<long long int>(row);
@@ -339,29 +357,29 @@ void EpetraSparseMatrix::clearRow( globalIndex const row,
   }
 }
 
-void EpetraSparseMatrix::getRow( globalIndex GlobalRow,
-                                 integer &NumEntries,
+void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
+                                 trilinosTypes::lid &NumEntries,
                                  real64* Values,
-                                 globalIndex*    Indices )
+                                 trilinosTypes::gid*    Indices )
 {
   m_matrix->ExtractGlobalRowView( GlobalRow, NumEntries, Values, Indices );
 }
 
-void EpetraSparseMatrix::getLocalRow( localIndex localRow,
-                                      integer &NumEntries,
-                                      real64* Values,
-                                      localIndex*    Indices )
+void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
+                                      trilinosTypes::lid & NumEntries,
+                                      real64 * & Values,
+                                      trilinosTypes::lid * & Indices )
 {
   m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
 }
 
-void EpetraSparseMatrix::getRow( globalIndex GlobalRow,
-                                 integer &NumEntries,
+void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
+                                 trilinosTypes::lid &NumEntries,
                                  std::vector<real64> &vecValues,
-                                 std::vector<globalIndex>    &vecIndices )
+                                 std::vector<trilinosTypes::gid>    &vecIndices )
 {
   real64* Values;
-  globalIndex* Indices;
+  trilinosTypes::gid* Indices;
   m_matrix->ExtractGlobalRowView( GlobalRow, NumEntries, Values, Indices );
   if( m_matrix->MyGRID( GlobalRow ))
   {
@@ -370,13 +388,13 @@ void EpetraSparseMatrix::getRow( globalIndex GlobalRow,
   }
 }
 
-void EpetraSparseMatrix::getLocalRow( localIndex localRow,
-                                      integer &NumEntries,
+void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
+                                      trilinosTypes::lid &NumEntries,
                                       std::vector<real64> &vecValues,
-                                      std::vector<localIndex>    &vecIndices )
+                                      std::vector<trilinosTypes::lid>    &vecIndices )
 {
   real64* Values;
-  localIndex* Indices;
+  trilinosTypes::lid* Indices;
   m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
   vecIndices.assign( Indices, Indices+NumEntries );
   vecValues.assign( Values, Values+NumEntries );
@@ -393,31 +411,31 @@ Epetra_CrsMatrix * EpetraSparseMatrix::getPointer() const
 }
 
 // Accessor for the number of global rows
-globalIndex EpetraSparseMatrix::globalRows() const
+trilinosTypes::gid EpetraSparseMatrix::globalRows() const
 {
   return m_matrix->RowMap().NumGlobalElements64();
 }
 
 // Accessor for the number of global columns
-globalIndex EpetraSparseMatrix::globalCols() const
+trilinosTypes::gid EpetraSparseMatrix::globalCols() const
 {
   return m_matrix->ColMap().NumGlobalElements64();
 }
 
 // Accessor for the number of global columns
-globalIndex EpetraSparseMatrix::uniqueCols() const
+trilinosTypes::gid EpetraSparseMatrix::uniqueCols() const
 {
   return m_matrix->DomainMap().NumGlobalElements64();
 }
 
 // Accessor for the index of the first global row
-globalIndex EpetraSparseMatrix::ilower() const
+trilinosTypes::gid EpetraSparseMatrix::ilower() const
 {
   return m_matrix->RowMap().MyGlobalElements64()[0];
 }
 
 // Accessor for the index of the last global row
-globalIndex EpetraSparseMatrix::iupper() const
+trilinosTypes::gid EpetraSparseMatrix::iupper() const
 {
   return m_matrix->RowMap().MyGlobalElements64()[0] + m_matrix->RowMap().NumMyElements();
 }
@@ -453,7 +471,7 @@ int EpetraSparseMatrix::myCols() const
 }
 
 // Accessor for the number of local columns
-localIndex EpetraSparseMatrix::rowMapLID( globalIndex GID ) const
+trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid GID ) const
 {
   return m_matrix->RowMap().LID( GID );
 }
