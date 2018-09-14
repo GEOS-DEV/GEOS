@@ -26,8 +26,7 @@
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
-
-#include <omp.h>
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -239,17 +238,16 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   }
 
   // Then loop over them in parallel.
-  #pragma omp parallel for
-  for ( localIndex i = 0; i < nodeSets.size(); ++i )
+  raja::forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
     const set<localIndex>& targetSet = nodeManager->GetGroup(keys::sets)->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
-  }
+  } );
 
   // sort the face node lists
-  SortAllFaceNodes(*nodeManager, *elementManager);
+  SortAllFaceNodes( nodeManager, elementManager);
 
   SetDomainBoundaryObjects( nodeManager );
 }
@@ -265,22 +263,20 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   array2d<localIndex> const & elemSubRegionList = this->elementSubRegionList();
   array2d<localIndex> const & elemList = this->elementList();
 
-  #pragma omp parallel for
-  for( localIndex kf=0 ; kf<size() ; ++kf )
+  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
     if( elemRegionList[kf][1] == -1 )
     {
       faceDomainBoundaryIndicator(kf) = 1;
     }
-  }
+  } );
 
   integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference<integer_array>(nodeManager->viewKeys.domainBoundaryIndicator);
   nodeDomainBoundaryIndicator = 0;
 
   OrderedVariableOneToManyRelation const & faceToNodesMap = this->nodeList();
 
-  #pragma omp parallel for
-  for( localIndex k=0 ; k<size() ; ++k )
+  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const k ) mutable -> void
   {
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
@@ -290,7 +286,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
         nodeDomainBoundaryIndicator[nodelist[a]] = 1;
       }
     }
-  }
+  } );
 }
 
 //
@@ -350,24 +346,23 @@ localIndex FaceManager::getMaxFaceNodes() const
   return max_size;
 }
 
-void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
-                                    ElementRegionManager const & elemManager )
+void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
+                                    ElementRegionManager const *const elemManager )
 {
   array2d<localIndex> const & elemRegionList = elementRegionList();
   array2d<localIndex> const & elemSubRegionList = elementSubRegionList();
   array2d<localIndex> const & elemList = elementList();
-  r1_array const & X = nodeManager.referencePosition();
+  r1_array const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
   constexpr int MAX_FACE_NODES = 9;
   GEOS_ASSERT( max_face_nodes <= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
-  #pragma omp parallel for
-  for(localIndex kf =0 ; kf < size() ; ++kf )
+  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
-    ElementRegion const * const elemRegion     = elemManager.GetRegion( elemRegionList[kf][0] );
+    ElementRegion const * const elemRegion     = elemManager->GetRegion( elemRegionList[kf][0] );
     CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( elemSubRegionList[kf][0] );
-    R1Tensor const elementCenter = subRegion->GetElementCenter( elemList[kf][0], nodeManager );
+    R1Tensor const elementCenter = subRegion->GetElementCenter( elemList[kf][0], *nodeManager );
     
     arrayView1d<localIndex> faceNodes = nodeList()[kf];
     const localIndex firstNodeIndex = faceNodes[0];
@@ -454,17 +449,17 @@ void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
         faceNodes[n] = tempFaceNodes[index];
       }
     }
-  }
+  } );
 }
 
-void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
+void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                                    array1d<globalIndex_array>& faceToNodes )
 {
 
   OrderedVariableOneToManyRelation const & faceNodes = this->nodeList();
   integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
 
-  nodeManager.CheckTypeID( typeid( NodeManager ) );
+  nodeManager->CheckTypeID( typeid( NodeManager ) );
 
 
   faceToNodes.clear();
@@ -477,7 +472,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
       for( localIndex a=0 ; a<faceNodes[kf].size() ; ++a )
       {
-        const globalIndex gnode = nodeManager.m_localToGlobalMap( faceNodes[kf][a] );
+        const globalIndex gnode = nodeManager->m_localToGlobalMap( faceNodes[kf][a] );
         temp.push_back( gnode );
       }
       std::sort( temp.begin(), temp.end() );

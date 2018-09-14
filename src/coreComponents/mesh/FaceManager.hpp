@@ -67,8 +67,8 @@ public:
 
   localIndex getMaxFaceNodes() const;
 
-  void SortAllFaceNodes( NodeManager const & nodeManager,
-                         ElementRegionManager const & elemManager);
+  void SortAllFaceNodes( NodeManager const * const nodeManager,
+                         ElementRegionManager const * const elemManager);
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
 
@@ -85,7 +85,7 @@ public:
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
   virtual void
-  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
                                                    array1d<globalIndex_array>& faceToNodes ) override final;
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
