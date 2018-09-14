@@ -772,11 +772,7 @@ localIndex Pack( char*& buffer,
     localIndex li = indices[a];
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
 
-#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size() );
-#else
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1) );
-#endif
   }
 
   return sizeOfPackedChars;
@@ -803,11 +799,8 @@ localIndex Unpack( char const *& buffer,
     sizeOfUnpackedChars += Unpack( buffer, gi );
     // do a check here on the global Index??
 
-#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
-    sizeOfUnpackedChars += Unpack( buffer, var[li].data(), var[li].size() );
-#else
-    sizeOfUnpackedChars += Unpack( buffer, var[li], var.size(1) );
-#endif
+    localIndex * const varSlice = var[li];
+    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
   }
 
 
@@ -830,11 +823,7 @@ localIndex Pack( char*& buffer,
     localIndex li = indices[a];
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
 
-#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size(), relatedObjectLocalToGlobalMap );
-#else
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1), relatedObjectLocalToGlobalMap );
-#endif
   }
 
   return sizeOfPackedChars;
@@ -862,12 +851,7 @@ localIndex Unpack( char const *& buffer,
     sizeOfUnpackedChars += Unpack( buffer, gi );
     // do a check here on the global Index??
 
-#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
-    sizeOfUnpackedChars += Unpack( buffer, var[li].data(), var[li].size(), relatedObjectGlobalToLocalMap );
-#else
     sizeOfUnpackedChars += Unpack( buffer, var[li], var.size(1), relatedObjectGlobalToLocalMap );
-
-#endif
   }
 
 
