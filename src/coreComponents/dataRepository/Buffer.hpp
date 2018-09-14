@@ -746,7 +746,7 @@ public:
   static void * pack(const StencilCollection<IndexType, WeightType> & data, localIndex & byte_size, void * buffer=nullptr)
   {
     GEOS_ERROR("You shouldn't be packing a StencilCollection!");
-    return 0;
+    return nullptr;
   }
 
   template <typename IndexType, typename WeightType>
