@@ -16,11 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#endif
 
 #include "gtest/gtest.h"
 
@@ -44,11 +39,13 @@ void testLaplaceOperator()
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
   using LinearSolver = typename LAI::LinearSolver;
+  using laiLID = typename LAI::laiLID;
+  using laiGID = typename LAI::laiGID;
 
   MPI_Init(nullptr,nullptr);
 
   // Get the MPI rank
-  integer rank;
+  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Set the MPI communicator
@@ -59,8 +56,8 @@ void testLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 5;
-  globalIndex N = n*n;
+  laiGID n = 100;
+  laiGID N = n*n;
 
   ParallelMatrix testMatrix;
   testMatrix.create(comm,N,5);
@@ -70,10 +67,10 @@ void testLaplaceOperator()
 
   // Allocate arrays to fill dummy 2D Laplace (cartesian) matrix
   real64 values[5];
-  globalIndex cols[5];
+  laiGID cols[5];
 
   // Construct a dummy Laplace matrix (5 points stencil)
-  for (globalIndex i = testMatrix.ilower(); i < testMatrix.iupper(); i++)
+  for (laiGID i = testMatrix.ilower(); i < testMatrix.iupper(); i++)
   {
     integer nnz = 0;
     /* The left -n: position i-n */
@@ -122,13 +119,13 @@ void testLaplaceOperator()
 
   integer numValRow0,numValRow1,numValRown;
   std::vector<real64> vecValuesRow0(5),vecValuesRow1(5),vecValuesRown(5);
-  std::vector<localIndex> vecIndicesRow0(5),vecIndicesRow1(5),vecIndicesRown(5);
+  std::vector<laiLID> vecIndicesRow0(5),vecIndicesRow1(5),vecIndicesRown(5);
   testMatrix.getLocalRow(0,numValRow0,vecValuesRow0,vecIndicesRow0);
   testMatrix.getLocalRow(1,numValRow1,vecValuesRow1,vecIndicesRow1);
-  testMatrix.getLocalRow(static_cast<localIndex>(n),numValRown,vecValuesRown,vecIndicesRown);
+  testMatrix.getLocalRow(static_cast<laiLID>(n),numValRown,vecValuesRown,vecIndicesRown);
 
   if (rank == 0)
-      {
+  {
     // Check number of values per row
     EXPECT_TRUE( numValRow0 == 3 );
     EXPECT_TRUE( numValRow1 == 4 );
@@ -165,7 +162,7 @@ void testLaplaceOperator()
     EXPECT_TRUE( vecIndicesRown[2] == n );
     EXPECT_TRUE( vecIndicesRown[3] == n+1 );
     EXPECT_TRUE( vecIndicesRown[4] == 2*n );
-      }
+  }
   // Fill standard vectors
   std::vector<real64> ones, zer;
   for (integer j = 0; j < N; j++)
@@ -191,8 +188,6 @@ void testLaplaceOperator()
   testMatrix.multiply(x, b);
 
   ParallelVector solIterative(b);
-  ParallelVector solCG(b);
-  ParallelVector bCG(b);
 
   // Test dot product
   real64 dotTest;
@@ -243,7 +238,7 @@ void testLaplaceOperator()
 
   // Test clearRow
   testMatrix.clearRow(2*N/4+n,2.0);
-  testMatrix.getLocalRow(static_cast<localIndex>(n),numValRown,vecValuesRown,vecIndicesRown);
+  testMatrix.getLocalRow(static_cast<laiLID>(n),numValRown,vecValuesRown,vecIndicesRown);
   if (rank == 2)
   {
     EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
@@ -259,6 +254,8 @@ void testBlockLaplaceOperator()
 
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
+  using laiLID = typename LAI::laiLID;
+  using laiGID = typename LAI::laiGID;
 
   //MPI_Init(nullptr,nullptr);
 
@@ -274,8 +271,8 @@ void testBlockLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 5;
-  globalIndex N = n*n;
+  laiGID n = 100;
+  laiGID N = n*n;
 
   ParallelMatrix testMatrix;
   testMatrix.create(comm,N,5);
@@ -415,6 +412,13 @@ void testBlockLaplaceOperator()
 
 }
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+
 TEST(testLAOperations,testEpetraLAOperations)
 {
 
@@ -429,3 +433,7 @@ TEST(testLAOperations,testHypreLAOperations)
   //testLaplaceOperator<HypreInterface>();
 
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

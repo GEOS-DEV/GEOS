@@ -415,7 +415,7 @@ find_path( HYPRE_INCLUDE_DIRS HYPRE.h
            NO_SYSTEM_ENVIRONMENT_PATH
            NO_CMAKE_SYSTEM_PATH)
 
-find_library( HYPRE_LIBRARY NAMES hypre
+find_library( HYPRE_LIBRARY NAMES HYPRE
               PATHS ${HYPRE_DIR}/lib
               NO_DEFAULT_PATH
               NO_CMAKE_ENVIRONMENT_PATH
@@ -423,6 +423,8 @@ find_library( HYPRE_LIBRARY NAMES hypre
               NO_SYSTEM_ENVIRONMENT_PATH
               NO_CMAKE_SYSTEM_PATH)
 
+message( "HYPRE_INCLUDE_DIRS = ${HYPRE_INCLUDE_DIRS}" )
+message( "HYPRE_LIBRARY = ${HYPRE_LIBRARY}" )
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(HYPRE  DEFAULT_MSG
                                   HYPRE_INCLUDE_DIRS
@@ -433,7 +435,7 @@ endif()
 
 blt_register_library( NAME hypre
                       INCLUDES ${HYPRE_INCLUDE_DIRS} 
-                      INCLUDES ${HYPRE_LIBRARY}
+                      LIBRARIES ${HYPRE_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
 set( thirdPartyLibs ${thirdPartyLibs} hypre )  

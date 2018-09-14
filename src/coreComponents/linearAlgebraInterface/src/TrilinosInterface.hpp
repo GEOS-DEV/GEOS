@@ -1,3 +1,21 @@
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
 /**
  * @file TrilinosInterface.hpp
  */
@@ -5,11 +23,14 @@
 #ifndef SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 #define SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 
-#include "Epetra_Map.h"
-#include "Epetra_CrsGraph.h"
 #include "EpetraSparseMatrix.hpp"
 #include "EpetraVector.hpp"
 #include "TrilinosSolver.hpp"
+
+/**
+ * \class TrilinosInterface
+ * \brief This class holds aliases based on the Trilinos library.
+ */
 
 namespace geosx
 {
@@ -18,14 +39,28 @@ class TrilinosInterface
 {
 public:
 
+  using laiLID = trilinosTypes::lid;
+  using laiGID = trilinosTypes::gid;
+
   // Epetra matrix and vector wrappers
   using ParallelMatrix = EpetraSparseMatrix;
   using ParallelVector = EpetraVector;
 
   using LinearSolver = TrilinosSolver;
 
+  //! @name Constructor/Destructor Methods
+  //@{
+  /**
+   * @brief Empty constructor.
+   */
   TrilinosInterface() = default;
+
+  /**
+   * @brief Destructor.
+   *
+   */
   ~TrilinosInterface() = default;
+  //@}
 
 };
 
