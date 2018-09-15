@@ -24,6 +24,7 @@
  */
 
 #include "ObjectManagerBase.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -140,19 +141,24 @@ void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 }
 
 
+void ObjectManagerBase::CreateSet( const std::string& newSetName )
+{
+  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  sets->RegisterViewWrapper<set<localIndex>>(newSetName);
+}
+
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const array2d<localIndex>& map,
-                                                   const std::string& newSetName )
+                                                   const std::string& setName )
 {
-
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
+  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
   newset.clear();
 
   localIndex mapSize = map.size(1);
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
-    arrayView1d<localIndex const> const sublist = map[ka];
+    localIndex const * const sublist = map[ka];
     localIndex addToSet = 0;
     for( localIndex a=0 ; a<mapSize ; ++a )
     {
@@ -170,11 +176,10 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const array1d<localIndex_array>& map,
-                                                   const std::string& newSetName )
+                                                   const std::string& setName )
 {
-
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
+  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
   newset.clear();
 
   for( localIndex ka=0 ; ka<size() ; ++ka )
