@@ -42,17 +42,17 @@ void testLaplaceOperator()
   using laiLID = typename LAI::laiLID;
   using laiGID = typename LAI::laiGID;
 
-  MPI_Init(nullptr,nullptr);
+  MPI_Init( nullptr, nullptr );
 
   // Get the MPI rank
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Set the MPI communicator
   // MPI_Comm comm = MPI_COMM_WORLD;
 
   MPI_Comm test_comm;
-  MPI_Comm_dup(MPI_COMM_WORLD,&test_comm);
+  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
@@ -60,10 +60,10 @@ void testLaplaceOperator()
   laiGID N = n*n;
 
   ParallelMatrix testMatrix;
-  testMatrix.create(comm,N,5);
+  testMatrix.create( comm, N, 5 );
 
   ParallelMatrix preconditioner;
-  preconditioner.create(comm,N,1);
+  preconditioner.create( comm, N, 1 );
 
   // Allocate arrays to fill dummy 2D Laplace (cartesian) matrix
   real64 values[5];
@@ -109,8 +109,8 @@ void testLaplaceOperator()
     real64 temp = 0.25;
 
     // Set the values for row i
-    testMatrix.insert(i,nnz,values,cols);
-    preconditioner.insert(i,1,&temp,&i);
+    testMatrix.insert( i, nnz, values, cols );
+    preconditioner.insert( i, 1, &temp, &i );
 
   }
 
@@ -118,11 +118,11 @@ void testLaplaceOperator()
   preconditioner.close();
 
   integer numValRow0,numValRow1,numValRown;
-  std::vector<real64> vecValuesRow0(5),vecValuesRow1(5),vecValuesRown(5);
-  std::vector<laiLID> vecIndicesRow0(5),vecIndicesRow1(5),vecIndicesRown(5);
-  testMatrix.getLocalRow(0,numValRow0,vecValuesRow0,vecIndicesRow0);
-  testMatrix.getLocalRow(1,numValRow1,vecValuesRow1,vecIndicesRow1);
-  testMatrix.getLocalRow(static_cast<laiLID>(n),numValRown,vecValuesRown,vecIndicesRown);
+  std::vector<real64> vecValuesRow0( 5 ),vecValuesRow1( 5 ),vecValuesRown( 5 );
+  std::vector<laiLID> vecIndicesRow0( 5 ),vecIndicesRow1( 5 ),vecIndicesRown( 5 );
+  testMatrix.getLocalRow( 0, numValRow0, vecValuesRow0, vecIndicesRow0 );
+  testMatrix.getLocalRow( 1, numValRow1, vecValuesRow1, vecIndicesRow1 );
+  testMatrix.getLocalRow( static_cast<laiLID>( n ), numValRown, vecValuesRown, vecIndicesRown );
 
   if (rank == 0)
   {
@@ -167,82 +167,89 @@ void testLaplaceOperator()
   std::vector<real64> ones, zer;
   for (integer j = 0; j < N; j++)
   {
-    zer.push_back(0);
-    ones.push_back(1);
+    zer.push_back( 0 );
+    ones.push_back( 1 );
   }
 
   // Define vectors
   ParallelVector x, b;
   // Right hand side for multiplication (b)
-  b.create(zer);
+  b.create( zer );
   // Vector of ones for multiplication (x)
-  x.create(ones);
+  x.create( ones );
   // Vector of zeros for iterative and direct solutions
-  ParallelVector solIterativeML(b);
-  ParallelVector solDirect(b);
+  ParallelVector solIterativeML( b );
+  ParallelVector solDirect( b );
   // Residual vector
-  ParallelVector r0(b);
-  ParallelVector r1(b);
+  ParallelVector r0( b );
+  ParallelVector r1( b );
 
   // Matrix/vector multiplication
-  testMatrix.multiply(x, b);
+  testMatrix.multiply( x, b );
 
-  ParallelVector solIterative(b);
+  ParallelVector solIterative( b );
+
+  ParallelVector solCG( b );
+  ParallelVector bCG( b );
 
   // Test dot product
   real64 dotTest;
-  x.dot(x,&dotTest);
+  x.dot( x, &dotTest );
 
   // test norms
   real64 norm1;
-  x.norm1(norm1);
-  EXPECT_TRUE( std::fabs(norm1 - N) <= 1e-6 );
+  x.norm1( norm1 );
+  EXPECT_TRUE( std::fabs( norm1 - N ) <= 1e-6 );
 
   real64 norm2;
-  x.norm2(norm2);
-  EXPECT_TRUE( std::fabs(norm2 - n) <= 1e-6 );
+  x.norm2( norm2 );
+  EXPECT_TRUE( std::fabs( norm2 - n ) <= 1e-6 );
 
   real64 norminf;
-  x.normInf(norminf);
-  EXPECT_TRUE( std::fabs(norminf - 1) <= 1e-6 );
+  x.normInf( norminf );
+  EXPECT_TRUE( std::fabs( norminf - 1 ) <= 1e-6 );
 
-  testMatrix.residual(x,b,r0);
+  testMatrix.residual( x, b, r0 );
   real64 normRes;
-  r0.normInf(normRes);
-  EXPECT_TRUE( std::fabs(normRes) <= 1e-6 );
+  r0.normInf( normRes );
+  EXPECT_TRUE( std::fabs( normRes ) <= 1e-6 );
 
   // Test solvers
   LinearSolver solver = LinearSolver();
 
   // AztecOO iterative solver
-  solver.solve(testMatrix,solIterative,b,1000,1e-8);
+  solver.solve( testMatrix, solIterative, b, 1000, 1e-8);
   real64 normIterativeSol;
-  solIterative.normInf(normIterativeSol);
-  EXPECT_TRUE( std::fabs(normIterativeSol - 1) <= 1e-5 );
+  solIterative.normInf( normIterativeSol );
+  EXPECT_TRUE( std::fabs( normIterativeSol - 1 ) <= 1e-5 );
 
   real64 norm2ItSol, norm2InitGuess = 0;
-  solIterative.norm2(norm2ItSol);
+  solIterative.norm2( norm2ItSol );
 
-  solver.ml_solve(testMatrix,solIterativeML,b,500,1e-8);
+  solver.ml_solve( testMatrix, solIterativeML, b, 500, 1e-8 );
 
   real64 normIterativeSolML;
-  solIterativeML.normInf(normIterativeSolML);
-  EXPECT_TRUE( std::fabs(normIterativeSolML - 1) <= 1e-5 );
+  solIterativeML.normInf( normIterativeSolML );
+  EXPECT_TRUE( std::fabs( normIterativeSolML - 1 ) <= 1e-5 );
 
   // Amesos (Klu) direct solver
-  solver.dsolve(testMatrix,solDirect,b);
+  solver.dsolve( testMatrix, solDirect, b );
 
   real64 normDirectSol;
-  solDirect.normInf(normDirectSol);
-  EXPECT_TRUE( std::fabs(normDirectSol - 1) <= 1e-8 );
+  solDirect.normInf( normDirectSol );
+  EXPECT_TRUE( std::fabs( normDirectSol - 1 ) <= 1e-8 );
 
   // Test clearRow
-  testMatrix.clearRow(2*N/4+n,2.0);
-  testMatrix.getLocalRow(static_cast<laiLID>(n),numValRown,vecValuesRown,vecIndicesRown);
-  if (rank == 2)
+  testMatrix.clearRow( 2*N/4+n, 2.0 );
+  testMatrix.getLocalRow(static_cast<laiLID>( n ),numValRown,vecValuesRown,vecIndicesRown);
+  if ( rank == 2 )
   {
-    EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
+    EXPECT_TRUE( std::fabs( vecValuesRown[2] - 8.0 ) <= 1e-8 );
   }
+
+  CGsolver<TrilinosInterface> testCG;
+
+  testCG.solve( testMatrix, solCG, bCG, preconditioner );
 
   //MPI_Finalize();
 
@@ -254,38 +261,37 @@ void testBlockLaplaceOperator()
 
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
-  using laiLID = typename LAI::laiLID;
   using laiGID = typename LAI::laiGID;
 
   //MPI_Init(nullptr,nullptr);
 
   // Get the MPI rank
   integer rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Set the MPI communicator
   // MPI_Comm comm = MPI_COMM_WORLD;
 
   MPI_Comm test_comm;
-  MPI_Comm_dup(MPI_COMM_WORLD,&test_comm);
+  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  laiGID n = 100;
+  laiGID n = 5;
   laiGID N = n*n;
 
-  ParallelMatrix testMatrix;
-  testMatrix.create(comm,N,5);
+  ParallelMatrix testMatrix00;
+  testMatrix00.create( comm, N, 5 );
 
-  ParallelMatrix preconditioner;
-  preconditioner.create(comm,N,1);
+  ParallelMatrix preconditioner00;
+  preconditioner00.create( comm, N, 1 );
 
   // Allocate arrays to fill dummy 2D Laplace (cartesian) matrix
   real64 values[5];
   globalIndex cols[5];
 
   // Construct a dummy Laplace matrix (5 points stencil)
-  for (globalIndex i = testMatrix.ilower(); i < testMatrix.iupper(); i++)
+  for (globalIndex i = testMatrix00.ilower(); i < testMatrix00.iupper(); i++)
   {
     integer nnz = 0;
     /* The left -n: position i-n */
@@ -321,90 +327,96 @@ void testBlockLaplaceOperator()
       nnz++;
     }
 
-    real64 temp = 0.25;
+    real64 temp = 1;
 
     // Set the values for row i
-    testMatrix.insert(i,nnz,values,cols);
-    preconditioner.insert(i,1,&temp,&i);
+    testMatrix00.insert( i, nnz, values, cols );
+    preconditioner00.insert( i, 1, &temp, &i );
 
   }
 
-  testMatrix.close();
-  preconditioner.close();
+  testMatrix00.close();
+  preconditioner00.close();
 
   // Fill standard vectors
   std::vector<real64> ones, zer;
   for (integer j = 0; j < N; j++)
   {
-    zer.push_back(0);
-    ones.push_back(1);
+    zer.push_back( 0 );
+    ones.push_back( 1 );
   }
 
   // Define vectors
   ParallelVector x, b;
   // Right hand side for multiplication (b)
-  b.create(zer);
+  b.create( zer );
   // Vector of ones for multiplication (x)
-  x.create(ones);
-  // Vector of zeros for iterative and direct solutions
-  ParallelVector solution(b);
+  x.create( ones );
   // Residual vector
-  ParallelVector r0(b);
-  ParallelVector r1(b);
+  ParallelVector r0( b );
+  ParallelVector r1( b );
 
   // Matrix/vector multiplication
-  testMatrix.multiply(x, b);
+  testMatrix00.multiply( x, b );
 
-  ParallelVector solCG(b);
-  ParallelVector bCG(b);
+  // Vector of zeros for iterative and direct solutions
+  ParallelVector solution0( b );
 
-
-  integer nRows = 1;
+  integer nRows = 2;
   integer nCols = 2;
 
-  BlockMatrixView<TrilinosInterface> testBlockMatrix(nRows,nCols);
-  BlockVectorView<TrilinosInterface> testBlockSolution(nCols);
-  BlockVectorView<TrilinosInterface> testBlockRhs(nRows);
+  BlockMatrixView<TrilinosInterface> testBlockMatrix( nRows, nCols );
+  BlockMatrixView<TrilinosInterface> blockPreconditioner( nRows, nCols );
+  BlockVectorView<TrilinosInterface> testBlockSolution( nCols );
+  BlockVectorView<TrilinosInterface> testBlockRhs( nRows );
 
-  ParallelMatrix testMatrix01(testMatrix);
-  ParallelVector solDirect1(solution);
+  ParallelMatrix testMatrix01( testMatrix00 );
+  ParallelMatrix testMatrix10( testMatrix00 );
+  ParallelMatrix testMatrix11( testMatrix00 );
 
-  testMatrix01.scale(2.);
-  solDirect1.scale(-0.5);
+  ParallelMatrix preconditioner11( preconditioner00 );
 
-  ParallelVector * testrhs0 = nullptr;
-  ParallelMatrix * testBlock00 = nullptr;
+  ParallelVector solution1( solution0 );
 
-  testBlockMatrix.setBlock(0,0,testMatrix);
-  testBlockMatrix.setBlock(0,1,testMatrix01);
+//  testMatrix01.scale( 2. );
+//  solution1.scale( -0.5 );
 
-  testBlockSolution.setBlock(0,solution);
-  testBlockSolution.setBlock(1,solDirect1);
+  testBlockMatrix.setBlock( 0, 0, testMatrix00 );
+  //testBlockMatrix.setBlock( 0, 1, testMatrix01 );
+  testBlockMatrix.setBlock( 1, 0, testMatrix10 );
+  //testBlockMatrix.setBlock( 1, 1, testMatrix11 );
 
-  testBlockRhs.setBlock(0,r0);
-  testBlockRhs.setBlock(1,r1);
+  blockPreconditioner.setBlock( 0, 0, preconditioner00 );
+  blockPreconditioner.setBlock( 1, 1, preconditioner11 );
+
+  testBlockSolution.setBlock( 0, solution0 );
+  testBlockSolution.setBlock( 1, solution1 );
+
+  testBlockRhs.setBlock( 0, r0 );
+  testBlockRhs.setBlock( 1, r1 );
 
   testBlockMatrix.multiply(testBlockSolution,testBlockRhs);
 
 //  testBlockRhs.getBlock(0)->print();
 
-  real64 normBlockProduct = 0;
-  testBlockRhs.getBlock(0)->normInf(normBlockProduct);
-  EXPECT_TRUE( std::fabs(normBlockProduct) <= 1e-8 );
+//  real64 normBlockProduct = 0;
+//  testBlockRhs.getBlock( 0 )->normInf( normBlockProduct );
+//  EXPECT_TRUE( std::fabs( normBlockProduct ) <= 1e-8 );
+
+  real64 testBlockNorm = 0;
+  testBlockSolution.norm2( testBlockNorm );
+//
+//  BlockVectorView<TrilinosInterface> testResidual( nRows );
+//  testResidual.setBlock( 0, r0 );
+//  testResidual.setBlock( 1, r1 );
+//  testBlockMatrix.residual( testBlockSolution, testBlockRhs, testResidual );
 
   CGsolver<TrilinosInterface> testCG;
 
-  testCG.solve( testMatrix, solCG, bCG, preconditioner );
+  testCG.solve( testBlockMatrix, testBlockSolution, testBlockRhs, blockPreconditioner );
 
-  real64 testBlockNorm = 0;
-  testBlockSolution.norm2(testBlockNorm);
-
-  BlockVectorView<TrilinosInterface> testResidual( nRows );
-
-  testResidual.setBlock(0,r0);
-  testResidual.setBlock(1,r1);
-
-  testBlockMatrix.residual(testBlockSolution,testBlockRhs,testResidual);
+  testBlockSolution.getBlock(0)->print();
+  testBlockSolution.getBlock(1)->print();
 
   //solCG.print();
   //solIterative.print();

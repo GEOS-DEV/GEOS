@@ -479,7 +479,7 @@ trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid GID ) const
 // Wrapper to print the trilinos output of the matrix
 void EpetraSparseMatrix::print() const
 {
-  if ( m_matrix.get() != nullptr )
+  if( m_matrix.get() != nullptr )
     std::cout << *m_matrix.get() << std::endl;
 }
 
