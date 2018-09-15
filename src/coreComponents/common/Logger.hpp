@@ -27,7 +27,7 @@
 #define SRC_COMPONENTS_CORE_SRC_COMMON_LOGGER_HPP_
 
 #include <string>
-#include "GeosxConfig.hpp"
+#include "common/GeosxConfig.hpp"
 #include <sstream>
 #ifdef GEOSX_USE_ATK
 #include "slic/slic.hpp"
