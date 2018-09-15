@@ -771,7 +771,8 @@ localIndex Pack( char*& buffer,
   {
     localIndex li = indices[a];
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size() );
+
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1) );
   }
 
   return sizeOfPackedChars;
@@ -798,7 +799,8 @@ localIndex Unpack( char const *& buffer,
     sizeOfUnpackedChars += Unpack( buffer, gi );
     // do a check here on the global Index??
 
-    sizeOfUnpackedChars += Unpack( buffer, var[li].data(), var[li].size() );
+    localIndex * const varSlice = var[li];
+    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
   }
 
 
@@ -820,7 +822,8 @@ localIndex Pack( char*& buffer,
   {
     localIndex li = indices[a];
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size(), relatedObjectLocalToGlobalMap );
+
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1), relatedObjectLocalToGlobalMap );
   }
 
   return sizeOfPackedChars;
@@ -848,7 +851,7 @@ localIndex Unpack( char const *& buffer,
     sizeOfUnpackedChars += Unpack( buffer, gi );
     // do a check here on the global Index??
 
-    sizeOfUnpackedChars += Unpack( buffer, var[li].data(), var[li].size(), relatedObjectGlobalToLocalMap );
+    sizeOfUnpackedChars += Unpack( buffer, var[li], var.size(1), relatedObjectGlobalToLocalMap );
   }
 
 

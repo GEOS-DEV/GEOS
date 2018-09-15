@@ -149,7 +149,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   /// <ol>
   for( localIndex ke=0 ; ke<numEdges ; ++ke )
   {
-    localIndex const numNodes = edgeToNodes[ke].size();
+    localIndex const numNodes = edgeToNodes.size(1);
     /// <li> Loop over all nodes for each edge
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
@@ -209,7 +209,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        arrayView1d<localIndex const> const nodeList = elemsToNodes[ke];
+        localIndex const * const nodeList = elemsToNodes[ke];
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
