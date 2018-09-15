@@ -65,24 +65,10 @@ public:
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
-  void  AddNewFace( localIndex const & kReg,
-                    localIndex const & kSubReg,
-                    localIndex const & ke,
-                    localIndex const & kelf,
-                    localIndex & numFaces,
-                    array1d<localIndex_array>& facesByLowestNode,
-                    localIndex_array& tempNodeList,
-                    array1d<localIndex_array>& tempFaceToNodeMap,
-                    CellBlockSubRegion & elementRegion );
+  localIndex getMaxFaceNodes() const;
 
-
-
-  void SortAllFaceNodes( NodeManager const & nodeManager,
-                         ElementRegionManager const & elemManager);
-
-  void SortFaceNodes( NodeManager const & nodeManager,
-                      R1Tensor const & elementCenter,
-                      const localIndex faceIndex );
+  void SortAllFaceNodes( NodeManager const * const nodeManager,
+                         ElementRegionManager const * const elemManager);
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
 
@@ -99,7 +85,7 @@ public:
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
   virtual void
-  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
                                                    array1d<globalIndex_array>& faceToNodes ) override final;
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
