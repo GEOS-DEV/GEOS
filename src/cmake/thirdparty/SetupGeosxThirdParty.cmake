@@ -65,6 +65,11 @@ if (EXISTS ${ATK_DIR})
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  slic
                         TREAT_INCLUDES_AS_SYSTEM ON)
+
+  blt_register_library( NAME lumberjack
+                        INCLUDES ${ATK_INCLUDE_DIRS} 
+                        LIBRARIES  lumberjack
+                        TREAT_INCLUDES_AS_SYSTEM ON)
                         
   set( thirdPartyLibs ${thirdPartyLibs} sidre slic )
 else()
