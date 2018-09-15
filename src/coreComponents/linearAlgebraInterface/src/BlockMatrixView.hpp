@@ -57,15 +57,15 @@ public:
   /**
    * @brief Apply the block matrix to a block vector.
    */
-  void multiply(BlockVectorView<LAI> &solution,
-                BlockVectorView<LAI> &rhs);
+  void multiply( BlockVectorView<LAI> &solution,
+                 BlockVectorView<LAI> &rhs ) const;
 
   /**
    * @brief Set to residual form.
    */
-  void residual(BlockVectorView<LAI> &solution,
-                          BlockVectorView<LAI> &rhs,
-                          BlockVectorView<LAI> &res);
+  void residual( BlockVectorView<LAI> &solution,
+                 BlockVectorView<LAI> &rhs,
+                 BlockVectorView<LAI> &res ) const;
 
   /**
    * @brief Clear row and multiply the diagonal entry by <tt>factor</tt>.
@@ -121,17 +121,17 @@ BlockMatrixView<LAI>::BlockMatrixView( integer nRows,
 // Apply the block matrix to a block vector (hard coded to 2 by 2 for now).
 template< typename LAI >
 void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> &solution,
-                                     BlockVectorView<LAI> &rhs )
+                                     BlockVectorView<LAI> &rhs ) const
 {
   for( integer row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
     rhs.scale( row, 0. );
-    ParallelVector temp( *rhs.getBlock(row) );
+    ParallelVector temp( *rhs.getBlock( row ) );
     for( integer col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
-      if (m_matrices[row][col] != nullptr)
+      if( m_matrices[row][col] != nullptr )
       {
-        m_matrices[row][col]->multiply( *solution.getBlock(col), temp );
+        m_matrices[row][col]->multiply( *solution.getBlock( col ), temp );
         rhs.update( row, 1.0, temp, 1.0 );
       }
     }
@@ -142,22 +142,21 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> &solution,
 template< typename LAI >
 void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> &solution,
                                      BlockVectorView<LAI> &rhs,
-                                     BlockVectorView<LAI> &res )
+                                     BlockVectorView<LAI> &res ) const
 {
-
   for( integer row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
     rhs.scale( row, 0. );
-    ParallelVector temp( *rhs.getBlock(row) );
+    ParallelVector temp( *rhs.getBlock( row ) );
     for( integer col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
-      if (m_matrices[row][col] != nullptr)
+      if( m_matrices[row][col] != nullptr )
       {
-        m_matrices[row][col]->multiply( *solution.getBlock(col), temp );
+        m_matrices[row][col]->multiply( *solution.getBlock( col ), temp );
         rhs.update( row, 1.0, temp, 1.0 );
       }
     }
-    res.update( row, -1.0, *rhs.getBlock(row), 1.0 );
+    res.update( row, -1.0, *rhs.getBlock( row ), 1.0 );
     res.scale( row, -1.0 );
   }
 

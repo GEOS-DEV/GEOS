@@ -31,12 +31,8 @@ EpetraVector::EpetraVector()
 // Copy a vector
 EpetraVector::EpetraVector( EpetraVector const &in_vec )
 {
-  if (in_vec.getPointer() != nullptr)
-  {
+  if( in_vec.getPointer() != nullptr )
     m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( *in_vec.getPointer()));
-  }
-  else
-    std::cout << "I'm here" << std::endl;
 }
 
 // Create a vector from array
@@ -115,7 +111,7 @@ trilinosTypes::lid EpetraVector::localSize() const
 // Print vector to the terminal in Trilinos format.
 void EpetraVector::print() const
 {
-  if ( m_vector.get() != nullptr )
+  if( m_vector.get() != nullptr )
     std::cout << *m_vector.get() << std::endl;
 }
 
