@@ -39,7 +39,8 @@ MeshLevel::MeshLevel( string const & name,
   m_nodeManager( groupStructKeys::nodeManagerString,this),
   m_edgeManager( groupStructKeys::edgeManagerString,this),
   m_faceManager( groupStructKeys::faceManagerString,this),
-  m_elementManager( groupStructKeys::elemManagerString,this)
+  m_elementManager( groupStructKeys::elemManagerString,this),
+  m_wellManager( groupStructKeys::wellManagerString,this)
 {
 
   RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
@@ -53,6 +54,7 @@ MeshLevel::MeshLevel( string const & name,
 
   RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
 
+  RegisterGroup<WellManager>( groupStructKeys::wellManagerString, &m_wellManager, false );
 
   RegisterViewWrapper<integer>( viewKeys.meshLevel );
 }

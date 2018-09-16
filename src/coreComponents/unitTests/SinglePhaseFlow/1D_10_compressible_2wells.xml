@@ -98,13 +98,13 @@
     <SimpleWell name="prod1"
                 type="producer"
                 referenceDepth="0.5">
-      <Perforation name="perf1" location="0.5 0.5 0.5" transmissibility="1"/>
+      <Perforation name="prod1_p0" location="0.5 0.5 0.5" transmissibility="1"/>
     </SimpleWell>
 
     <SimpleWell name="inj1"
                 type="injector"
                 referenceDepth="0.5">
-      <Perforation name="perf1" location="9.5 0.5 0.5" transmissibility="1"/>
+      <Perforation name="inj1_p0" location="9.5 0.5 0.5" transmissibility="1"/>
     </SimpleWell>
   </Wells>
 

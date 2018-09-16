@@ -23,7 +23,11 @@ set(managers_headers
     NumericalMethodsManager.hpp
     BoundaryConditions/BoundaryConditionBase.hpp
     BoundaryConditions/BoundaryConditionManager.hpp
-    BoundaryConditions/DirichletBoundaryCondition.hpp)
+    BoundaryConditions/DirichletBoundaryCondition.hpp
+    Wells/WellManager.hpp
+    Wells/WellBase.cpp
+    Wells/SimpleWell.hpp
+	)
 
 
 #
@@ -50,7 +54,11 @@ set(managers_sources
     NumericalMethodsManager.cpp
     BoundaryConditions/BoundaryConditionBase.cpp
     BoundaryConditions/BoundaryConditionManager.cpp
-    BoundaryConditions/DirichletBoundaryCondition.cpp)
+    BoundaryConditions/DirichletBoundaryCondition.cpp
+    Wells/WellManager.cpp
+    Wells/WellBase.cpp
+    Wells/SimpleWell.cpp
+    )
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )

@@ -657,6 +657,12 @@ void ProblemManager::ParseInputFile()
     topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     elementManager->ReadXML(topLevelNode);
+
+    topLevelNode = xmlProblemNode.child("Wells");
+    WellManager * wellManager = domain->getMeshBody(0)->getMeshLevel(0)->getWellManager();
+    wellManager->AddChildren( topLevelNode );
+    wellManager->SetDocumentationNodes();
+    wellManager->ReadXML(topLevelNode);
   }
 
   // Documentation output
