@@ -59,12 +59,12 @@ int main( int argc, char *argv[] )
 
   std::cout<<"starting main"<<std::endl;
 
-#ifdef USE_OPENMP
+#if defined(RAJA_ENABLE_OPENMP)
   {
-    int noThreads = omp_get_max_threads();
+    int noThreads = omp_get_max_threads(); 
     std::cout<<"No of threads: "<<noThreads<<std::endl;
   }
-#endif
+#endif  
 
 
 
@@ -113,6 +113,8 @@ int main( int argc, char *argv[] )
 
   std::cout << std::endl << "Running simulation:" << std::endl;
 
+
+  GEOSX_MARK_BEGIN("RunSimulation");
   gettimeofday(&tim, nullptr);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
@@ -120,6 +122,8 @@ int main( int argc, char *argv[] )
   gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
+  GEOSX_MARK_END("RunSimulation");
+  gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );
