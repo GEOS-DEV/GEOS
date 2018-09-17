@@ -23,21 +23,26 @@
 #include <caliper/cali.h>
 
 #define GEOSX_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
-#define GEOSX_CXX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,#loopName)
-#define GEOSX_CXX_MARK_LOOP_END(loop) CALI_CXX_MARK_LOOP_END(loop)
-#define GEOSX_CXX_MARK_LOOP_ITERATION(loop, iter) CALI_CXX_MARK_LOOP_ITERATION(loop, iter)
-#define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(#name)
-#define GEOSX_MARK_END(name) CALI_MARK_END(#name)
+
+#define DO_STRINGIFY(arg) #arg
+#define GEOSX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,DO_STRINGIFY(loopName))
+#define GEOSX_MARK_LOOP_END(loop) CALI_CXX_MARK_LOOP_END(loop)
+#define GEOSX_MARK_LOOP_ITERATION(loop, iter) CALI_CXX_MARK_LOOP_ITERATION(loop, iter)
+#define GEOSX_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
+
+#define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(DO_STRINGIFY(name))
+#define GEOSX_MARK_END(name) CALI_MARK_END(DO_STRINGIFY(name))
 
 #else
 
 #define GEOSX_MARK_FUNCTION
-#define GEOSX_CXX_MARK_LOOP_BEGIN(loop, loopName)
-#define GEOSX_CXX_MARK_LOOP_END(loop)
-#define GEOSX_CXX_MARK_LOOP_ITERATION(loop, iter)
+
+#define GEOSX_MARK_LOOP_BEGIN(loop, loopName)
+#define GEOSX_MARK_LOOP_END(loop)
+#define GEOSX_MARK_LOOP_ITERATION(loop, iter)
 #define GEOSX_MARK_BEGIN(name)
 #define GEOSX_MARK_END(name)
-
 #endif
+
 
 #endif
