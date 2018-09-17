@@ -24,6 +24,7 @@
  */
 
 #include "ObjectManagerBase.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -140,19 +141,24 @@ void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 }
 
 
+void ObjectManagerBase::CreateSet( const std::string& newSetName )
+{
+  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  sets->RegisterViewWrapper<set<localIndex>>(newSetName);
+}
+
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const array2d<localIndex>& map,
-                                                   const std::string& newSetName )
+                                                   const std::string& setName )
 {
-
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
+  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
   newset.clear();
 
   localIndex mapSize = map.size(1);
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
-    arrayView1d<localIndex const> const sublist = map[ka];
+    localIndex const * const sublist = map[ka];
     localIndex addToSet = 0;
     for( localIndex a=0 ; a<mapSize ; ++a )
     {
@@ -170,11 +176,10 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const array1d<localIndex_array>& map,
-                                                   const std::string& newSetName )
+                                                   const std::string& setName )
 {
-
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
+  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
   newset.clear();
 
   for( localIndex ka=0 ; ka<size() ; ++ka )
@@ -363,7 +368,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
+  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   int rank=0;
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
@@ -378,7 +383,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ASSERT( wrappersLabel=="Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect")
+  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
 
 
 //  if( readIncludeGlobalIndices )
@@ -403,11 +408,11 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ASSERT( numSubGroups==this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {
@@ -503,11 +508,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
+  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString);
-  GEOS_ASSERT( localToGlobalString==viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect")
+  GEOS_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
 
   int rank=0;
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
@@ -544,9 +549,9 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
       ++numNewIndices;
 
-      GEOS_ASSERT( packList.size()==0,
+      GEOS_ERROR_IF( packList.size() != 0,
                    "ObjectManagerBase::Unpack(): packList specified, "
-                   "but a new globalIndex is unpacked")
+                   "but a new globalIndex is unpacked");
     }
     else
     {
@@ -603,11 +608,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ASSERT( numSubGroups==this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {

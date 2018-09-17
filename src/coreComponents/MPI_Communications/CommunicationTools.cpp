@@ -135,7 +135,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   // get the relation to the composition object used that will be used to identify the main object. For example,
   // a face can be identified by its nodes.
   array1d<globalIndex_array> objectToCompositionObject;
-  object.ExtractMapFromObjectForAssignGlobalIndexNumbers( compositionObject, objectToCompositionObject );
+  object.ExtractMapFromObjectForAssignGlobalIndexNumbers( &compositionObject, objectToCompositionObject );
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with

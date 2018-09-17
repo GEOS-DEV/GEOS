@@ -48,8 +48,10 @@
 
 using namespace geosx;
 using namespace dataRepository;
+
 #ifdef GEOSX_USE_ATK
 using namespace axom;
+#include "slic/GenericOutputStream.hpp"
 #endif
 
 namespace
