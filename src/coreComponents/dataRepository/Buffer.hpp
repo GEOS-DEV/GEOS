@@ -484,7 +484,7 @@ public:
                  bytes_recorded << " " << byte_size);
     }
 
-    std::memcpy(arr.data(), buff + 2, dim0 * dim1 * sizeof(T));
+    std::memcpy(static_cast<void*>(arr.data()), buff + 2, dim0 * dim1 * sizeof(T));
     return bytes_recorded;
   }
 
