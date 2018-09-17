@@ -14,10 +14,10 @@ matrix:
 #    env:
 #    - IMG=gcc7
 #    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-  - compiler: clang4
-    env:
-    - IMG=clang4
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+#  - compiler: clang4
+#    env:
+#    - IMG=clang4
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
 #  - compiler: clang5
 #    env:
 #    - IMG=clang5

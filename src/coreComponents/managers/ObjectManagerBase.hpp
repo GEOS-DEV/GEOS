@@ -274,9 +274,7 @@ public:
     return 0;
   }
 
-
-
-
+  void CreateSet( const std::string& newSetName );
 
   /// builds a new set on this object given another objects set and the map
   // between them
@@ -295,7 +293,7 @@ public:
   void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & ,
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const ,
                                                                 array1d<globalIndex_array>&  )
   {
 

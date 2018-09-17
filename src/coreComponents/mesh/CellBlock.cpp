@@ -197,7 +197,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               localIndex_array& nodeIndicies) const
 {
   // get nodelist for this element
-  arrayView1d<localIndex const> const elemToNodeMap = m_toNodesRelation[elementIndex];
+  localIndex const * const elemToNodeMap = m_toNodesRelation[elementIndex];
 
   // resize the nodeIndicies based on element type (this is wrong for some types
   // of elements)
@@ -420,7 +420,7 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
 {
 
   r1_array const & X = nodeManager.referencePosition();
-  arrayView1d<localIndex const> nodelist = m_toNodesRelation[k];
+  localIndex const * const nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
   {
