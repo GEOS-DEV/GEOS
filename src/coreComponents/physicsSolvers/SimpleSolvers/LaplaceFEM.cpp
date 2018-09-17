@@ -380,7 +380,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
         {
           if( elemGhostRank[k] < 0 )
           {
-            arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
+            localIndex const * const localNodeIndices = elemsToNodes[k];
 
             for( localIndex a=0 ; a<numNodesPerElement ; ++a )
             {
@@ -453,7 +453,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       {
         if(elemGhostRank[k] < 0)
         {
-          arrayView1d<localIndex const> const local_index = elemsToNodes[k];
+          localIndex const * const local_index = elemsToNodes[k];
 
           for( int a=0 ; a<numNodesPerElement ; ++a)
           {

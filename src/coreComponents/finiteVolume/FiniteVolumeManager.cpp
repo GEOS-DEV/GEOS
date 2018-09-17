@@ -96,19 +96,20 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
                                 localIndex const esr,
                                 localIndex const k )->void
   {
-    arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][k];
+    localIndex const * const nodeList = elemsToNodes[er][esr][k];
+    localIndex const nodeListSize = elemsToNodes[er][esr].get().size(1);
     R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
 
     R1Tensor & center = elemCenter[er][esr][k];
     center = 0.0;
 
     // TODO different center options
-    for (localIndex a = 0; a < nodeList.size(); ++a)
+    for (localIndex a = 0; a < nodeListSize; ++a)
     {
       Xlocal[a] = X[nodeList[a]];
       center += Xlocal[a];
     }
-    center /= nodeList.size();
+    center /= nodeListSize;
 
     // TODO proper volumes for all shapes
     elemVolume[er][esr][k] = computationalGeometry::HexVolume(Xlocal);

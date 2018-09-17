@@ -36,13 +36,13 @@
 #else
 
 #define GEOSX_MARK_FUNCTION
+
 #define GEOSX_MARK_LOOP_BEGIN(loop, loopName)
 #define GEOSX_MARK_LOOP_END(loop)
 #define GEOSX_MARK_LOOP_ITERATION(loop, iter)
 #define GEOSX_MARK_BEGIN(name)
 #define GEOSX_MARK_END(name)
 #endif
-
 
 
 #endif

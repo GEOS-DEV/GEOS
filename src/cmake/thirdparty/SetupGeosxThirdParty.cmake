@@ -11,7 +11,15 @@ message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 if( NOT GEOSX_TPL_DIR )
     message("GEOSX_TPL_ROOT_DIR=${GEOSX_TPL_ROOT_DIR}")
     get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
-    string(REGEX REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
+    if( CMAKE_BUILD_TYPE MATCHES "Debug" )
+        string(REGEX REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
+    endif()
+    if( CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo" )
+        string(REGEX REPLACE "relwithdebinfo" "release" TEMP_DIR2 ${TEMP_DIR})
+    endif()
+    if( CMAKE_BUILD_TYPE MATCHES "Release" )
+        set(TEMP_DIR2 ${TEMP_DIR})
+    endif()
     set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
 endif()
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
@@ -64,6 +72,11 @@ if (EXISTS ${ATK_DIR})
   blt_register_library( NAME slic
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  slic
+                        TREAT_INCLUDES_AS_SYSTEM ON)
+
+  blt_register_library( NAME lumberjack
+                        INCLUDES ${ATK_INCLUDE_DIRS} 
+                        LIBRARIES  lumberjack
                         TREAT_INCLUDES_AS_SYSTEM ON)
                         
   set( thirdPartyLibs ${thirdPartyLibs} sidre slic )
