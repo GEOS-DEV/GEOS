@@ -1520,7 +1520,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
-    r1_array const & totalDisplacement = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
+
+    r1_array const * const totalDisplacement = nodeManager->getPointer<r1_array>(keys::TotalDisplacement);
 
     bool writeArbitraryPolygon(false);
     string const meshName("MeshLevel");
@@ -1534,7 +1535,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
-      nodePosition += totalDisplacement[a];
+      if( totalDisplacement!=nullptr )
+      {
+        nodePosition += (*totalDisplacement)[a];
+      }
 
       xcoords[a] = nodePosition(0) ;
       ycoords[a] = nodePosition(1);

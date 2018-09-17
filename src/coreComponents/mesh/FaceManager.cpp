@@ -133,6 +133,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
     {
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
       localIndex const numFacesPerElement = subRegion->numFacesPerElement();
+      array2d<localIndex> & elemsToFaces = subRegion->faceList();
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
@@ -354,7 +355,6 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   r1_array const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
-  constexpr int MAX_FACE_NODES = 9;
   GEOS_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
   raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
@@ -364,92 +364,101 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
     R1Tensor const elementCenter = subRegion->GetElementCenter( elemList[kf][0], *nodeManager );
     
     arrayView1d<localIndex> faceNodes = nodeList()[kf];
-    const localIndex firstNodeIndex = faceNodes[0];
-    const localIndex numFaceNodes = faceNodes.size();
-
-    // get face center (average vertex location) and store node coordinates
-    R1Tensor const* face_coords[MAX_FACE_NODES];
-    R1Tensor fc(0);
-    for( localIndex n =0 ; n < numFaceNodes ; ++n)
-    {
-      localIndex nd = faceNodes[n];
-      face_coords[n] = &(X[nd]);
-      fc += *(face_coords[n]);
-    }
-    fc /= realT(numFaceNodes);
-
-    R1Tensor ex, ey, ez;
-    // Approximate face normal direction (unscaled)
     
-    if (numFaceNodes == 2)  //2D only.
-    {
-      ex = X[faceNodes[1]];
-      ex -= X[faceNodes[0]];
-      ey = elementCenter;
-      ey -= fc;
-
-      ez.Cross(ex, ey);
-      // The element should be on the right hand side of the vector from node 0 to
-      // node 1.
-      // This ensure that the normal vector of an external face points to outside
-      // the element.
-      if (ez[2] > 0)
-      {
-        localIndex itemp = faceNodes[0];
-        faceNodes[0] = faceNodes[1];
-        faceNodes[1] = itemp;
-      }
-    }
-    else
-    {
-      ez = fc;
-      ez -= elementCenter;
-
-      /// Approximate in-plane axis
-      ex = *(face_coords[0]);
-      ex -= fc;
-      ex /= ex.L2_Norm();
-      ey.Cross(ez, ex);
-      ey /= ey.L2_Norm();
-
-      std::pair<realT, localIndex> thetaOrder[MAX_FACE_NODES];
-
-      /// Sort nodes counterclockwise around face center
-      for( localIndex n =0 ; n < numFaceNodes ; ++n)
-      {
-        R1Tensor v = *(face_coords[n]);
-        v -= fc;
-        thetaOrder[n] = std::pair<realT, localIndex>(atan2(Dot(v,ey),Dot(v,ex)),faceNodes[n]);
-      }
-
-      sort(thetaOrder, thetaOrder + numFaceNodes);
-
-      // Reorder nodes on face
-      for( localIndex n =0 ; n < numFaceNodes ; ++n)
-      {
-        faceNodes[n] = thetaOrder[n].second;
-      }
-
-      localIndex tempFaceNodes[MAX_FACE_NODES];
-
-      localIndex firstIndexIndex = 0;
-      for( localIndex n =0 ; n < numFaceNodes ; ++n)
-      {
-        tempFaceNodes[n] = thetaOrder[n].second;
-        if( tempFaceNodes[n] == firstNodeIndex )
-        {
-          firstIndexIndex = n;
-        }
-      }
-
-      for( localIndex n=0 ; n < numFaceNodes ; ++n)
-      {
-        const localIndex index = firstIndexIndex+n < numFaceNodes ? firstIndexIndex+n : firstIndexIndex+n-numFaceNodes;
-        faceNodes[n] = tempFaceNodes[index];
-      }
-    }
+    SortFaceNodes( X, elementCenter, faceNodes );
   } );
 }
+
+void FaceManager::SortFaceNodes( array1d<R1Tensor> const & X,
+                                 R1Tensor const & elementCenter,
+                                 arrayView1d<localIndex> faceNodes )
+{
+  localIndex const numFaceNodes = faceNodes.size();
+  localIndex const firstNodeIndex = faceNodes[0];
+
+  // get face center (average vertex location) and store node coordinates
+  R1Tensor const * face_coords[MAX_FACE_NODES];
+  R1Tensor fc(0);
+  for( localIndex n =0 ; n < numFaceNodes ; ++n)
+  {
+    localIndex nd = faceNodes[n];
+    face_coords[n] = &(X[nd]);
+    fc += *(face_coords[n]);
+  }
+  fc /= realT(numFaceNodes);
+
+  R1Tensor ex, ey, ez;
+  // Approximate face normal direction (unscaled)
+
+  if (numFaceNodes == 2)  //2D only.
+  {
+    ex = X[faceNodes[1]];
+    ex -= X[faceNodes[0]];
+    ey = elementCenter;
+    ey -= fc;
+
+    ez.Cross(ex, ey);
+    // The element should be on the right hand side of the vector from node 0 to
+    // node 1.
+    // This ensure that the normal vector of an external face points to outside
+    // the element.
+    if (ez[2] > 0)
+    {
+      localIndex itemp = faceNodes[0];
+      faceNodes[0] = faceNodes[1];
+      faceNodes[1] = itemp;
+    }
+  }
+  else
+  {
+    ez = fc;
+    ez -= elementCenter;
+
+    /// Approximate in-plane axis
+    ex = *(face_coords[0]);
+    ex -= fc;
+    ex /= ex.L2_Norm();
+    ey.Cross(ez, ex);
+    ey /= ey.L2_Norm();
+
+    std::pair<realT, localIndex> thetaOrder[MAX_FACE_NODES];
+
+    /// Sort nodes counterclockwise around face center
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
+    {
+      R1Tensor v = *(face_coords[n]);
+      v -= fc;
+      thetaOrder[n] = std::pair<realT, localIndex>(atan2(Dot(v,ey),Dot(v,ex)),faceNodes[n]);
+    }
+
+    sort(thetaOrder, thetaOrder + numFaceNodes);
+
+    // Reorder nodes on face
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
+    {
+      faceNodes[n] = thetaOrder[n].second;
+    }
+
+    localIndex tempFaceNodes[MAX_FACE_NODES];
+
+    localIndex firstIndexIndex = 0;
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
+    {
+      tempFaceNodes[n] = thetaOrder[n].second;
+      if( tempFaceNodes[n] == firstNodeIndex )
+      {
+        firstIndexIndex = n;
+      }
+    }
+
+    for( localIndex n=0 ; n < numFaceNodes ; ++n)
+    {
+      const localIndex index = firstIndexIndex+n < numFaceNodes ? firstIndexIndex+n : firstIndexIndex+n-numFaceNodes;
+      faceNodes[n] = tempFaceNodes[index];
+    }
+  }
+}
+
 
 void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                                    array1d<globalIndex_array>& faceToNodes )

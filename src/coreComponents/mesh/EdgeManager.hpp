@@ -153,13 +153,13 @@ public:
   }
 
 
-  OrderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
-  OrderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
 
 private:
   FixedOneToManyRelation m_toNodesRelation;
-  OrderedVariableOneToManyRelation m_toFacesRelation;
+  UnorderedVariableOneToManyRelation m_toFacesRelation;
 
 };
 }
