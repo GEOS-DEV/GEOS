@@ -85,6 +85,8 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
+  virtual void InitializePreSubGroups(ManagedGroup * const group) override;
+
   virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,

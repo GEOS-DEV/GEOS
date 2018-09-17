@@ -158,17 +158,17 @@
   
     <Dirichlet name="injPressure"
                objectPath="Wells/inj1"
-               fieldName="bottomholePressure"
+               fieldName="pressure"
                dataType="Scalar"
                scale="1e7"
-               setNames="source"/>
+               setNames="all"/>
 
     <Dirichlet name="prodPressure"
                objectPath="Wells/prod1"
-               fieldName="bottomholePressure"
+               fieldName="pressure"
                dataType="Scalar"
                scale="0.0"
-               setNames="sink"/>
+               setNames="all"/>
   </BoundaryConditions>
 
   <Functions>

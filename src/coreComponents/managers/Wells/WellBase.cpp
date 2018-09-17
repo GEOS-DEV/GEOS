@@ -23,12 +23,17 @@
 
 #include "WellBase.hpp"
 
+#include "Perforation.hpp"
+#include "WellManager.hpp"
+
 namespace geosx
 {
 
 
 WellBase::WellBase(string const & name, dataRepository::ManagedGroup * const parent)
-  : ObjectManagerBase(name, parent)
+  : ObjectManagerBase(name, parent),
+    m_referenceDepth(0),
+    m_type()
 {
   RegisterViewWrapper( viewKeys.referenceDepth.Key(), &m_referenceDepth, false );
   RegisterViewWrapper( viewKeys.type.Key(), &m_type, false );
@@ -64,12 +69,40 @@ void WellBase::FillDocumentationNode()
                               "string",
                               "string",
                               "Well type (producer/injector)",
-                              "Reference (producer/injector)",
-                              "0",
+                              "Well type (producer/injector)",
+                              "REQUIRED",
                               "",
                               0,
                               1,
                               0 );
+}
+
+void WellBase::CreateChild(string const & childKey, string const & childName)
+{
+  //std::cout << "Adding child: " << childKey << ", " << childName << std::endl;
+  if (childKey == "Perforation")
+  {
+    RegisterGroup<Perforation>(childName);
+  }
+  else
+  {
+    GEOS_ERROR("Unrecognized child: " << childKey);
+  }
+}
+
+void WellBase::InitializePostSubGroups(dataRepository::ManagedGroup * const group)
+{
+  ObjectManagerBase::InitializePostSubGroups(group);
+}
+
+R1Tensor const & WellBase::getGravityVector() const
+{
+  return dynamic_cast<WellManager const *>(getParent())->getGravityVector();
+}
+
+void WellBase::FinalInitialization(dataRepository::ManagedGroup * const group)
+{
+  // nothing yet
 }
 
 

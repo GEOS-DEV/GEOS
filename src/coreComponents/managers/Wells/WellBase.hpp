@@ -52,7 +52,15 @@ public:
 
   virtual void FillDocumentationNode() override;
 
-  struct viewKeyStruct
+  virtual void CreateChild(string const & childKey, string const & childName) override;
+
+  virtual void InitializePostSubGroups(ManagedGroup * const group) override;
+
+  virtual void FinalInitialization(ManagedGroup * const group) override;
+
+  R1Tensor const & getGravityVector() const;
+
+  struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
 
     static constexpr auto referenceDepthString = "referenceDepth";

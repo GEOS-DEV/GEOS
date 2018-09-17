@@ -37,6 +37,8 @@ static constexpr auto simpleWell = "SimpleWell";
 }
 }
 
+class DomainPartition;
+
 class SimpleWell : public WellBase
 {
 public:
@@ -54,7 +56,41 @@ public:
 
   void FillDocumentationNode() override;
 
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
+
+  virtual void FinalInitialization( ManagedGroup * const group ) override;
+
+  localIndex numConnections() const { return numSubGroups(); }
+
+  struct viewKeyStruct : public WellBase::viewKeyStruct
+  {
+
+    static constexpr auto connectionElementRegionString = "connectionElementRegion";
+    static constexpr auto connectionElementSubregionString = "connectionElementSubregion";
+    static constexpr auto connectionElementIndexString = "connectionElementIndex";
+
+    static constexpr auto pressureString = "pressure";
+    static constexpr auto transmissibilityString = "transmissibility";
+    static constexpr auto gravityDepthString = "gravityDepth";
+
+    dataRepository::ViewKey connectionElementRegion    = { connectionElementRegionString    };
+    dataRepository::ViewKey connectionElementSubregion = { connectionElementSubregionString };
+    dataRepository::ViewKey connectionElementIndex     = { connectionElementIndexString     };
+
+    dataRepository::ViewKey pressure         = { pressureString         };
+    dataRepository::ViewKey transmissibility = { transmissibilityString };
+    dataRepository::ViewKey gravityDepth     = { gravityDepthString     };
+
+  } viewKeys;
+
 private:
+
+  void ConnectToCells( DomainPartition const * domain );
+  void PrecomputeData( DomainPartition const * domain );
+
+  array1d<localIndex> m_connectionElementRegion;
+  array1d<localIndex> m_connectionElementSubregion;
+  array1d<localIndex> m_connectionElementIndex;
 
 };
 

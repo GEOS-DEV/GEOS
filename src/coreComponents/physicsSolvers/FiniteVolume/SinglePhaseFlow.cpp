@@ -316,9 +316,18 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
   }
 }
 
+void SinglePhaseFlow::InitializePreSubGroups( ManagedGroup * const problemManager )
+{
+  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
+
+  // provide gravity vector to well manager for gravity-depth precomputation
+  WellManager * wellManager = domain->getMeshBody(0)->getMeshLevel(0)->getWellManager();
+  wellManager->setGravityVector(getGravityVector());
+}
+
 void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
 {
-  DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
 
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
@@ -338,6 +347,8 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
 
 }
 
+
+
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
                                     real64 const& dt,
                                     const int cycleNumber,
@@ -350,7 +361,6 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
                                       domain,
                                       getLinearSystemRepository() );
 }
-
 
 
 void SinglePhaseFlow::
@@ -404,7 +414,6 @@ ImplicitStepSetup( real64 const& time_n,
   // setup dof numbers and linear system
   SetupSystem( domain, blockSystem );
 }
-
 
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
                                             real64 const & dt,
@@ -520,6 +529,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
   GEOS_ASSERT(localCount == numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
 
+
 void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem )
 {
@@ -595,7 +605,6 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 
 }
-
 
 void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
                                                Epetra_FECrsGraph * const sparsity )
@@ -695,6 +704,8 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
     });
   });
 }
+
+
 
 void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
                                      EpetraBlockSystem * const blockSystem,
@@ -920,8 +931,6 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
 }
 
-
-
 void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
                                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                               real64 const time_n,
@@ -1009,6 +1018,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
     }
   }
 }
+
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                                     real64 const time, real64 const dt,
@@ -1351,7 +1361,6 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
 
   return sqrt(globalResidualNorm);
 }
-
 
 void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
                                            real64 const scalingFactor,
