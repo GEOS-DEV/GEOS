@@ -203,8 +203,8 @@ public:
             processedPath += "/" + targetPath[pathLevel];
 //            std::cout<<"processedPath="<<processedPath<<std::endl;
 
-            GEOS_ASSERT( targetGroup != nullptr,
-                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
+            GEOS_ERROR_IF( targetGroup == nullptr,
+                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
 
           dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );

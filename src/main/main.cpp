@@ -35,11 +35,6 @@
 
 using namespace geosx;
 
-#ifdef GEOSX_USE_ATK
-using namespace axom;
-#endif
-
-
 
 int main( int argc, char *argv[] )
 {
@@ -55,6 +50,8 @@ int main( int argc, char *argv[] )
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
 
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+
+  logger::rank = rank;
 #endif
 
   std::cout<<"starting main"<<std::endl;
@@ -66,23 +63,8 @@ int main( int argc, char *argv[] )
   }
 #endif  
 
+  logger::InitializeLogger();
 
-
-
-#ifdef GEOSX_USE_ATK
-  slic::initialize();
-  std::string format =  std::string( "***********************************\n" )+
-                       std::string( "* <TIMESTAMP>\n\n" ) +
-                       std::string( "* LEVEL=<LEVEL>\n" ) +
-                       std::string( "* MESSAGE=<MESSAGE>\n" ) +
-                       std::string( "* FILE=<FILE>\n" ) +
-                       std::string( "* LINE=<LINE>\n" ) +
-                       std::string( "***********************************\n" );
-  slic::setLoggingMsgLevel( slic::message::Debug );
-  slic::GenericOutputStream * const stream = new slic::GenericOutputStream(&std::cout, format );
-  slic::addStreamToAllMsgLevels( stream );
-
-#endif
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
   std::string restartFileName;
@@ -130,15 +112,11 @@ int main( int argc, char *argv[] )
 
   problemManager.ClosePythonInterpreter();
 
-#ifdef GEOSX_USE_ATK
-  slic::finalize();
-#endif
-
+  logger::FinalizeLogger();
 
 #ifdef GEOSX_USE_MPI
   MPI_Finalize();
 #endif
-
 
   return 0;
 }

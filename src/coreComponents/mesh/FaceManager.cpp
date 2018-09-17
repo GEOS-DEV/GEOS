@@ -356,7 +356,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 
   const indexType max_face_nodes = getMaxFaceNodes();
   constexpr int MAX_FACE_NODES = 9;
-  GEOS_ASSERT( max_face_nodes <= MAX_FACE_NODES, "More nodes on a face than expected!" );
+  GEOS_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
   raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
@@ -546,7 +546,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ASSERT( nodeListString==viewKeyStruct::nodeListString, "")
+  GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
                                          m_nodeList,
@@ -556,7 +556,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOS_ASSERT( edgeListString==viewKeyStruct::edgeListString, "")
+  GEOS_ERROR_IF( edgeListString != viewKeyStruct::edgeListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
                                          m_edgeList,
@@ -567,7 +567,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOS_ASSERT( elementListString==viewKeyStruct::elementListString, "")
+  GEOS_ERROR_IF( elementListString != viewKeyStruct::elementListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toElements,
