@@ -126,7 +126,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
   string_array const & inputVarTypes = this->getReference<string_array>( dataRepository::keys::inputVarTypes );
 
-  localIndex const numVars = inputVarNames.size();
+  localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
   localIndex varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
   {

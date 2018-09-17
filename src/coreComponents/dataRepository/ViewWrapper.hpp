@@ -1087,7 +1087,7 @@ public:
     axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
     if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
     {
-      localIndex byte_size = view->getTotalBytes();
+      localIndex byte_size = integer_conversion<localIndex>(view->getTotalBytes());
       void * ptr = std::malloc(byte_size);
       view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
       return;
@@ -1120,7 +1120,7 @@ public:
     axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
     if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
     {
-      localIndex byte_size = view->getTotalBytes();
+      localIndex byte_size = integer_conversion<localIndex>(view->getTotalBytes());
       void * ptr = view->getVoidPtr();
       Buffer::unpack(reference(), ptr, byte_size);
       std::free(ptr);
@@ -1170,7 +1170,7 @@ public:
       std::type_index type_index = std::type_index(elementTypeID());
       localIndex sidre_size = rtTypes::getSidreSize(type_index);
 
-      localIndex byte_size = view->getTotalBytes();
+      localIndex byte_size = integer_conversion<localIndex>(view->getTotalBytes());
       localIndex num_elements = numElementsFromByteSize(byte_size);
 
       int ndims = view->getNumDimensions();

@@ -16,7 +16,16 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "gtest/gtest.h"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+
+#include <gtest/gtest.h>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#endif
 
 #include "common/Logger.hpp"
 #include "common/TimingMacros.hpp"

@@ -37,7 +37,8 @@
 //#include "Common/Common.h"
 //#include <string>
 
-#include "../common/DataTypes.hpp"
+#include "common/DataTypes.hpp"
+#include "common/integer_conversion.hpp"
 
 namespace geosx
 {
@@ -168,9 +169,9 @@ inline void RemoveSpaces(std::string& aString){
 
 /// Expand string vector based on multiple tokens eg [a, b**3, c] => [a,b,b,b,c]
 inline void ExpandMultipleTokens(string_array& sVector, const std::string& multipleToken="**"){
-  localIndex n= sVector.size();
+  localIndex n= integer_conversion<localIndex>(sVector.size());
   string_array newVec;
-  for( int i =0 ; i < n ; ++i)
+  for( localIndex i =0 ; i < n ; ++i)
   {
     string_array keyMult = TokenizeSeq(sVector[i], multipleToken);
     if( (keyMult.size() == 2) && strIsInt(keyMult[1]) )
