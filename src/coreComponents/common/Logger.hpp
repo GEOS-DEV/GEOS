@@ -121,6 +121,11 @@ extern int rank;
 
 void geos_abort();
 
+void InitializeLogger();
+
+void FinalizeLogger();
+
+
 } /* namespace logger */
 
 } /* namespace geosx */

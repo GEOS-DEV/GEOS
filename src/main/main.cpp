@@ -35,18 +35,6 @@
 
 using namespace geosx;
 
-#ifdef GEOSX_USE_ATK
-
-using namespace axom;
-#include "slic/GenericOutputStream.hpp"
-
-#ifdef GEOSX_USE_MPI
-#include "slic/LumberjackStream.hpp"
-#endif
-
-#endif
-
-
 
 int main( int argc, char *argv[] )
 {
@@ -75,35 +63,7 @@ int main( int argc, char *argv[] )
   }
 #endif
 
-#ifdef GEOSX_USE_ATK
-  slic::initialize();
-  slic::setLoggingMsgLevel( slic::message::Debug );
-
-#ifdef GEOSX_USE_MPI
-  std::string format =  std::string( "***********************************\n" )+
-                        std::string( "MESSAGE=<MESSAGE>\n" ) +
-                        std::string( "\t<TIMESTAMP>\n\n" ) +
-                        std::string( "\tLEVEL=<LEVEL>\n" ) +
-                        std::string( "\tRANKS=<RANK>\n") +
-                        std::string( "\tFILE=<FILE>\n" ) +
-                        std::string( "\tLINE=<LINE>\n" ) +
-                        std::string( "***********************************\n" );
-
-  const int ranks_limit = 5;
-  slic::LumberjackStream * const stream = new slic::LumberjackStream(&std::cout, MPI_COMM_GEOSX, ranks_limit, format);
-#else /* #ifdef GEOSX_USE_MPI */
-  std::string format =  std::string( "***********************************\n" )+
-                        std::string( "MESSAGE=<MESSAGE>\n" ) +
-                        std::string( "\t<TIMESTAMP>\n\n" ) +
-                        std::string( "\tLEVEL=<LEVEL>\n" ) +
-                        std::string( "\tFILE=<FILE>\n" ) +
-                        std::string( "\tLINE=<LINE>\n" ) +
-                        std::string( "***********************************\n" );
-  
-  slic::GenericOutputStream * const stream = new slic::GenericOutputStream(&std::cout, format );
-#endif /* #ifdef GEOSX_USE_MPI */
-  slic::addStreamToAllMsgLevels( stream );
-#endif /* #ifdef GEOSX_USE_ATK */
+  logger::InitializeLogger();
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
@@ -148,10 +108,7 @@ int main( int argc, char *argv[] )
 
   problemManager.ClosePythonInterpreter();
 
-#ifdef GEOSX_USE_ATK
-  slic::flushStreams();
-  slic::finalize();
-#endif
+  logger::FinalizeLogger();
 
 #ifdef GEOSX_USE_MPI
   MPI_Finalize();
