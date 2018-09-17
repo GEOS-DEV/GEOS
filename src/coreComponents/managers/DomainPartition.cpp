@@ -27,6 +27,7 @@
 
 #include "fileIO/silo/SiloFile.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/SortedArray.hpp"
 
 #include "common/Logger.hpp"
@@ -168,7 +169,7 @@ void DomainPartition::GenerateSets(  )
         set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
+          localIndex const * const nodelist = elemsToNodes[k];
           integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {

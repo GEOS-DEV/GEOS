@@ -5,9 +5,6 @@ message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
-
-
-
 # OPTIONS
 option( ENABLE_CALIPER "" OFF )
 set( CALIPER_INSTALL "" CACHE PATH "")
@@ -34,7 +31,8 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 
 option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" ON )
 
-option( ENABLE_HYPRE "Enables HYPRE" OFF )
+option( ENABLE_TRILINOS "Enables TRILINOS" ON )
+option( ENABLE_HYPRE "Enables HYPRE" ON )
 
 option( ENABLE_MPI "" ON )
 

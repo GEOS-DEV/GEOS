@@ -1,6 +1,6 @@
 message( "Entering /src/CMakeLists.txt")
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.9)
 
 ################################
 # GEOSX
@@ -86,7 +86,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core 
+                   DEPENDS_ON geosx_core
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )

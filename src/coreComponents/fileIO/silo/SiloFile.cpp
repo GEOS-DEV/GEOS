@@ -1598,7 +1598,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         const integer_array nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
-          arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
+          localIndex const * const elemToNodeMap = elemsToNodes[k];
 
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
