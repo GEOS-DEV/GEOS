@@ -356,7 +356,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 
   const indexType max_face_nodes = getMaxFaceNodes();
   constexpr int MAX_FACE_NODES = 9;
-  GEOS_ERROR_IF( max_face_nodes <= MAX_FACE_NODES, "More nodes on a face than expected!" );
+  GEOS_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
   raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
