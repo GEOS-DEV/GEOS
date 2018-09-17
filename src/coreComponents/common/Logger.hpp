@@ -33,6 +33,10 @@
 #include "slic/slic.hpp"
 #endif
 
+
+//#define USE_SLIC_ERROR
+
+
 #define GEOS_LOG_RANK_0(msg)                                  \
   do {                                                        \
     if (geosx::logger::rank == 0)                             \
@@ -41,20 +45,7 @@
     }                                                         \
   } while (false)
 
-#ifdef GEOSX_USE_ATK
-
-#define GEOS_ERROR_IF(EXP, msg) SLIC_ERROR_IF(EXP, msg)
-
-#define GEOS_WARNING_IF(EXP, msg) SLIC_WARNING_IF(EXP, msg)
-
-#define GEOS_ASSERT(EXP, msg) SLIC_ASSERT_MSG(EXP, msg)
-
-#define GEOS_CHECK(EXP, msg) SLIC_CHECK_MSG(EXP, msg)
-
-#define GEOS_INFO_IF(EXP, msg) SLIC_INFO_IF(EXP, msg)
-
-#else /* GEOSX_USE_ATK */
-
+#ifndef USE_SLIC_ERROR
 #define GEOS_ERROR_IF(EXP, msg)                               \
   do {                                                        \
     if (EXP)                                                  \
@@ -66,6 +57,37 @@
       geosx::logger::geos_abort();                            \
     }                                                         \
   } while (false)
+#endif
+
+
+
+#ifdef GEOSX_USE_ATK
+
+#ifdef USE_SLIC_ERROR
+#define GEOS_ERROR_IF(EXP, msg) SLIC_ERROR_IF(EXP, msg)
+#endif
+
+#define GEOS_WARNING_IF(EXP, msg) SLIC_WARNING_IF(EXP, msg)
+
+#define GEOS_ASSERT(EXP, msg) SLIC_ASSERT_MSG(EXP, msg)
+
+#define GEOS_CHECK(EXP, msg) SLIC_CHECK_MSG(EXP, msg)
+
+#define GEOS_INFO_IF(EXP, msg) SLIC_INFO_IF(EXP, msg)
+
+#else /* GEOSX_USE_ATK */
+
+//#define GEOS_ERROR_IF(EXP, msg)                               \
+//  do {                                                        \
+//    if (EXP)                                                  \
+//    {                                                         \
+//      std::cout << "***** GEOS_ERROR "<<std::endl;            \
+//      std::cout << "***** FILE: " << __FILE__ << std::endl;   \
+//      std::cout << "***** LINE: " << __LINE__ << std::endl;   \
+//      std::cout << msg << std::endl;                          \
+//      geosx::logger::geos_abort();                            \
+//    }                                                         \
+//  } while (false)
 
 #define GEOS_WARNING_IF(EXP, msg)                             \
   do {                                                        \
