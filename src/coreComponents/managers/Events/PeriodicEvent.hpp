@@ -104,7 +104,7 @@ public:
     dataRepository::ViewKey functionSetNames = { "setNames" };
     dataRepository::ViewKey functionStatOption = { "stat" };
     dataRepository::ViewKey eventThreshold = { "threshold" };
-  } viewKeys;
+  } periodicEventViewKeys;
 
 };
 

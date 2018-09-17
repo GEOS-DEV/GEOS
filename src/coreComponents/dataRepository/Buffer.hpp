@@ -302,7 +302,7 @@ public:
     }
 
     buff[0] = byte_size;
-    buff[1] = arr.size();
+    buff[1] = integer_conversion<localIndex>(arr.size());
     char * c_buff = reinterpret_cast<char *>(buff + 2);
 
     localIndex offset = 0;
@@ -591,7 +591,7 @@ public:
     }
 
     buff[0] = byte_size;
-    buff[1] = m.size();
+    buff[1] = integer_conversion<localIndex>(m.size());
     char * c_buff = reinterpret_cast<char *>(buff + 2);
     
     localIndex offset = 0;
