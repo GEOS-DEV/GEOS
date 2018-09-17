@@ -10,7 +10,18 @@ list( GET GEOSX_VERSION_LIST  2 GEOSX_VERSION_PATCH )
 message(STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}")
 
 
-set( PREPROCESSOR_DEFINES ATK CALIPER CHAI FPARSER MATHPRESSO PYTHON RAJA CONTAINERARRAY_RETURN_PTR MPI ARRAY_BOUNDS_CHECK)
+set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
+                          ATK 
+                          CALIPER
+                          CHAI 
+                          CONTAINERARRAY_RETURN_PTR
+                          FPARSER
+                          HYPRE
+                          MATHPRESSO
+                          MPI
+                          PYTHON
+                          RAJA 
+                          TRILINOS )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
     if( ${DEP}_FOUND OR ENABLE_${DEP} )

@@ -392,44 +392,68 @@ set( thirdPartyLibs ${thirdPartyLibs} pugixml )
 ################################
 # TRILINOS
 ################################
-#if( ENABLE_TRILINOS )
+if( ENABLE_TRILINOS )
 
+  if(EXISTS ${TRILINOS_DIR})
+  
+  else()
+      message( INFO ": setting up TRILINOS" )
+      set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+  endif()
+  
+  include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+  
+  
+  blt_register_library( NAME trilinos
+                        INCLUDES ${Trilinos_INCLUDE_DIRS} 
+                        LIBRARIES ${Trilinos_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
-if(EXISTS ${TRILINOS_DIR})
-
-else()
-    message( INFO ": setting up TRILINOS" )
-    set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
 endif()
-
-include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
-
-
-blt_register_library( NAME trilinos
-    		      INCLUDES ${Trilinos_INCLUDE_DIRS} 
-                      LIBRARIES ${Trilinos_LIBRARIES}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
-		      set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
-
-#endif()
 
 ################################
 # HYPRE
 ################################
-#if( ENABLE_HYPRE )
+if( ENABLE_HYPRE )
 message( INFO ": setting up HYPRE" )
 
 set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
-include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+
+find_path( HYPRE_INCLUDE_DIRS HYPRE.h
+           PATHS  ${HYPRE_DIR}/include
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+find_library( HYPRE_LIBRARY NAMES HYPRE
+              PATHS ${HYPRE_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+message( "HYPRE_INCLUDE_DIRS = ${HYPRE_INCLUDE_DIRS}" )
+message( "HYPRE_LIBRARY = ${HYPRE_LIBRARY}" )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(HYPRE  DEFAULT_MSG
+                                  HYPRE_INCLUDE_DIRS
+                                  HYPRE_LIBRARY )
+if (NOT HYPRE_FOUND)
+    message(FATAL_ERROR ": HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
+endif()
 
 blt_register_library( NAME hypre
-                      INCLUDES ${Trilinos_INCLUDE_DIRS} 
-                      LIBRARIES ${Trilinos_LIBRARIES}
+                      INCLUDES ${HYPRE_INCLUDE_DIRS} 
+                      LIBRARIES ${HYPRE_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
-set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+set( thirdPartyLibs ${thirdPartyLibs} hypre )  
 
-#endif()
+endif()
 
 
 

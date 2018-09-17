@@ -31,7 +31,8 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 
 option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" ON )
 
-option( ENABLE_HYPRE "Enables HYPRE" OFF )
+option( ENABLE_TRILINOS "Enables TRILINOS" ON )
+option( ENABLE_HYPRE "Enables HYPRE" ON )
 
 option( ENABLE_MPI "" ON )
 
