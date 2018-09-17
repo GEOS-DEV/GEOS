@@ -571,8 +571,7 @@ public:
     }
     default:
     {
-      std::cout<<LOCATION<<std::endl;
-      assert( false );
+      GEOS_ERROR( LOCATION );
     }
     }
   }
@@ -636,8 +635,7 @@ public:
 
     default:
     {
-      std::cout<<LOCATION<<std::endl;
-      assert( false );
+      GEOS_ERROR( LOCATION );
     }
     }
   }
@@ -742,8 +740,7 @@ public:
 
     default:
     {
-      std::cout<<LOCATION<<std::endl;
-      assert( false );
+      GEOS_ERROR( LOCATION );
     }
     }
   }
@@ -849,8 +846,7 @@ public:
     }
     default:
     {
-      std::cout<<LOCATION<<std::endl;
-      assert( false );
+      GEOS_ERROR( LOCATION );
       return lambda( double(1) );
     }
     }
@@ -959,8 +955,7 @@ public:
 
     default:
     {
-      std::cout<<LOCATION<<std::endl;
-      assert( false );
+      GEOS_ERROR( LOCATION );
     }
     }
   }
@@ -1042,8 +1037,7 @@ public:
 //    }
     default:
     {
-      std::cout<<LOCATION<<std::endl;
-      assert( false );
+      GEOS_ERROR( LOCATION );
     }
     }
   }

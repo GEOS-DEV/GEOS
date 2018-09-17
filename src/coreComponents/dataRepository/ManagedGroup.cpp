@@ -26,6 +26,7 @@
 #include "ManagedGroup.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
+#include "common/TimingMacros.hpp"
 #include <mpi.h>
 
 #ifdef GEOSX_USE_ATK
@@ -579,11 +580,11 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
+  GEOS_ERROR_IF( groupName != this->getName(), "ManagedGroup::Unpack(): group names do not match");
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect");
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers);
@@ -600,11 +601,11 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ASSERT( numSubGroups==m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->m_subGroups )
     {

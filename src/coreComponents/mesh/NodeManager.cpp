@@ -31,6 +31,7 @@
 #include "ElementRegionManager.hpp"
 #include "ToElementRelation.hpp"
 #include "BufferOps.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -136,7 +137,6 @@ void NodeManager::FillDocumentationNode()
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
-
   /// flow of function:
   /// <ol>
   /// <li> Extract edgeToNode map from the edge manager
@@ -149,7 +149,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   /// <ol>
   for( localIndex ke=0 ; ke<numEdges ; ++ke )
   {
-    localIndex const numNodes = edgeToNodes[ke].size();
+    localIndex const numNodes = edgeToNodes.size(1);
     /// <li> Loop over all nodes for each edge
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
@@ -173,7 +173,6 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 //**************************************************************************************************
 void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
-
   OrderedVariableOneToManyRelation const & faceToNodes = faceManager->nodeList();
   localIndex const numFaces = faceManager->size();
   for( localIndex ke=0 ; ke<numFaces ; ++ke )
@@ -214,7 +213,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        arrayView1d<localIndex const> const nodeList = elemsToNodes[ke];
+        localIndex const * const nodeList = elemsToNodes[ke];
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
@@ -291,7 +290,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ASSERT( temp==viewKeyStruct::edgeListString, "")
+  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -299,7 +298,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toEdgesRelation.RelatedObjectGlobalToLocal() );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ASSERT( temp==viewKeyStruct::faceListString, "")
+  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -307,7 +306,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toFacesRelation.RelatedObjectGlobalToLocal() );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ASSERT( temp==viewKeyStruct::elementListString, "")
+  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,
