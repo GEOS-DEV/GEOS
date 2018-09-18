@@ -21,6 +21,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -171,6 +172,8 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        DomainPartition * const domain,
                                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
+
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain, blockSystem );
 
@@ -179,6 +182,7 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
 
   // apply boundary conditions to system
   ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+
 
   // call the default linear solver on the system
   SolveSystem( blockSystem,
@@ -200,6 +204,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                            DomainPartition * const domain,
                                            systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
   real64 stepDt = dt;

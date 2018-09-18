@@ -27,6 +27,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "NeighborCommunicator.hpp"
 #include "managers/DomainPartition.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -102,6 +103,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               ObjectManagerBase const & compositionObject,
                                               array1d<NeighborCommunicator> & neighbors )
 {
+  GEOSX_MARK_FUNCTION;
 
   integer_array & ghostRank = object.getReference<integer_array>( object.m_ObjectManagerBaseViewKeys.ghostRank );
   ghostRank = -2;
@@ -334,6 +336,8 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                      array1d<NeighborCommunicator> & allNeighbors )//,
 //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
 {
+  GEOSX_MARK_FUNCTION;
+
   integer_array const & ghostRank = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.ghostRank );
   integer_array & domainBoundaryIndicator = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
   globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->m_ObjectManagerBaseViewKeys.localToGlobalMap );
@@ -400,6 +404,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
                                      array1d<NeighborCommunicator> & neighbors )
 {
+  GEOSX_MARK_FUNCTION;
   int commID = CommunicationTools::reserveCommID();
 
   for( auto & neighbor : neighbors )
