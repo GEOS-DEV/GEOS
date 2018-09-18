@@ -3,6 +3,7 @@
 #
 set( linearAlgebraInterface_headers
      CGsolver.hpp
+     BiCGSTABsolver.hpp
      BlockMatrixView.hpp
      BlockVectorView.hpp
      EpetraSparseMatrix.hpp

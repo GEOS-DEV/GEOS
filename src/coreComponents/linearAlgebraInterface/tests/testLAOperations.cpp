@@ -27,6 +27,7 @@
 //#include "HypreInterface.hpp"
 #include "BlockMatrixView.hpp"
 #include "CGsolver.hpp"
+#include "BiCGSTABsolver.hpp"
 
 #include "common/DataTypes.hpp"
 
@@ -239,6 +240,9 @@ void testLaplaceOperator()
   solDirect.normInf( normDirectSol );
   EXPECT_TRUE( std::fabs( normDirectSol - 1 ) <= 1e-8 );
 
+  CGsolver<TrilinosInterface> testCG;
+  testCG.solve( testMatrix, solCG, bCG, preconditioner );
+
   // Test clearRow
   testMatrix.clearRow( 2*N/4+n, 2.0 );
   testMatrix.getLocalRow(static_cast<laiLID>( n ),numValRown,vecValuesRown,vecIndicesRown);
@@ -246,10 +250,6 @@ void testLaplaceOperator()
   {
     EXPECT_TRUE( std::fabs( vecValuesRown[2] - 8.0 ) <= 1e-8 );
   }
-
-  CGsolver<TrilinosInterface> testCG;
-
-  testCG.solve( testMatrix, solCG, bCG, preconditioner );
 
   //MPI_Finalize();
 
@@ -261,12 +261,11 @@ void testBlockLaplaceOperator()
 
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
-  using laiGID = typename LAI::laiGID;
 
   // MPI_Init(nullptr,nullptr);
 
   // Get the MPI rank
-  integer rank;
+  typename LAI::laiLID rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Set the MPI communicator
@@ -277,11 +276,11 @@ void testBlockLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  laiGID n = 50;
-  laiGID N = n*n;
+  typename LAI::laiGID n = 100;
+  typename LAI::laiGID N = n*n;
 
-  ParallelMatrix testMatrix00;
-  testMatrix00.create( comm, N, 5 );
+  ParallelMatrix matrix00;
+  matrix00.create( comm, N, 5 );
 
   ParallelMatrix preconditioner00;
   preconditioner00.create( comm, N, 1 );
@@ -291,7 +290,7 @@ void testBlockLaplaceOperator()
   globalIndex cols[5];
 
   // Construct a dummy Laplace matrix (5 points stencil)
-  for (globalIndex i = testMatrix00.ilower(); i < testMatrix00.iupper(); i++)
+  for (typename LAI::laiGID i = matrix00.ilower(); i < matrix00.iupper(); i++)
   {
     integer nnz = 0;
     /* The left -n: position i-n */
@@ -330,12 +329,12 @@ void testBlockLaplaceOperator()
     real64 temp = 1;
 
     // Set the values for row i
-    testMatrix00.insert( i, nnz, values, cols );
+    matrix00.insert( i, nnz, values, cols );
     preconditioner00.insert( i, 1, &temp, &i );
 
   }
 
-  testMatrix00.close();
+  matrix00.close();
   preconditioner00.close();
 
   // Fill standard vectors
@@ -350,70 +349,72 @@ void testBlockLaplaceOperator()
   ParallelVector x, b;
   // Right hand side for multiplication (b)
   b.create( zer );
+
   // Vector of ones for multiplication (x)
   x.create( ones );
-  // Residual vector
-  ParallelVector r0( b );
-  ParallelVector r1( b );
 
-  // Matrix/vector multiplication
-  testMatrix00.multiply( x, b );
+  // Matrix-vector product
+  matrix00.multiply( x, b );
 
   // Vector of zeros for iterative and direct solutions
   ParallelVector solution0( b );
+  ParallelVector solution1( b );
+
+  // Rhs vectors
+  ParallelVector rhs0( b );
+  ParallelVector rhs1( b );
 
   integer nRows = 2;
   integer nCols = 2;
 
-  BlockMatrixView<TrilinosInterface> testBlockMatrix( nRows, nCols );
+  BlockMatrixView<TrilinosInterface> blockMatrix( nRows, nCols );
   BlockMatrixView<TrilinosInterface> blockPreconditioner( nRows, nCols );
-  BlockVectorView<TrilinosInterface> testBlockSolution( nCols );
-  BlockVectorView<TrilinosInterface> testBlockRhs( nRows );
+  BlockVectorView<TrilinosInterface> blockSolution( nCols );
+  BlockVectorView<TrilinosInterface> blockRhs( nRows );
 
-  ParallelMatrix testMatrix01( testMatrix00 );
-  ParallelMatrix testMatrix10( testMatrix00 );
-  ParallelMatrix testMatrix11( testMatrix00 );
+  ParallelMatrix matrix01( matrix00 );
+  ParallelMatrix matrix10( matrix00 );
+  ParallelMatrix matrix11( matrix00 );
 
   ParallelMatrix preconditioner11( preconditioner00 );
 
-  ParallelVector solution1( solution0 );
+  blockMatrix.setBlock( 0, 0, matrix00 );
+  blockMatrix.setBlock( 0, 1, matrix01 );
+  blockMatrix.setBlock( 1, 0, matrix10 );
+  blockMatrix.setBlock( 1, 1, matrix11 );
 
-  testBlockMatrix.setBlock( 0, 0, testMatrix00 );
-  testBlockMatrix.setBlock( 0, 1, testMatrix01 );
-  testBlockMatrix.setBlock( 1, 0, testMatrix10 );
-  testBlockMatrix.setBlock( 1, 1, testMatrix11 );
-
-  testBlockMatrix.scale(0,0,-1.);
+//  blockMatrix.scale(0,0,-1.);
+//  blockMatrix.scale(-1.);
 
   blockPreconditioner.setBlock( 0, 0, preconditioner00 );
   blockPreconditioner.setBlock( 1, 1, preconditioner11 );
 
-  testBlockSolution.setBlock( 0, solution0 );
-  testBlockSolution.setBlock( 1, solution1 );
+  blockSolution.setBlock( 0, solution0 );
+  blockSolution.setBlock( 1, solution1 );
 
-  testBlockRhs.setBlock( 0, r0 );
-  testBlockRhs.setBlock( 1, r1 );
-
-  testBlockMatrix.multiply(testBlockSolution,testBlockRhs);
+  blockRhs.setBlock( 0, rhs0 );
+  blockRhs.setBlock( 1, rhs1 );
 
 //  real64 normBlockProduct = 0;
 //  testBlockRhs.getBlock( 0 )->normInf( normBlockProduct );
 //  EXPECT_TRUE( std::fabs( normBlockProduct ) <= 1e-8 );
 
   real64 testBlockNorm = 0;
-  testBlockSolution.norm2( testBlockNorm );
+  blockSolution.norm2( testBlockNorm );
 
-//  BlockVectorView<TrilinosInterface> testResidual( nRows );
-//  testResidual.setBlock( 0, r0 );
-//  testResidual.setBlock( 1, r1 );
-//  testBlockMatrix.residual( testBlockSolution, testBlockRhs, testResidual );
+//  blockSolution.getBlock(0)->print();
+//  blockSolution.getBlock(1)->print();
 
   CGsolver<TrilinosInterface> testCG;
+  testCG.solve( blockMatrix, blockSolution, blockRhs, blockPreconditioner );
 
-  testCG.solve( testBlockMatrix, testBlockSolution, testBlockRhs, blockPreconditioner );
+  BiCGSTABsolver<TrilinosInterface> testBiCGSTAB;
 
-  testBlockSolution.getBlock(0)->print();
-  testBlockSolution.getBlock(1)->print();
+//  blockSolution.getBlock(0)->print();
+//  blockSolution.getBlock(1)->print();
+
+//  blockRhs.getBlock(0)->print();
+//  blockRhs.getBlock(1)->print();
 
   MPI_Finalize();
 
