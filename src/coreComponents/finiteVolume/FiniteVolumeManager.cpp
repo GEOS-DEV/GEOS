@@ -112,25 +112,25 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
     center /= nodeListSize;
 
     // TODO proper volumes for all shapes
-    if( nodeList.size() == 8 )
+    if( nodeListSize == 8 )
     {
         elemVolume[er][esr][k] = computationalGeometry::HexVolume(Xlocal);
     }
-    else if( nodeList.size() == 4)
+    else if( nodeListSize == 4)
     {
         elemVolume[er][esr][k] = computationalGeometry::TetVolume(Xlocal);
     }
-    else if(nodeList.size() == 6)
+    else if( nodeListSize == 6)
     {
         elemVolume[er][esr][k] = computationalGeometry::WedgeVolume(Xlocal);
     }
-    else if (nodeList.size() == 5)
+    else if ( nodeListSize == 5)
     {
         elemVolume[er][esr][k] = computationalGeometry::PyramidVolume(Xlocal);
     }
     else
     {
-        GEOS_ERROR("GEOX does not support cells with " << nodeList.size() << " nodes");
+        GEOS_ERROR("GEOX does not support cells with " << nodeListSize << " nodes");
     }
   });
 

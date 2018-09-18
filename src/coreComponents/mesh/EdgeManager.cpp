@@ -58,8 +58,8 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   faceToEdgeMap.SetRelatedObject( this );
   array1d<localIndex_array>& faceToNodeMap = faceManager->nodeList();
 
-  m_toNodesRelation.resize(4 * nodeManager->size());
-  m_toFacesRelation.resize(4 * nodeManager->size());
+  m_toNodesRelation.resize(8 * nodeManager->size());
+  m_toFacesRelation.resize(8 * nodeManager->size());
 
   for (localIndex i = 0; i < m_toFacesRelation.size(); ++i )
   {
