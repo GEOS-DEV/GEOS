@@ -1,4 +1,22 @@
 /*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/*
  * BlockMatrixView.hpp
  *
  *  Created on: Aug 24, 2018
@@ -44,7 +62,8 @@ public:
    *
    * Create a block matrix of size (<tt>nRows</tt>,<tt>nCols</tt>).
    */
-  BlockMatrixView( integer nRows, integer nCols );
+  BlockMatrixView( typename LAI::laiLID nRows,
+                   typename LAI::laiLID nCols );
 
   /**
    * @brief Virtual destructor.
@@ -70,14 +89,14 @@ public:
   /**
    * @brief Scale block (<tt>i</tt>,<tt>j</tt>) using <tt>factor</tt>.
    */
-  void scale( integer blockRowIndex,
-              integer blockColIndex,
+  void scale( typename LAI::laiLID blockRowIndex,
+              typename LAI::laiLID blockColIndex,
               real64 factor ) const;
 
   /**
    * @brief Clear row and multiply the diagonal entry by <tt>factor</tt>.
    */
-  void clearRow( globalIndex rowIndex, real64 factor );
+  void clearRow( typename LAI::laiGID rowIndex, real64 factor );
   //@}
 
   //! @name Accessors/Setters
@@ -85,8 +104,8 @@ public:
   /**
    * @brief Get the matrix corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
    */
-  ParallelMatrix * getBlock( integer blockRowIndex,
-                             integer blockColIndex );
+  ParallelMatrix * getBlock( typename LAI::laiLID blockRowIndex,
+                             typename LAI::laiLID blockColIndex );
 
   /**
    * @brief Get the matrix corresponding to block <tt>name</tt>.
@@ -96,8 +115,8 @@ public:
   /**
    * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
    */
-  void setBlock( integer blockRowIndex,
-                 integer blockColIndex,
+  void setBlock( typename LAI::laiLID blockRowIndex,
+                 typename LAI::laiLID blockColIndex,
                  ParallelMatrix &matrix );
 
   //@}
@@ -117,8 +136,8 @@ BlockMatrixView<LAI>::BlockMatrixView()
 // Constructor with a size (inlined)
 template< typename LAI >
 inline
-BlockMatrixView<LAI>::BlockMatrixView( integer nRows,
-                                       integer nCols )
+BlockMatrixView<LAI>::BlockMatrixView( typename LAI::laiLID nRows,
+                                       typename LAI::laiLID nCols )
 {
   m_matrices.resize( nRows, nCols );
 }
@@ -128,11 +147,11 @@ template< typename LAI >
 void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &solution,
                                      BlockVectorView<LAI> &rhs ) const
 {
-  for( integer row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  for( typename LAI::laiLID row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
     rhs.scale( row, 0. );
     ParallelVector temp( *rhs.getBlock( row ) );
-    for( integer col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    for( typename LAI::laiLID col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
@@ -143,26 +162,17 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &solution,
   }
 }
 
-// Apply the block matrix to a block vector (hard coded to 2 by 2 for now).
-template< typename LAI >
-void BlockMatrixView<LAI>::scale( integer blockRowIndex,
-                                  integer blockColIndex,
-                                  real64 factor ) const
-{
-  m_matrices[blockRowIndex][blockColIndex]->scale( factor );
-}
-
 // Set to residual form.
 template< typename LAI >
 void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &solution,
                                      BlockVectorView<LAI> &rhs,
                                      BlockVectorView<LAI> &res ) const
 {
-  for( integer row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  for( typename LAI::laiLID row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
     rhs.scale( row, 0. );
     ParallelVector temp( *rhs.getBlock( row ) );
-    for( integer col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    for( typename LAI::laiLID col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
@@ -176,21 +186,34 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &solution,
 
 }
 
+// Apply the block matrix to a block vector (hard coded to 2 by 2 for now).
+template< typename LAI >
+void BlockMatrixView<LAI>::scale( typename LAI::laiLID blockRowIndex,
+                                  typename LAI::laiLID blockColIndex,
+                                  real64 factor ) const
+{
+  m_matrices[blockRowIndex][blockColIndex]->scale( factor );
+}
+
 // Clear row and multiply the diagonal entry by <tt>factor</tt>.
 template< typename LAI >
-void BlockMatrixView<LAI>::clearRow( globalIndex rowIndex, real64 factor )
+void BlockMatrixView<LAI>::clearRow( typename LAI::laiGID rowIndex,
+                                     real64 factor )
 {}
 
 // Accessor for block.
 template< typename LAI >
-typename LAI::ParallelMatrix * BlockMatrixView<LAI>::getBlock( integer blockRowIndex, integer blockColIndex )
+typename LAI::ParallelMatrix * BlockMatrixView<LAI>::getBlock( typename LAI::laiLID blockRowIndex,
+                                                               typename LAI::laiLID blockColIndex )
 {
   return m_matrices[blockRowIndex][blockColIndex];
 }
 
 // Setter for block.
 template< typename LAI >
-void BlockMatrixView<LAI>::setBlock( integer blockRowIndex, integer blockColIndex, typename LAI::ParallelMatrix &matrix )
+void BlockMatrixView<LAI>::setBlock( typename LAI::laiLID blockRowIndex,
+                                     typename LAI::laiLID blockColIndex,
+                                     typename LAI::ParallelMatrix &matrix )
 {
   m_matrices[blockRowIndex][blockColIndex] = &matrix;
 }
