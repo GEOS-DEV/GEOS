@@ -50,8 +50,8 @@ void PeriodicEvent::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Describes the timing of the solver application");
 
-  docNode->AllocateChildNode( viewKeys.timeFrequency.Key(),
-                              viewKeys.timeFrequency.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.timeFrequency.Key(),
+                              periodicEventViewKeys.timeFrequency.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -63,8 +63,8 @@ void PeriodicEvent::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.cycleFrequency.Key(),
-                              viewKeys.cycleFrequency.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.cycleFrequency.Key(),
+                              periodicEventViewKeys.cycleFrequency.Key(),
                               -1,
                               "integer",
                               "integer",
@@ -76,8 +76,8 @@ void PeriodicEvent::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.targetExactTimestep.Key(),
-                              viewKeys.targetExactTimestep.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.targetExactTimestep.Key(),
+                              periodicEventViewKeys.targetExactTimestep.Key(),
                               -1,
                               "integer",
                               "integer",
@@ -90,8 +90,8 @@ void PeriodicEvent::FillDocumentationNode()
                               0 );
 
   // Function oriented options
-  docNode->AllocateChildNode( viewKeys.functionName.Key(),
-                              viewKeys.functionName.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.functionName.Key(),
+                              periodicEventViewKeys.functionName.Key(),
                               -1,
                               "string",
                               "string",
@@ -103,8 +103,8 @@ void PeriodicEvent::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.functionInputObject.Key(),
-                              viewKeys.functionInputObject.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.functionInputObject.Key(),
+                              periodicEventViewKeys.functionInputObject.Key(),
                               -1,
                               "string",
                               "string",
@@ -116,8 +116,8 @@ void PeriodicEvent::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.functionInputSetname.Key(),
-                              viewKeys.functionInputSetname.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.functionInputSetname.Key(),
+                              periodicEventViewKeys.functionInputSetname.Key(),
                               -1,
                               "string",
                               "string",
@@ -129,8 +129,8 @@ void PeriodicEvent::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.functionStatOption.Key(),
-                              viewKeys.functionStatOption.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.functionStatOption.Key(),
+                              periodicEventViewKeys.functionStatOption.Key(),
                               -1,
                               "integer",
                               "integer",
@@ -142,8 +142,8 @@ void PeriodicEvent::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.eventThreshold.Key(),
-                              viewKeys.eventThreshold.Key(),
+  docNode->AllocateChildNode( periodicEventViewKeys.eventThreshold.Key(),
+                              periodicEventViewKeys.eventThreshold.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -163,11 +163,11 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
                                         integer const cycle,
                                         ManagedGroup * domain)
 {
-  real64 const timeFrequency = this->getReference<real64>(viewKeys.timeFrequency);
-  integer const cycleFrequency = this->getReference<integer>(viewKeys.cycleFrequency);
+  real64 const timeFrequency = this->getReference<real64>(periodicEventViewKeys.timeFrequency);
+  integer const cycleFrequency = this->getReference<integer>(periodicEventViewKeys.cycleFrequency);
   real64 const lastTime = this->getReference<real64>(EventBase::viewKeys.lastTime);
   integer const lastCycle = this->getReference<integer>(EventBase::viewKeys.lastCycle);
-  string const functionName = this->getReference<string>(viewKeys.functionName);
+  string const functionName = this->getReference<string>(periodicEventViewKeys.functionName);
   
   // Check event status
   if (cycle == 0)
@@ -203,11 +203,11 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
                                                    integer const cycle,
                                                    ManagedGroup * domain)
 {
-  string const functionName = this->getReference<string>(viewKeys.functionName);
-  string const functionInputObject = this->getReference<string>(viewKeys.functionInputObject);
-  string const functionInputSetname = this->getReference<string>(viewKeys.functionInputSetname);
-  integer const functionStatOption = this->getReference<integer>(viewKeys.functionStatOption);
-  real64 const eventThreshold = this->getReference<real64>(viewKeys.eventThreshold);
+  string const functionName = this->getReference<string>(periodicEventViewKeys.functionName);
+  string const functionInputObject = this->getReference<string>(periodicEventViewKeys.functionInputObject);
+  string const functionInputSetname = this->getReference<string>(periodicEventViewKeys.functionInputSetname);
+  integer const functionStatOption = this->getReference<integer>(periodicEventViewKeys.functionStatOption);
+  real64 const eventThreshold = this->getReference<real64>(periodicEventViewKeys.eventThreshold);
 
   // Grab the function
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -238,7 +238,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     }
     else
     {
-      dataRepository::ManagedGroup const * sets = m_functionTarget->GetGroup(viewKeys.functionSetNames);
+      dataRepository::ManagedGroup const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
       mySet = sets->getReference< set<localIndex> >(functionInputSetname);
     }
 
@@ -270,8 +270,8 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
 real64 PeriodicEvent::GetTimestepRequest(real64 const time)
 {
   real64 const lastTime = this->getReference<real64>(EventBase::viewKeys.lastTime);
-  real64 const timeFrequency = this->getReference<real64>(viewKeys.timeFrequency);
-  integer const targetExactTimestep = this->getReference<integer>(viewKeys.targetExactTimestep);
+  real64 const timeFrequency = this->getReference<real64>(periodicEventViewKeys.timeFrequency);
+  integer const targetExactTimestep = this->getReference<integer>(periodicEventViewKeys.targetExactTimestep);
   
   real64 requestedDt = EventBase::GetTimestepRequest(time);
 
