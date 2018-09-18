@@ -82,8 +82,11 @@ namespace raja
 template< typename POLICY, typename T >
 using ReduceSum = RAJA::ReduceSum<POLICY, T>;
 
+template< typename POLICY, typename T >
+using ReduceMin = RAJA::ReduceMin<POLICY, T>;
 
-
+template< typename POLICY, typename T >
+using ReduceMax = RAJA::ReduceMax<POLICY, T>;
 
 //
 template<typename POLICY=atomicPolicy, typename T>

@@ -26,6 +26,7 @@
 
 #include "managers/DomainPartition.hpp"
 #include "math/TensorT/TensorBaseT.h"
+#include "mesh/MeshForLoopInterface.hpp"
 
 namespace geosx
 {
@@ -99,7 +100,7 @@ void SimpleWell::InitializePostSubGroups(ManagedGroup * const problemManager)
   WellBase::InitializePostSubGroups(problemManager);
 
   // all array fields live on connections/perforations
-  this->resize(numConnections());
+  resize(numConnectionsGlobal());
 
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
   ConnectToCells( domain );
@@ -107,24 +108,41 @@ void SimpleWell::InitializePostSubGroups(ManagedGroup * const problemManager)
 
 void SimpleWell::ConnectToCells( DomainPartition const * domain )
 {
-  ElementRegionManager const * elemManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+  MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager const * elemManager = mesh->getElemManager();
 
-  for (localIndex iconn = 0; iconn < numConnections(); ++iconn)
+  auto elemCenter = elemManager->ConstructViewAccessor<array1d<R1Tensor>>( CellBlockSubRegion::
+                                                                           viewKeyStruct::
+                                                                           elementCenterString );
+
+  // TODO Until we can properly trace perforations to cells,
+  // just connect to the nearest cell center (this is NOT correct in general)
+
+  localIndex numConnLocal = 0;
+  for (localIndex iconn = 0; iconn < numConnectionsGlobal(); ++iconn)
   {
     Perforation const * perf = GetGroup<Perforation>(iconn);
     R1Tensor const & loc = perf->getLocation();
 
-    elemManager->forCellBlocksComplete( [&] (localIndex er,
-                                             localIndex esr,
-                                             ElementRegion const * region,
-                                             CellBlockSubRegion const * subRegion) -> void
+    auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex er,
+                                                  localIndex esr,
+                                                  localIndex ei ) -> real64
     {
-      // TODO locate cell
-//    m_connectionElementRegion[iconn] = ...
-//    m_connectionElementSubregion[iconn] = ...
-//    m_connectionElementIndex[iconn] = ...
+      R1Tensor v = loc;
+      v -= elemCenter[er][esr][ei];
+      return v.L2_Norm();
     });
+
+    m_connectionElementRegion[iconn]    = std::get<0>(ret.second);
+    m_connectionElementSubregion[iconn] = std::get<1>(ret.second);
+    m_connectionElementIndex[iconn]     = std::get<2>(ret.second);
+
+    // This will not be correct in parallel until we can actually check that
+    // the perforation belongs to local mesh partition
+    ++numConnLocal;
   }
+
+  resize(numConnLocal);
 }
 
 void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
@@ -140,7 +158,7 @@ void SimpleWell::PrecomputeData(DomainPartition const * domain)
   R1Tensor const & gravity = getGravityVector();
   array1d<real64> gravDepth = getReference<array1d<real64>>(viewKeys.gravityDepth);
 
-  for (localIndex iconn = 0; iconn < numConnections(); ++iconn)
+  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
   {
     Perforation const * perf = GetGroup<Perforation>(iconn);
     gravDepth[iconn] = Dot(perf->getLocation(), gravity);

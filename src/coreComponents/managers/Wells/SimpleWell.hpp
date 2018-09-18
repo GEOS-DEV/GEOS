@@ -60,7 +60,8 @@ public:
 
   virtual void FinalInitialization( ManagedGroup * const group ) override;
 
-  localIndex numConnections() const { return numSubGroups(); }
+  localIndex numConnectionsGlobal() const { return numSubGroups(); }
+  localIndex numConnectionsLocal() const { return size(); }
 
   struct viewKeyStruct : public WellBase::viewKeyStruct
   {

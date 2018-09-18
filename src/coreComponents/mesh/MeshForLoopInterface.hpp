@@ -265,7 +265,6 @@ NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body
   return sum.get();
 }
 
-
 template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
 NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
@@ -278,10 +277,10 @@ NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMB
   return sum.get();
 }
 
-template<class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+NUMBER sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 {
-  real64 sum = 0.0;
+  NUMBER sum = 0;
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
@@ -297,13 +296,246 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
         return lambdaBody(er,esr,index);
       };
 
-      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
+      sum += sum_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
     }
   }
 
   return sum;
 }
 
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER min_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceMin<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
+
+  ::geosx::raja::forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    minval.min(body(index));
+  });
+
+
+  return minval.get();
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER min_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::ReduceMin<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
+  ::geosx::raja::forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    minval.min(body(index));
+  });
+
+  return minval.get();
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+NUMBER minOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  NUMBER minVal = std::numeric_limits<NUMBER>::max();
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      minVal = std::min(minVal, min_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody));
+    }
+  }
+
+  return minVal;
+}
+
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER max_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceMax<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
+
+  ::geosx::raja::forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    maxval.max(body(index));
+  });
+
+
+  return maxval.get();
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER max_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::ReduceMax<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
+  ::geosx::raja::forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    maxval.max(body(index));
+  });
+
+  return maxval.get();
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+NUMBER maxOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  NUMBER maxVal = std::numeric_limits<NUMBER>::min();
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      maxVal = std::max(maxVal, max_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody));
+    }
+  }
+
+  return maxVal;
+}
+
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+std::pair<NUMBER, localIndex>
+minloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceMinLoc<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
+
+  ::geosx::raja::forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    minval.minloc(body(index), index);
+  });
+
+
+  return std::make_pair(minval.get(), minval.getLoc());
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+std::pair<NUMBER, localIndex>
+minloc_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::ReduceMinLoc<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
+  ::geosx::raja::forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    minval.minloc(body(index), index);
+  });
+
+  return std::make_pair(minval.get(), minval.getLoc());
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
+minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  NUMBER minVal = std::numeric_limits<NUMBER>::max();
+  localIndex minReg = -1, minSubreg = -1, minIndex = -1;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      auto ret = minloc_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
+      if (ret.first < minVal)
+      {
+        minVal    = ret.first;
+        minReg    = er;
+        minSubreg = esr;
+        minIndex  = ret.second;
+      }
+    }
+  }
+
+  return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
+}
+
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+std::pair<NUMBER, localIndex>
+maxloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceMinLoc<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
+
+  ::geosx::raja::forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    maxval.maxloc(body(index), index);
+  });
+
+
+  return std::make_pair(maxval.get(), maxval.getLoc());
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+std::pair<NUMBER, localIndex>
+maxloc_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::ReduceMaxLoc<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
+  ::geosx::raja::forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    maxval.maxloc(body(index), index);
+  });
+
+  return std::make_pair(maxval.get(), maxval.getLoc());
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
+maxLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  NUMBER maxVal = std::numeric_limits<NUMBER>::min();
+  localIndex maxReg = -1, maxSubreg = -1, maxIndex = -1;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      auto ret = maxloc_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
+      if (ret.first > maxVal)
+      {
+        maxVal    = ret.first;
+        maxReg    = er;
+        maxSubreg = esr;
+        maxIndex  = ret.second;
+      }
+    }
+  }
+
+  return std::make_pair(maxVal, std::make_tuple(maxReg, maxSubreg, maxIndex));
+}
 
 }
 
