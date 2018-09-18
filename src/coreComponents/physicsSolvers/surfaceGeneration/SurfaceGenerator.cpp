@@ -1942,54 +1942,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   }
 
-  if( false )
-  {
-    std::cout<<" elementToFaces->edges->nodes = ";
-    for( int a=0; a<6 ; ++a )
-    {
-      set<localIndex> faceNodes;
-      localIndex faceIndex = 73847;
-
-      if( a>0 )
-        std::cout<<"                              = ";
-
-      std::cout<<faceIndex<<"( ";
-      for( int b=0 ; b<4 ; ++b )
-      {
-        localIndex faceNodeID = facesToNodes[faceIndex][b];
-        faceNodes.insert(faceNodeID);
-        //          if( elemNodes.count(nodeID) == 0 )
-        //            std::cout<<"*";
-        std::cout<<faceNodeID<<",";
-      }
-      std::cout<<" )      ";
-
-
-
-      std::cout<<faceIndex<<"[ ";
-      for( int b=0 ; b<4 ; ++b )
-      {
-        localIndex edgeIndex = facesToEdges[faceIndex][b];
-        std::cout<<edgeIndex<<"( ";
-        for( int c=0 ; c<2 ; ++c )
-        {
-          localIndex edgeNodeID = edgesToNodes(edgeIndex,c);
-          //            if( elemNodes.count(nodeID) == 0 )
-          //              std::cout<<"*";
-          if( faceNodes.count(edgeNodeID) == 0 )
-            std::cout<<"#";
-          std::cout<<edgeNodeID<<",";
-        }
-        std::cout<<" ), ";
-      }
-      std::cout<<" ] \n";
-
-    }
-    std::cout<<std::endl;
-
-  }
-
-
   if( verboseLevel() >= 2 )
   {
     // nodeToEdge

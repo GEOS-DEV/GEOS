@@ -24,7 +24,7 @@
 #include <gtest/gtest.h>
 
 #if __clang_major__ >= 5
-#pragma clang diagnostic push
+#pragma clang diagnostic pop
 #endif
 
 #include <mpi.h>

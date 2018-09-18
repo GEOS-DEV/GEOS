@@ -2030,8 +2030,19 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
 
     int hi_offset = 0;
 
-    DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
-                    hi_offset, (int*) shapetype, (int*) shapesize, (int*) shapecnt, numRegions,
+    DBPutZonelist2( m_dbFilePtr,
+                    zonelistName.c_str(),
+                    numTotZones,
+                    3,
+                    nodelist.data(),
+                    lnodelist,
+                    0,
+                    0,
+                    hi_offset,
+                    const_cast<int*>(shapetype),
+                    const_cast<int*>(shapesize),
+                    const_cast<int*>(shapecnt),
+                    numRegions,
                     optlist);
 
     DBClearOptlist(optlist);
