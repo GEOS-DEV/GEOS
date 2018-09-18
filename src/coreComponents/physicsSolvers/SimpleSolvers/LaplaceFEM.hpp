@@ -181,7 +181,7 @@ public:
 
     dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
 
-  } viewKeys;
+  } laplaceFEMViewKeys;
 
 //  struct groupKeyStruct
 //  {
