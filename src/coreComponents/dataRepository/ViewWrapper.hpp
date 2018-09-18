@@ -652,7 +652,8 @@ public:
     static typename std::enable_if<has_alias_isArray<U>::value, void>::type
     copy( T * const data , localIndex const sourceIndex, localIndex const destIndex )
     {
-      (*data)[destIndex] = (*data)[sourceIndex];
+      data->copy( destIndex, sourceIndex );
+//      (*data)[destIndex] = (*data)[sourceIndex];
     }
 
     template< class U=T >
@@ -1038,7 +1039,7 @@ public:
       axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
       if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
       {
-        localIndex byte_size;
+        localIndex byte_size = -1;
         void * ptr = Buffer::pack(reference(), byte_size);
         view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
         return;
