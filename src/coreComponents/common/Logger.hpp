@@ -77,17 +77,6 @@
 
 #else /* GEOSX_USE_ATK */
 
-//#define GEOS_ERROR_IF(EXP, msg)                               \
-//  do {                                                        \
-//    if (EXP)                                                  \
-//    {                                                         \
-//      std::cout << "***** GEOS_ERROR "<<std::endl;            \
-//      std::cout << "***** FILE: " << __FILE__ << std::endl;   \
-//      std::cout << "***** LINE: " << __LINE__ << std::endl;   \
-//      std::cout << msg << std::endl;                          \
-//      geosx::logger::geos_abort();                            \
-//    }                                                         \
-//  } while (false)
 
 #define GEOS_WARNING_IF(EXP, msg)                             \
   do {                                                        \
