@@ -55,7 +55,7 @@ public:
   struct viewKeysStruct
   {
     dataRepository::ViewKey rand_scale = { "rand_scale" };
-  } viewKeys;
+  } dummyViewKeys;
 
 };
 

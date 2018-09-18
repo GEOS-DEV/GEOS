@@ -81,7 +81,7 @@ integer FunctionBase::isFunctionOfTime() const
 {
   integer rval=0;
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  localIndex numVars = inputVarNames.size();
+  localIndex numVars = integer_conversion<localIndex>(inputVarNames.size());
 
   if( numVars==1 )
   {
