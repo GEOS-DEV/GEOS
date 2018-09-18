@@ -1807,7 +1807,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       WritePolygonMeshObject( facemeshName, numNodes, coords,
                               nodeManager->m_localToGlobalMap.data(), numFaceTypes,
                               fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
-                              NULL, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
+                              nullptr, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
 
 
     }
@@ -1998,8 +1998,8 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
     zonelistName = meshName + "_zonelist";
 
 
-    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, NULL, (float**) coords, nnodes, numTotZones,
-                 zonelistName.c_str(), NULL, datatype, optlist);
+    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, nullptr, (float**) coords, nnodes, numTotZones,
+                 zonelistName.c_str(), nullptr, datatype, optlist);
 
     DBClearOptlist(optlist);
 
@@ -2013,7 +2013,7 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
     }
 
     {
-      if( globalElementNum != NULL )
+      if( globalElementNum != nullptr )
       {
         for (int j = 0; j < shapecnt[0]; ++j)
         {

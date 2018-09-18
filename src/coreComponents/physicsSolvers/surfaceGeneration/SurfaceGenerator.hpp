@@ -41,7 +41,7 @@ class SurfaceGenerator : public SolverBase
 public:
   SurfaceGenerator( const std::string& name,
                     ManagedGroup * const parent );
-  ~SurfaceGenerator();
+  ~SurfaceGenerator() override;
 
 
   static string CatalogName() { return "SurfaceGenerator"; }
@@ -248,7 +248,7 @@ bool SetElemLocations( const int side,
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
-  } viewKeys;
+  } SurfaceGenViewKeys;
 
 
   integer m_failCriterion=1;
