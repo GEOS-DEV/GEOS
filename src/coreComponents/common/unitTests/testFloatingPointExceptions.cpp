@@ -82,8 +82,5 @@ void testStackTrace(double divisor)
 
 TEST(testStackTrace_DeathTest, stackTrace)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wused-but-marked-unused"
   EXPECT_DEATH_IF_SUPPORTED(testStackTrace(0), IGNORE_OUTPUT);
-#pragma GCC diagnostic pop
 }
