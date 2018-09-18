@@ -180,8 +180,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode()
   docNode->setShortDescription("An example solid mechanics solver");
 
 
-  docNode->AllocateChildNode( viewKeys.newmarkGamma.Key(),
-                              viewKeys.newmarkGamma.Key(),
+  docNode->AllocateChildNode( solidMechanicsViewKeys.newmarkGamma.Key(),
+                              solidMechanicsViewKeys.newmarkGamma.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -194,8 +194,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode()
                               1 );
 
   // correct default for this value is pow(newmarkGamma+0.5,2.0)/4.0
-  docNode->AllocateChildNode( viewKeys.newmarkBeta.Key(),
-                              viewKeys.newmarkBeta.Key(),
+  docNode->AllocateChildNode( solidMechanicsViewKeys.newmarkBeta.Key(),
+                              solidMechanicsViewKeys.newmarkBeta.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -207,8 +207,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode()
                               1,
                               1 );
 
-  docNode->AllocateChildNode( viewKeys.massDamping.Key(),
-                              viewKeys.massDamping.Key(),
+  docNode->AllocateChildNode( solidMechanicsViewKeys.massDamping.Key(),
+                              solidMechanicsViewKeys.massDamping.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -220,8 +220,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode()
                               1,
                               1 );
 
-  docNode->AllocateChildNode( viewKeys.stiffnessDamping.Key(),
-                              viewKeys.stiffnessDamping.Key(),
+  docNode->AllocateChildNode( solidMechanicsViewKeys.stiffnessDamping.Key(),
+                              solidMechanicsViewKeys.stiffnessDamping.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -234,8 +234,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode()
                               1 );
 
 
-  docNode->AllocateChildNode( viewKeys.timeIntegrationOption.Key(),
-                              viewKeys.timeIntegrationOption.Key(),
+  docNode->AllocateChildNode( solidMechanicsViewKeys.timeIntegrationOption.Key(),
+                              solidMechanicsViewKeys.timeIntegrationOption.Key(),
                               -1,
                               "string",
                               "string",
@@ -247,8 +247,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode()
                               1,
                               1 );
 
-  docNode->AllocateChildNode( viewKeys.useVelocityEstimateForQS.Key(),
-                              viewKeys.useVelocityEstimateForQS.Key(),
+  docNode->AllocateChildNode( solidMechanicsViewKeys.useVelocityEstimateForQS.Key(),
+                              solidMechanicsViewKeys.useVelocityEstimateForQS.Key(),
                               -1,
                               "integer",
                               "integer",
@@ -272,8 +272,8 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
     cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
 
-    docNode->AllocateChildNode( viewKeys.vTilde.Key(),
-                                viewKeys.vTilde.Key(),
+    docNode->AllocateChildNode( solidMechanicsViewKeys.vTilde.Key(),
+                                solidMechanicsViewKeys.vTilde.Key(),
                                 -1,
                                 "r1_array",
                                 "r1_array",
@@ -285,8 +285,8 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
                                 0,
                                 1 );
 
-    docNode->AllocateChildNode( viewKeys.uhatTilde.Key(),
-                                viewKeys.uhatTilde.Key(),
+    docNode->AllocateChildNode( solidMechanicsViewKeys.uhatTilde.Key(),
+                                solidMechanicsViewKeys.uhatTilde.Key(),
                                 -1,
                                 "r1_array",
                                 "r1_array",
@@ -363,8 +363,8 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
                                 0,
                                 1 );
 
-    docNode->AllocateChildNode( viewKeys.trilinosIndex.Key(),
-                                viewKeys.trilinosIndex.Key(),
+    docNode->AllocateChildNode( solidMechanicsViewKeys.trilinosIndex.Key(),
+                                solidMechanicsViewKeys.trilinosIndex.Key(),
                                 -1,
                                 "globalIndex_array",
                                 "globalIndex_array",
@@ -400,7 +400,7 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
 
 void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
 {
-  string tiOption = this->getReference<string>(viewKeys.timeIntegrationOption);
+  string tiOption = this->getReference<string>(solidMechanicsViewKeys.timeIntegrationOption);
 
   if( tiOption == "ExplicitDynamic" )
   {
@@ -994,7 +994,7 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                                  time,
                                                  targetGroup,
                                                  fieldName,
-                                                 viewKeys.trilinosIndex.Key(),
+                                                 solidMechanicsViewKeys.trilinosIndex.Key(),
                                                  3,
                                                  &blockSystem,
                                                  BlockIDs::displacementBlock );
@@ -1101,15 +1101,15 @@ ImplicitStepSetup( real64 const& time_n,
   {
     view_rtype_const<r1_array> v_n = nodeManager->getData<r1_array>(keys::Velocity);
     view_rtype_const<r1_array> a_n = nodeManager->getData<r1_array>(keys::Acceleration);
-    view_rtype<r1_array> vtilde   = nodeManager->getData<r1_array>(viewKeys.vTilde);
-    view_rtype<r1_array> uhatTilde   = nodeManager->getData<r1_array>(viewKeys.uhatTilde);
+    view_rtype<r1_array> vtilde   = nodeManager->getData<r1_array>(solidMechanicsViewKeys.vTilde);
+    view_rtype<r1_array> uhatTilde   = nodeManager->getData<r1_array>(solidMechanicsViewKeys.uhatTilde);
 
     view_rtype<r1_array> uhat  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
     view_rtype<r1_array> disp = nodeManager->getData<r1_array>(keys::TotalDisplacement);
 
     localIndex const numNodes = nodeManager->size();
-    real64 const newmarkGamma = this->getReference<real64>(viewKeys.newmarkGamma);
-    real64 const newmarkBeta = this->getReference<real64>(viewKeys.newmarkBeta);
+    real64 const newmarkGamma = this->getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
+    real64 const newmarkBeta = this->getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
 
     for( auto a = 0 ; a < numNodes ; ++a )
     {
@@ -1126,7 +1126,7 @@ ImplicitStepSetup( real64 const& time_n,
   {
 
     view_rtype<r1_array> uhat  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
-    integer const useVelocityEstimateForQS = this->getReference<integer>(viewKeys.useVelocityEstimateForQS);
+    integer const useVelocityEstimateForQS = this->getReference<integer>(solidMechanicsViewKeys.useVelocityEstimateForQS);
     localIndex const numNodes = nodeManager->size();
 
     if( useVelocityEstimateForQS==1 )
@@ -1169,10 +1169,10 @@ void SolidMechanics_LagrangianFEM::ImplicitStepComplete( real64 const & time_n,
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
     view_rtype<r1_array> a_n = nodeManager->getData<r1_array>(keys::Acceleration);
-    view_rtype<r1_array> vtilde    = nodeManager->getData<r1_array>(viewKeys.vTilde);
-    view_rtype<r1_array> uhatTilde = nodeManager->getData<r1_array>(viewKeys.uhatTilde);
-    real64 const newmarkGamma = this->getReference<real64>(viewKeys.newmarkGamma);
-    real64 const newmarkBeta = this->getReference<real64>(viewKeys.newmarkBeta);
+    view_rtype<r1_array> vtilde    = nodeManager->getData<r1_array>(solidMechanicsViewKeys.vTilde);
+    view_rtype<r1_array> uhatTilde = nodeManager->getData<r1_array>(solidMechanicsViewKeys.uhatTilde);
+    real64 const newmarkGamma = this->getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
+    real64 const newmarkBeta = this->getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
 
     for( auto a = 0 ; a < numNodes ; ++a )
     {
@@ -1233,8 +1233,8 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
 
   // create trilinos dof indexing
 
-  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.trilinosIndex);
-  integer_array& is_ghost       = nodeManager->getReference<integer_array>(viewKeys.ghostRank);
+  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
+  integer_array& is_ghost       = nodeManager->getReference<integer_array>(solidMechanicsViewKeys.ghostRank);
 
 
   trilinos_index = -1;
@@ -1245,7 +1245,6 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
     if(is_ghost[r] < 0)
     {
       trilinos_index[r] = first_local_row+local_count+offset;
-      localIndices.push_back(trilinos_index[r]);
       local_count++;
     }
     else
@@ -1291,7 +1290,7 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
 
 
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back(viewKeys.trilinosIndex.Key());
+  fieldNames["node"].push_back(solidMechanicsViewKeys.trilinosIndex.Key());
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          mesh,
@@ -1372,7 +1371,7 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.trilinosIndex);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
 
@@ -1443,7 +1442,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   view_rtype_const<r1_array> uhattilde = nullptr;
   view_rtype_const<r1_array> vtilde = nullptr;
 
-  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.trilinosIndex);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
 
   static array1d< R1Tensor > u_local(8);
   static array1d< R1Tensor > uhat_local(8);
@@ -1619,7 +1618,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                                                time_n+dt,
                                                targetGroup,
                                                keys::TotalDisplacement, // TODO fix use of dummy name for
-                                               viewKeys.trilinosIndex.Key(),
+                                               solidMechanicsViewKeys.trilinosIndex.Key(),
                                                3,
                                                blockSystem,
                                                BlockIDs::displacementBlock );
@@ -1720,10 +1719,10 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
 {
   const integer dim = 3;
   realT maxForce = 0;
-  realT amass = *this->getData<real64>(viewKeys.massDamping);
-  realT astiff = *this->getData<real64>(viewKeys.stiffnessDamping);
-  real64 const newmarkBeta = *(getData<real64>(viewKeys.newmarkBeta));
-  real64 const newmarkGamma = *(getData<real64>(viewKeys.newmarkGamma));
+  realT amass = *this->getData<real64>(solidMechanicsViewKeys.massDamping);
+  realT astiff = *this->getData<real64>(solidMechanicsViewKeys.stiffnessDamping);
+  real64 const newmarkBeta = *(getData<real64>(solidMechanicsViewKeys.newmarkBeta));
+  real64 const newmarkGamma = *(getData<real64>(solidMechanicsViewKeys.newmarkGamma));
 
 
 //  if( LagrangeSolverBase::m_2dOption==LagrangeSolverBase::PlaneStress )
@@ -1916,7 +1915,7 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
   solution->ExtractView(&local_solution,&solutionLength);
 
 
-  view_rtype_const<globalIndex_array> trilinos_index = nodeManager->getData< globalIndex_array >(viewKeys.trilinosIndex);
+  view_rtype_const<globalIndex_array> trilinos_index = nodeManager->getData< globalIndex_array >(solidMechanicsViewKeys.trilinosIndex);
 
   view_rtype<r1_array> X        = nodeManager->getData<r1_array>(nodeManager->viewKeys.referencePosition);
   view_rtype<r1_array> disp     = nodeManager->getData<r1_array>(keys::TotalDisplacement);
