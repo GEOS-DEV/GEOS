@@ -2159,7 +2159,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     {
 
       array1d< std::pair<CellBlockSubRegion*,localIndex> > faceToElements;
-      for( localIndex k=0 ; k<facesToElementRegions[a].size() ; ++k )
+      for( localIndex k=0 ; k<facesToElementRegions.size(1) ; ++k )
       {
         if( facesToElementRegions[a][k] != -1 )
         {
