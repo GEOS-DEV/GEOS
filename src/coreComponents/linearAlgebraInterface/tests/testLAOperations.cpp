@@ -263,7 +263,7 @@ void testBlockLaplaceOperator()
   using ParallelVector = typename LAI::ParallelVector;
   using laiGID = typename LAI::laiGID;
 
-  //MPI_Init(nullptr,nullptr);
+  // MPI_Init(nullptr,nullptr);
 
   // Get the MPI rank
   integer rank;
@@ -277,7 +277,7 @@ void testBlockLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  laiGID n = 5;
+  laiGID n = 50;
   laiGID N = n*n;
 
   ParallelMatrix testMatrix00;
@@ -378,13 +378,12 @@ void testBlockLaplaceOperator()
 
   ParallelVector solution1( solution0 );
 
-//  testMatrix01.scale( 2. );
-//  solution1.scale( -0.5 );
-
   testBlockMatrix.setBlock( 0, 0, testMatrix00 );
-  //testBlockMatrix.setBlock( 0, 1, testMatrix01 );
+  testBlockMatrix.setBlock( 0, 1, testMatrix01 );
   testBlockMatrix.setBlock( 1, 0, testMatrix10 );
-  //testBlockMatrix.setBlock( 1, 1, testMatrix11 );
+  testBlockMatrix.setBlock( 1, 1, testMatrix11 );
+
+  testBlockMatrix.scale(0,0,-1.);
 
   blockPreconditioner.setBlock( 0, 0, preconditioner00 );
   blockPreconditioner.setBlock( 1, 1, preconditioner11 );
@@ -397,15 +396,13 @@ void testBlockLaplaceOperator()
 
   testBlockMatrix.multiply(testBlockSolution,testBlockRhs);
 
-//  testBlockRhs.getBlock(0)->print();
-
 //  real64 normBlockProduct = 0;
 //  testBlockRhs.getBlock( 0 )->normInf( normBlockProduct );
 //  EXPECT_TRUE( std::fabs( normBlockProduct ) <= 1e-8 );
 
   real64 testBlockNorm = 0;
   testBlockSolution.norm2( testBlockNorm );
-//
+
 //  BlockVectorView<TrilinosInterface> testResidual( nRows );
 //  testResidual.setBlock( 0, r0 );
 //  testResidual.setBlock( 1, r1 );
@@ -418,8 +415,6 @@ void testBlockLaplaceOperator()
   testBlockSolution.getBlock(0)->print();
   testBlockSolution.getBlock(1)->print();
 
-  //solCG.print();
-  //solIterative.print();
   MPI_Finalize();
 
 }

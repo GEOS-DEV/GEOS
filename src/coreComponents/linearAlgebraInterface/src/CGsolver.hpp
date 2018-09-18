@@ -49,10 +49,10 @@ public:
               ParallelVector const &b,
               ParallelMatrix const &M );
 
-  void solve( BlockMatrixView<LAI> &A,
+  void solve( BlockMatrixView<LAI> const &A,
               BlockVectorView<LAI> &x,
               BlockVectorView<LAI> &b,
-              BlockMatrixView<LAI> &M );
+              BlockMatrixView<LAI> const &M );
 
 private:
 
@@ -147,10 +147,10 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 }
 
 template< typename LAI >
-void CGsolver<LAI>::solve( BlockMatrixView<LAI> &A,
+void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                            BlockVectorView<LAI> &x,
                            BlockVectorView<LAI> &b,
-                           BlockMatrixView<LAI> &M )
+                           BlockMatrixView<LAI> const &M )
 
 {
 

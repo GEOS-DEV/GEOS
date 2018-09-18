@@ -57,15 +57,22 @@ public:
   /**
    * @brief Apply the block matrix to a block vector.
    */
-  void multiply( BlockVectorView<LAI> &solution,
+  void multiply( BlockVectorView<LAI> const &solution,
                  BlockVectorView<LAI> &rhs ) const;
 
   /**
    * @brief Set to residual form.
    */
-  void residual( BlockVectorView<LAI> &solution,
+  void residual( BlockVectorView<LAI> const &solution,
                  BlockVectorView<LAI> &rhs,
                  BlockVectorView<LAI> &res ) const;
+
+  /**
+   * @brief Scale block (<tt>i</tt>,<tt>j</tt>) using <tt>factor</tt>.
+   */
+  void scale( integer blockRowIndex,
+              integer blockColIndex,
+              real64 factor ) const;
 
   /**
    * @brief Clear row and multiply the diagonal entry by <tt>factor</tt>.
@@ -116,11 +123,9 @@ BlockMatrixView<LAI>::BlockMatrixView( integer nRows,
   m_matrices.resize( nRows, nCols );
 }
 
-
-
 // Apply the block matrix to a block vector (hard coded to 2 by 2 for now).
 template< typename LAI >
-void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> &solution,
+void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &solution,
                                      BlockVectorView<LAI> &rhs ) const
 {
   for( integer row = 0 ; row < m_matrices.size( 0 ) ; row++ )
@@ -138,9 +143,18 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> &solution,
   }
 }
 
+// Apply the block matrix to a block vector (hard coded to 2 by 2 for now).
+template< typename LAI >
+void BlockMatrixView<LAI>::scale( integer blockRowIndex,
+                                  integer blockColIndex,
+                                  real64 factor ) const
+{
+  m_matrices[blockRowIndex][blockColIndex]->scale( factor );
+}
+
 // Set to residual form.
 template< typename LAI >
-void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> &solution,
+void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &solution,
                                      BlockVectorView<LAI> &rhs,
                                      BlockVectorView<LAI> &res ) const
 {
