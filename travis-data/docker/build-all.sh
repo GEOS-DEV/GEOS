@@ -1,34 +1,19 @@
 #!/usr/bin/env zsh
 
-if (( $# == 0 )) ; then
-  dockerfiles=(**/Dockerfile)
-else
-  dockerfiles=($@)
-fi
+#docker build --tag geosx/compiler:ubuntu18 ubuntu18
+#docker push geosx/compiler:ubuntu18
 
-all_images="${compiler_images} ubuntu-clang-base"
+docker build --tag geosx/compiler:gcc7-ubuntu18 gcc7-ubuntu18
+docker push geosx/compiler:gcc7-ubuntu18
 
-function build-tag () {
-  echo building $2 and tagging with $1
-  docker build --tag $1 $2
-}
+docker build --tag geosx/compiler:gcc8-ubuntu18 gcc8-ubuntu18
+docker push geosx/compiler:gcc8-ubuntu18
 
-build-tag geosx/compiler:ubuntu-clang-base ubuntu-clang-base
-#docker push geosx/compiler:ubuntu-clang-base
+docker build --tag geosx/compiler:clang5-ubuntu18 clang5-ubuntu18
+docker push geosx/compiler:clang5-ubuntu18
 
-echo ${dockerfiles}
-for df in ${dockerfiles} ; do
-  imgname=${df:h}
-  imgpath=geosx/compiler:$imgname
-  echo $imgname
-  echo $imgpath
-  [[ ${imgname} == 'ubuntu-clang-base' ]] && continue
-#  build-tag $imgpath $imgname
+docker build --tag geosx/compiler:clang6-ubuntu18 clang6-ubuntu18
+docker push geosx/compiler:clang6-ubuntu18
 
-  echo pushing $imgpath
-#  docker push $imgpath
-done
-
-#for img in $all_images ; do
-  # docker push geosx/compiler:$img
-#done 
+docker build --tag geosx/compiler:clang5-centos clang5-centos
+docker push geosx/compiler:clang5-centos
