@@ -1,4 +1,22 @@
 /*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/*
  * BlockMatrixView.hpp
  *
  *  Created on: Aug 24, 2018
@@ -42,7 +60,7 @@ public:
    *
    * Create a block vector of size (<tt>nRows</tt>,<tt>nCols</tt>).
    */
-  BlockVectorView( integer nBlocks );
+  BlockVectorView( typename LAI::laiLID nBlocks );
 
   /**
    * @brief Copy constructor.
@@ -68,12 +86,14 @@ public:
   /**
    * @brief Scale the vector corresponding to block (<tt>blockIndex</tt>).
    */
-  void scale( integer blockIndex, real64 factor );
+  void scale( typename LAI::laiLID blockIndex,
+              real64 factor );
 
   /**
    * @brief Dot product.
    */
-  void dot( BlockVectorView<LAI> const &blockVec, real64 &result );
+  void dot( BlockVectorView<LAI> const &blockVec,
+            real64 &result );
 
   /**
    * @brief 2-norm of the block vector.
@@ -83,17 +103,23 @@ public:
   /**
    * @brief 2-norm of the vector corresponding to block (<tt>blockIndex</tt>).
    */
-  void norm2( integer blockIndex, real64 &result );
+  void norm2( typename LAI::laiLID blockIndex,
+              real64 &result );
 
   /**
    * @brief Update the block vector.
    */
-  void update( real64 const alpha, BlockVectorView<LAI> const &blockVec, real64 const beta );
+  void update( real64 const alpha,
+               BlockVectorView<LAI> const &blockVec,
+               real64 const beta );
 
   /**
    * @brief Update the vector corresponding to block (<tt>blockIndex</tt>).
    */
-  void update( integer blockIndex, real64 const alpha, ParallelVector const &vec, real64 const beta );
+  void update( typename LAI::laiLID blockIndex,
+               real64 const alpha,
+               ParallelVector const &vec,
+               real64 const beta );
 
   //@}
 
@@ -103,7 +129,7 @@ public:
   /**
    * @brief Get block size.
    */
-  integer blockSize() const;
+  typename LAI::laiLID blockSize() const;
 
   /**
    * @brief Get global size.
@@ -113,7 +139,7 @@ public:
   /**
    * @brief Get the vector corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
    */
-  ParallelVector * getBlock( integer blockIndex ) const;
+  ParallelVector * getBlock( typename LAI::laiLID blockIndex ) const;
 
   /**
    * @brief Get the vector corresponding to block <tt>name</tt>.
@@ -123,7 +149,8 @@ public:
   /**
    * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
    */
-  void setBlock( integer blockIndex, ParallelVector &vector );
+  void setBlock( typename LAI::laiLID blockIndex,
+                 ParallelVector &vector );
 
   //@}
 
@@ -139,24 +166,22 @@ inline
 BlockVectorView<LAI>::BlockVectorView()
 {}
 
-// Constructor with a size (inlined)
+// Constructor with a size
 template< typename LAI >
-inline
-BlockVectorView<LAI>::BlockVectorView( integer nBlocks )
+BlockVectorView<LAI>::BlockVectorView( typename LAI::laiLID nBlocks )
 {
   m_vectors.resize( nBlocks );
 }
 
-// Constructor with a size (inlined)
+// Copy constructor
 template< typename LAI >
-inline
 BlockVectorView<LAI>::BlockVectorView( BlockVectorView<LAI> const &in_blockVec )
 {
   m_vectors.resize( in_blockVec.blockSize() );
-  for( integer i = 0 ; i < m_vectors.size() ; i++ )
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
   {
     //ParallelVector tempVec( *in_blockVec.getBlock( i ) );
-    m_vectors[i] = new ParallelVector (*in_blockVec.getBlock( i ));
+    m_vectors[i] = new ParallelVector ( *in_blockVec.getBlock( i ));
   }
 }
 
@@ -164,26 +189,28 @@ BlockVectorView<LAI>::BlockVectorView( BlockVectorView<LAI> const &in_blockVec )
 template< typename LAI >
 void BlockVectorView<LAI>::scale( real64 factor )
 {
-  for( integer i = 0 ; i < m_vectors.size() ; i++ )
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
     m_vectors[i]->scale( factor );
 }
 
 // Scale a block.
 template< typename LAI >
-void BlockVectorView<LAI>::scale( integer blockIndex, real64 factor )
+void BlockVectorView<LAI>::scale( typename LAI::laiLID blockIndex,
+                                  real64 factor )
 {
   m_vectors[blockIndex]->scale( factor );
 }
 
 // Dot product.
 template< typename LAI >
-void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec, real64 &result )
+void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec,
+                                real64 &result )
 {
   real64 accum = 0;
-  for( integer i = 0 ; i < m_vectors.size() ; i++ )
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
   {
     real64 temp = 0;
-    m_vectors[i]->dot( *blockVec.getBlock(i), &temp );
+    m_vectors[i]->dot( *blockVec.getBlock( i ), &temp );
     accum = accum + temp;
   }
   result = accum;
@@ -191,7 +218,8 @@ void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec, real64 &re
 
 // Compute the 2 norm of one block vector.
 template< typename LAI >
-void BlockVectorView<LAI>::norm2( integer blockIndex, real64 &result )
+void BlockVectorView<LAI>::norm2( typename LAI::laiLID blockIndex,
+                                  real64 &result )
 {
   m_vectors[blockIndex]->norm2( result );
 }
@@ -201,7 +229,7 @@ template< typename LAI >
 void BlockVectorView<LAI>::norm2( real64 &result )
 {
   real64 accum = 0;
-  for( integer i = 0 ; i < m_vectors.size() ; i++ )
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
   {
     real64 temp;
     m_vectors[i]->norm2( temp );
@@ -212,29 +240,35 @@ void BlockVectorView<LAI>::norm2( real64 &result )
 
 // Update a the vector.
 template< typename LAI >
-void BlockVectorView<LAI>::update( real64 const alpha, BlockVectorView<LAI> const &blockVec, real64 const beta )
+void BlockVectorView<LAI>::update( real64 const alpha,
+                                   BlockVectorView<LAI> const &blockVec,
+                                   real64 const beta )
 {
-  for( integer i = 0 ; i < m_vectors.size() ; i++ )
-    m_vectors[i]->update( alpha, *blockVec.getBlock(i), beta );
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
+    m_vectors[i]->update( alpha, *blockVec.getBlock( i ), beta );
 }
 
 // Update a block.
 template< typename LAI >
-void BlockVectorView<LAI>::update( integer blockIndex, real64 const alpha, ParallelVector const &vec, real64 const beta )
+void BlockVectorView<LAI>::update( typename LAI::laiLID blockIndex,
+                                   real64 const alpha,
+                                   ParallelVector const &vec,
+                                   real64 const beta )
 {
   m_vectors[blockIndex]->update( alpha, vec, beta );
 }
 
 // Setter for block.
 template< typename LAI >
-void BlockVectorView<LAI>::setBlock( integer blockIndex, ParallelVector &vector )
+void BlockVectorView<LAI>::setBlock( typename LAI::laiLID blockIndex,
+                                     ParallelVector &vector )
 {
   m_vectors[blockIndex] = &vector;
 }
 
 // Accessor for block size
 template< typename LAI >
-integer BlockVectorView<LAI>::blockSize() const
+typename LAI::laiLID BlockVectorView<LAI>::blockSize() const
 {
   return m_vectors.size();
 }
@@ -244,14 +278,14 @@ template< typename LAI >
 TrilinosInterface::laiGID BlockVectorView<LAI>::globalSize(  )
 {
   TrilinosInterface::laiGID size = 0;
-  for( integer i = 0 ; i < m_vectors.size() ; i++ )
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
     size = m_vectors[i]->globalSize() + size;
   return size;
 }
 
 // Accessor for block.
 template< typename LAI >
-typename LAI::ParallelVector * BlockVectorView<LAI>::getBlock( integer blockIndex ) const
+typename LAI::ParallelVector * BlockVectorView<LAI>::getBlock( typename LAI::laiLID blockIndex ) const
 {
   return m_vectors[blockIndex];
 }
