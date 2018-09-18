@@ -340,7 +340,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
   }
 }
 
-template< typename T >
+template< typename T , typename atomicPol=atomicPolicy>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               T const * __restrict__ const localField,
                               array1d< T >& globalField,
@@ -348,7 +348,12 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    globalField[ globalToLocalRelation[a] ] += localField[a];
+    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
+    real64 const * __restrict__ const lData = localField[a].Data();
+    for( localIndex i=0 ; i<3 ; ++i )
+      {
+        geosx::raja::atomicAdd<atomicPol>( &gData[i], lData[i] );
+      }
   }
 }
 
@@ -371,7 +376,6 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
                                     R1Tensor * __restrict__ const globalField,
                                     localIndex const N )
 {
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
@@ -382,27 +386,6 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
     }
   }
 }
-
-//01-22-2018 - Hack, we will have to fix. 
-#ifdef USE_OPENMP
-template<>
-inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localIndex* __restrict__ const globalToLocalRelation,
-                                         R1Tensor const * __restrict__ const localField,
-                                         R1Tensor * __restrict__ const globalField,
-                                         localIndex const N )
-{
-
-  for( typename array1d<R1Tensor>::size_type a=0 ; a<N ; ++a )
-    {
-      double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
-      double const * const rhs = localField[a].Data();
-      for( int i=0; i<3; ++i )
-        {          
-          geosx::raja::atomicAdd<RAJA::atomic::omp_atomic>(&lhs[i],rhs[i]);
-        }
-    }
-}
-#endif
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
