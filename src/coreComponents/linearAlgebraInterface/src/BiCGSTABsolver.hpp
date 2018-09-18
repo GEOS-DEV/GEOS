@@ -17,14 +17,14 @@
  */
 
 /*
- * CGsolver.hpp
+ * BiCGSTABsolver.hpp
  *
  *  Created on: Sep 12, 2018
  *      Author: Matthias
  */
 
-#ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_CGSOLVER_HPP_
-#define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_CGSOLVER_HPP_
+#ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BICGSTABSOLVER_HPP_
+#define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BICGSTABSOLVER_HPP_
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
@@ -39,7 +39,7 @@ namespace geosx
  */
 
 template< typename LAI >
-class CGsolver
+class BiCGSTABsolver
 {
 
   using ParallelMatrix = typename LAI::ParallelMatrix;
@@ -54,12 +54,12 @@ public:
    *
    * Create an empty block matrix.
    */
-  CGsolver();
+  BiCGSTABsolver();
 
   /**
    * @brief Virtual destructor.
    */
-  virtual ~CGsolver() = default;
+  virtual ~BiCGSTABsolver() = default;
   //@}
 
   void solve( ParallelMatrix const &A,
@@ -78,11 +78,11 @@ private:
 
 // Empty constructor
 template< typename LAI >
-CGsolver<LAI>::CGsolver()
+BiCGSTABsolver<LAI>::BiCGSTABsolver()
 {}
 
 template< typename LAI >
-void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
+void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
                            typename LAI::ParallelVector &x,
                            typename LAI::ParallelVector const &b,
                            typename LAI::ParallelMatrix const &M )
@@ -167,7 +167,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 }
 
 template< typename LAI >
-void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
+void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                            BlockVectorView<LAI> &x,
                            BlockVectorView<LAI> const &b,
                            BlockMatrixView<LAI> const &M )
@@ -253,4 +253,4 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
 } // namespace GEOSX
 
-#endif /* SRC_EXTERNALCOMPONENTS_LINEARALGEBRAINTERFACE_SRC_CGSOLVER_HPP_ */
+#endif /* SRC_EXTERNALCOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BiCGSTABsolver_HPP_ */
