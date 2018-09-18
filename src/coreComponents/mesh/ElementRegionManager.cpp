@@ -73,7 +73,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
                                    string_array const & elementTypes )
 {
-  localIndex const n_regions = regionNames.size();
+  localIndex const n_regions = integer_conversion<localIndex>(regionNames.size());
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<n_regions ; ++reg )
   {

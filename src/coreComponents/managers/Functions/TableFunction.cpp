@@ -174,7 +174,7 @@ void TableFunction::InitializeFunction()
   }
   else
   {
-    m_dimensions = coordinateFiles.size();
+    m_dimensions = integer_conversion<localIndex>(coordinateFiles.size());
     m_coordinates.resize(m_dimensions);
 
     // TODO: Read these files on rank 0, then broadcast
