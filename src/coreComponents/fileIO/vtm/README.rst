@@ -138,7 +138,8 @@ To define ElementRegions and CellBlocks within GEOSX, you have to write this ins
 You have to refer in :code:`name` the same name of the region as it is defined in the VTM
 file format. Values in code:`cellBlocks` are list of elements within the region.
 
-To apply boundary conditions or initial conditions, you may use 
+To apply boundary conditions or initial conditions, you have to refer the complete path
+to the cellBlock
 
 .. code-block:: xml
 

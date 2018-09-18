@@ -43,6 +43,12 @@ char** global_argv;
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
+#ifdef GEOSX_USE_MPI
+  int rank;
+  MPI_Init(&argc,&argv);
+  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+#endif
 
   global_argc = argc;
   global_argv = new char*[static_cast<unsigned int>(global_argc)];
@@ -50,21 +56,19 @@ int main(int argc, char** argv)
   {
     global_argv[i] = argv[i];
   }
-
-  return RUN_ALL_TESTS();
+  
+  int result = RUN_ALL_TESTS();
+#ifdef GEOSX_USE_MPI
+    MPI_Finalize();
+#endif
+    return result;
 }
 
 
 TEST(testVTM,testVTM)
 {
-#ifdef GEOSX_USE_MPI
-    MPI_Init(0, nullptr);
-#endif
     VtmFile vtmFile;
     string file_path = __FILE__;
     string dir_path = file_path.substr(0, file_path.rfind("/"));
     vtmFile.Load(dir_path + "/sampleMesh.vtm", true, true);
-#ifdef GEOSX_USE_MPI
-    MPI_Finalize();
-#endif
 }
