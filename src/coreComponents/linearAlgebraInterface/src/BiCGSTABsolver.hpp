@@ -83,9 +83,9 @@ BiCGSTABsolver<LAI>::BiCGSTABsolver()
 
 template< typename LAI >
 void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
-                           typename LAI::ParallelVector &x,
-                           typename LAI::ParallelVector const &b,
-                           typename LAI::ParallelMatrix const &M )
+                                 typename LAI::ParallelVector &x,
+                                 typename LAI::ParallelVector const &b,
+                                 typename LAI::ParallelMatrix const &M )
 
 {
 
@@ -101,39 +101,84 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   // Compute initial rk
   A.residual( x, b, rk );
 
-  // Preconditioning
-  ParallelVector zk( x );
-  M.multiply( rk, zk );
+  // Define vectors
+  ParallelVector r0_hat( rk );
 
-  // pk = zk
-  ParallelVector pk( zk );
-  ParallelVector Apk( zk );
+  real64 rhok, rhokminus1, alpha, beta, omegak;
+  rhok = 1.;
+  alpha = 1.;
+  omegak = 1.;
 
-  real64 alpha, beta;
+  // Define vectors
+  ParallelVector vk( rk );
+  vk.scale(0.);
+  ParallelVector pk( rk );
+  pk.scale(0.);
+  ParallelVector y( rk );
+  y.scale(0.);
+  ParallelVector z( rk );
+  z.scale(0.);
+  ParallelVector t( rk );
+  t.scale(0.);
+  ParallelVector u( rk );
+  u.scale(0.);
 
+  // Declare scalar for convergence check
   real64 convCheck;
-  rk.norm2( convCheck );
 
   for( typename LAI::laiGID k = 0 ; k < N ; k++ )
   {
-    // Compute rkT.rk
-    rk.dot( zk, &alpha );
+    rhokminus1 = rhok;
 
-    // Compute Apk
-    A.multiply( pk, Apk );
+    // Compute r0_hat.rk
+    rk.dot( r0_hat, &rhok );
 
-    // compute alpha
-    real64 temp;
-    pk.dot( Apk, &temp );
-    alpha = alpha/temp;
+    // Compute beta
+    beta = rhok/rhokminus1*alpha/omegak;
 
-    // Update x
-    x.update( alpha, pk, 1.0 );
+    // Update pk
+    pk.update(-omegak,vk,1.);
+    pk.update(1.,rk,beta);
 
-    // Update rk
-    ParallelVector rkold( rk );
-    ParallelVector zkold( zk );
-    rk.update( -alpha, Apk, 1.0 );
+    // Uptate vk
+    M.multiply(pk, y);
+    A.multiply(y, vk);
+
+    // Compute alpha
+    real64 temp1;
+    vk.dot( r0_hat, &temp1 );
+    alpha = rhok/temp1;
+
+    // compute h = x + alpha*y
+    ParallelVector h( x );
+    h.update(alpha, y, 1.);
+
+    // Compute s = rk -alpha*vk
+    ParallelVector s( rk );
+    s.update(-alpha, vk, 1.);
+
+    // Compute z
+    M.multiply(s, z);
+
+    // Compute t
+    A.multiply(z, t);
+
+    // Compute u
+    M.multiply(t, u);
+
+    // Update omega
+    real64 temp2;
+    u.dot( z, &temp1 );
+    u.dot( u, &temp2 );
+    omegak = temp1/temp2;
+
+    h.update(omegak, z, 1.);
+
+    x.update(1., h, 0.);
+
+    s.update(-omegak, t, 1.);
+
+    rk.update(1., s, 0.);
 
     // Convergence check
     rk.norm2( convCheck );
@@ -144,15 +189,6 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
       break;
     }
 
-    M.multiply( rk, zk );
-
-    zk.dot( rk, &beta );
-    zkold.dot( rkold, &temp );
-    beta = beta/temp;
-
-    // Update pk
-    pk.update( 1.0, zk, beta );
-
     //std::cout << k << ", " << convCheck << std::endl;
 
   }
@@ -161,16 +197,16 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
   if ( rank == 1 )
-    std::cout << "CG converged in " << numIt << " iterations." << std::endl;
+    std::cout << "BiCGSTAB converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
 
 template< typename LAI >
 void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
-                           BlockVectorView<LAI> &x,
-                           BlockVectorView<LAI> const &b,
-                           BlockMatrixView<LAI> const &M )
+                                 BlockVectorView<LAI> &x,
+                                 BlockVectorView<LAI> const &b,
+                                 BlockMatrixView<LAI> const &M )
 
 {
 
