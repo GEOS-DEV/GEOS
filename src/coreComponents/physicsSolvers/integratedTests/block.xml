@@ -1,0 +1,159 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  
+  <Solvers>
+    <SolidMechanics_LagrangianFEM name="lagsolve" 
+                                  timeIntegrationOption="QuasiStatic"
+                                  verboseLevel="0"
+                                  >
+      <SystemSolverParameters name="SystemSolverParameters"
+                              useMLPrecond="1"
+                              scalingOption="0"
+                              krylovTol="1.0e-8"
+                              newtonTol="1.0e-4"
+                              maxIterNewton="8"
+                              verbosityFlag="0"/>
+    </SolidMechanics_LagrangianFEM>
+  </Solvers>
+
+  
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="C3D8" 
+                  xCoords="0, 0.25"
+                  yCoords="0, 0.25"
+                  zCoords="0, 0.25"
+                  nx="25"
+                  ny="25"
+                  nz="25"
+                  cellBlockNames="cb1"/>
+  </Mesh>
+
+
+  <Events maxTime="10.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0"
+                   target="/Solvers/lagsolve" />
+
+    <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="5"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"/>
+  </Events>
+
+
+  <NumericalMethods>
+
+    <BasisFunctions> 
+        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+    
+    <QuadratureRules>
+        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+    </QuadratureRules>
+    
+    <FiniteElements>
+        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
+  </ElementRegions>
+
+  <Constitutive>
+      <LinearElasticIsotropic name="granite"
+                              density0="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"/>
+      <LinearElasticIsotropic name="shale"
+                              density0="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"/>
+  </Constitutive>
+
+
+  <InitialConditions>
+    
+  </InitialConditions>
+
+  <BoundaryConditions>
+    <Dirichlet name="xnegconstraint" 
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="0" 
+               scale="0.0" 
+               setNames="xneg xpos"/>
+
+    <Dirichlet name="yconstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="1" 
+               scale="0.0" 
+               setNames="ypos"/>
+               
+    <Dirichlet name="zconstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="2" 
+               scale="0.0" 
+               setNames="zneg zpos"/>
+               
+    <Dirichlet name="xposconstraint" 
+               objectPath="nodeManager" 
+               fieldName="Force" 
+               dataType="Vector" 
+               component="1" 
+               scale="1.0e6" 
+               functionName="timeFunction"
+               setNames="source"/>
+  </BoundaryConditions>
+
+
+  <Functions>
+    <TableFunction name="timeFunction"
+                   inputVarNames="time"
+                   inputVarTypes="real64"
+                   coordinates="0.0 10.0"
+                   values="0.0 10.0" />
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition>
+
+ 
+  <Outputs>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0" />
+    <Restart name="sidreRestart"/>
+  </ Outputs>
+  
+  <Geometry>
+    <Box name="source"
+         type="0"
+         xMin="  -1.0, -1.0e-6, -1.0"
+         xMax="  0.041,  1.0e-6,  0.041"/>
+  </Geometry>
+
+
+
+  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
+
+</Problem>
