@@ -64,9 +64,9 @@ void EpetraVector::scale( real64 const scalingFactor )
 }
 // Dot product with the vector vec.
 void EpetraVector::dot( EpetraVector const &vec,
-                        real64 *dst )
+                        real64 &dst )
 {
-  m_vector.get()->Dot( *vec.getPointer(), dst );
+  m_vector.get()->Dot( *vec.getPointer(), &dst );
 }
 
 // Update (name to be changed) vector as this = alpha*vec + beta*this..

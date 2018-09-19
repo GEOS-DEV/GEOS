@@ -83,7 +83,7 @@ public:
    * @brief Dot product with the vector vec.
    */
   void dot( EpetraVector const &vec,
-            real64 *dst );
+            real64 &dst );
 
   /**
    * @brief Update (name to be changed) vector as this = alpha*vec + beta*this.

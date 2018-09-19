@@ -33,9 +33,9 @@ namespace geosx
 {
 
 /**
- * \class BlockLinearSolvers
+ * \class CGsolver
  * \brief This class creates and provides basic support for block
- *        linear solvers (templated on the LA interface).
+ *        CG (templated on the LA interface).
  */
 
 template< typename LAI >
@@ -50,9 +50,9 @@ public:
   //! @name Constructor/Destructor Methods
   //@{
   /**
-   * @brief Empty matrix constructor.
+   * @brief Empty constructor.
    *
-   * Create an empty block matrix.
+   * Creates a solver object.
    */
   CGsolver();
 
@@ -62,11 +62,31 @@ public:
   virtual ~CGsolver() = default;
   //@}
 
+  /**
+   * @brief Solve.
+   *
+   * Solves the system <tt>M^{-1}(Ax - b) = 0</tt> using monolithic GEOSX matrices.
+   *
+   * \param A system matrix.
+   * \param x system solution (input = initial guess, output = solution).
+   * \param b system right hand side.
+   * \param M preconditioner.
+   */
   void solve( ParallelMatrix const &A,
               ParallelVector &x,
               ParallelVector const &b,
               ParallelMatrix const &M );
 
+  /**
+   * @brief Solve.
+   *
+   * Solves the system <tt>M^{-1}(Ax - b) = 0</tt> using block GEOSX matrices.
+   *
+   * \param A system block matrix.
+   * \param x system block solution (input = initial guess, output = solution).
+   * \param b system block right hand side.
+   * \param M block preconditioner.
+   */
   void solve( BlockMatrixView<LAI> const &A,
               BlockVectorView<LAI> &x,
               BlockVectorView<LAI> const &b,
@@ -98,7 +118,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   // Define vectors
   ParallelVector rk( x );
 
-  // Compute initial rk
+  // Compute initial rk =  b - Ax
   A.residual( x, b, rk );
 
   // Preconditioning
@@ -109,33 +129,36 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   ParallelVector pk( zk );
   ParallelVector Apk( zk );
 
+  // Declare alpha and beta scalars
   real64 alpha, beta;
 
+  // Convergence check
   real64 convCheck;
   rk.norm2( convCheck );
+
 
   for( typename LAI::laiGID k = 0 ; k < N ; k++ )
   {
     // Compute rkT.rk
-    rk.dot( zk, &alpha );
+    rk.dot( zk, alpha );
 
     // Compute Apk
     A.multiply( pk, Apk );
 
     // compute alpha
     real64 temp;
-    pk.dot( Apk, &temp );
+    pk.dot( Apk, temp );
     alpha = alpha/temp;
 
-    // Update x
+    // Update x = x + alpha*ph
     x.update( alpha, pk, 1.0 );
 
-    // Update rk
+    // Update rk = rk - alpha*Apk
     ParallelVector rkold( rk );
     ParallelVector zkold( zk );
     rk.update( -alpha, Apk, 1.0 );
 
-    // Convergence check
+    // Convergence check on ||rk||_2
     rk.norm2( convCheck );
 
     if( convCheck < 1e-8 )
@@ -144,13 +167,15 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
       break;
     }
 
+    // Update zk = Mrk
     M.multiply( rk, zk );
 
-    zk.dot( rk, &beta );
-    zkold.dot( rkold, &temp );
+    // Compute beta
+    zk.dot( rk, beta );
+    zkold.dot( rkold, temp );
     beta = beta/temp;
 
-    // Update pk
+    // Update pk = pk + beta*zk
     pk.update( 1.0, zk, beta );
 
     //std::cout << k << ", " << convCheck << std::endl;
@@ -160,7 +185,9 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  if ( rank == 1 )
+
+  // veborse output (TODO verbosity manager?)
+  if( rank == 1 )
     std::cout << "CG converged in " << numIt << " iterations." << std::endl;
   return;
 
@@ -183,7 +210,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   // Define vectors
   BlockVectorView<LAI> rk( x );
 
-  // Compute initial rk
+  // Compute initial rk =  b - Ax
   A.residual( x, b, rk );
 
   // Preconditioning
@@ -194,8 +221,10 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   BlockVectorView<LAI> pk( zk );
   BlockVectorView<LAI> Apk( zk );
 
+  // Declare alpha and beta scalars
   real64 alpha, beta;
 
+  // Convergence check
   real64 convCheck;
   rk.norm2( convCheck );
 
@@ -210,17 +239,18 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     // compute alpha
     real64 temp;
     pk.dot( Apk, temp );
+
     alpha = alpha/temp;
 
-    // Update x
+    // Update x = x + alpha*pk
     x.update( alpha, pk, 1.0 );
 
-    // Update rk
+    // Update rk = rk - alpha*Apk
     BlockVectorView<LAI> rkold( rk );
     BlockVectorView<LAI> zkold( zk );
     rk.update( -alpha, Apk, 1.0 );
 
-    // Convergence check
+    // Convergence check on ||rk||_2
     rk.norm2( convCheck );
 
     if( convCheck < 1e-8 )
@@ -229,13 +259,15 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
       break;
     }
 
+    // Update zk = Mrk
     M.multiply( rk, zk );
 
+    // Compute beta
     zk.dot( rk, beta );
     zkold.dot( rkold, temp );
     beta = beta/temp;
 
-    // Update pk
+    // Update pk = pk + beta*zk
     pk.update( 1.0, zk, beta );
 
     //std::cout << k << ", " << convCheck << std::endl;
@@ -245,8 +277,10 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  if ( rank == 1 )
-    std::cout << "CG converged in " << numIt << " iterations." << std::endl;
+
+  // veborse output (TODO verbosity manager?)
+  if( rank == 1 )
+    std::cout << "Block CG converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
