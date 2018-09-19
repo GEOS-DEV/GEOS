@@ -27,7 +27,6 @@ struct ModifiedObjectLists
 
 
 class SpatialPartition;
-class ModifiedObjectLists;
 
 class NodeManager;
 class EdgeManager;
@@ -42,7 +41,7 @@ class SurfaceGenerator : public SolverBase
 public:
   SurfaceGenerator( const std::string& name,
                     ManagedGroup * const parent );
-  ~SurfaceGenerator();
+  ~SurfaceGenerator() override;
 
 
   static string CatalogName() { return "SurfaceGenerator"; }
@@ -246,17 +245,26 @@ bool SetElemLocations( const int side,
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto parentIndexString = ObjectManagerBase::viewKeyStruct::parentIndexString;
-    constexpr static auto childIndexString = ObjectManagerBase::viewKeyStruct::childIndexString;
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
-
-  } viewKeys;
+  } SurfaceGenViewKeys;
 
 
   integer m_failCriterion=1;
   localIndex_set m_separableFaceSet;
+
+  array1d< set<localIndex> > m_originalNodetoFaces;
+  array1d< set<localIndex> > m_originalNodetoEdges;
+
+  array1d< array1d<localIndex> > m_originalFaceToEdges;
+  array1d< set<localIndex> > m_usedFacesForNode;
+
+  array2d< localIndex > m_originalFacesToElemRegion;
+  array2d< localIndex > m_originalFacesToElemSubRegion;
+  array2d< localIndex > m_originalFacesToElemIndex;
+
+
 };
 
 } /* namespace geosx */
