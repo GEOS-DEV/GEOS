@@ -9,6 +9,7 @@ set(physicsSolvers_headers
     SimpleSolvers/LaplaceFEM.hpp
     src/SolidMechanicsLagrangianFEM.hpp
     surfaceGeneration/SurfaceGenerator.hpp
+    src/DummySolver.hpp
     )
 
 #
@@ -21,6 +22,7 @@ set(physicsSolvers_sources
     SimpleSolvers/LaplaceFEM.cpp
     src/SolidMechanicsLagrangianFEM.cpp
     surfaceGeneration/SurfaceGenerator.cpp
+    src/DummySolver.cpp
     )
 
 

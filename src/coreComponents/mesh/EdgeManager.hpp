@@ -62,6 +62,8 @@ public:
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr);
   void SetIsExternal( FaceManager const * const faceManager );
+//  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
+//                                                         array<globalIndex_array>& objectToCompositionObject );
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
@@ -141,13 +143,23 @@ public:
   FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
   FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
 
-  OrderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
-  OrderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+  localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
+  {
+    return m_toNodesRelation(edgeIndex, nodeIndex);
+  }
+  localIndex nodeList( localIndex const edgeIndex, localIndex const nodeIndex ) const
+  {
+    return m_toNodesRelation(edgeIndex, nodeIndex);
+  }
+
+
+  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
 
 private:
   FixedOneToManyRelation m_toNodesRelation;
-  OrderedVariableOneToManyRelation m_toFacesRelation;
+  UnorderedVariableOneToManyRelation m_toFacesRelation;
 
 };
 }

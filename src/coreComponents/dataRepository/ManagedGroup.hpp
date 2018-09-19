@@ -746,7 +746,7 @@ public:
 
   template< typename T >
   T const * getPointer( viewWrapperMap::KeyIndex & keyIndex ) const
-  { return const_cast<T const *>( const_cast<ManagedGroup const *>(this)->getPointer<T>(keyIndex)); }
+  { return getPointerT<T>(keyIndex); }
 
   template< typename T >
   T * getPointer( viewWrapperMap::KeyIndex & keyIndex )
