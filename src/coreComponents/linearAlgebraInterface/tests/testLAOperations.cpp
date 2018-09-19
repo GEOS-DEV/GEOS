@@ -57,7 +57,7 @@ void testLaplaceOperator()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  laiGID n = 100;
+  laiGID n = 5;
   laiGID N = n*n;
 
   ParallelMatrix testMatrix;
@@ -107,7 +107,7 @@ void testLaplaceOperator()
       nnz++;
     }
 
-    real64 temp = 0.25;
+    real64 temp = 1;
 
     // Set the values for row i
     testMatrix.insert( i, nnz, values, cols );
@@ -193,6 +193,9 @@ void testLaplaceOperator()
   ParallelVector solCG( b );
   ParallelVector bCG( b );
 
+  ParallelVector solBiCGSTAB( b );
+  ParallelVector bBiCGSTAB( b );
+
   // Test dot product
   real64 dotTest;
   x.dot( x, &dotTest );
@@ -242,6 +245,13 @@ void testLaplaceOperator()
 
   CGsolver<TrilinosInterface> testCG;
   testCG.solve( testMatrix, solCG, bCG, preconditioner );
+
+  solCG.print();
+
+  BiCGSTABsolver<TrilinosInterface> testBiCGSTAB;
+  testBiCGSTAB.solve( testMatrix, solBiCGSTAB, bBiCGSTAB, preconditioner );
+
+  solBiCGSTAB.print();
 
   // Test clearRow
   testMatrix.clearRow( 2*N/4+n, 2.0 );
