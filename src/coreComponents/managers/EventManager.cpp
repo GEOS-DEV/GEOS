@@ -190,7 +190,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
     real64 nextDt = std::numeric_limits<real64>::max();
-    if ((verbosity > 0) && (rank == 0))
+    if (rank == 0)
     {
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
     }
