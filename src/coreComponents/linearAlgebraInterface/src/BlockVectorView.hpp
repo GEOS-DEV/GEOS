@@ -210,7 +210,7 @@ void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec,
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
   {
     real64 temp = 0;
-    m_vectors[i]->dot( *blockVec.getBlock( i ), &temp );
+    m_vectors[i]->dot( *blockVec.getBlock( i ), temp );
     accum = accum + temp;
   }
   result = accum;

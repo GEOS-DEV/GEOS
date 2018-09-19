@@ -283,7 +283,7 @@ void EpetraSparseMatrix::residual( EpetraVector const &x,
                                    EpetraVector &res ) const
 {
   m_matrix->Multiply( false, *x.getPointer(), *res.getPointer() );
-  res.update( -1.0, b, 1.0 );
+  res.update( 1.0, b, -1.0 );
 }
 
 // Compute gaxpy r = alpha*A*x + beta*b.

@@ -76,15 +76,15 @@ public:
   /**
    * @brief Apply the block matrix to a block vector.
    */
-  void multiply( BlockVectorView<LAI> const &solution,
-                 BlockVectorView<LAI> &rhs ) const;
+  void multiply( BlockVectorView<LAI> const &x,
+                 BlockVectorView<LAI> &b ) const;
 
   /**
    * @brief Set to residual form.
    */
-  void residual( BlockVectorView<LAI> const &solution,
-                 BlockVectorView<LAI> const &rhs,
-                 BlockVectorView<LAI> &res ) const;
+  void residual( BlockVectorView<LAI> const &x,
+                 BlockVectorView<LAI> const &b,
+                 BlockVectorView<LAI> &r ) const;
 
   /**
    * @brief Scale block (<tt>i</tt>,<tt>j</tt>) using <tt>factor</tt>.
@@ -149,19 +149,19 @@ BlockMatrixView<LAI>::BlockMatrixView( typename LAI::laiLID nRows,
 
 // Apply the block matrix to a block vector (hard coded to 2 by 2 for now).
 template< typename LAI >
-void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &solution,
-                                     BlockVectorView<LAI> &rhs ) const
+void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
+                                     BlockVectorView<LAI> &b ) const
 {
   for( typename LAI::laiLID row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
-    rhs.scale( row, 0. );
-    ParallelVector temp( *rhs.getBlock( row ) );
+    b.scale( row, 0. );
+    ParallelVector temp( *b.getBlock( row ) );
     for( typename LAI::laiLID col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
-        m_matrices[row][col]->multiply( *solution.getBlock( col ), temp );
-        rhs.update( row, 1.0, temp, 1.0 );
+        m_matrices[row][col]->multiply( *x.getBlock( col ), temp );
+        b.update( row, 1.0, temp, 1.0 );
       }
     }
   }
@@ -169,27 +169,29 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &solution,
 
 // Set to residual form.
 template< typename LAI >
-void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &solution,
-                                     BlockVectorView<LAI> const &rhs,
-                                     BlockVectorView<LAI> &res ) const
+void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
+                                     BlockVectorView<LAI> const &b,
+                                     BlockVectorView<LAI> &r ) const
 {
+  BlockVectorView<LAI> Ax( b );
+  Ax.scale( 0. );
   for( typename LAI::laiLID row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
-    ParallelVector temp1( *rhs.getBlock( row ) );
-    ParallelVector temp2( *rhs.getBlock( row ) );
-    temp1.scale( 0. );
-    temp2.scale( 0. );
+    ParallelVector temp( *b.getBlock( row ) );
+    temp.scale( 0. );
     for( typename LAI::laiLID col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
-        m_matrices[row][col]->multiply( *solution.getBlock( col ), temp2 );
-        temp1.update( 1.0, temp2, 1.0 );
+        m_matrices[row][col]->multiply( *x.getBlock( col ), temp );
+        Ax.update( row, 1.0, temp, 1.0 );
       }
     }
-    res.update( row, -1.0, temp1, 1.0 );
   }
-
+  // r = b
+  r.update( 1.0, b, 0. );
+  // r = b - Ax
+  r.update( -1.0, Ax, 1.0 );
 }
 
 // Scale the matrix with the factor <tt>factor</tt>.
