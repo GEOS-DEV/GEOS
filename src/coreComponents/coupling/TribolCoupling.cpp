@@ -152,7 +152,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   
   real64 *x0 = s_srcNodes->fieldCreateReal("x0")->Real() ;
   real64 *y0 = s_srcNodes->fieldCreateReal("y0")->Real() ;
-  real64 *z0 = s_srcNodes->fieldCreateReal("z0")->fill(-99999.999)->Real() ;
+  real64 *z0 = s_srcNodes->fieldCreateReal("z0")->Real() ;
 
   // These are used directly on the srcNodes by the slide decomposition,
   // so they need to have the proper tree structure.
@@ -202,7 +202,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
      }
   }
 
-  s_srcBricks->relationCreateFixed("bricksToNodes", nodesPerElem, (int*)subRegion->nodeList().data(), s_srcNodes, vista::VISTA_COPIES) ;
+  s_srcBricks->relationCreateFixed("bricksToNodes", nodesPerElem, bricksToNodes, s_srcNodes, vista::VISTA_ACQUIRES) ;
 
   SlideWorldAdapter::CreateWorld(MPI_COMM_GEOSX, MPI_COMM_WORLD,
                                  4000, // comm tag 
