@@ -36,9 +36,7 @@ using namespace dataRepository;
 SimpleWell::SimpleWell(string const & name, dataRepository::ManagedGroup * const parent)
   : WellBase(name, parent)
 {
-  RegisterViewWrapper( viewKeys.connectionElementRegion.Key(), &m_connectionElementRegion, false );
-  RegisterViewWrapper( viewKeys.connectionElementSubregion.Key(), &m_connectionElementSubregion, false );
-  RegisterViewWrapper( viewKeys.connectionElementIndex.Key(), &m_connectionElementIndex, false );
+
 }
 
 SimpleWell::~SimpleWell()
@@ -88,6 +86,9 @@ SimpleWell::~SimpleWell()
 void SimpleWell::FillDocumentationNode()
 {
   WellBase::FillDocumentationNode();
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setName("SimpleWell");
+  docNode->setSchemaType("Node");
 }
 
 const string SimpleWell::getCatalogName() const
@@ -99,11 +100,14 @@ void SimpleWell::InitializePostSubGroups(ManagedGroup * const problemManager)
 {
   WellBase::InitializePostSubGroups(problemManager);
 
-  // all array fields live on connections/perforations
+  // initially allocate enough memory for all (global) perforations
   resize(numConnectionsGlobal());
 
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
   ConnectToCells( domain );
+
+  // then shrink to only locally owned perforations (no ghosts needed in this simple model)
+  resize(numConnectionsLocal());
 }
 
 void SimpleWell::ConnectToCells( DomainPartition const * domain )
@@ -115,13 +119,15 @@ void SimpleWell::ConnectToCells( DomainPartition const * domain )
                                                                            viewKeyStruct::
                                                                            elementCenterString );
 
+  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeys.perforations );
+
   // TODO Until we can properly trace perforations to cells,
   // just connect to the nearest cell center (this is NOT correct in general)
 
-  localIndex numConnLocal = 0;
-  for (localIndex iconn = 0; iconn < numConnectionsGlobal(); ++iconn)
+  m_numConnections = 0;
+  localIndex iconn_global = 0;
+  perfManager->forSubGroups<Perforation>( [&] ( Perforation const * perf ) -> void
   {
-    Perforation const * perf = GetGroup<Perforation>(iconn);
     R1Tensor const & loc = perf->getLocation();
 
     auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex er,
@@ -133,16 +139,15 @@ void SimpleWell::ConnectToCells( DomainPartition const * domain )
       return v.L2_Norm();
     });
 
-    m_connectionElementRegion[iconn]    = std::get<0>(ret.second);
-    m_connectionElementSubregion[iconn] = std::get<1>(ret.second);
-    m_connectionElementIndex[iconn]     = std::get<2>(ret.second);
+    m_connectionElementRegion[m_numConnections]    = std::get<0>(ret.second);
+    m_connectionElementSubregion[m_numConnections] = std::get<1>(ret.second);
+    m_connectionElementIndex[m_numConnections]     = std::get<2>(ret.second);
+    m_connectionPerforationIndex[m_numConnections] = iconn_global++;
 
     // This will not be correct in parallel until we can actually check that
     // the perforation belongs to local mesh partition
-    ++numConnLocal;
-  }
-
-  resize(numConnLocal);
+    ++m_numConnections;
+  });
 }
 
 void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)

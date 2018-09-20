@@ -28,7 +28,8 @@ set(managers_headers
     Wells/WellBase.cpp
     Wells/SimpleWell.hpp
     Wells/Perforation.hpp
-	)
+    Wells/PerforationManager.hpp
+    )
 
 
 #
@@ -60,6 +61,7 @@ set(managers_sources
     Wells/WellBase.cpp
     Wells/SimpleWell.cpp
     Wells/Perforation.cpp
+    Wells/PerforationManager.cpp
     )
 
 #set( dependencyList dataRepository fileIO  )

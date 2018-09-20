@@ -55,6 +55,12 @@ public:
   xmlWrapper();
   virtual ~xmlWrapper();
 
+  template<typename LAMBDA>
+  static void forChildNodes(xmlNode & node, LAMBDA && body);
+
+  template<typename LAMBDA>
+  static void forChildNodes(xmlNode const & node, LAMBDA && body);
+
   template< typename T >
   static void as_type( std::vector<T> & target, std::string value, std::string defValue );
 
@@ -109,6 +115,23 @@ void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::
 //  return rval;
 //}
 
+template<typename LAMBDA>
+void xmlWrapper::forChildNodes(xmlNode & node, LAMBDA && body)
+{
+  for (xmlWrapper::xmlNode childNode=node.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    body(childNode);
+  }
+}
+
+template<typename LAMBDA>
+void xmlWrapper::forChildNodes(xmlNode const & node, LAMBDA && body)
+{
+  for (xmlWrapper::xmlNode childNode=node.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    body(childNode);
+  }
+}
 
 
 } /* namespace geosx */

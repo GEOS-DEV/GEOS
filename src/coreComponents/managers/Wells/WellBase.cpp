@@ -23,20 +23,28 @@
 
 #include "WellBase.hpp"
 
-#include "Perforation.hpp"
+#include "PerforationManager.hpp"
 #include "WellManager.hpp"
 
 namespace geosx
 {
 
-
 WellBase::WellBase(string const & name, dataRepository::ManagedGroup * const parent)
   : ObjectManagerBase(name, parent),
-    m_referenceDepth(0),
-    m_type()
+    m_perfManager( groupKeyStruct::perforationsString, this ),
+    m_numConnections( 0 ),
+    m_referenceDepth( 0.0 ),
+    m_typeString( "producer" ),
+    m_type( Type::PRODUCER )
 {
   RegisterViewWrapper( viewKeys.referenceDepth.Key(), &m_referenceDepth, false );
-  RegisterViewWrapper( viewKeys.type.Key(), &m_type, false );
+  RegisterViewWrapper( viewKeys.type.Key(), &m_typeString, false );
+  RegisterViewWrapper( viewKeys.connectionElementRegion.Key(), &m_connectionElementRegion, false );
+  RegisterViewWrapper( viewKeys.connectionElementSubregion.Key(), &m_connectionElementSubregion, false );
+  RegisterViewWrapper( viewKeys.connectionElementIndex.Key(), &m_connectionElementIndex, false );
+  RegisterViewWrapper( viewKeys.connectionPerforationIndex.Key(), &m_connectionPerforationIndex, false );
+
+  RegisterGroup( groupKeys.perforations.Key(), &m_perfManager, false );
 }
 
 WellBase::~WellBase()
@@ -79,15 +87,6 @@ void WellBase::FillDocumentationNode()
 
 void WellBase::CreateChild(string const & childKey, string const & childName)
 {
-  //std::cout << "Adding child: " << childKey << ", " << childName << std::endl;
-  if (childKey == "Perforation")
-  {
-    RegisterGroup<Perforation>(childName);
-  }
-  else
-  {
-    GEOS_ERROR("Unrecognized child: " << childKey);
-  }
 }
 
 void WellBase::InitializePostSubGroups(dataRepository::ManagedGroup * const group)
@@ -97,12 +96,28 @@ void WellBase::InitializePostSubGroups(dataRepository::ManagedGroup * const grou
 
 R1Tensor const & WellBase::getGravityVector() const
 {
-  return dynamic_cast<WellManager const *>(getParent())->getGravityVector();
+  return getParent()->group_cast<WellManager const *>()->getGravityVector();
 }
 
 void WellBase::FinalInitialization(dataRepository::ManagedGroup * const group)
 {
   // nothing yet
+}
+
+void WellBase::ReadXML_PostProcess()
+{
+  if (m_typeString == "producer")
+  {
+    m_type = Type::PRODUCER;
+  }
+  else if (m_typeString == "injector")
+  {
+    m_type = Type::INJECTOR;
+  }
+  else
+  {
+    GEOS_ERROR("Invalid well type: " << m_typeString);
+  }
 }
 
 

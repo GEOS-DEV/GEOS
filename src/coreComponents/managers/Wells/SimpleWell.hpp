@@ -60,23 +60,12 @@ public:
 
   virtual void FinalInitialization( ManagedGroup * const group ) override;
 
-  localIndex numConnectionsGlobal() const { return numSubGroups(); }
-  localIndex numConnectionsLocal() const { return size(); }
-
   struct viewKeyStruct : public WellBase::viewKeyStruct
   {
 
-    static constexpr auto connectionElementRegionString = "connectionElementRegion";
-    static constexpr auto connectionElementSubregionString = "connectionElementSubregion";
-    static constexpr auto connectionElementIndexString = "connectionElementIndex";
-
-    static constexpr auto pressureString = "pressure";
+    static constexpr auto pressureString         = "pressure";
     static constexpr auto transmissibilityString = "transmissibility";
-    static constexpr auto gravityDepthString = "gravityDepth";
-
-    dataRepository::ViewKey connectionElementRegion    = { connectionElementRegionString    };
-    dataRepository::ViewKey connectionElementSubregion = { connectionElementSubregionString };
-    dataRepository::ViewKey connectionElementIndex     = { connectionElementIndexString     };
+    static constexpr auto gravityDepthString     = "gravityDepth";
 
     dataRepository::ViewKey pressure         = { pressureString         };
     dataRepository::ViewKey transmissibility = { transmissibilityString };
@@ -88,10 +77,6 @@ private:
 
   void ConnectToCells( DomainPartition const * domain );
   void PrecomputeData( DomainPartition const * domain );
-
-  array1d<localIndex> m_connectionElementRegion;
-  array1d<localIndex> m_connectionElementSubregion;
-  array1d<localIndex> m_connectionElementIndex;
 
 };
 

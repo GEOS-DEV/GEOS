@@ -31,6 +31,14 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+namespace keys
+{
+  static constexpr auto FVstencil = "FVstencil";
+}
+}
+
 /**
  * @struct A structure containing a single cell (element) identifier triplet
  */
@@ -52,7 +60,7 @@ struct CellDescriptor
  */
 struct PointDescriptor
 {
-  enum class Tag { CELL, FACE, NODE };
+  enum class Tag { CELL, FACE, NODE, PERF };
 
   Tag tag;
 
@@ -60,6 +68,7 @@ struct PointDescriptor
   {
     localIndex nodeIndex;
     localIndex faceIndex;
+    localIndex perfIndex;
     CellDescriptor cellIndex;
   };
 };
@@ -83,6 +92,7 @@ public:
   // typedefs for stored stencil types
   using CellStencil     = StencilCollection<CellDescriptor, real64>;
   using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
+  using WellStencil     = StencilCollection<PointDescriptor, real64>;
 
   void FillDocumentationNode() override;
 
@@ -120,12 +130,18 @@ public:
     static constexpr auto boundaryFieldNameString = "boundaryFieldName";
     static constexpr auto coeffNameString         = "coefficientName";
     static constexpr auto cellStencilString       = "cellStencil";
-  };
+
+    dataRepository::ViewKey fieldName         = { fieldNameString };
+    dataRepository::ViewKey boundaryFieldName = { boundaryFieldNameString };
+    dataRepository::ViewKey coeffName         = { coeffNameString };
+    dataRepository::ViewKey cellStencil       = { cellStencilString };
+
+  } viewKeys;
 
   struct groupKeyStruct
   {
-    static constexpr auto boundarySetDataString = "BoundarySetData";
-  };
+
+  } groupKeys;
 
 protected:
 
@@ -134,9 +150,6 @@ protected:
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;
-
-  /// pointer to boundary set manager
-  dataRepository::ManagedGroup * m_boundarySetData;
 
   /// name of the primary solution field
   string m_fieldName;
