@@ -327,7 +327,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
   }
 }
 
-template< typename T >
+template< typename T , typename atomicPol=atomicPolicy>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               const array1d< T >& localField,
                               array1d< T >& globalField)
@@ -336,13 +336,13 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 
   for( typename array1d<T>::size_type a=0 ; a<N ; ++a )
   {
-    globalField[ globalToLocalRelation[a] ] += localField[a];
+    geosx::raja::atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
   }
 }
 
 template< typename T , typename atomicPol=atomicPolicy>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              T const * __restrict__ const localField,
+                              R1Tensor const * __restrict__ const localField,
                               array1d< T >& globalField,
                               localIndex const N )
 {
@@ -350,10 +350,9 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
     real64 const * __restrict__ const lData = localField[a].Data();
-    for( localIndex i=0 ; i<3 ; ++i )
-      {
-        geosx::raja::atomicAdd<atomicPol>( &gData[i], lData[i] );
-      }
+    geosx::raja::atomicAdd<atomicPol>( &gData[0], lData[0] );
+    geosx::raja::atomicAdd<atomicPol>( &gData[1], lData[1] );
+    geosx::raja::atomicAdd<atomicPol>( &gData[2], lData[2] );
   }
 }
 
