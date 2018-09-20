@@ -41,7 +41,16 @@ SimpleWell::SimpleWell(string const & name, dataRepository::ManagedGroup * const
 
 SimpleWell::~SimpleWell()
 {
+
+}
+
+void SimpleWell::FillDocumentationNode()
+{
+  WellBase::FillDocumentationNode();
+
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setName("SimpleWell");
+  docNode->setSchemaType("Node");
 
   docNode->AllocateChildNode( viewKeys.pressure.Key(),
                               viewKeys.pressure.Key(),
@@ -50,19 +59,6 @@ SimpleWell::~SimpleWell()
                               "real64_array",
                               "Connection pressure",
                               "Connection pressure",
-                              "",
-                              getName(),
-                              1,
-                              0,
-                              1 );
-
-  docNode->AllocateChildNode( viewKeys.transmissibility.Key(),
-                              viewKeys.transmissibility.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Connection transmissibility",
-                              "Connection transmissibility",
                               "",
                               getName(),
                               1,
@@ -81,14 +77,6 @@ SimpleWell::~SimpleWell()
                               1,
                               0,
                               1 );
-}
-
-void SimpleWell::FillDocumentationNode()
-{
-  WellBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("SimpleWell");
-  docNode->setSchemaType("Node");
 }
 
 const string SimpleWell::getCatalogName() const
@@ -161,11 +149,13 @@ void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
 void SimpleWell::PrecomputeData(DomainPartition const * domain)
 {
   R1Tensor const & gravity = getGravityVector();
-  array1d<real64> gravDepth = getReference<array1d<real64>>(viewKeys.gravityDepth);
+  array1d<real64> & gravDepth = getReference<array1d<real64>>(viewKeys.gravityDepth);
+
+  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeys.perforations );
 
   for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
   {
-    Perforation const * perf = GetGroup<Perforation>(iconn);
+    Perforation const * perf = perfManager->GetGroup<Perforation>(iconn);
     gravDepth[iconn] = Dot(perf->getLocation(), gravity);
   }
 }

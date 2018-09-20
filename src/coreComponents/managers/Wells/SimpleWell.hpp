@@ -64,14 +64,17 @@ public:
   {
 
     static constexpr auto pressureString         = "pressure";
-    static constexpr auto transmissibilityString = "transmissibility";
     static constexpr auto gravityDepthString     = "gravityDepth";
 
     dataRepository::ViewKey pressure         = { pressureString         };
-    dataRepository::ViewKey transmissibility = { transmissibilityString };
     dataRepository::ViewKey gravityDepth     = { gravityDepthString     };
 
   } viewKeys;
+
+  struct groupKeyStruct : public WellBase::groupKeyStruct
+  {
+
+  } groupKeys;
 
 private:
 
