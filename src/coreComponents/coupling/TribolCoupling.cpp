@@ -64,6 +64,9 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   vista::ErrSetMask(VERR_CONVERSION | VERR_TRUNCATION | VERR_NOTCREATED | VERR_INTERNAL | VERR_NILNAME | VERR_INVALID_INDEXSET) ;
   vista::ErrHandler(GEOSXSlideWorldErrorHandler) ;
 
+  const int nodesPerFace = 4 ;
+  const int nodesPerElem = 8 ;
+
   real64& currentTime = *(eventManager->getData<real64>("time"));
   real64& dt = *(eventManager->getData<real64>("dt"));
   integer& cycle = *(eventManager->getData<integer>("cycle"));
@@ -73,6 +76,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   s_tribolProblem = new vista::View("geosx", 0) ;
   s_tribolDomain = s_tribolProblem->viewCreate("DomainWorld", 0)->viewCreate("domain", 0, 0) ;
 
+  // Assuming only a single element region
   MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->getMeshBody(0)->getMeshLevel(0);
   CellBlockSubRegion * const subRegion = meshLevel->getElemManager()->GetRegion(0)->GetSubRegion(0);
   NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -82,10 +86,10 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   int numNodes = nodeManager->size() ;
   int numBricks = subRegion->size() ;
   const globalIndex_array faceMap = faceManager->m_localToGlobalMap ;
-  const globalIndex_array nodeMap = nodeManager->m_localToGlobalMap ;
-  const globalIndex_array brickMap = subRegion->m_localToGlobalMap ;
+  globalIndex_array nodeMap = nodeManager->m_localToGlobalMap ;
+  globalIndex_array brickMap = subRegion->m_localToGlobalMap ;
 
-  const array2d<localIndex> & facesToElems = faceManager->elementSubRegionList();
+  const array2d<localIndex> & facesToElems = faceManager->elementList();
   const OrderedVariableOneToManyRelation & facesToNodes = faceManager->nodeList();
   const integer_array isExternalFace = faceManager->m_isExternal ;
   const integer_array faceGhostRank = faceManager->m_ghostRank ;
@@ -94,9 +98,9 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   int *slideNodeMap ;
   int *extFacesToNodes ;
   int *extFacesToElement ;
-  vista::MemAlloc(numFaces*4, &slideNodeMap) ;
+  vista::MemAlloc(numFaces*nodesPerFace, &slideNodeMap) ;
   vista::MemAlloc(numFaces, &extFaceMap) ;
-  vista::MemAlloc(numFaces*4, &extFacesToNodes) ;
+  vista::MemAlloc(numFaces*nodesPerFace, &extFacesToNodes) ;
   vista::MemAlloc(numFaces*2, &extFacesToElement) ;
 
   int numSlideNodes = 0 ;
@@ -106,7 +110,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
      // Only include external, non-ghost faces/nodes.
      if (isExternalFace[i] && faceGhostRank[i] < 0) {
         extFaceMap[numExtFaces] = globalID((GIDTYPE)faceMap[i]) ;
-        for (int j = 0 ; j < 4 ; ++j) {
+        for (int j = 0 ; j < nodesPerFace ; ++j) {
            int nodeIdx = facesToNodes[i][j] ;
            extFacesToNodes[numExtFaces*4+j] = nodeIdx ;
            slideNodeMap[numSlideNodes++] = nodeIdx ;
@@ -124,7 +128,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   numSlideNodes = newEnd - slideNodeMap ;
   vista::MemRealloc(numSlideNodes, &slideNodeMap) ;
   vista::MemRealloc(numExtFaces, &extFaceMap) ;
-  vista::MemRealloc(numExtFaces*4, &extFacesToNodes) ;
+  vista::MemRealloc(numExtFaces*nodesPerFace, &extFacesToNodes) ;
   vista::MemRealloc(numExtFaces*2, &extFacesToElement) ;
 
   s_srcFaces = s_tribolDomain->viewCreate("extFaces", 1, &numExtFaces, new vista::IndexSet(vista::VISTA_ACQUIRES, numExtFaces, extFaceMap)) ;
@@ -139,16 +143,16 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
   s_slideWorldSourceFaces = s_srcFaces->attach(new vista::View("LSslaveFaces0", 1, &numExtFaces, new vista::IndexSet(numExtFaces))) ;
   // since we are including all extFaces, we can just copy the extFacesToNodes relation for our slide facesToDomainNodes relation.
-  s_slideWorldSourceFaces->relationCreateFixed("facesToDomainNodes", 4, extFacesToNodes, s_srcNodes, vista::VISTA_COPIES) ;
+  s_slideWorldSourceFaces->relationCreateFixed("facesToDomainNodes", nodesPerFace, extFacesToNodes, s_srcNodes, vista::VISTA_COPIES) ;
 
-  s_srcFaces->relationCreateFixed("facesToNodes", 4, extFacesToNodes, s_srcNodes, vista::VISTA_ACQUIRES) ;
+  s_srcFaces->relationCreateFixed("facesToNodes", nodesPerFace, extFacesToNodes, s_srcNodes, vista::VISTA_ACQUIRES) ;
   s_srcFaces->relationCreateFixed("facesToElement", 2, extFacesToElement, s_srcBricks, vista::VISTA_ACQUIRES) ;
 
   const array1d< R1Tensor > & X = nodeManager->referencePosition();
   
   real64 *x0 = s_srcNodes->fieldCreateReal("x0")->Real() ;
   real64 *y0 = s_srcNodes->fieldCreateReal("y0")->Real() ;
-  real64 *z0 = s_srcNodes->fieldCreateReal("z0")->Real() ;
+  real64 *z0 = s_srcNodes->fieldCreateReal("z0")->fill(-99999.999)->Real() ;
 
   // These are used directly on the srcNodes by the slide decomposition,
   // so they need to have the proper tree structure.
@@ -162,13 +166,21 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   s_srcNodes->fieldCreateReal("local:ydd") ;
   s_srcNodes->fieldCreateReal("local:zdd") ;
 
-  const int *slideMap = s_slideWorldSourceNodes->map() ;
+  const FixedOneToManyRelation& elemsToNodes = subRegion->nodeList() ;
 
-  for (int i = 0 ; i < numSlideNodes ; ++i) {
-     int nodeIdx = slideMap[i] ;
-     x0[nodeIdx] = X[nodeIdx][0] ;
-     y0[nodeIdx] = X[nodeIdx][1] ;
-     z0[nodeIdx] = X[nodeIdx][2] ;
+  // We need initial positions for the nodes of all bricks adjacent to the
+  // slide faces (this is needed to determine the orientation of the faces).
+
+  for (int i = 0 ; i < numExtFaces ; ++i) {
+     int faceElem = extFacesToElement[2*i] ;
+     localIndex const * const elemNodes = elemsToNodes[faceElem] ;
+
+     for (int j = 0 ; j < nodesPerElem ; ++j) {
+        int nodeIdx = elemNodes[j] ;
+        x0[nodeIdx] = X[nodeIdx][0] ;
+        y0[nodeIdx] = X[nodeIdx][1] ;
+        z0[nodeIdx] = X[nodeIdx][2] ;
+     }
   }
 
   s_srcNodes->fieldCreateReal("fx") ;
@@ -178,15 +190,27 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   CopyPositionsToTribolSourceData(nodeManager) ;
   CopyForcesToTribolSourceData(nodeManager) ;
 
-  s_srcBricks->relationCreateFixed("bricksToNodes", 8, (int*)subRegion->nodeList().data(), s_srcNodes, vista::VISTA_COPIES) ;
+  int *bricksToNodes ;
+  vista::MemAlloc(numBricks*nodesPerElem, &bricksToNodes) ;
+  int bricksToNodesIdx = 0 ;
+
+  for (int i = 0 ; i < numBricks ; ++i) {
+     localIndex const * const elemNodes = elemsToNodes[i] ;
+
+     for (int j = 0 ; j < nodesPerElem ; ++j) {
+         bricksToNodes[bricksToNodesIdx++] = elemNodes[j] ;
+     }
+  }
+
+  s_srcBricks->relationCreateFixed("bricksToNodes", nodesPerElem, (int*)subRegion->nodeList().data(), s_srcNodes, vista::VISTA_COPIES) ;
 
   SlideWorldAdapter::CreateWorld(MPI_COMM_GEOSX, MPI_COMM_WORLD,
                                  4000, // comm tag 
                                  3, // dimension
                                  0, // axisym
                                  1, // numSS
-                                 4, // nodesPerFace
-                                 8, // nodesPerElem
+                                 nodesPerFace,
+                                 nodesPerElem,
                                  &cycle,
                                  &dt,
                                  &dt, // prevDt
@@ -469,7 +493,7 @@ void TribolCoupling::Cleanup()
    s_slideWorldSourceFaces = nullptr ;
 }
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 // @author Tony De Groot
 void TribolCoupling::InitCommSubset(MPI_Comm const mpiComm,
                                     MPI_Comm *myComm,
