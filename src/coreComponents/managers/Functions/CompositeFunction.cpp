@@ -132,7 +132,7 @@ void CompositeFunction::InitializeFunction()
   // Grab pointers to sub functions
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
   string_array const & functionNames = getReference<string_array>(keys::functionNames);
-  m_numSubFunctions = functionNames.size();
+  m_numSubFunctions = integer_conversion<localIndex>(functionNames.size());
   for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
     m_subFunctions.push_back(functionManager->GetGroup<FunctionBase>(functionNames[ii]));

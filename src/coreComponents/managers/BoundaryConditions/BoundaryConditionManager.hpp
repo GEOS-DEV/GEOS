@@ -180,7 +180,7 @@ public:
       {
         string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
 //        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
-        localIndex const targetPathLength = targetPath.size();
+        localIndex const targetPathLength = integer_conversion<localIndex>(targetPath.size());
         string const targetName = bc->GetFieldName();
 //        std::cout<<"targetName = "<<targetName<<std::endl;
 

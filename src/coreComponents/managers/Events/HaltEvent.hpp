@@ -68,7 +68,7 @@ public:
   struct viewKeyStruct
   {
     dataRepository::ViewKey maxRuntime = { "maxRuntime" };
-  } viewKeys;
+  } haltEventViewKeys;
 
 };
 
