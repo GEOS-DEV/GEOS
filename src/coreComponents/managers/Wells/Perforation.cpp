@@ -32,9 +32,9 @@ Perforation::Perforation(string const & name, dataRepository::ManagedGroup * con
     m_location(),
     m_transmissibility()
 {
-  RegisterViewWrapper( viewKeys.location.Key(), &m_location, false );
-  RegisterViewWrapper( viewKeys.transmissibility.Key(), &m_transmissibility, false );
-  RegisterViewWrapper( viewKeys.segmentName.Key(), &m_segmentName, false );
+  RegisterViewWrapper( viewKeysPerforation.location.Key(), &m_location, false );
+  RegisterViewWrapper( viewKeysPerforation.transmissibility.Key(), &m_transmissibility, false );
+  RegisterViewWrapper( viewKeysPerforation.segmentName.Key(), &m_segmentName, false );
 }
 
 Perforation::~Perforation()
@@ -46,8 +46,8 @@ void Perforation::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->AllocateChildNode( viewKeys.location.Key(),
-                              viewKeys.location.Key(),
+  docNode->AllocateChildNode( viewKeysPerforation.location.Key(),
+                              viewKeysPerforation.location.Key(),
                               -1,
                               "R1Tensor",
                               "R1Tensor",
@@ -59,8 +59,8 @@ void Perforation::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.transmissibility.Key(),
-                              viewKeys.transmissibility.Key(),
+  docNode->AllocateChildNode( viewKeysPerforation.transmissibility.Key(),
+                              viewKeysPerforation.transmissibility.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -72,8 +72,8 @@ void Perforation::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.segmentName.Key(),
-                              viewKeys.segmentName.Key(),
+  docNode->AllocateChildNode( viewKeysPerforation.segmentName.Key(),
+                              viewKeysPerforation.segmentName.Key(),
                               -1,
                               "string",
                               "string",

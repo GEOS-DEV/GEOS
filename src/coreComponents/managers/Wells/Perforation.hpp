@@ -62,7 +62,7 @@ public:
     dataRepository::ViewKey transmissibility = { transmissibilityString };
     dataRepository::ViewKey segmentName      = { segmentNameString      };
 
-  } viewKeys;
+  } viewKeysPerforation;
 
 private:
 

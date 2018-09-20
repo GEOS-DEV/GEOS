@@ -72,12 +72,12 @@ public:
     dataRepository::ViewKey pressure         = { pressureString         };
     dataRepository::ViewKey gravityDepth     = { gravityDepthString     };
 
-  } viewKeys;
+  } viewKeysSimpleWell;
 
   struct groupKeyStruct : public WellBase::groupKeyStruct
   {
 
-  } groupKeys;
+  } groupKeysSimpleWell;
 
 private:
 

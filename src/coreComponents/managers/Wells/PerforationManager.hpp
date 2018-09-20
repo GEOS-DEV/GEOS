@@ -47,7 +47,7 @@ public:
   {
     static constexpr auto perforationString = "Perforation";
 
-  } groupKeys;
+  } groupKeysPerfManager;
 
 private:
 

@@ -37,14 +37,14 @@ WellBase::WellBase(string const & name, dataRepository::ManagedGroup * const par
     m_typeString( "producer" ),
     m_type( Type::PRODUCER )
 {
-  RegisterViewWrapper( viewKeys.referenceDepth.Key(), &m_referenceDepth, false );
-  RegisterViewWrapper( viewKeys.type.Key(), &m_typeString, false );
-  RegisterViewWrapper( viewKeys.connectionElementRegion.Key(), &m_connectionElementRegion, false );
-  RegisterViewWrapper( viewKeys.connectionElementSubregion.Key(), &m_connectionElementSubregion, false );
-  RegisterViewWrapper( viewKeys.connectionElementIndex.Key(), &m_connectionElementIndex, false );
-  RegisterViewWrapper( viewKeys.connectionPerforationIndex.Key(), &m_connectionPerforationIndex, false );
+  RegisterViewWrapper( viewKeysWellBase.referenceDepth.Key(), &m_referenceDepth, false );
+  RegisterViewWrapper( viewKeysWellBase.type.Key(), &m_typeString, false );
+  RegisterViewWrapper( viewKeysWellBase.connectionElementRegion.Key(), &m_connectionElementRegion, false );
+  RegisterViewWrapper( viewKeysWellBase.connectionElementSubregion.Key(), &m_connectionElementSubregion, false );
+  RegisterViewWrapper( viewKeysWellBase.connectionElementIndex.Key(), &m_connectionElementIndex, false );
+  RegisterViewWrapper( viewKeysWellBase.connectionPerforationIndex.Key(), &m_connectionPerforationIndex, false );
 
-  RegisterGroup( groupKeys.perforations.Key(), &m_perfManager, false );
+  RegisterGroup( groupKeysWellBase.perforations.Key(), &m_perfManager, false );
 }
 
 WellBase::~WellBase()
@@ -58,8 +58,8 @@ void WellBase::FillDocumentationNode()
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->AllocateChildNode( viewKeys.referenceDepth.Key(),
-                              viewKeys.referenceDepth.Key(),
+  docNode->AllocateChildNode( viewKeysWellBase.referenceDepth.Key(),
+                              viewKeysWellBase.referenceDepth.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -71,8 +71,8 @@ void WellBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.type.Key(),
-                              viewKeys.type.Key(),
+  docNode->AllocateChildNode( viewKeysWellBase.type.Key(),
+                              viewKeysWellBase.type.Key(),
                               -1,
                               "string",
                               "string",

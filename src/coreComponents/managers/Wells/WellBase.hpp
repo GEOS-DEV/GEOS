@@ -88,7 +88,7 @@ public:
     dataRepository::ViewKey connectionElementIndex     = { connectionElementIndexString     };
     dataRepository::ViewKey connectionPerforationIndex = { connectionPerforationIndexString };
 
-  } viewKeys;
+  } viewKeysWellBase;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
@@ -97,7 +97,7 @@ public:
 
     dataRepository::GroupKey perforations = { perforationsString };
 
-  } groupKeys;
+  } groupKeysWellBase;
 
 protected:
 

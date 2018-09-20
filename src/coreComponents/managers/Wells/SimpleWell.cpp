@@ -54,8 +54,8 @@ void SimpleWell::FillDocumentationNode()
   docNode->setName("SimpleWell");
   docNode->setSchemaType("Node");
 
-  docNode->AllocateChildNode( viewKeys.pressure.Key(),
-                              viewKeys.pressure.Key(),
+  docNode->AllocateChildNode( viewKeysSimpleWell.pressure.Key(),
+                              viewKeysSimpleWell.pressure.Key(),
                               -1,
                               "real64_array",
                               "real64_array",
@@ -67,8 +67,8 @@ void SimpleWell::FillDocumentationNode()
                               0,
                               1 );
 
-  docNode->AllocateChildNode( viewKeys.gravityDepth.Key(),
-                              viewKeys.gravityDepth.Key(),
+  docNode->AllocateChildNode( viewKeysSimpleWell.gravityDepth.Key(),
+                              viewKeysSimpleWell.gravityDepth.Key(),
                               -1,
                               "real64_array",
                               "real64_array",
@@ -109,7 +109,7 @@ void SimpleWell::ConnectToCells( DomainPartition const * domain )
                                                                            viewKeyStruct::
                                                                            elementCenterString );
 
-  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeys.perforations );
+  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeysSimpleWell.perforations );
 
   // TODO Until we can properly trace perforations to cells,
   // just connect to the nearest cell center (this is NOT correct in general)
@@ -151,9 +151,9 @@ void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
 void SimpleWell::PrecomputeData(DomainPartition const * domain)
 {
   R1Tensor const & gravity = getGravityVector();
-  array1d<real64> & gravDepth = getReference<array1d<real64>>(viewKeys.gravityDepth);
+  array1d<real64> & gravDepth = getReference<array1d<real64>>(viewKeysSimpleWell.gravityDepth);
 
-  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeys.perforations );
+  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeysSimpleWell.perforations );
 
   for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
   {
@@ -170,8 +170,8 @@ void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, local
   ConstitutiveManager const * constitutiveManager =
     domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
 
-  auto & pres      = getReference<array1d<real64>>( viewKeys.pressure );
-  auto & gravDepth = getReference<array1d<real64>>( viewKeys.gravityDepth );
+  auto & pres      = getReference<array1d<real64>>( viewKeysSimpleWell.pressure );
+  auto & gravDepth = getReference<array1d<real64>>( viewKeysSimpleWell.gravityDepth );
 
   auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase const>( constitutiveManager );
 

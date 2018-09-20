@@ -122,12 +122,12 @@ void FluxApproximationBase::compute(DomainPartition * domain)
   WellManager * wellManager = domain->getMeshBody(0)->getMeshLevel(0)->getWellManager();
   wellManager->forSubGroups<WellBase>( [&] (WellBase * well) -> void
   {
-    PerforationManager * perfManager = well->GetGroup<PerforationManager>( well->groupKeys.perforations );
+    PerforationManager * perfManager = well->GetGroup<PerforationManager>( well->groupKeysWellBase.perforations );
 
-    auto const & elemRegion    = well->getReference<array1d<localIndex>>( well->viewKeys.connectionElementRegion );
-    auto const & elemSubregion = well->getReference<array1d<localIndex>>( well->viewKeys.connectionElementSubregion );
-    auto const & elemIndex     = well->getReference<array1d<localIndex>>( well->viewKeys.connectionElementIndex );
-    auto const & perfIndex     = well->getReference<array1d<localIndex>>( well->viewKeys.connectionPerforationIndex );
+    auto const & elemRegion    = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementRegion );
+    auto const & elemSubregion = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementSubregion );
+    auto const & elemIndex     = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementIndex );
+    auto const & perfIndex     = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionPerforationIndex );
 
     auto vw = well->RegisterViewWrapper<WellStencil>( keys::FVstencil );
     vw->setRestartFlags( RestartFlags::NO_WRITE );
