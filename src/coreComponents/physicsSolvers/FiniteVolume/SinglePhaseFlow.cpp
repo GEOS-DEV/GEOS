@@ -489,7 +489,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                 &gather.front(),
                                                 1 );
 
-  GEOS_ASSERT( numLocalRows == numLocalRowsToSend, "number of local rows inconsistent" );
+  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
 
   // find the first local row on this partition, and find the number of total global rows.
   localIndex firstLocalRow = 0;
@@ -528,7 +528,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
     }
   });
 
-  GEOS_ASSERT(localCount == numLocalRows, "Number of DOF assigned does not match numLocalRows" );
+  GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
 
 

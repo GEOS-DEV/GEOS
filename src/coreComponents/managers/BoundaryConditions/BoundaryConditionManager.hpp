@@ -230,8 +230,8 @@ ApplyBoundaryCondition( real64 const time,
     {
       string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
 //        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
-      localIndex const targetPathLength = targetPath.size();
-      string const targetName = bc->GetFieldName();
+        localIndex const targetPathLength = integer_conversion<localIndex>(targetPath.size());
+        string const targetName = bc->GetFieldName();
 //        std::cout<<"targetName = "<<targetName<<std::endl;
 
       if( ( isInitialCondition && fieldName=="" ) ||
@@ -253,9 +253,9 @@ ApplyBoundaryCondition( real64 const time,
           processedPath += "/" + targetPath[pathLevel];
 //            std::cout<<"processedPath="<<processedPath<<std::endl;
 
-          GEOS_ASSERT( targetGroup != nullptr,
-                       "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
-        }
+            GEOS_ERROR_IF( targetGroup == nullptr,
+                           "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
+          }
 
         dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );
         string_array setNames = bc->GetSetNames();
@@ -315,8 +315,8 @@ ApplyBoundaryCondition( real64 const time,
           processedPath += "/" + targetPath[pathLevel];
 //            std::cout<<"processedPath="<<processedPath<<std::endl;
 
-          GEOS_ASSERT( targetGroup != nullptr,
-                       "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
+          GEOS_ERROR_IF( targetGroup == nullptr,
+                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
         }
 
         dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );
