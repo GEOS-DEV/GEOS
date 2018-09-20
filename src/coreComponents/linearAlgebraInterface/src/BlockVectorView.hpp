@@ -145,7 +145,7 @@ public:
   /**
    * @brief Get global size.
    */
-  TrilinosInterface::laiGID globalSize();
+  typename LAI::laiGID globalSize();
 
   /**
    * @brief Get the vector corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
@@ -300,18 +300,18 @@ void BlockVectorView<LAI>::setBlock( typename LAI::laiLID blockIndex,
   m_vectors[blockIndex] = &vector;
 }
 
-// Accessor for block size
+// Accessor for block size (number of blocks)
 template< typename LAI >
 typename LAI::laiLID BlockVectorView<LAI>::blockSize() const
 {
-  return m_vectors.size();
+  return static_cast<typename LAI::laiLID>(m_vectors.size());
 }
 
-// Accessor for size.
+// Accessor for size (total number of  elements)
 template< typename LAI >
-TrilinosInterface::laiGID BlockVectorView<LAI>::globalSize(  )
+typename LAI::laiGID BlockVectorView<LAI>::globalSize(  )
 {
-  TrilinosInterface::laiGID size = 0;
+  typename LAI::laiGID size = 0;
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
     size = m_vectors[i]->globalSize() + size;
   return size;
