@@ -55,4 +55,4 @@ WellBase * WellManager::getWell(string const & name)
 }
 
 
-}
+} //namespace geosx
