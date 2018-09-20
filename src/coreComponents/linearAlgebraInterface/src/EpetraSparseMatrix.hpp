@@ -18,6 +18,10 @@
 
 /**
  * @file EpetraSparseMatrix.hpp
+ *
+ *  Created on: Jul 24, 2018
+ *  Author: Matthias Cremon
+ *
  */
 
 #ifndef EPETRASPARSEMATRIX_HPP_

@@ -20,7 +20,7 @@
  * TrilinosSolver.cpp
  *
  *  Created on: Aug 9, 2018
- *      Author: Matthias
+ *  Author: Matthias Cremon
  */
 
 #include "TrilinosSolver.hpp"
