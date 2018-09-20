@@ -26,6 +26,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
 
+#include <managers/Wells/WellManager.hpp>
 #include "NodeManager.hpp"
 #include "EdgeManager.hpp"
 #include "FaceManager.hpp"
@@ -68,7 +69,7 @@ public:
 
     // This key is defined in problem manager:
     static constexpr auto elemManagerString = "ElementRegions";
-    static constexpr auto wellManagerString = "Wells";
+    static constexpr auto wellManagerString = dataRepository::keys::wellManager;
 
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};

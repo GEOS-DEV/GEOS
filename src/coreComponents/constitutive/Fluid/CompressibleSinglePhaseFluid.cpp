@@ -191,7 +191,7 @@ void CompressibleSinglePhaseFluid::ReadXML_PostProcess()
 void CompressibleSinglePhaseFluid::FluidDensityCompute( real64 const & pres,
                                                         localIndex const i,
                                                         real64 & dens,
-                                                        real64 & dDens_dPres )
+                                                        real64 & dDens_dPres ) const
 {
   m_densityRelation.Compute( pres, dens, dDens_dPres );
 }
@@ -200,7 +200,7 @@ void CompressibleSinglePhaseFluid::FluidDensityCompute( real64 const & pres,
 void CompressibleSinglePhaseFluid::FluidViscosityCompute( real64 const & pres,
                                                           localIndex const i,
                                                           real64 & visc,
-                                                          real64 & dVisc_dPres )
+                                                          real64 & dVisc_dPres ) const
 {
   m_viscosityRelation.Compute( pres, visc, dVisc_dPres );
 }

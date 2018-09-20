@@ -29,6 +29,14 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+namespace keys
+{
+  static constexpr auto wellManager = "Wells";
+}
+}
+
 class WellBase;
 
 class WellManager : public dataRepository::ManagedGroup

@@ -93,18 +93,18 @@ public:
   virtual void FluidDensityCompute( real64 const & pres,
                                     localIndex const i,
                                     real64 & dens,
-                                    real64 & dDens_dPres ) {}
+                                    real64 & dDens_dPres ) const {}
 
   virtual void FluidViscosityCompute( real64 const & pres,
                                       localIndex const i,
                                       real64 & visc,
-                                      real64 & dVisc_dPres ) {}
+                                      real64 & dVisc_dPres ) const {}
 
 
   virtual void PoreVolumeMultiplierCompute( real64 const & pres,
                                             localIndex const i,
                                             real64 & poro,
-                                            real64 & dPVMult_dPres ) {}
+                                            real64 & dPVMult_dPres ) const {}
 
   virtual void PressureUpdatePoint( real64 const & pres,
                                     localIndex const k,

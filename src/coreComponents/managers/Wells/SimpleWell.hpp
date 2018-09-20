@@ -60,6 +60,9 @@ public:
 
   virtual void FinalInitialization( ManagedGroup * const group ) override;
 
+  // update each connection pressure from bhp and hydrostatic head
+  void UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex );
+
   struct viewKeyStruct : public WellBase::viewKeyStruct
   {
 

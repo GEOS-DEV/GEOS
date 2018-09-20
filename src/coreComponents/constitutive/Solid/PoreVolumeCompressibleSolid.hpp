@@ -63,7 +63,7 @@ public:
   virtual void PoreVolumeMultiplierCompute(real64 const & pres,
                                            localIndex const i,
                                            real64 & poro,
-                                           real64 & dPVMult_dPres) override final;
+                                           real64 & dPVMult_dPres) const override final;
 
   virtual void PressureUpdatePoint(real64 const & pres,
                                    localIndex const k,

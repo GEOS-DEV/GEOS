@@ -136,16 +136,20 @@ public:
                                       DomainPartition * const domain ) override;
   /**@}*/
 
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void SetupSystem( real64 const & time_n,
+                    real64 const & dt,
+                    DomainPartition * const domain,
+                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system
    * @param domain the domain partition
    * @param sparsity the sparsity pattern matrix
    */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
+  void SetSparsityPattern( real64 const & time_n,
+                           real64 const & dt,
+                           DomainPartition const * const domain,
+                           Epetra_FECrsGraph * const sparsity);
 
   /**
    * @brief sets the dof indices for this solver
@@ -170,21 +174,34 @@ public:
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param object the target ObjectManager for the application of the BC.
    * @param time current time
+   * @param dt time step size
    * @param blockSystem the entire block system
    */
   void ApplyDirichletBC_implicit( DomainPartition * object,
                                   real64 const time, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
    * @param domain the domain
    * @param time current time
+   * @param dt time step size
    * @param blockSystem the entire block system
    */
-  void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
-                                     real64 const time, real64 const dt,
-                                     systemSolverInterface::EpetraBlockSystem * const blockSystem);
+  void ApplyFaceBC_implicit( DomainPartition * domain,
+                             real64 const time, real64 const dt,
+                             systemSolverInterface::EpetraBlockSystem * const blockSystem );
+
+  /**
+   * @brief Function to perform the application of all well BCs
+   * @param domain the domain
+   * @param time_n current time
+   * @param dt time step size
+   * @param blockSystem the entire block system
+   */
+  void ApplyWellBC_implicit( DomainPartition * domain,
+                             real64 const time_n, real64 const dt,
+                             systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
 
   struct viewKeyStruct : SolverBase::viewKeyStruct

@@ -119,7 +119,7 @@ void PoreVolumeCompressibleSolid::ReadXML_PostProcess()
 void PoreVolumeCompressibleSolid::PoreVolumeMultiplierCompute(real64 const & pres,
                                                               localIndex const i,
                                                               real64 & poro,
-                                                              real64 & dPVMult_dPres)
+                                                              real64 & dPVMult_dPres) const
 {
   m_poreVolumeRelation.Compute( pres, poro, dPVMult_dPres );
 }

@@ -168,60 +168,37 @@ public:
                                dataRepository::ManagedGroup * domain,
                                string const & fieldPath,
                                string const & fieldName,
-                               LAMBDA && lambda ) const
-  {
-    for( auto & subGroup : this->GetSubGroups() )
-    {
-      BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
-      int const isInitialCondition = bc->initialCondition();
+                               LAMBDA && lambda ) const;
 
-      if( ( isInitialCondition && fieldPath=="" ) ||
-          ( !isInitialCondition && bc->GetObjectPath().find(fieldPath) != string::npos ) )
-      {
-        string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
-//        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
-        localIndex const targetPathLength = targetPath.size();
-        string const targetName = bc->GetFieldName();
-//        std::cout<<"targetName = "<<targetName<<std::endl;
-
-        if( ( isInitialCondition && fieldName=="" ) ||
-            ( !isInitialCondition && time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
-        {
-//          std::cout<<bc->getName()<<std::endl;
-
-          MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
-                                        getMeshBody( 0 )->getMeshLevel( 0 );
-
-          dataRepository::ManagedGroup * targetGroup = meshLevel;
-
-          string processedPath;
-          for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
-          {
-//            std::cout<<targetPath[pathLevel]<<std::endl;
-
-            targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
-            processedPath += "/" + targetPath[pathLevel];
-//            std::cout<<"processedPath="<<processedPath<<std::endl;
-
-            GEOS_ASSERT( targetGroup != nullptr,
-                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
-          }
-
-          dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );
-          string_array setNames = bc->GetSetNames();
-          for( auto & setName : setNames )
-          {
-            dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
-            if( setWrapper != nullptr )
-            {
-              set<localIndex> const & targetSet = setWrapper->reference();
-              lambda( bc, setName, targetSet, targetGroup, targetName );
-            }
-          }
-        }
-      }
-    }
-  }
+  /**
+   * @brief Same as previous one, but with a const domain (when user lambda does not change anything)
+   * @tparam LAMBDA The type of the lambda function
+   * @param time The time at which the boundary condition will be evaluated. For instance if the
+   *             boundary condition is a time dependent function, this is the evaluation time.
+   * @param domain The DomainParition object.
+   * @param fieldPath The path to the object that contains the variable described in fieldName. This
+   *                  path need not be the complete path, but rather the check that is performed is
+   *                  that the fieldPath specified is contained in the BC string that specifies the
+   *                  path from the actual BC specification. In other words, the fieldPath variable
+   *                  can be a substring of the path specified in the BC, and that will be
+   *                  sufficient to proceed with the application of the BC.
+   * @param fieldName The name of the field/variable that the boundary condition will be applied to.
+   *                  It may not be necessary that this name is in the data repository, as the user
+   *                  supplied lambda may apply whatever it condition it would like. However, this
+   *                  name is used for comparing against the value given in the BC specification.
+   * @param lambda A lambda function that defines the application of the boundary condition.
+   *
+   * This function loops through all available boundary conditions, checks to see if the BC/IC
+   * should be applied, and applies the condition. More specifically, this function simply checks
+   * values of fieldPath,fieldName, against each BoundaryConditionBase object contained in the
+   * BoundaryConditionManager and decides on whether or not to call the user defined lambda.
+   */
+  template< typename LAMBDA >
+  void ApplyBoundaryCondition( real64 const time,
+                               dataRepository::ManagedGroup const * domain,
+                               string const & fieldPath,
+                               string const & fieldName,
+                               LAMBDA && lambda ) const;
 
 private:
   /**
@@ -233,6 +210,130 @@ private:
   virtual ~BoundaryConditionManager() override;
 
 };
+
+template< typename LAMBDA >
+void
+BoundaryConditionManager::
+ApplyBoundaryCondition( real64 const time,
+                        dataRepository::ManagedGroup * domain,
+                        string const & fieldPath,
+                        string const & fieldName,
+                        LAMBDA && lambda ) const
+{
+  for( auto & subGroup : this->GetSubGroups() )
+  {
+    BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
+    int const isInitialCondition = bc->initialCondition();
+
+    if( ( isInitialCondition && fieldPath=="" ) ||
+        ( !isInitialCondition && bc->GetObjectPath().find(fieldPath) != string::npos ) )
+    {
+      string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
+//        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
+      localIndex const targetPathLength = targetPath.size();
+      string const targetName = bc->GetFieldName();
+//        std::cout<<"targetName = "<<targetName<<std::endl;
+
+      if( ( isInitialCondition && fieldName=="" ) ||
+          ( !isInitialCondition && time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
+      {
+//          std::cout<<bc->getName()<<std::endl;
+
+        MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
+          getMeshBody( 0 )->getMeshLevel( 0 );
+
+        dataRepository::ManagedGroup * targetGroup = meshLevel;
+
+        string processedPath;
+        for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
+        {
+//            std::cout<<targetPath[pathLevel]<<std::endl;
+
+          targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
+          processedPath += "/" + targetPath[pathLevel];
+//            std::cout<<"processedPath="<<processedPath<<std::endl;
+
+          GEOS_ASSERT( targetGroup != nullptr,
+                       "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
+        }
+
+        dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );
+        string_array setNames = bc->GetSetNames();
+        for( auto & setName : setNames )
+        {
+          dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+          if( setWrapper != nullptr )
+          {
+            set<localIndex> const & targetSet = setWrapper->reference();
+            lambda( bc, setName, targetSet, targetGroup, targetName );
+          }
+        }
+      }
+    }
+  }
+}
+
+template<typename LAMBDA>
+void
+BoundaryConditionManager::
+ApplyBoundaryCondition( real64 const time,
+                        dataRepository::ManagedGroup const * domain,
+                        string const & fieldPath,
+                        string const & fieldName,
+                        LAMBDA && lambda) const
+{
+  for( auto & subGroup : this->GetSubGroups() )
+  {
+    BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
+    int const isInitialCondition = bc->initialCondition();
+
+    if( ( isInitialCondition && fieldPath=="" ) ||
+        ( !isInitialCondition && bc->GetObjectPath().find(fieldPath) != string::npos ) )
+    {
+      string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
+//        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
+      localIndex const targetPathLength = targetPath.size();
+      string const targetName = bc->GetFieldName();
+//        std::cout<<"targetName = "<<targetName<<std::endl;
+
+      if( ( isInitialCondition && fieldName=="" ) ||
+          ( !isInitialCondition && time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
+      {
+//          std::cout<<bc->getName()<<std::endl;
+
+        MeshLevel const * const meshLevel = domain->group_cast<DomainPartition const *>()->
+          getMeshBody( 0 )->getMeshLevel( 0 );
+
+        dataRepository::ManagedGroup const * targetGroup = meshLevel;
+
+        string processedPath;
+        for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
+        {
+//            std::cout<<targetPath[pathLevel]<<std::endl;
+
+          targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
+          processedPath += "/" + targetPath[pathLevel];
+//            std::cout<<"processedPath="<<processedPath<<std::endl;
+
+          GEOS_ASSERT( targetGroup != nullptr,
+                       "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
+        }
+
+        dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );
+        string_array setNames = bc->GetSetNames();
+        for( auto & setName : setNames )
+        {
+          dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+          if( setWrapper != nullptr )
+          {
+            set<localIndex> const & targetSet = setWrapper->reference();
+            lambda( bc, setName, targetSet, targetGroup, targetName );
+          }
+        }
+      }
+    }
+  }
+}
 
 template< typename LAMBDA >
 void

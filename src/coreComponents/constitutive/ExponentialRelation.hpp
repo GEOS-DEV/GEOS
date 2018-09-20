@@ -85,27 +85,27 @@ public:
 
   // *** no-derivative computes ***
 
-  void Compute( const RealType & x, RealType & y );
+  void Compute( const RealType & x, RealType & y ) const;
 
-  void Inverse( const RealType & y, RealType & x );
-
-  template<typename Policy>
-  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr );
+  void Inverse( const RealType & y, RealType & x ) const;
 
   template<typename Policy>
-  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr );
+  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr ) const;
+
+  template<typename Policy>
+  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr ) const;
 
   // *** derivative computes ***
 
-  void Compute( const RealType & x, RealType & y, RealType & dy_dx );
+  void Compute( const RealType & x, RealType & y, RealType & dy_dx ) const;
 
-  void Inverse( const RealType & y, RealType & x, RealType & dx_dy );
-
-  template<typename Policy>
-  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr, PtrType dy_dx_ptr );
+  void Inverse( const RealType & y, RealType & x, RealType & dx_dy ) const;
 
   template<typename Policy>
-  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr, PtrType dx_dy_ptr );
+  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr, PtrType dy_dx_ptr ) const;
+
+  template<typename Policy>
+  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr, PtrType dx_dy_ptr ) const;
 
 private:
 

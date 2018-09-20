@@ -36,6 +36,8 @@
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "managers/Wells/WellManager.hpp"
+#include "managers/Wells/SimpleWell.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
@@ -412,7 +414,7 @@ ImplicitStepSetup( real64 const& time_n,
   });
 
   // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  SetupSystem(time_n, dt, domain, blockSystem);
 }
 
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
@@ -530,8 +532,10 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
 }
 
 
-void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
-                                         EpetraBlockSystem * const blockSystem )
+void SinglePhaseFlow::SetupSystem( real64 const & time_n,
+                                   real64 const & dt,
+                                   DomainPartition * const domain,
+                                   EpetraBlockSystem * const blockSystem )
 {
   // assume that there is only a single MeshLevel for now
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -585,7 +589,7 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
 
 
   // set the sparsity patter
-  SetSparsityPattern( domain, sparsity );
+  SetSparsityPattern(time_n, dt, domain, sparsity);
 
   // assemble the global sparsity matrix
   sparsity->GlobalAssemble();
@@ -606,8 +610,10 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
 
 }
 
-void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
-                                               Epetra_FECrsGraph * const sparsity )
+void SinglePhaseFlow::SetSparsityPattern( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition const * const domain,
+                                          Epetra_FECrsGraph * const sparsity)
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
@@ -671,9 +677,23 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   });
 
   // add additional connectivity resulting from boundary stencils
-  fluxApprox->forBoundaryStencils([&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection) -> void
+  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  bcManager->ApplyBoundaryCondition(time_n + dt,
+                                    domain,
+                                    "faceManager",
+                                    viewKeyStruct::facePressureString,
+                                    [&]( BoundaryConditionBase const * bc,
+                                         string const & setName,
+                                         set<localIndex> const &,
+                                         ManagedGroup const *,
+                                         string const & ) -> void
   {
-    boundaryStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
+    if (!fluxApprox->hasBoundaryStencil(setName))
+      return;
+
+    FluxApproximationBase::BoundaryStencil const & bcStencilCollection = fluxApprox->getBoundaryStencil(setName);
+
+    bcStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
     {
       elementLocalDofIndexRow.resize(1);
       stencil.forConnected([&] (PointDescriptor const & point, localIndex const i) -> void
@@ -697,11 +717,12 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
         }
       });
 
-      sparsity->InsertGlobalIndices(1,
-                                    elementLocalDofIndexRow.data(),
-                                    integer_conversion<int>(counter),
-                                    elementLocalDofIndexCol.data());
+      sparsity->InsertGlobalIndices( 1,
+                                     elementLocalDofIndexRow.data(),
+                                     integer_conversion<int>(counter),
+                                     elementLocalDofIndexCol.data() );
     });
+
   });
 }
 
@@ -941,8 +962,9 @@ void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   // apply pressure boundary conditions.
-  ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
-  ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
+  ApplyDirichletBC_implicit( domain, time_n, dt, blockSystem );
+  ApplyFaceBC_implicit( domain, time_n, dt, blockSystem );
+  ApplyWellBC_implicit( domain, time_n, dt, blockSystem );
 
   if (verboseLevel() >= 2)
   {
@@ -950,8 +972,8 @@ void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
                                                               BlockIDs::fluidPressureBlock );
     Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-    dRdP->Print(std::cout);
-    residual->Print(std::cout);
+    dRdP->Print( std::cout );
+    residual->Print( std::cout );
   }
 
 }
@@ -1020,9 +1042,9 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
 }
 
 
-void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
-                                                    real64 const time, real64 const dt,
-                                                    EpetraBlockSystem * const blockSystem)
+void SinglePhaseFlow::ApplyFaceBC_implicit(DomainPartition * domain,
+                                           real64 const time, real64 const dt,
+                                           EpetraBlockSystem * const blockSystem)
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -1033,57 +1055,49 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
   array2d<localIndex> const & elemList           = faceManager->elementList();
 
-  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
-                                                                                 viewKeyStruct::
-                                                                                 ghostRankString);
+  integer_array const & faceGhostRank =
+    faceManager->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   ConstitutiveManager * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  constitutiveManager = domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
 
   NumericalMethodsManager * const numericalMethodManager = domain->
-    getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+    getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager * const fvManager = numericalMethodManager->
-    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+    GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
 
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
+  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
-                                                               BlockIDs::fluidPressureBlock);
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+                                                                BlockIDs::fluidPressureBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-  auto
-    elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
-                                                                       viewKeyStruct::
-                                                                       ghostRankString );
+  auto elemGhostRank =
+    elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   auto blockLocalDofNumber = elemManager->
-    ConstructViewAccessor<globalIndex_array>(viewKeyStruct::
-                                             blockLocalDofNumberString);
+    ConstructViewAccessor<globalIndex_array>( viewKeyStruct::blockLocalDofNumberString );
 
-  auto pres      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::pressureString);
-  auto dPres     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaPressureString);
-  auto densOld   = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::densityString);
-  auto poroOld   = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::porosityString);
-  auto poroRef   = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::referencePorosityString);
-  auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
-  auto volume    = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
+  auto pres      = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::pressureString );
+  auto dPres     = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::deltaPressureString );
+  auto gravDepth = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::gravityDepthString );
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
-    dens = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
-                                                                          constitutiveManager );
+  auto const dens =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
+                                                                   constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
-    dDens_dPres = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
-                                                                                 constitutiveManager);
+  auto const dDens_dPres =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
+                                                                   constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
-    visc = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::viscosityString,
-                                                                          constitutiveManager);
+  auto const visc =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::viscosityString,
+                                                                   constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
-    dVisc_dPres = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
-                                                                                 constitutiveManager);
+  auto const dVisc_dPres =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
+                                                                   constitutiveManager );
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
     constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
@@ -1162,7 +1176,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                          ManagedGroup * const,
                                          string const & ) -> void
   {
-    if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
+    if (!fluxApprox->hasBoundaryStencil(setName))
       return;
 
     FluxApproximationBase::BoundaryStencil const & stencilCollection = fluxApprox->getBoundaryStencil(setName);
@@ -1313,6 +1327,67 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   });
 }
 
+
+void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
+                                            real64 const time_n,
+                                            real64 const dt,
+                                            EpetraBlockSystem * const blockSystem)
+{
+  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  WellManager * const wellManager = mesh->getWellManager();
+
+  ConstitutiveManager * const
+    constitutiveManager = domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
+
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+                                                                BlockIDs::fluidPressureBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+
+  auto elemGhostRank =
+    elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  auto blockLocalDofNumber = elemManager->
+    ConstructViewAccessor<globalIndex_array>( viewKeyStruct::blockLocalDofNumberString );
+
+  auto pres      = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::pressureString );
+  auto dPres     = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::deltaPressureString );
+  auto gravDepth = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::gravityDepthString );
+
+  auto const dens =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
+                                                                   constitutiveManager );
+
+  auto const dDens_dPres =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
+                                                                   constitutiveManager );
+
+  auto const visc =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::viscosityString,
+                                                                   constitutiveManager );
+
+  auto const dVisc_dPres =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
+                                                                   constitutiveManager );
+
+  wellManager->forSubGroups<SimpleWell>( [&] ( SimpleWell * well) -> void
+  {
+    bcManager->ApplyBoundaryConditionToField( time_n + dt,
+                                              domain,
+                                              string(keys::wellManager) + '/' + well->getName(),
+                                              SimpleWell::viewKeyStruct::pressureString );
+
+    well->UpdateConnectionPressure( domain, m_fluidIndex );
+
+    auto const & wellStencil = well->getReference<FluxApproximationBase::WellStencil>( keys::FVstencil );
+
+    wellStencil.forAll( [&] ( FluxApproximationBase::WellStencil::Accessor stencil ) -> void
+    {
+      // TODO compute and apply well flux
+    });
+  });
+}
 
 real64
 SinglePhaseFlow::

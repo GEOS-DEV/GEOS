@@ -69,7 +69,7 @@ public:
   R1Tensor const & getGravityVector() const;
 
   real64 getReferenceDepth() const { return m_referenceDepth; }
-  Type getType() const { return m_type; };
+  Type getType() const { return m_type; }
 
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {

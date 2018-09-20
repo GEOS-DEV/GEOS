@@ -213,7 +213,7 @@ void forall_compute( I first, I last, Lambda lambda )
 }
 
 template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, RealType & y )
+void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, RealType & y ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {
@@ -222,7 +222,7 @@ void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, Real
 }
 
 template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, RealType & x )
+void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, RealType & x ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {
@@ -232,7 +232,7 @@ void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, Real
 
 template<typename IndexType, typename RealType>
 template<typename Policy>
-void ExponentialRelation<IndexType, RealType>::BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr )
+void ExponentialRelation<IndexType, RealType>::BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {
@@ -246,7 +246,7 @@ void ExponentialRelation<IndexType, RealType>::BatchCompute( IndexType size, Con
 
 template<typename IndexType, typename RealType>
 template<typename Policy>
-void ExponentialRelation<IndexType, RealType>::BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr )
+void ExponentialRelation<IndexType, RealType>::BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {
@@ -259,7 +259,7 @@ void ExponentialRelation<IndexType, RealType>::BatchInverse( IndexType size, Con
 }
 
 template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, RealType & y, RealType & dy_dx )
+void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, RealType & y, RealType & dy_dx ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {
@@ -269,7 +269,7 @@ void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, Real
 }
 
 template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, RealType & x, RealType & dx_dy )
+void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, RealType & x, RealType & dx_dy ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {
@@ -281,7 +281,7 @@ void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, Real
 template<typename IndexType, typename RealType>
 template<typename Policy>
 void ExponentialRelation<IndexType, RealType>::BatchCompute( IndexType size, ConstPtrType x_ptr,
-                                                             PtrType y_ptr, PtrType dy_dx_ptr )
+                                                             PtrType y_ptr, PtrType dy_dx_ptr ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {
@@ -296,7 +296,7 @@ void ExponentialRelation<IndexType, RealType>::BatchCompute( IndexType size, Con
 template<typename IndexType, typename RealType>
 template<typename Policy>
 void ExponentialRelation<IndexType, RealType>::BatchInverse( IndexType size, ConstPtrType y_ptr,
-                                                             PtrType x_ptr, PtrType dx_dy_ptr )
+                                                             PtrType x_ptr, PtrType dx_dy_ptr ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
       {

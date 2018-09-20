@@ -62,12 +62,12 @@ public:
   virtual void FluidDensityCompute( real64 const & pres,
                                     localIndex const i,
                                     real64 & dens,
-                                    real64 & dDens_dPres ) override final;
+                                    real64 & dDens_dPres ) const override final;
 
   virtual void FluidViscosityCompute( real64 const & pres,
                                       localIndex const i,
                                       real64 & visc,
-                                      real64 & dVisc_dPres ) override final;
+                                      real64 & dVisc_dPres ) const override final;
 
   virtual void PressureUpdatePoint( real64 const & pres,
                                     localIndex const k,

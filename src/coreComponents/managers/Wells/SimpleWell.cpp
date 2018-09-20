@@ -24,6 +24,7 @@
 #include "SimpleWell.hpp"
 #include "Perforation.hpp"
 
+#include "constitutive/ConstitutiveManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "math/TensorT/TensorBaseT.h"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -32,6 +33,7 @@ namespace geosx
 {
 
 using namespace dataRepository;
+using namespace constitutive;
 
 SimpleWell::SimpleWell(string const & name, dataRepository::ManagedGroup * const parent)
   : WellBase(name, parent)
@@ -84,7 +86,7 @@ const string SimpleWell::getCatalogName() const
   return CatalogName();
 }
 
-void SimpleWell::InitializePostSubGroups(ManagedGroup * const problemManager)
+void SimpleWell::InitializePostSubGroups( ManagedGroup * const problemManager )
 {
   WellBase::InitializePostSubGroups(problemManager);
 
@@ -156,7 +158,36 @@ void SimpleWell::PrecomputeData(DomainPartition const * domain)
   for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
   {
     Perforation const * perf = perfManager->GetGroup<Perforation>(iconn);
-    gravDepth[iconn] = Dot(perf->getLocation(), gravity);
+    gravDepth[iconn] = Dot( perf->getLocation(), gravity );
+  }
+}
+
+void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex )
+{
+  MeshLevel const * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const * elemManager = mesh->getElemManager();
+
+  ConstitutiveManager const * constitutiveManager =
+    domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
+
+  auto & pres      = getReference<array1d<real64>>( viewKeys.pressure );
+  auto & gravDepth = getReference<array1d<real64>>( viewKeys.gravityDepth );
+
+  auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase const>( constitutiveManager );
+
+  R1Tensor const & gravity = getGravityVector();
+  R1Tensor const & refDepth = { 0, 0, m_referenceDepth };
+  real64 const refGravDepth = Dot( refDepth, gravity );
+
+  // ECLIPSE 100/300 treatment: use density at BHP to compute hydrostatic head
+  real64 dens, dummy;
+  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
+  {
+    constitutiveRelations[m_connectionElementRegion[iconn]]
+                         [m_connectionElementSubregion[iconn]]
+                         [fluidIndex]->FluidDensityCompute( pres[iconn], m_connectionElementIndex[iconn], dens, dummy );
+
+    pres[iconn] += dens * (gravDepth[iconn] - refGravDepth);
   }
 }
 
