@@ -138,9 +138,9 @@ RAJA_INLINE void structuredElemToNodes(localIndex nodeList[8], localIndex k, loc
 {
   
   //Convert 1D Index to 3D                                                                                    
-  globalIndex x = k % nx;
-  globalIndex y = (k / nx) % ny;
-  globalIndex z = k / (nx * ny);
+  localIndex x = k % nx;
+  localIndex y = (k / nx) % ny;
+  localIndex z = k / (nx * ny);
   
   //Compute node ids
   nodeList[0] = x + nx*(y + z*nx);
