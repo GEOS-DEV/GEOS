@@ -107,6 +107,17 @@ public:
               real64 &result );
 
   /**
+   * @brief Inf-norm of the block vector.
+   */
+  void normInf( real64 &result );
+
+  /**
+   * @brief Inf-norm of the vector corresponding to block (<tt>blockIndex</tt>).
+   */
+  void normInf( typename LAI::laiLID blockIndex,
+                real64 &result );
+
+  /**
    * @brief Update the block vector.
    */
   void update( real64 const alpha,
@@ -236,6 +247,29 @@ void BlockVectorView<LAI>::norm2( real64 &result )
     accum = accum + temp*temp;
   }
   result = std::sqrt( accum );
+}
+
+// Compute the 2 norm of one block vector.
+template< typename LAI >
+void BlockVectorView<LAI>::normInf( typename LAI::laiLID blockIndex,
+                                    real64 &result )
+{
+  m_vectors[blockIndex]->normInf( result );
+}
+
+// Compute the 2 norm of the block vector.
+template< typename LAI >
+void BlockVectorView<LAI>::normInf( real64 &result )
+{
+  real64 temp;
+  result = 0;
+  temp = 0;
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
+  {
+    m_vectors[i]->normInf( temp );
+    if (temp > result)
+      result = temp;
+  }
 }
 
 // Update a the vector.
