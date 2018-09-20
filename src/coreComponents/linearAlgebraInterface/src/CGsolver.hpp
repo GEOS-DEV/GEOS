@@ -16,11 +16,11 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CGsolver.hpp
+/**
+ * @file CGsolver.hpp
  *
  *  Created on: Sep 12, 2018
- *      Author: Matthias
+ *      Author: Matthias Cremon
  */
 
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_CGSOLVER_HPP_
@@ -36,6 +36,10 @@ namespace geosx
  * \class CGsolver
  * \brief This class creates and provides basic support for block
  *        CG (templated on the LA interface).
+ * \note  The notation is consistent with "Iterative Methods for
+ *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
+ *        and "Iterative Methods for Sparse Linear Systems"
+ *        from Y. Saad (2003).
  */
 
 template< typename LAI >
@@ -63,7 +67,7 @@ public:
   //@}
 
   /**
-   * @brief Solve.
+   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> using monolithic GEOSX matrices.
    *
    * Solves the system <tt>M^{-1}(Ax - b) = 0</tt> using monolithic GEOSX matrices.
    *
@@ -78,7 +82,7 @@ public:
               ParallelMatrix const &M );
 
   /**
-   * @brief Solve.
+   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> using block GEOSX matrices.
    *
    * Solves the system <tt>M^{-1}(Ax - b) = 0</tt> using block GEOSX matrices.
    *

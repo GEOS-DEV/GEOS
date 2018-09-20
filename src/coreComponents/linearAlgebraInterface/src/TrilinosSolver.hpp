@@ -16,15 +16,15 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * TrilinosSolver.hpp
+/**
+ * @file TrilinosSolver.hpp
  *
  *  Created on: Aug 9, 2018
- *      Author: Matthias
+ *      Author: Matthias Cremon
  */
 
-#ifndef TRILINOSSOLVER_HPP_
-#define TRILINOSSOLVER_HPP_
+#ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSSOLVER_HPP_
+#define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSSOLVER_HPP_
 
 #include "EpetraSparseMatrix.hpp"
 #include "EpetraVector.hpp"

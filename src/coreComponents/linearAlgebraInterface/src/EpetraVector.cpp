@@ -18,6 +18,9 @@
 
 /**
  * @file EpetraVector.cpp
+ *
+ *  Created on: Jul 24, 2018
+ *  Author: Matthias Cremon
  */
 
 #include "EpetraVector.hpp"

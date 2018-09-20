@@ -16,11 +16,11 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * testLAOperations.hpp
+/**
+ * @file testLAOperations.hpp
  *
  *  Created on: Sep 19, 2018
- *      Author: Matthias
+ *      Author: Matthias Cremon
  */
 
 #include "gtest/gtest.h"
@@ -360,7 +360,7 @@ void testGEOSXSolvers()
 
   // Create Dummy Laplace matrix (5 points stencil)
   // Size of the mesh
-  laiGID n = 200;
+  laiGID n = 100;
   // Size of the problem
   laiGID N = n*n;
 
@@ -449,7 +449,7 @@ void testGEOSXBlockSolvers()
   MPI_Comm comm = test_comm;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  typename LAI::laiGID n = 200;
+  typename LAI::laiGID n = 100;
   typename LAI::laiGID N = n*n;
 
   // Compute a 2D Laplace operator (symmetric) for testing purposes
