@@ -319,14 +319,14 @@ void testNativeSolvers()
 
   real64 normDirectSol;
   solDirect.normInf( normDirectSol );
-  EXPECT_TRUE( std::fabs( normDirectSol - 1 ) <= 1e-8 );
+  EXPECT_TRUE( std::fabs( normDirectSol - 1 ) <= 1e-6 );
 
   // Test clearRow
   testMatrix.clearRow( 2*N/4+n, 2.0 );
   testMatrix.getLocalRow(static_cast<laiLID>( n ),numValRown,vecValuesRown,vecIndicesRown);
   if ( rank == 2 )
   {
-    EXPECT_TRUE( std::fabs( vecValuesRown[2] - 8.0 ) <= 1e-8 );
+    EXPECT_TRUE( std::fabs( vecValuesRown[2] - 8.0 ) <= 1e-6 );
   }
 
   //MPI_Finalize();
@@ -404,10 +404,20 @@ void testGEOSXSolvers()
   // Solve the left-preconditioned system with CG
   testCG.solve( testMatrix, solCG, b, preconditioner );
 
+  // Check if the inf norm is 1 (expected solution is a vector of 1).
+  real64 normCG;
+  solCG.normInf( normCG );
+  EXPECT_TRUE( std::fabs( normCG - 1 ) <= 1e-6 );
+
   // Create BiCGSTAB solver object
   BiCGSTABsolver<TrilinosInterface> testBiCGSTAB;
   // Solve the left-preconditioned system with BiCGSTAB
   testBiCGSTAB.solve( testMatrix, solBiCGSTAB, b, preconditioner );
+
+  // Check if the inf norm is 1 (expected solution is a vector of 1).
+  real64 normBiCGSTAB;
+  solBiCGSTAB.normInf( normBiCGSTAB );
+  EXPECT_TRUE( std::fabs( normBiCGSTAB - 1 ) <= 1e-6 );
 
   //MPI_Finalize();
 
@@ -520,10 +530,20 @@ void testGEOSXBlockSolvers()
   // Solve the left-preconditioned block system with CG
   testCG.solve( blockMatrix, blockSolutionCG, blockRhs, blockPreconditioner );
 
+  // Check if the inf norm is 0.5 (expected solution is a vector of 0.5).
+  real64 normCG;
+  blockSolutionCG.normInf( normCG );
+  EXPECT_TRUE( std::fabs( normCG - 0.5 ) <= 1e-6 );
+
   // Create block BiCGSTAB solver object
   BiCGSTABsolver<TrilinosInterface> testBiCGSTAB;
   // Solve the left-preconditioned block system with BiCGSTAB
   testBiCGSTAB.solve( blockMatrix, blockSolutionBiCGSTAB, blockRhs, blockPreconditioner );
+
+  // Check if the inf norm is 0.5 (expected solution is a vector of 0.5).
+  real64 normBiCGSTAB;
+  blockSolutionBiCGSTAB.normInf( normBiCGSTAB );
+  EXPECT_TRUE( std::fabs( normBiCGSTAB - 0.5 ) <= 1e-6 );
 
   MPI_Finalize();
 

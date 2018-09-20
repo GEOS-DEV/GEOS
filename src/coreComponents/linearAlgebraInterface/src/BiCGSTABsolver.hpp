@@ -216,6 +216,8 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  // veborse output (TODO verbosity manager?)
   if( rank == 1 )
     std::cout << "BiCGSTAB converged in " << numIt << " iterations." << std::endl;
   return;
@@ -339,6 +341,8 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  // verbose output (TODO verbosity manager?)
   if( rank == 1 )
     std::cout << "Block BiCGSTAB converged in " << numIt << " iterations." << std::endl;
   return;
