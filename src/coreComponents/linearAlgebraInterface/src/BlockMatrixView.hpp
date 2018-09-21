@@ -107,9 +107,9 @@ public:
    * \param y Updated vector.
    *
    */
-  void gemv( real64 alpha,
+  void gemv( real64 const alpha,
              BlockVectorView<LAI> const &x,
-             real64 beta,
+             real64 const beta,
              BlockVectorView<LAI> &y ) const;
 
   /**
@@ -216,21 +216,21 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
       if( m_matrices[row][col] != nullptr )
       {
         m_matrices[row][col]->multiply( *x.getBlock( col ), temp );
-        Ax.axpby( row, 1.0, temp, 1.0 );
+        Ax.axpy( row, 1.0, temp );
       }
     }
   }
   // r = b
-  r.axpby( 1.0, b, 0. );
+  r.copy( b );
   // r = r - Ax
-  r.axpby( -1.0, Ax, 1.0 );
+  r.axpy( -1.0, Ax );
 }
 
 // Generalized matrix-vector product.
 template< typename LAI >
-void BlockMatrixView<LAI>::gemv( real64 alpha,
+void BlockMatrixView<LAI>::gemv( real64 const alpha,
                                  BlockVectorView<LAI> const &x,
-                                 real64 beta,
+                                 real64 const beta,
                                  BlockVectorView<LAI> &y ) const
 {
   BlockVectorView<LAI> Ax( y );
@@ -244,7 +244,7 @@ void BlockMatrixView<LAI>::gemv( real64 alpha,
       if( m_matrices[row][col] != nullptr )
       {
         m_matrices[row][col]->multiply( *x.getBlock( col ), temp );
-        Ax.axpby( row, 1.0, temp, 1.0 );
+        Ax.axpy( row, 1.0, temp );
       }
     }
   }

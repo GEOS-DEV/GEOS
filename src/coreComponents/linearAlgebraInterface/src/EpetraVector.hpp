@@ -80,8 +80,8 @@ public:
    * \param values Array of values to populate vector.
    *
    */
-  void create( const Epetra_Map &map,
-               real64     *values );
+  void create( Epetra_Map const &map,
+               real64  *values );
 
   /**
    * @brief Construct vector from array.
@@ -92,8 +92,8 @@ public:
    * \param values Array of values to populate vector.
    *
    */
-  void create( const trilinosTypes::gid  size,
-               real64      *values );
+  void create( trilinosTypes::gid const size,
+               real64 *values );
 
   /**
    * @brief Construct vector from std::vector.
@@ -136,6 +136,18 @@ public:
    *
    */
   void copy( EpetraVector const &x );
+
+  /**
+   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * \param alpha Scaling factor for added vector.
+   * \param x Vector to add.
+   *
+   */
+  void axpy( real64 const alpha,
+             EpetraVector const &x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
