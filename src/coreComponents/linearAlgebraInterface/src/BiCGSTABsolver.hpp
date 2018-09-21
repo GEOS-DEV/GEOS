@@ -147,6 +147,10 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   // Declare scalar for convergence check
   real64 convCheck;
 
+  // Declare temp scalars for alpha and beta computations
+  real64 temp1;
+  real64 temp2;
+
   for( typename LAI::laiGID k = 0 ; k < N ; k++ )
   {
     // Keep the old value of rho
@@ -159,7 +163,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     beta = rhok/rhokminus1*alpha/omegak;
 
     // Update pk = rk + beta*(pk - omega*vk)
-    pk.axpby( -omegak, vk, 1. );
+    pk.axpy( -omegak, vk );
     pk.axpby( 1., rk, beta );
 
     // Uptate vk = MApk
@@ -167,17 +171,16 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     A.multiply( y, vk );
 
     // Compute alpha
-    real64 temp1;
     vk.dot( r0_hat, temp1 );
     alpha = rhok/temp1;
 
     // compute h = x + alpha*y
     ParallelVector h( x );
-    h.axpby( alpha, y, 1. );
+    h.axpy( alpha, y );
 
     // Compute s = rk - alpha*vk
     ParallelVector s( rk );
-    s.axpby( -alpha, vk, 1. );
+    s.axpy( -alpha, vk );
 
     // Compute z = Ms
     M.multiply( s, z );
@@ -189,17 +192,16 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     M.multiply( t, t );
 
     // Update omega
-    real64 temp2;
     t.dot( z, temp1 );
     t.dot( t, temp2 );
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
-    h.axpby( omegak, z, 1. );
+    h.axpy( omegak, z );
     x.copy( h );
 
     // Update rk = s - omega*t
-    s.axpby( -omegak, t, 1. );
+    s.axpy( -omegak, t );
     rk.copy( s );
 
     // Convergence check
@@ -272,6 +274,10 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   // Declare scalar for convergence check
   real64 convCheck;
 
+  // Declare temp scalars for alpha and beta computations
+  real64 temp1;
+  real64 temp2;
+
   for( typename LAI::laiGID k = 0 ; k < N ; k++ )
   {
     // Keep previous value of rho
@@ -284,7 +290,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     beta = rhok/rhokminus1*alpha/omegak;
 
     // Update pk = rk + beta*(pk - omega*vk)
-    pk.axpby( -omegak, vk, 1. );
+    pk.axpy( -omegak, vk );
     pk.axpby( 1., rk, beta );
 
     // Uptate vk = MApk
@@ -292,17 +298,16 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     A.multiply( y, vk );
 
     // Compute alpha
-    real64 temp1;
     vk.dot( r0_hat, temp1 );
     alpha = rhok/temp1;
 
     // compute h = x + alpha*y
     BlockVectorView<LAI> h( x );
-    h.axpby( alpha, y, 1. );
+    h.axpy( alpha, y );
 
     // Compute s = rk - alpha*vk
     BlockVectorView<LAI> s( rk );
-    s.axpby( -alpha, vk, 1. );
+    s.axpy( -alpha, vk );
 
     // Compute z = Ms
     M.multiply( s, z );
@@ -314,17 +319,16 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     M.multiply( t, u );
 
     // Update omega
-    real64 temp2;
     u.dot( z, temp1 );
     u.dot( u, temp2 );
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
-    h.axpby( omegak, z, 1. );
+    h.axpy( omegak, z );
     x.copy( h );
 
     // Update rk = s - omega*t
-    s.axpby( -omegak, u, 1. );
+    s.axpy( -omegak, u );
     rk.copy( s );
 
     // Convergence check

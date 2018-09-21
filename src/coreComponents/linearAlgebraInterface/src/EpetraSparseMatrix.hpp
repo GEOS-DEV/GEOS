@@ -130,7 +130,7 @@ public:
    *
    * \param Epetra_CrsGraph existing graph.
    */
-  void create( Epetra_CrsGraph &graph );
+  void create( Epetra_CrsGraph const &graph );
 
   /**
    * @brief Create a matrix from an existing Epetra_CrsMatrix.
@@ -287,9 +287,9 @@ public:
    * \param useTranspose Boolean, set to true to use <tt>A^T</tt>.
    *
    */
-  void gemv( real64 alpha,
+  void gemv( real64 const alpha,
              EpetraVector const &x,
-             real64 beta,
+             real64 const beta,
              EpetraVector &y,
              bool useTranspose=false );
 
@@ -299,7 +299,7 @@ public:
    * \param scalingFactor Scaling factor.
    *
    */
-  void scale( real64 scalingFactor );
+  void scale( real64 const scalingFactor );
 
   /**
    * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
@@ -438,7 +438,7 @@ public:
    * @brief Wrapper for LID function. Returns the local map of the corresponding global index.
    * Returns -1 if the global row is not owned by the processor.
    */
-  trilinosTypes::lid rowMapLID( trilinosTypes::gid GID ) const;
+  trilinosTypes::lid rowMapLID( trilinosTypes::gid const GID ) const;
 
   /**
    * @brief Returns the infinity norm of the matrix.

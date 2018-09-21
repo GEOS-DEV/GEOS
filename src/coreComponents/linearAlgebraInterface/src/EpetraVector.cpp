@@ -39,14 +39,16 @@ EpetraVector::EpetraVector( EpetraVector const &in_vec )
 }
 
 // Create a vector from array
-void EpetraVector::create( const trilinosTypes::gid size, double *V )
+void EpetraVector::create( trilinosTypes::gid const size,
+                           double *V )
 {
   Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
 // Create a vector from array
-void EpetraVector::create( const Epetra_Map& Map, double *V )
+void EpetraVector::create( Epetra_Map const &Map,
+                           double *V )
 {
   Epetra_Map map = Epetra_Map( Map );
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
@@ -76,6 +78,13 @@ void EpetraVector::dot( EpetraVector const &vec,
 void EpetraVector::copy( EpetraVector const &x )
 {
   m_vector.get()->Update( 1., *x.getPointer(), 0. );
+}
+
+// Update vector as this = alpha*x + this.
+void EpetraVector::axpy( real64 const alpha,
+                          EpetraVector const &x )
+{
+  m_vector.get()->Update( alpha, *x.getPointer(), 1. );
 }
 
 // Update vector as this = alpha*x + beta*this.

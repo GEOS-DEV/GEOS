@@ -79,7 +79,7 @@ void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
 }
 
 // Create a matrix from an Epetra_CrsGraph.
-void EpetraSparseMatrix::create( Epetra_CrsGraph &graph )
+void EpetraSparseMatrix::create( Epetra_CrsGraph const &graph )
 {
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, graph ) );
 }
@@ -287,9 +287,9 @@ void EpetraSparseMatrix::residual( EpetraVector const &x,
 }
 
 // Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
-void EpetraSparseMatrix::gemv( real64 alpha,
+void EpetraSparseMatrix::gemv( real64 const alpha,
                                EpetraVector const &x,
-                               real64 beta,
+                               real64 const beta,
                                EpetraVector &y,
                                bool useTranspose )
 {
@@ -299,7 +299,7 @@ void EpetraSparseMatrix::gemv( real64 alpha,
 }
 
 // Multiply all elements by scalingFactor.
-void EpetraSparseMatrix::scale( real64 scalingFactor )
+void EpetraSparseMatrix::scale( real64 const scalingFactor )
 {
   m_matrix->Scale( scalingFactor );
 }
@@ -471,7 +471,7 @@ int EpetraSparseMatrix::myCols() const
 }
 
 // Accessor for the number of local columns
-trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid GID ) const
+trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid const GID ) const
 {
   return m_matrix->RowMap().LID( GID );
 }

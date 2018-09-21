@@ -168,6 +168,31 @@ public:
              ParallelVector const &x );
 
   /**
+   * @brief Update vector <tt>y</tt> as <tt>y = alpha*x + y</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * \param alpha Scaling factor for added vector.
+   * \param x Vector to add.
+   */
+  void axpy( real64 const alpha,
+              BlockVectorView<LAI> const &x );
+
+  /**
+   * @brief Update the vector corresponding to block (<tt>blockIndex</tt>)
+   *  as <tt>y(blockIndex) = alpha*x + beta*y(blockIndex)</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * \param alpha Scaling factor for added vector.
+   * \param x Vector to add.
+   *
+   */
+  void axpy( typename LAI::laiLID const blockIndex,
+              real64 const alpha,
+              ParallelVector const &x );
+
+  /**
    * @brief Update vector <tt>y</tt> as <tt>y = alpha*x + beta*y</tt>.
    *
    * @note The naming convention follows the logic of the BLAS library.
@@ -361,6 +386,24 @@ void BlockVectorView<LAI>::copy( typename LAI::laiLID blockIndex,
                                  ParallelVector const &x )
 {
   m_vectors[blockIndex]->copy( x );
+}
+
+// Update the vector.
+template< typename LAI >
+void BlockVectorView<LAI>::axpy( real64 const alpha,
+                                 BlockVectorView<LAI> const &x )
+{
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
+    m_vectors[i]->axpby( alpha, *x.getBlock( i ), 1. );
+}
+
+// Update a block.
+template< typename LAI >
+void BlockVectorView<LAI>::axpy( typename LAI::laiLID blockIndex,
+                                 real64 const alpha,
+                                 ParallelVector const &x )
+{
+  m_vectors[blockIndex]->axpby( alpha, x, 1. );
 }
 
 // Update the vector.
