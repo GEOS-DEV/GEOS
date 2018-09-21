@@ -72,12 +72,18 @@ void EpetraVector::dot( EpetraVector const &vec,
   m_vector.get()->Dot( *vec.getPointer(), &dst );
 }
 
-// Update (name to be changed) vector as this = alpha*vec + beta*this..
-void EpetraVector::update( real64 const alpha,
-                           EpetraVector const &vec,
-                           real64 const beta )
+// Update vector as this = x.
+void EpetraVector::copy( EpetraVector const &x )
 {
-  m_vector.get()->Update( alpha, *vec.getPointer(), beta );
+  m_vector.get()->Update( 1., *x.getPointer(), 0. );
+}
+
+// Update vector as this = alpha*x + beta*this.
+void EpetraVector::axpby( real64 const alpha,
+                          EpetraVector const &x,
+                          real64 const beta )
+{
+  m_vector.get()->Update( alpha, *x.getPointer(), beta );
 }
 
 // 1-norm of the vector.

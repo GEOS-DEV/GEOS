@@ -153,12 +153,12 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     alpha = alpha/temp;
 
     // Update x = x + alpha*ph
-    x.update( alpha, pk, 1.0 );
+    x.axpby( alpha, pk, 1.0 );
 
     // Update rk = rk - alpha*Apk
     ParallelVector rkold( rk );
     ParallelVector zkold( zk );
-    rk.update( -alpha, Apk, 1.0 );
+    rk.axpby( -alpha, Apk, 1.0 );
 
     // Convergence check on ||rk||_2
     rk.norm2( convCheck );
@@ -178,7 +178,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     beta = beta/temp;
 
     // Update pk = pk + beta*zk
-    pk.update( 1.0, zk, beta );
+    pk.axpby( 1.0, zk, beta );
 
     //std::cout << k << ", " << convCheck << std::endl;
 
@@ -245,12 +245,12 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     alpha = alpha/temp;
 
     // Update x = x + alpha*pk
-    x.update( alpha, pk, 1.0 );
+    x.axpby( alpha, pk, 1.0 );
 
     // Update rk = rk - alpha*Apk
     BlockVectorView<LAI> rkold( rk );
     BlockVectorView<LAI> zkold( zk );
-    rk.update( -alpha, Apk, 1.0 );
+    rk.axpby( -alpha, Apk, 1.0 );
 
     // Convergence check on ||rk||_2
     rk.norm2( convCheck );
@@ -270,7 +270,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     beta = beta/temp;
 
     // Update pk = pk + beta*zk
-    pk.update( 1.0, zk, beta );
+    pk.axpby( 1.0, zk, beta );
 
     //std::cout << k << ", " << convCheck << std::endl;
 

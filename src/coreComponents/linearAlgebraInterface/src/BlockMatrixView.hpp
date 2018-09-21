@@ -97,6 +97,21 @@ public:
                  BlockVectorView<LAI> const &b,
                  BlockVectorView<LAI> &r ) const;
 
+
+  /**
+   * @brief Compute generalized matrix-vector product <tt>y = alpha*Ax + beta*y</tt>.
+   *
+   * \param alpha Scaling factor for Ax.
+   * \param x Input vector.
+   * \param beta Scaling factor for y.
+   * \param y Updated vector.
+   *
+   */
+  void gemv( real64 alpha,
+             BlockVectorView<LAI> const &x,
+             real64 beta,
+             BlockVectorView<LAI> &y ) const;
+
   /**
    * @brief Scale block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>) using <tt>factor</tt>.
    *
@@ -164,7 +179,7 @@ BlockMatrixView<LAI>::BlockMatrixView( typename LAI::laiLID const nRows,
   m_matrices.resize( nRows, nCols );
 }
 
-// Apply the block matrix to a block vector (hard coded to 2 by 2 for now).
+// Apply the block matrix to a block vector.
 template< typename LAI >
 void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
                                      BlockVectorView<LAI> &b ) const
@@ -178,7 +193,7 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
       if( m_matrices[row][col] != nullptr )
       {
         m_matrices[row][col]->multiply( *x.getBlock( col ), temp );
-        b.update( row, 1.0, temp, 1.0 );
+        b.axpby( row, 1.0, temp, 1.0 );
       }
     }
   }
@@ -201,14 +216,40 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
       if( m_matrices[row][col] != nullptr )
       {
         m_matrices[row][col]->multiply( *x.getBlock( col ), temp );
-        Ax.update( row, 1.0, temp, 1.0 );
+        Ax.axpby( row, 1.0, temp, 1.0 );
       }
     }
   }
   // r = b
-  r.update( 1.0, b, 0. );
-  // r = b - Ax
-  r.update( -1.0, Ax, 1.0 );
+  r.axpby( 1.0, b, 0. );
+  // r = r - Ax
+  r.axpby( -1.0, Ax, 1.0 );
+}
+
+// Generalized matrix-vector product.
+template< typename LAI >
+void BlockMatrixView<LAI>::gemv( real64 alpha,
+                                 BlockVectorView<LAI> const &x,
+                                 real64 beta,
+                                 BlockVectorView<LAI> &y ) const
+{
+  BlockVectorView<LAI> Ax( y );
+  Ax.scale( 0. );
+  for( typename LAI::laiLID row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  {
+    ParallelVector temp( *y.getBlock( row ) );
+    temp.scale( 0. );
+    for( typename LAI::laiLID col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    {
+      if( m_matrices[row][col] != nullptr )
+      {
+        m_matrices[row][col]->multiply( *x.getBlock( col ), temp );
+        Ax.axpby( row, 1.0, temp, 1.0 );
+      }
+    }
+  }
+  // y = alpha*Ax + beta*y
+  y.axpby( alpha, Ax, beta );
 }
 
 // Scale the matrix with the factor <tt>factor</tt>.

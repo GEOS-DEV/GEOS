@@ -149,19 +149,52 @@ public:
                 real64 &result ) const;
 
   /**
-   * @brief Update the block vector.
+   * @brief Update vector <tt>y</tt> as <tt>y = x</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * \param x Vector to copy.
    */
-  void update( real64 const alpha,
-               BlockVectorView<LAI> const &blockVec,
-               real64 const beta );
+  void copy( BlockVectorView<LAI> const &x );
 
   /**
-   * @brief Update the vector corresponding to block (<tt>blockIndex</tt>).
+   * @brief Update vector <tt>y(blockIndex)</tt> as <tt>y(blockIndex) = x</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * \param x Vector to copy.
    */
-  void update( typename LAI::laiLID const blockIndex,
-               real64 const alpha,
-               ParallelVector const &vec,
-               real64 const beta );
+  void copy( typename LAI::laiLID blockIndex,
+             ParallelVector const &x );
+
+  /**
+   * @brief Update vector <tt>y</tt> as <tt>y = alpha*x + beta*y</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * \param alpha Scaling factor for added vector.
+   * \param x Vector to add.
+   * \param beta Scaling factor for self vector.
+   */
+  void axpby( real64 const alpha,
+              BlockVectorView<LAI> const &x,
+              real64 const beta );
+
+  /**
+   * @brief Update the vector corresponding to block (<tt>blockIndex</tt>)
+   *  as <tt>y(blockIndex) = alpha*x + beta*y(blockIndex)</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * \param alpha Scaling factor for added vector.
+   * \param x Vector to add.
+   * \param beta Scaling factor for self vector.
+   *
+   */
+  void axpby( typename LAI::laiLID const blockIndex,
+              real64 const alpha,
+              ParallelVector const &x,
+              real64 const beta );
 
   //@}
 
@@ -309,29 +342,45 @@ void BlockVectorView<LAI>::normInf( real64 &result ) const
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
   {
     m_vectors[i]->normInf( temp );
-    if (temp > result)
+    if( temp > result )
       result = temp;
   }
 }
 
-// Update a the vector.
+// Copy the vector.
 template< typename LAI >
-void BlockVectorView<LAI>::update( real64 const alpha,
-                                   BlockVectorView<LAI> const &blockVec,
-                                   real64 const beta )
+void BlockVectorView<LAI>::copy( BlockVectorView<LAI> const &x )
 {
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
-    m_vectors[i]->update( alpha, *blockVec.getBlock( i ), beta );
+    m_vectors[i]->copy( *x.getBlock( i ) );
+}
+
+// Copy a ParallelVector in a block.
+template< typename LAI >
+void BlockVectorView<LAI>::copy( typename LAI::laiLID blockIndex,
+                                 ParallelVector const &x )
+{
+  m_vectors[blockIndex]->copy( x );
+}
+
+// Update the vector.
+template< typename LAI >
+void BlockVectorView<LAI>::axpby( real64 const alpha,
+                                  BlockVectorView<LAI> const &x,
+                                  real64 const beta )
+{
+  for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
+    m_vectors[i]->axpby( alpha, *x.getBlock( i ), beta );
 }
 
 // Update a block.
 template< typename LAI >
-void BlockVectorView<LAI>::update( typename LAI::laiLID blockIndex,
-                                   real64 const alpha,
-                                   ParallelVector const &vec,
-                                   real64 const beta )
+void BlockVectorView<LAI>::axpby( typename LAI::laiLID blockIndex,
+                                  real64 const alpha,
+                                  ParallelVector const &x,
+                                  real64 const beta )
 {
-  m_vectors[blockIndex]->update( alpha, vec, beta );
+  m_vectors[blockIndex]->axpby( alpha, x, beta );
 }
 
 // Setter for block.

@@ -128,16 +128,28 @@ public:
             real64 &dst );
 
   /**
-   * @brief Update (name to be changed) vector as this = alpha*vec + beta*this.
+   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
+   *
+   * @note The naming convention follows the BLAS library.
+   *
+   * \param x Vector to add.
+   *
+   */
+  void copy( EpetraVector const &x );
+
+  /**
+   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
+   *
+   * @note The naming convention follows the logic of the BLAS library.
    *
    * \param alpha Scaling factor for added vector.
-   * \param vec Vector to add.
+   * \param x Vector to add.
    * \param beta Scaling factor for self vector.
    *
    */
-  void update( real64 const alpha,
-               EpetraVector const &vec,
-               real64 const beta );
+  void axpby( real64 const alpha,
+              EpetraVector const &x,
+              real64 const beta );
 
   /**
    * @brief 1-norm of the vector.
