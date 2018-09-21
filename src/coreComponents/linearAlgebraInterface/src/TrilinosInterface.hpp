@@ -27,13 +27,13 @@
 #include "EpetraVector.hpp"
 #include "TrilinosSolver.hpp"
 
+namespace geosx
+{
+
 /**
  * \class TrilinosInterface
  * \brief This class holds aliases based on the Trilinos library.
  */
-
-namespace geosx
-{
 
 class TrilinosInterface
 {

@@ -57,7 +57,7 @@ public:
    * @brief Copy constructor.
    *
    */
-  TrilinosSolver( const TrilinosSolver &Solver );
+  TrilinosSolver( TrilinosSolver const &Solver );
 
   /**
    * @brief Virtual destructor.
@@ -69,13 +69,13 @@ public:
   //! @name Solvers
   //@{
   /**
-   * @brief Solve system.
+   * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
    *
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void solve( EpetraSparseMatrix &Mat,
-              EpetraVector &rhs,
               EpetraVector &sol,
+              EpetraVector &rhs,
               integer max_iter,
               real64 newton_tol,
               std::unique_ptr<Epetra_Operator> Prec = nullptr );
@@ -86,20 +86,20 @@ public:
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void ml_solve( EpetraSparseMatrix &Mat,
-                 EpetraVector &rhs,
                  EpetraVector &sol,
+                 EpetraVector &rhs,
                  integer max_iter,
                  real64 newton_tol,
                  std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec = nullptr );
 
   /**
-   * @brief Solve system using a direct solver.
+   * @brief Solve system using a direct solver (KLU).
    *
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void dsolve( EpetraSparseMatrix &Mat,
-               EpetraVector &rhs,
-               EpetraVector &sol );
+               EpetraVector &sol,
+               EpetraVector &rhs );
   //@}
 
 protected:

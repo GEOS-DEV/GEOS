@@ -280,13 +280,13 @@ void EpetraSparseMatrix::multiply( EpetraVector const &src,
 // Compute res = b - Ax (residual form).
 void EpetraSparseMatrix::residual( EpetraVector const &x,
                                    EpetraVector const &b,
-                                   EpetraVector &res ) const
+                                   EpetraVector &r ) const
 {
-  m_matrix->Multiply( false, *x.getPointer(), *res.getPointer() );
-  res.update( 1.0, b, -1.0 );
+  m_matrix->Multiply( false, *x.getPointer(), *r.getPointer() );
+  r.update( 1.0, b, -1.0 );
 }
 
-// Compute gaxpy r = alpha*A*x + beta*b.
+// Compute gaxpy <tt>r = alpha*A*x + beta*b</tt>.
 void EpetraSparseMatrix::gaxpy( real64 alpha,
                                 EpetraVector const &x,
                                 real64 beta,
@@ -360,7 +360,7 @@ void EpetraSparseMatrix::clearRow( trilinosTypes::gid const row,
 void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
                                  trilinosTypes::lid &NumEntries,
                                  real64* Values,
-                                 trilinosTypes::gid*    Indices )
+                                 trilinosTypes::gid* Indices ) const
 {
   m_matrix->ExtractGlobalRowView( GlobalRow, NumEntries, Values, Indices );
 }
@@ -368,7 +368,7 @@ void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
 void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
                                       trilinosTypes::lid & NumEntries,
                                       real64 * & Values,
-                                      trilinosTypes::lid * & Indices )
+                                      trilinosTypes::lid * & Indices ) const
 {
   m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
 }
@@ -376,7 +376,7 @@ void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
 void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
                                  trilinosTypes::lid &NumEntries,
                                  std::vector<real64> &vecValues,
-                                 std::vector<trilinosTypes::gid>    &vecIndices )
+                                 std::vector<trilinosTypes::gid> &vecIndices ) const
 {
   real64* Values;
   trilinosTypes::gid* Indices;
@@ -391,7 +391,7 @@ void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
 void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
                                       trilinosTypes::lid &NumEntries,
                                       std::vector<real64> &vecValues,
-                                      std::vector<trilinosTypes::lid>    &vecIndices )
+                                      std::vector<trilinosTypes::lid> &vecIndices ) const
 {
   real64* Values;
   trilinosTypes::lid* Indices;

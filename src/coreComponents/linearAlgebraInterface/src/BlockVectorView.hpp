@@ -56,16 +56,22 @@ public:
   BlockVectorView();
 
   /**
-   * @brief Sized vector constructor.
+   * @brief Vector of <tt>nBlocks</tt> blocks.
    *
-   * Create a block vector of size (<tt>nRows</tt>,<tt>nCols</tt>).
+   * Create a block vector of size <tt>nBlocks</tt>.
+   *
+   * \param nBlocks Number of blocks.
+   *
    */
-  BlockVectorView( typename LAI::laiLID nBlocks );
+  BlockVectorView( typename LAI::laiLID const nBlocks );
 
   /**
    * @brief Copy constructor.
    *
-   * Create an empty block vector.
+   * Create a copy of the block vector <tt>in_blockVec</tt>.
+   *
+   * \param in_blockVec Block vector to copy.
+   *
    */
   BlockVectorView( BlockVectorView<LAI> const &in_blockVec );
 
@@ -79,43 +85,68 @@ public:
   //@{
 
   /**
-   * @brief Scale the block vector.
+   * @brief Scale the block vector with <tt>factor</tt>.
+   *
+   * \param factor Multiplication factor.
+   *
    */
-  void scale( real64 factor );
+  void scale( real64 const factor );
 
   /**
-   * @brief Scale the vector corresponding to block (<tt>blockIndex</tt>).
+   * @brief Scale the vector corresponding to block (<tt>blockIndex</tt>)
+   * with <tt>factor</tt>.
+   *
+   * \param blockIndex Index of the block to scale.
+   * \param factor Multiplication factor.
+   *
    */
-  void scale( typename LAI::laiLID blockIndex,
-              real64 factor );
+  void scale( typename LAI::laiLID const blockIndex,
+              real64 const factor );
 
   /**
    * @brief Dot product.
+   *
+   * \param blockVec Block vector.
+   * \param result Result of the dot product.
+   *
    */
   void dot( BlockVectorView<LAI> const &blockVec,
-            real64 &result );
+            real64 &result ) const;
 
   /**
    * @brief 2-norm of the block vector.
+   *
+   * \param result 2-norm of the block vector.
+   *
    */
-  void norm2( real64 &result );
+  void norm2( real64 &result ) const;
 
   /**
    * @brief 2-norm of the vector corresponding to block (<tt>blockIndex</tt>).
+   *
+   * \param blockIndex Index of the block to scale.
+   * \param result 2-norm of the <tt>blockIndex</tt>-th vector.
+   *
    */
-  void norm2( typename LAI::laiLID blockIndex,
-              real64 &result );
+  void norm2( typename LAI::laiLID const blockIndex,
+              real64 &result ) const;
 
   /**
    * @brief Inf-norm of the block vector.
+   *
+   * \param result Inf-norm of the block vector.
    */
-  void normInf( real64 &result );
+  void normInf( real64 &result ) const;
 
   /**
    * @brief Inf-norm of the vector corresponding to block (<tt>blockIndex</tt>).
+   *
+   * \param blockIndex Index of the block to scale.
+   * \param result 2-norm of the <tt>blockIndex</tt>-th vector.
+   *
    */
   void normInf( typename LAI::laiLID blockIndex,
-                real64 &result );
+                real64 &result ) const;
 
   /**
    * @brief Update the block vector.
@@ -127,7 +158,7 @@ public:
   /**
    * @brief Update the vector corresponding to block (<tt>blockIndex</tt>).
    */
-  void update( typename LAI::laiLID blockIndex,
+  void update( typename LAI::laiLID const blockIndex,
                real64 const alpha,
                ParallelVector const &vec,
                real64 const beta );
@@ -145,28 +176,39 @@ public:
   /**
    * @brief Get global size.
    */
-  typename LAI::laiGID globalSize();
+  typename LAI::laiGID globalSize() const;
 
   /**
    * @brief Get the vector corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
+   *
+   * \param blockIndex Index of the block to return.
+   *
    */
-  ParallelVector * getBlock( typename LAI::laiLID blockIndex ) const;
+  ParallelVector * getBlock( typename LAI::laiLID const blockIndex ) const;
 
   /**
    * @brief Get the vector corresponding to block <tt>name</tt>.
+   *
+   * \param blockName Name of the block to return.
+   *
    */
-  ParallelVector * getBlock( std::string blockName ) const;
+  ParallelVector * getBlock( std::string const blockName ) const;
 
   /**
-   * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
+   * @brief Set block <tt>blockIndex</tt> using <tt>vector</tt>.
+   *
+   * \param blockIndex Index of the block to return.
+   * \param vector Input vector to put in the block <tt>blockIndex</tt>.
+   *
    */
-  void setBlock( typename LAI::laiLID blockIndex,
+  void setBlock( typename LAI::laiLID const blockIndex,
                  ParallelVector &vector );
 
   //@}
 
 private:
 
+  // Resizable array of pointers to GEOSX vectors.
   array1d<ParallelVector *> m_vectors;
 
 };
@@ -179,7 +221,7 @@ BlockVectorView<LAI>::BlockVectorView()
 
 // Constructor with a size
 template< typename LAI >
-BlockVectorView<LAI>::BlockVectorView( typename LAI::laiLID nBlocks )
+BlockVectorView<LAI>::BlockVectorView( typename LAI::laiLID const nBlocks )
 {
   m_vectors.resize( nBlocks );
 }
@@ -198,7 +240,7 @@ BlockVectorView<LAI>::BlockVectorView( BlockVectorView<LAI> const &in_blockVec )
 
 // Scale a block.
 template< typename LAI >
-void BlockVectorView<LAI>::scale( real64 factor )
+void BlockVectorView<LAI>::scale( real64 const factor )
 {
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
     m_vectors[i]->scale( factor );
@@ -206,8 +248,8 @@ void BlockVectorView<LAI>::scale( real64 factor )
 
 // Scale a block.
 template< typename LAI >
-void BlockVectorView<LAI>::scale( typename LAI::laiLID blockIndex,
-                                  real64 factor )
+void BlockVectorView<LAI>::scale( typename LAI::laiLID const blockIndex,
+                                  real64 const factor )
 {
   m_vectors[blockIndex]->scale( factor );
 }
@@ -215,7 +257,7 @@ void BlockVectorView<LAI>::scale( typename LAI::laiLID blockIndex,
 // Dot product.
 template< typename LAI >
 void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec,
-                                real64 &result )
+                                real64 &result ) const
 {
   real64 accum = 0;
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
@@ -229,15 +271,15 @@ void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec,
 
 // Compute the 2 norm of one block vector.
 template< typename LAI >
-void BlockVectorView<LAI>::norm2( typename LAI::laiLID blockIndex,
-                                  real64 &result )
+void BlockVectorView<LAI>::norm2( typename LAI::laiLID const blockIndex,
+                                  real64 &result ) const
 {
   m_vectors[blockIndex]->norm2( result );
 }
 
 // Compute the 2 norm of the block vector.
 template< typename LAI >
-void BlockVectorView<LAI>::norm2( real64 &result )
+void BlockVectorView<LAI>::norm2( real64 &result ) const
 {
   real64 accum = 0;
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )
@@ -251,15 +293,15 @@ void BlockVectorView<LAI>::norm2( real64 &result )
 
 // Compute the 2 norm of one block vector.
 template< typename LAI >
-void BlockVectorView<LAI>::normInf( typename LAI::laiLID blockIndex,
-                                    real64 &result )
+void BlockVectorView<LAI>::normInf( typename LAI::laiLID const blockIndex,
+                                    real64 &result ) const
 {
   m_vectors[blockIndex]->normInf( result );
 }
 
 // Compute the 2 norm of the block vector.
 template< typename LAI >
-void BlockVectorView<LAI>::normInf( real64 &result )
+void BlockVectorView<LAI>::normInf( real64 &result ) const
 {
   real64 temp;
   result = 0;
@@ -294,7 +336,7 @@ void BlockVectorView<LAI>::update( typename LAI::laiLID blockIndex,
 
 // Setter for block.
 template< typename LAI >
-void BlockVectorView<LAI>::setBlock( typename LAI::laiLID blockIndex,
+void BlockVectorView<LAI>::setBlock( typename LAI::laiLID const blockIndex,
                                      ParallelVector &vector )
 {
   m_vectors[blockIndex] = &vector;
@@ -309,7 +351,7 @@ typename LAI::laiLID BlockVectorView<LAI>::blockSize() const
 
 // Accessor for size (total number of  elements)
 template< typename LAI >
-typename LAI::laiGID BlockVectorView<LAI>::globalSize(  )
+typename LAI::laiGID BlockVectorView<LAI>::globalSize(  ) const
 {
   typename LAI::laiGID size = 0;
   for( typename LAI::laiLID i = 0 ; i < m_vectors.size() ; i++ )

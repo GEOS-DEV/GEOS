@@ -58,12 +58,12 @@ public:
   BlockMatrixView();
 
   /**
-   * @brief Empty matrix constructor.
+   * @brief Matrix of (<tt>nRows</tt>,<tt>nCols</tt>) blocks.
    *
    * Create a block matrix of size (<tt>nRows</tt>,<tt>nCols</tt>).
    */
-  BlockMatrixView( typename LAI::laiLID nRows,
-                   typename LAI::laiLID nCols );
+  BlockMatrixView( typename LAI::laiLID const nRows,
+                   typename LAI::laiLID const nCols );
 
   /**
    * @brief Virtual destructor.
@@ -75,33 +75,50 @@ public:
   //@{
   /**
    * @brief Apply the block matrix to a block vector.
+   *
+   * Computes the matrix-vector product <tt>Ax = b</tt>.
+   *
+   * \param x Input vector.
+   * \param b Output vector.
+   *
    */
   void multiply( BlockVectorView<LAI> const &x,
                  BlockVectorView<LAI> &b ) const;
 
   /**
-   * @brief Set to residual form.
+   * @brief Compute residual <tt>r = b - Ax</tt>.
+   *
+   * \param x Input solution.
+   * \param b Input right hand size.
+   * \param r Output residual.
+   *
    */
   void residual( BlockVectorView<LAI> const &x,
                  BlockVectorView<LAI> const &b,
                  BlockVectorView<LAI> &r ) const;
 
   /**
-   * @brief Scale block (<tt>i</tt>,<tt>j</tt>) using <tt>factor</tt>.
+   * @brief Scale block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>) using <tt>factor</tt>.
+   *
+   * \param blockRowIndex Row index.
+   * \param blockColIndex Column index.
+   * \param factor Scaling factor.
+   *
    */
-  void scale( typename LAI::laiLID blockRowIndex,
-              typename LAI::laiLID blockColIndex,
-              real64 factor ) const;
+  void scale( typename LAI::laiLID const blockRowIndex,
+              typename LAI::laiLID const blockColIndex,
+              real64 const factor );
 
   /**
    * @brief Scale matrix using <tt>factor</tt>.
    */
-  void scale( real64 factor ) const;
+  void scale( real64 const factor );
 
   /**
    * @brief Clear row and multiply the diagonal entry by <tt>factor</tt>.
    */
-  void clearRow( typename LAI::laiGID rowIndex, real64 factor );
+  void clearRow( typename LAI::laiGID const rowIndex,
+                 real64 const factor );
   //@}
 
   //! @name Accessors/Setters
@@ -109,19 +126,19 @@ public:
   /**
    * @brief Get the matrix corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
    */
-  ParallelMatrix * getBlock( typename LAI::laiLID blockRowIndex,
-                             typename LAI::laiLID blockColIndex );
+  ParallelMatrix * getBlock( typename LAI::laiLID const blockRowIndex,
+                             typename LAI::laiLID const blockColIndex ) const;
 
   /**
    * @brief Get the matrix corresponding to block <tt>name</tt>.
    */
-  ParallelMatrix * getBlock( std::string blockName );
+  ParallelMatrix * getBlock( std::string const blockName ) const;
 
   /**
    * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
    */
-  void setBlock( typename LAI::laiLID blockRowIndex,
-                 typename LAI::laiLID blockColIndex,
+  void setBlock( typename LAI::laiLID const blockRowIndex,
+                 typename LAI::laiLID const blockColIndex,
                  ParallelMatrix &matrix );
 
   //@}
@@ -141,8 +158,8 @@ BlockMatrixView<LAI>::BlockMatrixView()
 // Constructor with a size (inlined)
 template< typename LAI >
 inline
-BlockMatrixView<LAI>::BlockMatrixView( typename LAI::laiLID nRows,
-                                       typename LAI::laiLID nCols )
+BlockMatrixView<LAI>::BlockMatrixView( typename LAI::laiLID const nRows,
+                                       typename LAI::laiLID const nCols )
 {
   m_matrices.resize( nRows, nCols );
 }
@@ -196,7 +213,7 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
 
 // Scale the matrix with the factor <tt>factor</tt>.
 template< typename LAI >
-void BlockMatrixView<LAI>::scale( real64 factor ) const
+void BlockMatrixView<LAI>::scale( real64 const factor )
 {
   for( typename LAI::laiLID row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
@@ -212,31 +229,31 @@ void BlockMatrixView<LAI>::scale( real64 factor ) const
 
 // Scale the block (<tt>blockRowIndex</tt>,<tt>blockRowIndex</tt>) with the factor <tt>factor</tt>.
 template< typename LAI >
-void BlockMatrixView<LAI>::scale( typename LAI::laiLID blockRowIndex,
-                                  typename LAI::laiLID blockColIndex,
-                                  real64 factor ) const
+void BlockMatrixView<LAI>::scale( typename LAI::laiLID const blockRowIndex,
+                                  typename LAI::laiLID const blockColIndex,
+                                  real64 const factor )
 {
   m_matrices[blockRowIndex][blockColIndex]->scale( factor );
 }
 
 // Clear row and multiply the diagonal entry by <tt>factor</tt>.
 template< typename LAI >
-void BlockMatrixView<LAI>::clearRow( typename LAI::laiGID rowIndex,
-                                     real64 factor )
+void BlockMatrixView<LAI>::clearRow( typename LAI::laiGID const rowIndex,
+                                     real64 const factor )
 {}
 
 // Accessor for block.
 template< typename LAI >
-typename LAI::ParallelMatrix * BlockMatrixView<LAI>::getBlock( typename LAI::laiLID blockRowIndex,
-                                                               typename LAI::laiLID blockColIndex )
+typename LAI::ParallelMatrix * BlockMatrixView<LAI>::getBlock( typename LAI::laiLID const blockRowIndex,
+                                                               typename LAI::laiLID const blockColIndex ) const
 {
   return m_matrices[blockRowIndex][blockColIndex];
 }
 
 // Setter for block.
 template< typename LAI >
-void BlockMatrixView<LAI>::setBlock( typename LAI::laiLID blockRowIndex,
-                                     typename LAI::laiLID blockColIndex,
+void BlockMatrixView<LAI>::setBlock( typename LAI::laiLID const blockRowIndex,
+                                     typename LAI::laiLID const blockColIndex,
                                      typename LAI::ParallelMatrix &matrix )
 {
   m_matrices[blockRowIndex][blockColIndex] = &matrix;

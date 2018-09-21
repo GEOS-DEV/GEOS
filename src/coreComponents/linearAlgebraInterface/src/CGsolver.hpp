@@ -67,9 +67,8 @@ public:
   //@}
 
   /**
-   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> using monolithic GEOSX matrices.
-   *
-   * Solves the system <tt>M^{-1}(Ax - b) = 0</tt> using monolithic GEOSX matrices.
+   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
+   * using monolithic GEOSX matrices.
    *
    * \param A system matrix.
    * \param x system solution (input = initial guess, output = solution).
@@ -82,9 +81,8 @@ public:
               ParallelMatrix const &M );
 
   /**
-   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> using block GEOSX matrices.
-   *
-   * Solves the system <tt>M^{-1}(Ax - b) = 0</tt> using block GEOSX matrices.
+   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
+   * using block GEOSX matrices.
    *
    * \param A system block matrix.
    * \param x system block solution (input = initial guess, output = solution).
