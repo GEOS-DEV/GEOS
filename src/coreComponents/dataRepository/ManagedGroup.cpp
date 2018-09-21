@@ -414,9 +414,17 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 {
   FinalInitialization(rootGroup);
-  for( auto&& subGroup : m_subGroups )
+//  for( auto&& subGroup : m_subGroups )
+//  {
+//    subGroup.second->FinalInitializationRecursive(rootGroup);
+//  }
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
   {
-    subGroup.second->FinalInitializationRecursive(rootGroup);
+    this->GetGroup(groupName)->FinalInitializationRecursive(rootGroup);
   }
 }
 

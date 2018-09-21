@@ -143,13 +143,21 @@ public:
 
   } groupKeys;
 
-protected:
-
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
-  virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
+  virtual void computeMainStencil( DomainPartition const * domain,
+                                   CellStencil & stencil ) const = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
-  virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;
+  virtual void computeBoundaryStencil( DomainPartition const * domain,
+                                       set<localIndex> const & faceSet,
+                                       BoundaryStencil & stencil ) const = 0;
+
+  /// actual computation of well-to-cell stencil, to be overridden by implementations
+  virtual void computeWellStencil( DomainPartition const * domain,
+                                   WellBase const * well,
+                                   WellStencil & stencil ) const = 0;
+
+protected:
 
   /// name of the primary solution field
   string m_fieldName;

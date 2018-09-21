@@ -56,12 +56,10 @@ public:
 
   void FillDocumentationNode() override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
-
   virtual void FinalInitialization( ManagedGroup * const group ) override;
 
   // update each connection pressure from bhp and hydrostatic head
-  void UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex );
+  void UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex, bool gravityFlag = true );
 
   struct viewKeyStruct : public WellBase::viewKeyStruct
   {

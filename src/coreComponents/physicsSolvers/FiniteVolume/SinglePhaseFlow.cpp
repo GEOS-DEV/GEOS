@@ -957,10 +957,6 @@ void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
                                               real64 const time_n,
                                               real64 const dt)
 {
-
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit( domain, time_n, dt, blockSystem );
   ApplyFaceBC_implicit( domain, time_n, dt, blockSystem );
@@ -1108,8 +1104,6 @@ void SinglePhaseFlow::ApplyFaceBC_implicit(DomainPartition * domain,
   ArrayView<real64, 1, localIndex> viscFace = faceManager->getReference<real64_array>( viewKeyStruct::viscosityString );
   ArrayView<real64, 1, localIndex> gravDepthFace = faceManager->getReference<real64_array>( viewKeyStruct::gravityDepthString );
 
-  dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
-
   // first, evaluate BC to get primary field values (pressure)
 //  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::facePressureString, time + dt);
   bcManager->ApplyBoundaryCondition( time + dt,
@@ -1161,7 +1155,7 @@ void SinglePhaseFlow::ApplyFaceBC_implicit(DomainPartition * domain,
   real64_array localFluxJacobian;
 
   // temporary working arrays
-  real64 densWeight[numElems] = { 0.5, 0.5 };
+  real64 const densWeight[numElems] = { 0.5, 0.5 };
   real64 mobility[numElems], dMobility_dP[numElems];
   real64_array dDensMean_dP, dFlux_dP;
 
@@ -1280,7 +1274,7 @@ void SinglePhaseFlow::ApplyFaceBC_implicit(DomainPartition * domain,
             break;
           }
           default:
-          GEOS_ERROR("Unsupported point type in stencil");
+          GEOS_ERROR("ApplyFaceBC(): Unsupported point type in stencil");
         }
 
         real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
@@ -1378,13 +1372,157 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
                                               string(keys::wellManager) + '/' + well->getName(),
                                               SimpleWell::viewKeyStruct::pressureString );
 
-    well->UpdateConnectionPressure( domain, m_fluidIndex );
+    well->UpdateConnectionPressure( domain, m_fluidIndex, m_gravityFlag );
+
+    auto const & presWell      = well->getReference<array1d<real64>>( well->viewKeysSimpleWell.pressure );
+    auto const & gravDepthWell = well->getReference<array1d<real64>>( well->viewKeysSimpleWell.gravityDepth );
 
     auto const & wellStencil = well->getReference<FluxApproximationBase::WellStencil>( keys::FVstencil );
 
+    constexpr localIndex numElems = 2;
+    // ECLIPSE 100/300 treatment - take density from cell, no averaging
+    real64 const densWeight[numElems] = { 1.0, 0.0 }; // TODO assumes cell always first
+
     wellStencil.forAll( [&] ( FluxApproximationBase::WellStencil::Accessor stencil ) -> void
     {
-      // TODO compute and apply well flux
+      GEOS_ERROR_IF( stencil.size() > numElems, "Well stencil contains more than 2 points" );
+
+      // local working variables and arrays
+      real64 densMean = 0.0;
+      real64 dDensMean_dP[numElems];
+
+      real64 mobility[numElems], dMobility_dP[numElems];
+
+      real64 dFlux_dP[numElems];
+      real64 localFluxJacobian[numElems];
+
+      globalIndex eqnRowIndex = -1;
+      globalIndex dofColIndices[numElems] = { -1, -1 };
+
+      // calculate quantities on primary connected points
+      localIndex cell_order;
+      stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
+      {
+        real64 density = 0, dDens_dP = 0;
+        real64 viscosity = 0, dVisc_dP = 0;
+        switch (point.tag)
+        {
+          case PointDescriptor::Tag::CELL:
+          {
+            localIndex const er  = point.cellIndex.region;
+            localIndex const esr = point.cellIndex.subRegion;
+            localIndex const ei  = point.cellIndex.index;
+
+            eqnRowIndex = blockLocalDofNumber[er][esr][ei];
+
+            density   = dens[er][esr][m_fluidIndex][ei][0];
+            dDens_dP  = dDens_dPres[er][esr][m_fluidIndex][ei][0];
+
+            viscosity = visc[er][esr][m_fluidIndex][ei][0];
+            dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
+
+            cell_order = i; // mark position of the cell in connection for sign consistency later
+            break;
+          }
+          case PointDescriptor::Tag::PERF:
+          {
+            // these values don't matter, not gonna use them
+
+            density = 0.0;
+            dDens_dP = 0.0;
+
+            viscosity = 1.0;
+            dVisc_dP = 0.0;
+
+            break;
+          }
+          default:
+            GEOS_ERROR("Unsupported point type in stencil");
+        }
+
+        // mobility
+        mobility[i]  = density / viscosity;
+        dMobility_dP[i]  = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
+
+        // average density
+        densMean += densWeight[i] * density;
+        dDensMean_dP[i] = densWeight[i] * dDens_dP;
+      });
+
+      //***** calculation of flux *****
+
+      // compute potential difference MPFA-style
+      real64 potDif = 0.0;
+      stencil.forAll([&] (PointDescriptor point, real64 w, localIndex i) -> void
+      {
+        real64 pressure = 0.0, gravD = 0.0;
+        switch (point.tag)
+        {
+          case PointDescriptor::Tag::CELL:
+          {
+            localIndex const er = point.cellIndex.region;
+            localIndex const esr = point.cellIndex.subRegion;
+            localIndex const ei = point.cellIndex.index;
+
+            dofColIndices[i] = blockLocalDofNumber[er][esr][ei];
+            pressure = pres[er][esr][ei] + dPres[er][esr][ei];
+            gravD = gravDepth[er][esr][ei];
+
+            break;
+          }
+          case PointDescriptor::Tag::PERF:
+          {
+            localIndex const iperf = point.perfIndex;
+
+            pressure = presWell[iperf];
+            gravD = gravDepthWell[iperf];
+
+            break;
+          }
+          default:
+            GEOS_ERROR("ApplyFaceBC(): Unsupported point type in stencil");
+        }
+
+        real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
+        real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
+
+        potDif += w * (pressure + gravTerm);
+        dFlux_dP[i] = w * (1.0 + dGrav_dP);
+      });
+
+      // no upwinding of fluid properties, always use cell values
+      localIndex const k_up = cell_order;
+
+      // compute the final flux and derivatives
+      real64 const flux = mobility[k_up] * potDif;
+      for (localIndex ke = 0; ke < numElems; ++ke)
+        dFlux_dP[ke] *= mobility[k_up];
+      dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
+
+      //***** end flux terms *****
+
+      // populate local flux vector and derivatives
+      integer sign = (cell_order == 0 ? 1 : -1);
+      real64 const localFlux =  dt * flux * sign;
+
+      integer counter = 0;
+      for (localIndex ke = 0; ke < numElems; ++ke)
+      {
+        // compress arrays, skipping face derivatives
+        if (dofColIndices[ke] >= 0)
+        {
+          dofColIndices[counter] = dofColIndices[ke];
+          localFluxJacobian[counter] = dt * dFlux_dP[ke] * sign;
+          ++counter;
+        }
+      }
+
+      // Add to global residual/jacobian
+      jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                     counter, dofColIndices,
+                                     localFluxJacobian );
+
+      residual->SumIntoGlobalValues( 1, &eqnRowIndex, &localFlux );
     });
   });
 }

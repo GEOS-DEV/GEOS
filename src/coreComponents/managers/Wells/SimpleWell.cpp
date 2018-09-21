@@ -25,7 +25,10 @@
 #include "Perforation.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "math/TensorT/TensorBaseT.h"
 #include "mesh/MeshForLoopInterface.hpp"
 
@@ -86,20 +89,6 @@ const string SimpleWell::getCatalogName() const
   return CatalogName();
 }
 
-void SimpleWell::InitializePostSubGroups( ManagedGroup * const problemManager )
-{
-  WellBase::InitializePostSubGroups(problemManager);
-
-  // initially allocate enough memory for all (global) perforations
-  resize(numConnectionsGlobal());
-
-  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
-  ConnectToCells( domain );
-
-  // then shrink to only locally owned perforations (no ghosts needed in this simple model)
-  resize(numConnectionsLocal());
-}
-
 void SimpleWell::ConnectToCells( DomainPartition const * domain )
 {
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
@@ -145,7 +134,28 @@ void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
   WellBase::FinalInitialization(problemManager);
 
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
+
+  // initially allocate enough memory for all (global) perforations
+  resize(numConnectionsGlobal());
+  ConnectToCells( domain );
+  resize(numConnectionsLocal());
+
   PrecomputeData( domain );
+
+  NumericalMethodsManager const * numericalMethodManager = domain->
+    getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * fvManager = numericalMethodManager->
+    GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->GetGroup<FluxApproximationBase>(0); // TODO HACK!
+
+  auto vw = this->RegisterViewWrapper<FluxApproximationBase::WellStencil>( keys::FVstencil );
+  vw->setRestartFlags( RestartFlags::NO_WRITE );
+  FluxApproximationBase::WellStencil & stencil = vw->reference();
+  stencil.reserve( numConnectionsLocal(), 2 );
+
+  fluxApprox->computeWellStencil( domain, this, stencil );
 }
 
 void SimpleWell::PrecomputeData(DomainPartition const * domain)
@@ -162,8 +172,11 @@ void SimpleWell::PrecomputeData(DomainPartition const * domain)
   }
 }
 
-void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex )
+void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex, bool gravityFlag )
 {
+  if ( !gravityFlag )
+    return;
+
   MeshLevel const * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * elemManager = mesh->getElemManager();
 

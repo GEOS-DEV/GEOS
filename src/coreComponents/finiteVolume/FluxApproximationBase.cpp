@@ -24,10 +24,6 @@
 #include "FluxApproximationBase.hpp"
 
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
-#include "managers/Wells/WellManager.hpp"
-#include "managers/Wells/WellBase.hpp"
-#include "managers/Wells/PerforationManager.hpp"
-#include "managers/Wells/Perforation.hpp"
 
 namespace geosx
 {
@@ -116,54 +112,6 @@ void FluxApproximationBase::compute(DomainPartition * domain)
     ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
     computeBoundaryStencil(domain, targetSet, stencil->reference());
-  });
-
-  // compute stencils for wells
-  WellManager * wellManager = domain->getMeshBody(0)->getMeshLevel(0)->getWellManager();
-  wellManager->forSubGroups<WellBase>( [&] (WellBase * well) -> void
-  {
-    PerforationManager * perfManager = well->GetGroup<PerforationManager>( well->groupKeysWellBase.perforations );
-
-    auto const & elemRegion    = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementRegion );
-    auto const & elemSubregion = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementSubregion );
-    auto const & elemIndex     = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementIndex );
-    auto const & perfIndex     = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionPerforationIndex );
-
-    auto vw = well->RegisterViewWrapper<WellStencil>( keys::FVstencil );
-    vw->setRestartFlags( RestartFlags::NO_WRITE );
-    WellStencil & stencil = vw->reference();
-    stencil.reserve( well->numConnectionsLocal(), 2 );
-
-    array1d<PointDescriptor> points( 2 );
-    array1d<real64> weights( 2 );
-
-    for (localIndex iconn = 0; iconn < well->numConnectionsLocal(); ++iconn)
-    {
-      Perforation * perf = perfManager->GetGroup<Perforation>( perfIndex[iconn] );
-      real64 trans = perf->getTransmissibility();
-
-      // if transmissibility is default (i.e. not input), compute it
-      if (trans < 0.0)
-      {
-        // TODO use Peaceman or other formula to compute well index
-        trans = 0.0;
-
-        // Should we update the input node value? (e.g. to be written into output files)
-        perf->setTransmissibility(trans);
-      }
-
-      points[0].tag = PointDescriptor::Tag::CELL;
-      points[0].cellIndex = { elemRegion[iconn], elemSubregion[iconn], elemIndex[iconn] };
-      weights[0] = trans;
-
-      points[1].tag = PointDescriptor::Tag::PERF;
-      points[1].perfIndex = iconn;
-      weights[1] = -trans;
-
-      stencil.add(points.data(), points, weights);
-    };
-
-    stencil.compress();
   });
 }
 
