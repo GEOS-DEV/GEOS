@@ -136,9 +136,17 @@ void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
 
   // initially allocate enough memory for all (global) perforations
-  resize(numConnectionsGlobal());
+  resize( numConnectionsGlobal() );
   ConnectToCells( domain );
-  resize(numConnectionsLocal());
+  resize( numConnectionsLocal() );
+
+  // generate the "all" set to enable application of BC
+  ManagedGroup * sets = GetGroup( keys::sets );
+  set<localIndex> & setAll = sets->RegisterViewWrapper<set<localIndex>>("all")->reference();
+  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
+  {
+    setAll.insert( iconn );
+  }
 
   PrecomputeData( domain );
 
