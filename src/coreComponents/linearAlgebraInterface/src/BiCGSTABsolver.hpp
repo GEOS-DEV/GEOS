@@ -159,8 +159,8 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     beta = rhok/rhokminus1*alpha/omegak;
 
     // Update pk = rk + beta*(pk - omega*vk)
-    pk.update( -omegak, vk, 1. );
-    pk.update( 1., rk, beta );
+    pk.axpby( -omegak, vk, 1. );
+    pk.axpby( 1., rk, beta );
 
     // Uptate vk = MApk
     M.multiply( pk, y );
@@ -173,11 +173,11 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
     // compute h = x + alpha*y
     ParallelVector h( x );
-    h.update( alpha, y, 1. );
+    h.axpby( alpha, y, 1. );
 
     // Compute s = rk - alpha*vk
     ParallelVector s( rk );
-    s.update( -alpha, vk, 1. );
+    s.axpby( -alpha, vk, 1. );
 
     // Compute z = Ms
     M.multiply( s, z );
@@ -195,12 +195,12 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
-    h.update( omegak, z, 1. );
-    x.update( 1., h, 0. );
+    h.axpby( omegak, z, 1. );
+    x.copy( h );
 
     // Update rk = s - omega*t
-    s.update( -omegak, t, 1. );
-    rk.update( 1., s, 0. );
+    s.axpby( -omegak, t, 1. );
+    rk.copy( s );
 
     // Convergence check
     rk.norm2( convCheck );
@@ -284,8 +284,8 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     beta = rhok/rhokminus1*alpha/omegak;
 
     // Update pk = rk + beta*(pk - omega*vk)
-    pk.update( -omegak, vk, 1. );
-    pk.update( 1., rk, beta );
+    pk.axpby( -omegak, vk, 1. );
+    pk.axpby( 1., rk, beta );
 
     // Uptate vk = MApk
     M.multiply( pk, y );
@@ -298,11 +298,11 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
     // compute h = x + alpha*y
     BlockVectorView<LAI> h( x );
-    h.update( alpha, y, 1. );
+    h.axpby( alpha, y, 1. );
 
     // Compute s = rk - alpha*vk
     BlockVectorView<LAI> s( rk );
-    s.update( -alpha, vk, 1. );
+    s.axpby( -alpha, vk, 1. );
 
     // Compute z = Ms
     M.multiply( s, z );
@@ -320,12 +320,12 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
-    h.update( omegak, z, 1. );
-    x.update( 1., h, 0. );
+    h.axpby( omegak, z, 1. );
+    x.copy( h );
 
     // Update rk = s - omega*t
-    s.update( -omegak, u, 1. );
-    rk.update( 1., s, 0. );
+    s.axpby( -omegak, u, 1. );
+    rk.copy( s );
 
     // Convergence check
     rk.norm2( convCheck );

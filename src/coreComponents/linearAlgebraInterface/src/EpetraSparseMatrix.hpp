@@ -276,22 +276,22 @@ public:
                  EpetraVector &r ) const;
 
   /**
-   * @brief Compute "gaxpy" res = alpha*A*x + beta*b.
+   * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
+   *
+   * @note The naming convention follows the BLAS library.
    *
    * \param alpha Scalar factor for added matvec product.
    * \param x Input vector.
    * \param beta Scalar factor for right hand side.
-   * \param b Input right hand side.
-   * \param r Ouput vector.
+   * \param y Output vector.
    * \param useTranspose Boolean, set to true to use <tt>A^T</tt>.
    *
    */
-  void gaxpy( real64 alpha,
-              EpetraVector const &x,
-              real64 beta,
-              EpetraVector const &b,
-              EpetraVector &res,
-              bool useTranspose=false );
+  void gemv( real64 alpha,
+             EpetraVector const &x,
+             real64 beta,
+             EpetraVector &y,
+             bool useTranspose=false );
 
   /**
    * @brief Multiply all elements by scalingFactor.
