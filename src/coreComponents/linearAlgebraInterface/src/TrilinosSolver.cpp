@@ -48,22 +48,28 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
                             real64 newton_tol,
                             std::unique_ptr<Epetra_Operator> Prec )
 {
+  // Create Epetra linear problem and instantiate solver.
   Epetra_LinearProblem problem( Mat.getPointer(), sol.getPointer(), rhs.getPointer());
   AztecOO solver( problem );
-  solver.SetAztecOption( AZ_solver, AZ_cg );
   if( Prec != nullptr )
   {
     solver.SetPrecOperator( Prec.get());
   }
   else
   {
-    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
-    solver.SetAztecOption( AZ_conv, AZ_noscaled );
-//    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-//    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
-//    solver.SetAztecParam( AZ_ilut_fill, 5.0 );
+    // Other parameters used to debug
+//    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
+//    solver.SetAztecOption( AZ_conv, AZ_noscaled );
+
+    // Choose the solver, preconditioner and options (HARD CODED)
+    solver.SetAztecOption( AZ_solver, AZ_gmres );
+    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
+    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
+    solver.SetAztecParam( AZ_ilut_fill, 3.0 );
   }
+  // Suppress output
   solver.SetAztecOption( AZ_output, 0 );
+  // Solve
   solver.Iterate( max_iter, newton_tol );
 }
 
@@ -71,6 +77,9 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
  * @brief Solve system using an ML preconditioner.
  *
  * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+ * This function is a very early design and should be further improved
+ * before real usage.
+ *
  */
 void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
                                EpetraVector &sol,
@@ -79,6 +88,7 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
                                real64 newton_tol,
                                std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec )
 {
+  // Create Epetra linear problem and instantiate solver.
   Epetra_LinearProblem problem( Mat.getPointer(), sol.getPointer(), rhs.getPointer());
   AztecOO solver( problem );
 
@@ -97,19 +107,25 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
 /**
  * @brief Solve system using a direct solver (sequential!).
  *
- * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+ * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVectors.
+ *
  */
+
 void TrilinosSolver::dsolve( EpetraSparseMatrix &Mat,
                              EpetraVector &sol,
                              EpetraVector &rhs )
 {
+  // Create Epetra linear problem and instantiate solver.
   Epetra_LinearProblem problem( Mat.getPointer(), sol.getPointer(), rhs.getPointer());
   Amesos_BaseSolver* solver;
   Amesos Factory;
 
+  // Select KLU solver (only one available as of 9/20/2018)
   solver = Factory.Create( "Klu", problem );
+  // Factorize the matrix
   solver->SymbolicFactorization();
   solver->NumericFactorization();
+  // Solve the system
   solver->Solve();
 }
 

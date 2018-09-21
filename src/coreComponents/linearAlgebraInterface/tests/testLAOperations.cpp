@@ -301,7 +301,8 @@ void testNativeSolvers()
   solver.solve( testMatrix, solIterative, b, 1000, 1e-8);
   real64 normIterativeSol;
   solIterative.normInf( normIterativeSol );
-  EXPECT_TRUE( std::fabs( normIterativeSol - 1 ) <= 1e-5 );
+
+  EXPECT_TRUE( std::fabs( normIterativeSol - 1 ) <= 5e-5 );
 
   real64 norm2ItSol, norm2InitGuess = 0;
   solIterative.norm2( norm2ItSol );
@@ -319,7 +320,7 @@ void testNativeSolvers()
 
   real64 normDirectSol;
   solDirect.normInf( normDirectSol );
-  EXPECT_TRUE( std::fabs( normDirectSol - 1 ) <= 1e-6 );
+  EXPECT_TRUE( std::fabs( normDirectSol - 1 ) <= 1e-8 );
 
   // Test clearRow
   testMatrix.clearRow( 2*N/4+n, 2.0 );

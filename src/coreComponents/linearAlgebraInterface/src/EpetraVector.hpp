@@ -56,6 +56,9 @@ public:
 
   /**
    * @brief Copy constructor.
+   *
+   * \param vector Vector to be copied.
+   *
    */
   EpetraVector( EpetraVector const & vector );
 
@@ -72,6 +75,10 @@ public:
    * @brief Construct vector from array.
    *
    * Create a vector from an Epetra_Map and an array of values.
+   *
+   * \param map Input Epetra Map.
+   * \param values Array of values to populate vector.
+   *
    */
   void create( const Epetra_Map &map,
                real64     *values );
@@ -79,7 +86,11 @@ public:
   /**
    * @brief Construct vector from array.
    *
-   * Create a vector from an Epetra_Map and an array of values.
+   * Create a vector from a size and an array of values.
+   *
+   * \param size Global number of elements.
+   * \param values Array of values to populate vector.
+   *
    */
   void create( const trilinosTypes::gid  size,
                real64      *values );
@@ -88,6 +99,9 @@ public:
    * @brief Construct vector from std::vector.
    *
    * Create a vector from an std vector.
+   *
+   * \param vec Std vector to cast as EpetraVector
+   *
    */
   void create( std::vector<real64> &vec );
   //@}
@@ -97,17 +111,29 @@ public:
 
   /**
    * @brief Multiply all elements by scalingFactor.
+   *
+   * \param scalingFactor Scaling Factor.
+   *
    */
   void scale( real64 const scalingFactor );
 
   /**
    * @brief Dot product with the vector vec.
+   *
+   * \param vec Vector to dot-product with.
+   * \param dst Result.
+   *
    */
   void dot( EpetraVector const &vec,
             real64 &dst );
 
   /**
    * @brief Update (name to be changed) vector as this = alpha*vec + beta*this.
+   *
+   * \param alpha Scaling factor for added vector.
+   * \param vec Vector to add.
+   * \param beta Scaling factor for self vector.
+   *
    */
   void update( real64 const alpha,
                EpetraVector const &vec,
@@ -115,16 +141,25 @@ public:
 
   /**
    * @brief 1-norm of the vector.
+   *
+   * \param 1-norm of the vector.
+   *
    */
   void norm1( real64 &result ) const;
 
   /**
    * @brief 2-norm of the vector.
+   *
+   * \param 2-norm of the vector.
+   *
    */
   void norm2( real64 &result ) const;
 
   /**
    * @brief Infinity-norm of the vector.
+   *
+   * \param Inf-norm of the vector.
+   *
    */
   void normInf( real64 &result ) const;
 
