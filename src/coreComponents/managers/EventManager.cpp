@@ -22,6 +22,7 @@
 
 #include "EventManager.hpp"
 #include "managers/Events/EventBase.hpp"
+#include "common/TimingMacros.hpp"
 
 #include "DocumentationNode.hpp"
 
@@ -101,7 +102,8 @@ void EventManager::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              RestartFlags::WRITE );
 
   docNode->AllocateChildNode( viewKeys.maxCycle.Key(),
                               viewKeys.maxCycle.Key(),
@@ -114,7 +116,8 @@ void EventManager::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              RestartFlags::WRITE );
 
   docNode->AllocateChildNode( viewKeys.verbosity.Key(),
                               viewKeys.verbosity.Key(),
@@ -127,7 +130,8 @@ void EventManager::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              RestartFlags::WRITE );
 }
 
 
@@ -166,6 +170,16 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
   integer exitFlag = 0;
 
+  // Setup MPI communication
+  integer rank = 0;
+  integer comm_size = 1;
+  #if USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+  #endif
+  real64 send_buffer[2];
+  array1d<real64> receive_buffer(2 * comm_size);
+
   // Setup event targets
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
   {
@@ -176,13 +190,20 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
     real64 nextDt = std::numeric_limits<real64>::max();
-    std::cout << "\nTime: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-
+    if (rank == 0)
+    {
+      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+    }
+    
     this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
     {
+      // Calculate the event and sub-event forecasts
+      // Note: because events can be nested, the mpi reduce for event
+      // forecasts need to happen in EventBase.
       subEvent->CheckEvents(time, dt, cycle, domain);
       integer eventForecast = subEvent->GetForecast();
 
+      // Execute, signal events
       if (eventForecast == 1)
       {
         subEvent->SignalToPrepareForExecution(time, dt, cycle, domain);
@@ -193,19 +214,20 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
         subEvent->Execute(time, dt, cycle, domain);
       }
 
-      real64 requestedDt = 1e6;
+      // Estimate the time-step for the next cycle
       if (eventForecast <= 1)
       {
-        requestedDt = subEvent->GetTimestepRequest(time + dt);
+        real64 requestedDt = subEvent->GetTimestepRequest(time + dt);
+        nextDt = std::min(requestedDt, nextDt);
       }
-      nextDt = std::min(requestedDt, nextDt);
 
+      // Check the exit flag
       exitFlag += subEvent->GetExitFlag();
-
+    
       // Debug information
-      if (verbosity > 0)
+      if ((verbosity > 0) && (rank == 0))
       {
-        std::cout << "     Event: " << subEvent->getName() << ", f=" << eventForecast << ", dt_r=" << requestedDt << std::endl;
+        std::cout << "     Event: " << subEvent->getName() << ", f=" << eventForecast << std::endl;
       }      
     });
 
@@ -213,11 +235,37 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     ++cycle;
     dt = nextDt;
     dt = (time + dt > maxTime) ? (maxTime - time) : dt;
+
+    #if USE_MPI
+      send_buffer[0] = dt;
+      send_buffer[1] = static_cast<real64>(exitFlag);
+      MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+      if (rank == 0)
+      {
+        for (integer ii=0; ii<comm_size; ii++)
+        {
+          send_buffer[0] = std::min(send_buffer[0], receive_buffer[2*ii]);
+          send_buffer[1] += receive_buffer[2*ii + 1]; 
+        }
+      }
+
+      MPI_Bcast(send_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      dt = send_buffer[0];
+      if (send_buffer[1] > 0.5)
+      {
+        exitFlag = 1;
+      }
+    #endif
   }
 
 
   // Cleanup
-  std::cout << "Cleaning up events" << std::endl;
+  if (rank == 0)
+  {
+    std::cout << "Cleaning up events" << std::endl;
+  }
+  
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     subEvent->Cleanup(time, cycle, domain);     

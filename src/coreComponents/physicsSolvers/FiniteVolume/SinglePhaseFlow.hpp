@@ -219,11 +219,11 @@ public:
     constexpr static auto fluidIndexString = "fluidIndex";
     constexpr static auto solidIndexString = "solidIndex";
 
-  } viewKeys;
+  } singlePhaseFlowViewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeys;
+  } singlePhaseFlowGroupKeys;
 
   localIndex fluidIndex() const
   { return m_fluidIndex; }

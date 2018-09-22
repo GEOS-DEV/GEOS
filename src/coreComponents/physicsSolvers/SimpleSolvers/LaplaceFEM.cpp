@@ -89,8 +89,8 @@ void LaplaceFEM::FillDocumentationNode(  )
   docNode->setShortDescription("An example solid mechanics solver");
 
 
-  docNode->AllocateChildNode( viewKeys.timeIntegrationOption.Key(),
-                              viewKeys.timeIntegrationOption.Key(),
+  docNode->AllocateChildNode( laplaceFEMViewKeys.timeIntegrationOption.Key(),
+                              laplaceFEMViewKeys.timeIntegrationOption.Key(),
                               -1,
                               "string",
                               "string",
@@ -103,8 +103,8 @@ void LaplaceFEM::FillDocumentationNode(  )
                               0 );
 
 
-  docNode->AllocateChildNode( viewKeys.fieldVarName.Key(),
-                              viewKeys.fieldVarName.Key(),
+  docNode->AllocateChildNode( laplaceFEMViewKeys.fieldVarName.Key(),
+                              laplaceFEMViewKeys.fieldVarName.Key(),
                               -1,
                               "string",
                               "string",
@@ -158,7 +158,7 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
 
 void LaplaceFEM::ReadXML_PostProcess()
 {
-  string tiOption = this->getReference<string>(viewKeys.timeIntegrationOption);
+  string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 
   if( tiOption == "SteadyState" )
   {
@@ -265,7 +265,7 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
   // create trilinos dof indexing
 
-  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(laplaceFEMViewKeys.blockLocalDofNumber);
   integer_array const & is_ghost       = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
 
 
@@ -277,7 +277,6 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
     if(is_ghost[r] < 0)
     {
       trilinos_index[r] = first_local_row+local_count+offset;
-      localIndices.push_back(trilinos_index[r]);
       local_count++;
     }
     else
@@ -357,7 +356,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(laplaceFEMViewKeys.blockLocalDofNumber);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
@@ -380,7 +379,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
         {
           if( elemGhostRank[k] < 0 )
           {
-            arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
+            localIndex const * const localNodeIndices = elemsToNodes[k];
 
             for( localIndex a=0 ; a<numNodesPerElement ; ++a )
             {
@@ -421,7 +420,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::dummyScalarBlock );
   Epetra_FEVector * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
 
-  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(laplaceFEMViewKeys.blockLocalDofNumber);
 
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
@@ -453,7 +452,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       {
         if(elemGhostRank[k] < 0)
         {
-          arrayView1d<localIndex const> const local_index = elemsToNodes[k];
+          localIndex const * const local_index = elemsToNodes[k];
 
           for( int a=0 ; a<numNodesPerElement ; ++a)
           {
@@ -517,9 +516,9 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::dummyScalarBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
-  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(laplaceFEMViewKeys.blockLocalDofNumber);
 
-  string const & fieldName = getReference<string>(viewKeys.fieldVarName);
+  string const & fieldName = getReference<string>(laplaceFEMViewKeys.fieldVarName);
   real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
 
 //  integer_array & ghostRank = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
@@ -588,7 +587,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                                         time,
                                                         targetGroup,
                                                         "Temperature",
-                                                        viewKeys.blockLocalDofNumber.Key(),
+                                                        laplaceFEMViewKeys.blockLocalDofNumber.Key(),
                                                         1,
                                                         &blockSystem,
                                                         BlockIDs::dummyScalarBlock );

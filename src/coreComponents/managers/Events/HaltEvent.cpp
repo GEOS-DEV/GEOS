@@ -54,8 +54,8 @@ void HaltEvent::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Describes the timing of the solver application");
 
-  docNode->AllocateChildNode( viewKeys.maxRuntime.Key(),
-                              viewKeys.maxRuntime.Key(),
+  docNode->AllocateChildNode( haltEventViewKeys.maxRuntime.Key(),
+                              haltEventViewKeys.maxRuntime.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -75,7 +75,7 @@ void HaltEvent::EstimateEventTiming(real64 const time,
                                      integer const cycle,
                                      ManagedGroup * domain)
 {
-  real64 const maxRuntime = this->getReference<real64>(viewKeys.maxRuntime);
+  real64 const maxRuntime = this->getReference<real64>(haltEventViewKeys.maxRuntime);
   
   // Check run time
   timeval tim;
@@ -86,6 +86,14 @@ void HaltEvent::EstimateEventTiming(real64 const time,
   m_realDt = currentTime - m_lastTime;
   m_lastTime = currentTime;
   integer forecast = static_cast<integer>((maxRuntime - (currentTime - m_startTime)) / m_realDt);
+  
+  // The timing for the ranks may differ slightly, so synchronize
+  #if USE_MPI
+    integer forecast_global;
+    MPI_Allreduce(&forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    forecast = forecast_global;
+  #endif
+
   SetForecast(forecast);
 
   if (this->GetForecast() <= 0)

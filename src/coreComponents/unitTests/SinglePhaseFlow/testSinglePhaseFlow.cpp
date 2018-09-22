@@ -16,7 +16,16 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "gtest/gtest.h"
+#if __clang_major__ >= 5
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+
+#include <gtest/gtest.h>
+
+#if __clang_major__ >= 5
+#pragma clang diagnostic push
+#endif
 
 #include "common/Logger.hpp"
 #include "common/TimingMacros.hpp"
@@ -39,8 +48,10 @@
 
 using namespace geosx;
 using namespace dataRepository;
+
 #ifdef GEOSX_USE_ATK
 using namespace axom;
+#include "slic/GenericOutputStream.hpp"
 #endif
 
 namespace
