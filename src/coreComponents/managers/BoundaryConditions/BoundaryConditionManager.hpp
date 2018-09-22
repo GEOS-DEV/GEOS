@@ -180,7 +180,7 @@ public:
       {
         string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
 //        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
-        localIndex const targetPathLength = targetPath.size();
+        localIndex const targetPathLength = integer_conversion<localIndex>(targetPath.size());
         string const targetName = bc->GetFieldName();
 //        std::cout<<"targetName = "<<targetName<<std::endl;
 
@@ -203,8 +203,8 @@ public:
             processedPath += "/" + targetPath[pathLevel];
 //            std::cout<<"processedPath="<<processedPath<<std::endl;
 
-            GEOS_ASSERT( targetGroup != nullptr,
-                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
+            GEOS_ERROR_IF( targetGroup == nullptr,
+                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
 
           dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );

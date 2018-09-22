@@ -197,15 +197,16 @@ public:
     dataRepository::ViewKey trilinosIndex = { "trilinosIndex" };
     dataRepository::ViewKey ghostRank = { "ghostRank" };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-  } viewKeys;
+  } solidMechanicsViewKeys;
 
   struct groupKeyStruct
   {
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
-  } groupKeys;
+  } solidMechanicsGroupKeys;
 
 private:
 
+  real64 m_maxForce;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   SolidMechanics_LagrangianFEM();

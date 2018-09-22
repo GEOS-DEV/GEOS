@@ -1,12 +1,13 @@
 message( "Entering /src/CMakeLists.txt")
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.9)
 
 ################################
 # GEOSX
 ################################
 project(geosx LANGUAGES C CXX)
 set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
+set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
 
 ################################
 # Include blt
@@ -86,7 +87,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core 
+                   DEPENDS_ON geosx_core
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
