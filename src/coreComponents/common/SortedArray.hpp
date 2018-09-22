@@ -19,7 +19,7 @@
 #ifndef SRC_COMMON_SORTEDARRAY
 #define SRC_COMMON_SORTEDARRAY
 
-#include <vector>             /* for std::vector */
+#include "ManagedArray.hpp"   /* for ManagedArray */
 #include <algorithm>          /* for std::binary_search, std::lower_bound */
 //#include <stdint.h>
 
@@ -28,12 +28,12 @@ class SortedArray
 {
 
 public:
-  using iterator = typename std::vector<T>::iterator;
-  using const_iterator = typename std::vector<T>::const_iterator;
+  using iterator = typename multidimensionalArray::ManagedArray<T, 1, INDEX_TYPE>::iterator;
+  using const_iterator = typename multidimensionalArray::ManagedArray<T, 1, INDEX_TYPE>::const_iterator;
   using size_type = INDEX_TYPE;
-  using value_type = typename std::vector<T>::value_type;
-  using pointer = typename std::vector<T>::pointer;
-  using const_pointer = typename std::vector<T>::const_pointer;
+  using value_type = typename multidimensionalArray::ManagedArray<T, 1, INDEX_TYPE>::value_type;
+  using pointer = typename multidimensionalArray::ManagedArray<T, 1, INDEX_TYPE>::pointer;
+  using const_pointer = typename multidimensionalArray::ManagedArray<T, 1, INDEX_TYPE>::const_pointer;
 
 
   SortedArray():
@@ -44,10 +44,6 @@ public:
   SortedArray(InputIterator first, InputIterator last):
     m_data()
   { insert(first, last); }
-
-
-//  ~SortedArray()
-//  {}
 
 
   T * data()
@@ -162,8 +158,7 @@ public:
   { return std::is_sorted(begin(), end()); }
 
 private:
-
-  std::vector< T > m_data;
+  multidimensionalArray::ManagedArray<T, 1, INDEX_TYPE> m_data;
 };
 
 #endif /* SRC_COMMON_SORTEDARRAY */
