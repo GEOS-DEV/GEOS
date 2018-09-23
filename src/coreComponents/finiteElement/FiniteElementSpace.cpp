@@ -130,7 +130,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 
   for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
   {
-    arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
+    localIndex const * const elemToNodeMap = elemsToNodes[k];
 
     CopyGlobalToLocal(elemToNodeMap, X, X_elemLocal);
 

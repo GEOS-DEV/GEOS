@@ -58,7 +58,7 @@ static auto ExponentApproximationTypeSwitchBlock( ExponentApproximationType cons
   }
   default:
   {
-    GEOS_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" )
+    GEOS_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
   }
 
   }
