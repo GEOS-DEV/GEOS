@@ -198,8 +198,23 @@ void ManagedGroup::resize( indexType const newsize )
     }
   }
   m_size = newsize;
+  if( m_size > m_capacity )
+  {
+    m_capacity = m_size;
+  }
 }
 
+void ManagedGroup::reserve( indexType const newsize )
+{
+  for( auto&& i : this->wrappers() )
+  {
+    if( i.second->sizedFromParent() == 1 )
+    {
+      i.second->reserve(newsize);
+    }
+  }
+  m_capacity = newsize;
+}
 
 
 void ManagedGroup::RegisterDocumentationNodes()
