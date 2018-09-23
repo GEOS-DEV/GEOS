@@ -59,7 +59,7 @@ public:
                             dataRepository::ManagedGroup * const parent,
                             localIndex const numConstitutivePointsPerParentIndex ) const;
 
-  ~ConstitutiveManager();
+  ~ConstitutiveManager() override;
 
   template< typename T = ConstitutiveBase >
   T const * GetConstitituveRelation( string const & constitutiveRelationInstanceName ) const

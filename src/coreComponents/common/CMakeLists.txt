@@ -19,7 +19,7 @@ set(common_sources
 set( dependencyList cxx-utilities mpi )
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} slic conduit )
+  set( dependencyList ${dependencyList} slic conduit lumberjack )
 endif()
 
 if( ENABLE_CALIPER )
@@ -43,6 +43,7 @@ blt_add_library( NAME                  common
                
                
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+#target_include_directories( common PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../../include)
                
 geosx_add_code_checks(PREFIX common )
 
