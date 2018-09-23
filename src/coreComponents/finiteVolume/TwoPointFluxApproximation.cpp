@@ -237,19 +237,19 @@ void TwoPointFluxApproximation::computeWellStencil( DomainPartition const * doma
                                                     WellBase const * well,
                                                     WellStencil & stencil ) const
 {
-  PerforationManager const * perfManager = well->GetGroup<PerforationManager>( well->groupKeysWellBase.perforations );
+  PerforationManager const * perfManager = well->getPerforations();
 
-  auto const & elemRegion    = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementRegion );
-  auto const & elemSubregion = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementSubregion );
-  auto const & elemIndex     = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionElementIndex );
-  auto const & perfIndex     = well->getReference<array1d<localIndex>>( well->viewKeysWellBase.connectionPerforationIndex );
+  auto const & elemRegion    = perfManager->getReference<array1d<localIndex>>( perfManager->viewKeysPerfManager.connectionElementRegion );
+  auto const & elemSubregion = perfManager->getReference<array1d<localIndex>>( perfManager->viewKeysPerfManager.connectionElementSubregion );
+  auto const & elemIndex     = perfManager->getReference<array1d<localIndex>>( perfManager->viewKeysPerfManager.connectionElementIndex );
+  auto const & perfIndex     = perfManager->getReference<array1d<localIndex>>( perfManager->viewKeysPerfManager.connectionPerforationIndex );
 
   array1d<PointDescriptor> points( 2 );
   array1d<real64> weights( 2 );
 
   for (localIndex iconn = 0; iconn < well->numConnectionsLocal(); ++iconn)
   {
-    Perforation const * perf = perfManager->GetGroup<Perforation>( perfIndex[iconn] );
+    Perforation const * perf = perfManager->getPerforation( perfIndex[iconn] );
     real64 trans = perf->getTransmissibility();
 
     // if transmissibility is default (i.e. not input), compute it

@@ -248,7 +248,12 @@ private:
    * @brief This function generates various discretization information for later use.
    * @param domain the domain parition
    */
-  void PrecomputeData(DomainPartition *const domain);
+  void PrecomputeData( DomainPartition * const domain );
+
+  /**
+   * @brief Outputs well stats for the time step
+   */
+  void PrintWellStats( DomainPartition * const domain );
 
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;

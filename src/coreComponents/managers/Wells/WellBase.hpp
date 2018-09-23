@@ -43,9 +43,6 @@ public:
   WellBase( WellBase const &) = delete;
   WellBase( WellBase && ) = delete;
 
-  localIndex numConnectionsGlobal() const { return m_perfManager.numSubGroups(); }
-  localIndex numConnectionsLocal()  const { return m_numConnections;             }
-
   /// Catalog name interface
   static string CatalogName() { return "WellBase"; }
 
@@ -56,15 +53,21 @@ public:
     return catalog;
   }
 
+  virtual const string getCatalogName() const override;
+
   virtual void FillDocumentationNode() override;
 
   virtual void CreateChild(string const & childKey, string const & childName) override;
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void InitializePostSubGroups(ManagedGroup * const group) override;
+  virtual void FinalInitialization(ManagedGroup * const problemManager) override;
 
-  virtual void FinalInitialization(ManagedGroup * const group) override;
+  localIndex numConnectionsGlobal() const { return m_perfManager.numConnectionsGlobal(); }
+  localIndex numConnectionsLocal()  const { return m_perfManager.numConnectionsLocal();  }
+
+  PerforationManager * getPerforations()             { return &m_perfManager; }
+  PerforationManager const * getPerforations() const { return &m_perfManager; }
 
   R1Tensor const & getGravityVector() const;
 
@@ -76,24 +79,16 @@ public:
 
     static constexpr auto referenceDepthString = "referenceDepth";
     static constexpr auto typeString = "type";
-    static constexpr auto connectionElementRegionString    = "connectionElementRegion";
-    static constexpr auto connectionElementSubregionString = "connectionElementSubregion";
-    static constexpr auto connectionElementIndexString     = "connectionElementIndex";
-    static constexpr auto connectionPerforationIndexString = "connectionPerforationIndex";
 
     dataRepository::ViewKey referenceDepth             = { referenceDepthString };
     dataRepository::ViewKey type                       = { typeString };
-    dataRepository::ViewKey connectionElementRegion    = { connectionElementRegionString    };
-    dataRepository::ViewKey connectionElementSubregion = { connectionElementSubregionString };
-    dataRepository::ViewKey connectionElementIndex     = { connectionElementIndexString     };
-    dataRepository::ViewKey connectionPerforationIndex = { connectionPerforationIndexString };
 
   } viewKeysWellBase;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
 
-    static constexpr auto perforationsString = "Perforations";
+    static constexpr auto perforationsString = dataRepository::keys::perforations;
 
     dataRepository::GroupKey perforations = { perforationsString };
 
@@ -102,16 +97,10 @@ public:
 protected:
 
   PerforationManager m_perfManager;
-  localIndex m_numConnections;
 
   real64 m_referenceDepth;
   string m_typeString;
   Type   m_type;
-
-  array1d<localIndex> m_connectionElementRegion;
-  array1d<localIndex> m_connectionElementSubregion;
-  array1d<localIndex> m_connectionElementIndex;
-  array1d<localIndex> m_connectionPerforationIndex;
 
 };
 

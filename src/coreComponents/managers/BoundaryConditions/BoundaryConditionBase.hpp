@@ -43,6 +43,48 @@ class Function;
 struct BcEqual
 {
   /**
+   * @brief Application of a boundary condition to a scalar variable.
+   * @tparam T The type of the variable specified in @p field.
+   * @param[in] field The scalar variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to (must be zero).
+   * @param[in] component not used.
+   * @param[in] value The value of the boundary condition to apply to @p field.
+   *
+   * This function performs field = value.
+   */
+  template< typename T >
+  static inline typename std::enable_if< !traits::is_array<T>::value && !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( T & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    GEOS_ERROR_IF( index > 0, "ApplyBcValue(): attempting to use scalar value as an array" );
+    field = static_cast<T>(value);
+  }
+
+  /**
+   * @brief Application of a boundary condition to a tensor variable.
+   * @tparam T The type of the variable specified in @p field.
+   * @param[in] field The tensor variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to (must be zero).
+   * @param[in] component tensor component to apply value to.
+   * @param[in] value The value of the boundary condition to apply to @p field.
+   *
+   * This function performs field[component] = value.
+   */
+  template< typename T >
+  static inline typename std::enable_if< !traits::is_array<T>::value && traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( T & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    GEOS_ERROR_IF( index > 0, "ApplyBcValue(): attempting to use tensor value as an array" );
+    field.Data()[component] = value;
+  }
+
+  /**
    * @brief Pointwise application of a boundary condition to a field variable.
    * @tparam T The type of the array1d field variable specified in @p field.
    * @param[in] field The array1d field variable to apply @p value to.

@@ -52,23 +52,27 @@ public:
   /// Catalog name interface
   static string CatalogName() { return dataRepository::keys::simpleWell; }
 
-  const string getCatalogName() const override;
-
   void FillDocumentationNode() override;
+
+  virtual void InitializationOrder(string_array & order) override;
 
   virtual void FinalInitialization( ManagedGroup * const group ) override;
 
   // update each connection pressure from bhp and hydrostatic head
   void UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex, bool gravityFlag = true );
 
+  real64 GetTotalFlowRate();
+
   struct viewKeyStruct : public WellBase::viewKeyStruct
   {
 
-    static constexpr auto pressureString         = "pressure";
-    static constexpr auto gravityDepthString     = "gravityDepth";
+    static constexpr auto pressureString = "pressure";
+    static constexpr auto flowRateString = "flowRate";
+    static constexpr auto bhpString      = "bhp";
 
-    dataRepository::ViewKey pressure         = { pressureString         };
-    dataRepository::ViewKey gravityDepth     = { gravityDepthString     };
+    dataRepository::ViewKey pressure = { pressureString };
+    dataRepository::ViewKey flowRate = { flowRateString };
+    dataRepository::ViewKey bhp      = { bhpString };
 
   } viewKeysSimpleWell;
 
@@ -79,8 +83,7 @@ public:
 
 private:
 
-  void ConnectToCells( DomainPartition const * domain );
-  void PrecomputeData( DomainPartition const * domain );
+  array1d<real64> m_bhp;
 
 };
 

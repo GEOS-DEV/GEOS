@@ -25,11 +25,23 @@
 #define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONMANAGER_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
 {
 
-class PerforationManager : public dataRepository::ManagedGroup
+namespace dataRepository
+{
+namespace keys
+{
+static constexpr auto perforations = "Perforations";
+}
+}
+
+class DomainPartition;
+class Perforation;
+
+class PerforationManager : public ObjectManagerBase
 {
 public:
 
@@ -43,13 +55,54 @@ public:
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
-  struct groupKeyStruct
+  virtual void FinalInitialization(ManagedGroup * const problemManager) override;
+
+  virtual const string getCatalogName() const override;
+
+  localIndex numConnectionsGlobal() const { return m_allPerfList.size(); }
+  localIndex numConnectionsLocal()  const { return size();         }
+
+  Perforation const * getPerforation( localIndex iperf ) const;
+  Perforation *       getPerforation( localIndex iperf );
+
+  struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
+  {
+
+    static constexpr auto connectionElementRegionString    = "connectionElementRegion";
+    static constexpr auto connectionElementSubregionString = "connectionElementSubregion";
+    static constexpr auto connectionElementIndexString     = "connectionElementIndex";
+    static constexpr auto connectionPerforationIndexString = "connectionPerforationIndex";
+
+    static constexpr auto gravityDepthString               = "gravityDepth";
+
+    dataRepository::ViewKey connectionElementRegion    = { connectionElementRegionString    };
+    dataRepository::ViewKey connectionElementSubregion = { connectionElementSubregionString };
+    dataRepository::ViewKey connectionElementIndex     = { connectionElementIndexString     };
+    dataRepository::ViewKey connectionPerforationIndex = { connectionPerforationIndexString };
+
+    dataRepository::ViewKey gravityDepth               = { gravityDepthString     };
+
+  } viewKeysPerfManager;
+
+struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
     static constexpr auto perforationString = "Perforation";
+
+    dataRepository::GroupKey perforation = { perforationString };
 
   } groupKeysPerfManager;
 
 private:
+
+  void ConnectToCells( DomainPartition const * domain );
+  void PrecomputeData( DomainPartition const * domain );
+
+  array1d<localIndex> m_connectionElementRegion;
+  array1d<localIndex> m_connectionElementSubregion;
+  array1d<localIndex> m_connectionElementIndex;
+  array1d<localIndex> m_connectionPerforationIndex;
+
+  string_array m_allPerfList;
 
 };
 

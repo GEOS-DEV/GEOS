@@ -456,6 +456,11 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
     densOld[er][esr][ei] = dens[er][esr][m_fluidIndex][ei][0];
     poroOld[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
   });
+
+  if (verboseLevel() >= 1)
+  {
+    PrintWellStats( domain );
+  }
 }
 
 void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
@@ -1116,7 +1121,7 @@ void SinglePhaseFlow::ApplyFaceBC_implicit(DomainPartition * domain,
                                           ManagedGroup * const targetGroup,
                                           string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToField<BcEqual>(targetSet,time + dt, targetGroup, fieldName);
+    bc->ApplyBoundaryConditionToField<BcEqual>(targetSet, time + dt, targetGroup, fieldName);
   });
 
 
@@ -1365,17 +1370,21 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
     elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
                                                                    constitutiveManager );
 
-  wellManager->forSubGroups<SimpleWell>( [&] ( SimpleWell * well) -> void
+  wellManager->forSubGroups<SimpleWell>( [&] ( SimpleWell * well ) -> void
   {
     bcManager->ApplyBoundaryConditionToField( time_n + dt,
                                               domain,
                                               string(keys::wellManager) + '/' + well->getName(),
-                                              SimpleWell::viewKeyStruct::pressureString );
+                                              SimpleWell::viewKeyStruct::bhpString );
 
     well->UpdateConnectionPressure( domain, m_fluidIndex, m_gravityFlag );
 
-    auto const & presWell      = well->getReference<array1d<real64>>( well->viewKeysSimpleWell.pressure );
-    auto const & gravDepthWell = well->getReference<array1d<real64>>( well->viewKeysSimpleWell.gravityDepth );
+    PerforationManager * perfManager = well->getPerforations();
+
+    auto const & presWell      = perfManager->getReference<array1d<real64>>( well->viewKeysSimpleWell.pressure );
+    auto const & gravDepthWell = perfManager->getReference<array1d<real64>>( perfManager->viewKeysPerfManager.gravityDepth );
+
+    auto & flowRateWell  = perfManager->getReference<array1d<real64>>( well->viewKeysSimpleWell.flowRate );
 
     auto const & wellStencil = well->getReference<FluxApproximationBase::WellStencil>( keys::FVstencil );
 
@@ -1453,6 +1462,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
 
       // compute potential difference MPFA-style
       real64 potDif = 0.0;
+      localIndex iperf = -1;
       stencil.forAll([&] (PointDescriptor point, real64 w, localIndex i) -> void
       {
         real64 pressure = 0.0, gravD = 0.0;
@@ -1472,7 +1482,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
           }
           case PointDescriptor::Tag::PERF:
           {
-            localIndex const iperf = point.perfIndex;
+            iperf = point.perfIndex;
 
             pressure = presWell[iperf];
             gravD = gravDepthWell[iperf];
@@ -1516,6 +1526,9 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
           ++counter;
         }
       }
+
+      // save flux from/into the perforation for calculating well totals
+      flowRateWell[iperf] = localFlux;
 
       // Add to global residual/jacobian
       jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
@@ -1716,6 +1729,19 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
     constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint( pres[er][esr][ei], ei, 0 );
   });
 
+}
+
+void SinglePhaseFlow::PrintWellStats(DomainPartition * const domain)
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = mesh->getWellManager();
+
+  wellManager->forSubGroups<SimpleWell>( [&] ( SimpleWell * well ) -> void
+  {
+    real64 const rate = well->GetTotalFlowRate();
+
+    std::cout << "Well " << well->getName() << ": rate = " << rate << std::endl;
+  });
 }
 
 

@@ -30,7 +30,6 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "math/TensorT/TensorBaseT.h"
-#include "mesh/MeshForLoopInterface.hpp"
 
 namespace geosx
 {
@@ -39,9 +38,10 @@ using namespace dataRepository;
 using namespace constitutive;
 
 SimpleWell::SimpleWell(string const & name, dataRepository::ManagedGroup * const parent)
-  : WellBase(name, parent)
+  : WellBase( name, parent ),
+    m_bhp()
 {
-
+  RegisterViewWrapper( viewKeysSimpleWell.bhp.Key(), &m_bhp, false );
 }
 
 SimpleWell::~SimpleWell()
@@ -57,104 +57,60 @@ void SimpleWell::FillDocumentationNode()
   docNode->setName("SimpleWell");
   docNode->setSchemaType("Node");
 
-  docNode->AllocateChildNode( viewKeysSimpleWell.pressure.Key(),
-                              viewKeysSimpleWell.pressure.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Connection pressure",
-                              "Connection pressure",
-                              "",
-                              getName(),
-                              1,
-                              0,
-                              1 );
+  cxx_utilities::DocumentationNode * const perfDocNode = m_perfManager.getDocumentationNode();
 
-  docNode->AllocateChildNode( viewKeysSimpleWell.gravityDepth.Key(),
-                              viewKeysSimpleWell.gravityDepth.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Connection gravity-depth product",
-                              "Connection gravity-depth product",
-                              "",
-                              getName(),
-                              1,
-                              0,
-                              1 );
+  perfDocNode->AllocateChildNode( viewKeysSimpleWell.pressure.Key(),
+                                  viewKeysSimpleWell.pressure.Key(),
+                                  -1,
+                                  "real64_array",
+                                  "real64_array",
+                                  "Connection pressure",
+                                  "Connection pressure",
+                                  "",
+                                  getName(),
+                                  1,
+                                  0,
+                                  1 );
+
+  perfDocNode->AllocateChildNode( viewKeysSimpleWell.flowRate.Key(),
+                                  viewKeysSimpleWell.flowRate.Key(),
+                                  -1,
+                                  "real64_array",
+                                  "real64_array",
+                                  "Connection flow rate",
+                                  "Connection flow rate",
+                                  "",
+                                  getName(),
+                                  1,
+                                  0,
+                                  1 );
+
 }
 
-const string SimpleWell::getCatalogName() const
+void SimpleWell::InitializationOrder(string_array & order)
 {
-  return CatalogName();
-}
-
-void SimpleWell::ConnectToCells( DomainPartition const * domain )
-{
-  MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  ElementRegionManager const * elemManager = mesh->getElemManager();
-
-  auto elemCenter = elemManager->ConstructViewAccessor<array1d<R1Tensor>>( CellBlockSubRegion::
-                                                                           viewKeyStruct::
-                                                                           elementCenterString );
-
-  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeysSimpleWell.perforations );
-
-  // TODO Until we can properly trace perforations to cells,
-  // just connect to the nearest cell center (this is NOT correct in general)
-
-  m_numConnections = 0;
-  localIndex iconn_global = 0;
-  perfManager->forSubGroups<Perforation>( [&] ( Perforation const * perf ) -> void
-  {
-    R1Tensor const & loc = perf->getLocation();
-
-    auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex er,
-                                                  localIndex esr,
-                                                  localIndex ei ) -> real64
-    {
-      R1Tensor v = loc;
-      v -= elemCenter[er][esr][ei];
-      return v.L2_Norm();
-    });
-
-    m_connectionElementRegion[m_numConnections]    = std::get<0>(ret.second);
-    m_connectionElementSubregion[m_numConnections] = std::get<1>(ret.second);
-    m_connectionElementIndex[m_numConnections]     = std::get<2>(ret.second);
-    m_connectionPerforationIndex[m_numConnections] = iconn_global++;
-
-    // This will not be correct in parallel until we can actually check that
-    // the perforation belongs to local mesh partition
-    ++m_numConnections;
-  });
+  // Skip initializing PerforationManager, call it manually from FinalInitialization()
 }
 
 void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
 {
   WellBase::FinalInitialization(problemManager);
 
-  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
-
-  // initially allocate enough memory for all (global) perforations
-  resize( numConnectionsGlobal() );
-  ConnectToCells( domain );
-  resize( numConnectionsLocal() );
+  // fields owned by the well itself are scalar, but must be arrays for BC, so resize to 1
+  resize(1);
 
   // generate the "all" set to enable application of BC
   ManagedGroup * sets = GetGroup( keys::sets );
   set<localIndex> & setAll = sets->RegisterViewWrapper<set<localIndex>>("all")->reference();
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    setAll.insert( iconn );
-  }
+  setAll.insert(0);
 
-  PrecomputeData( domain );
+  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
 
-  NumericalMethodsManager const * numericalMethodManager = domain->
-    getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  NumericalMethodsManager const * numericalMethodManager =
+    problemManager->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
-  FiniteVolumeManager const * fvManager = numericalMethodManager->
-    GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+  FiniteVolumeManager const * fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
 
   FluxApproximationBase const * fluxApprox = fvManager->GetGroup<FluxApproximationBase>(0); // TODO HACK!
 
@@ -164,20 +120,6 @@ void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
   stencil.reserve( numConnectionsLocal(), 2 );
 
   fluxApprox->computeWellStencil( domain, this, stencil );
-}
-
-void SimpleWell::PrecomputeData(DomainPartition const * domain)
-{
-  R1Tensor const & gravity = getGravityVector();
-  array1d<real64> & gravDepth = getReference<array1d<real64>>(viewKeysSimpleWell.gravityDepth);
-
-  PerforationManager const * perfManager = GetGroup<PerforationManager>( groupKeysSimpleWell.perforations );
-
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    Perforation const * perf = perfManager->GetGroup<Perforation>(iconn);
-    gravDepth[iconn] = Dot( perf->getLocation(), gravity );
-  }
 }
 
 void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex, bool gravityFlag )
@@ -191,8 +133,12 @@ void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, local
   ConstitutiveManager const * constitutiveManager =
     domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
 
-  auto & pres      = getReference<array1d<real64>>( viewKeysSimpleWell.pressure );
-  auto & gravDepth = getReference<array1d<real64>>( viewKeysSimpleWell.gravityDepth );
+  auto & pres      = m_perfManager.getReference<array1d<real64>>( viewKeysSimpleWell.pressure );
+  auto & gravDepth = m_perfManager.getReference<array1d<real64>>( m_perfManager.viewKeysPerfManager.gravityDepth );
+
+  auto & elemRegion    = m_perfManager.getReference<array1d<localIndex>>( m_perfManager.viewKeysPerfManager.connectionElementRegion );
+  auto & elemSubregion = m_perfManager.getReference<array1d<localIndex>>( m_perfManager.viewKeysPerfManager.connectionElementSubregion );
+  auto & elemIndex     = m_perfManager.getReference<array1d<localIndex>>( m_perfManager.viewKeysPerfManager.connectionElementIndex );
 
   auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase const>( constitutiveManager );
 
@@ -204,12 +150,25 @@ void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, local
   real64 dens, dummy;
   for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
   {
-    constitutiveRelations[m_connectionElementRegion[iconn]]
-                         [m_connectionElementSubregion[iconn]]
-                         [fluidIndex]->FluidDensityCompute( pres[iconn], m_connectionElementIndex[iconn], dens, dummy );
+    constitutiveRelations[elemRegion[iconn]][elemSubregion[iconn]][fluidIndex]->FluidDensityCompute( pres[iconn],
+                                                                                                     elemIndex[iconn],
+                                                                                                     dens, dummy );
 
-    pres[iconn] += dens * (gravDepth[iconn] - refGravDepth);
+    pres[iconn] = m_bhp[0] + dens * (gravDepth[iconn] - refGravDepth);
   }
+}
+
+real64 SimpleWell::GetTotalFlowRate()
+{
+  auto const & flowRate = m_perfManager.getReference<array1d<real64>>( viewKeysSimpleWell.flowRate );
+
+  real64 totalRate = 0.0;
+  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
+  {
+    totalRate += flowRate[iconn];
+  }
+
+  return totalRate;
 }
 
 REGISTER_CATALOG_ENTRY( WellBase, SimpleWell, string const &, ManagedGroup * const )
