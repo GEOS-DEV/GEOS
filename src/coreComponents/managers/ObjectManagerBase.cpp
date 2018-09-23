@@ -695,6 +695,11 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
   // if the object index has a zero sized childIndices entry, then this object can be split into two
   // new objects
 
+  if( size()+1 > capacity() )
+  {
+    reserve( static_cast<localIndex>( size() * m_overAllocationFactor ) );
+  }
+
   // the new indices are tacked on to the end of the arrays
   newIndex = size() ;
   this->resize( newIndex + 1 );

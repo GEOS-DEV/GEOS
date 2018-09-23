@@ -399,6 +399,8 @@ public:
   integer_array m_isExternal;
   integer_array m_ghostRank;
 
+  real64 m_overAllocationFactor = 1.1;
+
 //  localIndex_array m_ghostToSend;
  // localIndex_array m_ghostToReceive;
 
