@@ -1,8 +1,23 @@
 /*
- * SurfaceGenerator.cpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: Jul 3, 2018
- *      Author: settgast
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/**
+ * @file SurfaceGenerator.cpp
  */
 
 #include "SurfaceGenerator.hpp"
@@ -29,7 +44,6 @@ static localIndex GetOtherFaceEdge( const map< localIndex, std::pair<localIndex,
   }
   else
   {
-    std::cout<<"";
     GEOS_ERROR("SurfaceGenerator::Couldn't find thisEdge in localFacesToEdges[thisFace]");
   }
   return nextEdge;
@@ -1250,7 +1264,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
   {
 
     // define the actual face index, and the virtual face index
-    const localIndex faceIndex = k.first->m_toFacesRelation(k.second,kf);
+    const localIndex faceIndex = k.first->faceList()(k.second,kf);
     const localIndex virtualFaceIndex = ( parentFaceIndices[faceIndex] == -1 ) ?
                                         faceIndex : parentFaceIndices[faceIndex];
 
@@ -1593,6 +1607,10 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
       modifiedObjects.modifiedElements[elemSubRegion.getName()].insert(elemIndex);
 
+
+      array2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
+      array2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
+
       if( verboseLevel() ) std::cout<<"Element "<<elemIndex<<std::endl;
 
       // 2a) correct elementToNode and nodeToElement
@@ -1603,8 +1621,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       {
         // loop over all nodes on element
         if( verboseLevel() ) std::cout<<"    m_ElementToNodeMap = ( ";
-        localIndex* const elementToNodeMap = elemSubRegion.m_toNodesRelation[elemIndex];
-        for( localIndex a=0 ; a<elemSubRegion.m_toNodesRelation.size(1) ; ++a )
+        localIndex* const elementToNodeMap = elemsToNodes[elemIndex];
+        for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           elemCenter += X[ elementToNodeMap[a] ];
           // if the node was just split
@@ -1622,12 +1640,12 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           else
             if( verboseLevel() ) std::cout<<elementToNodeMap[a]<<", ";
         }
-        elemCenter /= elemSubRegion.m_toNodesRelation.size(1);
+        elemCenter /= elemsToNodes.size(1);
         if( verboseLevel() ) std::cout<<")"<<std::endl;
 
         if( verboseLevel() )
         {
-          for( localIndex a=0 ; a<elemSubRegion.m_toNodesRelation.size(1) ; ++a )
+          for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
           {
             if( verboseLevel() )
             {
@@ -1665,12 +1683,12 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       }
 
 
-      localIndex* const elemToFaces = elemSubRegion.m_toFacesRelation[elemIndex];
+      localIndex* const elemToFaces = elemsToFaces[elemIndex];
       // we need to build a list of faces that is elemToFaces FOLLOWED by any
       // parent face of those indicated in elemToFaces
 
       // Now we do a loop over the facelist and process all the faces
-      for( int kf=0 ; kf<elemSubRegion.m_numFacesPerElement ; ++kf )
+      for( int kf=0 ; kf<elemSubRegion.numFacesPerElement() ; ++kf )
       {
 
         // set both faceID and newFaceID to the parent face.
@@ -1874,8 +1892,11 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     {
       const std::pair<CellBlockSubRegion*, localIndex >& elem = iter_elem->first;
 
-      CellBlockSubRegion& elemRegion = *(elem.first);
+      CellBlockSubRegion& elemSubRegion = *(elem.first);
       const localIndex elemIndex = elem.second;
+
+      array2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
+      array2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
 
       set<localIndex> elemNodes;
@@ -1885,8 +1906,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       std::cout<<" elementToNodes = ";
       for( int a=0; a<8 ; ++a )
       {
-        elemNodes.insert(elemRegion.m_toNodesRelation(elemIndex,a));
-        std::cout<<elemRegion.m_toNodesRelation(elemIndex,a)<<", ";
+        elemNodes.insert( elemsToNodes(elemIndex,a));
+        std::cout<< elemsToNodes(elemIndex,a)<<", ";
       }
       std::cout<<std::endl;
 
@@ -1894,11 +1915,11 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
       // Now we do a loop over the facelist and process all the faces
-      for( int kf=0 ; kf<elemRegion.m_numFacesPerElement ; ++kf )
+      for( int kf=0 ; kf<elemSubRegion.numFacesPerElement() ; ++kf )
       {
         set<localIndex> faceNodes;
 
-        localIndex faceIndex  = elemRegion.m_toFacesRelation(elemIndex,kf);
+        localIndex faceIndex  = elemsToFaces(elemIndex,kf);
 
         if( kf>0 )
           std::cout<<"                              = ";
@@ -1909,7 +1930,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         {
           localIndex faceNodeID = facesToNodes[faceIndex][b];
           faceNodes.insert(faceNodeID);
-          if( elemNodes.count(faceNodeID) == 0 && kf<elemRegion.m_numFacesPerElement )
+          if( elemNodes.count(faceNodeID) == 0 && kf<elemSubRegion.numFacesPerElement() )
             std::cout<<"*";
           std::cout<<faceNodeID<<",";
         }
@@ -1925,7 +1946,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           for( int c=0 ; c<2 ; ++c )
           {
             localIndex edgeNodeID = edgesToNodes(edgeIndex,c);
-            if( elemNodes.count(edgeNodeID) == 0  && kf<elemRegion.m_numFacesPerElement )
+            if( elemNodes.count(edgeNodeID) == 0  && kf<elemSubRegion.numFacesPerElement() )
               std::cout<<"*";
             if( faceNodes.count(edgeNodeID) == 0 )
               std::cout<<"#";
