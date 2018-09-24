@@ -148,6 +148,18 @@ private:
                               SpatialPartition& partition,
                               const bool prefrac  );
 
+  /**
+   * @brief
+   * @param edgeID
+   * @param trailFaceID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elementManager
+   * @param vecTipNorm
+   * @param vecTip
+   * @return
+   */
   realT CalculateEdgeSIF ( const localIndex edgeID,
                            localIndex& trailFaceID,
                          NodeManager & nodeManager,
@@ -157,6 +169,18 @@ private:
                          R1Tensor& vecTipNorm,
                          R1Tensor& vecTip);
 
+  /**
+   * @brief
+   * @param edgeID
+   * @param trailFaceID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param vecTipNorm
+   * @param vecTip
+   * @param modifiedObjects
+   * @param edgeMode
+   */
   void MarkRuptureFaceFromEdge ( const localIndex edgeID,
                                  localIndex& trailFaceID,
                                  NodeManager & nodeManager,
@@ -167,13 +191,15 @@ private:
                                  ModifiedObjectLists& modifiedObjects,
                                  const int edgeMode);
 
-//  void UpdateRuptureStates( NodeManager & nodeManager,
-//                            EdgeManager & edgeManager,
-//                            FaceManager & faceManager,
-//                            ElementRegionManager & elementManager,
-//                            array1d<set<localIndex>>& nodesToRupturedFaces,
-//                            array1d<set<localIndex>>& edgesToRupturedFaces,
-//                            const bool prefrac = false );
+  /**
+   *
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elementManager
+   * @param nodesToRupturedFaces
+   * @param edgesToRupturedFaces
+   */
   void PostUpdateRuptureStates( NodeManager & nodeManager,
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
@@ -181,20 +207,52 @@ private:
                                 array1d<set<localIndex>>& nodesToRupturedFaces,
                                 array1d<set<localIndex>>& edgesToRupturedFaces );
 
+  /**
+   *
+   * @param edgeID
+   * @param nodeManager
+   * @param faceManager
+   * @param edgeManager
+   * @param prefrac
+   * @return
+   */
   int CheckEdgeSplitability( const localIndex edgeID,
                                 NodeManager & nodeManager,
                                 FaceManager & faceManager,
                                 EdgeManager & edgeManager,
                                 const bool prefrac);
 
+  /**
+   *
+   * @param nodeID
+   * @param nodeManager
+   * @param faceManager
+   * @param edgeManager
+   * @param prefrac
+   * @return
+   */
   int CheckNodeSplitability( const localIndex nodeID,
                                 NodeManager & nodeManager,
                                 FaceManager & faceManager,
                                 EdgeManager & edgeManager,
                                 const bool prefrac);
 
-  void UpdatePathCheckingArrays();
+//  void UpdatePathCheckingArrays();
 
+  /**
+   * @brief check and split node in mesh
+   * @param nodeID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elemManager
+   * @param nodesToRupturedFaces
+   * @param edgesToRupturedFaces
+   * @param elementManager
+   * @param modifiedObjects
+   * @param prefrac
+   * @return
+   */
   bool ProcessNode( const localIndex nodeID,
                     NodeManager & nodeManager,
                     EdgeManager & edgeManager,
@@ -206,6 +264,21 @@ private:
                     ModifiedObjectLists& modifiedObjects,
                     const bool prefrac );
 
+  /**
+   * @brief Find a fracture path for surface generation
+   * @param nodeID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elemManager
+   * @param nodesToRupturedFaces
+   * @param edgesToRupturedFaces
+   * @param separationPathFaces
+   * @param edgeLocations
+   * @param faceLocations
+   * @param elemLocations
+   * @return
+   */
   bool FindFracturePlanes( const localIndex nodeID,
                            const NodeManager & nodeManager,
                            const EdgeManager & edgeManager,
@@ -219,7 +292,21 @@ private:
                            map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations  );
 
 
-
+  /**
+   * @brief given a fracture path, split the mesh according to the path.
+   * @param nodeID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elementManager
+   * @param modifiedObjects
+   * @param nodesToRupturedFaces
+   * @param edgesToRupturedFaces
+   * @param separationPathFaces
+   * @param edgeLocations
+   * @param faceLocations
+   * @param elemLocations
+   */
   void PerformFracture( const localIndex nodeID,
                         NodeManager & nodeManager,
                         EdgeManager & edgeManager,
@@ -233,44 +320,95 @@ private:
                         const map<localIndex,int>& faceLocations,
                         const map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
+  /**
+   * @brief function to set which side of the fracture plane all objects are on
+   * @param separationPathFaces
+   * @param elemManager
+   * @param faceManager
+   * @param nodesToElements
+   * @param localFacesToEdges
+   * @param edgeLocations
+   * @param faceLocations
+   * @param elemLocations
+   * @return
+   */
+  bool SetLocations( const set<localIndex>& separationPathFaces,
+                     ElementRegionManager & elemManager,
+                     const FaceManager & faceManager,
+                     const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,
+                     const map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
+                     map<localIndex,int>& edgeLocations,
+                     map<localIndex,int>& faceLocations,
+                     map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
-bool SetLocations( const set<localIndex>& separationPathFaces,
-                   ElementRegionManager & elemManager,
-                   const FaceManager & faceManager,
-                   const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,
-                   const map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
-                   map<localIndex,int>& edgeLocations,
-                   map<localIndex,int>& faceLocations,
-                   map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
+  /**
+   * @brief function to set which side of the fracture plane all objects are on
+   * @param side
+   * @param elem
+   * @param separationPathFaces
+   * @param elemManager
+   * @param faceManager
+   * @param nodesToElements
+   * @param localFacesToEdges
+   * @param edgeLocations
+   * @param faceLocations
+   * @param elemLocations
+   * @return
+   */
+  bool SetElemLocations( const int side,
+                         const std::pair<CellBlockSubRegion*, localIndex >& elem,
+                         const set<localIndex>& separationPathFaces,
+                         ElementRegionManager & elemManager,
+                         const FaceManager & faceManager,
+                         const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,
+                         const map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
+                         map<localIndex,int>& edgeLocations,
+                         map<localIndex,int>& faceLocations,
+                         map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
-bool SetElemLocations( const int side,
-                       const std::pair<CellBlockSubRegion*, localIndex >& elem,
-                       const set<localIndex>& separationPathFaces,
-                       ElementRegionManager & elemManager,
-                       const FaceManager & faceManager,
-                       const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,
-                       const map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
-                       map<localIndex,int>& edgeLocations,
-                       map<localIndex,int>& faceLocations,
-                       map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
-
+  /**
+   *
+   * @param nodeID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @return
+   */
   realT CalculateKinkAngle (const localIndex nodeID,
                             const NodeManager & nodeManager,
                             EdgeManager & edgeManager,
                             FaceManager & faceManager);
 
+  /**
+   *
+   * @param faceManager
+   * @param edgeManager
+   * @param nodeManager
+   * @param modifiedObjects
+   * @param prefrac
+   */
   void CalculateKinkAngles (FaceManager & faceManager,
                             EdgeManager & edgeManager,
                             NodeManager & nodeManager,
                             ModifiedObjectLists& modifiedObjects,
                             const bool prefrac);
 
+  /**
+   *
+   * @param edgeID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @return
+   */
   realT MinimumToughnessOnEdge( const localIndex edgeID,
                                 const NodeManager & nodeManager,
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager );
 
-
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto ruptureStateString = "ruptureState";
@@ -278,18 +416,32 @@ bool SetElemLocations( const int side,
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
   } SurfaceGenViewKeys;
 
-
+private:
+  /// choice of failure criterion
   integer m_failCriterion=1;
+
+  /// set of sepearable faces
   localIndex_set m_separableFaceSet;
 
+  /// copy of the original node->face mapping prior to any separation
   array1d< set<localIndex> > m_originalNodetoFaces;
+
+  /// copy of the original node->edge mapping prior to any separation
   array1d< set<localIndex> > m_originalNodetoEdges;
 
+  /// copy of the original face->edge mapping prior to any separation
   array1d< array1d<localIndex> > m_originalFaceToEdges;
+
+  /// collection of faces that have been used for separation of each node
   array1d< set<localIndex> > m_usedFacesForNode;
 
+  /// copy of the original face->elemRegion mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemRegion;
+
+  /// copy of the original face->elemSubRegion mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemSubRegion;
+
+  /// copy of the original face->elemIndex mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemIndex;
 
 
