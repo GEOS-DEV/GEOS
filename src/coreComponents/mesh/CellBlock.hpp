@@ -156,10 +156,7 @@ public:
   FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-
-//protected:
-
-//private:
+private:
   localIndex m_numNodesPerElement;
   localIndex m_numEdgesPerElement;
   localIndex m_numFacesPerElement;
