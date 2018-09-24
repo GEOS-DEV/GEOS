@@ -116,7 +116,7 @@ public:
 //  virtual  void ImplicitStepComplete( real64 const & time,
 //                                      real64 const & dt,
 //                                      DomainPartition * const domain ) override;
-  /**@}*/
+/**@}*/
 
 
   int SeparationDriver( NodeManager& nodeManager,
@@ -146,7 +146,7 @@ private:
                               FaceManager & faceManager,
                               ElementRegionManager & elementManager,
                               SpatialPartition& partition,
-                              const bool prefrac  );
+                              const bool prefrac );
 
   /**
    * @brief
@@ -162,12 +162,12 @@ private:
    */
   realT CalculateEdgeSIF ( const localIndex edgeID,
                            localIndex& trailFaceID,
-                         NodeManager & nodeManager,
-                         EdgeManager & edgeManager,
-                         FaceManager & faceManager,
-                         ElementRegionManager & elementManager,
-                         R1Tensor& vecTipNorm,
-                         R1Tensor& vecTip);
+                           NodeManager & nodeManager,
+                           EdgeManager & edgeManager,
+                           FaceManager & faceManager,
+                           ElementRegionManager & elementManager,
+                           R1Tensor& vecTipNorm,
+                           R1Tensor& vecTip );
 
   /**
    * @brief
@@ -189,7 +189,7 @@ private:
                                  R1Tensor& vecTipNorm,
                                  R1Tensor& vecTip,
                                  ModifiedObjectLists& modifiedObjects,
-                                 const int edgeMode);
+                                 const int edgeMode );
 
   /**
    *
@@ -204,8 +204,8 @@ private:
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager & elementManager,
-                                array1d<set<localIndex>>& nodesToRupturedFaces,
-                                array1d<set<localIndex>>& edgesToRupturedFaces );
+                                array1d<set<localIndex> >& nodesToRupturedFaces,
+                                array1d<set<localIndex> >& edgesToRupturedFaces );
 
   /**
    *
@@ -217,10 +217,10 @@ private:
    * @return
    */
   int CheckEdgeSplitability( const localIndex edgeID,
-                                NodeManager & nodeManager,
-                                FaceManager & faceManager,
-                                EdgeManager & edgeManager,
-                                const bool prefrac);
+                             NodeManager & nodeManager,
+                             FaceManager & faceManager,
+                             EdgeManager & edgeManager,
+                             const bool prefrac );
 
   /**
    *
@@ -232,10 +232,10 @@ private:
    * @return
    */
   int CheckNodeSplitability( const localIndex nodeID,
-                                NodeManager & nodeManager,
-                                FaceManager & faceManager,
-                                EdgeManager & edgeManager,
-                                const bool prefrac);
+                             NodeManager & nodeManager,
+                             FaceManager & faceManager,
+                             EdgeManager & edgeManager,
+                             const bool prefrac );
 
 //  void UpdatePathCheckingArrays();
 
@@ -258,8 +258,8 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    array1d<set<localIndex>>& nodesToRupturedFaces,
-                    array1d<set<localIndex>>& edgesToRupturedFaces,
+                    array1d<set<localIndex> >& nodesToRupturedFaces,
+                    array1d<set<localIndex> >& edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists& modifiedObjects,
                     const bool prefrac );
@@ -284,12 +284,12 @@ private:
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
                            ElementRegionManager & elemManager,
-                           const array1d<set<localIndex>>& nodesToRupturedFaces,
-                           const array1d<set<localIndex>>& edgesToRupturedFaces,
+                           const array1d<set<localIndex> >& nodesToRupturedFaces,
+                           const array1d<set<localIndex> >& edgesToRupturedFaces,
                            set<localIndex>& separationPathFaces,
-                           map<localIndex,int>& edgeLocations,
-                           map<localIndex,int>& faceLocations,
-                           map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations  );
+                           map<localIndex, int>& edgeLocations,
+                           map<localIndex, int>& faceLocations,
+                           map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
 
   /**
@@ -313,11 +313,11 @@ private:
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists& modifiedObjects,
-                        array1d<set<localIndex>>& nodesToRupturedFaces,
-                        array1d<set<localIndex>>& edgesToRupturedFaces,
+                        array1d<set<localIndex> >& nodesToRupturedFaces,
+                        array1d<set<localIndex> >& edgesToRupturedFaces,
                         const set<localIndex>& separationPathFaces,
-                        const map<localIndex,int>& edgeLocations,
-                        const map<localIndex,int>& faceLocations,
+                        const map<localIndex, int>& edgeLocations,
+                        const map<localIndex, int>& faceLocations,
                         const map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
   /**
@@ -335,10 +335,10 @@ private:
   bool SetLocations( const set<localIndex>& separationPathFaces,
                      ElementRegionManager & elemManager,
                      const FaceManager & faceManager,
-                     const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,
-                     const map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
-                     map<localIndex,int>& edgeLocations,
-                     map<localIndex,int>& faceLocations,
+                     const set< std::pair<CellBlockSubRegion*, localIndex> >& nodesToElements,
+                     const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
+                     map<localIndex, int>& edgeLocations,
+                     map<localIndex, int>& faceLocations,
                      map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
   /**
@@ -360,10 +360,10 @@ private:
                          const set<localIndex>& separationPathFaces,
                          ElementRegionManager & elemManager,
                          const FaceManager & faceManager,
-                         const set< std::pair<CellBlockSubRegion*,localIndex> >& nodesToElements,
-                         const map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
-                         map<localIndex,int>& edgeLocations,
-                         map<localIndex,int>& faceLocations,
+                         const set< std::pair<CellBlockSubRegion*, localIndex> >& nodesToElements,
+                         const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
+                         map<localIndex, int>& edgeLocations,
+                         map<localIndex, int>& faceLocations,
                          map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
 
   /**
@@ -374,10 +374,10 @@ private:
    * @param faceManager
    * @return
    */
-  realT CalculateKinkAngle (const localIndex nodeID,
-                            const NodeManager & nodeManager,
-                            EdgeManager & edgeManager,
-                            FaceManager & faceManager);
+  realT CalculateKinkAngle ( const localIndex nodeID,
+                             const NodeManager & nodeManager,
+                             EdgeManager & edgeManager,
+                             FaceManager & faceManager );
 
   /**
    *
@@ -387,11 +387,11 @@ private:
    * @param modifiedObjects
    * @param prefrac
    */
-  void CalculateKinkAngles (FaceManager & faceManager,
-                            EdgeManager & edgeManager,
-                            NodeManager & nodeManager,
-                            ModifiedObjectLists& modifiedObjects,
-                            const bool prefrac);
+  void CalculateKinkAngles ( FaceManager & faceManager,
+                             EdgeManager & edgeManager,
+                             NodeManager & nodeManager,
+                             ModifiedObjectLists& modifiedObjects,
+                             const bool prefrac );
 
   /**
    *
