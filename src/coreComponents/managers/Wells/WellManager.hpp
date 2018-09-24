@@ -54,12 +54,15 @@ public:
 
   WellBase * getWell( string const & name );
 
-  void setGravityVector(R1Tensor const & gravity) { m_gravityVector = gravity; }
+  void setGravityVector(R1Tensor const & gravity, bool gravityFlag = true);
+
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
+  bool getGravityFlag() const { return m_gravityFlag; }
 
 private:
 
   R1Tensor m_gravityVector;
+  bool m_gravityFlag;
 
 };
 

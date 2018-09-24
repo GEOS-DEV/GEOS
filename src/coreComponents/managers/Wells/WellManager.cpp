@@ -54,5 +54,10 @@ WellBase * WellManager::getWell(string const & name)
   return GetGroup<WellBase>(name);
 }
 
+void WellManager::setGravityVector(R1Tensor const & gravity, bool gravityFlag)
+{
+  m_gravityVector = gravity;
+  m_gravityFlag = gravityFlag;
+}
 
 } //namespace geosx

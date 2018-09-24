@@ -124,9 +124,9 @@ void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
   fluxApprox->computeWellStencil( domain, this, stencil );
 }
 
-void SimpleWell::UpdateConnectionPressure( DomainPartition const * domain, localIndex fluidIndex, bool gravityFlag )
+void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIndex )
 {
-  if ( !gravityFlag )
+  if ( !getParent()->group_cast<WellManager *>()->getGravityFlag() )
     return;
 
   MeshLevel const * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );

@@ -324,7 +324,7 @@ void SinglePhaseFlow::InitializePreSubGroups( ManagedGroup * const problemManage
 
   // provide gravity vector to well manager for gravity-depth precomputation
   WellManager * wellManager = domain->getMeshBody(0)->getMeshLevel(0)->getWellManager();
-  wellManager->setGravityVector(getGravityVector());
+  wellManager->setGravityVector( getGravityVector(), m_gravityFlag );
 }
 
 void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
@@ -1385,7 +1385,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
                                               string(keys::wellManager) + '/' + well->getName(),
                                               SimpleWell::viewKeyStruct::bhpString );
 
-    well->UpdateConnectionPressure( domain, m_fluidIndex, m_gravityFlag );
+    well->StateUpdate( domain, m_fluidIndex );
 
     PerforationManager * perfManager = well->getPerforations();
 
@@ -1398,7 +1398,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
 
     constexpr localIndex numElems = 2;
     // ECLIPSE 100/300 treatment - take density from cell, no averaging
-    real64 const densWeight[numElems] = { 1.0, 0.0 }; // TODO assumes cell always first
+    real64 const densWeight[numElems] = { 1.0, 0.0 }; // cell / well weights
 
     wellStencil.forAll( [&] ( FluxApproximationBase::WellStencil::Accessor stencil ) -> void
     {
@@ -1420,8 +1420,10 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
       localIndex cell_order;
       stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
       {
-        real64 density = 0, dDens_dP = 0;
-        real64 viscosity = 0, dVisc_dP = 0;
+        real64 density = 0.0, dDens_dP = 0.0;
+        real64 viscosity = 1.0, dVisc_dP = 0.0;
+        localIndex weightIndex = 0;
+
         switch (point.tag)
         {
           case PointDescriptor::Tag::CELL:
@@ -1438,19 +1440,14 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
             viscosity = visc[er][esr][m_fluidIndex][ei][0];
             dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
 
+            weightIndex = 0;
             cell_order = i; // mark position of the cell in connection for sign consistency later
             break;
           }
           case PointDescriptor::Tag::PERF:
           {
-            // these values don't matter, not gonna use them
-
-            density = 0.0;
-            dDens_dP = 0.0;
-
-            viscosity = 1.0;
-            dVisc_dP = 0.0;
-
+            // we don't compute/use fluid properties in thr well
+            weightIndex = 1;
             break;
           }
           default:
@@ -1462,8 +1459,8 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
         dMobility_dP[i]  = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
 
         // average density
-        densMean += densWeight[i] * density;
-        dDensMean_dP[i] = densWeight[i] * dDens_dP;
+        densMean += densWeight[weightIndex] * density;
+        dDensMean_dP[i] = densWeight[weightIndex] * dDens_dP;
       });
 
       //***** calculation of flux *****
@@ -1526,7 +1523,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
       integer counter = 0;
       for (localIndex ke = 0; ke < numElems; ++ke)
       {
-        // compress arrays, skipping face derivatives
+        // compress arrays, skipping well derivatives
         if (dofColIndices[ke] >= 0)
         {
           dofColIndices[counter] = dofColIndices[ke];
