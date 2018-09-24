@@ -39,12 +39,12 @@ public:
 
   TwoPointFluxApproximation(std::string const & name, dataRepository::ManagedGroup * const parent);
 
-  void computeMainStencil( DomainPartition const * domain,
-                           CellStencil & stencil ) const override;
+  void computeCellStencil(DomainPartition const * domain,
+                          CellStencil & stencil) const override;
 
-  void computeBoundaryStencil( DomainPartition const * domain,
-                               set<localIndex> const & faceSet,
-                               BoundaryStencil & stencil ) const override;
+  void computeFaceStencil(DomainPartition const * domain,
+                          set<localIndex> const & faceSet,
+                          FaceStencil & stencil) const override;
 
   virtual void computeWellStencil( DomainPartition const * domain,
                                    WellBase const * well,

@@ -637,7 +637,7 @@ void SinglePhaseFlow::SetSparsityPattern( real64 const & time_n,
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
+  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getCellStencil();
 
   globalIndex_array elementLocalDofIndexRow;
   globalIndex_array elementLocalDofIndexCol;
@@ -693,10 +693,10 @@ void SinglePhaseFlow::SetSparsityPattern( real64 const & time_n,
                                          ManagedGroup const *,
                                          string const & ) -> void
   {
-    if (!fluxApprox->hasBoundaryStencil(setName))
+    if (!fluxApprox->hasFaceStencil(setName))
       return;
 
-    FluxApproximationBase::BoundaryStencil const & bcStencilCollection = fluxApprox->getBoundaryStencil(setName);
+    FluxApproximationBase::FaceStencil const & bcStencilCollection = fluxApprox->getFaceStencil(setName);
 
     bcStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
     {
@@ -753,7 +753,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
+  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getCellStencil();
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
                                                                BlockIDs::fluidPressureBlock);
@@ -1175,10 +1175,10 @@ void SinglePhaseFlow::ApplyFaceBC_implicit(DomainPartition * domain,
                                          ManagedGroup * const,
                                          string const & ) -> void
   {
-    if (!fluxApprox->hasBoundaryStencil(setName))
+    if (!fluxApprox->hasFaceStencil(setName))
       return;
 
-    FluxApproximationBase::BoundaryStencil const & stencilCollection = fluxApprox->getBoundaryStencil(setName);
+    FluxApproximationBase::FaceStencil const & stencilCollection = fluxApprox->getFaceStencil(setName);
 
     stencilCollection.forAll([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
     {
@@ -1340,6 +1340,14 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
   ConstitutiveManager * const
     constitutiveManager = domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
 
+  NumericalMethodsManager * const numericalMethodManager = domain->
+    getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager * const fvManager = numericalMethodManager->
+    GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                                 BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
@@ -1386,7 +1394,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
 
     auto & flowRateWell  = perfManager->getReference<array1d<real64>>( well->viewKeysSimpleWell.flowRate );
 
-    auto const & wellStencil = well->getReference<FluxApproximationBase::WellStencil>( keys::FVstencil );
+    auto const & wellStencil = fluxApprox->getWellStencil( well->getName() );
 
     constexpr localIndex numElems = 2;
     // ECLIPSE 100/300 treatment - take density from cell, no averaging

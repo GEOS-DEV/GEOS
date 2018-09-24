@@ -106,15 +106,17 @@ void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
 
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
 
-  NumericalMethodsManager const * numericalMethodManager =
+  NumericalMethodsManager * numericalMethodManager =
     problemManager->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
-  FiniteVolumeManager const * fvManager =
+  FiniteVolumeManager * fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
 
-  FluxApproximationBase const * fluxApprox = fvManager->GetGroup<FluxApproximationBase>(0); // TODO HACK!
+  FluxApproximationBase * fluxApprox = fvManager->GetGroup<FluxApproximationBase>(0); // TODO HACK!
 
-  auto vw = this->RegisterViewWrapper<FluxApproximationBase::WellStencil>( keys::FVstencil );
+  auto vw = fluxApprox->GetGroup( fluxApprox->groupKeysFABase.wellStencils )
+    ->RegisterViewWrapper<FluxApproximationBase::WellStencil>( getName() );
+
   vw->setRestartFlags( RestartFlags::NO_WRITE );
   FluxApproximationBase::WellStencil & stencil = vw->reference();
   stencil.reserve( numConnectionsLocal(), 2 );

@@ -90,9 +90,9 @@ public:
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
-  using CellStencil     = StencilCollection<CellDescriptor, real64>;
-  using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
-  using WellStencil     = StencilCollection<PointDescriptor, real64>;
+  using CellStencil = StencilCollection<CellDescriptor, real64>;
+  using FaceStencil = StencilCollection<PointDescriptor, real64>;
+  using WellStencil = StencilCollection<PointDescriptor, real64>;
 
   void FillDocumentationNode() override;
 
@@ -103,19 +103,28 @@ public:
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
 
   /// provides const access to the cell stencil collection
-  CellStencil const & getStencil() const;
+  CellStencil const & getCellStencil() const;
 
   /// provides access to the cell stencil collection
-  CellStencil & getStencil();
+  CellStencil & getCellStencil();
 
   /// return a boundary stencil by face set name
-  BoundaryStencil const & getBoundaryStencil(string const & setName) const;
+  FaceStencil const & getFaceStencil(string const & setName) const;
 
   /// return a boundary stencil by face set name
-  BoundaryStencil & getBoundaryStencil(string const & setName);
+  FaceStencil & getFaceStencil(string const & setName);
 
   /// check if a stencil exists
-  bool hasBoundaryStencil(string const & setName) const;
+  bool hasFaceStencil(string const & setName) const;
+
+  /// return a boundary stencil by face set name
+  WellStencil const & getWellStencil(string const & wellName) const;
+
+  /// return a boundary stencil by face set name
+  WellStencil & getWellStencil(string const & wellName);
+
+  /// check if a stencil exists
+  bool hasWellStencil(string const & wellName) const;
 
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
@@ -136,21 +145,27 @@ public:
     dataRepository::ViewKey coeffName         = { coeffNameString };
     dataRepository::ViewKey cellStencil       = { cellStencilString };
 
-  } viewKeys;
+  } viewKeysFABase;
 
   struct groupKeyStruct
   {
 
-  } groupKeys;
+    static constexpr auto faceStencilsString = "faceStencils";
+    static constexpr auto wellStencilsString = "wellStencils";
+
+    dataRepository::ViewKey faceStencils = { faceStencilsString };
+    dataRepository::ViewKey wellStencils = { wellStencilsString };
+
+  } groupKeysFABase;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
-  virtual void computeMainStencil( DomainPartition const * domain,
-                                   CellStencil & stencil ) const = 0;
+  virtual void computeCellStencil(DomainPartition const * domain,
+                                  CellStencil & stencil) const = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
-  virtual void computeBoundaryStencil( DomainPartition const * domain,
-                                       set<localIndex> const & faceSet,
-                                       BoundaryStencil & stencil ) const = 0;
+  virtual void computeFaceStencil( DomainPartition const * domain,
+                                   set<localIndex> const & faceSet,
+                                   FaceStencil & stencil ) const = 0;
 
   /// actual computation of well-to-cell stencil, to be overridden by implementations
   virtual void computeWellStencil( DomainPartition const * domain,
@@ -173,7 +188,7 @@ protected:
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappersByType<BoundaryStencil>([&] (auto const & vw) -> void
+  this->GetGroup( groupKeysFABase.faceStencils )->forViewWrappersByType<FaceStencil>([&] (auto const & vw) -> void
   {
     if (vw.getName() != viewKeyStruct::cellStencilString)
       lambda(vw.reference());

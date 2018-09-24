@@ -64,8 +64,8 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 
 }
 
-void TwoPointFluxApproximation::computeMainStencil( DomainPartition const * domain,
-                                                    CellStencil & stencil ) const
+void TwoPointFluxApproximation::computeCellStencil(DomainPartition const * domain,
+                                                   CellStencil & stencil) const
 {
   MeshLevel const * mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager const * nodeManager = mesh->getNodeManager();
@@ -151,9 +151,9 @@ void TwoPointFluxApproximation::computeMainStencil( DomainPartition const * doma
   stencil.compress();
 }
 
-void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const * domain,
-                                                        set<localIndex> const & faceSet,
-                                                        FluxApproximationBase::BoundaryStencil & stencil ) const
+void TwoPointFluxApproximation::computeFaceStencil(DomainPartition const * domain,
+                                                   set<localIndex> const & faceSet,
+                                                   FluxApproximationBase::FaceStencil & stencil) const
 {
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager const * const nodeManager = mesh->getNodeManager();
