@@ -305,7 +305,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
       arrayView1d<localIndex const> nodelist = faceToNodesMap[k];
-      for( localIndex a=0 ; a<nodelist.size() ; ++a )
+      for( localIndex a=0 ; a<faceToNodesMap[k].size() ; ++a )
       {
         nodeDomainBoundaryIndicator[nodelist[a]] = 1;
       }
@@ -390,7 +390,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
     
     arrayView1d<localIndex> faceNodes = nodeList()[kf];
     const localIndex firstNodeIndex = faceNodes[0];
-    const localIndex numFaceNodes = faceNodes.size();
+    const localIndex numFaceNodes = nodeList()[kf].size();
 
     // get face center (average vertex location) and store node coordinates
     R1Tensor const* face_coords[MAX_FACE_NODES];

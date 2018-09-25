@@ -324,7 +324,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
         // update element volume
         arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][ei];
         R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
-        for (localIndex a = 0; a < nodeList.size(); ++a)
+        for (localIndex a = 0; a < elemsToNodes[er][esr].get().size(1); ++a)
         {
           Xlocal[a] = X[nodeList[a]];
           Xlocal[a] += u[nodeList[a]] ;
