@@ -414,7 +414,7 @@ private:
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
-  } SurfaceGenViewKeys;
+  }; //SurfaceGenViewKeys;
 
 private:
   /// choice of failure criterion
