@@ -142,6 +142,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
 
   DocumentationNode * const docNode = this->getDocumentationNode();
 
+
   docNode->setName( this->CatalogName());
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "Linear Elastic Isotropic Constitutive Relation" );

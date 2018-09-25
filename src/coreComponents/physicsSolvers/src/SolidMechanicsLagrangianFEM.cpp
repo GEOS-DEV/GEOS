@@ -500,6 +500,10 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
                                              DomainPartition * domain )
 {
   real64 dtReturn = dt;
+
+  SolverBase * const
+  surfaceGenerator =  this->getParent()->GetGroup("SurfaceGen")->group_cast<SolverBase*>();
+
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
@@ -517,6 +521,11 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
                                       getLinearSystemRepository() );
 
     ImplicitStepComplete( time_n, dt,  domain );
+
+    if( surfaceGenerator!=nullptr )
+    {
+      surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
+    }
 
   }
 return dtReturn;

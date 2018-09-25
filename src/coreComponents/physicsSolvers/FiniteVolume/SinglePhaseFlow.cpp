@@ -1222,7 +1222,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   // temporary working arrays
   real64 densWeight[numElems] = { 0.5, 0.5 };
-  real64 mobility[numElems], dMobility_dP[numElems];
+  real64 mobility[numElems] = {0.0,0.0};
+  real64 dMobility_dP[numElems] = {0.0,0.0};
   real64_array dDensMean_dP, dFlux_dP;
 
 
@@ -1259,7 +1260,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       // calculate quantities on primary connected points
       real64 densMean = 0.0;
       globalIndex eqnRowIndex = -1;
-      localIndex cell_order;
+      localIndex cell_order = -1;
       stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
       {
         real64 density = 0, dDens_dP = 0;
