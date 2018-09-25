@@ -16,16 +16,16 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#if __clang_major__ >= 5
+#ifdef __clang__
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#if __clang_major__ >= 5
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 #endif
 
 #include <gtest/gtest.h>
-
-#if __clang_major__ >= 5
-#pragma clang diagnostic pop
-#endif
 
 
 #include <iostream>
@@ -254,17 +254,7 @@ void testLaplaceOperator()
 
 }
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
 
-
-#endif
 
 TEST(testLAOperations,testEpetraLAOperations)
 {
