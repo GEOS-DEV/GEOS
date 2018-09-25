@@ -143,7 +143,7 @@
   <Outputs>
     <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0" />
     <Restart name="sidreRestart"/>
-  </ Outputs>
+  </Outputs>
   
   <Geometry>
     <Box name="source"
