@@ -96,6 +96,7 @@ using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
 using globalIndex = long long int;//std::int64_t;
 using string      = std::string;
+
 using real32 = float;
 using real64 = double;
 //using real   = double;
