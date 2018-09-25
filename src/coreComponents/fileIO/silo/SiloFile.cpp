@@ -1157,7 +1157,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
 
 
-  for( localIndex matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+  for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
   {
     string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
     MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
