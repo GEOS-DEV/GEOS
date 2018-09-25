@@ -119,6 +119,32 @@ public:
     }
   }
 
+  iterator erase( const_iterator pos )
+  {
+    return m_data.erase(pos);
+  }
+
+  iterator erase( iterator pos )
+  {
+    return m_data.erase(pos);
+  }
+
+  iterator erase( const_iterator first, const_iterator last )
+  {
+    return m_data.erase(first,last);
+  }
+
+  size_type erase( T const & key )
+  {
+    size_type rval=0;
+    const_iterator iter = find(key);
+    if( iter!=this->end() )
+    {
+      erase( iter );
+      rval=1;
+    }
+    return rval;
+  }
 
   iterator find(const T& value)
   { return std::lower_bound(begin(), end(), value); }
