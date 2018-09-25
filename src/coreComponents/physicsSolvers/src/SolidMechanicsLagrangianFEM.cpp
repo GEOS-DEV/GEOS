@@ -1027,7 +1027,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
   array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
 
   globalIndex_array const &
-  blockLocalDofNumber = nodeManager->getReference<globalIndex_array>(viewKeys.trilinosIndex);
+  blockLocalDofNumber = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
 
   Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
 
@@ -1657,9 +1657,9 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 //  bcManager->ApplyBoundaryCondition( this, &,
 //                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
-  Epetra_FECrsMatrix const * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
+  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                                     BlockIDs::displacementBlock );
-  Epetra_FEVector const * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
+  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
 
   if( verboseLevel() >= 2 )
   {

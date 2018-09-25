@@ -156,6 +156,19 @@ void SystemSolverParameters::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.numNewtonIterations.Key(),
+                              viewKeys.numNewtonIterations.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "verbosity level",
+                              "verbosity level",
+                              "5",
+                              "",
+                              0,
+                              1,
+                              0 );
+
   docNode->AllocateChildNode( viewKeys.maxIterNewton.Key(),
                               viewKeys.maxIterNewton.Key(),
                               -1,
@@ -168,7 +181,6 @@ void SystemSolverParameters::FillDocumentationNode()
                               0,
                               1,
                               0 );
-
   docNode->AllocateChildNode( viewKeys.scalingOption.Key(),
                               viewKeys.scalingOption.Key(),
                               -1,
