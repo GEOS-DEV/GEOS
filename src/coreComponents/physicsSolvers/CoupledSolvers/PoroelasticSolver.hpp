@@ -34,7 +34,7 @@ class PoroelasticSolver : public SolverBase
 public:
   PoroelasticSolver( const std::string& name,
                      ManagedGroup * const parent );
-  ~PoroelasticSolver();
+  ~PoroelasticSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -139,7 +139,7 @@ public:
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
-  } viewKeys;
+  } poroElasticSolverViewKeys;
 
 
 
