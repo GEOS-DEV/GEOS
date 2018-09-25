@@ -153,10 +153,14 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
     /// <li> Loop over all nodes for each edge
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      /// <ul>
-      /// <li> Set the nodeToEdge relation using the current node and edge indices
-      m_toEdgesRelation[a].insert(ke);
-      /// </ul>
+//<<<<<<< HEAD
+      m_toEdgesRelation[edgeToNodes[ke][a]].insert(ke);
+//=======
+//      /// <ul>
+//      /// <li> Set the nodeToEdge relation using the current node and edge indices
+//      m_toEdgesRelation[a].insert(ke);
+//      /// </ul>
+//>>>>>>> develop
     }
   }
   /// </ol>
@@ -176,7 +180,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     localIndex const numNodes = faceToNodes[ke].size();
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      m_toFacesRelation[a].insert(ke);
+      m_toFacesRelation[faceToNodes[ke][a]].insert(ke);
     }
   }
   m_toFacesRelation.SetRelatedObject( faceManager );
@@ -186,9 +190,9 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 //**************************************************************************************************
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array1d<set<localIndex>> & toElementRegionList = elementRegionList();
-  array1d<set<localIndex>> & toElementSubRegionList = elementSubRegionList();
-  array1d<set<localIndex>> & toElementList = elementList();
+  array1d<localIndex_array> & toElementRegionList = elementRegionList();
+  array1d<localIndex_array> & toElementSubRegionList = elementSubRegionList();
+  array1d<localIndex_array> & toElementList = elementList();
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
@@ -213,9 +217,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
-          toElementRegionList[nodeIndex].insert( kReg );
-          toElementSubRegionList[nodeIndex].insert( kSubReg );
-          toElementList[nodeIndex].insert( ke );
+          toElementRegionList[nodeIndex].push_back( kReg );
+          toElementSubRegionList[nodeIndex].push_back( kSubReg );
+          toElementList[nodeIndex].push_back( ke );
         }
       }
     }

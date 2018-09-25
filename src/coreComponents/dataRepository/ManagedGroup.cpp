@@ -198,8 +198,23 @@ void ManagedGroup::resize( indexType const newsize )
     }
   }
   m_size = newsize;
+  if( m_size > m_capacity )
+  {
+    m_capacity = m_size;
+  }
 }
 
+void ManagedGroup::reserve( indexType const newsize )
+{
+  for( auto&& i : this->wrappers() )
+  {
+    if( i.second->sizedFromParent() == 1 )
+    {
+      i.second->reserve(newsize);
+    }
+  }
+  m_capacity = newsize;
+}
 
 
 void ManagedGroup::RegisterDocumentationNodes()
@@ -237,6 +252,28 @@ void ManagedGroup::RegisterDocumentationNodes()
           cxx_utilities::equateStlVector(data,values);
         });
       }
+//      else if( defVal != "NONE" && defVal != "" )
+//      {
+//        rtTypes::ApplyTypeLambda2( typeID,
+//                                   [&]( auto a, auto b ) -> void
+//        {
+//
+//          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
+//          std::vector<decltype(b)> values;
+//          stringutilities::StringToType( values, defVal );
+//          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
+//          if( size != 1 )
+//          {
+//            GEOS_ERROR("Expect size of default value to be a scalar");
+//          }
+//          decltype(a) & data = dataView.reference();
+//          for( localIndex c=0 ; c<size ; ++c )
+//          {
+//            data[c] = values[0];
+//          }
+//          //data = values[0];
+//        });
+//      }
     }
   }
 
