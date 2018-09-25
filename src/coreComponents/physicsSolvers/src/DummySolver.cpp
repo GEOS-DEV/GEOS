@@ -70,8 +70,8 @@ void DummySolver::FillDocumentationNode()
 void DummySolver::Initialize( ManagedGroup * const problemManager )
 {
   integer rank = 0;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  #ifdef GEOSX_USE_MPI
+    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   #endif
   std::srand(rank * 12345);
 }
@@ -90,8 +90,8 @@ real64 DummySolver::SolverStep( real64 const& time_n,
 real64 DummySolver::GetTimestepRequest(real64 const time)
 {
   integer rank = 0;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  #ifdef GEOSX_USE_MPI
+    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   #endif
 
   real64 const rand_scale = this->getReference<real64>(dummyViewKeys.rand_scale);

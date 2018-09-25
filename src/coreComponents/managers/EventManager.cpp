@@ -175,9 +175,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   // Setup MPI communication
   integer rank = 0;
   integer comm_size = 1;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+  #ifdef GEOSX_USE_MPI
+    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+    MPI_Comm_size(MPI_COMM_GEOSX, &comm_size);
   #endif
   real64 send_buffer[2];
   array1d<real64> receive_buffer(2 * comm_size);
@@ -196,7 +196,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   while(1) {
     int terminate = ((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0)) ? 0 : 1 ;
 
-    if (dt > 0.0) {
+    if (cycle > 0) {
 #if HAVE_TRIBOLCOUPLING
        TribolCoupling::SyncTermination(&terminate) ;
 #endif
@@ -266,10 +266,10 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     dt = nextDt;
     dt = (time + dt > maxTime) ? (maxTime - time) : dt;
 
-    #if USE_MPI
+    #ifdef GEOSX_USE_MPI
       send_buffer[0] = dt;
       send_buffer[1] = static_cast<real64>(exitFlag);
-      MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX);
 
       if (rank == 0)
       {
@@ -280,7 +280,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
         }
       }
 
-      MPI_Bcast(send_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Bcast(send_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX);
       dt = send_buffer[0];
       if (send_buffer[1] > 0.5)
       {

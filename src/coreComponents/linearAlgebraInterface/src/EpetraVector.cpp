@@ -37,7 +37,7 @@ EpetraVector::EpetraVector( EpetraVector const &in_vec )
 // Create a vector from array
 void EpetraVector::create( const trilinosTypes::gid size, double *V )
 {
-  Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_GEOSX ));
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
@@ -52,7 +52,7 @@ void EpetraVector::create( const Epetra_Map& Map, double *V )
 void EpetraVector::create( std::vector<double> &vec )
 {
   trilinosTypes::gid m_size = vec.size();
-  Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_GEOSX ));
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
 }
 

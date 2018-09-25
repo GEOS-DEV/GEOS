@@ -387,7 +387,7 @@ int SurfaceGenerator::SeparationDriver( NodeManager & nodeManager,
 
   int rval = 0;
   int rank ;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
   //  array1d<MaterialBaseStateDataT*>&  temp = elementManager.m_ElementRegions["PM1"].m_materialStates;
 
@@ -1353,7 +1353,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 {
 
   int rank=0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
 
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
   array1d<set<localIndex>> & nodesToEdges = nodeManager.edgeList();
@@ -2305,7 +2305,7 @@ void SurfaceGenerator::IdentifyRupturedFaces( NodeManager & nodeManager,
 //  primaryCandidateFace = std::numeric_limits<localIndex>::max();
 
   int rank ;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
   //"Heal" faces that were marked but not split.
 //  if (m_failCriterion >0)
@@ -2803,7 +2803,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( const localIndex edgeID,
       {
         // GEOS_ERROR("Error: I have two trailing nodes but cannot find a trailing edge.");
         int rank=0;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+        MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
         std::cout << "Cannot find trailing edge (edge=" << edgeID << ", rank=" << rank <<   "  )" << std::endl;
         return 0.0;
       }
