@@ -54,8 +54,9 @@ void IOUtilities::parse_file( array1d<T> & target, std::string filename, char de
 
   if (inputStream)
   {
-    while (std::getline(inputStream, lineString))
+    while (!inputStream.eof())
     {
+      std::getline(inputStream, lineString);
       std::istringstream ss( lineString );
 
       while(ss.peek() == delimiter || ss.peek() == ' ')
