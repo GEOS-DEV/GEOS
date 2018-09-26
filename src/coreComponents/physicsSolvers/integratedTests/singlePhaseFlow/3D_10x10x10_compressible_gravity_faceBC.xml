@@ -93,7 +93,7 @@
     <CompressibleSinglePhaseFluid name="water"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-9"
+                                  compressibility="5e-10"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
