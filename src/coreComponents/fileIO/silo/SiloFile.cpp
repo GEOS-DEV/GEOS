@@ -1647,12 +1647,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       else if ( !elementType.compare(0, 4, "C3D6") )
       {
         shapetype[count] = DB_ZONETYPE_PRISM;
-        //writeArbitraryPolygon = true; TODO What is it ?
+        writeArbitraryPolygon = true;
       }
       else if ( !elementType.compare(0, 4, "C3D5") )
       {
         shapetype[count] = DB_ZONETYPE_PYRAMID;
-        //writeArbitraryPolygon = true; TODO What is it ?
+        writeArbitraryPolygon = true; 
       }
 //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
 // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
