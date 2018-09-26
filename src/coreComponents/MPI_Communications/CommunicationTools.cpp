@@ -426,51 +426,70 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
 
 
 
+
+void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
+                                                  MeshLevel * const mesh,
+                                                  array1d<NeighborCommunicator> & neighbors,
+                                                  MPI_iCommData & icomm )
+{
+  icomm.commID = CommunicationTools::reserveCommID();
+  icomm.fieldNames.insert(fieldNames.begin(), fieldNames.end() );
+  icomm.resize( neighbors.size() );
+
+  for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
+  {
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    neighbor.PackBufferForSync( fieldNames, mesh, icomm.commID );
+    neighbor.MPI_iSendReceive( icomm.commID,
+                               icomm.mpiSendBufferRequest[neighborIndex],
+                               icomm.mpiRecvBufferRequest[neighborIndex],
+                               MPI_COMM_GEOSX );
+  }
+}
+
+void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
+                                            array1d<NeighborCommunicator> & neighbors,
+                                            MPI_iCommData & icomm )
+{
+#if 0
+  for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
+  {
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    MPI_Waitall( 1, &( mpiRecvBufferRequest[neighborIndex] ), &( mpiRecvBufferStatus[neighborIndex] ) );
+    neighbor.UnpackBufferForSync( fieldNames, mesh, commID );
+    MPI_Waitall( 1, &( mpiSendBufferRequest[commID] ), &( mpiSendBufferStatus[commID] ) );
+  }
+#else
+
+  // unpack the buffers
+  for( int count=0 ; count<neighbors.size() ; ++count )
+  {
+    int neighborIndex;
+    MPI_Waitany( icomm.mpiRecvBufferRequest.size(),
+                 icomm.mpiRecvBufferRequest.data(),
+                 &neighborIndex,
+                 icomm.mpiRecvBufferStatus.data() );
+
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID );
+  }
+
+
+  MPI_Waitall( icomm.mpiSendBufferRequest.size(),
+               icomm.mpiSendBufferRequest.data(),
+               icomm.mpiSendBufferStatus.data() );
+#endif
+
+  CommunicationTools::releaseCommID( icomm.commID );
+}
+
 void CommunicationTools::SynchronizeFields( const std::map<string, string_array >& fieldNames,
                                             MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors )
 {
-
-  int commID = CommunicationTools::reserveCommID();
-
-  for( auto & neighbor : neighbors )
-  {
-    neighbor.PackBufferForSync( fieldNames, mesh, commID );
-  }
-
-
-  for( auto & neighbor : neighbors )
-  {
-    neighbor.MPI_WaitAll( commID );
-    neighbor.UnpackBufferForSync( fieldNames, mesh, commID );
-  }
-  CommunicationTools::releaseCommID( commID );
-
-//
-//  // send and receive buffers
-//  for( int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
-//  {
-//    NeighborCommunication& neighbor = m_neighbors[neighborIndex];
-//    neighbor.PackBuffer( fieldNames, commID  );
-//    neighbor.SendReceiveBuffers( commID, mpiSendBufferRequest[neighborIndex], mpiRecvBufferRequest[neighborIndex] );
-//
-//  }
-//
-//
-//  // unpack the buffers
-//  for( int count=0 ; count<m_neighbors.size() ; ++count )
-//  {
-//    int neighborIndex;
-//    MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data()
-// );
-//
-//    NeighborCommunication& neighbor = this->m_neighbors[neighborIndex];
-//    neighbor.UnpackBuffer( fieldNames );
-//  }
-//
-//  MPI_Waitall( mpiSendBufferRequest.size(), mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
-//
-
+  MPI_iCommData icomm;
+  SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
+  SynchronizeUnpack( mesh, neighbors, icomm );
 }
 
 
