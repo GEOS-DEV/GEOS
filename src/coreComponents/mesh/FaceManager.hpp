@@ -72,7 +72,8 @@ public:
 
   void SortFaceNodes( array1d<R1Tensor> const & X,
                       R1Tensor const & elemCenter,
-                      arrayView1d<localIndex> faceNodes );
+                      arrayView1d<localIndex> faceNodes,
+                      localIndex const numFaceNodes );
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
 
