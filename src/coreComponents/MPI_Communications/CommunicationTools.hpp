@@ -37,6 +37,26 @@ class ObjectManagerBase;
 class NeighborCommunicator;
 class MeshLevel;
 
+class MPI_iCommData
+{
+public:
+  void resize( int numMessages )
+  {
+    mpiSendBufferRequest.resize( numMessages );
+    mpiRecvBufferRequest.resize( numMessages );
+    mpiSendBufferStatus.resize( numMessages );
+    mpiRecvBufferStatus.resize( numMessages );
+  }
+
+  int commID;
+  std::map<string, string_array > fieldNames;
+  array1d<MPI_Request> mpiSendBufferRequest;
+  array1d<MPI_Request> mpiRecvBufferRequest;
+  array1d<MPI_Status>  mpiSendBufferStatus;
+  array1d<MPI_Status>  mpiRecvBufferStatus;
+};
+
+
 class CommunicationTools
 {
 public:
@@ -63,6 +83,15 @@ public:
   static void SynchronizeFields( const std::map<string, string_array >& fieldNames,
                                  MeshLevel * const mesh,
                                  array1d<NeighborCommunicator> & allNeighbors );
+
+  static void SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
+                                       MeshLevel * const mesh,
+                                       array1d<NeighborCommunicator> & allNeighbors,
+                                       MPI_iCommData & icomm );
+
+  static void SynchronizeUnpack( MeshLevel * const mesh,
+                                 array1d<NeighborCommunicator> & neighbors,
+                                 MPI_iCommData & icomm );
 
 };
 

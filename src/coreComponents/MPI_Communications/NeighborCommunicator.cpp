@@ -680,11 +680,14 @@ void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > co
 
 
   GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
-  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
 
-
-//  MPI_WaitAll( commID );
 }
+
+void NeighborCommunicator::SendRecvBuffers( int const commID )
+{
+  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
+}
+
 
 void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
                                                 MeshLevel * const mesh,
