@@ -35,8 +35,8 @@ EdgeManager::EdgeManager( std::string const & name,
                           ManagedGroup * const parent ):
   ObjectManagerBase(name,parent)
 {
-  this->RegisterViewWrapper<FixedOneToManyRelation>(viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
-  this->RegisterViewWrapper<OrderedVariableOneToManyRelation>(viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
+  this->RegisterViewWrapper(viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
+  this->RegisterViewWrapper(viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
 
   m_toNodesRelation.resize( 0, 2 );
   // TODO Auto-generated constructor stub
@@ -61,10 +61,6 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   m_toNodesRelation.resize(8 * nodeManager->size());
   m_toFacesRelation.resize(8 * nodeManager->size());
 
-  for (localIndex i = 0; i < m_toFacesRelation.size(); ++i )
-  {
-    m_toFacesRelation[i].reserve(4);
-  }
 
   UnorderedVariableOneToManyRelation & nodeToEdgeMap = nodeManager->edgeList();
   // this will be used to hold a list pairs that store the 2nd node in the edge,
@@ -109,7 +105,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
         {
           duplicate = true;
           faceToEdgeMap(kf).push_back(existingEdgeIndex);
-          m_toFacesRelation(existingEdgeIndex).push_back(kf);
+          m_toFacesRelation(existingEdgeIndex).insert(kf);
           break;
         }
       }
@@ -120,7 +116,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
       {
         edgesByLowestNode[node0].push_back( numEdges );
         faceToEdgeMap(kf).push_back(numEdges);
-        m_toFacesRelation(numEdges).push_back(kf);
+        m_toFacesRelation(numEdges).insert(kf);
         
         m_toNodesRelation(numEdges, 0) = node0;
         m_toNodesRelation(numEdges, 1) = node1;
@@ -294,21 +290,18 @@ bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) co
 //  return(val);
 //}
 
-void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenceObject )
+void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
 {
-  // make sure that the reference object is a faceManger object
-  //referenceObject->CheckObjectType( ObjectDataStructureBaseT::FaceManager );
-
-  // cast the referenceObject into a faceManager
-  const FaceManager* const faceManager = static_cast<const FaceManager *>( referenceObject);
-
   // get the "isExternal" field from the faceManager->..This should have been
   // set already!
-  array1d<integer> const & isExternalFace = referenceObject->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::isExternalString );
+  array1d<integer> const & isExternalFace = faceManager->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::isExternalString );
   array1d<integer>& isExternal = this->getReference< array1d<integer> >( viewKeyStruct::isExternalString );
+
+  array1d<localIndex_array> const & facesToEdges = faceManager->edgeList();
 
   // get the "isExternal" field from for *this, and set it to zero
   isExternal = 0;
+
 
   // loop through all faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
@@ -316,12 +309,12 @@ void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenc
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
     {
-      localIndex_array const & faceToEdges = faceManager->edgeList()(kf);
+      localIndex_array const & faceToEdges = facesToEdges[kf];
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-      for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
+      for( auto a : faceToEdges )
       {
-        isExternal(*a) = 1;
+        isExternal(a) = 1;
       }
     }
   }
@@ -648,7 +641,7 @@ void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
          a != facesToEdges[lfi].end() ; ++a )
     {
       // enter the value of the face index into the nodeToFace map
-      m_toFacesRelation[*a].push_back(lfi);
+      m_toFacesRelation[*a].insert(lfi);
     }
   }
 }

@@ -157,15 +157,25 @@ public:
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
+  OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
-  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  array1d<localIndex_array>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array1d<localIndex_array> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
+  array1d<localIndex_array>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array1d<localIndex_array> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
+  array1d<localIndex_array>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array1d<localIndex_array>  const & elementList() const { return m_toElements.m_toElementIndex; }
+//  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+//  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+//
+//  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+//  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+//
+//  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
+//  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
   /**
@@ -207,7 +217,7 @@ private:
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
   /// nodeToElement relation
-  UnorderedVariableToManyElementRelation m_toElements;
+  OrderedVariableToManyElementRelation m_toElements;
 
   /// deleted constructor
   NodeManager() = delete;
