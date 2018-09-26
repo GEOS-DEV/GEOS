@@ -388,16 +388,17 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
     R1Tensor const elementCenter = subRegion->GetElementCenter( elemList[kf][0], *nodeManager );
     
     const localIndex numFaceNodes = nodeList()[kf].size();
-    
-    SortFaceNodes( X, elementCenter, faceNodes );
+    arrayView1d<localIndex> faceNodes = nodeList()[kf];
+
+    SortFaceNodes( X, elementCenter, faceNodes, numFaceNodes );
   } );
 }
 
 void FaceManager::SortFaceNodes( array1d<R1Tensor> const & X,
                                  R1Tensor const & elementCenter,
-                                 arrayView1d<localIndex> faceNodes )
+                                 arrayView1d<localIndex> faceNodes,
+                                 localIndex const numFaceNodes )
 {
-  localIndex const numFaceNodes = faceNodes.size();
   localIndex const firstNodeIndex = faceNodes[0];
 
   // get face center (average vertex location) and store node coordinates

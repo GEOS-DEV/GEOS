@@ -1755,7 +1755,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           }
 
 
-          faceManager.SortFaceNodes( X, elemCenter, facesToNodes[newFaceIndex] );
+          faceManager.SortFaceNodes( X, elemCenter, facesToNodes[newFaceIndex], facesToNodes.size(1) );
 
 
         } // if( splitFaces.count( faceID ) > 0 )
