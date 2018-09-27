@@ -117,6 +117,10 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   // Placeholder for the number of iterations
   typename LAI::laiGID numIt = 0;
 
+  // Get the norm of the right hand side
+  real64 normb;
+  b.norm2( normb );
+
   // Define vectors
   ParallelVector rk( x );
 
@@ -204,16 +208,13 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     s.axpy( -omegak, t );
     rk.copy( s );
 
-    // Convergence check
+    // Convergence check on ||rk||/||b||
     rk.norm2( convCheck );
-
-    if( convCheck < 1e-8 )
+    if( convCheck/normb < 1e-8 )
     {
       numIt = k;
       break;
     }
-
-//    std::cout << k << ", " << convCheck << std::endl;
 
   }
 
@@ -223,7 +224,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
   // veborse output (TODO verbosity manager?)
   if( rank == 1 )
-    std::cout << "BiCGSTAB converged in " << numIt << " iterations." << std::endl;
+    std::cout << std::endl << "BiCGSTAB converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
@@ -241,6 +242,10 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
   // Placeholder for the number of iterations
   typename LAI::laiGID numIt = 0;
+
+  // Get the norm of the right hand side
+  real64 normb;
+  b.norm2( normb );
 
   // Define vectors
   BlockVectorView<LAI> rk( x );
@@ -331,16 +336,13 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     s.axpy( -omegak, u );
     rk.copy( s );
 
-    // Convergence check
+    // Convergence check ||rk||/||b||
     rk.norm2( convCheck );
-
-    if( convCheck < 1e-8 )
+    if( convCheck/normb < 1e-8 )
     {
       numIt = k;
       break;
     }
-
-    //std::cout << k << ", " << convCheck << std::endl;
 
   }
 
@@ -350,7 +352,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
   // verbose output (TODO verbosity manager?)
   if( rank == 1 )
-    std::cout << "Block BiCGSTAB converged in " << numIt << " iterations." << std::endl;
+    std::cout << std::endl << "Block BiCGSTAB converged in " << numIt << " iterations." << std::endl;
   return;
 
 }

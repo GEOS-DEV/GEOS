@@ -117,7 +117,11 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   // Placeholder for the number of iterations
   typename LAI::laiGID numIt = 0;
 
-  // Define vectors
+  // Get the norm of the right hand side
+  real64 normb;
+  b.norm2( normb );
+
+  // Define residual vector
   ParallelVector rk( x );
 
   // Compute initial rk =  b - Ax
@@ -165,10 +169,9 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     zkold.copy( zk );
     rk.axpby( -alpha, Apk, 1.0 );
 
-    // Convergence check on ||rk||_2
+    // Convergence check on ||rk||/||b||
     rk.norm2( convCheck );
-
-    if( convCheck < 1e-8 )
+    if( convCheck/normb < 1e-8 )
     {
       numIt = k;
       break;
@@ -185,8 +188,6 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     // Update pk = pk + beta*zk
     pk.axpby( 1.0, zk, beta );
 
-    //std::cout << k << ", " << convCheck << std::endl;
-
   }
 
   // Get the MPI rank
@@ -195,7 +196,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
   // veborse output (TODO verbosity manager?)
   if( rank == 1 )
-    std::cout << "CG converged in " << numIt << " iterations." << std::endl;
+    std::cout << std::endl << "CG converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
@@ -213,6 +214,10 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
   // Placeholder for the number of iterations
   typename LAI::laiGID numIt = 0;
+
+  // Get the norm of the right hand side
+  real64 normb;
+  b.norm2( normb );
 
   // Define vectors
   BlockVectorView<LAI> rk( x );
@@ -263,10 +268,9 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     zkold.copy( zk );
     rk.axpby( -alpha, Apk, 1.0 );
 
-    // Convergence check on ||rk||_2
+    // Convergence check on ||rk||/||b||
     rk.norm2( convCheck );
-
-    if( convCheck < 1e-8 )
+    if( convCheck/normb < 1e-8 )
     {
       numIt = k;
       break;
@@ -283,8 +287,6 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     // Update pk = pk + beta*zk
     pk.axpby( 1.0, zk, beta );
 
-    //std::cout << k << ", " << convCheck << std::endl;
-
   }
 
   // Get the MPI rank
@@ -293,7 +295,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
   // veborse output (TODO verbosity manager?)
   if( rank == 1 )
-    std::cout << "Block CG converged in " << numIt << " iterations." << std::endl;
+    std::cout << std::endl << "Block CG converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
