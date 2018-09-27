@@ -16,7 +16,7 @@ Parameter                          Type   Default    Definition [Options]
 ``nonlinearSolver.type``           string ``newton`` Nonlinear solver type ``[newton, backtrackingNewton, appleyard]``
 ``nonlinearSolver.tolerance``      real   1e-5       Relative convergence tolerance
 ``nonlinearSolver.maxIterations``  int    25         Max nonlinear iterations before timestep cut
-=================================  ====== ========== =================================================================
+================================== ====== ========== =================================================================
 
 ************************
 Linear Solver Parameters
@@ -53,4 +53,4 @@ Parameter                                 Type    Default          Definition ``
 ``preconditioner.amg.symmetricProblem``   bool    true             Optimize settings for symmetric or nonsymmetric problems
 ``preconditioner.amg.nullSpaceType``      string  ``constant``     Null space to use ``[constant,rigidBody]``
 ``preconditioner.sai.placeHolder``        tbd     tbd              Placeholder anticipating Sparse Approximate Inverse preconditioners
-========================================= ======= ================ ====================================================================================
+========================================= ======= ===============  ====================================================================================
