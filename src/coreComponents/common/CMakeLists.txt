@@ -5,8 +5,7 @@
 set(common_headers
     integer_conversion.hpp
     DataTypes.hpp
-    Logger.hpp
-    SortedArray.hpp )
+    Logger.hpp )
 
 #
 # Specify all sources
