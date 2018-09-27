@@ -40,14 +40,16 @@ class MeshLevel;
 class MPI_iCommData
 {
 public:
-  void resize( int numMessages )
+  void resize( localIndex numMessages )
   {
     mpiSendBufferRequest.resize( numMessages );
     mpiRecvBufferRequest.resize( numMessages );
     mpiSendBufferStatus.resize( numMessages );
     mpiRecvBufferStatus.resize( numMessages );
+    size = static_cast<int>(numMessages);
   }
 
+  int size;
   int commID;
   std::map<string, string_array > fieldNames;
   array1d<MPI_Request> mpiSendBufferRequest;

@@ -294,8 +294,8 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
 {
   // get the "isExternal" field from the faceManager->..This should have been
   // set already!
-  array1d<integer> const & isExternalFace = faceManager->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::isExternalString );
-  array1d<integer>& isExternal = this->getReference< array1d<integer> >( viewKeyStruct::isExternalString );
+  array1d<integer> const & isExternalFace = faceManager->isExternal();
+  array1d<integer>& isExternal = this->isExternal();
 
   array1d<localIndex_array> const & facesToEdges = faceManager->edgeList();
 
@@ -314,7 +314,7 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
       // loop over all nodes connected to face, and set isNodeDomainBoundary
       for( auto a : faceToEdges )
       {
-        isExternal(a) = 1;
+        isExternal[a] = 1;
       }
     }
   }

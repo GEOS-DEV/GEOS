@@ -404,7 +404,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
 
   for( auto & neighbor : neighbors )
   {
-    neighbor.FindAndPackGhosts( false, 2, meshLevel, commID );
+    neighbor.FindAndPackGhosts( false, 1, meshLevel, commID );
   }
 
   for( auto & neighbor : neighbors )
@@ -465,7 +465,7 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
   for( int count=0 ; count<neighbors.size() ; ++count )
   {
     int neighborIndex;
-    MPI_Waitany( icomm.mpiRecvBufferRequest.size(),
+    MPI_Waitany( icomm.size,
                  icomm.mpiRecvBufferRequest.data(),
                  &neighborIndex,
                  icomm.mpiRecvBufferStatus.data() );
@@ -475,7 +475,7 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
   }
 
 
-  MPI_Waitall( icomm.mpiSendBufferRequest.size(),
+  MPI_Waitall( icomm.size,
                icomm.mpiSendBufferRequest.data(),
                icomm.mpiSendBufferStatus.data() );
 #endif
