@@ -165,6 +165,21 @@ public:
                        int const cycleNumber,
                        real64 const problemTime);
 
+
+  void WritePolygonMeshObject(const std::string& meshName,
+                                        const localIndex nnodes,
+                                        realT* coords[3],
+                                        const globalIndex*,
+                                        const int numRegions,
+                                        const int* shapecnt,
+                                        const localIndex* const * const meshConnectivity,
+                                        const globalIndex* const * const globalElementNum,
+                                        const int* const * const,
+                                        const int* const shapetype,
+                                        const int* const shapesize,
+                                        const int cycleNumber,
+                                        const realT problemTime,
+                                        const int lnodelist);
 /**
  * @brief write a domain parititon out to silo file
  * @param domain the domain partition to write
@@ -392,6 +407,10 @@ public:
     m_numGroups = numGroups;
   }
 
+  void setPlotLevel( int const plotLevel )
+  {
+    m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
+  }
 private:
 
   /// pointer to the DBfile that this class is working on
@@ -424,6 +443,8 @@ private:
 
   string_array m_emptyMeshes;
   string_array m_emptyVariables;
+
+  dataRepository::PlotLevel m_plotLevel;
 
   /**
    *
@@ -559,7 +580,7 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
   {
     auto const & wrapper = wrapperIter.second;
 
-    if( wrapper->getPlotLevel() < dataRepository::PlotLevel::LEVEL_1 )
+    if( wrapper->getPlotLevel() < m_plotLevel )
     {
       // the field name is the key to the map
       string const fieldName = wrapper->getName();
@@ -793,7 +814,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
       ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-      localIndex const numMatInRegion = elemRegion->getMaterialList().size();
+      localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
 
       array1d<localIndex> matIndices(numMatInRegion);
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
@@ -842,7 +863,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
       ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-      localIndex const numMatInRegion = elemRegion->getMaterialList().size();
+      localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
 
       array1d<localIndex> matIndices(numMatInRegion);
 

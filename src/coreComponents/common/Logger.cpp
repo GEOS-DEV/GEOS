@@ -30,12 +30,69 @@
 #include "stackTrace.hpp"
 #include<iostream>
 
+#ifdef GEOSX_USE_ATK
+
+#include "slic/GenericOutputStream.hpp"
+
+#ifdef GEOSX_USE_MPI
+#include "slic/LumberjackStream.hpp"
+#endif
+
+#endif
+
 namespace geosx
 {
 
-void geos_abort( std::string message )
+namespace logger
 {
-  std::cerr<<message<<std::endl;
+
+int rank = 0;
+
+
+void InitializeLogger()
+{
+#ifdef GEOSX_USE_ATK
+  axom::slic::initialize();
+  axom::slic::setLoggingMsgLevel( axom::slic::message::Debug );
+
+#ifdef GEOSX_USE_MPI
+  std::string format =  std::string( "***********************************\n" )+
+                        std::string( "MESSAGE=<MESSAGE>\n" ) +
+                        std::string( "\t<TIMESTAMP>\n\n" ) +
+                        std::string( "\tLEVEL=<LEVEL>\n" ) +
+                        std::string( "\tRANKS=<RANK>\n") +
+                        std::string( "\tFILE=<FILE>\n" ) +
+                        std::string( "\tLINE=<LINE>\n" ) +
+                        std::string( "***********************************\n" );
+
+  const int ranks_limit = 5;
+  axom::slic::LumberjackStream * const stream = new axom::slic::LumberjackStream(&std::cout, MPI_COMM_GEOSX, ranks_limit, format);
+#else /* #ifdef GEOSX_USE_MPI */
+  std::string format =  std::string( "***********************************\n" )+
+                        std::string( "MESSAGE=<MESSAGE>\n" ) +
+                        std::string( "\t<TIMESTAMP>\n\n" ) +
+                        std::string( "\tLEVEL=<LEVEL>\n" ) +
+                        std::string( "\tFILE=<FILE>\n" ) +
+                        std::string( "\tLINE=<LINE>\n" ) +
+                        std::string( "***********************************\n" );
+
+  axom::slic::GenericOutputStream * const stream = new axom::slic::GenericOutputStream(&std::cout, format );
+#endif /* #ifdef GEOSX_USE_MPI */
+  axom::slic::addStreamToAllMsgLevels( stream );
+#endif /* #ifdef GEOSX_USE_ATK */
+}
+
+void FinalizeLogger()
+{
+#ifdef GEOSX_USE_ATK
+  axom::slic::flushStreams();
+  axom::slic::finalize();
+#endif
+
+}
+
+void geos_abort()
+{
   cxx_utilities::handler1(EXIT_FAILURE);
 #ifdef GEOSX_USE_MPI
   int mpi = 0;
@@ -51,4 +108,6 @@ void geos_abort( std::string message )
   }
 }
 
-}
+} /* namespace logger */
+
+} /* namespace geosx */

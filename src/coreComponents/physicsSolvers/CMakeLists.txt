@@ -10,6 +10,7 @@ set( physicsSolvers_headers
      FiniteVolume/SinglePhaseFlow.hpp
      FiniteVolume/CompositionalMultiphaseFlow.hpp
      src/SolidMechanicsLagrangianFEM.hpp
+     surfaceGeneration/SurfaceGenerator.hpp
      src/DummySolver.hpp
      )
 
@@ -24,6 +25,7 @@ set( physicsSolvers_sources
      FiniteVolume/SinglePhaseFlow.cpp
      FiniteVolume/CompositionalMultiphaseFlow.cpp
      src/SolidMechanicsLagrangianFEM.cpp
+     surfaceGeneration/SurfaceGenerator.cpp
      src/DummySolver.cpp
      )
 

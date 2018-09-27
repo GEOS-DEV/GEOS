@@ -27,7 +27,7 @@
 
 #include "fileIO/silo/SiloFile.hpp"
 
-#include "common/SortedArray.hpp"
+#include "common/TimingMacros.hpp"
 
 #include "common/Logger.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
@@ -42,8 +42,6 @@ DomainPartition::DomainPartition( std::string const & name,
   ManagedGroup( name, parent ),
   m_mpiComm()
 {
-
-
   this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
   MPI_Comm_dup( MPI_COMM_GEOSX, &m_mpiComm );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
@@ -53,9 +51,9 @@ DomainPartition::DomainPartition( std::string const & name,
   RegisterGroup<CellBlockManager>( keys::cellManager );
 }
 
+
 DomainPartition::~DomainPartition()
 {}
-
 
 
 void DomainPartition::FillDocumentationNode()
@@ -168,7 +166,7 @@ void DomainPartition::GenerateSets(  )
         set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
+          localIndex const * const nodelist = elemsToNodes[k];
           integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {

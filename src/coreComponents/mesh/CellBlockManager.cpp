@@ -51,7 +51,7 @@ void CellBlockManager::resize( integer_array const & numElements,
                                string_array const & regionNames,
                                string_array const & elementTypes )
 {
-  localIndex const numRegions = regionNames.size();
+  localIndex const numRegions = integer_conversion<localIndex>(regionNames.size());
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<numRegions ; ++reg )
   {

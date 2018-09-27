@@ -1496,10 +1496,16 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
   //--------------WRITE FE DATA-----------------
 //  if (m_feElementManager->m_numElems > 0)
-  {
+//  {
 
     NodeManager const * const nodeManager = meshLevel->getNodeManager();
     localIndex const numNodes = nodeManager->size();
+
+    FaceManager const * const faceManager = meshLevel->getFaceManager();
+    localIndex const numFaces = faceManager->size();
+
+    EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
+    localIndex const numEdges = edgeManager->size();
 
 
     string const ghostNodeName = "ghostNodeFlag";
@@ -1515,6 +1521,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
 
+    r1_array const * const totalDisplacement = nodeManager->getPointer<r1_array>(keys::TotalDisplacement);
+
     bool writeArbitraryPolygon(false);
     string const meshName("MeshLevel");
 
@@ -1527,8 +1535,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
+      if( totalDisplacement!=nullptr )
+      {
+        nodePosition += (*totalDisplacement)[a];
+      }
 
-      xcoords[a] = nodePosition(0);
+      xcoords[a] = nodePosition(0) ;
       ycoords[a] = nodePosition(1);
       zcoords[a] = nodePosition(2);
 
@@ -1577,7 +1589,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
-          arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
+          localIndex const * const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = SiloNodeOrdering();
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
@@ -1745,8 +1757,314 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 // isRestart );
 
 
-  }//end FE write
+//  }//end FE write
+
+
+
+
+
+
+
+//  if ( (isRestart || (writeFEMFaces && faceManager.DataLengths() > 0)) )
+  {
+
+    // face mesh
+    const std::string facemeshName("face_mesh");
+
+    if (writeArbitraryPolygon)
+    {
+      const int numFaceTypes = 1;
+      int dbZoneType = DB_ZONETYPE_POLYGON;
+      // See a discussion of silo's arbitrary polygon implementation at
+      // https://visitbugs.ornl.gov/projects/7/wiki/Arbitrary_Polygons_and_Polyhedra_in_Silo
+      // It is not documented in silo manual.
+      array1d<localIndex*> faceConnectivity(numFaceTypes);
+      array1d<globalIndex const*> globalFaceNumbers(numFaceTypes);
+      std::vector<int> fshapecnt(numFaceTypes);
+      std::vector<int> fshapetype(numFaceTypes);
+      std::vector<int> fshapesize(numFaceTypes);
+
+      array1d<array1d<localIndex>> faceToNodeMap(numFaceTypes);
+      {
+        for (localIndex k = 0; k < numFaces; ++k)
+        {
+          faceToNodeMap[0].push_back(faceManager->nodeList()[k].size());
+          for (localIndex a = 0; a < faceManager->nodeList()[k].size(); ++a)
+          {
+            faceToNodeMap[0].push_back(faceManager->nodeList()[k][a]);
+          }
+        }
+
+        faceConnectivity[0] = faceToNodeMap[0].data();
+
+        globalFaceNumbers[0] = faceManager->m_localToGlobalMap.data();
+        fshapecnt[0] = numFaces;
+        fshapetype[0] = dbZoneType;
+        fshapesize[0] = 0;
+      }
+      int lnodelist = faceToNodeMap[0].size();
+
+      WritePolygonMeshObject( facemeshName, numNodes, coords,
+                              nodeManager->m_localToGlobalMap.data(), numFaceTypes,
+                              fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
+                              nullptr, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
+
+
+    }
+    else  //The old way
+    {
+      const int numFaceTypes = 1;
+      int numNodesPerFace = faceManager->nodeList()[0].size(); // TODO assumes all faces have same number of nodes
+      int dbZoneType = DB_ZONETYPE_POLYGON;
+      if(numNodesPerFace == 3) {
+        dbZoneType = DB_ZONETYPE_TRIANGLE;
+      }else if(numNodesPerFace == 4){
+        dbZoneType = DB_ZONETYPE_QUAD;
+      }else if(numNodesPerFace == 2){
+        dbZoneType = DB_ZONETYPE_BEAM;
+      }
+
+      array1d<localIndex*> faceConnectivity(numFaceTypes);
+      array1d<globalIndex const*> globalFaceNumbers(numFaceTypes);
+      std::vector<int> fshapecnt(numFaceTypes);
+      std::vector<int> fshapetype(numFaceTypes);
+      std::vector<int> fshapesize(numFaceTypes);
+
+      array1d<array2d<localIndex>> faceToNodeMap(numFaceTypes);
+
+
+      for(int faceType = 0; faceType < numFaceTypes; ++faceType)
+      {
+        faceToNodeMap[faceType].resize( numFaces, numNodesPerFace);
+
+        for(localIndex k = 0; k < numFaces; ++k )
+        {
+          for (int a = 0; a < numNodesPerFace; ++a)
+          {
+            faceToNodeMap[faceType][k][a] = faceManager->nodeList()[k][a];
+          }
+        }
+
+        faceConnectivity[faceType] = faceToNodeMap[faceType].data();
+
+        globalFaceNumbers[faceType] = faceManager->m_localToGlobalMap.data();
+        fshapecnt[faceType] = numFaces;
+        fshapetype[faceType] = dbZoneType;
+        fshapesize[faceType] = numNodesPerFace;
+      }
+
+      WriteMeshObject( facemeshName,
+                       numNodes,
+                       coords,
+                       nodeManager->m_localToGlobalMap.data(),
+                       nullptr,
+                       nullptr,
+                       numFaceTypes,
+                       fshapecnt.data(),
+                       faceConnectivity.data(),
+                       globalFaceNumbers.data(),
+                       fshapetype.data(),
+                       fshapesize.data(),
+                       cycleNum,
+                       problemTime);
+    }
+
+    WriteManagedGroupSilo( faceManager,
+                           "FaceFields",
+                           facemeshName,
+                           DB_ZONECENT,
+                           cycleNum,
+                           problemTime,
+                           isRestart,
+                           localIndex_array());
+
+  }
+
+
+//  if ( isRestart || (writeFEMEdges && edgeManager.DataLengths() > 0) )
+  {
+    // write edges
+
+    const std::string edgeMeshName("edge_mesh");
+
+    const int numEdgeTypes = 1;
+    const int numNodesPerEdge = 2;
+    int dbZoneType = DB_ZONETYPE_BEAM;
+
+    array1d<localIndex*> edgeConnectivity(numEdgeTypes);
+    array1d<globalIndex const*> globalEdgeNumbers(numEdgeTypes);
+    std::vector<int> eshapecnt(numEdgeTypes);
+    std::vector<int> eshapetype(numEdgeTypes);
+    std::vector<int> eshapesize(numEdgeTypes);
+
+    array1d<array2d<localIndex>> edgeToNodeMap(numEdgeTypes);
+
+
+    for (int edgeType = 0; edgeType < numEdgeTypes; ++edgeType)
+    {
+      edgeToNodeMap[edgeType].resize( numEdges, numNodesPerEdge);
+
+      for (localIndex k = 0; k < numEdges; ++k)
+      {
+        for (int a = 0; a < numNodesPerEdge; ++a)
+        {
+          if ( faceManager->nodeList()[0].size() == 2 && a > 0)
+          {
+            edgeToNodeMap[edgeType][k][a] = edgeManager->nodeList()[k][0];
+          }
+          else
+          {
+            edgeToNodeMap[edgeType][k][a] = edgeManager->nodeList()[k][a];
+          }
+        }
+      }
+
+      edgeConnectivity[edgeType] = edgeToNodeMap[edgeType].data();
+
+      globalEdgeNumbers[edgeType] = edgeManager->m_localToGlobalMap.data();
+      eshapecnt[edgeType] = numEdges;
+      eshapetype[edgeType] = dbZoneType;
+      eshapesize[edgeType] = numNodesPerEdge;
+    }
+
+    WriteMeshObject( edgeMeshName,
+                     numNodes,
+                     coords,
+                     nodeManager->m_localToGlobalMap.data(),
+                     nullptr,
+                     nullptr,
+                     numEdgeTypes,
+                     eshapecnt.data(),
+                     edgeConnectivity.data(),
+                     globalEdgeNumbers.data(),
+                     eshapetype.data(),
+                     eshapesize.data(),
+                     cycleNum,
+                     problemTime);
+
+    WriteManagedGroupSilo( edgeManager,
+                           "EdgeFields",
+                           edgeMeshName,
+                           DB_ZONECENT,
+                           cycleNum,
+                           problemTime,
+                           isRestart,
+                           localIndex_array());
+  }
+
 }
+
+// Arbitrary polygon. Have to deal with this separately
+void SiloFile::WritePolygonMeshObject(const std::string& meshName,
+                                      const localIndex nnodes,
+                                      realT* coords[3],
+                                      const globalIndex*,
+                                      const int numRegions,
+                                      const int* shapecnt,
+                                      const localIndex* const * const meshConnectivity,
+                                      const globalIndex* const * const globalElementNum,
+                                      const int* const * const,
+                                      const int* const shapetype,
+                                      const int* const shapesize,
+                                      const int cycleNumber,
+                                      const realT problemTime,
+                                      const int lnodelist)
+{
+
+  const DBdatatype datatype = DB_DOUBLE;
+
+
+//  DBfacelist* facelist;
+//  std::string facelistName;
+//  facelistName = meshName + "_facelist";
+
+  DBoptlist* optlist = DBMakeOptlist(4);
+//  DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*> (globalNodeNum));
+  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+  DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
+
+  int numTotZones = shapecnt[0];
+  if (numTotZones == 0)
+  {
+    char pwd[256];
+    DBGetDir(m_dbFilePtr, pwd);
+    std::string emptyObject = pwd;
+    emptyObject += "/" + meshName;
+    m_emptyMeshes.push_back(emptyObject);
+  }
+  else
+  {
+    std::string zonelistName;
+    zonelistName = meshName + "_zonelist";
+
+
+    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, nullptr, (float**) coords, nnodes, numTotZones,
+                 zonelistName.c_str(), nullptr, datatype, optlist);
+
+    DBClearOptlist(optlist);
+
+    std::vector<int> nodelist(lnodelist);
+    std::vector<globalIndex> globalZoneNumber(lnodelist);
+
+    int elemCount = 0;
+    for (int j = 0; j < lnodelist; ++j)
+    {
+      nodelist[j] = meshConnectivity[0][j];
+    }
+
+    {
+      if( globalElementNum != nullptr )
+      {
+        for (int j = 0; j < shapecnt[0]; ++j)
+        {
+          globalZoneNumber[elemCount++] = globalElementNum[0][j];
+        }
+        // write zonelist
+  //      DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*> (globalZoneNumber.data()));
+//        if (type_name<globalIndex>::name() == type_name<long long>::name())
+//          DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
+      }
+    }
+
+
+
+    int hi_offset = 0;
+
+    DBPutZonelist2( m_dbFilePtr,
+                    zonelistName.c_str(),
+                    numTotZones,
+                    3,
+                    nodelist.data(),
+                    lnodelist,
+                    0,
+                    0,
+                    hi_offset,
+                    const_cast<int*>(shapetype),
+                    const_cast<int*>(shapesize),
+                    const_cast<int*>(shapecnt),
+                    numRegions,
+                    optlist);
+
+    DBClearOptlist(optlist);
+
+  }
+
+  // write multimesh object
+  int rank = 0;
+#ifdef GEOSX_USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+  if (rank == 0)
+  {
+    DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+    DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
+
+    WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist);
+  }
+
+  DBFreeOptlist(optlist);
+}
+
 
 }
 #pragma GCC diagnostic pop

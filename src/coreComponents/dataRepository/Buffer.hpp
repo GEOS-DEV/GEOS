@@ -302,7 +302,7 @@ public:
     }
 
     buff[0] = byte_size;
-    buff[1] = arr.size();
+    buff[1] = integer_conversion<localIndex>(arr.size());
     char * c_buff = reinterpret_cast<char *>(buff + 2);
 
     localIndex offset = 0;
@@ -484,7 +484,7 @@ public:
                  bytes_recorded << " " << byte_size);
     }
 
-    std::memcpy(arr.data(), buff + 2, dim0 * dim1 * sizeof(T));
+    std::memcpy(static_cast<void*>(arr.data()), buff + 2, dim0 * dim1 * sizeof(T));
     return bytes_recorded;
   }
 
@@ -591,7 +591,7 @@ public:
     }
 
     buff[0] = byte_size;
-    buff[1] = m.size();
+    buff[1] = integer_conversion<localIndex>(m.size());
     char * c_buff = reinterpret_cast<char *>(buff + 2);
     
     localIndex offset = 0;
@@ -746,7 +746,7 @@ public:
   static void * pack(const StencilCollection<IndexType, WeightType> & data, localIndex & byte_size, void * buffer=nullptr)
   {
     GEOS_ERROR("You shouldn't be packing a StencilCollection!");
-    return 0;
+    return nullptr;
   }
 
   template <typename IndexType, typename WeightType>
