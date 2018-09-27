@@ -199,15 +199,6 @@ void PoroelasticSolver::FinalInitialization( ManagedGroup * const problemManager
 {
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
-
-  SolverBase &
-  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-
-  SinglePhaseFlow &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  solidSolver.FinalInitialization(problemManager);
-  fluidSolver.FinalInitialization(problemManager);
 }
 
 PoroelasticSolver::~PoroelasticSolver()
