@@ -58,6 +58,7 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
   else
   {
     // Other parameters used to debug
+//    solver.SetAztecOption( AZ_solver, AZ_cg );
 //    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
 //    solver.SetAztecOption( AZ_conv, AZ_noscaled );
 
@@ -66,9 +67,12 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
     solver.SetAztecParam( AZ_ilut_fill, 3.0 );
+
   }
-  // Suppress output
-  solver.SetAztecOption( AZ_output, 0 );
+  // Ask for a convergence normalized by the rhs
+  solver.SetAztecOption( AZ_conv, AZ_rhs );
+  // Set output (TODO verbosity manager?)
+  solver.SetAztecOption( AZ_output, AZ_last );
   // Solve
   solver.Iterate( max_iter, newton_tol );
 }
@@ -127,6 +131,9 @@ void TrilinosSolver::dsolve( EpetraSparseMatrix &Mat,
   solver->NumericFactorization();
   // Solve the system
   solver->Solve();
+  // Set output (TODO verbosity manager?)
+  solver->PrintStatus();
+  solver->PrintTiming();
 }
 
 }
