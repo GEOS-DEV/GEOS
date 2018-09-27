@@ -39,12 +39,10 @@
 
 #include "common/GeosxConfig.hpp"
 #include "common/Logger.hpp"
-#include "common/SortedArray.hpp"
 #include "Macros.hpp"
 #include "ManagedArray.hpp"
+#include "SortedArray.hpp"
 #include "math/TensorT/TensorT.h"
-
-
 
 #ifdef GEOSX_USE_ATK
 #include "sidre/SidreTypes.hpp"
