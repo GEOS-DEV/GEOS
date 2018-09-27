@@ -32,7 +32,7 @@ Parameter                                 Type   Default   Definition ``[Options
 ``linearSolver.scaling.useRowScaling``    bool   false     Apply row scaling before solving
 ``linearSolver.scaling.useRowColScaling`` bool   false     Apply row & column scaling before solving
 ``linearSolver.gmres.maxRestart``         int    300       Restart basis after ``maxRestart`` iterations
-========================================= ====== ========= ========================================================
+========================================= ====== ========= =========================================================
 
 **************************
 Preconditioner Parameters
@@ -53,4 +53,4 @@ Parameter                                 Type    Default          Definition ``
 ``preconditioner.amg.symmetricProblem``   bool    true             Optimize settings for symmetric or nonsymmetric problems
 ``preconditioner.amg.nullSpaceType``      string  ``constant``     Null space to use ``[constant,rigidBody]``
 ``preconditioner.sai.placeHolder``        tbd     tbd              Placeholder anticipating Sparse Approximate Inverse preconditioners
-========================================= ======= ================ ===================================================================================
+========================================= ======= ================ ====================================================================================
