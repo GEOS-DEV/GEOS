@@ -308,7 +308,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
                                 edgeAdjacencyList,
                                 faceAdjacencyList,
                                 elementAdjacencyList,
-                                2 );
+                                depth );
 
   int bufferSize = 0;
 
