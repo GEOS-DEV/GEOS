@@ -10,21 +10,21 @@ some parameters are nested as ``topLevel.subLevel.subSubLevel``.
 Nonlinear Solver Parameters
 ***************************
 
-================================== ====== ========== ======================================================
+================================== ====== ========== =================================================================
 Parameter                          Type   Default    Definition [Options]
-================================== ====== ========== ======================================================
+================================== ====== ========== =================================================================
 ``nonlinearSolver.type``           string ``newton`` Nonlinear solver type ``[newton, backtrackingNewton, appleyard]``
 ``nonlinearSolver.tolerance``      real   1e-5       Relative convergence tolerance
 ``nonlinearSolver.maxIterations``  int    25         Max nonlinear iterations before timestep cut
-=================================  ====== ========== ======================================================
+=================================  ====== ========== =================================================================
 
 ************************
 Linear Solver Parameters
 ************************
 
-========================================= ====== ========= ======================================================
+========================================= ====== ========= =========================================================
 Parameter                                 Type   Default   Definition ``[Options]``
-========================================= ====== ========= ======================================================
+========================================= ====== ========= =========================================================
 ``linearSolver.type``                     string ``gmres`` Linear solver type ``[direct, cg, gmres, bicgstab]``
 ``linearSolver.tolerance``                real   1e-6      Relative convergence tolerance
 ``linearSolver.useAdaptiveTolerance``     bool   false     Use Eisenstat-Walker adaptive tolerance
@@ -32,15 +32,15 @@ Parameter                                 Type   Default   Definition ``[Options
 ``linearSolver.scaling.useRowScaling``    bool   false     Apply row scaling before solving
 ``linearSolver.scaling.useRowColScaling`` bool   false     Apply row & column scaling before solving
 ``linearSolver.gmres.maxRestart``         int    300       Restart basis after ``maxRestart`` iterations
-========================================= ====== ========= ======================================================
+========================================= ====== ========= ========================================================
 
 **************************
 Preconditioner Parameters
 **************************
 
-========================================= ======= ===============  ======================================================
+========================================= ======= ===============  ====================================================================================
 Parameter                                 Type    Default          Definition ``[Options]``
-========================================= ======= ===============  ======================================================
+========================================= ======= ===============  ====================================================================================
 ``preconditioner.type``                   string  ``ilut``         Preconditioner type ``[none, iluk, ilut, amg, userDefined]``
 ``preconditioner.blockSize``              int     1                Some algorithms support block-variants for matrices with dense sub-blocks.
 ``preconditioner.ilu.fill``               int     0                Sparsity pattern fill factor for ILUK, ILUT
@@ -53,4 +53,4 @@ Parameter                                 Type    Default          Definition ``
 ``preconditioner.amg.symmetricProblem``   bool    true             Optimize settings for symmetric or nonsymmetric problems
 ``preconditioner.amg.nullSpaceType``      string  ``constant``     Null space to use ``[constant,rigidBody]``
 ``preconditioner.sai.placeHolder``        tbd     tbd              Placeholder anticipating Sparse Approximate Inverse preconditioners
-========================================= ======= ================ ======================================================
+========================================= ======= ================ ===================================================================================
