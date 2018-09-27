@@ -38,14 +38,14 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   : SolverBase( name, parent ),
     m_gravityFlag(1)
 {
-  this->RegisterViewWrapper(viewKeys.gravityFlag.Key(),    &m_gravityFlag,        false);
-  this->RegisterViewWrapper(viewKeys.discretization.Key(), &m_discretizationName, false);
+  this->RegisterViewWrapper(viewKeysFlowSolverBase.gravityFlag.Key(),    &m_gravityFlag,        false);
+  this->RegisterViewWrapper(viewKeysFlowSolverBase.discretization.Key(), &m_discretizationName, false);
 
-  this->RegisterViewWrapper(viewKeys.fluidName.Key(),  &m_fluidName,  false);
-  this->RegisterViewWrapper(viewKeys.fluidIndex.Key(), &m_fluidIndex, false);
+  this->RegisterViewWrapper(viewKeysFlowSolverBase.fluidName.Key(),  &m_fluidName,  false);
+  this->RegisterViewWrapper(viewKeysFlowSolverBase.fluidIndex.Key(), &m_fluidIndex, false);
 
-  this->RegisterViewWrapper(viewKeys.solidName.Key(),  &m_solidName,  false);
-  this->RegisterViewWrapper(viewKeys.solidIndex.Key(), &m_solidIndex, false);
+  this->RegisterViewWrapper(viewKeysFlowSolverBase.solidName.Key(),  &m_solidName,  false);
+  this->RegisterViewWrapper(viewKeysFlowSolverBase.solidIndex.Key(), &m_solidIndex, false);
 }
 
 void FlowSolverBase::FillDocumentationNode()
@@ -54,8 +54,8 @@ void FlowSolverBase::FillDocumentationNode()
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->AllocateChildNode( viewKeys.gravityFlag.Key(),
-                              viewKeys.gravityFlag.Key(),
+  docNode->AllocateChildNode( viewKeysFlowSolverBase.gravityFlag.Key(),
+                              viewKeysFlowSolverBase.gravityFlag.Key(),
                               -1,
                               "integer",
                               "integer",
@@ -67,8 +67,8 @@ void FlowSolverBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.discretization.Key(),
-                              viewKeys.discretization.Key(),
+  docNode->AllocateChildNode( viewKeysFlowSolverBase.discretization.Key(),
+                              viewKeysFlowSolverBase.discretization.Key(),
                               -1,
                               "string",
                               "string",
@@ -80,8 +80,8 @@ void FlowSolverBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.fluidName.Key(),
-                              viewKeys.fluidName.Key(),
+  docNode->AllocateChildNode( viewKeysFlowSolverBase.fluidName.Key(),
+                              viewKeysFlowSolverBase.fluidName.Key(),
                               -1,
                               "string",
                               "string",
@@ -93,8 +93,8 @@ void FlowSolverBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.solidName.Key(),
-                              viewKeys.solidName.Key(),
+  docNode->AllocateChildNode( viewKeysFlowSolverBase.solidName.Key(),
+                              viewKeysFlowSolverBase.solidName.Key(),
                               -1,
                               "string",
                               "string",
@@ -123,8 +123,8 @@ void FlowSolverBase::FillOtherDocumentationNodes(dataRepository::ManagedGroup * 
     {
       cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
 
-      docNode->AllocateChildNode( viewKeys.referencePorosity.Key(),
-                                  viewKeys.referencePorosity.Key(),
+      docNode->AllocateChildNode( viewKeysFlowSolverBase.referencePorosity.Key(),
+                                  viewKeysFlowSolverBase.referencePorosity.Key(),
                                   -1,
                                   "real64_array",
                                   "real64_array",
@@ -136,8 +136,8 @@ void FlowSolverBase::FillOtherDocumentationNodes(dataRepository::ManagedGroup * 
                                   0,
                                   1 );
 
-      docNode->AllocateChildNode( viewKeys.permeability.Key(),
-                                  viewKeys.permeability.Key(),
+      docNode->AllocateChildNode( viewKeysFlowSolverBase.permeability.Key(),
+                                  viewKeysFlowSolverBase.permeability.Key(),
                                   -1,
                                   "r1_array",
                                   "r1_array",
@@ -149,8 +149,8 @@ void FlowSolverBase::FillOtherDocumentationNodes(dataRepository::ManagedGroup * 
                                   0,
                                   1 );
 
-      docNode->AllocateChildNode( viewKeys.gravityDepth.Key(),
-                                  viewKeys.gravityDepth.Key(),
+      docNode->AllocateChildNode( viewKeysFlowSolverBase.gravityDepth.Key(),
+                                  viewKeysFlowSolverBase.gravityDepth.Key(),
                                   -1,
                                   "real64_array",
                                   "real64_array",
@@ -167,8 +167,8 @@ void FlowSolverBase::FillOtherDocumentationNodes(dataRepository::ManagedGroup * 
       FaceManager * const faceManager = meshLevel->getFaceManager();
       cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
 
-      docNode->AllocateChildNode( viewKeys.gravityDepth.Key(),
-                                  viewKeys.gravityDepth.Key(),
+      docNode->AllocateChildNode( viewKeysFlowSolverBase.gravityDepth.Key(),
+                                  viewKeysFlowSolverBase.gravityDepth.Key(),
                                   -1,
                                   "real64_array",
                                   "real64_array",
@@ -216,7 +216,7 @@ void FlowSolverBase::PrecomputeData(DomainPartition * const domain)
                                                                     viewKeyStruct::
                                                                     elementCenterString );
 
-  auto gravityDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeys.gravityDepth.Key());
+  auto gravityDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeysFlowSolverBase.gravityDepth.Key());
 
   // Loop over all the elements and calculate element centers, and element volumes
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -228,7 +228,7 @@ void FlowSolverBase::PrecomputeData(DomainPartition * const domain)
 
 
   r1_array & faceCenter = faceManager->getReference<r1_array>(FaceManager::viewKeyStruct::faceCenterString);
-  real64_array & gravityDepthFace = faceManager->getReference<real64_array>(viewKeys.gravityDepth);
+  real64_array & gravityDepthFace = faceManager->getReference<real64_array>(viewKeysFlowSolverBase.gravityDepth);
 
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {

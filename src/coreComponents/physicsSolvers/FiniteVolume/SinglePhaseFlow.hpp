@@ -168,11 +168,11 @@ public:
     ViewKey viscosity = { viscosityString };
     ViewKey porosity  = { porosityString };
 
-  } viewKeys;
+  } viewKeysSinglePhaseFlow;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeys;
+  } groupKeysSinglePhaseFlow;
 
 
 private:

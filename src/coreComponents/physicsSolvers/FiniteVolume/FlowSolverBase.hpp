@@ -103,11 +103,11 @@ public:
     ViewKey fluidIndex     = { "fluidIndex" };
     ViewKey solidIndex     = { "solidIndex" };
 
-  } viewKeys;
+  } viewKeysFlowSolverBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeys;
+  } groupKeysFlowSolverBase;
 
 private:
 
