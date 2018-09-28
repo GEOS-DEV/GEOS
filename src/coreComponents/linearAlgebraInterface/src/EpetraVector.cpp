@@ -23,26 +23,52 @@
  *  Author: Matthias Cremon
  */
 
+// BEGIN_RST_NARRATIVE EpetraSparseVector.rst
+// ==============================
+// Epetra-based Vector Object
+// ==============================
+// This class contains the ParallelVector wrappers based on Epetra_Vector Objects.
+// The class contains a unique pointer to an Epetra_CrsVector as well as constructors,
+// functions and accessors for Epetra objects.
+
+// Include the corresponding header file.
 #include "EpetraVector.hpp"
 
+// Put everything under the geosx namespace.
 namespace geosx
 {
+
+// ----------------------------
+// Constructors
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Empty constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create an empty vector
 EpetraVector::EpetraVector()
 {}
 
-// Copy a vector
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Copy constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Create a unique pointer to an Epetra_CrsMatrix.  The data from the input vector is
+// copied to a new memory location. First checks if the vector to be copied is not empty.
 EpetraVector::EpetraVector( EpetraVector const &in_vec )
 {
-  // Check if the vector to be copied is not empty
   if( in_vec.getPointer() != nullptr )
   {
-    // Create a unique pointer to an Epetra_CrsMatrix.  The data from the input vector is
-    // copied to a new memory location.
     m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( *in_vec.getPointer()));
   }
 }
 
+// ----------------------------
+// Create/finalize
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Create from array
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from array
 void EpetraVector::create( trilinosTypes::gid const size,
                            double *V )
@@ -53,6 +79,9 @@ void EpetraVector::create( trilinosTypes::gid const size,
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Create from Epetra_Map
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from Epetra_Map
 void EpetraVector::create( Epetra_Map const &Map,
                            double *V )
@@ -63,6 +92,9 @@ void EpetraVector::create( Epetra_Map const &Map,
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Create from vector
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from vector
 void EpetraVector::create( std::vector<double> &vec )
 {
@@ -74,6 +106,13 @@ void EpetraVector::create( std::vector<double> &vec )
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
 }
 
+// ----------------------------
+// Linear Algebra
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Scale
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Multiply all elements by scalingFactor.
 void EpetraVector::scale( real64 const scalingFactor )
 {
@@ -81,6 +120,9 @@ void EpetraVector::scale( real64 const scalingFactor )
   m_vector.get()->Scale( scalingFactor );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Dot
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
 void EpetraVector::dot( EpetraVector const &vec,
                         real64 &dst )
@@ -89,6 +131,9 @@ void EpetraVector::dot( EpetraVector const &vec,
   m_vector.get()->Dot( *vec.getPointer(), &dst );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Copy
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = x.
 void EpetraVector::copy( EpetraVector const &x )
 {
@@ -96,6 +141,9 @@ void EpetraVector::copy( EpetraVector const &x )
   m_vector.get()->Update( 1., *x.getPointer(), 0. );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Axpy
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + this.
 void EpetraVector::axpy( real64 const alpha,
                           EpetraVector const &x )
@@ -104,6 +152,9 @@ void EpetraVector::axpy( real64 const alpha,
   m_vector.get()->Update( alpha, *x.getPointer(), 1. );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Axpby
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + beta*this.
 void EpetraVector::axpby( real64 const alpha,
                           EpetraVector const &x,
@@ -113,6 +164,9 @@ void EpetraVector::axpby( real64 const alpha,
   m_vector.get()->Update( alpha, *x.getPointer(), beta );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// 1-norm
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // 1-norm of the vector.
 void EpetraVector::norm1( real64 &dst ) const
 {
@@ -120,6 +174,9 @@ void EpetraVector::norm1( real64 &dst ) const
   m_vector.get()->Norm1( &dst );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// 2-norm
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // 2-norm of the vector.
 void EpetraVector::norm2( real64 &dst ) const
 {
@@ -127,6 +184,9 @@ void EpetraVector::norm2( real64 &dst ) const
   m_vector.get()->Norm2( &dst );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Inf-norm
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Inf-norm of the vector.
 void EpetraVector::normInf( real64 &dst ) const
 {
@@ -134,6 +194,9 @@ void EpetraVector::normInf( real64 &dst ) const
   m_vector.get()->NormInf( &dst );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Print
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print vector to the terminal in Trilinos format.
 void EpetraVector::print() const
 {
@@ -141,25 +204,40 @@ void EpetraVector::print() const
     std::cout << *m_vector.get() << std::endl;
 }
 
-// Accessors
+// ----------------------------
+// Acessors
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get pointer (const)
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get const pointer
 const Epetra_Vector* EpetraVector::getPointer() const
 {
   return m_vector.get();
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get pointer
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get non-const pointer
 Epetra_Vector* EpetraVector::getPointer()
 {
   return m_vector.get();
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get the number of global elements
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the global size of the vector (total number of elements).
 trilinosTypes::gid EpetraVector::globalSize() const
 {
   return m_vector.get()->GlobalLength64();
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get the number of local elements
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local size of the vector (total number of local elements).
 trilinosTypes::lid EpetraVector::localSize() const
 {
@@ -167,3 +245,5 @@ trilinosTypes::lid EpetraVector::localSize() const
 }
 
 }
+
+// END_NARRATIVE_RST

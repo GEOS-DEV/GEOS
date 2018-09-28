@@ -23,8 +23,17 @@
  *  Author: Matthias Cremon
  */
 
+// BEGIN_RST_NARRATIVE TrilinosSolver.rst
+// ==============================
+// Trilinos Solver
+// ==============================
+// This class implements solvers from the Trilinos library. Iterative solvers come from
+// the AztecOO package, and direct solvers from the Amesos package.
+
+// Include the corresponding header file.
 #include "TrilinosSolver.hpp"
 
+// Put everything under the geosx namespace.
 namespace geosx
 {
 /**
@@ -32,6 +41,15 @@ namespace geosx
  *
  * Create an empty (distributed) vector.
  */
+
+// ----------------------------
+// Constructors
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Empty constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 TrilinosSolver::TrilinosSolver()
 {}
 
@@ -41,6 +59,11 @@ TrilinosSolver::TrilinosSolver()
  * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector. Prec is an optional
  * pointer to a preconditioner.
  */
+
+// ----------------------------
+// Iterative solver
+// ----------------------------
+
 void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
                             EpetraVector &sol,
                             EpetraVector &rhs,
@@ -97,6 +120,12 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
  * before real usage.
  *
  */
+
+// ----------------------------
+// Iterative solver with ML
+// ----------------------------
+// Initial test of an ML-based preconditioner.
+
 void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
                                EpetraVector &sol,
                                EpetraVector &rhs,
@@ -120,7 +149,7 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
     MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( *Mat.getPointer(), MLList );
   }
   // Set output (TODO verbosity manager?)
-  solver.SetAztecOption( AZ_output, 0 );
+  solver.SetAztecOption( AZ_output, AZ_last );
 
   // Set the precondtioner
   solver.SetPrecOperator( MLPrec.get());
@@ -135,6 +164,10 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
  * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVectors.
  *
  */
+
+// ----------------------------
+// Direct solver
+// ----------------------------
 
 void TrilinosSolver::dsolve( EpetraSparseMatrix &Mat,
                              EpetraVector &sol,
