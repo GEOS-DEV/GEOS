@@ -44,8 +44,8 @@ TrilinosSolver::TrilinosSolver()
 void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
                             EpetraVector &sol,
                             EpetraVector &rhs,
-                            integer max_iter,
-                            real64 newton_tol,
+                            integer const max_iter,
+                            real64 const newton_tol,
                             std::unique_ptr<Epetra_Operator> Prec )
 {
   // Create Epetra linear problem.
@@ -100,8 +100,8 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
 void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
                                EpetraVector &sol,
                                EpetraVector &rhs,
-                               integer max_iter,
-                               real64 newton_tol,
+                               integer const max_iter,
+                               real64 const newton_tol,
                                std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec )
 {
   // Create Epetra linear problem.
