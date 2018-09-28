@@ -71,7 +71,7 @@ way to get started is setting the following variable
 
 We refer the reader to the full Caliper tutorial `Caliper <https://github.com/LLNL/Caliper>`_ , for further details.
 
-Post running application, the output will be of the following form (where time is given in miliseconds). 
+Post running application, the output will be of the following form (where time is given in microseconds). 
   
 .. code-block:: sh
 
