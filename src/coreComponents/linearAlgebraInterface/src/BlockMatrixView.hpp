@@ -164,22 +164,44 @@ private:
 
 };
 
-// Empty constructor (inlined)
+// BEGIN_RST_NARRATIVE BlockMatrixView.rst
+// ==============================
+// Block Matrix View
+// ==============================
+// This class contains the block matrix view object. Each block matrix owns
+// pointers to a variable number of ParallelMatrices and is templated on the
+// LA interface.
+
+// ----------------------------
+// Constructors
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Empty constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
-inline
 BlockMatrixView<LAI>::BlockMatrixView()
 {}
 
-// Constructor with a size (inlined)
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Sized constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Constructor with a size (number of rows and columns)
 template< typename LAI >
-inline
 BlockMatrixView<LAI>::BlockMatrixView( typename LAI::laiLID const nRows,
                                        typename LAI::laiLID const nCols )
 {
   m_matrices.resize( nRows, nCols );
 }
 
-// Apply the block matrix to a block vector.
+// ----------------------------
+// Linear Algebra
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Multiply
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Apply the block matrix to a block vector and compute the result.
 template< typename LAI >
 void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
                                      BlockVectorView<LAI> &b ) const
@@ -199,7 +221,10 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
   }
 }
 
-// Set to residual form.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Residual
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Compute the residual r = b - Ax.
 template< typename LAI >
 void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
                                      BlockVectorView<LAI> const &b,
@@ -226,7 +251,10 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
   r.axpy( -1.0, Ax );
 }
 
-// Generalized matrix-vector product.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Generalized matrix-vector product
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Compute the gemv y = alpha*A*x + beta*y.
 template< typename LAI >
 void BlockMatrixView<LAI>::gemv( real64 const alpha,
                                  BlockVectorView<LAI> const &x,
@@ -252,6 +280,9 @@ void BlockMatrixView<LAI>::gemv( real64 const alpha,
   y.axpby( alpha, Ax, beta );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Scale
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Scale the matrix with the factor <tt>factor</tt>.
 template< typename LAI >
 void BlockMatrixView<LAI>::scale( real64 const factor )
@@ -268,6 +299,9 @@ void BlockMatrixView<LAI>::scale( real64 const factor )
   }
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Scale block
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Scale the block (<tt>blockRowIndex</tt>,<tt>blockRowIndex</tt>) with the factor <tt>factor</tt>.
 template< typename LAI >
 void BlockMatrixView<LAI>::scale( typename LAI::laiLID const blockRowIndex,
@@ -277,13 +311,21 @@ void BlockMatrixView<LAI>::scale( typename LAI::laiLID const blockRowIndex,
   m_matrices[blockRowIndex][blockColIndex]->scale( factor );
 }
 
-// Clear row and multiply the diagonal entry by <tt>factor</tt>.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Clear row
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
 void BlockMatrixView<LAI>::clearRow( typename LAI::laiGID const rowIndex,
                                      real64 const factor )
 {}
 
-// Accessor for block.
+// ----------------------------
+// Accessors
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get block
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
 typename LAI::ParallelMatrix * BlockMatrixView<LAI>::getBlock( typename LAI::laiLID const blockRowIndex,
                                                                typename LAI::laiLID const blockColIndex ) const
@@ -291,7 +333,13 @@ typename LAI::ParallelMatrix * BlockMatrixView<LAI>::getBlock( typename LAI::lai
   return m_matrices[blockRowIndex][blockColIndex];
 }
 
-// Setter for block.
+// ----------------------------
+// Setters
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Set block
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
 void BlockMatrixView<LAI>::setBlock( typename LAI::laiLID const blockRowIndex,
                                      typename LAI::laiLID const blockColIndex,

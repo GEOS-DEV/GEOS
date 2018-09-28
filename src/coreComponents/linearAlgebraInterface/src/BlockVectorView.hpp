@@ -271,20 +271,38 @@ private:
 
 };
 
-// Empty constructor (inlined)
+// BEGIN_RST_NARRATIVE BlockVectorView.rst
+// ==============================
+// Block Vector View
+// ==============================
+// This class contains the block vector view object. Each block vector owns
+// pointers to a variable number of ParallelVectors and is templated on the
+// LA interface.
+
+// ----------------------------
+// Constructors
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Empty constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
-inline
 BlockVectorView<LAI>::BlockVectorView()
 {}
 
-// Constructor with a size
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Size constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Constructor with a size (number of vectors)
 template< typename LAI >
 BlockVectorView<LAI>::BlockVectorView( typename LAI::laiLID const nBlocks )
 {
   m_vectors.resize( nBlocks );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Copy constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
 BlockVectorView<LAI>::BlockVectorView( BlockVectorView<LAI> const &in_blockVec )
 {
@@ -296,7 +314,14 @@ BlockVectorView<LAI>::BlockVectorView( BlockVectorView<LAI> const &in_blockVec )
   }
 }
 
-// Scale a block.
+// ----------------------------
+// Linear Algebra
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Scale
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Scale the whole block vector by factor.
 template< typename LAI >
 void BlockVectorView<LAI>::scale( real64 const factor )
 {
@@ -304,7 +329,10 @@ void BlockVectorView<LAI>::scale( real64 const factor )
     m_vectors[i]->scale( factor );
 }
 
-// Scale a block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Scale block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Scale the a block of the vector by factor.
 template< typename LAI >
 void BlockVectorView<LAI>::scale( typename LAI::laiLID const blockIndex,
                                   real64 const factor )
@@ -312,7 +340,10 @@ void BlockVectorView<LAI>::scale( typename LAI::laiLID const blockIndex,
   m_vectors[blockIndex]->scale( factor );
 }
 
-// Dot product.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Dot
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Perform a dot product.
 template< typename LAI >
 void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec,
                                 real64 &result ) const
@@ -327,15 +358,10 @@ void BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &blockVec,
   result = accum;
 }
 
-// Compute the 2 norm of one block vector.
-template< typename LAI >
-void BlockVectorView<LAI>::norm2( typename LAI::laiLID const blockIndex,
-                                  real64 &result ) const
-{
-  m_vectors[blockIndex]->norm2( result );
-}
-
-// Compute the 2 norm of the block vector.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// 2-norm
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Compute the 2 norm of the whole block vector.
 template< typename LAI >
 void BlockVectorView<LAI>::norm2( real64 &result ) const
 {
@@ -349,15 +375,21 @@ void BlockVectorView<LAI>::norm2( real64 &result ) const
   result = std::sqrt( accum );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// 2-norm block
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute the 2 norm of one block vector.
 template< typename LAI >
-void BlockVectorView<LAI>::normInf( typename LAI::laiLID const blockIndex,
-                                    real64 &result ) const
+void BlockVectorView<LAI>::norm2( typename LAI::laiLID const blockIndex,
+                                  real64 &result ) const
 {
-  m_vectors[blockIndex]->normInf( result );
+  m_vectors[blockIndex]->norm2( result );
 }
 
-// Compute the 2 norm of the block vector.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Inf-norm
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Compute the inf norm of the whole block vector.
 template< typename LAI >
 void BlockVectorView<LAI>::normInf( real64 &result ) const
 {
@@ -372,7 +404,21 @@ void BlockVectorView<LAI>::normInf( real64 &result ) const
   }
 }
 
-// Copy the vector.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Inf-norm block
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Compute the inf norm of one block vector.
+template< typename LAI >
+void BlockVectorView<LAI>::normInf( typename LAI::laiLID const blockIndex,
+                                    real64 &result ) const
+{
+  m_vectors[blockIndex]->normInf( result );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Copy
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Copy the input block vector.
 template< typename LAI >
 void BlockVectorView<LAI>::copy( BlockVectorView<LAI> const &x )
 {
@@ -380,7 +426,10 @@ void BlockVectorView<LAI>::copy( BlockVectorView<LAI> const &x )
     m_vectors[i]->copy( *x.getBlock( i ) );
 }
 
-// Copy a ParallelVector in a block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Copy block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Copy the input parallel vector in a block.
 template< typename LAI >
 void BlockVectorView<LAI>::copy( typename LAI::laiLID blockIndex,
                                  ParallelVector const &x )
@@ -388,7 +437,10 @@ void BlockVectorView<LAI>::copy( typename LAI::laiLID blockIndex,
   m_vectors[blockIndex]->copy( x );
 }
 
-// Update the vector.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Axpy
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Update the whole block vector with y = alpha*x + y
 template< typename LAI >
 void BlockVectorView<LAI>::axpy( real64 const alpha,
                                  BlockVectorView<LAI> const &x )
@@ -397,7 +449,10 @@ void BlockVectorView<LAI>::axpy( real64 const alpha,
     m_vectors[i]->axpby( alpha, *x.getBlock( i ), 1. );
 }
 
-// Update a block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Axpy block
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Update the i-th block with y(i) = alpha*x + y(i)
 template< typename LAI >
 void BlockVectorView<LAI>::axpy( typename LAI::laiLID blockIndex,
                                  real64 const alpha,
@@ -406,7 +461,10 @@ void BlockVectorView<LAI>::axpy( typename LAI::laiLID blockIndex,
   m_vectors[blockIndex]->axpby( alpha, x, 1. );
 }
 
-// Update the vector.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Axpy
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Update the whole block vector with y = alpha*x + beta*y
 template< typename LAI >
 void BlockVectorView<LAI>::axpby( real64 const alpha,
                                   BlockVectorView<LAI> const &x,
@@ -416,7 +474,10 @@ void BlockVectorView<LAI>::axpby( real64 const alpha,
     m_vectors[i]->axpby( alpha, *x.getBlock( i ), beta );
 }
 
-// Update a block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Axpby
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Update the i-th block with y(i) = alpha*x + beta*y(i)
 template< typename LAI >
 void BlockVectorView<LAI>::axpby( typename LAI::laiLID blockIndex,
                                   real64 const alpha,
@@ -426,6 +487,9 @@ void BlockVectorView<LAI>::axpby( typename LAI::laiLID blockIndex,
   m_vectors[blockIndex]->axpby( alpha, x, beta );
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Setter
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Setter for block.
 template< typename LAI >
 void BlockVectorView<LAI>::setBlock( typename LAI::laiLID const blockIndex,
@@ -434,6 +498,13 @@ void BlockVectorView<LAI>::setBlock( typename LAI::laiLID const blockIndex,
   m_vectors[blockIndex] = &vector;
 }
 
+// ----------------------------
+// Accessor
+// ----------------------------
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get the number of blocks
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for block size (number of blocks)
 template< typename LAI >
 typename LAI::laiLID BlockVectorView<LAI>::blockSize() const
@@ -441,6 +512,9 @@ typename LAI::laiLID BlockVectorView<LAI>::blockSize() const
   return static_cast<typename LAI::laiLID>(m_vectors.size());
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get the number of elements
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for size (total number of  elements)
 template< typename LAI >
 typename LAI::laiGID BlockVectorView<LAI>::globalSize(  ) const
@@ -451,12 +525,16 @@ typename LAI::laiGID BlockVectorView<LAI>::globalSize(  ) const
   return size;
 }
 
-// Accessor for block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get block.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
 typename LAI::ParallelVector * BlockVectorView<LAI>::getBlock( typename LAI::laiLID blockIndex ) const
 {
   return m_vectors[blockIndex];
 }
+
+// END_RST_NARRATIVE
 
 }
 

@@ -246,4 +246,4 @@ trilinosTypes::lid EpetraVector::localSize() const
 
 }
 
-// END_NARRATIVE_RST
+// END_RST_NARRATIVE

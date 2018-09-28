@@ -690,4 +690,4 @@ bool EpetraSparseMatrix::isAssembled() const
 
 }
 
-// END_NARRATIVE_RST
+// END_RST_NARRATIVE

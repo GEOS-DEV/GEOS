@@ -98,11 +98,26 @@ private:
 
 };
 
+// BEGIN_RST_NARRATIVE BiCGSTABsolver.rst
+// ==============================
+// BiCGSTAB Solver
+// ==============================
+// Implementation of the BiCGSTAB algorithm.
+// The notation is consistent with "Iterative Methods for
+// Linear and Non-Linear Equations" from C.T. Kelley (1995)
+// and "Iterative Methods for Sparse Linear Systems" from Y. Saad (2003).
+
+// ----------------------------
+// Constructor
+// ----------------------------
 // Empty constructor
 template< typename LAI >
 BiCGSTABsolver<LAI>::BiCGSTABsolver()
 {}
 
+// ----------------------------
+// Monolithic BiCGSTAB solver
+// ----------------------------
 template< typename LAI >
 void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
                                  typename LAI::ParallelVector &x,
@@ -229,6 +244,9 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
 }
 
+// ----------------------------
+// Block BiCGSTAB solver
+// ----------------------------
 template< typename LAI >
 void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                                  BlockVectorView<LAI> &x,
