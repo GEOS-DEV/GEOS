@@ -70,7 +70,10 @@ using namespace geosx;
  * \param N size of the squared identity matrix.
  */
 
-// BEGIN_RST_NARRATIVE computeIdentity.rst
+// BEGIN_RST_NARRATIVE testLAOperations.rst
+// ==============================
+// Compute Identity
+// ==============================
 // This function computes the identity matrix. Can be used to generate a dummy
 // preconditioner.
 
@@ -99,8 +102,6 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
   return I;
 }
 
-// END_RST_NARRATIVE
-
 /**
  * @brief Compute the 2D Laplace operator of size <tt>N</tt>.
  *
@@ -108,7 +109,10 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
  * \param N size of the squared 2D Laplace operator matrix.
  */
 
-// BEGIN_RST_NARRATIVE compute2DLaplaceOperator.rst
+// ==============================
+// Compute 2D Laplace Operator
+// ==============================
+
 // This function computes the matrix corresponding to a 2D Laplace operator. These
 // matrices arise from a classical finite volume formulation on a cartesian mesh.
 // (5-point stencil).
@@ -144,7 +148,7 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
       nnz++;
     }
 
-    // The left -n: position i-n
+    // The left -1: position i-1
     if ( i-1 >= 0 )
     {
       cols[nnz] = i-1;
@@ -186,7 +190,6 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 
 }
 
-// END_RST_NARRATIVE
 //@}
 
 
@@ -201,10 +204,19 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
  * such as matrix-vector products, dot products, norms and residuals.
  */
 
-// BEGIN_RST_NARRATIVE testLAoperations.rst
+// ==============================
+// Test Linear Algebra Operations
+// ==============================
 // In these 3 functions we test the linear algebra operations, the native solvers from the
 // libraries as well as the re-implemented GEOSX solvers for CG and BiCGSTAB. We run these
 // on both monolithic and block matrices.
+
+// -------------------------------------
+// Test libraries operations and solvers
+// -------------------------------------
+// We start by testing the linear algebra operations. We fill two matrices (one will be a
+// preconditioner) and make sure the sparse storage is behaving properly. We then test the
+// iterative and direct solvers available.
 
 template< typename LAI >
 void testNativeSolvers()
@@ -399,6 +411,13 @@ void testNativeSolvers()
  * @brief Test the GEOSX solvers for monolithic matrices by solving a system with
  * a Laplace operator and the identity matrix as a preconditioner.
  */
+
+// -----------------------------------------
+// Test GEOSX solvers on monolithic matrices
+// -----------------------------------------
+// We now test the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
+// on monolithic matrices.
+
 template< typename LAI >
 void testGEOSXSolvers()
 {
@@ -501,6 +520,13 @@ void testGEOSXSolvers()
  * @brief Test the GEOSX block solvers by solving a system with a block matrix
  * made of tiled Laplace operators and using the identity as a preconditioner.
  */
+
+// -----------------------------------------
+// Test GEOSX solvers on block matrices
+// -----------------------------------------
+// We finish by testing the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
+// on block matrices.
+
 template< typename LAI >
 void testGEOSXBlockSolvers()
 {
