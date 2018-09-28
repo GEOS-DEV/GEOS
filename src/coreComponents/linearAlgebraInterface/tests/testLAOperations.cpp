@@ -69,6 +69,11 @@ using namespace geosx;
  * \param comm MPI communicator.
  * \param N size of the squared identity matrix.
  */
+
+// BEGIN_RST_NARRATIVE computeIdentity.rst
+// This function computes the identity matrix. Can be used to generate a dummy
+// preconditioner.
+
 template< typename LAI >
 typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
                                               typename LAI::laiGID N )
@@ -90,8 +95,11 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
   // Close the matrix (make data contiguous in memory)
   I.close();
 
+  // Return the matrix.
   return I;
 }
+
+// END_RST_NARRATIVE
 
 /**
  * @brief Compute the 2D Laplace operator of size <tt>N</tt>.
@@ -99,6 +107,12 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
  * \param comm MPI communicator.
  * \param N size of the squared 2D Laplace operator matrix.
  */
+
+// BEGIN_RST_NARRATIVE compute2DLaplaceOperator.rst
+// This function computes the matrix corresponding to a 2D Laplace operator. These
+// matrices arise from a classical finite volume formulation on a cartesian mesh.
+// (5-point stencil).
+
 template< typename LAI >
 typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
                                                        typename LAI::laiGID N )
@@ -167,9 +181,12 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
   // Close the matrix
   laplace2D.close();
 
+  // Return the matrix
   return laplace2D;
 
 }
+
+// END_RST_NARRATIVE
 //@}
 
 
@@ -183,6 +200,12 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
  * @brief Test the native solvers from the LAI as well as basic linear algebra operations,
  * such as matrix-vector products, dot products, norms and residuals.
  */
+
+// BEGIN_RST_NARRATIVE testLAoperations.rst
+// In these 3 functions we test the linear algebra operations, the native solvers from the
+// libraries as well as the re-implemented GEOSX solvers for CG and BiCGSTAB. We run these
+// on both monolithic and block matrices.
+
 template< typename LAI >
 void testNativeSolvers()
 {
@@ -625,6 +648,9 @@ void testGEOSXBlockSolvers()
   MPI_Finalize();
 
 }
+
+// END_RST_NARRATIVE
+
 //@}
 
 /*! @name Ctest tests.

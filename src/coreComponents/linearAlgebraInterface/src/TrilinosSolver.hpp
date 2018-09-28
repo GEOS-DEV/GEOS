@@ -76,8 +76,8 @@ public:
   void solve( EpetraSparseMatrix &Mat,
               EpetraVector &sol,
               EpetraVector &rhs,
-              integer max_iter,
-              real64 newton_tol,
+              integer const max_iter,
+              real64 const newton_tol,
               std::unique_ptr<Epetra_Operator> Prec = nullptr );
 
   /**
@@ -88,8 +88,8 @@ public:
   void ml_solve( EpetraSparseMatrix &Mat,
                  EpetraVector &sol,
                  EpetraVector &rhs,
-                 integer max_iter,
-                 real64 newton_tol,
+                 integer const max_iter,
+                 real64 const newton_tol,
                  std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec = nullptr );
 
   /**
