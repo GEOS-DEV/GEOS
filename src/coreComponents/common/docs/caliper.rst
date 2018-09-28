@@ -22,13 +22,13 @@ The following macros may be used to annotate GEOSX:
 
 * ``GEOSX_MARK_END(name)`` - Marks end of user defined code region.
 
-* ``GEOSX_CXX_MARK_LOOP_BEGIN(loop, loopName)`` - Marks the start of a loop. **Will not work with a lambda which captures by value**
+* ``GEOSX_MARK_LOOP_BEGIN(loop, loopName)`` - Marks the start of a loop. **Will not work with a lambda which captures by value**
 
-* ``GEOSX_CXX_MARK_LOOP_ITERATION`` - Marks a loop iteration.
+* ``GEOSX_MARK_LOOP_ITERATION`` - Marks a loop iteration.
 
-*  ``GEOSX_CXX_MARK_LOOP_END(loop)`` - Marks end of a loop.
+*  ``GEOSX_MARK_LOOP_END(loop)`` - Marks end of a loop.
 
-*  ``GEOSX_CXX_MARK_FUNCTION`` - Marks a function.
+*  ``GEOSX_MARK_FUNCTION`` - Marks a function.
 
 As an example of annotation, we consider the following example:
    
@@ -47,15 +47,15 @@ As an example of annotation, we consider the following example:
     //intialization step
     GEOSX_MARK_END("setup");
 
-    GEOSX_MARK_LOOP_BEGIN(elemLoop, elemLoop);
+    GEOSX_MARK_LOOP_BEGIN(myloop, elemLoop);
     for(int elem = 0; i < noElements; ++i){
 
-       GEOSX_MARK_LOOP_ITERATION(elemLoop,i);
+       GEOSX_MARK_LOOP_ITERATION(myLoop,i);
        //computation...
 
        scatter();
     }
-    GEOSX_MARK_LOOP_END(elemLoop, elemLoop);
+    GEOSX_MARK_LOOP_END(myLoop);
     
     return 0;
   }
@@ -71,7 +71,7 @@ way to get started is setting the following variable
 
 We refer the reader to the full Caliper tutorial `Caliper <https://github.com/LLNL/Caliper>`_ , for further details.
 
-Post running application, the output will be of the following form (where time is given in miliseconds). 
+Post running application, the output will be of the following form (where time is given in microseconds). 
   
 .. code-block:: sh
 

@@ -216,12 +216,8 @@ private:
   /// nodeToFace relation
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
-//<<<<<<< HEAD
   /// nodeToElement relation
   OrderedVariableToManyElementRelation m_toElements;
-//=======
-//  UnorderedVariableToManyElementRelation m_toElements;
-//>>>>>>> develop
 
   /// deleted constructor
   NodeManager() = delete;

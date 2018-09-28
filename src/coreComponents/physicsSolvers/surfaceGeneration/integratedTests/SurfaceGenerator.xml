@@ -42,20 +42,20 @@
   </Geometry>
 
 
-  <Events maxTime="3.0e-5">
+  <Events maxTime="1.0">
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0e-5"
+                   forceDt="0.5"
                    target="/Solvers/lagSolve" />
   
-    <!-- PeriodicEvent name="solverApplications"
-                   forceDt="1.0e-5"
-                   target="/Solvers/SurfaceGen" /-->
-  
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e-6"
+                   timeFrequency="0.5"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
-
+    
+    <PeriodicEvent name="restarts"
+                   timeFrequency="0.5"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"/>
   </Events>
 
 
@@ -80,7 +80,7 @@
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              Density0="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
   </Constitutive>
@@ -145,6 +145,7 @@
  
   <Outputs>
     <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot" restartInterval="1e6"/>
+    <Restart name="sidreRestart"/>
   </Outputs>
 
 
