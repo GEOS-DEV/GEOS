@@ -70,7 +70,13 @@ public:
   void SortAllFaceNodes( NodeManager const * const nodeManager,
                          ElementRegionManager const * const elemManager);
 
+  void SortFaceNodes( array1d<R1Tensor> const & X,
+                      R1Tensor const & elemCenter,
+                      arrayView1d<localIndex> faceNodes );
+
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
+
+  void SetIsExternal();
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
@@ -134,6 +140,8 @@ private:
   FixedToManyElementRelation m_toElements;
 
   array1d< R1Tensor > m_faceCenter;
+
+  constexpr static int MAX_FACE_NODES = 9;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;

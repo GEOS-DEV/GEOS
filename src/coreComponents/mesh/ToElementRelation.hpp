@@ -58,7 +58,6 @@ public:
     return m_elemRegionManager;
   }
 
-
 //  template< bool DOPACK >
 //  friend localIndex Pack( char *& buffer,
 //                   localIndex_array const & packList,
@@ -100,9 +99,30 @@ void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
 
 
 //typedef ToElementRelation<localIndex_array> OneToOneRelation;
+//<<<<<<< HEAD
+//typedef ToElementRelation<lArray2d> FixedToManyElementRelation;
+//typedef ToElementRelation<array<localIndex_array> > OrderedVariableToManyElementRelation;
+//typedef ToElementRelation<array<lSet> > UnorderedVariableToManyElementRelation;
+
+
+
 typedef ToElementRelation<array2d<localIndex>> FixedToManyElementRelation;
 typedef ToElementRelation<array1d<localIndex_array> > OrderedVariableToManyElementRelation;
 typedef ToElementRelation<array1d<set<localIndex>> > UnorderedVariableToManyElementRelation;
+
+void erase( OrderedVariableToManyElementRelation & relation,
+            localIndex const firstIndex,
+            localIndex const er,
+            localIndex const esr,
+            localIndex const ei );
+
+void insert( OrderedVariableToManyElementRelation & relation,
+             localIndex const firstIndex,
+             localIndex const er,
+             localIndex const esr,
+             localIndex const ei );
+
+
 
 } /* namespace geosx */
 

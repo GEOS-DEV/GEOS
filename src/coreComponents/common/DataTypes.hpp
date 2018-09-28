@@ -39,12 +39,10 @@
 
 #include "common/GeosxConfig.hpp"
 #include "common/Logger.hpp"
-#include "common/SortedArray.hpp"
 #include "Macros.hpp"
 #include "ManagedArray.hpp"
+#include "SortedArray.hpp"
 #include "math/TensorT/TensorT.h"
-
-
 
 #ifdef GEOSX_USE_ATK
 #include "sidre/SidreTypes.hpp"
@@ -96,6 +94,7 @@ using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
 using globalIndex = long long int;//std::int64_t;
 using string      = std::string;
+
 using real32 = float;
 using real64 = double;
 //using real   = double;
