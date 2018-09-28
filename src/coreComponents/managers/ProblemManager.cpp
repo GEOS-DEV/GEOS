@@ -784,6 +784,10 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
   domain->SetupCommunications();
+
+  faceManager->SetIsExternal();
+  edgeManager->SetIsExternal( faceManager );
+
 }
 
 void ProblemManager::RunSimulation()

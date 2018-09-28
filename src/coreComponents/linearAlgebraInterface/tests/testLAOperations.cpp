@@ -23,7 +23,16 @@
  *      Author: Matthias Cremon
  */
 
-#include "gtest/gtest.h"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#if __clang_major__ >= 5
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+#endif
+
+#include <gtest/gtest.h>
 
 #include <iostream>
 #include <vector>
@@ -623,12 +632,7 @@ void testGEOSXBlockSolvers()
  */
 //@{
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
+
 
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
