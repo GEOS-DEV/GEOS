@@ -707,6 +707,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
       (0, cellBlock->size(), GEOSX_LAMBDA ( globalIndex k) mutable        
       {
 
+        //Note: inumNodesPerElement are defined by a macro. The value is 8. 
         R1Tensor uhat_local[inumNodesPerElement];
         R1Tensor u_local[inumNodesPerElement];
         R1Tensor f_local[inumNodesPerElement];
@@ -724,8 +725,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
         {
 
           R2Tensor dUhatdX, dUdX;
-          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q], inumNodesPerElement);
-          CalculateGradient( dUdX,u_local, dNdX[k][q], inumNodesPerElement);
+          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q], numNodesPerElement);
+          CalculateGradient( dUdX,u_local, dNdX[k][q], numNodesPerElement);
 
           R2Tensor F,L, Finv;
 
@@ -776,7 +777,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
 
           //----------------------
-          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, inumNodesPerElement, f_local);
+          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, numNodesPerElement, f_local);
 
         }//quadrature loop
 
