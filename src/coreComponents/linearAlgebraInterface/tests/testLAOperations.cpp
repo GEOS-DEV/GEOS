@@ -17,7 +17,7 @@
  */
 
 /**
- * @file testLAOperations.hpp
+ * @file testLAOperations.cpp
  *
  *  Created on: Sep 19, 2018
  *      Author: Matthias Cremon
@@ -50,7 +50,7 @@
  * \file testLAOperations.cpp
  * \brief This test file is part of the ctest suite and tests the Trilinos based solvers
  * as well as block GEOSX solvers. It mainly uses dummy 2D Laplace operator matrices
- * to test the solvers along with a simple (block) identity precondioner.
+ * to test the solvers along with a simple (block) identity preconditioner.
  */
 
 using namespace geosx;
@@ -74,7 +74,7 @@ using namespace geosx;
 // ==============================
 // Compute Identity
 // ==============================
-// This function computes the identity matrix. Can be used to generate a dummy
+// This function computes the identity matrix. It can be used to generate a dummy
 // preconditioner.
 
 template< typename LAI >
@@ -114,7 +114,7 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
 // ==============================
 
 // This function computes the matrix corresponding to a 2D Laplace operator. These
-// matrices arise from a classical finite volume formulation on a cartesian mesh.
+// matrices arise from a classical finite volume formulation on a cartesian mesh
 // (5-point stencil).
 
 template< typename LAI >
@@ -318,7 +318,7 @@ void testNativeSolvers()
   // Vector of ones for multiplication (x)
   x.create( ones );
 
-  // Random vector for the initial guess.
+  // Random vector for the initial guess (x0)
   x0.create( random );
 
   // Fill initial guess for the direct solver
@@ -336,6 +336,7 @@ void testNativeSolvers()
   // Test dot product
   real64 dotTest;
   x.dot( x, dotTest );
+  EXPECT_TRUE( std::fabs( dotTest - N ) <= 1e-6 );
 
   // Test 1-norm
   real64 norm1;
@@ -352,14 +353,18 @@ void testNativeSolvers()
   // Test inf-norm
   real64 norminf;
   x.normInf( norminf );
+
   // The inf-norm should be equal to 1
   EXPECT_TRUE( std::fabs( norminf - 1 ) <= 1e-6 );
 
   // Test residual function by computing r = b - Ax.
   testMatrix.residual( x, b, r );
+
+  // Compute the norm of the residual
   real64 normRes;
   r.normInf( normRes );
-  // The inf-norm should be equal to 0 (all elements are 0).
+
+  // The inf-norm should be equal to 0 (all elements are 0 in exact algebra).
   EXPECT_TRUE( std::fabs( normRes ) <= 1e-6 );
 
   // We now test the linear solvers from the libraries.
@@ -400,8 +405,6 @@ void testNativeSolvers()
   {
     EXPECT_TRUE( std::fabs( vecValuesRown[2] - 8.0 ) <= 1e-6 );
   }
-
-  //MPI_Finalize();
 
 }
 
@@ -510,8 +513,6 @@ void testGEOSXSolvers()
   solBiCGSTAB.normInf( normBiCGSTAB );
   EXPECT_TRUE( std::fabs( normBiCGSTAB - 1 ) <= 1e-6 );
 
-  //MPI_Finalize();
-
 }
 
 /**
@@ -536,8 +537,6 @@ void testGEOSXBlockSolvers()
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
   using laiGID = typename LAI::laiGID;
-
-  // MPI_Init(nullptr,nullptr);
 
   // Get the MPI rank
   typename LAI::laiLID rank;
@@ -632,11 +631,14 @@ void testGEOSXBlockSolvers()
   blockMatrix.setBlock( 1, 1, matrix00 );
 
   // We do the same for the preconditioner to get the block identity matrix.
+  // We ignore the off-diagonal blocks and leave them as null-pointers.
+  // Block (0,0)
   blockPreconditioner.setBlock( 0, 0, preconditioner00 );
+  // Block (1,1)
   blockPreconditioner.setBlock( 1, 1, preconditioner00 );
 
   // Set initial guess blocks (here we need multiple objects since we cannot
-  // have them point to the same memory location. These objects are initial
+  // have them point to the same memory location). These objects are initial
   // guesses as input but solution vectors as output.
   // CG vector
   blockSolutionCG.setBlock( 0, solutionCG0 );
@@ -646,7 +648,7 @@ void testGEOSXBlockSolvers()
   blockSolutionBiCGSTAB.setBlock( 0, solutionBiCGSTAB0 );
   blockSolutionBiCGSTAB.setBlock( 1, solutionBiCGSTAB1 );
 
-  // Set right hand side blocks (this can be one object, it is passed as const.
+  // Set right hand side blocks (this can be one object, it is passed as const).
   // We keep 2 of them for potential tests with more flexibility (rhs0 != rhs1).
   blockRhs.setBlock( 0, rhs0 );
   blockRhs.setBlock( 1, rhs1 );
@@ -671,6 +673,7 @@ void testGEOSXBlockSolvers()
   blockSolutionBiCGSTAB.normInf( normBiCGSTAB );
   EXPECT_TRUE( std::fabs( normBiCGSTAB - 0.5 ) <= 1e-6 );
 
+  // Finalize MPI
   MPI_Finalize();
 
 }
