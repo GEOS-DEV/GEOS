@@ -303,6 +303,13 @@ public:
 
   localIndex GetNumberOfLocalIndices() const;
 
+  integer SplitObject( localIndex const indexToSplit,
+                       int const rank,
+                       localIndex & newIndex );
+
+  void CopyObject( localIndex const source, localIndex const destination );
+
+
 
   //**********************************************************************************************************************
 
@@ -315,7 +322,9 @@ public:
   {
 
     static constexpr auto adjacencyListString = "adjacencyList";
+    static constexpr auto childIndexString = "childIndex";
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    static constexpr auto externalSetString = "externalSet";
     static constexpr auto ghostRankString = "ghostRank";
     static constexpr auto ghostsToSendString = "ghostsToSend";
     static constexpr auto ghostsToReceiveString = "ghostsToReceive";
@@ -323,9 +332,12 @@ public:
     static constexpr auto isExternalString = "isExternal";
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
     static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
+    static constexpr auto parentIndexString = "parentIndex";
 
     dataRepository::ViewKey adjacencyList = { adjacencyListString };
+    dataRepository::ViewKey childIndex = { childIndexString };
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
+    dataRepository::ViewKey externalSet = { externalSetString };
     dataRepository::ViewKey ghostRank = { ghostRankString };
     dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
     dataRepository::ViewKey ghostsToReceive = { ghostsToReceiveString };
@@ -333,6 +345,7 @@ public:
     dataRepository::ViewKey isExternal = { isExternalString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
     dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
+    dataRepository::ViewKey parentIndex = { parentIndexString };
   } m_ObjectManagerBaseViewKeys;
 
 
@@ -357,13 +370,27 @@ public:
   virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
+
+  ManagedGroup * sets()             {return &m_sets;}
+  ManagedGroup const * sets() const {return &m_sets;}
+
+  set<localIndex> & externalSet()
+  {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
+
+  set<localIndex> const & externalSet() const
+  {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
+
+  integer_array & isExternal()
+  { return this->m_isExternal; }
+
+  integer_array const & isExternal() const
+  { return this->m_isExternal; }
+
   integer_array & GhostRank()
   { return this->m_ghostRank; }
 
   integer_array const & GhostRank() const
   { return this->m_ghostRank; }
-
-
 
   ManagedGroup m_sets;
 
@@ -371,6 +398,9 @@ public:
   map<globalIndex,localIndex>  m_globalToLocalMap;
   integer_array m_isExternal;
   integer_array m_ghostRank;
+
+  real64 m_overAllocationFactor = 1.1;
+
 //  localIndex_array m_ghostToSend;
  // localIndex_array m_ghostToReceive;
 

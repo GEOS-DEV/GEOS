@@ -23,9 +23,6 @@
 
 #include <gtest/gtest.h>
 
-#if __clang_major__ >= 5
-#pragma clang diagnostic push
-#endif
 
 #include <mpi.h>
 #include "dataRepository/ManagedGroup.hpp"
@@ -130,3 +127,7 @@ int main(int argc, char* argv[]) {
 
 } /* end namespace dataRepository */
 } /* end namespace goesx */
+
+#if __clang_major__ >= 5
+#pragma clang diagnostic pop
+#endif

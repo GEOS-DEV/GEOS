@@ -644,6 +644,33 @@ public:
     return should_resize_wrapper::shouldResize();
   }
 
+  struct copy_wrapper
+  {
+    HAS_ALIAS(isArray)
+
+    template< class U=T >
+    static typename std::enable_if<has_alias_isArray<U>::value, void>::type
+    copy( T * const data , localIndex const sourceIndex, localIndex const destIndex )
+    {
+      data->copy( destIndex, sourceIndex );
+//      (*data)[destIndex] = (*data)[sourceIndex];
+    }
+
+    template< class U=T >
+    static typename std::enable_if<!has_alias_isArray<U>::value, void>::type
+    copy( T * const data , localIndex const sourceIndex, localIndex const destIndex )
+    {}
+
+  };
+  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override final
+  {
+    if( this->sizedFromParent() )
+    {
+      copy_wrapper::copy( this->m_data, sourceIndex, destIndex );
+    }
+  }
+
+
   /**
    * @name Structure to determine return types for data access functions
    */
@@ -789,7 +816,11 @@ public:
   T const & reference() const
   { return *m_data; }
 
+  T * getPointer()
+  { return m_data; }
 
+  T const * getPointer() const
+  { return m_data; }
 
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
@@ -1008,7 +1039,7 @@ public:
       axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
       if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
       {
-        localIndex byte_size;
+        localIndex byte_size = -1;
         void * ptr = Buffer::pack(reference(), byte_size);
         view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
         return;
