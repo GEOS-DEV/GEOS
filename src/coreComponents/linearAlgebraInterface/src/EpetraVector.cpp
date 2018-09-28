@@ -34,49 +34,65 @@ EpetraVector::EpetraVector()
 // Copy a vector
 EpetraVector::EpetraVector( EpetraVector const &in_vec )
 {
+  // Check if the vector to be copied is not empty
   if( in_vec.getPointer() != nullptr )
+  {
+    // Create a unique pointer to an Epetra_CrsMatrix.  The data from the input vector is
+    // copied to a new memory location.
     m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( *in_vec.getPointer()));
+  }
 }
 
 // Create a vector from array
 void EpetraVector::create( trilinosTypes::gid const size,
                            double *V )
 {
+  // Create an Epetra_Map of size size.
   Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  // Create a unique pointer to an Epetra_Vector defined from the Epetra_Map.
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
-// Create a vector from array
+// Create a vector from Epetra_Map
 void EpetraVector::create( Epetra_Map const &Map,
                            double *V )
 {
+  // Create an Epetra_Map from the input map.
   Epetra_Map map = Epetra_Map( Map );
+  // Create a unique pointer to an Epetra_Vector defined from the Epetra_Map.
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
 }
 
 // Create a vector from vector
 void EpetraVector::create( std::vector<double> &vec )
 {
+  // Get the size of the vector
   trilinosTypes::gid m_size = vec.size();
+  // Create an Epetra_Map from that size.
   Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  // Create a unique pointer to an Epetra_Vector defined from the Epetra_Map.
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
 }
 
 // Multiply all elements by scalingFactor.
 void EpetraVector::scale( real64 const scalingFactor )
 {
+  // Scale every element in the vector.
   m_vector.get()->Scale( scalingFactor );
 }
+
 // Dot product with the vector vec.
 void EpetraVector::dot( EpetraVector const &vec,
                         real64 &dst )
 {
+  // Compute a dot product with vector vec. Put the result in dst.
   m_vector.get()->Dot( *vec.getPointer(), &dst );
 }
 
 // Update vector as this = x.
 void EpetraVector::copy( EpetraVector const &x )
 {
+  // Copy the input vector. Points to the same memory location but update the values.
   m_vector.get()->Update( 1., *x.getPointer(), 0. );
 }
 
@@ -84,6 +100,7 @@ void EpetraVector::copy( EpetraVector const &x )
 void EpetraVector::axpy( real64 const alpha,
                           EpetraVector const &x )
 {
+  // Update the vector. Points to the same memory location but update the values.
   m_vector.get()->Update( alpha, *x.getPointer(), 1. );
 }
 
@@ -92,38 +109,29 @@ void EpetraVector::axpby( real64 const alpha,
                           EpetraVector const &x,
                           real64 const beta )
 {
+  // Update the vector. Points to the same memory location but update the values.
   m_vector.get()->Update( alpha, *x.getPointer(), beta );
 }
 
 // 1-norm of the vector.
 void EpetraVector::norm1( real64 &dst ) const
 {
+  // Compute the 1-norm of the vector and put the result in dst.
   m_vector.get()->Norm1( &dst );
 }
 
 // 2-norm of the vector.
 void EpetraVector::norm2( real64 &dst ) const
 {
+  // Compute the 2-norm of the vector and put the result in dst.
   m_vector.get()->Norm2( &dst );
 }
 
 // Inf-norm of the vector.
 void EpetraVector::normInf( real64 &dst ) const
 {
+  // Compute the inf-norm of the vector and put the result in dst.
   m_vector.get()->NormInf( &dst );
-}
-
-
-// Return the global size of the vector (total number of elements).
-trilinosTypes::gid EpetraVector::globalSize() const
-{
-  return m_vector.get()->GlobalLength64();
-}
-
-// Return the local size of the vector (total number of local elements).
-trilinosTypes::lid EpetraVector::localSize() const
-{
-  return m_vector.get()->MyLength();
 }
 
 // Print vector to the terminal in Trilinos format.
@@ -144,6 +152,18 @@ const Epetra_Vector* EpetraVector::getPointer() const
 Epetra_Vector* EpetraVector::getPointer()
 {
   return m_vector.get();
+}
+
+// Return the global size of the vector (total number of elements).
+trilinosTypes::gid EpetraVector::globalSize() const
+{
+  return m_vector.get()->GlobalLength64();
+}
+
+// Return the local size of the vector (total number of local elements).
+trilinosTypes::lid EpetraVector::localSize() const
+{
+  return m_vector.get()->MyLength();
 }
 
 }
