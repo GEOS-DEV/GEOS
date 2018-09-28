@@ -98,11 +98,27 @@ private:
 
 };
 
-// Empty constructor
+// BEGIN_RST_NARRATIVE CGsolver.rst
+// ==============================
+// CG Solver
+// ==============================
+// Implementation of the Preconditioned Conjugate Gradient (CG) algorithm.
+// The notation is consistent with "Iterative Methods for
+// Linear and Non-Linear Equations" from C.T. Kelley (1995)
+// and "Iterative Methods for Sparse Linear Systems" from Y. Saad (2003).
+
+
+// ----------------------------
+// Constructor
+// ----------------------------
+// Empty constructor.
 template< typename LAI >
 CGsolver<LAI>::CGsolver()
 {}
 
+// ----------------------------
+// Monolithic CG solver
+// ----------------------------
 template< typename LAI >
 void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
                            typename LAI::ParallelVector &x,
@@ -201,6 +217,9 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
 }
 
+// ----------------------------
+// Block CG solver
+// ----------------------------
 template< typename LAI >
 void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                            BlockVectorView<LAI> &x,
@@ -293,12 +312,14 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // veborse output (TODO verbosity manager?)
+  // verbose output (TODO verbosity manager?)
   if( rank == 1 )
     std::cout << std::endl << "Block CG converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
+
+// END_RST_NARRATIVE
 
 } // namespace GEOSX
 
