@@ -59,7 +59,7 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow(const string & name,
   //getLinearSystemRepository()->SetBlockID(BlockIDs::fluidPressureBlock, this->getName());
   getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
-  this->RegisterViewWrapper( viewKeysCompositionalMultiphaseFlow.temperature.Key(), &m_temperature, false );
+  this->RegisterViewWrapper( viewKeysCompMultiphaseFlow.temperature.Key(), &m_temperature, false );
 }
 
 void CompositionalMultiphaseFlow::FillDocumentationNode()
@@ -72,8 +72,8 @@ void CompositionalMultiphaseFlow::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("A compositional multiphase flow solver");
 
-  docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.temperature.Key(),
-                             viewKeysCompositionalMultiphaseFlow.temperature.Key(),
+  docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.temperature.Key(),
+                             viewKeysCompMultiphaseFlow.temperature.Key(),
                              -1,
                              "real64",
                              "real64",
@@ -101,8 +101,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                {
                                  cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.pressure.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.pressure.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.pressure.Key(),
+                                                            viewKeysCompMultiphaseFlow.pressure.Key(),
                                                             -1,
                                                             "real64_array",
                                                             "real64_array",
@@ -114,8 +114,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             0);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.deltaPressure.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.deltaPressure.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.deltaPressure.Key(),
+                                                            viewKeysCompMultiphaseFlow.deltaPressure.Key(),
                                                             -1,
                                                             "real64_array",
                                                             "real64_array",
@@ -127,8 +127,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             1);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.globalCompDensity.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.globalCompDensity.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.globalCompDensity.Key(),
+                                                            viewKeysCompMultiphaseFlow.globalCompDensity.Key(),
                                                             -1,
                                                             "real64_array2d",
                                                             "real64_array2d",
@@ -140,8 +140,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             0);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key(),
+                                                            viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key(),
                                                             -1,
                                                             "real64_array2d",
                                                             "real64_array2d",
@@ -153,8 +153,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             1);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.globalCompMoleFraction.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.globalCompMoleFraction.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.globalCompMoleFraction.Key(),
+                                                            viewKeysCompMultiphaseFlow.globalCompMoleFraction.Key(),
                                                             -1,
                                                             "real64_array2d",
                                                             "real64_array2d",
@@ -166,8 +166,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             0);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity.Key(),
+                                                            viewKeysCompMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity.Key(),
                                                             -1,
                                                             "real64_array3d",
                                                             "real64_array3d",
@@ -179,8 +179,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             3);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.phaseVolumeFraction.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.phaseVolumeFraction.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.phaseVolumeFraction.Key(),
+                                                            viewKeysCompMultiphaseFlow.phaseVolumeFraction.Key(),
                                                             -1,
                                                             "real64_array2d",
                                                             "real64_array2d",
@@ -192,8 +192,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             3);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.phaseDensity.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.phaseDensity.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.phaseDensity.Key(),
+                                                            viewKeysCompMultiphaseFlow.phaseDensity.Key(),
                                                             -1,
                                                             "real64_array2d",
                                                             "real64_array2d",
@@ -205,8 +205,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             3);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.phaseComponentMassFraction.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.phaseComponentMassFraction.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key(),
+                                                            viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key(),
                                                             -1,
                                                             "real64_array3d",
                                                             "real64_array3d",
@@ -218,8 +218,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             3);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.porosity.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.porosity.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.porosity.Key(),
+                                                            viewKeysCompMultiphaseFlow.porosity.Key(),
                                                             -1,
                                                             "real64_array",
                                                             "real64_array",
@@ -231,8 +231,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                                             0,
                                                             3);
 
-                                 docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber.Key(),
-                                                            viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber.Key(),
+                                 docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key(),
+                                                            viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key(),
                                                             -1,
                                                             "globalIndex_array2d",
                                                             "globalIndex_array2d",
@@ -249,8 +249,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
       FaceManager * const faceManager = meshLevel->getFaceManager();
       cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
 
-      docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.facePressure.Key(),
-                                 viewKeysCompositionalMultiphaseFlow.facePressure.Key(),
+      docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.facePressure.Key(),
+                                 viewKeysCompMultiphaseFlow.facePressure.Key(),
                                  -1,
                                  "real64_array",
                                  "real64_array",
@@ -262,8 +262,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                  0,
                                  3);
 
-      docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.globalCompMoleFraction.Key(),
-                                 viewKeysCompositionalMultiphaseFlow.globalCompMoleFraction.Key(),
+      docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.globalCompMoleFraction.Key(),
+                                 viewKeysCompMultiphaseFlow.globalCompMoleFraction.Key(),
                                  -1,
                                  "real64_array2d",
                                  "real64_array2d",
@@ -275,8 +275,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                  0,
                                  3);
 
-      docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.phaseDensity.Key(),
-                                 viewKeysCompositionalMultiphaseFlow.phaseDensity.Key(),
+      docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.phaseDensity.Key(),
+                                 viewKeysCompMultiphaseFlow.phaseDensity.Key(),
                                  -1,
                                  "real64_array2d",
                                  "real64_array2d",
@@ -288,8 +288,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                  0,
                                  3);
 
-      docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.phaseComponentMassFraction.Key(),
-                                 viewKeysCompositionalMultiphaseFlow.phaseComponentMassFraction.Key(),
+      docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key(),
+                                 viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key(),
                                  -1,
                                  "real64_array3d",
                                  "real64_array3d",
@@ -301,8 +301,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                  0,
                                  3);
 
-      docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.phaseViscosity.Key(),
-                                 viewKeysCompositionalMultiphaseFlow.phaseViscosity.Key(),
+      docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.phaseViscosity.Key(),
+                                 viewKeysCompMultiphaseFlow.phaseViscosity.Key(),
                                  -1,
                                  "real64_array2d",
                                  "real64_array2d",
@@ -314,8 +314,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes(dataRepository::Ma
                                  0,
                                  3);
 
-      docNode->AllocateChildNode(viewKeysCompositionalMultiphaseFlow.phaseRelativePermeability.Key(),
-                                 viewKeysCompositionalMultiphaseFlow.phaseRelativePermeability.Key(),
+      docNode->AllocateChildNode(viewKeysCompMultiphaseFlow.phaseRelativePermeability.Key(),
+                                 viewKeysCompMultiphaseFlow.phaseRelativePermeability.Key(),
                                  -1,
                                  "real64_array2d",
                                  "real64_array2d",
@@ -358,23 +358,23 @@ void CompositionalMultiphaseFlow::ResizeFields(DomainPartition * domain)
 
     elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
     {
-      cellBlock->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.globalCompDensity).resizeDimension<1>(m_numComponents);
-      cellBlock->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity).resizeDimension<1>(m_numComponents);
-      cellBlock->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.globalCompMoleFraction).resizeDimension<1>(m_numComponents);
-      cellBlock->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseVolumeFraction).resizeDimension<1>(m_numPhases);
-      cellBlock->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseDensity).resizeDimension<1>(m_numPhases);
-      cellBlock->getReference<array3d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseComponentMassFraction).resizeDimension<1,2>(m_numPhases, m_numComponents);
-      cellBlock->getReference<array3d<real64>>(viewKeysCompositionalMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity).resizeDimension<1,2>(m_numComponents, m_numComponents);
-      cellBlock->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber).resizeDimension<1>(m_numDofPerCell);
+      cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.globalCompDensity).resizeDimension<1>(m_numComponents);
+      cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.deltaGlobalCompDensity).resizeDimension<1>(m_numComponents);
+      cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.globalCompMoleFraction).resizeDimension<1>(m_numComponents);
+      cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseVolumeFraction).resizeDimension<1>(m_numPhases);
+      cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity).resizeDimension<1>(m_numPhases);
+      cellBlock->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction).resizeDimension<1,2>(m_numPhases, m_numComponents);
+      cellBlock->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity).resizeDimension<1,2>(m_numComponents, m_numComponents);
+      cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.blockLocalDofNumber).resizeDimension<1>(m_numDofPerCell);
     });
 
     {
       FaceManager * const faceManager = meshLevel->getFaceManager();
 
-      faceManager->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseDensity).resizeDimension<1>(m_numPhases);
-      faceManager->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseViscosity).resizeDimension<1>(m_numPhases);
-      faceManager->getReference<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseRelativePermeability).resizeDimension<1>(m_numPhases);
-      faceManager->getReference<array3d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseComponentMassFraction).resizeDimension<1,2>(m_numPhases, m_numComponents);;
+      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseViscosity).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseRelativePermeability).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction).resizeDimension<1,2>(m_numPhases, m_numComponents);;
     }
   }
 }
@@ -387,8 +387,8 @@ void CompositionalMultiphaseFlow::FinalInitialization(ManagedGroup * const rootG
 
   //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back(viewKeysCompositionalMultiphaseFlow.pressure.Key());
-  fieldNames["elems"].push_back(viewKeysCompositionalMultiphaseFlow.globalCompDensity.Key());
+  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.pressure.Key());
+  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.globalCompDensity.Key());
   CommunicationTools::SynchronizeFields(fieldNames,
                                         domain->getMeshBody(0)->getMeshLevel(0),
                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
@@ -420,13 +420,13 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction(DomainPartition * doma
                                                              viewKeyStruct::
                                                              componentMolarWeightString );
 
-  auto compDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.globalCompDensity.Key());
-  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity.Key());
+  auto compDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.globalCompDensity.Key());
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key());
 
   auto compMoleFrac =
-    elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.globalCompMoleFraction.Key());
+    elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.globalCompMoleFraction.Key());
   auto dCompMoleFrac_dCompDens =
-    elemManager->ConstructViewAccessor<array3d<real64>>(viewKeysCompositionalMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity.Key());
+    elemManager->ConstructViewAccessor<array3d<real64>>(viewKeysCompMultiphaseFlow.dGlobalCompMoleFraction_dGlobalCompDensity.Key());
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -458,9 +458,9 @@ void CompositionalMultiphaseFlow::UpdateConstitutiveModels(DomainPartition * dom
 
   auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>( constitutiveManager );
 
-  auto pres         = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompositionalMultiphaseFlow.pressure.Key());
-  auto dPres        = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompositionalMultiphaseFlow.deltaPressure.Key());
-  auto compMoleFrac = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.globalCompMoleFraction.Key());
+  auto pres         = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompMultiphaseFlow.pressure.Key());
+  auto dPres        = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompMultiphaseFlow.deltaPressure.Key());
+  auto compMoleFrac = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.globalCompMoleFraction.Key());
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -481,11 +481,11 @@ void CompositionalMultiphaseFlow::BackupFields(DomainPartition * domain)
   ElementRegionManager * const elemManager = mesh->getElemManager();
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
-  auto phaseDensOld         = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseDensity.Key());
-  auto phaseVolFracOld      = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseVolumeFraction.Key());
-  auto phaseCompMassFracOld = elemManager->ConstructViewAccessor<array3d<real64>>(viewKeysCompositionalMultiphaseFlow.phaseComponentMassFraction.Key());
-  auto poroOld              = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompositionalMultiphaseFlow.porosity.Key());
-  auto poroRef              = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompositionalMultiphaseFlow.referencePorosity.Key());
+  auto phaseDensOld         = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity.Key());
+  auto phaseVolFracOld      = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseVolumeFraction.Key());
+  auto phaseCompMassFracOld = elemManager->ConstructViewAccessor<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key());
+  auto poroOld              = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompMultiphaseFlow.porosity.Key());
+  auto poroRef              = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompMultiphaseFlow.referencePorosity.Key());
 
   auto const pvmult =
     elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::
@@ -555,7 +555,7 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
   ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
 
   auto blockLocalDofNumber =
-    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber.Key(), string() );
+    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key(), string() );
 
   ElementRegionManager::ElementViewAccessor< integer_array >
     ghostRank = elementRegionManager->
@@ -623,7 +623,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
 
   auto blockLocalDofNumber =
-    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber.Key() );
+    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
 
   auto elemGhostRank =
     elementRegionManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -759,7 +759,7 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
                                 0 );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back(viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber.Key());
+  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key());
   CommunicationTools::
   SynchronizeFields(fieldNames,
                     mesh,
@@ -808,7 +808,162 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
                                                   EpetraBlockSystem * const blockSystem,
                                                   real64 const time_n, real64 const dt )
 {
+//***** extract data required for assembly of system *****
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
+  ConstitutiveManager const *
+    constitutiveManager = domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
+
+  ElementRegionManager const * elemManager = mesh->getElemManager();
+
+  NumericalMethodsManager const * numericalMethodManager = domain->
+    getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * fvManager = numericalMethodManager->
+    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
+
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::compositionalBlock,
+                                                               BlockIDs::compositionalBlock);
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector(BlockIDs::compositionalBlock);
+
+  jacobian->Scale(0.0);
+  residual->Scale(0.0);
+
+  auto
+    elemGhostRank = elemManager->ConstructViewAccessor<array1d<integer>>( ObjectManagerBase::
+                                                                          viewKeyStruct::
+                                                                          ghostRankString );
+
+  auto blockLocalDofNumber =
+    elemManager->ConstructViewAccessor<array2d<globalIndex >>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+
+  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
+
+  auto gravDepth = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.gravityDepth.Key() );
+  auto volume    = elemManager->ConstructViewAccessor<array1d<real64>>( CellBlock::viewKeyStruct::elementVolumeString );
+
+  auto phaseDensOld =
+    elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity.Key());
+
+  auto phaseDens =
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   phaseDensityString,
+                                                                   constitutiveManager );
+
+  auto dPhaseDens_dPres =
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseDensity_dPressureString,
+                                                                   constitutiveManager );
+
+  auto dPhaseDens_dComp =
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseDensity_dGlobalCompMoleFractionString,
+                                                                   constitutiveManager );
+
+  auto phaseVolFracOld =
+    elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseVolumeFraction.Key() );
+
+  auto phaseVolFrac =
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   phaseVolumeFractionString,
+                                                                   constitutiveManager );
+
+  auto dPhaseVolFrac_dPres =
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseVolumeFraction_dPressureString,
+                                                                   constitutiveManager );
+
+  auto dPhaseVolFrac_dComp =
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseVolumeFraction_dGlobalCompMoleFractionString,
+                                                                   constitutiveManager );
+
+  auto phaseCompMassFracOld =
+    elemManager->ConstructViewAccessor<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key());
+
+  auto phaseCompMassFrac =
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   phaseComponentMassFractionString,
+                                                                   constitutiveManager );
+
+  auto dPhaseCompMassFrac_dPres =
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseCompMassFraction_dPressureString,
+                                                                   constitutiveManager );
+
+  auto dPhaseCompMassFrac_dComp =
+    elemManager->ConstructMaterialViewAccessor< array5d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseCompMassFraction_dGlobalCompMoleFractionString,
+                                                                   constitutiveManager );
+
+  auto poroOld =
+    elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.porosity.Key() );
+
+  auto poroRef =
+    elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.referencePorosity.Key() );
+
+  auto pvmult =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::
+                                                                   viewKeyStruct::
+                                                                   poreVolumeMultiplierString,
+                                                                   constitutiveManager );
+
+  auto dPVMult_dPres =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::
+                                                                   viewKeyStruct::
+                                                                   dPVMult_dPresString,
+                                                                   constitutiveManager );
+
+  //***** Loop over all elements and assemble the change in volume/density terms *****
+//  forAllElemsInMesh(mesh, [=] (localIndex const er,
+//                               localIndex const esr,
+//                               localIndex const ei) -> void
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
+      {
+        if (elemGhostRank[er][esr][ei]<0)
+        {
+//          globalIndex const elemDOF = blockLocalDofNumber[er][esr][ei];
+//
+//          real64 const densNew = dens[er][esr][m_fluidIndex][ei][0];
+//          real64 const poroNew = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
+//          real64 const vol     = volume[er][esr][ei];
+//
+//          // Residual contribution is mass conservation in the cell
+//          real64 const localAccum = poroNew              * densNew              * vol
+//                                    - poroOld[er][esr][ei] * densOld[er][esr][ei] * vol;
+//
+//          // Derivative of residual wrt to pressure in the cell
+//          real64 const localAccumJacobian = (dPVMult_dPres[er][esr][m_solidIndex][ei][0] * poroRef[er][esr][ei] * densNew * vol)
+//                                            + (dDens_dPres[er][esr][m_fluidIndex][ei][0]                          * poroNew * vol);
+//
+//          // add contribution to global residual and dRdP
+//          residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
+//          jacobian->SumIntoGlobalValues(1, &elemDOF, 1, &elemDOF, &localAccumJacobian);
+        }
+      }
+    }
+  }//)
 }
 
 void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
@@ -857,9 +1012,9 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
                                                                           ghostRankString );
 
   auto blockLocalDofNumber = elemManager->
-    ConstructViewAccessor<array2d<globalIndex>>(viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber.Key());
+    ConstructViewAccessor<array2d<globalIndex>>(viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key());
 
-  auto refPoro = elemManager->ConstructViewAccessor<real64_array>(viewKeysCompositionalMultiphaseFlow.referencePorosity.Key());
+  auto refPoro = elemManager->ConstructViewAccessor<real64_array>(viewKeysCompMultiphaseFlow.referencePorosity.Key());
   auto volume  = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
 
   // get a view into local residual vector
@@ -931,10 +1086,10 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
   solution->ExtractView(&local_solution,&dummy);
 
   auto blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompositionalMultiphaseFlow.blockLocalDofNumber.Key() );
+    elemManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
 
-  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompositionalMultiphaseFlow.deltaPressure.Key() );
-  auto dCompDens = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity.Key() );
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
+  auto dCompDens = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key() );
 
   auto elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
                                                                           viewKeyStruct::
@@ -962,8 +1117,8 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
   });
 
   std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back(viewKeysCompositionalMultiphaseFlow.deltaPressure.Key());
-  fieldNames["elems"].push_back(viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity.Key());
+  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.deltaPressure.Key());
+  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key());
   CommunicationTools::SynchronizeFields(fieldNames,
                                         mesh,
                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
@@ -977,8 +1132,8 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep(DomainPartition * 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompositionalMultiphaseFlow.deltaPressure.Key());
-  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity.Key());
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompMultiphaseFlow.deltaPressure.Key());
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key());
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -1000,10 +1155,10 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompositionalMultiphaseFlow.pressure.Key());
-  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompositionalMultiphaseFlow.deltaPressure.Key());
-  auto compDens  = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.globalCompDensity.Key());
-  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompositionalMultiphaseFlow.deltaGlobalCompDensity.Key());
+  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompMultiphaseFlow.pressure.Key());
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>(viewKeysCompMultiphaseFlow.deltaPressure.Key());
+  auto compDens  = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.globalCompDensity.Key());
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key());
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,

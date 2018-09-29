@@ -164,11 +164,11 @@ public:
     ViewKey phaseRelativePermeability  = { "phaseRelativePermeability" };
     ViewKey porosity                   = { "porosity" };
 
-  } viewKeysCompositionalMultiphaseFlow
+  } viewKeysCompMultiphaseFlow;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeysCompositionalMultiphaseFlow;
+  } groupKeysCompMultiphaseFlow;
 
 
 private:
