@@ -153,8 +153,8 @@ public:
     ViewKey deltaGlobalCompDensity = { "deltaGlobalCompDensity" };
 
     // intermediate values for constitutive model input
-    ViewKey globalCompMoleFraction                     = { "globalCompMoleFraction" };
-    ViewKey dGlobalCompMoleFraction_dGlobalCompDensity = { "dGlobalCompMoleFraction_dGlobalCompDensity" };
+    ViewKey globalCompMassFraction                     = { "globalCompMassFraction" };
+    ViewKey dGlobalCompMassFraction_dGlobalCompDensity = { "dGlobalCompMassFraction_dGlobalCompDensity" };
 
     // these are used to store last converged time step values
     ViewKey phaseVolumeFraction        = { "phaseVolumeFraction" };

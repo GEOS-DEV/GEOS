@@ -85,6 +85,8 @@ public:
                                                localIndex const k,
                                                localIndex const q) override;
 
+  bool getMassFractionFlag() const      { return m_useMassFractions; }
+  void setMassFractionFlag( bool flag ) { m_useMassFractions = flag; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -99,25 +101,25 @@ public:
     static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
     static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
 
-    static constexpr auto phaseMoleFractionString                          = "phaseMoleFraction";                          // xi_p
-    static constexpr auto dPhaseMoleFraction_dPressureString               = "dPhaseMoleFraction_dPressure";               // dXi_p/dP
-    static constexpr auto dPhaseMoleFraction_dTemperatureString            = "dPhaseMoleFraction_dTemperature";            // dXi_p/dT
-    static constexpr auto dPhaseMoleFraction_dGlobalCompMoleFractionString = "dPhaseMoleFraction_dGlobalCompMoleFraction"; // dXi_p/dz_c
+    static constexpr auto phaseMoleFractionString                      = "phaseMoleFraction";                      // xi_p
+    static constexpr auto dPhaseMoleFraction_dPressureString           = "dPhaseMoleFraction_dPressure";           // dXi_p/dP
+    static constexpr auto dPhaseMoleFraction_dTemperatureString        = "dPhaseMoleFraction_dTemperature";        // dXi_p/dT
+    static constexpr auto dPhaseMoleFraction_dGlobalCompFractionString = "dPhaseMoleFraction_dGlobalCompFraction"; // dXi_p/dz_c
 
-    static constexpr auto phaseVolumeFractionString                          = "phaseVolumeFraction";                          // S_p
-    static constexpr auto dPhaseVolumeFraction_dPressureString               = "dPhaseVolumeFraction_dPressure";               // dS_p/dP
-    static constexpr auto dPhaseVolumeFraction_dTemperatureString            = "dPhaseVolumeFraction_dTemperature";            // dS_p/dT
-    static constexpr auto dPhaseVolumeFraction_dGlobalCompMoleFractionString = "dPhaseVolumeFraction_dGlobalCompMoleFraction"; // dS_p/dz_c
+    static constexpr auto phaseVolumeFractionString                      = "phaseVolumeFraction";                      // S_p
+    static constexpr auto dPhaseVolumeFraction_dPressureString           = "dPhaseVolumeFraction_dPressure";           // dS_p/dP
+    static constexpr auto dPhaseVolumeFraction_dTemperatureString        = "dPhaseVolumeFraction_dTemperature";        // dS_p/dT
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompFractionString = "dPhaseVolumeFraction_dGlobalCompFraction"; // dS_p/dz_c
 
-    static constexpr auto phaseDensityString                          = "phaseDensity";                          // rho_p
-    static constexpr auto dPhaseDensity_dPressureString               = "dPhaseDensity_dPressure";               // dRho_p/dP
-    static constexpr auto dPhaseDensity_dTemperatureString            = "dPhaseDensity_dTemperature";            // dRho_p/dT
-    static constexpr auto dPhaseDensity_dGlobalCompMoleFractionString = "dPhaseDensity_dGlobalCompMoleFraction"; // dRho_p/dz_c
+    static constexpr auto phaseDensityString                      = "phaseDensity";                       // rho_p
+    static constexpr auto dPhaseDensity_dPressureString           = "dPhaseDensity_dPressure";           // dRho_p/dP
+    static constexpr auto dPhaseDensity_dTemperatureString        = "dPhaseDensity_dTemperature";        // dRho_p/dT
+    static constexpr auto dPhaseDensity_dGlobalCompFractionString = "dPhaseDensity_dGlobalCompFraction"; // dRho_p/dz_c
 
-    static constexpr auto phaseComponentMassFractionString                     = "phaseComponentMassFraction";                     // x_cp
-    static constexpr auto dPhaseCompMassFraction_dPressureString               = "dPhaseCompMassFraction_dPressure";               // dx_cp/dP
-    static constexpr auto dPhaseCompMassFraction_dTemperatureString            = "dPhaseCompMassFraction_dTemperature";            // dx_cp/dT
-    static constexpr auto dPhaseCompMassFraction_dGlobalCompMoleFractionString = "dPhaseCompMassFraction_dGlobalCompMoleFraction"; // dx_cp/dz_c
+    static constexpr auto phaseComponentFractionString                 = "phaseComponentFraction";                 // x_cp
+    static constexpr auto dPhaseCompFraction_dPressureString           = "dPhaseCompFraction_dPressure";           // dx_cp/dP
+    static constexpr auto dPhaseCompFraction_dTemperatureString        = "dPhaseCompFraction_dTemperature";        // dx_cp/dT
+    static constexpr auto dPhaseCompFraction_dGlobalCompFractionString = "dPhaseCompFraction_dGlobalCompFraction"; // dx_cp/dz_c
     
     using ViewKey = dataRepository::ViewKey;
 
@@ -135,22 +137,22 @@ public:
     ViewKey phaseMoleFraction                              = { phaseMoleFractionString };                              // xi_p
     ViewKey dPhaseMoleFraction_dPressure                   = { dPhaseMoleFraction_dPressureString };                   // dXi_p/dP
     ViewKey dPhaseMoleFraction_dTemperature                = { dPhaseMoleFraction_dTemperatureString };                // dXi_p/dT
-    ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction     = { dPhaseMoleFraction_dGlobalCompMoleFractionString };     // dXi_p/dz_c
+    ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction     = { dPhaseMoleFraction_dGlobalCompFractionString };     // dXi_p/dz_c
 
     ViewKey phaseVolumeFraction                            = { phaseVolumeFractionString };                            // S_p
     ViewKey dPhaseVolumeFraction_dPressure                 = { dPhaseVolumeFraction_dPressureString };                 // dS_p/dP
     ViewKey dPhaseVolumeFraction_dTemperature              = { dPhaseVolumeFraction_dTemperatureString };              // dS_p/dT
-    ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction   = { dPhaseVolumeFraction_dGlobalCompMoleFractionString };   // dS_p/dz_c
+    ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction   = { dPhaseVolumeFraction_dGlobalCompFractionString };   // dS_p/dz_c
 
     ViewKey phaseDensity                                   = { phaseDensityString };                                   // rho_p
     ViewKey dPhaseDensity_dPressure                        = { dPhaseDensity_dPressureString };                        // dRho_p/dP
     ViewKey dPhaseDensity_dTemperature                     = { dPhaseDensity_dTemperatureString };                     // dRho_p/dT
-    ViewKey dPhaseDensity_dGlobalCompMoleFraction          = { dPhaseDensity_dGlobalCompMoleFractionString };          // dRho_p/dz_c
+    ViewKey dPhaseDensity_dGlobalCompMoleFraction          = { dPhaseDensity_dGlobalCompFractionString };          // dRho_p/dz_c
 
-    ViewKey phaseComponentMassFraction                     = { phaseComponentMassFractionString };                     // x_cp
-    ViewKey dPhaseCompMassFraction_dPressure               = { dPhaseCompMassFraction_dPressureString };               // dx_cp/dP
-    ViewKey dPhaseCompMassFraction_dTemperature            = { dPhaseCompMassFraction_dTemperatureString };            // dx_cp/dT
-    ViewKey dPhaseCompMassFraction_dGlobalCompMoleFraction = { dPhaseCompMassFraction_dGlobalCompMoleFractionString }; // dx_cp/dz_c
+    ViewKey phaseComponentMassFraction                     = { phaseComponentFractionString };                     // x_cp
+    ViewKey dPhaseCompMassFraction_dPressure               = { dPhaseCompFraction_dPressureString };               // dx_cp/dP
+    ViewKey dPhaseCompMassFraction_dTemperature            = { dPhaseCompFraction_dTemperatureString };            // dx_cp/dT
+    ViewKey dPhaseCompMassFraction_dGlobalCompMoleFraction = { dPhaseCompFraction_dGlobalCompFractionString }; // dx_cp/dz_c
 
   } viewKeys;
 
@@ -185,6 +187,9 @@ private:
 
   void createFluid();
 
+  // flag indicating whether input/output component fractions are treated as mass fractions
+  bool m_useMassFractions;
+
   // general fluid composition information
   string_array m_phases;
   string_array m_equationsOfState;
@@ -201,22 +206,22 @@ private:
   array3d<real64> m_phaseMoleFraction;
   array3d<real64> m_dPhaseMoleFraction_dPressure;
   array3d<real64> m_dPhaseMoleFraction_dTemperature;
-  array4d<real64> m_dPhaseMoleFraction_dGlobalCompMoleFraction;
+  array4d<real64> m_dPhaseMoleFraction_dGlobalCompFraction;
 
   array3d<real64> m_phaseVolumeFraction;
   array3d<real64> m_dPhaseVolumeFraction_dPressure;
   array3d<real64> m_dPhaseVolumeFraction_dTemperature;
-  array4d<real64> m_dPhaseVolumeFraction_dGlobalCompMoleFraction;
+  array4d<real64> m_dPhaseVolumeFraction_dGlobalCompFraction;
 
   array3d<real64> m_phaseDensity;
   array3d<real64> m_dPhaseDensity_dPressure;
   array3d<real64> m_dPhaseDensity_dTemperature;
-  array4d<real64> m_dPhaseDensity_dGlobalCompMoleFraction;
+  array4d<real64> m_dPhaseDensity_dGlobalCompFraction;
 
-  array4d<real64> m_phaseCompMassFraction;
-  array4d<real64> m_dPhaseCompMassFraction_dPressure;
-  array4d<real64> m_dPhaseCompMassFraction_dTemperature;
-  array5d<real64> m_dPhaseCompMassFraction_dGlobalCompMoleFraction;
+  array4d<real64> m_phaseCompFraction;
+  array4d<real64> m_dPhaseCompFraction_dPressure;
+  array4d<real64> m_dPhaseCompFraction_dTemperature;
+  array5d<real64> m_dPhaseCompFraction_dGlobalCompFraction;
 
   // PVTPackage fluid object
   PVTPackage::CompositionalMultiphaseSystem * m_fluid;
