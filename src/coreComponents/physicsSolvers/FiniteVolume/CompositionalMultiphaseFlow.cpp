@@ -1325,6 +1325,9 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
       // set up array views to reduce amount of indexing
       arrayView2d<globalIndex const> const dofNumber = blockLocalDofNumber[er][esr].get();
 
+      arrayView2d<real64 const> const pVMultSub = pVMult[er][esr][m_solidIndex].get();
+      arrayView2d<real64 const> const dPVMult_dPresSub = dPVMult_dPres[er][esr][m_solidIndex].get();
+
       arrayView3d<real64 const> const phaseVolFracSub = phaseVolFrac[er][esr][m_fluidIndex].get();
       arrayView3d<real64 const> const dPhaseVolFrac_dPresSub = dPhaseVolFrac_dPres[er][esr][m_fluidIndex].get();
       arrayView4d<real64 const> const dPhaseVolFrac_dCompSub = dPhaseVolFrac_dComp[er][esr][m_fluidIndex].get();
@@ -1333,6 +1336,16 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
       {
         if (elemGhostRank[er][esr][ei]<0)
         {
+          // compute pore volume
+          real64 const vol      = volume[er][esr][ei];
+          real64 const dVol_dP  = 0.0; // used in poroelastic solver
+
+          real64 const poro     = porosityRef[er][esr][ei] * pVMultSub[ei][0];
+          real64 const dPoro_dP = porosityRef[er][esr][ei] * dPVMult_dPresSub[ei][0];
+
+          real64 const poreVol     = vol * poro;
+          real64 const dPoreVol_dP = dVol_dP * poro + vol * dPoro_dP;
+
           // get equation/dof indices
           globalIndex const eqnIndex = dofNumber[ei][NDOF-1];
           for (localIndex jdof = 0; jdof < NDOF; ++jdof)
@@ -1354,6 +1367,14 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
               localVolBalanceJacobian[jc+1] -= dPhaseVolFrac_dCompSub[ei][0][ip][jc];
             }
           }
+
+          // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
+          for (localIndex idof = 0; idof < NDOF; ++idof)
+          {
+            localVolBalanceJacobian[idof] *= poreVol;
+          }
+          localVolBalanceJacobian[0] += dPoreVol_dP * localVolBalance;
+          localVolBalance *= poreVol;
 
 
           // TODO: apply chain rule to update derivatives w.r.t. global density
