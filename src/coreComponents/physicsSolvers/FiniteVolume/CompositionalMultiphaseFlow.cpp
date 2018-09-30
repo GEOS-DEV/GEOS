@@ -927,8 +927,10 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
                                                                    dPVMult_dPresString,
                                                                    constitutiveManager );
 
+  //***** begin accumulation terms *****
+
   // using Epetra types
-  array1d<long long int> localAccumDOF(m_numComponents);
+  array1d<long long> localAccumDOF(m_numComponents);
   array1d<double> localAccum(m_numComponents);
   array2d<double> localAccumJacobian(m_numComponents, m_numDofPerCell);
 
@@ -978,7 +980,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
           // set DOF indices for this block
           for (localIndex ic = 0; ic < m_numComponents; ++ic)
           {
-            localAccumDOF[ic] = dofNumber[ei][ic];
+            localAccumDOF[ic] = integer_conversion<long long>(dofNumber[ei][ic]);
           }
 
           // compute fluid-independent (pore volume) part
@@ -1039,13 +1041,13 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
           // TODO: apply equation/variable change transformation(s)
 
           // add contribution to global residual and dRdP
-          residual->SumIntoGlobalValues( integer_conversion<int>(m_numComponents),
+          residual->SumIntoGlobalValues( integer_conversion<int>( m_numComponents ),
                                          localAccumDOF.data(),
                                          localAccum.data() );
 
-          jacobian->SumIntoGlobalValues( integer_conversion<int>(m_numComponents),
+          jacobian->SumIntoGlobalValues( integer_conversion<int>( m_numComponents ),
                                          localAccumDOF.data(),
-                                         integer_conversion<int>(m_numComponents),
+                                         integer_conversion<int>( m_numComponents ),
                                          localAccumDOF.data(),
                                          localAccumJacobian.data() );
         }
@@ -1053,10 +1055,245 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
     }
   }//)
 
+  //***** end accumulation terms *****
 
-  // TODO flux terms
+  //***** begin flux terms *****
+
+  constexpr localIndex numElems = 2; // number of connected elements
+  array1d<long long> eqnRowIndices( numElems * m_numComponents );
+  array1d<long long> dofColIndices( numElems * m_numDofPerCell ); // to be resized for stencil size
+  array1d<double> localFlux( numElems * m_numComponents );
+  array2d<double> localFluxJacobian( numElems * m_numComponents, numElems * m_numDofPerCell ); // to be resized for stencil size
+
+  // temporary working arrays
+  real64 densWeight[numElems] = { 0.5, 0.5 };
+  real64 mobility[numElems] = { 0.0, 0.0 };
+  real64 dMobility_dP[numElems] = { 0.0, 0.0 };
+
+  array2d<real64> dMobility_dC( numElems, m_numComponents );
+
+  array1d<real64> dDensMean_dP( numElems );
+  array2d<real64> dDensMean_dC( numElems, m_numComponents );
+
+  array1d<real64> dPhaseFlux_dP( numElems );
+  array2d<real64> dPhaseFlux_dC( numElems, m_numComponents );
+
+  array1d<real64> compFlux( m_numComponents );
+  array2d<real64> dCompFlux_dP( numElems, m_numComponents );
+  array3d<real64> dCompFlux_dC( numElems, m_numComponents, m_numComponents );
+
+  stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
+  {
+    localIndex const stencilSize = stencil.size();
+
+    // reset the local values
+    compFlux = 0.0;
+    dCompFlux_dP = 0.0;
+    dCompFlux_dC = 0.0;
+
+    localFlux = 0.0;
+    localFluxJacobian = 0.0;
+
+    // resize local working arrays that are stencil-dependent
+    dDensMean_dP.resize( stencilSize ); // doesn't need to be that large, but it's convenient
+    dDensMean_dC.resizeDimension<0>( stencilSize );
+    dPhaseFlux_dP.resize( stencilSize );
+    dPhaseFlux_dC.resizeDimension<0>( stencilSize );
+    dCompFlux_dP.resizeDimension<0>( stencilSize );
+    dCompFlux_dC.resizeDimension<0>( stencilSize );
+
+    // resize local matrices and vectors
+    dofColIndices.resize( stencilSize * m_numComponents );
+    localFluxJacobian.resizeDimension<1>( stencilSize * m_numDofPerCell );
+
+    // set equation indices for both connected cells
+    stencil.forConnected( [&] ( auto const & cell,
+                                localIndex i ) -> void
+    {
+      localIndex const er  = cell.region;
+      localIndex const esr = cell.subRegion;
+      localIndex const ei  = cell.index;
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      {
+        eqnRowIndices[i * m_numComponents + ic] = blockLocalDofNumber[er][esr][ei][ic];
+      }
+    });
+
+    // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
+    for (localIndex ip = 0; ip < m_numPhases; ++ip)
+    {
+      // clear working arrays
+      real64 densMean = 0.0;
+      dDensMean_dP = 0.0;
+      dDensMean_dC = 0.0;
+
+      // calculate quantities on primary connected cells
+      stencil.forConnected( [&] ( auto const & cell,
+                                  localIndex i ) -> void
+      {
+        localIndex const er  = cell.region;
+        localIndex const esr = cell.subRegion;
+        localIndex const ei  = cell.index;
+
+        // density
+        real64 const density = phaseDens[er][esr][m_fluidIndex][ei][0][ip];
+        real64 const dDens_dP = dPhaseDens_dPres[er][esr][m_fluidIndex][ei][0][ip];
+
+        real64 const viscosity = 1.0; // TODO
+        real64 const dVisc_dP = 0.0; // TODO
+
+        // mobility and pressure derivative
+        mobility[i] = density / viscosity;
+        dMobility_dP[i] = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
+
+        // average density and pressure derivative
+        densMean += densWeight[i] * density;
+        dDensMean_dP[i] = densWeight[i] * dDens_dP;
+
+        // compositional derivatives
+        for (localIndex jc = 0; jc < m_numComponents; ++jc)
+        {
+          real64 const dDens_dC = dPhaseDens_dComp[er][esr][m_fluidIndex][ei][0][ip][jc];
+          real64 const dVisc_dC = 0.0; // TODO
+
+          dMobility_dC[i][jc] = dDens_dC / viscosity - mobility[i] / viscosity * dVisc_dC;
+          dDensMean_dC[i][jc] = densWeight[i] * dDens_dC;
+        }
+      });
+
+      //***** calculation of flux *****
+
+      // compute potential difference MPFA-style
+      real64 potDif = 0.0;
+      stencil.forAll( [&] ( CellDescriptor cell,
+                            real64 w,
+                            localIndex i ) -> void
+      {
+        localIndex const er  = cell.region;
+        localIndex const esr = cell.subRegion;
+        localIndex const ei  = cell.index;
+
+        for (localIndex jc = 0; jc < m_numComponents; ++jc)
+        {
+          dofColIndices[i * m_numComponents + jc] = blockLocalDofNumber[er][esr][ei][jc];
+        }
+
+        real64 const gravD = gravDepth[er][esr][ei];
+        real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
+        real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
+
+        potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] + gravTerm);
+        dPhaseFlux_dP[i] = w * (1.0 + dGrav_dP);
+
+        for (localIndex jc = 0; jc < m_numComponents; ++jc)
+        {
+          real64 const dGrav_dC = m_gravityFlag ? dDensMean_dC[i][jc] * gravD : 0.0;
+          dPhaseFlux_dC[i][jc] = w * (1.0 + dGrav_dC);
+        }
+      });
+
+      // upwinding of fluid properties
+      localIndex const k_up = (potDif >= 0) ? 0 : 1;
+
+      // compute the phase fluphaseCompMassFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip][ic]x and derivatives
+      real64 const phaseFlux = mobility[k_up] * potDif;
+      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      {
+        dPhaseFlux_dP[ke] *= mobility[k_up];
+        for (localIndex jc = 0; jc < m_numComponents; ++jc)
+        {
+          dPhaseFlux_dC[ke][jc] *= mobility[k_up];
+        }
+      }
+      dPhaseFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
+      for (localIndex jc = 0; jc < m_numComponents; ++jc)
+      {
+        dPhaseFlux_dC[k_up][jc] += dMobility_dC[k_up][jc] * potDif;
+      }
+
+      CellDescriptor cell_up = stencil.connectedIndex( k_up );
+      localIndex er_up  = cell_up.region;
+      localIndex esr_up = cell_up.subRegion;
+      localIndex ei_up  = cell_up.index;
+
+      // compute component fluxes and derivatives
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      {
+        real64 const ycp = phaseCompMassFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip][ic];
+        compFlux[ic] += phaseFlux * ycp;
+
+        // derivatives stemming from phase flux
+        for (localIndex ke = 0; ke < stencilSize; ++ke)
+        {
+          dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+          for (localIndex jc = 0; jc < m_numComponents; ++jc)
+          {
+            dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+          }
+        }
+
+        // additional derivatives stemming from upwinding of phase composition
+        dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompMassFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip][ic];
+        for (localIndex jc = 0; jc < m_numComponents; ++jc)
+        {
+          dCompFlux_dC[k_up][ic][jc] += phaseFlux * dPhaseCompMassFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip][ic][jc];
+        }
+      }
+    }
+
+    // populate local flux vector and derivatives
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+    {
+      localFlux[ic]                   =  dt * compFlux[ic];
+      localFlux[m_numComponents + ic] = -dt * compFlux[ic];
+
+      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      {
+        localIndex const localDofIndexPres = ke * m_numDofPerCell;
+        localFluxJacobian[ic][localDofIndexPres]                   =  dt * dCompFlux_dP[ke][ic];
+        localFluxJacobian[m_numComponents + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
+
+        for (localIndex jc = 0; jc < m_numComponents; ++jc)
+        {
+          localIndex const localDofIndexComp = ke * m_numComponents + jc + 1;
+          localFluxJacobian[ic][localDofIndexComp]                   =  dt * dCompFlux_dC[ke][ic][jc];
+          localFluxJacobian[m_numComponents + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
+        }
+      }
+    }
+
+    // TODO: apply equation/variable change transformation(s)
+
+    // Add to global residual/jacobian
+    residual->SumIntoGlobalValues( integer_conversion<int>( numElems * m_numComponents ),
+                                   eqnRowIndices.data(),
+                                   localFlux.data() );
+
+    jacobian->SumIntoGlobalValues( integer_conversion<int>( numElems * m_numComponents ),
+                                   eqnRowIndices.data(),
+                                   integer_conversion<int>( stencilSize * m_numDofPerCell ),
+                                   dofColIndices.data(),
+                                   localFluxJacobian.data() );
+
+  });
+
+  //***** end flux terms *****
+
+  //***** begin volume balance *****
 
   // TODO volume balance eqn
+
+  //***** end volume balance *****
+
+  jacobian->GlobalAssemble(true);
+  residual->GlobalAssemble();
+
+  if( verboseLevel() >= 2 )
+  {
+    jacobian->Print(std::cout);
+    residual->Print(std::cout);
+  }
+
 }
 
 void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
