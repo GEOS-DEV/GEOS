@@ -1306,7 +1306,73 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
 
   //***** begin volume balance *****
 
-  // TODO volume balance eqn
+  // using Epetra types
+  array1d<long long> localVolBalanceDOF( NDOF );
+  array1d<double> localVolBalanceJacobian( NDOF );
+
+  //***** Loop over all elements and assemble the change in volume/density terms *****
+//  forAllElemsInMesh( mesh, [=] ( localIndex const er,
+//                                 localIndex const esr,
+//                                 localIndex const ei ) -> void
+
+  for (localIndex er = 0; er < elemManager->numRegions(); ++er)
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for (localIndex esr = 0; esr < elemRegion->numSubRegions(); ++esr)
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      // set up array views to reduce amount of indexing
+      arrayView2d<globalIndex const> const dofNumber = blockLocalDofNumber[er][esr].get();
+
+      arrayView3d<real64 const> const phaseVolFracSub = phaseVolFrac[er][esr][m_fluidIndex].get();
+      arrayView3d<real64 const> const dPhaseVolFrac_dPresSub = dPhaseVolFrac_dPres[er][esr][m_fluidIndex].get();
+      arrayView4d<real64 const> const dPhaseVolFrac_dCompSub = dPhaseVolFrac_dComp[er][esr][m_fluidIndex].get();
+
+      for (localIndex ei = 0; ei < cellBlockSubRegion->size(); ++ei)
+      {
+        if (elemGhostRank[er][esr][ei]<0)
+        {
+          // get equation/dof indices
+          globalIndex const eqnIndex = dofNumber[ei][NDOF-1];
+          for (localIndex jdof = 0; jdof < NDOF; ++jdof)
+          {
+            localVolBalanceDOF[jdof] = dofNumber[ei][jdof];
+          }
+
+          real64 localVolBalance = 1.0;
+          localVolBalanceJacobian = 0.0;
+
+          // sum contributions to component mass accumulation from each phase
+          for (localIndex ip = 0; ip < NP; ++ip)
+          {
+            localVolBalance -= phaseVolFracSub[ei][0][ip];
+            localVolBalanceJacobian[0] -= dPhaseVolFrac_dPresSub[ei][0][ip];
+
+            for (localIndex jc = 0; jc < NC; ++jc)
+            {
+              localVolBalanceJacobian[jc+1] -= dPhaseVolFrac_dCompSub[ei][0][ip][jc];
+            }
+          }
+
+
+          // TODO: apply chain rule to update derivatives w.r.t. global density
+          // TODO: apply equation/variable change transformation(s)
+
+          // add contribution to global residual and dRdP
+          residual->SumIntoGlobalValues( 1,
+                                         &eqnIndex,
+                                         &localVolBalance );
+
+          jacobian->SumIntoGlobalValues( 1,
+                                         &eqnIndex,
+                                         integer_conversion<int>( NC ),
+                                         localVolBalanceDOF.data(),
+                                         localVolBalanceJacobian.data() );
+        }
+      }
+    }
+  }//)
 
   //***** end volume balance *****
 
