@@ -156,14 +156,31 @@ public:
 
 private:
 
+  template<typename T, int DIM>
+  struct array_view_helper
+  {
+    using type = array_view<T, DIM>;
+  };
+
+#ifndef GEOSX_USE_ARRAY_BOUNDS_CHECK
+  template<typename T>
+  struct array_view_helper<T, 1>
+  {
+    using type = T *;
+  };
+#endif
+
+  template<int DIM>
+  using real_array_view = typename array_view_helper<real64, DIM>::type;
+
   // helper struct to represent a var and its derivatives
   template<int DIM>
   struct VarContainer
   {
-    array_view<real64, DIM>   value; // variable value
-    array_view<real64, DIM>   dPres; // derivative w.r.t. pressure
-    array_view<real64, DIM>   dTemp; // derivative w.r.t. temperature
-    array_view<real64, DIM+1> dComp; // derivative w.r.t. composition
+    real_array_view<DIM>   value; // variable value
+    real_array_view<DIM>   dPres; // derivative w.r.t. pressure
+    real_array_view<DIM>   dTemp; // derivative w.r.t. temperature
+    real_array_view<DIM+1> dComp; // derivative w.r.t. composition
   };
 
   void createFluid();

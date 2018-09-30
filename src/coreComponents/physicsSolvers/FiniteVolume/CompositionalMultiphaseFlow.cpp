@@ -468,7 +468,7 @@ void CompositionalMultiphaseFlow::UpdateConstitutiveModels(DomainPartition * dom
   {
     constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointMultiphaseFluid( pres[er][esr][ei] + dPres[er][esr][ei],
                                                                                    m_temperature,
-                                                                                   compMoleFrac[er][esr][ei].data(),
+                                                                                   static_cast<real64 const *>(compMoleFrac[er][esr][ei]),
                                                                                    ei, 0 ); // fluid
 
     constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure(pres[er][esr][ei], ei, 0); // solid
