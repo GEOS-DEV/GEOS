@@ -1145,6 +1145,18 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
                                                                    dPhaseDensity_dGlobalCompFractionString,
                                                                    constitutiveManager );
 
+  auto dPhaseVolFrac_dPres =
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseVolumeFraction_dPressureString,
+                                                                   constitutiveManager );
+
+  auto dPhaseVolFrac_dComp =
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+                                                                   viewKeyStruct::
+                                                                   dPhaseVolumeFraction_dGlobalCompFractionString,
+                                                                   constitutiveManager );
+
   auto phaseCompMassFrac =
     elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
                                                                    viewKeyStruct::
@@ -1174,19 +1186,26 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
   array2d<double> localFluxJacobian( numElems * NC, numElems * NDOF ); // to be resized for stencil size
 
   // temporary working arrays
-  real64 densWeight[numElems] = { 0.5, 0.5 };
-  real64 mobility[numElems] = { 0.0, 0.0 };
-  real64 dMobility_dP[numElems] = { 0.0, 0.0 };
 
+  real64 densWeight[numElems] = { 0.5, 0.5 };
+
+  // these arrays have constant size
+
+  array1d<real64> compFlux( NC );
+  array1d<real64> dRelPerm_dC( NC );
+
+  array1d<real64> mobility( numElems );
+  array1d<real64> dMobility_dP( numElems );
   array2d<real64> dMobility_dC( numElems, NC );
 
   array1d<real64> dDensMean_dP( numElems );
   array2d<real64> dDensMean_dC( numElems, NC );
 
+  // the arrays below are resized for each cell's stencil size
+
   array1d<real64> dPhaseFlux_dP( numElems );
   array2d<real64> dPhaseFlux_dC( numElems, NC );
 
-  array1d<real64> compFlux( NC );
   array2d<real64> dCompFlux_dP( numElems, NC );
   array3d<real64> dCompFlux_dC( numElems, NC, NC );
 
@@ -1248,12 +1267,29 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
         real64 const density = phaseDens[er][esr][m_fluidIndex][ei][0][ip];
         real64 const dDens_dP = dPhaseDens_dPres[er][esr][m_fluidIndex][ei][0][ip];
 
+        // viscosity
         real64 const viscosity = 1.0; // TODO
         real64 const dVisc_dP = 0.0; // TODO
 
+        //relative permeability
+        real64 const relPerm = 1.0; // TODO
+        real64 dRelPerm_dP = 0.0;
+        dRelPerm_dC = 0.0;
+        for (localIndex jp = 0; jp < NP; ++jp)
+        {
+          real64 const dRelPerm_dS = 0.0; // TODO
+          dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[er][esr][m_fluidIndex][ei][0][jp];
+
+          for (localIndex jc = 0; jc < NC; ++jc)
+          {
+            dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[er][esr][m_fluidIndex][ei][0][jp][jc];
+          }
+        }
+
         // mobility and pressure derivative
-        mobility[i] = density / viscosity;
-        dMobility_dP[i] = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
+        mobility[i] = relPerm * density / viscosity;
+        dMobility_dP[i] = dRelPerm_dP * density / viscosity
+                        + mobility[i] * (dDens_dP / density - dVisc_dP / viscosity);
 
         // average density and pressure derivative
         densMean += densWeight[i] * density;
@@ -1265,8 +1301,10 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
           real64 const dDens_dC = dPhaseDens_dComp[er][esr][m_fluidIndex][ei][0][ip][jc];
           real64 const dVisc_dC = 0.0; // TODO
 
-          dMobility_dC[i][jc] = dDens_dC / viscosity - mobility[i] / viscosity * dVisc_dC;
           dDensMean_dC[i][jc] = densWeight[i] * dDens_dC;
+
+          dMobility_dC[i][jc] = dRelPerm_dC[jc] * density / viscosity
+                              + mobility[i] * (dDens_dC / density - dVisc_dC / viscosity);
         }
       });
 
