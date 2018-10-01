@@ -507,6 +507,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
                                          localIndex_array & packList,
                                          integer const recursive )
 {
+  GEOSX_MARK_FUNCTION;
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );

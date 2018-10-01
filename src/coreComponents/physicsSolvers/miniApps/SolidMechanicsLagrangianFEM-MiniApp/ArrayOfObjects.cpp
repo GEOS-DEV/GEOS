@@ -48,18 +48,18 @@ int main(int argc, char* const argv[])
   //
   //Allocate space for constitutive map
   //
-  Index_type *  constitutiveMap = memoryManager::allocate<Index_type>(inumQuadraturePoints*NoElem, dataAllocated);
+  Index_type *  constitutiveMap = memoryManager::allocate<Index_type>(QUAD_PTS*NoElem, dataAllocated);
 
 
   //
   //Generate space for an element to node list
   //
-  Index_type  *  elemsToNodes = memoryManager::allocate<Index_type>(inumNodesPerElement*NoElem, dataAllocated);
+  Index_type  *  elemsToNodes = memoryManager::allocate<Index_type>(NUM_NODES*NoElem, dataAllocated);
  
   //
   //Allocate space for a list of vertices, generate a mesh, and populate the constitutive map
   //
-  geosxData VX = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
+  geosxData VX = memoryManager::allocatqe<real64>(numNodes*LOCAL_DIM, dataAllocated);
   meshGen(VX, elemsToNodes,constitutiveMap,Kx);
 
   //
@@ -67,38 +67,38 @@ int main(int argc, char* const argv[])
   //with respect to the parent basis function
   //
   P_Wrapper P; 
-  generateP(P, inumNodesPerElement, inumQuadraturePoints);
+  generateP(P, NUM_NODES, QUAD_PTS);
   
   //
   //Allocate space for shape function derivatives and compute their values
   //
-  geosxData dNdX = memoryManager::allocate<real64>(inumNodesPerElement*inumQuadraturePoints*NoElem*local_dim, dataAllocated);
-  make_dNdX(dNdX, VX, elemsToNodes, NoElem, inumQuadraturePoints, inumNodesPerElement);
+  geosxData dNdX = memoryManager::allocate<real64>(NUM_NODES*QUAD_PTS*NoElem*LOCAL_DIM, dataAllocated);
+  make_dNdX(dNdX, VX, elemsToNodes, NoElem, QUAD_PTS, NUM_NODES);
 
   ///
   //Allocate space for nodal degrees of freedom as an Array of Objects
   ///
-  geosxData u = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
-  geosxData uhat = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
-  geosxData acc  = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
-  std::memset(u,0, numNodes*local_dim*sizeof(real64));
-  std::memset(uhat,0, numNodes*local_dim*sizeof(real64));
-  std::memset(acc,0, numNodes*local_dim*sizeof(real64));    
+  geosxData u = memoryManager::allocate<real64>(numNodes*LOCAL_DIM, dataAllocated);
+  geosxData uhat = memoryManager::allocate<real64>(numNodes*LOCAL_DIM, dataAllocated);
+  geosxData acc  = memoryManager::allocate<real64>(numNodes*LOCAL_DIM, dataAllocated);
+  std::memset(u,0, numNodes*LOCAL_DIM*sizeof(real64));
+  std::memset(uhat,0, numNodes*LOCAL_DIM*sizeof(real64));
+  std::memset(acc,0, numNodes*LOCAL_DIM*sizeof(real64));    
   
   //
   //In the case of three kernel launches, we need to allocate
   //extra memory for intermediate results
   //
 #if defined(THREE_KERNEL_UPDATE)
-  geosxData Dadt = memoryManager::allocate<real64>(localMatSz*inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData Rot  = memoryManager::allocate<real64>(localMatSz*inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData detF  = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData inverseF  = memoryManager::allocate<real64>(localMatSz*inumQuadraturePoints*NoElem, dataAllocated);
+  geosxData Dadt = memoryManager::allocate<real64>(localMatSz*QUAD_PTS*NoElem, dataAllocated);
+  geosxData Rot  = memoryManager::allocate<real64>(localMatSz*QUAD_PTS*NoElem, dataAllocated);
+  geosxData detF  = memoryManager::allocate<real64>(QUAD_PTS*NoElem, dataAllocated);
+  geosxData inverseF  = memoryManager::allocate<real64>(localMatSz*QUAD_PTS*NoElem, dataAllocated);
   
-  std::memset(Dadt, 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(Rot, 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(detF, 0, inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(inverseF, 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));    
+  std::memset(Dadt, 0, localMatSz*QUAD_PTS*NoElem*sizeof(real64));
+  std::memset(Rot, 0, localMatSz*QUAD_PTS*NoElem*sizeof(real64));
+  std::memset(detF, 0, QUAD_PTS*NoElem*sizeof(real64));
+  std::memset(inverseF, 0, localMatSz*QUAD_PTS*NoElem*sizeof(real64));    
 #endif
 
   //
@@ -106,13 +106,13 @@ int main(int argc, char* const argv[])
   //
   Index_type noSymEnt = 6;
   real64 bulkModulus = 10, shearModulus=20;
-  geosxData detJ            = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData meanStress      = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData devStressData   = memoryManager::allocate<real64>(noSymEnt*inumQuadraturePoints*NoElem, dataAllocated);
+  geosxData detJ            = memoryManager::allocate<real64>(QUAD_PTS*NoElem, dataAllocated);
+  geosxData meanStress      = memoryManager::allocate<real64>(QUAD_PTS*NoElem, dataAllocated);
+  geosxData devStressData   = memoryManager::allocate<real64>(noSymEnt*QUAD_PTS*NoElem, dataAllocated);
     
-  std::memset(detJ, 1 ,inumQuadraturePoints * NoElem);
-  std::memset(meanStress, 1 ,inumQuadraturePoints * NoElem);
-  std::memset(devStressData, 1 , noSymEnt * inumQuadraturePoints * NoElem);
+  std::memset(detJ, 1 ,QUAD_PTS * NoElem);
+  std::memset(meanStress, 1 ,QUAD_PTS * NoElem);
+  std::memset(devStressData, 1 , noSymEnt * QUAD_PTS * NoElem);
   
 
   //

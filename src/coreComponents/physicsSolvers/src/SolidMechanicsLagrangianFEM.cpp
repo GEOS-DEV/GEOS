@@ -488,6 +488,7 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
                                              const int cycleNumber,
                                              DomainPartition * domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
 
   SolverBase * const
@@ -525,6 +526,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                                    const int cycleNumber,
                                                    DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   GEOSX_MARK_BEGIN(initialization);
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -689,30 +692,28 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       //Storage for holding intermediate results
 #if defined(EXTERNAL_KERNELS) && defined(THREE_KERNEL_UPDATE) 
-      static geosxData Dadt = new double[localMatSz*inumQuadraturePoints*elementList.size()];
-      static geosxData Rot  = new double[localMatSz*inumQuadraturePoints*elementList.size()];
-      static geosxData detF = new double[inumQuadraturePoints*elementList.size()];
-      static geosxData inverseF = new double[localMatSz*inumQuadraturePoints*elementList.size()];
+      static geosxData Dadt = new double[localMatSz*QUAD_PTS*elementList.size()];
+      static geosxData Rot  = new double[localMatSz*QUAD_PTS*elementList.size()];
+      static geosxData detF = new double[QUAD_PTS*elementList.size()];
+      static geosxData inverseF = new double[localMatSz*QUAD_PTS*elementList.size()];
 #endif
 
       //
       //Internal GEOSX Kernel
       //
-
-      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-
+      GEOSX_MARK_BEGIN(elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
 
    ::geosx::raja::forall_in_range<elemPolicy>
       (0, cellBlock->size(), GEOSX_LAMBDA ( globalIndex k) mutable        
       {
 
-        //Note: inumNodesPerElement are defined by a macro. The value is 8. 
-        R1Tensor uhat_local[inumNodesPerElement];
-        R1Tensor u_local[inumNodesPerElement];
-        R1Tensor f_local[inumNodesPerElement];
+        //Note: NUM_NODES are defined by a macro. The value is 8. 
+        R1Tensor uhat_local[NUM_NODES];
+        R1Tensor u_local[NUM_NODES];
+        R1Tensor f_local[NUM_NODES];
 
-        for(localIndex i=0; i<inumNodesPerElement; ++i) f_local[i] = 0.0;
+        for(localIndex i=0; i<NUM_NODES; ++i) f_local[i] = 0.0;
 
         localIndex const * const nodelist = elemsToNodes[k];
 
@@ -798,7 +799,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
       const real64 * idetJ  = detJ.data();
 
       //Setup pointer for the external constitutive update
-      void (*externConstitutiveUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
+      void (*externConstitutiveUpdate)(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
           localIndex m, localIndex q, globalIndex k, geosxData devStressData2,
           geosxData meanStress2, real64 shearModulus2, real64 bulkModulus2, localIndex NoElem);
       externConstitutiveUpdate = UpdateStatePoint;
@@ -862,9 +863,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #elif defined(OBJECT_OF_ARRAYS_LAYOUT)
 
       //Split the shape function derivatives into three arrays
-      static geosxData dNdX_x = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-      static geosxData dNdX_y = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-      static geosxData dNdX_z = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
+      static geosxData dNdX_x = new double[NUM_NODES*QUAD_PTS*elementList.size()];
+      static geosxData dNdX_y = new double[NUM_NODES*QUAD_PTS*elementList.size()];
+      static geosxData dNdX_z = new double[NUM_NODES*QUAD_PTS*elementList.size()];
 
       static bool copy = true;
       if(copy){
@@ -872,13 +873,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
         //Generate shape function derivatives
         //const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
         make_dNdX(dNdX_x, dNdX_y, dNdX_z,
-                  Xptr, elemsToNodes.data(),elementList.size(), inumNodesPerElement, inumQuadraturePoints);
+                  Xptr, elemsToNodes.data(),elementList.size(), NUM_NODES, QUAD_PTS);
 
         //Verify correctness
         for(localIndex k = 0; k < elementList.size(); ++k){
-          for(localIndex a = 0; a < inumNodesPerElement; ++a){
-            for(localIndex q = 0; q < inumQuadraturePoints; ++q){
-              localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+          for(localIndex a = 0; a < NUM_NODES; ++a){
+            for(localIndex q = 0; q < QUAD_PTS; ++q){
+              localIndex id = q + QUAD_PTS*(a + NUM_NODES*k);
               assert( std::abs( dNdX_x[id] - dNdX[k][a][q][0]) < 1e-12);
               assert( std::abs( dNdX_y[id] - dNdX[k][a][q][1]) < 1e-12);
               assert( std::abs( dNdX_z[id] - dNdX[k][a][q][2]) < 1e-12);
@@ -934,8 +935,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 #endif// If !defined(EXTERNAL_KERNELS)
 
-      GEOSX_MARK_LOOP_END(elemLoop);
-
+      GEOSX_MARK_END(elemLoop);
     } //Element Region
 
   } //Element Manager
@@ -986,7 +986,7 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                                                  DomainPartition & domain,
                                                                  EpetraBlockSystem & blockSystem )
 {
-
+  GEOSX_MARK_FUNCTION;
   BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
 
   bcManager->ApplyBoundaryCondition( time,
@@ -1017,6 +1017,7 @@ void SolidMechanics_LagrangianFEM::TractionBC( ManagedGroup * const object,
                                                real64 time,
                                                systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
 //  string const functionName =
 // bc->getData<string>(dataRepository::keys::functionName);
 //  NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -1102,7 +1103,7 @@ ImplicitStepSetup( real64 const& time_n,
                    DomainPartition * const domain,
                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
-
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
 
@@ -1168,6 +1169,7 @@ void SolidMechanics_LagrangianFEM::ImplicitStepComplete( real64 const & time_n,
                                                              real64 const & dt,
                                                              DomainPartition * const domain)
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
@@ -1212,6 +1214,7 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
                                                                  localIndex_array& localIndices,
                                                                  localIndex offset )
 {
+  GEOSX_MARK_FUNCTION;
 //  dim =
 // domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
   int dim = 3;
@@ -1272,6 +1275,7 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
 void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domain,
                                                    EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
 
@@ -1428,6 +1432,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
                                                 real64 const time_n,
                                                 real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -1502,8 +1507,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
       array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
 
 
-      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-
+      GEOSX_MARK_BEGIN(elemLoop);
       for( localIndex k=0 ; k<cellBlock->size() ; ++k )
       {
 
@@ -1580,6 +1584,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
                                     element_rhs);
         }
       }
+      GEOSX_MARK_END(elemLoop);
     }
   }
 
@@ -1605,6 +1610,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                          real64 const dt )
 {
 
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   ManagedGroup * const nodeManager = mesh->getNodeManager();
@@ -1659,6 +1665,7 @@ SolidMechanics_LagrangianFEM::
 CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem, DomainPartition *const domain)
 {
 
+  GEOSX_MARK_FUNCTION;
   Epetra_FEVector const * const
   residual = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
 
@@ -1726,6 +1733,7 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
                                                                            Epetra_SerialDenseVector& R,
                                                                            real64 c[6][6] )
 {
+  GEOSX_MARK_FUNCTION;
   const integer dim = 3;
   realT maxForce = 0;
   realT amass = *this->getData<real64>(solidMechanicsViewKeys.massDamping);
@@ -1914,6 +1922,7 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
                                                         real64 const scalingFactor,
                                                         DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::displacementBlock );
@@ -1972,6 +1981,7 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 void SolidMechanics_LagrangianFEM::SolveSystem( EpetraBlockSystem * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
+  GEOSX_MARK_FUNCTION;
   Epetra_FEVector * const
   solution = blockSystem->GetSolutionVector( BlockIDs::displacementBlock );
 
@@ -1994,6 +2004,7 @@ void SolidMechanics_LagrangianFEM::SolveSystem( EpetraBlockSystem * const blockS
 
 void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
 

@@ -25,6 +25,7 @@
 
 #include "NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -47,6 +48,10 @@ NeighborCommunicator::NeighborCommunicator():
 //{
 //}
 
+//
+// We choose not to create unique send/receive tags on account 
+// of Cori's (nersc) Tag value limit.
+//
 void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                                              int const sendSize,
                                              MPI_Request& sendRequest,
@@ -56,23 +61,24 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                                              int const commID,
                                              MPI_Comm mpiComm )
 {
-  int const sendTag = CommTag( Rank(), m_neighborRank, commID );
+  GEOSX_MARK_FUNCTION;
+  //int const sendTag = CommTag( Rank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
   MPI_Isend( const_cast<char*>(sendBuffer),
              sendSize,
              MPI_CHAR,
              m_neighborRank,
-             sendTag,
+             commID, //Tag
              mpiComm,
              &sendRequest );
-
-  int const receiveTag = CommTag( m_neighborRank, Rank(), commID );
+  
+  //int const receiveTag = CommTag( m_neighborRank, Rank(), commID );
   //m_neighborRank * m_size + m_rank + m_size*m_size*commID;
   MPI_Irecv( receiveBuffer,
              receiveSize,
              MPI_CHAR,
              m_neighborRank,
-             receiveTag,
+             commID, //Tag
              mpiComm,
              &receiveRequest );
 }
@@ -80,6 +86,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
                                                         MPI_Comm mpiComm )
 {
+  GEOSX_MARK_FUNCTION;
   MPI_iSendReceiveBufferSizes( commID,
                                m_mpiRecvBufferRequest[commID],
                                m_mpiSendBufferRequest[commID],
@@ -91,6 +98,7 @@ void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
                                                         MPI_Request& mpiRecvRequest,
                                                         MPI_Comm mpiComm )
 {
+  GEOSX_MARK_FUNCTION;
   m_sendBufferSize[commID] = integer_conversion<int>( m_sendBuffer[commID].size());
   MPI_iSendReceive( &m_sendBufferSize[commID], 1, mpiSendRequest,
                     &m_receiveBufferSize[commID],
@@ -102,6 +110,7 @@ void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
 void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
                                                     MPI_Comm mpiComm )
 {
+  GEOSX_MARK_FUNCTION;
   MPI_iSendReceiveBuffers( commID,
                            m_mpiSendBufferRequest[commID],
                            m_mpiRecvBufferRequest[commID],
@@ -113,6 +122,7 @@ void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
                                                     MPI_Request& mpiRecvRequest,
                                                     MPI_Comm mpiComm )
 {
+  GEOSX_MARK_FUNCTION;
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
   MPI_iSendReceive( m_sendBuffer[commID].data(),
@@ -129,6 +139,7 @@ void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
 void NeighborCommunicator::MPI_iSendReceive( int const commID,
                                              MPI_Comm mpiComm )
 {
+  GEOSX_MARK_FUNCTION;
   MPI_iSendReceive( commID,
                     m_mpiSendBufferRequest[commID],
                     m_mpiRecvBufferRequest[commID],
@@ -140,6 +151,7 @@ void NeighborCommunicator::MPI_iSendReceive( int const commID,
                                              MPI_Request& mpiRecvRequest,
                                              MPI_Comm mpiComm )
 {
+  GEOSX_MARK_FUNCTION;
   MPI_iSendReceiveBufferSizes( commID, mpiComm );
 
   MPI_Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
@@ -162,6 +174,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                                              int const commID,
                                              MPI_Comm mpiComm )
 {
+  GEOSX_MARK_FUNCTION;
   MPI_iSendReceive( &sendSize,
                     1,
                     m_mpiSendBufferRequest[commID],
@@ -193,18 +206,21 @@ void NeighborCommunicator::MPI_WaitAll( int const commID,
                                         MPI_Status& mpiReceiveStatus )
 
 {
+  GEOSX_MARK_FUNCTION;
   MPI_Waitall( 1, &mpiRecvRequest, &mpiReceiveStatus );
   MPI_Waitall( 1, &mpiSendRequest, &mpiSendStatus );
 }
 
 void NeighborCommunicator::MPI_WaitAll( int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   MPI_Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
   MPI_Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
 }
 
 int NeighborCommunicator::Rank()
 {
+  GEOSX_MARK_FUNCTION;
   int rank = -1;
   MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
   return rank;
@@ -212,6 +228,7 @@ int NeighborCommunicator::Rank()
 
 void NeighborCommunicator::Clear()
 {
+  GEOSX_MARK_FUNCTION;
   for( int i = 0 ; i < maxComm ; ++i )
   {
     m_sendBuffer[i].clear();
@@ -221,6 +238,7 @@ void NeighborCommunicator::Clear()
 
 void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) const
 {
+  GEOSX_MARK_FUNCTION;
   ManagedGroup * neighborGroups[100];
   localIndex numNeighborGroups = 0;
 
@@ -277,6 +295,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
                                               MeshLevel * const mesh,
                                               int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -362,6 +381,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
 void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
                                          int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -424,6 +444,7 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
 void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                              int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -573,6 +594,7 @@ void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > co
                                               MeshLevel * const mesh,
                                               int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -690,7 +712,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
                                                 MeshLevel * const mesh,
                                                 int const commID )
 {
-
+  GEOSX_MARK_FUNCTION;
   buffer_type const & receiveBuffer = ReceiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 

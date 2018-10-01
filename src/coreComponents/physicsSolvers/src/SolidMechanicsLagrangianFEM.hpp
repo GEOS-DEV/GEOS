@@ -232,7 +232,7 @@ void OnePoint( T const & dydx,
                localIndex const length )
 #endif
 {
-
+  GEOSX_MARK_FUNCTION;
   forall_in_range(0, length, GEOSX_LAMBDA (localIndex a){
       
     dy[a][0] = dydx[a][0] * dx;
@@ -254,7 +254,7 @@ void OnePoint (U dydx,
                real64 const dx,
                localIndex const length)
 {
-  
+  GEOSX_MARK_FUNCTION;
   forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
       
     dy_1[a] = dydx[a][0] * dx;
@@ -283,7 +283,7 @@ void OnePoint( T const &  dydx,
                localIndex const length )
 #endif
 {
-
+  GEOSX_MARK_FUNCTION;
   forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
       
     y[a].plus_cA( dx, dydx[a] );
@@ -301,7 +301,7 @@ void OnePoint( T const dydx_0,
                real64 const dx,
                localIndex const length )
 {
-  
+  GEOSX_MARK_FUNCTION;
   forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
     //y[a].plus_cA( dx, dydx[a] );
     y[a][0] += dx*dydx_0[a];

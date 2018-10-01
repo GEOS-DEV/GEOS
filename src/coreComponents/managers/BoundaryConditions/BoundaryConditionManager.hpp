@@ -23,6 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
 #include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "BoundaryConditionBase.hpp"
@@ -92,6 +93,7 @@ public:
                                       string const & fieldPath,
                                       string const & fieldName ) const
   {
+    GEOSX_MARK_FUNCTION;
     ApplyBoundaryConditionToField( time, domain, fieldPath, fieldName,
                                    [&]( BoundaryConditionBase const * const,
                                         set<localIndex> const & ){} );
@@ -170,6 +172,7 @@ public:
                                string const & fieldName,
                                LAMBDA && lambda ) const
   {
+    GEOSX_MARK_FUNCTION;
     for( auto & subGroup : this->GetSubGroups() )
     {
       BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
@@ -243,6 +246,7 @@ ApplyBoundaryConditionToField( real64 const time,
                                string const & fieldName,
                                LAMBDA && lambda ) const
 {
+  GEOSX_MARK_FUNCTION;
   BoundaryConditionBase const * bcBase = nullptr;
   set<localIndex> const * targetSetCopy = nullptr;
   ApplyBoundaryCondition( time, domain, fieldPath, fieldName,

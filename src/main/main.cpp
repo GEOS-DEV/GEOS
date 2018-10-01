@@ -105,9 +105,6 @@ int main( int argc, char *argv[] )
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   GEOSX_MARK_END("RunSimulation");
-  gettimeofday(&tim, nullptr);
-  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
-
   printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );
 
   problemManager.ClosePythonInterpreter();

@@ -25,35 +25,35 @@
 
 template<typename T>
 RAJA_HOST_DEVICE
-RAJA_INLINE void HughesWinget(T Rot[local_dim][local_dim], T Dadt[local_dim][local_dim], T L[local_dim][local_dim], real64 dt){
+RAJA_INLINE void HughesWinget(T Rot[LOCAL_DIM][LOCAL_DIM], T Dadt[LOCAL_DIM][LOCAL_DIM], T L[LOCAL_DIM][LOCAL_DIM], real64 dt){
 
-  double Omega[local_dim][local_dim];
+  double Omega[LOCAL_DIM][LOCAL_DIM];
   //Omega = 0.5*(L-LT)
   //Dadt  = 0.5*(L+LT)*dt
 
-  for(localIndex ty=0; ty<local_dim; ++ty)
+  for(localIndex ty=0; ty<LOCAL_DIM; ++ty)
     {
-      for(localIndex tx=0; tx<local_dim; ++tx)
+      for(localIndex tx=0; tx<LOCAL_DIM; ++tx)
         {
           Dadt[ty][tx] = 0.5*(L[ty][tx] + L[tx][ty])*dt;
           Omega[ty][tx] = 0.5*(L[ty][tx] - L[tx][ty]);
         }
     }
 
-  double IpR[local_dim][local_dim];
-  double ImR[local_dim][local_dim];
-  double ImRinv[local_dim][local_dim];
+  double IpR[LOCAL_DIM][LOCAL_DIM];
+  double ImR[LOCAL_DIM][LOCAL_DIM];
+  double ImRinv[LOCAL_DIM][LOCAL_DIM];
   
-  for(localIndex ty=0; ty<local_dim; ++ty)
+  for(localIndex ty=0; ty<LOCAL_DIM; ++ty)
     {
-      for(localIndex tx=0; tx<local_dim; ++tx)
+      for(localIndex tx=0; tx<LOCAL_DIM; ++tx)
         {
           IpR[ty][tx] =  0.5*Omega[ty][tx];
           ImR[ty][tx] = -0.5*Omega[ty][tx];
         }
     }
   
-  for(localIndex tx=0; tx<local_dim; ++tx)
+  for(localIndex tx=0; tx<LOCAL_DIM; ++tx)
     {
       IpR[tx][tx] = 1.0 + IpR[tx][tx];
       ImR[tx][tx] = 1.0 + ImR[tx][tx];
@@ -70,7 +70,7 @@ RAJA_INLINE void HughesWinget(T Rot[local_dim][local_dim], T Dadt[local_dim][loc
 
 ///Const update
 RAJA_HOST_DEVICE
-RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
+RAJA_INLINE void UpdateStatePoint(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
                                   localIndex m, localIndex q, globalIndex k, geosxData idevStressData,
                                   geosxData imeanStress,
                                   real64 shearModulus, real64 bulkModulus, localIndex noElem)
@@ -80,7 +80,7 @@ RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[loc
   //imeanStress(k,q) += volumeStrain * bulkModulus;
   imeanStress[m] += volumeStrain * bulkModulus;
   
-  real64 temp[local_dim][local_dim];
+  real64 temp[LOCAL_DIM][LOCAL_DIM];
   for(localIndex i=0; i<3; ++i)
     {
       for(localIndex j=0; j<3; ++j)
@@ -98,7 +98,7 @@ RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[loc
         }
     }
 
-  real64 localDevStress[local_dim][local_dim];
+  real64 localDevStress[LOCAL_DIM][LOCAL_DIM];
   idevStressData(k,q,0) += temp[0][0];
   idevStressData(k,q,1) += temp[1][0];
   idevStressData(k,q,2) += temp[1][1];
@@ -159,7 +159,7 @@ RAJA_INLINE void structuredElemToNodes(localIndex nodeList[8], localIndex k, loc
 //Setup function pointers for stateUpdate
 
 //Created a type 
-typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
+typedef void (*constUpdate)(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
                             localIndex m, localIndex q, globalIndex k, geosxData devStressData,
                             geosxData meanStress,
                             real64 shearModulus, real64 bulkModulus, localIndex NoElem);

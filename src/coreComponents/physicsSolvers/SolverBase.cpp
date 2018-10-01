@@ -18,6 +18,7 @@
 
 #include "SolverBase.hpp"
 #include "PhysicsSolverManager.hpp"
+#include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
@@ -171,6 +172,8 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        DomainPartition * const domain,
                                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
+
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain, blockSystem );
 
@@ -181,9 +184,11 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
   // call the default linear solver on the system
+  GEOSX_MARK_BEGIN(solveBlockSystem);
   SolveSystem( blockSystem,
                getSystemSolverParameters() );
-
+  GEOSX_MARK_END(solveBlockSystem);
+  
   // apply the system solution to the fields/variables
   ApplySystemSolution( blockSystem, 1.0, domain );
 
@@ -200,6 +205,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           DomainPartition * const domain,
                                           systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
@@ -410,6 +416,7 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
                               SystemSolverParameters const * const params,
                               systemSolverInterface::BlockIDs const blockID )
 {
+  GEOSX_MARK_FUNCTION;
   Epetra_FEVector * const
   solution = blockSystem->GetSolutionVector( blockID );
 
@@ -419,9 +426,11 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
   solution->Scale( 0.0 );
 
+  GEOSX_MARK_BEGIN(SolveSingleBlockSystem);
   m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
                                                 params,
                                                 blockID );
+  GEOSX_MARK_END(SolveSingleBlockSystem);
 
   if( verboseLevel() >= 2 )
   {

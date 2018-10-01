@@ -23,6 +23,7 @@
  *      Author: settgast
  */
 
+#include "common/TimingMacros.hpp"
 #include "CommunicationTools.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "NeighborCommunicator.hpp"
@@ -430,7 +431,7 @@ void CommunicationTools::SynchronizeFields( const std::map<string, string_array 
                                             MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors )
 {
-
+  GEOSX_MARK_FUNCTION;
   int commID = CommunicationTools::reserveCommID();
 
   for( auto & neighbor : neighbors )
