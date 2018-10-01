@@ -14,10 +14,10 @@ matrix:
 #    env:
 #    - IMG=gcc7
 #    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-  - compiler: clang4
-    env:
-    - IMG=clang4
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+#  - compiler: clang4
+#    env:
+#    - IMG=clang4
+#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
 #  - compiler: clang5
 #    env:
 #    - IMG=clang5
@@ -29,23 +29,23 @@ matrix:
   - compiler: gcc7-ubuntu18
     env:
     - IMG=gcc7-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - compiler: gcc8-ubuntu18
     env:
     - IMG=gcc8-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - compiler: clang5-ubuntu18
     env:
     - IMG=clang5-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - compiler: clang6-ubuntu18
     env:
     - IMG=clang6-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - compiler: clang5-centos
     env:
     - IMG=clang5-centos
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
     - PATHMOD="/opt/rh/llvm-toolset-7/root/usr/bin:/opt/rh/llvm-toolset-7/root/usr/sbin:/usr/lib64/openmpi/bin"
 
 script: 

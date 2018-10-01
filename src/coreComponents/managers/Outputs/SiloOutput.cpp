@@ -53,19 +53,20 @@ void SiloOutput::FillDocumentationNode()
   docNode->setShortDescription("Outputs SILO format files");
 
 
-//  docNode->AllocateChildNode( viewKeys.plotFileRoot.Key(),
-//                              viewKeys.plotFileRoot.Key(),
-//                              -1,
-//                              "string",
-//                              "string",
-//                              "root name of the plot file",
-//                              "root name of the plot file",
-//                              "plot",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-//
+
+  docNode->AllocateChildNode( siloOutputViewKeys.plotLevel.Key(),
+                              siloOutputViewKeys.plotLevel.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "output level",
+                              "output level",
+                              "1",
+                              "",
+                              0,
+                              1,
+                              0 );
+
 //  docNode->AllocateChildNode( viewKeys.writeFEMFaces.Key(),
 //                              viewKeys.writeFEMFaces.Key(),
 //                              -1,
@@ -94,6 +95,8 @@ void SiloOutput::Execute(real64 const& time_n,
   MPI_Barrier( MPI_COMM_GEOSX );
 
   integer numFiles = this->getReference<integer>( siloOutputViewKeys.parallelThreads);
+
+  silo.setPlotLevel( getReference<integer>( siloOutputViewKeys.plotLevel ) );
 
   silo.Initialize(PMPIO_WRITE , numFiles );
   silo.WaitForBatonWrite(rank, cycleNumber, eventCount, false );

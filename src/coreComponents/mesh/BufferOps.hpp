@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 
-class UnorderedVariableToManyElementRelation;
+class OrderedVariableToManyElementRelation;
 class FixedToManyElementRelation;
 class ElementRegionManager;
 
@@ -33,7 +33,7 @@ namespace bufferOps
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-                 UnorderedVariableToManyElementRelation const & var,
+                 OrderedVariableToManyElementRelation const & var,
                  array1d<localIndex> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
@@ -46,7 +46,7 @@ localIndex Pack( char*& buffer,
 
 
 localIndex Unpack( char const * & buffer,
-                   UnorderedVariableToManyElementRelation & var,
+                   OrderedVariableToManyElementRelation & var,
                    array1d<localIndex> const & packList,
                    ElementRegionManager const * const elementRegionManager );
 

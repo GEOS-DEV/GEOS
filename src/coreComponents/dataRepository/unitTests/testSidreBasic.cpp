@@ -16,7 +16,14 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#if __clang_major__ >= 5
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+
 #include <gtest/gtest.h>
+
+
 #include <mpi.h>
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
@@ -24,12 +31,14 @@
 #include "common/DataTypes.hpp"
 
 
+
 namespace geosx {
 namespace dataRepository {
 
 #ifdef GEOSX_USE_ATK
-TEST(testSidreBasic, testSidreBasic) {
-  MPI_Init(0, nullptr);
+TEST(testSidreBasic, testSidreBasic)
+{
+  MPI_Init(nullptr, nullptr);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_basic";
   const string protocol = "sidre_hdf5";
@@ -118,3 +127,7 @@ int main(int argc, char* argv[]) {
 
 } /* end namespace dataRepository */
 } /* end namespace goesx */
+
+#if __clang_major__ >= 5
+#pragma clang diagnostic pop
+#endif

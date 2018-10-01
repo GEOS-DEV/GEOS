@@ -70,13 +70,12 @@ public:
 
   SolverBase() = default;
   SolverBase( SolverBase const & ) = default;
-  SolverBase( SolverBase &&) = default;
+  SolverBase( SolverBase && ) = default;
   SolverBase& operator=( SolverBase const & ) = default;
   SolverBase& operator=( SolverBase&& ) = default;
 
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
-
 
 
 
@@ -108,9 +107,9 @@ public:
    * method is determined in this function, and the appropriate step function is called.
    */
   virtual real64 SolverStep( real64 const & time_n,
-                         real64 const & dt,
-                         int const cycleNumber,
-                         DomainPartition * domain );
+                             real64 const & dt,
+                             int const cycleNumber,
+                             DomainPartition * domain );
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -158,11 +157,11 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in systemSolverParameters member.
    */
-  virtual real64 LinearImplicitStep(real64 const & time_n,
-                                    real64 const & dt,
-                                    integer const cycleNumber,
-                                    DomainPartition * const domain,
-                                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  virtual real64 LinearImplicitStep( real64 const & time_n,
+                                     real64 const & dt,
+                                     integer const cycleNumber,
+                                     DomainPartition * const domain,
+                                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -179,7 +178,7 @@ public:
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
                                   DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -330,7 +329,7 @@ public:
 
   struct groupKeyStruct
   {
-    constexpr static auto systemSolverParametersString = "SystemSolverParameters" ;
+    constexpr static auto systemSolverParametersString = "SystemSolverParameters";
     dataRepository::GroupKey systemSolverParameters = { systemSolverParametersString };
   } groupKeys;
 

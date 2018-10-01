@@ -204,7 +204,7 @@ void EventBase::GetTargetReferences()
   {
     ManagedGroup * tmp = this->GetGroupByPath(eventTarget);
     m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
-    GEOS_ASSERT( m_target != nullptr, "The target of an event must be executable!");
+    GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
