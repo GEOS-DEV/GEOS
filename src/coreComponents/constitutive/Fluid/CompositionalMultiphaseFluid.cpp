@@ -57,10 +57,10 @@ static std::unordered_map<string, EOS_TYPE> const eosNameDict =
 #endif
 }
 
-CompositionalMultiphaseFluid::CompositionalMultiphaseFluid(std::string const & name, ManagedGroup * const parent)
-  : ConstitutiveBase(name, parent),
-    m_useMassFractions(false),
-    m_fluid(nullptr)
+CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
+  : ConstitutiveBase( name, parent ),
+    m_useMassFractions( false) ,
+    m_fluid( nullptr )
 {
   RegisterViewWrapper( viewKeys.phases.Key(), &m_phases, false );
   RegisterViewWrapper( viewKeys.equationsOfState.Key(), &m_equationsOfState, false );
@@ -89,10 +89,10 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid(std::string const & n
   RegisterViewWrapper( viewKeys.dPhaseDensity_dTemperature.Key(), &m_dPhaseDensity_dTemperature, false );
   RegisterViewWrapper( viewKeys.dPhaseDensity_dGlobalCompMoleFraction.Key(), &m_dPhaseDensity_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeys.phaseComponentMassFraction.Key(), &m_phaseCompFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompMassFraction_dPressure.Key(), &m_dPhaseCompFraction_dPressure, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompMassFraction_dTemperature.Key(), &m_dPhaseCompFraction_dTemperature, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompMassFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseCompFraction_dGlobalCompFraction, false );
+  RegisterViewWrapper( viewKeys.phaseCompFraction.Key(), &m_phaseCompFraction, false );
+  RegisterViewWrapper( viewKeys.dPhaseCompFraction_dPressure.Key(), &m_dPhaseCompFraction_dPressure, false );
+  RegisterViewWrapper( viewKeys.dPhaseCompFraction_dTemperature.Key(), &m_dPhaseCompFraction_dTemperature, false );
+  RegisterViewWrapper( viewKeys.dPhaseCompFraction_dGlobalCompFraction.Key(), &m_dPhaseCompFraction_dGlobalCompFraction, false );
 }
 
 CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
@@ -101,7 +101,7 @@ CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 }
 
 std::unique_ptr<ConstitutiveBase>
-CompositionalMultiphaseFluid::DeliverClone(string const & name, ManagedGroup * const parent) const
+CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
 {
   auto clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
 
@@ -123,8 +123,8 @@ CompositionalMultiphaseFluid::DeliverClone(string const & name, ManagedGroup * c
   return clone;
 }
 
-void CompositionalMultiphaseFluid::AllocateConstitutiveData(dataRepository::ManagedGroup * const parent,
-                                                            localIndex const numPts)
+void CompositionalMultiphaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                                             localIndex const numPts )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numPts );
 

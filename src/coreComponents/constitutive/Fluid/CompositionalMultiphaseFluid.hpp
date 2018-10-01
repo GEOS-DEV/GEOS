@@ -134,25 +134,25 @@ public:
     ViewKey componentVolumeShift         = { componentVolumeShiftString };
     ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
 
-    ViewKey phaseMoleFraction                              = { phaseMoleFractionString };                              // xi_p
-    ViewKey dPhaseMoleFraction_dPressure                   = { dPhaseMoleFraction_dPressureString };                   // dXi_p/dP
-    ViewKey dPhaseMoleFraction_dTemperature                = { dPhaseMoleFraction_dTemperatureString };                // dXi_p/dT
-    ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction     = { dPhaseMoleFraction_dGlobalCompFractionString };     // dXi_p/dz_c
+    ViewKey phaseMoleFraction                            = { phaseMoleFractionString };                        // xi_p
+    ViewKey dPhaseMoleFraction_dPressure                 = { dPhaseMoleFraction_dPressureString };             // dXi_p/dP
+    ViewKey dPhaseMoleFraction_dTemperature              = { dPhaseMoleFraction_dTemperatureString };          // dXi_p/dT
+    ViewKey dPhaseMoleFraction_dGlobalCompMoleFraction   = { dPhaseMoleFraction_dGlobalCompFractionString };   // dXi_p/dz_c
 
-    ViewKey phaseVolumeFraction                            = { phaseVolumeFractionString };                            // S_p
-    ViewKey dPhaseVolumeFraction_dPressure                 = { dPhaseVolumeFraction_dPressureString };                 // dS_p/dP
-    ViewKey dPhaseVolumeFraction_dTemperature              = { dPhaseVolumeFraction_dTemperatureString };              // dS_p/dT
-    ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction   = { dPhaseVolumeFraction_dGlobalCompFractionString };   // dS_p/dz_c
+    ViewKey phaseVolumeFraction                          = { phaseVolumeFractionString };                      // S_p
+    ViewKey dPhaseVolumeFraction_dPressure               = { dPhaseVolumeFraction_dPressureString };           // dS_p/dP
+    ViewKey dPhaseVolumeFraction_dTemperature            = { dPhaseVolumeFraction_dTemperatureString };        // dS_p/dT
+    ViewKey dPhaseVolumeFraction_dGlobalCompMoleFraction = { dPhaseVolumeFraction_dGlobalCompFractionString }; // dS_p/dz_c
 
-    ViewKey phaseDensity                                   = { phaseDensityString };                                   // rho_p
-    ViewKey dPhaseDensity_dPressure                        = { dPhaseDensity_dPressureString };                        // dRho_p/dP
-    ViewKey dPhaseDensity_dTemperature                     = { dPhaseDensity_dTemperatureString };                     // dRho_p/dT
-    ViewKey dPhaseDensity_dGlobalCompMoleFraction          = { dPhaseDensity_dGlobalCompFractionString };          // dRho_p/dz_c
+    ViewKey phaseDensity                                 = { phaseDensityString };                             // rho_p
+    ViewKey dPhaseDensity_dPressure                      = { dPhaseDensity_dPressureString };                  // dRho_p/dP
+    ViewKey dPhaseDensity_dTemperature                   = { dPhaseDensity_dTemperatureString };               // dRho_p/dT
+    ViewKey dPhaseDensity_dGlobalCompMoleFraction        = { dPhaseDensity_dGlobalCompFractionString };        // dRho_p/dz_c
 
-    ViewKey phaseComponentMassFraction                     = { phaseComponentFractionString };                     // x_cp
-    ViewKey dPhaseCompMassFraction_dPressure               = { dPhaseCompFraction_dPressureString };               // dx_cp/dP
-    ViewKey dPhaseCompMassFraction_dTemperature            = { dPhaseCompFraction_dTemperatureString };            // dx_cp/dT
-    ViewKey dPhaseCompMassFraction_dGlobalCompMoleFraction = { dPhaseCompFraction_dGlobalCompFractionString }; // dx_cp/dz_c
+    ViewKey phaseCompFraction                            = { phaseComponentFractionString };                   // x_cp
+    ViewKey dPhaseCompFraction_dPressure                 = { dPhaseCompFraction_dPressureString };             // dx_cp/dP
+    ViewKey dPhaseCompFraction_dTemperature              = { dPhaseCompFraction_dTemperatureString };          // dx_cp/dT
+    ViewKey dPhaseCompFraction_dGlobalCompFraction       = { dPhaseCompFraction_dGlobalCompFractionString };   // dx_cp/dz_c
 
   } viewKeys;
 
