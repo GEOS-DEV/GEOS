@@ -31,8 +31,8 @@ SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
   ExecutableGroup( name, parent ),
   m_linearSolverWrapper(),
-  m_verboseLevel(0),
-  m_gravityVector( R1Tensor(0.0) ),
+  m_verboseLevel( 0 ),
+  m_gravityVector( R1Tensor( 0.0 ) ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )//,
 //  m_blockLocalDofNumber()
 {
@@ -71,10 +71,10 @@ void SolverBase::FillDocumentationNode()
 
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName(this->CatalogName());    // If this method lived in Managed
-                                            // groups, this could be done
-                                            // automatically
-  docNode->setSchemaType("Node");
+  docNode->setName( this->CatalogName());    // If this method lived in Managed
+                                             // groups, this could be done
+                                             // automatically
+  docNode->setSchemaType( "Node" );
 
   docNode->AllocateChildNode( keys::courant,
                               keys::courant,
@@ -162,9 +162,9 @@ void SolverBase::Execute( real64 const& time_n,
                           const integer eventCount,
                           ManagedGroup * domain )
 {
-  if ( dt > 0 )
+  if( dt > 0 )
   {
-    SolverStep(time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
   }
 }
 
@@ -192,17 +192,17 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   ApplySystemSolution( blockSystem, 1.0, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dt,  domain );
+  ImplicitStepComplete( time_n, dt, domain );
 
   // return the achieved timestep
   return dt;
 }
 
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
-                                           real64 const & dt,
-                                           integer const cycleNumber,
-                                           DomainPartition * const domain,
-                                           systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                          real64 const & dt,
+                                          integer const cycleNumber,
+                                          DomainPartition * const domain,
+                                          systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
@@ -237,9 +237,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
 
       // get residual norm
-      real64 residualNorm = CalculateResidualNorm(blockSystem, domain);
+      real64 residualNorm = CalculateResidualNorm( blockSystem, domain );
 
-      if (m_verboseLevel >= 1)
+      if( m_verboseLevel >= 1 )
       {
         std::cout << "Attempt: " << dtAttempt  << ", Newton: " << k
                   << ", R = " << residualNorm << std::endl;
@@ -281,9 +281,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
 
           // get residual norm
-          residualNorm = CalculateResidualNorm(blockSystem, domain);
+          residualNorm = CalculateResidualNorm( blockSystem, domain );
 
-          if (m_verboseLevel >= 1)
+          if( m_verboseLevel >= 1 )
           {
             std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
                       << ", Line search: " << lineSearchIteration + 1
@@ -334,7 +334,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   }
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, stepDt,  domain );
+  ImplicitStepComplete( time_n, stepDt, domain );
 
   // return the achieved timestep
   return stepDt;
@@ -342,20 +342,20 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
 
 real64 SolverBase::ExplicitStep( real64 const & time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition * const domain )
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 DomainPartition * const domain )
 {
-  GEOS_ERROR( "SolverBase::ExplicitStep called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::ExplicitStep called!. Should be overridden." );
   return 0;
 }
 
 void SolverBase::ImplicitStepSetup( real64 const& time_n,
-                        real64 const& dt,
-                        DomainPartition * const domain,
-                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                    real64 const& dt,
+                                    DomainPartition * const domain,
+                                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
-  GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
 
 void SolverBase::AssembleSystem( DomainPartition * const domain,
@@ -363,7 +363,7 @@ void SolverBase::AssembleSystem( DomainPartition * const domain,
                                  real64 const time,
                                  real64 const dt )
 {
-  GEOS_ERROR( "SolverBase::Assemble called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::Assemble called!. Should be overridden." );
 }
 
 
@@ -372,7 +372,7 @@ void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
                                           real64 const time,
                                           real64 const dt )
 {
-  GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden." );
 }
 
 real64
@@ -380,33 +380,33 @@ SolverBase::
 CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
                        DomainPartition * const domain )
 {
-  GEOS_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden." );
   return 0;
 }
 
 void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                               SystemSolverParameters const * const params )
 {
-  GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden." );
 }
 
 void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                                       real64 const scalingFactor,
-                                      DomainPartition * const  )
+                                      DomainPartition * const )
 {
-  GEOS_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden." );
 }
 
-void SolverBase::ResetStateToBeginningOfStep( DomainPartition * const  )
+void SolverBase::ResetStateToBeginningOfStep( DomainPartition * const )
 {
-  GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }
 
 void SolverBase::ImplicitStepComplete( real64 const & time,
-                           real64 const & dt,
-                           DomainPartition * const domain )
+                                       real64 const & dt,
+                                       DomainPartition * const domain )
 {
-  GEOS_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
 
@@ -419,17 +419,17 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
   Epetra_FEVector * const
   residual = blockSystem->GetResidualVector( blockID );
-  residual->Scale(-1.0);
+  residual->Scale( -1.0 );
 
-  solution->Scale(0.0);
+  solution->Scale( 0.0 );
 
   m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
-                                                 params,
-                                                 blockID );
+                                                params,
+                                                blockID );
 
   if( verboseLevel() >= 2 )
   {
-    solution->Print(std::cout);
+    solution->Print( std::cout );
   }
 
 }

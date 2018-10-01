@@ -32,7 +32,47 @@ namespace geosx
 {
 
 
+void erase( OrderedVariableToManyElementRelation & relation,
+            localIndex const firstIndex,
+            localIndex const er,
+            localIndex const esr,
+            localIndex const ei )
+{
+  for( localIndex a=relation.m_toElementRegion[firstIndex].size()-1 ; a>=0 ; --a )
+  {
+    if( er==relation.m_toElementRegion[firstIndex][a] &&
+        esr==relation.m_toElementSubRegion[firstIndex][a] &&
+        ei==relation.m_toElementIndex[firstIndex][a] )
+    {
+      relation.m_toElementRegion[firstIndex].erase( relation.m_toElementRegion[firstIndex].begin() + a);
+      relation.m_toElementSubRegion[firstIndex].erase( relation.m_toElementSubRegion[firstIndex].begin() + a);
+      relation.m_toElementIndex[firstIndex].erase( relation.m_toElementIndex[firstIndex].begin() + a);
+    }
+  }
+}
 
-
+void insert( OrderedVariableToManyElementRelation & relation,
+             localIndex const firstIndex,
+             localIndex const er,
+             localIndex const esr,
+             localIndex const ei )
+{
+  bool alreadyPresent = false;
+  for( localIndex a=0 ; a<relation.m_toElementRegion[firstIndex].size() ; ++a )
+  {
+    if( er==relation.m_toElementRegion[firstIndex][a] &&
+        esr==relation.m_toElementSubRegion[firstIndex][a] &&
+        ei==relation.m_toElementIndex[firstIndex][a] )
+    {
+      alreadyPresent = true;
+    }
+  }
+  if( !alreadyPresent )
+  {
+    relation.m_toElementRegion[firstIndex].push_back( er );
+    relation.m_toElementSubRegion[firstIndex].push_back( esr );
+    relation.m_toElementIndex[firstIndex].push_back( ei );
+  }
+}
 
 } /* namespace geosx */

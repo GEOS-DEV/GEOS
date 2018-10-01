@@ -478,7 +478,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                 &gather.front(),
                                                 1 );
 
-  GEOS_ASSERT( numLocalRows == numLocalRowsToSend, "number of local rows inconsistent" );
+  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
 
   // find the first local row on this partition, and find the number of total global rows.
   localIndex firstLocalRow = 0;
@@ -517,7 +517,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
     }
   });
 
-  GEOS_ASSERT(localCount == numLocalRows, "Number of DOF assigned does not match numLocalRows" );
+  GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
 
 void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
@@ -1138,7 +1138,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   // temporary working arrays
   real64 densWeight[numElems] = { 0.5, 0.5 };
-  real64 mobility[numElems], dMobility_dP[numElems];
+  real64 mobility[numElems] = {0.0,0.0};
+  real64 dMobility_dP[numElems] = {0.0,0.0};
   real64_array dDensMean_dP, dFlux_dP;
 
 
@@ -1175,7 +1176,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       // calculate quantities on primary connected points
       real64 densMean = 0.0;
       globalIndex eqnRowIndex = -1;
-      localIndex cell_order;
+      localIndex cell_order = -1;
       stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
       {
         real64 density = 0, dDens_dP = 0;

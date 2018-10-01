@@ -605,7 +605,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
       {
         FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
 
-        GEOS_ASSERT( function != nullptr, "Function '" << functionName << "' not found" );
+        GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
         if( function->isFunctionOfTime()==2 )
         {
@@ -801,7 +801,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   {
     FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
 
-    GEOS_ASSERT( function != nullptr, "Function '" << functionName << "' not found" );
+    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {

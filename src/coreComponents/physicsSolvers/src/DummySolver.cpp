@@ -51,8 +51,8 @@ void DummySolver::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Dummy solver for testing time-stepping behavior");
 
-  docNode->AllocateChildNode( viewKeys.rand_scale.Key(),
-                              viewKeys.rand_scale.Key(),
+  docNode->AllocateChildNode( dummyViewKeys.rand_scale.Key(),
+                              dummyViewKeys.rand_scale.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -94,7 +94,7 @@ real64 DummySolver::GetTimestepRequest(real64 const time)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
 
-  real64 const rand_scale = this->getReference<real64>(viewKeys.rand_scale);
+  real64 const rand_scale = this->getReference<real64>(dummyViewKeys.rand_scale);
   real64 dt_request = std::rand() * rand_scale;
 
   std::cout << "time=" << time << ", solver=" << this->getName() << ", rank=" << rank << ", dt_r=" << dt_request << std::endl;

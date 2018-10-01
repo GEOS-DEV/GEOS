@@ -24,6 +24,8 @@
 # uses default intel compiler
 ##################################
 
+set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE PATH "" FORCE)
+
 # c compiler used by spack
 set(CMAKE_CXX_COMPILER "CC" CACHE PATH "")
 set(CMAKE_C_COMPILER "cc" CACHE PATH "")
