@@ -208,7 +208,41 @@ private:
                                      globalIndex & numGlobalRows,
                                      localIndex offset );
 
+  /**
+   * @brief assembles the accumulation terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleAccumulationTerms( DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                  real64 const time_n,
+                                  real64 const dt );
 
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleFluxTerms( DomainPartition * const domain,
+                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                          real64 const time_n,
+                          real64 const dt );
+
+  /**
+   * @brief assembles the volume balance terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleVolumeBalanceTerms( DomainPartition * const domain,
+                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                   real64 const time_n,
+                                   real64 const dt );
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
