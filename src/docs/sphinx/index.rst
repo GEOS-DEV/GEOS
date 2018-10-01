@@ -17,6 +17,8 @@ GEOSX is a simulation platform focused on providing streamlined development of H
 
    caliper_link
 
+   event_link
+
 Indices and tables
 ==================
 
