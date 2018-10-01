@@ -24,6 +24,7 @@
 
 #include "ArrayView.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -955,6 +956,9 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
                                                                    dPVMult_dPresString,
                                                                    constitutiveManager );
 
+  auto dCompMassFrac_dCompDens =
+    elemManager->ConstructViewAccessor<array3d<real64>>( viewKeysCompMultiphaseFlow.dGlobalCompMassFraction_dGlobalCompDensity.Key() );
+
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
@@ -971,6 +975,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
 
   // temporary work arrays
   array1d<real64> dPhaseMass_dC( NC );
+  array1d<real64> work( NC );
 
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
@@ -998,6 +1003,8 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
       arrayView4d<real64 const> const phaseCompMassFracSub = phaseCompMassFrac[er][esr][m_fluidIndex].get();
       arrayView4d<real64 const> const dPhaseCompMassFrac_dPresSub = dPhaseCompMassFrac_dPres[er][esr][m_fluidIndex].get();
       arrayView5d<real64 const> const dPhaseCompMassFrac_dCompSub = dPhaseCompMassFrac_dComp[er][esr][m_fluidIndex].get();
+
+      arrayView3d<real64 const> const dCompMassFrac_dCompDensSub = dCompMassFrac_dCompDens[er][esr].get();
 
       for (localIndex ei = 0; ei < cellBlockSubRegion->size(); ++ei)
       {
@@ -1068,8 +1075,12 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
             }
           }
 
+          // apply chain rule to update derivatives w.r.t. global density
+          for (localIndex ic = 0; ic < NC; ++ic)
+          {
+            applyChainRuleInPlace(NC, dCompMassFrac_dCompDensSub[ei], &localAccumJacobian[ic][1], work);
+          }
 
-          // TODO: apply chain rule to update derivatives w.r.t. global density
           // TODO: apply equation/variable change transformation(s)
 
           // add contribution to global residual and dRdP
@@ -1175,6 +1186,9 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
                                                                    dPhaseCompFraction_dGlobalCompFractionString,
                                                                    constitutiveManager );
 
+  auto dCompMassFrac_dCompDens =
+    elemManager->ConstructViewAccessor<array3d<real64>>( viewKeysCompMultiphaseFlow.dGlobalCompMassFraction_dGlobalCompDensity.Key() );
+
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
@@ -1193,6 +1207,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
 
   array1d<real64> compFlux( NC );
   array1d<real64> dRelPerm_dC( NC );
+  array1d<real64> work( NC );
 
   array1d<real64> mobility( numElems );
   array1d<real64> dMobility_dP( numElems );
@@ -1397,19 +1412,27 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
       for (localIndex ke = 0; ke < stencilSize; ++ke)
       {
         localIndex const localDofIndexPres = ke * NDOF;
-        localFluxJacobian[ic][localDofIndexPres]      =  dt * dCompFlux_dP[ke][ic];
+        localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
         localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
 
         for (localIndex jc = 0; jc < NC; ++jc)
         {
           localIndex const localDofIndexComp = ke * NDOF + jc + 1;
-          localFluxJacobian[ic][localDofIndexComp]      =  dt * dCompFlux_dC[ke][ic][jc];
+          localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
           localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
         }
+
+        CellDescriptor cd = stencil.stencilIndex( ke );
+        localIndex const er  = cd.region;
+        localIndex const esr = cd.subRegion;
+        localIndex const ei  = cd.index;
+
+        // apply chain rule to update derivatives w.r.t. global density
+        applyChainRuleInPlace(NC, dCompMassFrac_dCompDens[er][esr][ei], &localFluxJacobian[ic][localDofIndexPres + 1], work);
+        applyChainRuleInPlace(NC, dCompMassFrac_dCompDens[er][esr][ei], &localFluxJacobian[NC + ic][localDofIndexPres + 1], work);
       }
     }
 
-    // TODO: apply chain rule to update derivatives w.r.t. global density
     // TODO: apply equation/variable change transformation(s)
 
     // Add to global residual/jacobian
@@ -1489,6 +1512,9 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
                                                                    dPVMult_dPresString,
                                                                    constitutiveManager );
 
+  auto dCompMassFrac_dCompDens =
+    elemManager->ConstructViewAccessor<array3d<real64>>( viewKeysCompMultiphaseFlow.dGlobalCompMassFraction_dGlobalCompDensity.Key() );
+
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
@@ -1496,6 +1522,9 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
   // using Epetra types
   array1d<long long> localVolBalanceDOF( NDOF );
   array1d<double> localVolBalanceJacobian( NDOF );
+
+  // temporary work arrays
+  array1d<real64> work( NC );
 
   //***** Loop over all elements and assemble the change in volume/density terms *****
 //  forAllElemsInMesh( mesh, [=] ( localIndex const er,
@@ -1518,6 +1547,8 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
       arrayView3d<real64 const> const phaseVolFracSub = phaseVolFrac[er][esr][m_fluidIndex].get();
       arrayView3d<real64 const> const dPhaseVolFrac_dPresSub = dPhaseVolFrac_dPres[er][esr][m_fluidIndex].get();
       arrayView4d<real64 const> const dPhaseVolFrac_dCompSub = dPhaseVolFrac_dComp[er][esr][m_fluidIndex].get();
+
+      arrayView3d<real64 const> const dCompMassFrac_dCompDensSub = dCompMassFrac_dCompDens[er][esr].get();
 
       for (localIndex ei = 0; ei < cellBlockSubRegion->size(); ++ei)
       {
@@ -1564,7 +1595,9 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
           localVolBalance *= poreVol;
 
 
-          // TODO: apply chain rule to update derivatives w.r.t. global density
+          // apply chain rule to update derivatives w.r.t. global density
+          applyChainRuleInPlace(NC, dCompMassFrac_dCompDensSub[ei], &localVolBalanceJacobian[1], work);
+
           // TODO: apply equation/variable change transformation(s)
 
           // add contribution to global residual and dRdP

@@ -803,6 +803,37 @@ T_VALUE softMapLookup( map<T_KEY,T_VALUE> const & theMap,
   return rvalue;
 }
 
+// The code below should work with any subscriptable vector type, including 'array_view1d' and 'double *'
+// (so regardless of whether GEOSX_USE_ARRAY_BOUNDS_CHECK is defined)
+
+template<typename VEC1, typename VEC2>
+inline void copy( localIndex N, VEC1 && v1, VEC2 && v2 )
+{
+  for (localIndex i = 0; i < N; ++i)
+    v2[i] = v1[i];
+}
+
+template<typename MATRIX, typename VEC1, typename VEC2>
+inline void applyChainRule(localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 && df_dx)
+{
+  // this could use some dense linear algebra
+  for (localIndex i = 0; i < N; ++i)
+  {
+    df_dx[i] = 0.0;
+    for (localIndex j = 0; j < N; ++j)
+    {
+      df_dx[i] += df_dy[j] * dy_dx[i][j];
+    }
+  }
+}
+
+template<typename MATRIX, typename VEC1, typename VEC2>
+inline void applyChainRuleInPlace(localIndex N, MATRIX && dy_dx, VEC1 && df_dxy, VEC2 && work )
+{
+  applyChainRule( N, dy_dx, df_dxy, work );
+  copy( N, work, df_dxy );
+}
+
 }
 
 #endif /* UTILITIES_H_ */
