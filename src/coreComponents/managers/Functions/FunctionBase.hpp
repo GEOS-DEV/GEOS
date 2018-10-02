@@ -33,7 +33,6 @@ namespace dataRepository
 namespace keys
 {
 string const inputVarNames("inputVarNames");
-string const inputVarTypes("inputVarTypes");
 
 }
 }
@@ -124,14 +123,12 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   real64 const * input_ptrs[4];
 
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  string_array const & inputVarTypes = this->getReference<string_array>( dataRepository::keys::inputVarTypes );
-
+  
   localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
   localIndex varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];
-    string const & varTypeName = inputVarTypes[varIndex];
 
     if( varName=="time")
     {
