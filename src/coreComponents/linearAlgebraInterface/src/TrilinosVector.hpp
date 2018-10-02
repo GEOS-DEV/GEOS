@@ -198,9 +198,14 @@ public:
   trilinosTypes::gid globalSize() const;
 
   /**
-   * @brief Returns the local of the vector.
+   * @brief Returns the local size of the vector.
    */
   trilinosTypes::lid localSize() const;
+
+  /**
+   * @brief Returns element i of the vector.
+   */
+  real64 getElement(trilinosTypes::gid i) const;
 
   /**
    * @brief Returns a const pointer to the underlying Epetra_Vector.
