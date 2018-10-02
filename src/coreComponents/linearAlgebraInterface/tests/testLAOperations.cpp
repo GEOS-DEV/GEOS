@@ -41,8 +41,8 @@
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
 #include "BlockMatrixView.hpp"
-#include "CGsolver.hpp"
-#include "BiCGSTABsolver.hpp"
+#include "../src/solver_CG.hpp"
+#include "../src/solver_BiCGSTAB.hpp"
 
 #include "common/DataTypes.hpp"
 

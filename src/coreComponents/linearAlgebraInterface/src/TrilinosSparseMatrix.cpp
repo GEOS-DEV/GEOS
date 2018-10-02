@@ -29,7 +29,7 @@
 // functions and accessors for Epetra objects.
 
 // Include the corresponding header file.
-#include "EpetraSparseMatrix.hpp"
+#include "TrilinosSparseMatrix.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx

@@ -23,9 +23,9 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 
-#include "EpetraSparseMatrix.hpp"
-#include "EpetraVector.hpp"
 #include "TrilinosSolver.hpp"
+#include "TrilinosSparseMatrix.hpp"
+#include "TrilinosVector.hpp"
 
 namespace geosx
 {
