@@ -84,7 +84,7 @@ The event manager will also test to see if a given target is expected to execute
 
 
 
-Event Superstepping and Substepping Behavior
+Event Sub/Super Stepping Behavior
 =============================================
 
 If the ``allowSuperstep`` attribute of an event is set, when its criteria are met, it will execute its target with ``time = lastTime`` and ``dt = dt + time - lastTime`` instead of their typical values.
