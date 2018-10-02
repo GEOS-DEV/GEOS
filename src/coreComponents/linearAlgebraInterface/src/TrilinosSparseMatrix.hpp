@@ -27,7 +27,6 @@
 #ifndef EPETRASPARSEMATRIX_HPP_
 #define EPETRASPARSEMATRIX_HPP_
 
-#include "EpetraVector.hpp"
 #include "InterfaceTypes.hpp"
 #include <Epetra_Comm.h>
 #include <Epetra_MpiComm.h>
@@ -36,6 +35,7 @@
 #include <Epetra_CrsMatrix.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include "common/DataTypes.hpp"
+#include "TrilinosVector.hpp"
 
 namespace geosx
 {

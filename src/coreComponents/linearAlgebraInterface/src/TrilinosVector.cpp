@@ -32,7 +32,7 @@
 // functions and accessors for Epetra objects.
 
 // Include the corresponding header file.
-#include "EpetraVector.hpp"
+#include "TrilinosVector.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx

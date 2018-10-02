@@ -26,12 +26,12 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSSOLVER_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSSOLVER_HPP_
 
-#include "EpetraSparseMatrix.hpp"
-#include "EpetraVector.hpp"
 #include <AztecOO.h>
 #include <Amesos.h>
 #include "ml_MultiLevelPreconditioner.h"
 #include "ml_epetra_utils.h"
+#include "TrilinosSparseMatrix.hpp"
+#include "TrilinosVector.hpp"
 
 namespace geosx
 {
