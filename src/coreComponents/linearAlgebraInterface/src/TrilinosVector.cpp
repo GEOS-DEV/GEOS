@@ -209,6 +209,16 @@ void EpetraVector::print() const
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get element
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get element i
+real64 EpetraVector::getElement(trilinosTypes::gid i) const
+{
+  real64 * temp = m_vector->Values();
+  return temp[i];
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get pointer (const)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get const pointer

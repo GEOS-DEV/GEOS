@@ -271,34 +271,52 @@ void testNativeSolvers()
   if (rank == 0)
   {
     // Check number of values per row
-    EXPECT_TRUE( numValRow0 == 3 );
-    EXPECT_TRUE( numValRow1 == 4 );
-    EXPECT_TRUE( numValRown == 5 );
+    EXPECT_DOUBLE_EQ( numValRow0, 3 );
+    EXPECT_DOUBLE_EQ( numValRow1, 4 );
+    EXPECT_DOUBLE_EQ( numValRown, 5 );
 
     // Check column indices for row 0
-    EXPECT_TRUE( vecIndicesRow0[0] == 0 );
-    EXPECT_TRUE( vecIndicesRow0[1] == 1 );
-    EXPECT_TRUE( vecIndicesRow0[2] == n );
+    EXPECT_DOUBLE_EQ( vecIndicesRow0[0], 0 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow0[1], 1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow0[2], n );
 
     // Check column indices for row 1
-    EXPECT_TRUE( vecIndicesRow1[0] == 0 );
-    EXPECT_TRUE( vecIndicesRow1[1] == 1 );
-    EXPECT_TRUE( vecIndicesRow1[2] == 2 );
-    EXPECT_TRUE( vecIndicesRow1[3] == n+1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[0], 0 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[1], 1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[2], 2 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[3], n+1 );
 
     // Check column indices for row n
-    EXPECT_TRUE( vecIndicesRown[0] == 0 );
-    EXPECT_TRUE( vecIndicesRown[1] == n-1 );
-    EXPECT_TRUE( vecIndicesRown[2] == n );
-    EXPECT_TRUE( vecIndicesRown[3] == n+1 );
-    EXPECT_TRUE( vecIndicesRown[4] == 2*n );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[0], 0 );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[1], n-1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[2], n );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[3], n+1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[4], 2*n );
+
+    // Check values for row 0
+    EXPECT_DOUBLE_EQ( vecValuesRow0[0], 4. );
+    EXPECT_DOUBLE_EQ( vecValuesRow0[1], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRow0[2], -1. );
+
+    // Check values for row 1
+    EXPECT_DOUBLE_EQ( vecValuesRow1[0], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRow1[1], 4. );
+    EXPECT_DOUBLE_EQ( vecValuesRow1[2], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRow1[3], -1. );
+
+    // Check values for row n
+    EXPECT_DOUBLE_EQ( vecValuesRown[0], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[1], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[2], 4. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[3], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[4], -1. );
   }
 
   // We now test the linear algebra operations, such as matrix-vector product and
   // compute residuals.
 
   // For that we first fill some standard vectors
-  std::vector<real64> ones, zer, random;
+  std::vector<real64> ones, zer, random, random2;
   for (integer j = 0; j < N; j++)
   {
     // Vector of zeros
@@ -307,19 +325,27 @@ void testNativeSolvers()
     ones.push_back( 1 );
     // Vector of random integers
     random.push_back( rand() % 20 - 10 );
+    // Vector of random integers (different range to make sure the two random vectors
+    // are not the same, which would defeat the purpose).
+    random2.push_back( rand() % 30 - 15 );
   }
 
   // Define x, b and x0 guess vectors
   ParallelVector x, b, x0;
 
-  // Right hand side for multiplication (b)
-  b.create( zer );
+  // Place holder for b (will be recomputed a few lines down). We do use the vector to test
+  // the linear algebra operations
+  b.create( ones );
 
-  // Vector of ones for multiplication (x)
-  x.create( ones );
+  // Random vector for x (the true solution of Ax = b).
+  x.create( random );
 
-  // Random vector for the initial guess (x0)
-  x0.create( random );
+  // Get the inf-norm of the true solution (x).
+  real64 norm2x;
+  x.norm2( norm2x );
+
+  // Random vector for the initial guess x0
+  x0.create( random2 );
 
   // Fill initial guess for the direct solver
   ParallelVector solDirect( x0 );
@@ -330,34 +356,35 @@ void testNativeSolvers()
   // Residual vector (vector of zeros)
   ParallelVector r( b );
 
-  // Compute the matrix/vector multiplication.
-  testMatrix.multiply( x, b );
-
   // Test dot product
   real64 dotTest;
-  x.dot( x, dotTest );
-  EXPECT_TRUE( std::fabs( dotTest - N ) <= 1e-6 );
+  b.dot( b, dotTest );
+  EXPECT_DOUBLE_EQ( dotTest, N );
 
   // Test 1-norm
   real64 norm1;
-  x.norm1( norm1 );
+  b.norm1( norm1 );
   // The 1-norm should be equal to N
-  EXPECT_TRUE( std::fabs( norm1 - N ) <= 1e-6 );
+  EXPECT_DOUBLE_EQ( norm1, N );
 
   // Test 2-norm
   real64 norm2;
-  x.norm2( norm2 );
+  b.norm2( norm2 );
   // The 2-norm should be equal to n
-  EXPECT_TRUE( std::fabs( norm2 - n ) <= 1e-6 );
+  EXPECT_DOUBLE_EQ( norm2, n );
 
   // Test inf-norm
   real64 norminf;
-  x.normInf( norminf );
+  b.normInf( norminf );
 
   // The inf-norm should be equal to 1
-  EXPECT_TRUE( std::fabs( norminf - 1 ) <= 1e-6 );
+  EXPECT_DOUBLE_EQ( norminf, 1. );
 
-  // Test residual function by computing r = b - Ax.
+  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
+  // back from the solvers.
+  testMatrix.multiply( x, b );
+
+  // First we test the residual function by computing r = b - Ax.
   testMatrix.residual( x, b, r );
 
   // Compute the norm of the residual
@@ -365,7 +392,7 @@ void testNativeSolvers()
   r.normInf( normRes );
 
   // The inf-norm should be equal to 0 (all elements are 0 in exact algebra).
-  EXPECT_TRUE( std::fabs( normRes ) <= 1e-6 );
+  EXPECT_DOUBLE_EQ( normRes, 0. );
 
   // We now test the linear solvers from the libraries.
 
@@ -378,22 +405,31 @@ void testNativeSolvers()
     std::cout << std::endl << "AztecOO iterative solver:";
   solver.solve( testMatrix, solIterative, b, 1000, 1e-8);
 
-  // Get the inf-norm of the solution.
+  // Get the inf-norm of the iterative solution.
   real64 normIterativeSol;
-  solIterative.normInf( normIterativeSol );
+  solIterative.norm2( normIterativeSol );
 
-  // The true solution is a vector of ones, so the inf-norm should be 1.
-  EXPECT_TRUE( std::fabs( normIterativeSol - 1 ) <= 5e-5 );
+  // The true solution is the vector x, so we check if the norm are equal.
+  EXPECT_LT( std::fabs( normIterativeSol/norm2x - 1. ), 1e-6 );
+
+  // We also check a couple random elements to see if they are equal.
+  EXPECT_LT( (std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-5 );
+  EXPECT_LT( (std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-5 );
 
   // We now do the same using a direct solver from Amesos (Klu)
   if (rank == 0)
     std::cout << std::endl << "Amesos direct solver:" << std::endl << std::endl;
   solver.dsolve( testMatrix, solDirect, b );
 
-  // Again the inf-norm should be 1
+  // Again the norm should be the norm of x (we use a tougher tolerance on the test
+  // compared to the iterative solution. This should be accurate to machine precision
+  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
   real64 normDirectSol;
-  solDirect.normInf( normDirectSol );
-  EXPECT_TRUE( std::fabs( normDirectSol - 1 ) <= 1e-8 );
+  solDirect.norm2( normDirectSol );
+  EXPECT_LT( std::fabs( normDirectSol/norm2x - 1 ), 1e-12 );
+  // Again we check a couple elements
+  EXPECT_LT( std::fabs( solDirect.getElement(n) - x.getElement(n) ), 1e-12 );
+  EXPECT_LT( std::fabs( solDirect.getElement(3*n) - x.getElement(3*n) ), 1e-12 );
 
   // Test the clearRow function (this has to be after the solves so that we do not
   // use a different matrix.
@@ -403,7 +439,7 @@ void testNativeSolvers()
   testMatrix.getLocalRow(static_cast<laiLID>( n ),numValRown,vecValuesRown,vecIndicesRown);
   if ( rank == 2 )
   {
-    EXPECT_TRUE( std::fabs( vecValuesRown[2] - 8.0 ) <= 1e-6 );
+    EXPECT_DOUBLE_EQ( vecValuesRown[2], 8.0 );
   }
 
 }
@@ -476,12 +512,6 @@ void testGEOSXSolvers()
   // Vector of random values for initial guesses
   x0.create( random );
 
-  // Residual vector for CG
-  ParallelVector rCG( b );
-
-  // Residual vector for BiCGSTAB
-  ParallelVector rBiCGSTAB( b );
-
   // Perform a matrix/vector multiplication to compute b
   testMatrix.multiply( x, b );
 
@@ -500,7 +530,7 @@ void testGEOSXSolvers()
   // Check if the inf norm is 1 (expected solution is a vector of 1).
   real64 normCG;
   solCG.normInf( normCG );
-  EXPECT_TRUE( std::fabs( normCG - 1 ) <= 1e-6 );
+  EXPECT_LT( std::fabs( normCG - 1 ), 1e-6 );
 
   // Create a BiCGSTAB solver object
   BiCGSTABsolver<LAI> testBiCGSTAB;
@@ -511,7 +541,7 @@ void testGEOSXSolvers()
   // Check if the inf norm is 1 (expected solution is a vector of 1).
   real64 normBiCGSTAB;
   solBiCGSTAB.normInf( normBiCGSTAB );
-  EXPECT_TRUE( std::fabs( normBiCGSTAB - 1 ) <= 1e-6 );
+  EXPECT_LT( std::fabs( normBiCGSTAB - 1 ), 1e-6 );
 
 }
 
@@ -661,7 +691,7 @@ void testGEOSXBlockSolvers()
   // Check if the inf norm is 0.5 (the expected solution is a vector of 0.5).
   real64 normCG;
   blockSolutionCG.normInf( normCG );
-  EXPECT_TRUE( std::fabs( normCG - 0.5 ) <= 1e-6 );
+  EXPECT_LT( std::fabs( normCG - 0.5 ), 1e-6 );
 
   // Create block BiCGSTAB solver object
   BiCGSTABsolver<LAI> testBiCGSTAB;
@@ -671,7 +701,7 @@ void testGEOSXBlockSolvers()
   // Check if the inf norm is 0.5 (the expected solution is a vector of 0.5).
   real64 normBiCGSTAB;
   blockSolutionBiCGSTAB.normInf( normBiCGSTAB );
-  EXPECT_TRUE( std::fabs( normBiCGSTAB - 0.5 ) <= 1e-6 );
+  EXPECT_LT( std::fabs( normBiCGSTAB - 0.5 ), 1e-6 );
 
   // Finalize MPI
   MPI_Finalize();
