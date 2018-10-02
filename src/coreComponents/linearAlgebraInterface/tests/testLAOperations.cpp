@@ -413,8 +413,8 @@ void testNativeSolvers()
   EXPECT_LT( std::fabs( normIterativeSol/norm2x - 1. ), 1e-6 );
 
   // We also check a couple random elements to see if they are equal.
-  EXPECT_LT( (std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-5 );
-  EXPECT_LT( (std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-5 );
+  EXPECT_LT( ( std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-5 );
+  EXPECT_LT( ( std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-5 );
 
   // We now do the same using a direct solver from Amesos (Klu)
   if (rank == 0)
@@ -489,7 +489,7 @@ void testGEOSXSolvers()
   ParallelMatrix preconditioner = computeIdentity<LAI>( comm, N );
 
   // We first fill some standard vectors
-  std::vector<real64> ones, zer, random;
+  std::vector<real64> ones, zer, random, random2;
   for (integer j = 0; j < N; j++)
   {
     // Vector of zeros
@@ -498,6 +498,9 @@ void testGEOSXSolvers()
     ones.push_back( 1 );
     // Vector of random integers
     random.push_back( rand() % 20 - 10 );
+    // Vector of random integers (different range to make sure the two random vectors
+    // are not the same, which would defeat the purpose).
+    random2.push_back( rand() % 30 - 15 );
   }
 
   // Define vectors for x, b and x0
@@ -506,11 +509,15 @@ void testGEOSXSolvers()
   // Right hand side for multiplication (b)
   b.create( zer );
 
-  // Vector of ones for multiplication (x)
-  x.create( ones );
+  // Random vector for x (the true solution of Ax = b).
+  x.create( random );
 
   // Vector of random values for initial guesses
-  x0.create( random );
+  x0.create( random2 );
+
+  // Get the norm of the true solution
+  real64 norm2x;
+  x.norm2( norm2x );
 
   // Perform a matrix/vector multiplication to compute b
   testMatrix.multiply( x, b );
@@ -527,10 +534,10 @@ void testGEOSXSolvers()
   // Solve the left-preconditioned system with CG
   testCG.solve( testMatrix, solCG, b, preconditioner );
 
-  // Check if the inf norm is 1 (expected solution is a vector of 1).
+  // The true solution is the vector x, so we check if the norm are equal.
   real64 normCG;
-  solCG.normInf( normCG );
-  EXPECT_LT( std::fabs( normCG - 1 ), 1e-6 );
+  solCG.norm2( normCG );
+  EXPECT_LT( std::fabs( normCG/norm2x - 1. ), 5e-6 );
 
   // Create a BiCGSTAB solver object
   BiCGSTABsolver<LAI> testBiCGSTAB;
@@ -538,10 +545,10 @@ void testGEOSXSolvers()
   // Solve the left-preconditioned system with BiCGSTAB.
   testBiCGSTAB.solve( testMatrix, solBiCGSTAB, b, preconditioner );
 
-  // Check if the inf norm is 1 (expected solution is a vector of 1).
+  // The true solution is the vector x, so we check if the norm are equal.
   real64 normBiCGSTAB;
-  solBiCGSTAB.normInf( normBiCGSTAB );
-  EXPECT_LT( std::fabs( normBiCGSTAB - 1 ), 1e-6 );
+  solBiCGSTAB.norm2( normBiCGSTAB );
+  EXPECT_LT( std::fabs( normBiCGSTAB/norm2x - 1. ), 5e-6 );
 
 }
 
@@ -590,7 +597,7 @@ void testGEOSXBlockSolvers()
   ParallelMatrix preconditioner00 = computeIdentity<LAI>( comm, N );
 
   // We first fill some standard vectors
-  std::vector<real64> ones, zer, random;
+  std::vector<real64> ones, zer, random, random2;
   for (integer j = 0; j < N; j++)
   {
     // Vector of zeros
@@ -599,6 +606,9 @@ void testGEOSXBlockSolvers()
     ones.push_back( 1 );
     // Vector of random integers
     random.push_back( rand() % 20 - 10 );
+    // Vector of random integers (different range to make sure the two random vectors
+    // are not the same, which would defeat the purpose).
+    random2.push_back( rand() % 30 - 15 );
   }
 
   // Define vectors for x, b and x0
@@ -608,13 +618,16 @@ void testGEOSXBlockSolvers()
   b.create( zer );
 
   // Vector of ones for multiplication (x)
-  x.create( ones );
+  x.create( random );
 
   // Random vector for initial guess (x0)
-  x0.create( random );
+  x0.create( random2 );
 
-  // Matrix-vector product
-  matrix00.multiply( x, b );
+//  // Matrix-vector product
+//  matrix00.multiply( x, b );
+
+  // Create vector for the true solution
+  ParallelVector trueSolution( x );
 
   // Set the initial guesses for CG and BiCGSTAB
   ParallelVector solutionCG0( x0 );
@@ -636,6 +649,9 @@ void testGEOSXBlockSolvers()
 
   // Preconditioner
   BlockMatrixView<LAI> blockPreconditioner( nRows, nCols );
+
+  // True solution
+  BlockVectorView<LAI> blockTrueSolution( nCols );
 
   // Solution from CG
   BlockVectorView<LAI> blockSolutionCG( nCols );
@@ -667,6 +683,10 @@ void testGEOSXBlockSolvers()
   // Block (1,1)
   blockPreconditioner.setBlock( 1, 1, preconditioner00 );
 
+  // Construct the true solution
+  blockTrueSolution.setBlock( 0, trueSolution );
+  blockTrueSolution.setBlock( 1, trueSolution );
+
   // Set initial guess blocks (here we need multiple objects since we cannot
   // have them point to the same memory location). These objects are initial
   // guesses as input but solution vectors as output.
@@ -683,25 +703,34 @@ void testGEOSXBlockSolvers()
   blockRhs.setBlock( 0, rhs0 );
   blockRhs.setBlock( 1, rhs1 );
 
+  blockMatrix.multiply( blockTrueSolution, blockRhs);
+
+  // Get the norm of the true solution
+  real64 norm2trueSolution;
+  blockTrueSolution.norm2( norm2trueSolution );
+
   // Create block CG solver object
   CGsolver<LAI> testCG;
   // Solve the left-preconditioned block system with CG
   testCG.solve( blockMatrix, blockSolutionCG, blockRhs, blockPreconditioner );
 
-  // Check if the inf norm is 0.5 (the expected solution is a vector of 0.5).
+  // The true solution is the vector x, so we check if the norm are equal.
+  // Note: the tolerance is higher that in the previous cases because the matrix is
+  // twice as big and the condition number is higher. See details on the error
+  // bounds of Krylov methods wrt the condition number.
   real64 normCG;
-  blockSolutionCG.normInf( normCG );
-  EXPECT_LT( std::fabs( normCG - 0.5 ), 1e-6 );
+  blockSolutionCG.norm2( normCG );
+  EXPECT_LT( std::fabs( normCG/norm2trueSolution - 1. ), 5e-6 );
 
   // Create block BiCGSTAB solver object
   BiCGSTABsolver<LAI> testBiCGSTAB;
   // Solve the left-preconditioned block system with BiCGSTAB
   testBiCGSTAB.solve( blockMatrix, blockSolutionBiCGSTAB, blockRhs, blockPreconditioner );
 
-  // Check if the inf norm is 0.5 (the expected solution is a vector of 0.5).
+  // The true solution is the vector x, so we check if the norm are equal.
   real64 normBiCGSTAB;
-  blockSolutionBiCGSTAB.normInf( normBiCGSTAB );
-  EXPECT_LT( std::fabs( normBiCGSTAB - 0.5 ), 1e-6 );
+  blockSolutionBiCGSTAB.norm2( normBiCGSTAB );
+  EXPECT_LT( std::fabs( normBiCGSTAB/norm2trueSolution - 1. ), 5e-6 );
 
   // Finalize MPI
   MPI_Finalize();
@@ -738,7 +767,19 @@ TEST(testLAOperations,testHypreLAOperations)
 {
 
   //testLaplaceOperator<HypreInterface>();
+  //testGEOSXSolvers<HypreInterface>();
+  //testGEOSXBlockSolvers<HypreInterface>();
+}
 
+/*! @function testPETScLAOperations.
+ * @brief Runs all tests using the PETSc interface.
+ */
+TEST(testLAOperations,testPETScLAOperations)
+{
+
+  //testLaplaceOperator<PETScInterface>();
+  //testGEOSXSolvers<PETScInterface>();
+  //testGEOSXBlockSolvers<PETScInterface>();
 }
 
 //@}
