@@ -61,20 +61,6 @@ void FunctionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::inputVarTypes,
-                              keys::inputVarTypes,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "Name of fields are input to function.",
-                              "",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
 }
 
 integer FunctionBase::isFunctionOfTime() const
