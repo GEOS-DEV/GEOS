@@ -151,24 +151,28 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   localIndex bufferSize = 0;
   for( localIndex a = 0 ; a < objectToCompositionObject.size() ; ++a )
   {
-    // set nodelist array
-    globalIndex_array const & nodeList = objectToCompositionObject[a];
+    if( objectToCompositionObject[a].size() > 0 )
+    {
+      // set nodelist array
+      globalIndex_array const & nodeList = objectToCompositionObject[a];
 
-    // grab the first global index of the composition objects
-    const globalIndex firstCompositionIndex = nodeList[0];
+      // grab the first global index of the composition objects
+      const globalIndex firstCompositionIndex = nodeList[0];
 
-    // create a temporary to hold the pair
-    std::pair<globalIndex_array, globalIndex> tempComp;
+      // create a temporary to hold the pair
+      std::pair<globalIndex_array, globalIndex> tempComp;
 
-    // fill the array with the remaining composition object global indices
-    tempComp.first.insert( tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
+      // fill the array with the remaining composition object global indices
+      tempComp.first.insert( tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
 
-    // set the second value of the pair to the localIndex of the object.
-    tempComp.second = a;
+      // set the second value of the pair to the localIndex of the object.
+      tempComp.second = a;
 
-    // push the tempComp onto the map.
-    indexByFirstCompositionIndex[firstCompositionIndex].push_back( tempComp );
-    bufferSize += 2 + nodeList.size();
+      // push the tempComp onto the map.
+      indexByFirstCompositionIndex[firstCompositionIndex].push_back( std::move(tempComp) );
+  //    indexByFirstCompositionIndex[firstCompositionIndex].push_back( tempComp );
+      bufferSize += 2 + nodeList.size();
+    }
   }
 
   globalIndex_array objectToCompositionObjectSendBuffer;
@@ -177,12 +181,15 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   // put the map into a buffer
   for( localIndex a = 0 ; a < objectToCompositionObject.size() ; ++a )
   {
-    globalIndex_array const & nodeList = objectToCompositionObject[a];
-    objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
-    objectToCompositionObjectSendBuffer.push_back( object.m_localToGlobalMap[a] );
-    for( localIndex b = 0 ; b < nodeList.size() ; ++b )
+    if( objectToCompositionObject[a].size() > 0 )
     {
-      objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
+      globalIndex_array const & nodeList = objectToCompositionObject[a];
+      objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
+      objectToCompositionObjectSendBuffer.push_back( object.m_localToGlobalMap[a] );
+      for( localIndex b = 0 ; b < nodeList.size() ; ++b )
+      {
+        objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
+      }
     }
   }
 
@@ -245,7 +252,10 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
         }
 
         // fill neighborCompositionObjects
-        std::pair<globalIndex_array, globalIndex> tempComp( std::make_pair( temp, neighborGlobalIndex ) );
+        std::pair<globalIndex_array, globalIndex>
+        tempComp( std::make_pair( std::move(temp), std::move(neighborGlobalIndex) ) );
+//        tempComp( std::make_pair( temp, neighborGlobalIndex ) );
+
         neighborCompositionObjects[neighborIndex][firstCompositionIndex].push_back( tempComp );
       }
     }
@@ -261,6 +271,31 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     // it only matters if the neighbor rank is lower than this rank
 //    if( neighbor.NeighborRank() < commRank )
     {
+
+//      for( map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator iter_local = indexByFirstCompositionIndex.begin() ;
+//           iter_local != indexByFirstCompositionIndex.end() ;
+//           ++iter_local )
+//      {
+//        GEOS_LOG_RANK("local data ("<<iter_local->first<<")\n");
+//        for( localIndex a=0 ; a<iter_local->second.size() ; ++a )
+//        {
+//          std::cout<<"    ("<<iter_local->second[a].first<<" , "<<iter_local->second[a].second<<std::endl;
+//        }
+//      }
+//
+//      for( map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > >::const_iterator iter_neighbor = neighborCompositionObjects[neighborIndex].begin() ;
+//          iter_neighbor != neighborCompositionObjects[neighborIndex].end() ;
+//           ++iter_neighbor )
+//      {
+//        GEOS_LOG_RANK("neighbor data ("<<iter_neighbor->first<<")\n");
+//        for( localIndex a=0 ; a<iter_neighbor->second.size() ; ++a )
+//        {
+//          std::cout<<"    ("<<iter_neighbor->second[a].first<<" , "<<iter_neighbor->second[a].second<<std::endl;
+//        }
+//      }
+
+
+
       // Set iterators to the beginning of each indexByFirstCompositionIndex,
       // and neighborCompositionObjects[neighborNum].
       map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator

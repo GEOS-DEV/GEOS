@@ -439,6 +439,15 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
+//  integer_array & nodeGhostRank = nodeManager.GhostRank();
+//  integer_array & edgeGhostRank = edgeManager.GhostRank();
+//  integer_array & faceGhostRank = faceManager.GhostRank();
+//
+//  ElementRegionManager::ElementViewAccessor<integer_array>
+//  elementGhostRank = elemManager.ConstructViewAccessor<integer_array>( ObjectManagerBase::
+//                                                                       viewKeyStruct::
+//                                                                       ghostRankString );
+
 
   localIndex_array & nodeGhostsToSend = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
   localIndex_array & edgeGhostsToSend = edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToSend );
@@ -453,8 +462,9 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
 
 
+
   localIndex_array const & nodeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToReceive );
-  localIndex_array const & edgeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToReceive );
+  localIndex_array const & edgeGhostsToReceive = edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToReceive );
   localIndex_array const & faceGhostsToReceive = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToReceive );
 
   ElementRegionManager::ElementViewAccessor<localIndex_array>
@@ -553,16 +563,24 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                      faceGhostsToSend,
                                      faceManager.m_globalToLocalMap );
 
+
+  nodeManager.SetGhostRankForSenders( nodeGhostsToSend );
+  edgeManager.SetGhostRankForSenders( edgeGhostsToSend );
+  faceManager.SetGhostRankForSenders( faceGhostsToSend );
+
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elemManager.GetRegion( er );
+    ElementRegion * const elemRegion = elemManager.GetRegion( er );
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion( esr );
 
       unpackedSize+= bufferOps::Unpack( receiveBufferPtr,
                                         elementGhostToSend[er][esr].get(),
                                         subRegion->m_globalToLocalMap );
+
+      subRegion->SetGhostRankForSenders( elementGhostToSend[er][esr].get() );
+
     }
   }
 

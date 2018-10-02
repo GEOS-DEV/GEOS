@@ -320,6 +320,37 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
   }
 }
 
+
+void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+                                                                   array1d<globalIndex_array>& edgesToNodes )
+{
+
+  FixedOneToManyRelation const & edgeNodes = this->nodeList();
+  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+
+  nodeManager->CheckTypeID( typeid( NodeManager ) );
+
+
+  edgesToNodes.clear();
+  edgesToNodes.resize(size());
+  for( localIndex kf=0 ; kf<size() ; ++kf )
+  {
+
+    if( isDomainBoundary(kf) != 0 )
+    {
+      globalIndex_array temp;
+
+      for( localIndex a=0 ; a<edgeNodes[kf].size() ; ++a )
+      {
+        const globalIndex gnode = nodeManager->m_localToGlobalMap( edgeNodes[kf][a] );
+        temp.push_back( gnode );
+      }
+      std::sort( temp.begin(), temp.end() );
+      edgesToNodes[kf] = temp;
+    }
+  }
+}
+
 #if 0
 // It seems like this function is not used anywhere
 void EdgeManager::SplitEdge( const localIndex indexToSplit,
