@@ -67,6 +67,10 @@ public:
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
+
+  void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+                                                        array1d<globalIndex_array>& edgesToNodes ) override final;
+
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,
                           const NodeManager& nodeManager,

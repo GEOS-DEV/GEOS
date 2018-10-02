@@ -208,6 +208,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
             // add the nodes to the faceToNodeMap
             node_list[curFace] = tempNodeList;
 
+//            GEOS_LOG_RANK( "face #"<<curFace<<" ("<<tempNodeList<<")");
+
             // and add the face to facesByLowestNode[]
             matching_faces.push_back(curFace);
 
@@ -471,6 +473,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
 
   faceToNodes.clear();
+  faceToNodes.resize(size());
   for( localIndex kf=0 ; kf<size() ; ++kf )
   {
 
@@ -485,7 +488,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
       }
       std::sort( temp.begin(), temp.end() );
 //      temp.insert( temp.begin(), this->m_localToGlobalMap[kf] );
-      faceToNodes.push_back(temp);
+      faceToNodes[kf] = temp;
     }
   }
 }
