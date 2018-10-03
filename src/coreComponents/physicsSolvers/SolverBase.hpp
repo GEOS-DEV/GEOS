@@ -85,7 +85,7 @@ public:
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
                         const integer cycleNumber,
-                        const integer eventCount,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**

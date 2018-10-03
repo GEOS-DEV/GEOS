@@ -58,15 +58,17 @@ void RestartOutput::FillDocumentationNode()
 void RestartOutput::Execute(real64 const& time_n,
                             real64 const& dt,
                             const integer cycleNumber,
-                            const integer eventCount,
+                            real64 const & eventProgress,
                             ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
   ProblemManager* problemManager = ManagedGroup::group_cast<ProblemManager*>(domainPartition->getParent());
 
 #ifdef GEOSX_USE_ATK
+  integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
+    
   char fileName[200] = {0};
-  sprintf(fileName, "%s_%s__%03d_%09d", problemManager->getProblemName().c_str(), "restart", eventCount, cycleNumber);
+  sprintf(fileName, "%s_%s__%03d_%09d", problemManager->getProblemName().c_str(), "restart", eventProgressPercent, cycleNumber);
 
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();

@@ -96,7 +96,7 @@ public:
    */
   void WaitForBatonWrite( int const domainNumber,
                           int const cycleNum,
-                          const integer eventCount,
+                          real64 const & eventProgress,
                           bool const isRestart );
 
   /**

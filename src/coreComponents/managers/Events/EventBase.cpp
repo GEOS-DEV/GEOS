@@ -274,7 +274,7 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 void EventBase::Execute(real64 const& time_n,
                         real64 const& dt,
                         const integer cycleNumber,
-                        const integer eventCount,
+                        real64 const & eventProgress,
                         ManagedGroup * domain)
 {
   real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
@@ -320,11 +320,11 @@ void EventBase::Step(real64 const time,
   {
     if (isPostTimeStep == 1)
     {
-      m_target->Execute(time + dt, dt, cycle, m_eventCount, domain);
+      m_target->Execute(time + dt, dt, cycle, m_eventProgress, domain);
     }
     else
     {
-      m_target->Execute(time, dt, cycle, m_eventCount, domain);
+      m_target->Execute(time, dt, cycle, m_eventProgress, domain);
     }
   }
 
@@ -332,7 +332,7 @@ void EventBase::Step(real64 const time,
   {
     if (subEvent->GetForecast() <= 0)
     {
-      subEvent->Execute(time, dt, cycle, m_eventCount, domain);
+      subEvent->Execute(time, dt, cycle, m_eventProgress, domain);
     }
   });
 }
@@ -379,17 +379,17 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
 void EventBase::Cleanup(real64 const& time_n,
                         const int cycleNumber,
-                        const integer eventCount,
+                        real64 const & eventProgress,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)
   {
-    m_target->Cleanup(time_n, cycleNumber, m_eventCount, domain);
+    m_target->Cleanup(time_n, cycleNumber, m_eventProgress, domain);
   }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time_n, cycleNumber, m_eventCount, domain);
+    subEvent->Cleanup(time_n, cycleNumber, m_eventProgress, domain);
   });
 }
 
@@ -429,7 +429,7 @@ void EventBase::GetExecutionOrder(array1d<integer> & eventCounters)
 }
 
 
-void EventBase::SetPostSolverEventFlag(array1d<integer> & eventCounters)
+void EventBase::FinalizeExecutionOrder(array1d<integer> & eventCounters)
 {
   integer& isPostTimeStep = *(this->getData<integer>(viewKeys.isPostTimeStep));
 
@@ -439,9 +439,15 @@ void EventBase::SetPostSolverEventFlag(array1d<integer> & eventCounters)
     isPostTimeStep = (m_eventCount > eventCounters[1]) ? 1 : 0;
   }
 
+  // Calculate the event progress indicator
+  // This is defined as the percent completion through the executaion loop
+  // with respect to the beginning of the event.
+  m_eventProgress = static_cast<real64>(m_eventCount) / static_cast<real64>(eventCounters[0]);
+
+  // Do this for child events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->SetPostSolverEventFlag(eventCounters);
+    subEvent->FinalizeExecutionOrder(eventCounters);
   });
 }
 

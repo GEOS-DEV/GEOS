@@ -71,7 +71,7 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
 
 
 void Blueprint::write(int cycle,
-                      const integer eventCount) const
+                      real64 const & eventProgress) const
 {
 #ifdef GEOSX_USE_ATK
   const string mesh_name = "bp_mesh";
@@ -112,8 +112,15 @@ void Blueprint::write(int cycle,
     GEOS_ERROR( "Does not conform to the blueprint. See above errors" );
   }
 
-  const std::string root_output_path = m_output_path + "_" + std::to_string( eventCount ) + "_" + std::to_string( cycle ) + ".root";
-  const std::string output_path = m_output_path + "_" + std::to_string( eventCount ) + "_" + std::to_string( cycle ) + ".hdf5";
+
+  // Build the file-name
+  char baseFileName[200] = { 0 };
+
+  integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
+  sprintf(baseFileName, "_%03d_%06d", eventProgressPercent, cycleNum);
+
+  const std::string root_output_path = m_output_path + baseFileName + ".root";
+  const std::string output_path = m_output_path + baseFileName + ".hdf5";
 
   root_node[ "protocol/name" ] = "conduit_hdf5";
   root_node[ "protocol/version" ] = "0.1";

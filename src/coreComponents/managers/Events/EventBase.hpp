@@ -71,7 +71,7 @@ public:
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
                         const integer cycleNumber,
-                        const integer eventCount,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -88,7 +88,7 @@ public:
    */
   virtual void Cleanup( real64 const & time_n,
                         int const cycleNumber,
-                        const integer eventCount,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
 
@@ -147,7 +147,7 @@ public:
    * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
    * will be time + dt.
    */
-  void SetPostSolverEventFlag(array1d<integer> & eventCounters);
+  void FinalizeExecutionOrder(array1d<integer> & eventCounters);
 
 
   /// A pointer to the optional event target
@@ -183,7 +183,7 @@ public:
 private:
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
-  integer m_eventCount = 0;
+  real64 m_eventProgress = 0;
 };
 
 } /* namespace geosx */
