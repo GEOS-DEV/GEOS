@@ -487,7 +487,6 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
         temp.push_back( gnode );
       }
       std::sort( temp.begin(), temp.end() );
-//      temp.insert( temp.begin(), this->m_localToGlobalMap[kf] );
       faceToNodes[kf] = temp;
     }
   }

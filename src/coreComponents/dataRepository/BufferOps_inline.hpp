@@ -533,11 +533,6 @@ Pack( char*& buffer,
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, string("test") );
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(indices[a]), var.strides()[0] );
   }
-//  const localIndex length = indices.size();
-//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
-//
-//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(), indices.data(), length );
-
   return sizeOfPackedChars;
 }
 
@@ -609,7 +604,6 @@ localIndex Unpack( char const *& buffer,
   {
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
-//    var[a] = globalToLocalMap.at(unpackedGlobalIndex);
     var[a] = softMapLookup( globalToLocalMap,
                             unpackedGlobalIndex,
                             localIndex(-1) );
@@ -646,28 +640,6 @@ localIndex Unpack( char const *& buffer,
 
 
 
-//
-//template< bool DO_PACKING >
-//int Pack( char*& buffer,
-//          multidimensionalArray::ManagedArray<localIndex,2,localIndex> const & var,
-//          localIndex_array const & indices,
-//          globalIndex_array const & localToGlobalMap )
-//{
-//  int sizeOfPackedChars;
-//
-//  return sizeOfPackedChars;
-//}
-//
-//inline
-//int Unpack( char const *& buffer,
-//            multidimensionalArray::ManagedArray<localIndex,2,localIndex> & var,
-//            localIndex_array const & indices,
-//            globalIndex_array const & globalToLocalMap )
-//{
-//  int sizeOfUnpackedChars;
-//
-//  return sizeOfUnpackedChars;
-//}
 
 
 template< bool DO_PACKING >
@@ -708,11 +680,10 @@ localIndex Unpack( char const *& buffer,
 
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
 
-//    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
-//                   "global index "<<gi<<" unpacked from buffer does equal the lookup "
-//                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
+    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+                   "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
 
     sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
   }
@@ -757,7 +728,11 @@ localIndex Unpack( char const *& buffer,
 
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
+
+    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+                   "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
+
 
     sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
   }
@@ -805,7 +780,11 @@ localIndex Unpack( char const *& buffer,
 
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
+
+    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+                   "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
+
 
     localIndex * const varSlice = var[li];
     sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
@@ -857,7 +836,10 @@ localIndex Unpack( char const *& buffer,
 
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
+
+    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+                   "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
 
     sizeOfUnpackedChars += Unpack( buffer, var[li], var.size(1), relatedObjectGlobalToLocalMap );
   }
