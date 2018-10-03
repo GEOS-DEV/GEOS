@@ -429,7 +429,7 @@ void EventBase::GetExecutionOrder(array1d<integer> & eventCounters)
 }
 
 
-void EventBase::FinalizeExecutionOrder(array1d<integer> & eventCounters)
+void EventBase::SetProgressIndicator(array1d<integer> & eventCounters)
 {
   integer& isPostTimeStep = *(this->getData<integer>(viewKeys.isPostTimeStep));
 
@@ -447,7 +447,7 @@ void EventBase::FinalizeExecutionOrder(array1d<integer> & eventCounters)
   // Do this for child events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->FinalizeExecutionOrder(eventCounters);
+    subEvent->SetProgressIndicator(eventCounters);
   });
 }
 
