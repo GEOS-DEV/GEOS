@@ -117,7 +117,7 @@ void Blueprint::write(int cycle,
   char baseFileName[200] = { 0 };
 
   integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
-  sprintf(baseFileName, "_%03d_%06d", eventProgressPercent, cycleNum);
+  sprintf(baseFileName, "_%03d_%06d", eventProgressPercent, cycle);
 
   const std::string root_output_path = m_output_path + baseFileName + ".root";
   const std::string output_path = m_output_path + baseFileName + ".hdf5";

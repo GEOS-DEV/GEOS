@@ -188,10 +188,10 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     subEvent->GetExecutionOrder(eventCounters);
   });
 
-  // Set the post solver event flag
+  // Set the progress indicators
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->SetPostSolverEventFlag(eventCounters);
+    subEvent->SetProgressIndicator(eventCounters);
   });
 
   // Run problem

@@ -147,7 +147,7 @@ public:
    * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
    * will be time + dt.
    */
-  void FinalizeExecutionOrder(array1d<integer> & eventCounters);
+  void SetProgressIndicator(array1d<integer> & eventCounters);
 
 
   /// A pointer to the optional event target
@@ -183,6 +183,7 @@ public:
 private:
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
+  integer m_eventCount = 0;
   real64 m_eventProgress = 0;
 };
 
