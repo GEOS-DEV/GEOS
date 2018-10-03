@@ -268,94 +268,67 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
-    // it only matters if the neighbor rank is lower than this rank
-//    if( neighbor.NeighborRank() < commRank )
+    // Set iterators to the beginning of each indexByFirstCompositionIndex,
+    // and neighborCompositionObjects[neighborNum].
+    map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator
+    iter_local = indexByFirstCompositionIndex.begin();
+    map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > >::const_iterator
+    iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
+
+    // now we continue the while loop as long as both of our iterators are in range.
+    while( iter_local != indexByFirstCompositionIndex.end() &&
+        iter_neighbor != neighborCompositionObjects[neighborIndex].end() )
     {
-
-//      for( map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator iter_local = indexByFirstCompositionIndex.begin() ;
-//           iter_local != indexByFirstCompositionIndex.end() ;
-//           ++iter_local )
-//      {
-//        GEOS_LOG_RANK("local data ("<<iter_local->first<<")\n");
-//        for( localIndex a=0 ; a<iter_local->second.size() ; ++a )
-//        {
-//          std::cout<<"    ("<<iter_local->second[a].first<<" , "<<iter_local->second[a].second<<std::endl;
-//        }
-//      }
-//
-//      for( map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > >::const_iterator iter_neighbor = neighborCompositionObjects[neighborIndex].begin() ;
-//          iter_neighbor != neighborCompositionObjects[neighborIndex].end() ;
-//           ++iter_neighbor )
-//      {
-//        GEOS_LOG_RANK("neighbor data ("<<iter_neighbor->first<<")\n");
-//        for( localIndex a=0 ; a<iter_neighbor->second.size() ; ++a )
-//        {
-//          std::cout<<"    ("<<iter_neighbor->second[a].first<<" , "<<iter_neighbor->second[a].second<<std::endl;
-//        }
-//      }
-
-
-
-      // Set iterators to the beginning of each indexByFirstCompositionIndex,
-      // and neighborCompositionObjects[neighborNum].
-      map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator
-        iter_local = indexByFirstCompositionIndex.begin();
-      map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > >::const_iterator
-        iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
-
-      // now we continue the while loop as long as both of our iterators are in range.
-      while( iter_local != indexByFirstCompositionIndex.end() &&
-             iter_neighbor != neighborCompositionObjects[neighborIndex].end() )
+      // check to see if the map keys (first composition index) are the same.
+      if( iter_local->first == iter_neighbor->first )
       {
-        // check to see if the map keys (first composition index) are the same.
-        if( iter_local->first == iter_neighbor->first )
+        // first we loop over all local composition arrays (objects with the matched key)
+        for( array1d<std::pair<globalIndex_array, localIndex> >::const_iterator
+            iter_local2 = iter_local->second.begin() ;
+            iter_local2 != iter_local->second.end() ; ++iter_local2 )
         {
-          // first we loop over all local composition arrays (objects with the matched key)
-          for( array1d<std::pair<globalIndex_array, localIndex> >::const_iterator
-               iter_local2 = iter_local->second.begin() ;
-               iter_local2 != iter_local->second.end() ; ++iter_local2 )
+          // and loop over all of the neighbor composition arrays (objects with the matched key)
+          for( array1d<std::pair<globalIndex_array, globalIndex> >::const_iterator
+              iter_neighbor2 = iter_neighbor->second.begin() ;
+              iter_neighbor2 != iter_neighbor->second.end() ;
+              ++iter_neighbor2 )
           {
-            // and loop over all of the neighbor composition arrays (objects with the matched key)
-            for( array1d<std::pair<globalIndex_array, globalIndex> >::const_iterator
-                 iter_neighbor2 = iter_neighbor->second.begin() ;
-                 iter_neighbor2 != iter_neighbor->second.end() ;
-                 ++iter_neighbor2 )
+            // now compare the composition arrays
+            if( iter_local2->first.size() == iter_neighbor2->first.size() &&
+                std::equal( iter_local2->first.begin(),
+                            iter_local2->first.end(),
+                            iter_neighbor2->first.begin() ) )
             {
-              // now compare the composition arrays
-              if( iter_local2->first.size() == iter_neighbor2->first.size() &&
-                  std::equal( iter_local2->first.begin(), iter_local2->first.end(), iter_neighbor2->first.begin() ) )
+              // they are equal, so we need to overwrite the global index for the object
+              if( iter_neighbor2->second < object.m_localToGlobalMap[iter_local2->second] )
               {
-                // they are equal, so we need to overwrite the global index for the object
-                if( iter_neighbor2->second < object.m_localToGlobalMap[iter_local2->second] )
+                if( neighbor.NeighborRank() < commRank )
                 {
-                  if( neighbor.NeighborRank() < commRank )
-                  {
-                    object.m_localToGlobalMap[iter_local2->second] = iter_neighbor2->second;
-                    ghostRank[iter_local2->second] = neighbor.NeighborRank();
-                  }
-                  else
-                  {
-                    ghostRank[iter_local2->second] = -1;
-                  }
-
+                  object.m_localToGlobalMap[iter_local2->second] = iter_neighbor2->second;
+                  ghostRank[iter_local2->second] = neighbor.NeighborRank();
+                }
+                else
+                {
+                  ghostRank[iter_local2->second] = -1;
                 }
 
-                // we should break out of the iter_local2 loop since we aren't going to find another match.
-                break;
               }
+
+              // we should break out of the iter_local2 loop since we aren't going to find another match.
+              break;
             }
           }
-          ++iter_local;
-          ++iter_neighbor;
         }
-        else if( iter_local->first < iter_neighbor->first )
-        {
-          ++iter_local;
-        }
-        else if( iter_local->first > iter_neighbor->first )
-        {
-          ++iter_neighbor;
-        }
+        ++iter_local;
+        ++iter_neighbor;
+      }
+      else if( iter_local->first < iter_neighbor->first )
+      {
+        ++iter_local;
+      }
+      else if( iter_local->first > iter_neighbor->first )
+      {
+        ++iter_neighbor;
       }
     }
   }

@@ -86,7 +86,7 @@ using ReduceSum = RAJA::ReduceSum<POLICY, T>;
 
 
 //
-template<typename POLICY=atomicPolicy, typename T=void>
+template<typename POLICY=atomicPolicy, typename T>
 RAJA_INLINE void atomicAdd(T *acc, T value)
 {
   RAJA::atomic::atomicAdd<POLICY>(acc, value);
