@@ -54,14 +54,14 @@ public:
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
                         const integer cycleNumber,
-                        const integer eventCount,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /// Write one final output as the code exits
   virtual void Cleanup( real64 const & time_n,
                         int const cycleNumber,
-                        const integer eventCount,
-                        dataRepository::ManagedGroup * domain ) override { Execute(time_n, 0, cycleNumber, eventCount, domain); }
+                        real64 const & eventProgress,
+                        dataRepository::ManagedGroup * domain ) override { Execute(time_n, 0, cycleNumber, eventProgress, domain); }
 
   struct viewKeyStruct : OutputBase::viewKeyStruct
   {
