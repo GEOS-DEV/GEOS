@@ -1096,6 +1096,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
     AddLocalToGlobal( nodelist, f_local.data(), acc, NUM_NODES_PER_ELEM );
 
   } END_FOR //Element loop
+
+  return dt;
 }
 
 void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
