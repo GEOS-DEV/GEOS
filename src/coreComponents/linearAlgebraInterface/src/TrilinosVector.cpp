@@ -106,6 +106,34 @@ void EpetraVector::create( std::vector<double> &vec )
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
 }
 
+// Add into value (TODO This needs to use integers for some reason! No longlong).
+void EpetraVector::add( integer const element,
+                        real64 const value )
+{
+  m_vector->SumIntoGlobalValues( 1, &value, &element );
+}
+
+// Add into values (TODO This needs to use integers for some reason! No longlong).
+void EpetraVector::add( array1d<integer> const elements,
+                        array1d<real64> const values )
+{
+  m_vector->SumIntoGlobalValues( elements.size(), values.data(), elements.data() );
+}
+
+// Set value
+void EpetraVector::set( trilinosTypes::gid const element,
+                        real64 const value )
+{
+  m_vector->ReplaceGlobalValues( 1, &value, &element );
+}
+
+// Set values
+void EpetraVector::set( array1d<trilinosTypes::gid> const elements,
+                        array1d<real64> const values )
+{
+  m_vector->ReplaceGlobalValues( elements.size(), values.data(), elements.data() );
+}
+
 // ----------------------------
 // Linear Algebra
 // ----------------------------

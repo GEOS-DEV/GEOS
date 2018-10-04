@@ -191,8 +191,8 @@ public:
    * \param indices Vector of indices.
    * \param values Values.
    */
-  void add( array1d<integer> const rowIndices,
-            array1d<integer> const colIndices,
+  void add( array1d<trilinosTypes::gid> const rowIndices,
+            array1d<trilinosTypes::gid> const colIndices,
             array2d<real64> const values);
 
   /**

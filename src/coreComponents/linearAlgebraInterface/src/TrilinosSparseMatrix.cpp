@@ -119,7 +119,7 @@ void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
                                  trilinosTypes::lid const nMaxEntriesPerRow )
 {
   // Create a unique pointer to an Epetra_CrsMatrix defined from the two input Epetra_Map.
-  // (TODO this has not been tested and from previous experience it may not be the correct \
+  // (TODO this has not been tested and from previous experience it may not be the correct
   // way of getting a rectangular matrix).
   // Specifies the maximum number of non-zeros per row.
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_row_map, input_col_map, nMaxEntriesPerRow, false ) );
@@ -318,25 +318,29 @@ void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
 // Add dense matrix.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // TODO THIS FUNCTION HAS NOT BEEN PROPERLY TESTED.
-void EpetraSparseMatrix::add( array1d<integer> const rowIndices,
-                              array1d<integer> const colIndices,
+void EpetraSparseMatrix::add( array1d<trilinosTypes::gid> const rowIndices,
+                              array1d<trilinosTypes::gid> const colIndices,
                               array2d<real64> const values)
 {
   // Dummy variable for a row of the matrix values.
-  array1d<real64> valuesInRow;
+//  array1d<real64> valuesInRow;
 
   // Loop over the rows
   for ( integer i = 0; i < rowIndices.size(); i++ )
   {
+
     // Loop over the columns to extract the values in the row (TODO there is probably
     // a better way to access a row of an array2d object).
-    for (integer j = 0; j < colIndices.size(); j++)
-    {
-      valuesInRow[j] = values[i][j];
-    }
+//    for (integer j = 0; j < colIndices.size(); j++)
+//    {
+//      valuesInRow[j] = values[i][j];
+//    }
 
-    // Fill row i.
-    m_matrix->SumIntoGlobalValues( rowIndices[i], colIndices.size(), valuesInRow.data(), colIndices.data() );
+//      Fill row i.
+//    m_matrix->SumIntoGlobalValues( rowIndices[i], colIndices.size(), valuesInRow.data(), colIndices.data() );
+
+    // This version uses the sliced array2d. TODO test it properly! But should be more efficient.
+    m_matrix->SumIntoGlobalValues( rowIndices[i], colIndices.size(), values[i], colIndices.data() );
   }
 }
 
