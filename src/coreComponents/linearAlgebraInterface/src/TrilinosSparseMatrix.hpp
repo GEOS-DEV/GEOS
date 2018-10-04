@@ -183,6 +183,19 @@ public:
             trilinosTypes::gid const *cols );
 
   /**
+   * @brief Add dense matrix.
+   *
+   * Adds the matrix <tt>values</tt> to the sparse matrix, at locations specified
+   * by <tt>indices</tt>.
+   *
+   * \param indices Vector of indices.
+   * \param values Values.
+   */
+  void add( array1d<integer> const rowIndices,
+            array1d<integer> const colIndices,
+            array2d<real64> const values);
+
+  /**
    * @brief Add to one element.
    *
    * Adds the value <tt>value</tt> to location (<tt>iRow</tt>,<tt>iCol</tt>).
