@@ -89,17 +89,17 @@ public:
 
   virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
-                             integer const cycleNumber,
-                             DomainPartition * domain ) override;
-
   /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+  virtual real64 SolverStep( real64 const& time_n,
+                             real64 const& dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
@@ -131,9 +131,11 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual  void ImplicitStepComplete( real64 const & time,
-                                      real64 const & dt,
-                                      DomainPartition * const domain ) override;
+  virtual void ImplicitStepComplete( real64 const & time,
+                                     real64 const & dt,
+                                     DomainPartition * const domain ) override;
+
+  /**@}*/
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -173,14 +175,38 @@ public:
 
 private:
 
-  void ResizeFields(DomainPartition * domain);
+  /**
+   * @brief Resize the allocated multidimensional fields
+   * @param domain the domain containing the mesh and fields
+   *
+   * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
+   * once the number of phases/components is known (e.g. component fractions)
+   */
+  void ResizeFields( DomainPartition * domain );
 
-  void UpdateComponentFraction(DomainPartition * domain);
+  /**
+   * @brief Recompute component mass fractions from primary variables (component densities)
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateComponentFraction( DomainPartition * domain );
 
-  void UpdateConstitutiveModels(DomainPartition * domain);
+  /**
+   * @brief Update all relevant constitutive models using current values of pressure and composition
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateConstitutiveModels( DomainPartition * domain );
 
+  /**
+   * @brief Backup current values of all constitutive fields that participate in the accumulation term
+   * @param domain the domain containing the mesh and fields
+   */
   void BackupFields( DomainPartition * domain );
 
+  /**
+   * @brief Set up the linear system (DOF indices and sparsity patterns)
+   * @param domain the domain containing the mesh and fields
+   * @param blockSystem the linear system object
+   */
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
@@ -197,7 +223,6 @@ private:
    * @param meshLevel the mesh object (single level only)
    * @param numLocalRows the number of local rows on this partition
    * @param numGlobalRows the number of global rows in the problem
-   * @param localIndices unused TODO delete
    * @param offset the DOF offset for this solver in the case of a non-block system
    *
    * This function sets the number of global rows, and sets the dof numbers for
@@ -264,10 +289,16 @@ private:
                                       real64 const time, real64 const dt,
                                       systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
+  /// the max number of fluid phases
   localIndex m_numPhases;
+
+  /// the number of fluid components
   localIndex m_numComponents;
+
+  /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  /// the (uniform) temperature
   real64 m_temperature;
 };
 
