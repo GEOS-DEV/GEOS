@@ -751,6 +751,7 @@ void testGEOSXBlockSolvers()
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
  */
+
 TEST(testLAOperations,testEpetraLAOperations)
 {
 
