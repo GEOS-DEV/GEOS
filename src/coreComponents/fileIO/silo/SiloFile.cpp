@@ -410,10 +410,10 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
 
   if( isRestart )
   {
-
-    sprintf( baseFileName, "%s_%03d_%06d", m_restartFileRoot.c_str(), eventProgressPercent, cycleNum );
-    sprintf( fileName, "%s%s%s_%03d_%06d.%03d",
-             m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), eventProgressPercent, cycleNum, groupRank);
+    // The integrated test repo does not use the eventProgress indicator, so skip it for now
+    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum );
+    sprintf( fileName, "%s%s%s_%06d.%03d",
+             m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
   }
   else
   {
