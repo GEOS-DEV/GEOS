@@ -169,7 +169,7 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
       nnz++;
     }
 
-    // The right +n: position i-n
+    // The right +n: position i+n
     if ( i+n < N )
     {
       cols[nnz] = i+n;
@@ -182,7 +182,7 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 
   }
 
-  // Close the matrix
+  // Close the matrix (make data contiguous in memory)
   laplace2D.close();
 
   // Return the matrix
@@ -421,18 +421,18 @@ void testNativeSolvers()
     std::cout << std::endl << "Amesos direct solver:" << std::endl << std::endl;
   solver.dsolve( testMatrix, solDirect, b );
 
-  // Again the norm should be the norm of x (we use a tougher tolerance on the test
+  // Again the norm should be the norm of x. We use a tougher tolerance on the test
   // compared to the iterative solution. This should be accurate to machine precision
   // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
   real64 normDirectSol;
   solDirect.norm2( normDirectSol );
   EXPECT_LT( std::fabs( normDirectSol/norm2x - 1 ), 1e-12 );
   // Again we check a couple elements
-  EXPECT_LT( std::fabs( solDirect.getElement(n) - x.getElement(n) ), 1e-12 );
-  EXPECT_LT( std::fabs( solDirect.getElement(3*n) - x.getElement(3*n) ), 1e-12 );
+  EXPECT_LT( ( std::fabs( solDirect.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-12 );
+  EXPECT_LT( ( std::fabs( solDirect.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-12 );
 
-  // Test the clearRow function (this has to be after the solves so that we do not
-  // use a different matrix.
+  // Test the clearRow function (this has to be done after the solves so that we can
+  // use the same matrix when we are done with it).
 
   // We clear the row and multiply the diagonal value by 2.
   testMatrix.clearRow( 2*N/4+n, 2.0 );
@@ -448,7 +448,7 @@ void testNativeSolvers()
  * @function testGEOSXSolvers
  *
  * @brief Test the GEOSX solvers for monolithic matrices by solving a system with
- * a Laplace operator and the identity matrix as a preconditioner.
+ * a Laplace operator and the identity matrix as a (dummy) preconditioner.
  */
 
 // -----------------------------------------

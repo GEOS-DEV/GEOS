@@ -315,6 +315,32 @@ void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Add dense matrix.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// TODO THIS FUNCTION HAS NOT BEEN PROPERLY TESTED.
+void EpetraSparseMatrix::add( array1d<integer> const rowIndices,
+                              array1d<integer> const colIndices,
+                              array2d<real64> const values)
+{
+  // Dummy variable for a row of the matrix values.
+  array1d<real64> valuesInRow;
+
+  // Loop over the rows
+  for ( integer i = 0; i < rowIndices.size(); i++ )
+  {
+    // Loop over the columns to extract the values in the row (TODO there is probably
+    // a better way to access a row of an array2d object).
+    for (integer j = 0; j < colIndices.size(); j++)
+    {
+      valuesInRow[j] = values[i][j];
+    }
+
+    // Fill row i.
+    m_matrix->SumIntoGlobalValues( rowIndices[i], colIndices.size(), valuesInRow.data(), colIndices.data() );
+  }
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Set single value.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Set the value of the element (iRow,iCol) to value.
