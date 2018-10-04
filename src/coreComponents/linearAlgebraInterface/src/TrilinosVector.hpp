@@ -96,6 +96,58 @@ public:
                real64 *values );
 
   /**
+   * @brief Set vector value.
+   *
+   * Set vector value at given element.
+   *
+   * \param element elements index.
+   * \param value Values to add in given element.
+   *
+   */
+  void set( trilinosTypes::gid element,
+            real64 value );
+
+  /**
+   * @brief Set vector values.
+   *
+   * Set vector values at given elements.
+   *
+   * \param elements elements indices.
+   * \param values Values to add in given rows.
+   *
+   */
+  void set( array1d<trilinosTypes::gid> elements,
+            array1d<real64> values );
+
+  /**
+   * @brief Add into vector value.
+   *
+   * Add into vector value at given element.
+   *
+   * (TODO This needs to use integers for some reason! No longlong).
+   *
+   * \param element elements index.
+   * \param value Values to add in given element.
+   *
+   */
+  void add( integer element,
+            real64 value );
+
+  /**
+   * @brief Add into vector values.
+   *
+   * Add into vector values at given elements.
+   *
+   * (TODO This needs to use integers for some reason! No longlong).
+   *
+   * \param elements elements indices.
+   * \param values Values to add in given rows.
+   *
+   */
+  void add( array1d<integer> const elements,
+            array1d<real64> const values );
+
+  /**
    * @brief Construct vector from std::vector.
    *
    * Create a vector from an std vector.
