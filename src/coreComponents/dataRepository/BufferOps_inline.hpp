@@ -681,9 +681,9 @@ localIndex Unpack( char const *& buffer,
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
 
-    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+    GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
                    "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
+                   <<li<<" for localIndex "<<li<<" on this rank");
 
     sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
   }
@@ -729,10 +729,9 @@ localIndex Unpack( char const *& buffer,
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
 
-    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+    GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
                    "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
-
+                   <<li<<" for localIndex "<<li<<" on this rank");
 
     sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
   }
@@ -781,10 +780,9 @@ localIndex Unpack( char const *& buffer,
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
 
-    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+    GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
                    "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
-
+                   <<li<<" for localIndex "<<li<<" on this rank");
 
     localIndex * const varSlice = var[li];
     sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
@@ -837,9 +835,9 @@ localIndex Unpack( char const *& buffer,
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
 
-    GEOS_ERROR_IF( gi!=globalToLocalMap.at(li),
+    GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
                    "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                   <<globalToLocalMap.at(li)<<" for localIndex "<<li<<" on this rank");
+                   <<li<<" for localIndex "<<li<<" on this rank");
 
     sizeOfUnpackedChars += Unpack( buffer, var[li], var.size(1), relatedObjectGlobalToLocalMap );
   }
