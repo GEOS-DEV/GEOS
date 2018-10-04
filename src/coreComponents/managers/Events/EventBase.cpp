@@ -21,7 +21,7 @@
  */
 
 #include "EventBase.hpp"
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include <cstring>
 
 namespace geosx
@@ -178,7 +178,7 @@ void EventBase::FillDocumentationNode()
 
 void EventBase::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
+  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
