@@ -65,10 +65,11 @@ void RestartOutput::Execute(real64 const& time_n,
   ProblemManager* problemManager = ManagedGroup::group_cast<ProblemManager*>(domainPartition->getParent());
 
 #ifdef GEOSX_USE_ATK
-  integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
-    
+  // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
+  // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
+
   char fileName[200] = {0};
-  sprintf(fileName, "%s_%s_%03d_%09d", problemManager->getProblemName().c_str(), "restart", eventProgressPercent, cycleNumber);
+  sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
 
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
