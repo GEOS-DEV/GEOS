@@ -25,7 +25,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 #define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
-#include "common/Logger.hpp"
+#include "Logger.hpp"
 #include "KeyIndexT.hpp"
 #include "SFINAE_Macros.hpp"
 

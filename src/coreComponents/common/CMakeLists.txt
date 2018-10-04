@@ -4,21 +4,19 @@
 #
 set(common_headers
     integer_conversion.hpp
-    DataTypes.hpp
-    Logger.hpp )
+    DataTypes.hpp )
 
 #
 # Specify all sources
 #
 set(common_sources
-    Logger.cpp
     DataTypes.cpp )
 
 
 set( dependencyList cxx-utilities mpi )
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} slic conduit lumberjack )
+  set( dependencyList ${dependencyList} conduit )
 endif()
 
 if( ENABLE_CALIPER )
