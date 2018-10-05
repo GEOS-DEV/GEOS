@@ -109,6 +109,8 @@ localIndex Unpack( char const * & buffer,
       var.m_toElementIndex[index][b] = softMapLookup( elemSubRegion->m_globalToLocalMap,
                                                       globalElementIndex,
                                                       localIndex(-1) );
+//      var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
+
     }
   ;}
 
@@ -219,6 +221,7 @@ localIndex Unpack( char const * & buffer,
         var.m_toElementIndex[index][b] = softMapLookup( elemSubRegion->m_globalToLocalMap,
                                                         globalElementIndex,
                                                         localIndex(-1) );
+//        var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
 
       }
 
