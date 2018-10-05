@@ -49,4 +49,10 @@ MeshLevel * MeshBody::CreateMeshLevel( integer const newLevel )
   return this->RegisterGroup<MeshLevel>( "Level0" );
 }
 
+MeshBody::CatalogInterface::CatalogType& MeshBody::GetCatalog()
+{
+  static MeshBody::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
+
 } /* namespace geosx */

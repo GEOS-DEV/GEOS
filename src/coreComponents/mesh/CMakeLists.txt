@@ -16,6 +16,7 @@ set(mesh_headers
     MeshLevel.hpp
     NodeManager.hpp
     ToElementRelation.hpp
+    MeshBodyManager.hpp
   )
 
 
@@ -35,6 +36,7 @@ set(mesh_sources
     MeshLevel.cpp    
     NodeManager.cpp
     ToElementRelation.cpp
+    MeshBodyManager.cpp
    )
 
 blt_add_library( NAME                  mesh

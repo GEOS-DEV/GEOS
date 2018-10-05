@@ -48,6 +48,7 @@
 #include "dataRepository/RestartFlags.hpp"
 
 #include "mesh/MeshBody.hpp"
+#include "mesh/MeshBodyManager.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
 #include "common/TimingMacros.hpp"
 // #include "managers/MeshLevel.hpp"
@@ -63,8 +64,7 @@ ProblemManager::ProblemManager( const std::string& name,
   ObjectManagerBase(name, parent),
   m_physicsSolverManager(nullptr),
   m_eventManager(nullptr),
-  m_functionManager(nullptr),
-  m_inputManager(nullptr)
+  m_functionManager(nullptr)
 {
   // Groups that do not read from the xml
   // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
@@ -80,12 +80,12 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<NumericalMethodsManager>(groupKeys.numericalMethodsManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
+  RegisterGroup<MeshBodyManager>(groupKeys.meshBodyManager);
   RegisterGroup<OutputManager>(groupKeys.outputManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
   // Theses managers are handled separately
   m_functionManager = NewFunctionManager::Instance();
-  m_inputManager = InputManager::Instance();
 }
 
 
@@ -656,6 +656,14 @@ void ProblemManager::ParseInputFile()
     bcManager->AddChildren( topLevelNode );
     bcManager->SetDocumentationNodes();
     bcManager->ReadXML( topLevelNode );
+  }
+
+  {
+    MeshBodyManager * meshBodyManager = this->GetGroup<MeshBodyManager>(groupKeys.meshBodyManager);
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("MeshBody");
+    meshBodyManager->AddChildren(topLevelNode);
+    meshBodyManager->SetDocumentationNodes();
+    meshBodyManager->ReadXML(topLevelNode);
   }
 
   // The objects in domain are handled separately for now

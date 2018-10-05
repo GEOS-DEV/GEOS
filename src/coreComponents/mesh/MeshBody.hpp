@@ -52,12 +52,17 @@ public:
   {
 
 
-    dataRepository::ViewKey meshLevels                = { "meshLevels" };
+    dataRepository::ViewKey meshLevels = { "meshLevels" };
   } viewKeys;
 
   struct groupStructKeys
   {} groupKeys;
 
+  static string CatalogName() { return "MeshBody"; }
+
+  using CatalogInterface = cxx_utilities::CatalogInterface< MeshBody, std::string const &,
+        ManagedGroup * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
 
 };
 
