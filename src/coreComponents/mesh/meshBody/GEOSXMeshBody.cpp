@@ -17,30 +17,21 @@
  */
 
 /*
- * MeshBodyManager.cpp
+ * GEOSXMeshBody.hpp
  *
- *  Created on: Oct 4, 2018
+ *  Created on: Oct 10, 2018
  *      Author: Antoine Mazuyer
  */
 
-#include "MeshBodyManager.hpp"
-#include "MeshBody.hpp"
+#include "GEOSXMeshBody.hpp"
 
-namespace geosx
-{
-
+namespace geosx {
 using namespace dataRepository;
-
-MeshBodyManager::MeshBodyManager( const std::string& name,
-                                        ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
-{}
-
-void MeshBodyManager::CreateChild( string const & childKey, string const & childName  ) {
-    std::cout << "Using a MeshBody provided by " << childKey << " named " << childName << std::endl;
-    std::unique_ptr<MeshBody> meshBody =
-        MeshBody::CatalogInterface::Factory( childKey, childName, this );
-    this->RegisterGroup<MeshBody>( childKey, std::move(meshBody) );
+GEOSXMeshBody::GEOSXMeshBody( const std::string& name,
+                              ManagedGroup * const parent ) :
+    MeshBody(name, parent)
+{
 }
 
-} //namespace
+REGISTER_CATALOG_ENTRY(MeshBody, GEOSXMeshBody, std::string const &, ManagedGroup * const)
+} // namespace
