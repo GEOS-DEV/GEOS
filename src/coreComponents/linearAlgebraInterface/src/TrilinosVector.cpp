@@ -117,7 +117,7 @@ void EpetraVector::add( integer const element,
 void EpetraVector::add( array1d<integer> const elements,
                         array1d<real64> const values )
 {
-  m_vector->SumIntoGlobalValues( elements.size(), values.data(), elements.data() );
+  m_vector->SumIntoGlobalValues( static_cast<integer>(elements.size()), values.data(), elements.data() );
 }
 
 // Set value
@@ -131,7 +131,7 @@ void EpetraVector::set( trilinosTypes::gid const element,
 void EpetraVector::set( array1d<trilinosTypes::gid> const elements,
                         array1d<real64> const values )
 {
-  m_vector->ReplaceGlobalValues( elements.size(), values.data(), elements.data() );
+  m_vector->ReplaceGlobalValues( static_cast<integer>(elements.size()), values.data(), elements.data() );
 }
 
 // ----------------------------
