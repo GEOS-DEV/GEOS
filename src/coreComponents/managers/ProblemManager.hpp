@@ -40,6 +40,7 @@
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
+#include "Inputs/InputManager.hpp"
 
 namespace geosx
 {
@@ -171,6 +172,7 @@ public:
     dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
+    dataRepository::ViewKey inputManagerName         = {"inputManager"};
   } viewKeys;
 
   struct groupKeysStruct
@@ -195,6 +197,9 @@ private:
   //SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
+
+  string m_inputManagerName;
+  InputManager * m_inputManager;
 };
 
 } /* namespace geosx */

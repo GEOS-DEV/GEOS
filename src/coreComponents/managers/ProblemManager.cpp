@@ -63,7 +63,8 @@ ProblemManager::ProblemManager( const std::string& name,
   ObjectManagerBase(name, parent),
   m_physicsSolverManager(nullptr),
   m_eventManager(nullptr),
-  m_functionManager(nullptr)
+  m_functionManager(nullptr),
+  m_inputManager(nullptr)
 {
   // Groups that do not read from the xml
   // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
@@ -82,8 +83,9 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<OutputManager>(groupKeys.outputManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
-  // The function manager is handled separately
+  // Theses managers are handled separately
   m_functionManager = NewFunctionManager::Instance();
+  m_inputManager = InputManager::Instance();
 }
 
 
@@ -258,6 +260,20 @@ void ProblemManager::FillDocumentationNode()
                                      "Schema verbosity level (0=default, 1=development, 2=all)",
                                      "0",
                                      "CommandLine",
+                                     0,
+                                     0,
+                                     0,
+                                     RestartFlags::WRITE );
+
+  commandDocNode->AllocateChildNode( viewKeys.inputManagerName.Key(),
+                                     viewKeys.inputManagerName.Key(),
+                                     -1,
+                                     "string",
+                                     "",
+                                     "Name of the InputManager",
+                                     "Name of the InputManager (GEOSX or PAMELA)",
+                                     "",
+                                     "",
                                      0,
                                      0,
                                      0,
