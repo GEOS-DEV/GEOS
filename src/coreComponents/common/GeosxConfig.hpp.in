@@ -18,6 +18,7 @@
 #cmakedefine GEOSX_USE_RAJA
 #cmakedefine GEOSX_USE_PVT_PACKAGE
 
+#cmakedefine GEOSX_USE_ARRAY_BOUNDS_CHECK
 #cmakedefine USE_CONTAINERARRAY_RETURN_PTR
 
 

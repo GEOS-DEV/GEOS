@@ -65,6 +65,8 @@ public:
   {
     dataRepository::ViewKey plotFileRoot = { "plotFileRoot" };
     dataRepository::ViewKey writeFEMFaces = { "writeFEMFaces" };
+    dataRepository::ViewKey plotLevel = { "plotLevel" };
+
   } siloOutputViewKeys;
 
 };

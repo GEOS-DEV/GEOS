@@ -57,6 +57,8 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     ######################################################
     if( CMAKE_BUILD_TYPE MATCHES "(Debug|RelWithDebInfo)" )
         add_definitions(-DGEOSX_DEBUG)
+        add_definitions(-DAXOM_DEBUG)
+        set(ENABLE_ARRAY_BOUNDS_CHECK "ON" CACHE PATH "" FORCE)
     endif()
 else ()
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS

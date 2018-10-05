@@ -31,6 +31,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wglobal-constructors"
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
+#pragma clang diagnostic ignored "-Wused-but-marked-unused"
 #endif
 
 #include "gtest/gtest.h"
@@ -82,8 +83,13 @@ void testStackTrace(double divisor)
 
 TEST(testStackTrace_DeathTest, stackTrace)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wused-but-marked-unused"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wused-but-marked-unused"
+#endif
   EXPECT_DEATH_IF_SUPPORTED(testStackTrace(0), IGNORE_OUTPUT);
-#pragma GCC diagnostic pop
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 }
