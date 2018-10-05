@@ -119,8 +119,6 @@ void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
                                  trilinosTypes::lid const nMaxEntriesPerRow )
 {
   // Create a unique pointer to an Epetra_CrsMatrix defined from the two input Epetra_Map.
-  // (TODO this has not been tested and from previous experience it may not be the correct
-  // way of getting a rectangular matrix).
   // Specifies the maximum number of non-zeros per row.
   m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_row_map, input_col_map, nMaxEntriesPerRow, false ) );
 }
