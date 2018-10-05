@@ -413,8 +413,8 @@ void testNativeSolvers()
   EXPECT_LT( std::fabs( normIterativeSol/norm2x - 1. ), 1e-6 );
 
   // We also check a couple random elements to see if they are equal.
-  EXPECT_LT( ( std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-5 );
-  EXPECT_LT( ( std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-5 );
+  EXPECT_LT( ( std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-4 );
+  EXPECT_LT( ( std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-4 );
 
   // We now do the same using a direct solver from Amesos (Klu)
   if (rank == 0)
