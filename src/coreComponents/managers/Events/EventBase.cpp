@@ -186,6 +186,19 @@ void EventBase::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.currentSubEvent.Key(),
+                              viewKeys.currentSubEvent.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "index of the current subevent",
+                              "index of the current subevent",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
 }
 
 
@@ -315,6 +328,7 @@ void EventBase::Step(real64 const time,
                      dataRepository::ManagedGroup * domain )
 {
   integer const isPostTimeStep = this->getReference<integer>(viewKeys.isPostTimeStep);
+  integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
 
   if (m_target != nullptr)
   {
@@ -328,13 +342,19 @@ void EventBase::Step(real64 const time,
     }
   }
 
-  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  // Iterage using the managed integer currentSubEvent, which will
+  // allow restart runs to pick up where they left off.
+  for ( ; currentSubEvent<this->numSubGroups(); ++currentSubEvent)
   {
+    EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[currentSubEvent] );
+
     if (subEvent->GetForecast() <= 0)
     {
       subEvent->Execute(time, dt, cycle, m_eventProgress, domain);
     }
-  });
+  }
+
+  currentSubEvent = 0;
 }
 
 
