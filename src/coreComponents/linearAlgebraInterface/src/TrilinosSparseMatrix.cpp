@@ -338,7 +338,7 @@ void EpetraSparseMatrix::add( array1d<trilinosTypes::gid> const rowIndices,
 //    m_matrix->SumIntoGlobalValues( rowIndices[i], colIndices.size(), valuesInRow.data(), colIndices.data() );
 
     // This version uses the sliced array2d. TODO test it properly! But should be more efficient.
-    m_matrix->SumIntoGlobalValues( rowIndices[i], colIndices.size(), values[i], colIndices.data() );
+    m_matrix->SumIntoGlobalValues( rowIndices[i], static_cast<integer>(colIndices.size()), values[i], colIndices.data() );
   }
 }
 
