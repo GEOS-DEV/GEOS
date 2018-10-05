@@ -612,6 +612,12 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
         this->WriteDataField<localIndex>(meshname.c_str(), fieldName,
                                          viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
+      if( typeID==typeid(globalIndex_array) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<globalIndex_array> const & >( *wrapper );
+        this->WriteDataField<globalIndex>(meshname.c_str(), fieldName,
+                                         viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+      }
     }
   }
 }

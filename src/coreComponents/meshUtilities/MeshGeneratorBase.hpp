@@ -70,7 +70,7 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
 
-  int m_delayMeshDeformation;
+  int m_delayMeshDeformation = 0;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
