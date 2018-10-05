@@ -39,11 +39,9 @@ using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
-  m_mpiComm()
+  ManagedGroup( name, parent )
 {
   this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
-  MPI_Comm_dup( MPI_COMM_GEOSX, &m_mpiComm );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
