@@ -26,6 +26,7 @@
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -34,8 +35,8 @@ EdgeManager::EdgeManager( std::string const & name,
                           ManagedGroup * const parent ):
   ObjectManagerBase(name,parent)
 {
-  this->RegisterViewWrapper<FixedOneToManyRelation>(viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
-  this->RegisterViewWrapper<UnorderedVariableOneToManyRelation>(viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
+  this->RegisterViewWrapper(viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
+  this->RegisterViewWrapper(viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
 
   m_toNodesRelation.resize( 0, 2 );
   // TODO Auto-generated constructor stub
@@ -47,198 +48,113 @@ EdgeManager::~EdgeManager()
   // TODO Auto-generated destructor stub
 }
 
-
-
 void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager )
 {
-
-
   if (faceManager->size() == 0 || nodeManager->size() == 0)
     return;
 
-  localIndex numMultiNodeEdges = 0;
+  localIndex numEdges = 0;
   OrderedVariableOneToManyRelation& faceToEdgeMap = faceManager->edgeList();
   faceToEdgeMap.SetRelatedObject( this );
   array1d<localIndex_array>& faceToNodeMap = faceManager->nodeList();
+
+  m_toNodesRelation.SetRelatedObject( nodeManager );
+  m_toFacesRelation.SetRelatedObject( faceManager );
+
+  m_toNodesRelation.resize(4 * nodeManager->size());
+  m_toFacesRelation.resize(4 * nodeManager->size());
 
 
   UnorderedVariableOneToManyRelation & nodeToEdgeMap = nodeManager->edgeList();
   // this will be used to hold a list pairs that store the 2nd node in the edge,
   // and the edge number.
   // they are keyed the edges lowest node.
-  std::map< localIndex, array1d<std::pair<localIndex, localIndex> > > edgesByLowestNode;
-
-  set<localIndex> singleNodeEdges;
-
-  // For 2D problems, there is a one-to-one relationship between nodes and
-  // edges.
-  if ( faceToNodeMap[0].size() == 2)
-  {
-    m_toNodesRelation.resize( 0, 1 );
-    for( localIndex kn=0 ; kn<nodeManager->size() ; ++kn )
-    {
-      singleNodeEdges.insert(kn);
-    }
-  }
-
+  array1d<localIndex_array> edgesByLowestNode(nodeManager->size());
 
   // loop over all the faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
   {
     const localIndex_array::size_type numNodesInFace = faceToNodeMap[kf].size();
+    const localIndex_array& nodeList = faceToNodeMap[kf];
 
-    if( numNodesInFace > 2 )
+    localIndex node0, node1, temp;
+
+    // loop over all the nodes in the face. there will be an edge for each
+    // node.
+    for( localIndex_array::size_type a=0 ; a<numNodesInFace ; ++a )
     {
-      const localIndex_array& nodeList = faceToNodeMap[kf];
+      // sort the nodes in order of index value
+      node0 = nodeList[a];
+      node1 = nodeList[ ( a + 1 ) % numNodesInFace ];
 
-
-      localIndex node0, node1, temp;
-
-      // loop over all the nodes in the face. there will be an edge for each
-      // node.
-      for( localIndex_array::size_type a=0 ; a<numNodesInFace ; ++a )
+      if( node0 > node1 )
       {
-        // sort the nodes in order of index value
-        node0 = nodeList[a];
-        if( a == numNodesInFace-1 )
+        temp = node0;
+        node0 = node1;
+        node1 = temp;
+      }
+
+      // check to see if the edge is in the edgesByLowestNode array (i.e. it
+      // is already registered)
+
+      bool duplicate = false;
+      localIndex_array& edgesWithSameFirstNode = edgesByLowestNode[node0];
+      const localIndex numMatches = edgesWithSameFirstNode.size();
+      for( localIndex i = 0; i < numMatches; ++i )
+      {
+        const localIndex existingEdgeIndex = edgesWithSameFirstNode[i];
+        const localIndex existingNode1 = m_toNodesRelation(existingEdgeIndex, 1);
+        if( existingNode1 == node1 )
         {
-          node1 = nodeList[0];
-        }
-        else
-        {
-          node1 = nodeList[a+1];
-        }
-
-        if( node0 > node1 )
-        {
-          temp = node0;
-          node0 = node1;
-          node1 = temp;
-        }
-
-
-        // check to see if the edge is in the edgesByLowestNode array (i.e. it
-        // is already registered)
-
-
-        bool duplicate = false;
-        array1d<std::pair<localIndex, localIndex> >& edgesWithSameFirstNode = edgesByLowestNode[node0];
-        array1d<std::pair<localIndex, localIndex> >::iterator i=edgesWithSameFirstNode.begin();
-        for( ; i!=edgesWithSameFirstNode.end() ; ++i )
-        {
-          localIndex existingNode1 = i->first;
-          localIndex existingEdgeIndex = i->second;
-          if( existingNode1 == node1 ) // node1 is has already been
-                                       // entered...thus the edge already had
-                                       // been processed
-          {
-            duplicate = true;
-            faceToEdgeMap(kf).push_back(existingEdgeIndex);
-
-            break;
-          }
-        }
-
-        // if the edge is not duplicate, then we will assign a new pair into the
-        // edgesByLowestNode array
-        if( !duplicate )
-        {
-          edgesByLowestNode[node0].push_back( std::make_pair(node1,numMultiNodeEdges) );
-          faceToEdgeMap(kf).push_back(numMultiNodeEdges);
-          ++numMultiNodeEdges;
+          duplicate = true;
+          faceToEdgeMap(kf).push_back(existingEdgeIndex);
+          m_toFacesRelation(existingEdgeIndex).insert(kf);
+          break;
         }
       }
-    }
-    else if( numNodesInFace == 2 )
-    {
-      const localIndex_array& nodeList = faceToNodeMap[kf];
 
-      const localIndex node0 = nodeList[0];
-      const localIndex node1 = nodeList[1];
-
-      faceToEdgeMap(kf).push_back(node0);
-      faceToEdgeMap(kf).push_back(node1);
-
-    }
-  }
-
-  // all edge data is stored in the edgesByLowest node and
-  // faceManager::faceToEdgeMap arrays. So now we can
-  // just extract the data into the edgeManager structures
-  this->resize( numMultiNodeEdges + singleNodeEdges.size() );
-
-  if (faceToNodeMap[0].size() > 2)
-  {
-    // fill edgesToNodes array by using data in the edgesByLowestNode array
-    for( std::map< localIndex, array1d<std::pair<localIndex, localIndex> > >::iterator a=edgesByLowestNode.begin() ;
-         a!=edgesByLowestNode.end() ; ++a )
-    {
-      array1d<std::pair<localIndex, localIndex> >& edgesWithSameFirstNode = a->second;
-      const localIndex& node0 = a->first;
-      for( array1d<std::pair<localIndex, localIndex> >::iterator i=edgesWithSameFirstNode.begin() ;
-           i!=edgesWithSameFirstNode.end() ; ++i )
+      // if the edge is not duplicate, then we will assign a new pair into the
+      // edgesByLowestNode array
+      if( !duplicate )
       {
-        const localIndex& node1 = i->first;
-        const localIndex& edgeIndex = i->second;
+        edgesByLowestNode[node0].push_back( numEdges );
+        faceToEdgeMap(kf).push_back(numEdges);
+        m_toFacesRelation(numEdges).insert(kf);
+        
+        m_toNodesRelation(numEdges, 0) = node0;
+        m_toNodesRelation(numEdges, 1) = node1;
 
-        m_toNodesRelation(edgeIndex,0) = node0;
-        m_toNodesRelation(edgeIndex,1) = node1;
-
-        nodeToEdgeMap(node0).insert(edgeIndex);
-        nodeToEdgeMap(node1).insert(edgeIndex);
-
-        //      std::cout<<"m_edgesToNodes("<<edgeIndex<<",*) = "<<node0<<'
-        // '<<node1<<std::endl;
+        nodeToEdgeMap(node0).insert(numEdges);
+        nodeToEdgeMap(node1).insert(numEdges);
+        
+        numEdges += 1;
       }
     }
   }
-  else
-  {
-    for( localIndex edgeIndex=0 ; edgeIndex<singleNodeEdges.size() ; ++edgeIndex )
-    {
-      m_toNodesRelation(edgeIndex,0) = edgeIndex;
-      nodeToEdgeMap(edgeIndex).insert(edgeIndex);
-    }
 
-  }
-
-
-  for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
-  {
-    const localIndex_array::size_type numEdgesInFace = faceToEdgeMap(kf).size();
-
-    // loop over all the nodes in the face. there will be an edge for each node.
-    for( localIndex_array::size_type a=0 ; a<numEdgesInFace ; ++a )
-    {
-      localIndex edgeIndex = faceToEdgeMap(kf)(a);
-      m_toFacesRelation(edgeIndex).insert(kf);
-    }
-  }
-
-
-  // fill edgesToNodes array by using data in the for single node edges
-//  set<localIndex>::size_type edgeIndex = numMultiNodeEdges;
-//  for( set<localIndex>::const_iterator i=singleNodeEdges.begin() ;
-// i!=singleNodeEdges.end() ; ++i )
-//  {
-//    const localIndex& nodeIndex = *i;
-//    m_m_toNodesRelation(edgeIndex,0) = nodeIndex;
-//    nodeManager->m_nodeToEdgeMap(nodeIndex).insert(edgeIndex);
-//
-//    ++edgeIndex;
-//  }
-//
+  resize(numEdges);
 
   // make sets from nodesets
 
-  auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
-
-  for( auto const & setWrapper : nodeSets )
+  auto const & nodeSets = nodeManager->GetGroup(dataRepository::keys::sets)->wrappers();
+  for ( int i = 0; i < nodeSets.size(); ++i )
   {
-    const string& setname = setWrapper.second->getName();
-    const set<localIndex>& targetSet = ( dataRepository::ViewWrapper<set<localIndex>>::cast( *setWrapper.second ) ).reference();
-    this->ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setname );
+    auto const & setWrapper = nodeSets[i];
+    std::string const & setName = setWrapper->getName();
+    CreateSet( setName );
   }
+
+  // Then loop over them in parallel.
+  raja::forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
+  {
+    auto const & setWrapper = nodeSets[i];
+    std::string const & setName = setWrapper->getName();
+    const set<localIndex>& targetSet = nodeManager->GetGroup(dataRepository::keys::sets)->getReference<set<localIndex>>( setName );
+    ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
+  } );
+
+
+  SetDomainBoundaryObjects( faceManager );
 
 }
 
@@ -381,21 +297,18 @@ bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) co
 //  return(val);
 //}
 
-void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenceObject )
+void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
 {
-  // make sure that the reference object is a faceManger object
-  //referenceObject->CheckObjectType( ObjectDataStructureBaseT::FaceManager );
-
-  // cast the referenceObject into a faceManager
-  const FaceManager* const faceManager = static_cast<const FaceManager *>( referenceObject);
-
   // get the "isExternal" field from the faceManager->..This should have been
   // set already!
-  array1d<integer> const & isExternalFace = referenceObject->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::isExternalString );
-  array1d<integer>& isExternal = this->getReference< array1d<integer> >( viewKeyStruct::isExternalString );
+  array1d<integer> const & isExternalFace = faceManager->isExternal();
+  array1d<integer>& isExternal = this->isExternal();
+
+  array1d<localIndex_array> const & facesToEdges = faceManager->edgeList();
 
   // get the "isExternal" field from for *this, and set it to zero
   isExternal = 0;
+
 
   // loop through all faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
@@ -403,13 +316,45 @@ void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenc
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
     {
-      localIndex_array const & faceToEdges = faceManager->edgeList()(kf);
+      localIndex_array const & faceToEdges = facesToEdges[kf];
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-      for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
+
+      for( auto a : faceToEdges )
       {
-        isExternal(*a) = 1;
+        isExternal[a] = 1;
       }
+    }
+  }
+}
+
+
+void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+                                                                   array1d<globalIndex_array>& edgesToNodes )
+{
+
+  FixedOneToManyRelation const & edgeNodes = this->nodeList();
+  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+
+  nodeManager->CheckTypeID( typeid( NodeManager ) );
+
+
+  edgesToNodes.clear();
+  edgesToNodes.resize(size());
+  for( localIndex kf=0 ; kf<size() ; ++kf )
+  {
+
+    if( isDomainBoundary(kf) != 0 )
+    {
+      globalIndex_array temp;
+
+      for( localIndex a=0 ; a<edgeNodes.size(1) ; ++a )
+      {
+        const globalIndex gnode = nodeManager->m_localToGlobalMap( edgeNodes[kf][a] );
+        temp.push_back( gnode );
+      }
+      std::sort( temp.begin(), temp.end() );
+      edgesToNodes[kf] = temp;
     }
   }
 }
@@ -761,5 +706,75 @@ void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
 //    }
 //  }
 //}
+
+
+
+
+localIndex EdgeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return PackUpDownMapsPrivate<false>( junk, packList );
+}
+
+localIndex EdgeManager::PackUpDownMaps( buffer_unit_type * & buffer,
+                                        localIndex_array const & packList ) const
+{
+  return PackUpDownMapsPrivate<true>( buffer, packList );
+}
+
+template<bool DOPACK>
+localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                               localIndex_array const & packList ) const
+{
+  localIndex packedSize = 0;
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         m_toNodesRelation,
+                                         packList,
+                                         m_localToGlobalMap,
+                                         m_toNodesRelation.RelatedObjectLocalToGlobal() );
+
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         m_toFacesRelation,
+                                         packList,
+                                         m_localToGlobalMap,
+                                         m_toFacesRelation.RelatedObjectLocalToGlobal() );
+
+
+  return packedSize;
+}
+
+
+
+localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                          localIndex_array const & packList )
+{
+  localIndex unPackedSize = 0;
+
+  string nodeListString;
+  unPackedSize += bufferOps::Unpack( buffer, nodeListString );
+  GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
+
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     m_toNodesRelation,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_toNodesRelation.RelatedObjectGlobalToLocal() );
+
+  string faceListString;
+  unPackedSize += bufferOps::Unpack( buffer, faceListString );
+  GEOS_ERROR_IF( faceListString != viewKeyStruct::faceListString, "");
+
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     m_toFacesRelation,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
+
+  return unPackedSize;
+}
 
 }

@@ -33,6 +33,8 @@ typedef RAJA::cuda_exec<256> computeForcePolicy;
 typedef RAJA::cuda_exec<256> quadraturePolicy;
 typedef RAJA::atomic::cuda_atomic atomicPolicy;
 
+typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
+
 #elif defined(RAJA_ENABLE_OPENMP)
 typedef RAJA::omp_parallel_for_exec elemPolicy;
 typedef RAJA::omp_parallel_for_exec onePointPolicy;
@@ -46,6 +48,8 @@ typedef RAJA::atomic::omp_atomic atomicPolicy;
 typedef RAJA::loop_exec stencilPolicy;
 typedef RAJA::omp_reduce_ordered reducePolicy;
 
+typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
+
 #else
 typedef RAJA::loop_exec elemPolicy;
 typedef RAJA::loop_exec onePointPolicy;
@@ -58,6 +62,9 @@ typedef RAJA::atomic::seq_atomic atomicPolicy;
 
 typedef RAJA::loop_exec stencilPolicy;
 typedef RAJA::seq_reduce reducePolicy;
+
+typedef RAJA::loop_exec parallelHostPolicy;
+
 #endif
 
 #if defined(RAJA_ENABLE_CUDA)

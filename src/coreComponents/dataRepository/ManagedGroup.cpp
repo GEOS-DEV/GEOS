@@ -26,6 +26,7 @@
 #include "ManagedGroup.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
+#include "common/TimingMacros.hpp"
 #include <mpi.h>
 
 #ifdef GEOSX_USE_ATK
@@ -79,6 +80,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
   m_size(0),
+  m_capacity(0),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_name(name)
 {
@@ -157,6 +159,7 @@ ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_sidreGroup( std::move(source.m_sidreGroup) ),
 #endif
   m_size( source.m_size ),
+  m_capacity( source.m_capacity ),
   m_restart_flags( source.m_restart_flags ),
   m_name( source.m_name )
 {}
@@ -197,8 +200,23 @@ void ManagedGroup::resize( indexType const newsize )
     }
   }
   m_size = newsize;
+  if( m_size > m_capacity )
+  {
+    m_capacity = m_size;
+  }
 }
 
+void ManagedGroup::reserve( indexType const newsize )
+{
+  for( auto&& i : this->wrappers() )
+  {
+    if( i.second->sizedFromParent() == 1 )
+    {
+      i.second->reserve(newsize);
+    }
+  }
+  m_capacity = newsize;
+}
 
 
 void ManagedGroup::RegisterDocumentationNodes()
@@ -236,6 +254,28 @@ void ManagedGroup::RegisterDocumentationNodes()
           cxx_utilities::equateStlVector(data,values);
         });
       }
+//      else if( defVal != "NONE" && defVal != "" )
+//      {
+//        rtTypes::ApplyTypeLambda2( typeID,
+//                                   [&]( auto a, auto b ) -> void
+//        {
+//
+//          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
+//          std::vector<decltype(b)> values;
+//          stringutilities::StringToType( values, defVal );
+//          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
+//          if( size != 1 )
+//          {
+//            GEOS_ERROR("Expect size of default value to be a scalar");
+//          }
+//          decltype(a) & data = dataView.reference();
+//          for( localIndex c=0 ; c<size ; ++c )
+//          {
+//            data[c] = values[0];
+//          }
+//          //data = values[0];
+//        });
+//      }
     }
   }
 
@@ -557,11 +597,11 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
+  GEOS_ERROR_IF( groupName != this->getName(), "ManagedGroup::Unpack(): group names do not match");
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect");
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers);
@@ -578,11 +618,11 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ASSERT( numSubGroups==m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->m_subGroups )
     {

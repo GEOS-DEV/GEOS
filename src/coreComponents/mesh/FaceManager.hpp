@@ -65,26 +65,18 @@ public:
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
-  void  AddNewFace( localIndex const & kReg,
-                    localIndex const & kSubReg,
-                    localIndex const & ke,
-                    localIndex const & kelf,
-                    localIndex & numFaces,
-                    array1d<localIndex_array>& facesByLowestNode,
-                    localIndex_array& tempNodeList,
-                    array1d<localIndex_array>& tempFaceToNodeMap,
-                    CellBlockSubRegion & elementRegion );
+  localIndex getMaxFaceNodes() const;
 
+  void SortAllFaceNodes( NodeManager const * const nodeManager,
+                         ElementRegionManager const * const elemManager);
 
-
-  void SortAllFaceNodes( NodeManager const & nodeManager,
-                         ElementRegionManager const & elemManager);
-
-  void SortFaceNodes( NodeManager const & nodeManager,
-                      R1Tensor const & elementCenter,
-                      const localIndex faceIndex );
+  void SortFaceNodes( array1d<R1Tensor> const & X,
+                      R1Tensor const & elemCenter,
+                      arrayView1d<localIndex> faceNodes );
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
+
+  void SetIsExternal();
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
@@ -99,7 +91,7 @@ public:
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
   virtual void
-  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
                                                    array1d<globalIndex_array>& faceToNodes ) override final;
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -148,6 +140,8 @@ private:
   FixedToManyElementRelation m_toElements;
 
   array1d< R1Tensor > m_faceCenter;
+
+  constexpr static int MAX_FACE_NODES = 9;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;

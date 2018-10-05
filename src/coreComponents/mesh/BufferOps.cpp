@@ -31,7 +31,7 @@ namespace bufferOps
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-                 UnorderedVariableToManyElementRelation const & var,
+                 OrderedVariableToManyElementRelation const & var,
                  array1d<localIndex> const & packList,
                  ElementRegionManager const * const elementRegionManager )
 {
@@ -62,17 +62,17 @@ localIndex Pack( char*& buffer,
   return sizeOfPackedChars;
 }
 template localIndex Pack<true>( char*&,
-                                UnorderedVariableToManyElementRelation const &,
+                                OrderedVariableToManyElementRelation const &,
                                 array1d<localIndex> const &,
                                 ElementRegionManager const * const );
 template localIndex Pack<false>( char*&,
-                                 UnorderedVariableToManyElementRelation const &,
+                                 OrderedVariableToManyElementRelation const &,
                                  array1d<localIndex> const &,
                                  ElementRegionManager const * const );
 
 
 localIndex Unpack( char const * & buffer,
-                   UnorderedVariableToManyElementRelation & var,
+                   OrderedVariableToManyElementRelation & var,
                    array1d<localIndex> const & packList,
                    ElementRegionManager const * const elementRegionManager )
 {
@@ -80,7 +80,7 @@ localIndex Unpack( char const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ASSERT( numIndicesUnpacked==packList.size(), "")
+  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
@@ -89,7 +89,7 @@ localIndex Unpack( char const * & buffer,
     var.m_toElementRegion[index].resize( numIndicesUnpacked );
     var.m_toElementSubRegion[index].resize( numIndicesUnpacked );
     var.m_toElementIndex[index].resize( numIndicesUnpacked );
-//    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+//    GEOS_ERROR_IF( numIndicesUnpacked != var.m_toElementRegion[index].size(), "")
 
     for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
     {
@@ -109,8 +109,10 @@ localIndex Unpack( char const * & buffer,
       var.m_toElementIndex[index][b] = softMapLookup( elemSubRegion->m_globalToLocalMap,
                                                       globalElementIndex,
                                                       localIndex(-1) );
+//      var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
+
     }
-  }
+  ;}
 
   return sizeOfUnpackedChars;
 }
@@ -139,8 +141,8 @@ localIndex Pack( char*& buffer,
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.m_toElementRegion[index].size() );
-    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.m_toElementRegion.size(1) );
+    for( localIndex b=0 ; b<var.m_toElementRegion.size(1) ; ++b )
     {
       localIndex elemRegionIndex             = var.m_toElementRegion[index][b];
 
@@ -187,15 +189,15 @@ localIndex Unpack( char const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ASSERT( numIndicesUnpacked==packList.size(), "")
+  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
     sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+    GEOS_ERROR_IF( numIndicesUnpacked != var.m_toElementRegion.size(1), "");
 
-    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    for( localIndex b=0 ; b<var.m_toElementRegion.size(1) ; ++b )
     {
       localIndex & elemRegionIndex = var.m_toElementRegion[index][b];
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemRegionIndex );
@@ -219,6 +221,7 @@ localIndex Unpack( char const * & buffer,
         var.m_toElementIndex[index][b] = softMapLookup( elemSubRegion->m_globalToLocalMap,
                                                         globalElementIndex,
                                                         localIndex(-1) );
+//        var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
 
       }
 

@@ -54,8 +54,8 @@ void HaltEvent::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Describes the timing of the solver application");
 
-  docNode->AllocateChildNode( viewKeys.maxRuntime.Key(),
-                              viewKeys.maxRuntime.Key(),
+  docNode->AllocateChildNode( haltEventViewKeys.maxRuntime.Key(),
+                              haltEventViewKeys.maxRuntime.Key(),
                               -1,
                               "real64",
                               "real64",
@@ -75,7 +75,7 @@ void HaltEvent::EstimateEventTiming(real64 const time,
                                      integer const cycle,
                                      ManagedGroup * domain)
 {
-  real64 const maxRuntime = this->getReference<real64>(viewKeys.maxRuntime);
+  real64 const maxRuntime = this->getReference<real64>(haltEventViewKeys.maxRuntime);
   
   // Check run time
   timeval tim;

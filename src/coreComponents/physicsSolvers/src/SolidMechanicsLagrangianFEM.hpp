@@ -148,6 +148,24 @@ public:
                                  real64 const & dt,
                                  DomainPartition * const domain ) override;
 
+  /**@}*/
+
+  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+  real64 ExplicitElementKernel( localIndex const er,
+                                localIndex const esr,
+                                set<localIndex> const & elementList,
+                                array2d<localIndex> const & elemsToNodes,
+                                array3d< R1Tensor > const & dNdX,
+                                array2d<real64> const & detJ,
+                                r1_array const & u,
+                                r1_array const & uhat,
+                                r1_array const & acc,
+                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+                                ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+                                ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                real64 const dt );
+
+
   realT CalculateElementResidualAndDerivative( real64 const density,
                                                FiniteElementBase const * const fe,
                                                const array_view<R1Tensor,2>& dNdX,
@@ -198,18 +216,24 @@ public:
     dataRepository::ViewKey trilinosIndex = { "trilinosIndex" };
     dataRepository::ViewKey ghostRank = { "ghostRank" };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-  } viewKeys;
+
+
+  } solidMechanicsViewKeys;
 
   struct groupKeyStruct
   {
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
-  } groupKeys;
+  } solidMechanicsGroupKeys;
 
 private:
 
   real64 m_maxForce;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
+
+  array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
+  array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
+
   SolidMechanics_LagrangianFEM();
 
 };

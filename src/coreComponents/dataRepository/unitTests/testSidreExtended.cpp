@@ -16,7 +16,14 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#if __clang_major__ >= 5
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+
 #include <gtest/gtest.h>
+
+
 #include <mpi.h>
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
@@ -172,7 +179,7 @@ ViewWrapper<string> * createStringView(ManagedGroup * parent, const string & nam
   ViewWrapper<string> * view = parent->RegisterViewWrapper<string>(name);
   view->setSizedFromParent(sfp);
   
-  localIndex expected_size = str.size() * sizeof(char);
+  localIndex expected_size = static_cast<localIndex>(str.size()) * sizeof(char);
 
   /* Set the data */
   view->data() = str;
@@ -201,7 +208,7 @@ ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const s
   view->setSizedFromParent(sfp);
 
   unsigned long expected_size = arr.size() * sizeof(string);
-  view->resize(arr.size());
+  view->resize( static_cast<localIndex>(arr.size()));
 
   EXPECT_EQ(static_cast<uint>(view->size()), arr.size());
   EXPECT_EQ(view->byteSize(), expected_size);
@@ -255,8 +262,9 @@ void checkScalarView(const ViewWrapper<T> * view, int sfp, const T value) {
 }
 
 
-TEST(testSidreExtended, testSidreExtended) {
-  MPI_Init(0, nullptr);
+TEST(testSidreExtended, testSidreExtended)
+{
+  MPI_Init( nullptr, nullptr);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_extended";
   const string protocol = "sidre_hdf5";
@@ -522,3 +530,7 @@ int main(int argc, char* argv[]) {
 
 } /* end namespace dataRepository */
 } /* end namespace goesx */
+
+#if __clang_major__ >= 5
+#pragma clang diagnostic pop
+#endif
