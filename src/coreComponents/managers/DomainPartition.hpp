@@ -71,11 +71,6 @@ public:
 //  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 //                                            array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects );
 
-  void SetMpiComm( MPI_Comm comm )
-  {
-    MPI_Comm_dup( comm, &m_mpiComm );
-  }
-
 //  static std::set<int> & getFreeCommIDs();
 //  static int reserveCommID();
 //  static void releaseCommID( int & ID );
@@ -143,8 +138,6 @@ public:
 
 
 private:
-  MPI_Comm m_mpiComm;
-//  std::set<int> m_freeCommID;
 
 
 };
