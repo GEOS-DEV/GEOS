@@ -545,8 +545,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                                    const int cycleNumber,
                                                    DomainPartition * const domain )
 {
-  GEOSX_MARK_BEGIN(initialization);
+  GEOSX_MARK_FUNCTION;
 
+  GEOSX_MARK_BEGIN(initialization);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
@@ -646,7 +647,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
 
-      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
+      GEOSX_MARK_BEGIN(elemLoop);
 
 
       ElementKernelSelector( er,
@@ -665,7 +666,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                              numNodesPerElement,
                              numQuadraturePoints );
 
-      GEOSX_MARK_LOOP_END(elemLoop);
+      GEOSX_MARK_END(elemLoop);
 
     } //Element Region
 

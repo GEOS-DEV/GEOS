@@ -23,6 +23,7 @@
  *      Author: settgast
  */
 
+#include "common/TimingMacros.hpp"
 #include "NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
 
@@ -41,7 +42,7 @@ NeighborCommunicator::NeighborCommunicator():
   m_mpiRecvBufferRequest(),
   m_mpiSendBufferStatus(),
   m_mpiRecvBufferStatus()
-{}
+{GEOSX_MARK_FUNCTION;}
 
 //NeighborCommunicator::~NeighborCommunicator()
 //{
@@ -362,6 +363,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
 void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
                                          int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
