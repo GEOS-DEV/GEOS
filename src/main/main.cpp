@@ -39,9 +39,10 @@ int main( int argc, char *argv[] )
   gettimeofday(&tim, nullptr);
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
+#ifdef GEOSX_USE_MPI
   int rank = 0;
   int nranks = 1;
-#ifdef GEOSX_USE_MPI
+
   MPI_Init(&argc,&argv);
 
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
@@ -49,9 +50,11 @@ int main( int argc, char *argv[] )
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
   MPI_Comm_size(MPI_COMM_GEOSX, &nranks);
+
+  logger::InitializeLogger(MPI_COMM_GEOSX);
+#else
+  logger::InitializeLogger():
 #endif
-  
-  logger::InitializeLogger(rank, nranks, MPI_COMM_GEOSX, "rank_output");
 
 #if defined(RAJA_ENABLE_OPENMP)
   {
