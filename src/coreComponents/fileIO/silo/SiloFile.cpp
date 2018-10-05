@@ -405,7 +405,7 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   char baseFileName[200] = { 0 };
   char dirName[200] = { 0 };
 
-  integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
+  integer eventProgressPercent = static_cast<integer>(eventProgress * 100.0);
   
 
   if( isRestart )
