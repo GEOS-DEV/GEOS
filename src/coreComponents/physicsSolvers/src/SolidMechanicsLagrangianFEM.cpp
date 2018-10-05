@@ -718,28 +718,30 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 #if !defined(EXTERNAL_KERNELS)         
 
-      //          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
-      for( localIndex k=0 ; k<cellBlock->size() ; ++k )
+   ::geosx::raja::forall_in_range<elemPolicy>
+      (0, cellBlock->size(), GEOSX_LAMBDA ( globalIndex k) mutable        
       {
-        r1_array uhat_local( numNodesPerElement );
-        r1_array u_local( numNodesPerElement );
-        r1_array f_local( numNodesPerElement );
 
-        f_local = R1Tensor(0.0);
+        //Note: inumNodesPerElement are defined by a macro. The value is 8. 
+        R1Tensor uhat_local[inumNodesPerElement];
+        R1Tensor u_local[inumNodesPerElement];
+        R1Tensor f_local[inumNodesPerElement];
+
+        for(localIndex i=0; i<inumNodesPerElement; ++i) f_local[i] = 0.0;
+
         localIndex const * const nodelist = elemsToNodes[k];
 
         CopyGlobalToLocal( nodelist,
                            u, uhat,
-                           u_local.data(), uhat_local.data(), numNodesPerElement );
-
+                           u_local, uhat_local, numNodesPerElement );
 
         //Compute Quadrature
         for(auto q = 0 ; q<numQuadraturePoints ; ++q)
         {
 
           R2Tensor dUhatdX, dUdX;
-          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q] );
-          CalculateGradient( dUdX,u_local, dNdX[k][q] );
+          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q], numNodesPerElement);
+          CalculateGradient( dUdX,u_local, dNdX[k][q], numNodesPerElement);
 
           R2Tensor F,L, Finv;
 
@@ -790,15 +792,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
 
           //----------------------
-
-          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local.size(), f_local.data() );
+          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, numNodesPerElement, f_local);
 
         }//quadrature loop
 
+        AddLocalToGlobal(nodelist, f_local, acc, numNodesPerElement);
 
-        AddLocalToGlobal(nodelist, f_local.data(), acc, numNodesPerElement);
-
-      } //Element loop
+      }); //Element loop
 #else// defined(EXTERNAL_KERNELS) 
 
       //
