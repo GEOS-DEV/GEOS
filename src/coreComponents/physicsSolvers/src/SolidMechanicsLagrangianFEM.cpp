@@ -716,7 +716,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
 
-      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
+      GEOSX_MARK_BEGIN(elemLoop);
 
 
       ElementKernelSelector( er,
@@ -735,7 +735,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                              numNodesPerElement,
                              numQuadraturePoints );
 
-      GEOSX_MARK_LOOP_END(elemLoop);
+      GEOSX_MARK_END(elemLoop);
 
     } //Element Region
 
