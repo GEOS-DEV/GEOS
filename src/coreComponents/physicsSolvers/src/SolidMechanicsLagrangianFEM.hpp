@@ -150,6 +150,22 @@ public:
 
   /**@}*/
 
+  real64 ElementKernelSelector( localIndex const er,
+                                localIndex const esr,
+                                set<localIndex> const & elementList,
+                                array2d<localIndex> const & elemsToNodes,
+                                array3d< R1Tensor > const & dNdX,
+                                array2d<real64> const & detJ,
+                                r1_array const & u,
+                                r1_array const & uhat,
+                                r1_array & acc,
+                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+                                ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+                                ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                real64 const dt,
+                                localIndex NUM_NODES_PER_ELEM,
+                                localIndex NUM_QUADRATURE_POINTS );
+
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
   real64 ExplicitElementKernel( localIndex const er,
                                 localIndex const esr,
@@ -159,7 +175,7 @@ public:
                                 array2d<real64> const & detJ,
                                 r1_array const & u,
                                 r1_array const & uhat,
-                                r1_array const & acc,
+                                r1_array & acc,
                                 ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
                                 ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
                                 ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
@@ -233,6 +249,8 @@ private:
 
   array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
+  set<localIndex> m_sendOrRecieveNodes;
+  set<localIndex> m_nonSendOrRecieveNodes;
 
   SolidMechanics_LagrangianFEM();
 
