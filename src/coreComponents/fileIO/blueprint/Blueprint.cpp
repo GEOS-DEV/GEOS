@@ -116,7 +116,7 @@ void Blueprint::write(int cycle,
   // Build the file-name
   char baseFileName[200] = { 0 };
 
-  integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
+  integer eventProgressPercent = static_cast<integer>(eventProgress * 100.0);
   sprintf(baseFileName, "_%03d_%06d", eventProgressPercent, cycle);
 
   const std::string root_output_path = m_output_path + baseFileName + ".root";
