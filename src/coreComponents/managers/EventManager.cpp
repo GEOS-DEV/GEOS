@@ -91,6 +91,32 @@ void EventManager::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.currentSubEvent.Key(),
+                              viewKeys.currentSubEvent.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "index of the current subevent",
+                              "index of the current subevent",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.currentMaxDt.Key(),
+                              viewKeys.currentMaxDt.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Maximum dt request for event loop",
+                              "Maximum dt request for event loop",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
   docNode->AllocateChildNode( viewKeys.maxTime.Key(),
                               viewKeys.maxTime.Key(),
                               -1,
@@ -165,6 +191,8 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   real64& time = *(this->getData<real64>(viewKeys.time));
   real64& dt = *(this->getData<real64>(viewKeys.dt));
   integer& cycle = *(this->getData<integer>(viewKeys.cycle));
+  integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
+  real64& currentMaxDt = *(this->getData<real64>(viewKeys.currentMaxDt));
   real64 const maxTime = this->getReference<real64>(viewKeys.maxTime);
   integer const maxCycle = this->getReference<integer>(viewKeys.maxCycle);
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
@@ -194,17 +222,31 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     subEvent->SetProgressIndicator(eventCounters);
   });
 
+  // Inform user if it appears this is a mid-loop restart
+  if ((currentSubEvent > 0) && (rank == 0))
+  {
+    std::cout << "The restart-file was written during step " << currentSubEvent << " of the event loop.  Resuming from that point." << std::endl;
+  }
+
   // Run problem
   while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
-    real64 nextDt = std::numeric_limits<real64>::max();
     if (rank == 0)
     {
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
     }
-    
-    this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+
+    // Iterage using the managed integer currentSubEvent and real64 currentMaxDt,
+    // which will allow restart runs to pick up where they left off.
+    if (currentSubEvent == 0)
     {
+      currentMaxDt = std::numeric_limits<real64>::max();
+    }
+
+    for ( ; currentSubEvent<this->numSubGroups(); ++currentSubEvent)
+    {
+      EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[currentSubEvent] );
+
       // Calculate the event and sub-event forecasts
       // Note: because events can be nested, the mpi reduce for event
       // forecasts need to happen in EventBase.
@@ -226,7 +268,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       if (eventForecast <= 1)
       {
         real64 requestedDt = subEvent->GetTimestepRequest(time + dt);
-        nextDt = std::min(requestedDt, nextDt);
+        currentMaxDt = std::min(requestedDt, currentMaxDt);
       }
 
       // Check the exit flag
@@ -235,14 +277,18 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       // Debug information
       if ((verbosity > 0) && (rank == 0))
       {
-        std::cout << "     Event: " << subEvent->getName() << ", f=" << eventForecast << std::endl;
-      }      
-    });
+        std::cout << "     Event: " << currentSubEvent << " (" << subEvent->getName() << "), f=" << eventForecast << std::endl;
+      }
+    }
 
+    // Increment the time, cycle
     time += dt;
     ++cycle;
-    dt = nextDt;
+    dt = currentMaxDt;
     dt = (time + dt > maxTime) ? (maxTime - time) : dt;
+
+    // Reset the subevent counter
+    currentSubEvent = 0;
 
     #if USE_MPI
       send_buffer[0] = dt;
