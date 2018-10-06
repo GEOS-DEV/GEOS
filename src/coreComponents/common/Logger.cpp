@@ -32,10 +32,10 @@
 
 #ifdef GEOSX_USE_ATK
 
-#include "slic/GenericOutputStream.hpp"
+#include "axom/slic/streams/GenericOutputStream.hpp"
 
 #ifdef GEOSX_USE_MPI
-#include "slic/LumberjackStream.hpp"
+#include "axom/slic/streams/LumberjackStream.hpp"
 #endif
 
 #endif

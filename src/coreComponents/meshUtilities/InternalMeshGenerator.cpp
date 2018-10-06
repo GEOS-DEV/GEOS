@@ -350,9 +350,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     }
     else
     {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
-#endif
+      GEOS_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
     }
   }
 
@@ -890,9 +888,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-// #ifdef GEOSX_USE_ATK
-//                    SLIC_ERROR("not implemented");
-// #endif
+//                  GEOS_ERROR("not implemented");
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;

@@ -25,10 +25,6 @@
 
 #include "LinearElasticIsotropic.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 namespace geosx
 {
 using namespace dataRepository;
