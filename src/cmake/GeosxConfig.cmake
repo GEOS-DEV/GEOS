@@ -20,7 +20,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           MATHPRESSO
                           MPI
                           PYTHON
-                          RAJA
+                          RAJA 
                           TRILINOS
                           PVT_PACKAGE )
 
