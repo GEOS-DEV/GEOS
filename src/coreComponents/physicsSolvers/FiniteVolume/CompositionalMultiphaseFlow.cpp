@@ -28,7 +28,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/Fluid/CompositionalMultiphaseFluid.hpp"
+#include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -340,7 +340,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
 
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
   ConstitutiveBase const * fluid = cm->GetConstitituveRelation( this->m_fluidName );
-  CompositionalMultiphaseFluid const * mpFluid = fluid->group_cast<CompositionalMultiphaseFluid const *>();
+  MultiFluidBase const * mpFluid = fluid->group_cast<MultiFluidBase const *>();
 
   m_numPhases = mpFluid->numFluidPhases();
   m_numComponents = mpFluid->numFluidComponents();
@@ -402,7 +402,7 @@ void CompositionalMultiphaseFlow::FinalInitialization( ManagedGroup * const root
   // set mass fraction flag on main model
   {
     ConstitutiveBase * const fluid = constitutiveManager->GetConstitituveRelation( this->m_fluidName );
-    CompositionalMultiphaseFluid * const mpFluid = fluid->group_cast<CompositionalMultiphaseFluid *>();
+    MultiFluidBase * const mpFluid = fluid->group_cast<MultiFluidBase *>();
     mpFluid->setMassFractionFlag( true ); // this formulation uses mass fractions
   }
 
@@ -414,7 +414,7 @@ void CompositionalMultiphaseFlow::FinalInitialization( ManagedGroup * const root
                                             CellBlockSubRegion * cellBlock ) -> void
   {
     ConstitutiveBase * fluid = constitutiveRelations[er][esr][m_fluidIndex];
-    CompositionalMultiphaseFluid * mpFluid = fluid->group_cast<CompositionalMultiphaseFluid *>();
+    MultiFluidBase * mpFluid = fluid->group_cast<MultiFluidBase *>();
     mpFluid->setMassFractionFlag( true ); // this formulation uses mass fractions
   });
 }
@@ -494,7 +494,7 @@ void CompositionalMultiphaseFlow::UpdateConstitutiveModels( DomainPartition * do
   });
 }
 
-void CompositionalMultiphaseFlow::BackupFields(DomainPartition * domain)
+void CompositionalMultiphaseFlow::BackupFields( DomainPartition * domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -514,19 +514,19 @@ void CompositionalMultiphaseFlow::BackupFields(DomainPartition * domain)
 
 
   auto const phaseDens =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseDensityString,
                                                                    constitutiveManager );
 
   auto const phaseVolFrac =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseVolumeFractionString,
                                                                    constitutiveManager );
 
   auto const phaseCompMassFrac =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseComponentFractionString,
                                                                    constitutiveManager );
@@ -880,19 +880,19 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
     elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity.Key());
 
   auto phaseDens =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseDensityString,
                                                                    constitutiveManager );
 
   auto dPhaseDens_dPres =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseDensity_dPressureString,
                                                                    constitutiveManager );
 
   auto dPhaseDens_dComp =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseDensity_dGlobalCompFractionString,
                                                                    constitutiveManager );
@@ -901,19 +901,19 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
     elemManager->ConstructViewAccessor<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseVolumeFraction.Key() );
 
   auto phaseVolFrac =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseVolumeFractionString,
                                                                    constitutiveManager );
 
   auto dPhaseVolFrac_dPres =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseVolumeFraction_dPressureString,
                                                                    constitutiveManager );
 
   auto dPhaseVolFrac_dComp =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseVolumeFraction_dGlobalCompFractionString,
                                                                    constitutiveManager );
@@ -922,19 +922,19 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
     elemManager->ConstructViewAccessor<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key());
 
   auto phaseCompMassFrac =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseComponentFractionString,
                                                                    constitutiveManager );
 
   auto dPhaseCompMassFrac_dPres =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseCompFraction_dPressureString,
                                                                    constitutiveManager );
 
   auto dPhaseCompMassFrac_dComp =
-    elemManager->ConstructMaterialViewAccessor< array5d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array5d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseCompFraction_dGlobalCompFractionString,
                                                                    constitutiveManager );
@@ -1140,49 +1140,49 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
   auto gravDepth = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.gravityDepth.Key() );
 
   auto phaseDens =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseDensityString,
                                                                    constitutiveManager );
 
   auto dPhaseDens_dPres =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseDensity_dPressureString,
                                                                    constitutiveManager );
 
   auto dPhaseDens_dComp =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseDensity_dGlobalCompFractionString,
                                                                    constitutiveManager );
 
   auto dPhaseVolFrac_dPres =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseVolumeFraction_dPressureString,
                                                                    constitutiveManager );
 
   auto dPhaseVolFrac_dComp =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseVolumeFraction_dGlobalCompFractionString,
                                                                    constitutiveManager );
 
   auto phaseCompMassFrac =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseComponentFractionString,
                                                                    constitutiveManager );
 
   auto dPhaseCompMassFrac_dPres =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseCompFraction_dPressureString,
                                                                    constitutiveManager );
 
   auto dPhaseCompMassFrac_dComp =
-    elemManager->ConstructMaterialViewAccessor< array5d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array5d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseCompFraction_dGlobalCompFractionString,
                                                                    constitutiveManager );
@@ -1481,19 +1481,19 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
   auto volume    = elemManager->ConstructViewAccessor<array1d<real64>>( CellBlock::viewKeyStruct::elementVolumeString );
 
   auto phaseVolFrac =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    phaseVolumeFractionString,
                                                                    constitutiveManager );
 
   auto dPhaseVolFrac_dPres =
-    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array3d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseVolumeFraction_dPressureString,
                                                                    constitutiveManager );
 
   auto dPhaseVolFrac_dComp =
-    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( CompositionalMultiphaseFluid::
+    elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
                                                                    dPhaseVolumeFraction_dGlobalCompFractionString,
                                                                    constitutiveManager );

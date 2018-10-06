@@ -42,14 +42,14 @@ namespace constitutive
 namespace
 {
 #ifdef GEOSX_USE_PVT_PACKAGE
-static std::unordered_map<string, PHASE_TYPE> const phaseNameDict =
+std::unordered_map<string, PHASE_TYPE> const phaseNameDict =
   {
     { "gas",   PHASE_TYPE::GAS },
     { "oil",   PHASE_TYPE::OIL },
     { "water", PHASE_TYPE::LIQUID_WATER_RICH }
   };
 
-static std::unordered_map<string, EOS_TYPE> const eosNameDict =
+std::unordered_map<string, EOS_TYPE> const eosNameDict =
   {
     { "PR",   EOS_TYPE::PENG_ROBINSON },
     { "SRK",  EOS_TYPE::REDLICH_KWONG_SOAVE }
@@ -58,13 +58,10 @@ static std::unordered_map<string, EOS_TYPE> const eosNameDict =
 }
 
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
-  : ConstitutiveBase( name, parent ),
-    m_useMassFractions( false) ,
+  : MultiFluidBase( name, parent ),
     m_fluid( nullptr )
 {
-  RegisterViewWrapper( viewKeys.phases.Key(), &m_phases, false );
   RegisterViewWrapper( viewKeys.equationsOfState.Key(), &m_equationsOfState, false );
-  RegisterViewWrapper( viewKeys.componentNames.Key(), &m_componentNames, false );
 
   RegisterViewWrapper( viewKeys.componentCriticalPressure.Key(), &m_componentCriticalPressure, false );
   RegisterViewWrapper( viewKeys.componentCriticalTemperature.Key(), &m_componentCriticalTemperature, false );
@@ -72,27 +69,6 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & 
   RegisterViewWrapper( viewKeys.componentMolarWeight.Key(), &m_componentMolarWeight, false );
   RegisterViewWrapper( viewKeys.componentVolumeShift.Key(), &m_componentVolumeShift, false );
   RegisterViewWrapper( viewKeys.componentBinaryCoeff.Key(), &m_componentBinaryCoeff, false );
-
-
-  RegisterViewWrapper( viewKeys.phaseMoleFraction.Key(), &m_phaseMoleFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseMoleFraction_dPressure.Key(), &m_dPhaseMoleFraction_dPressure, false );
-  RegisterViewWrapper( viewKeys.dPhaseMoleFraction_dTemperature.Key(), &m_dPhaseMoleFraction_dTemperature, false );
-  RegisterViewWrapper( viewKeys.dPhaseMoleFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseMoleFraction_dGlobalCompFraction, false );
-
-  RegisterViewWrapper( viewKeys.phaseVolumeFraction.Key(), &m_phaseVolumeFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseVolumeFraction_dPressure.Key(), &m_dPhaseVolumeFraction_dPressure, false );
-  RegisterViewWrapper( viewKeys.dPhaseVolumeFraction_dTemperature.Key(), &m_dPhaseVolumeFraction_dTemperature, false );
-  RegisterViewWrapper( viewKeys.dPhaseVolumeFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseVolumeFraction_dGlobalCompFraction, false );
-
-  RegisterViewWrapper( viewKeys.phaseDensity.Key(), &m_phaseDensity, false );
-  RegisterViewWrapper( viewKeys.dPhaseDensity_dPressure.Key(), &m_dPhaseDensity_dPressure, false );
-  RegisterViewWrapper( viewKeys.dPhaseDensity_dTemperature.Key(), &m_dPhaseDensity_dTemperature, false );
-  RegisterViewWrapper( viewKeys.dPhaseDensity_dGlobalCompMoleFraction.Key(), &m_dPhaseDensity_dGlobalCompFraction, false );
-
-  RegisterViewWrapper( viewKeys.phaseCompFraction.Key(), &m_phaseCompFraction, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompFraction_dPressure.Key(), &m_dPhaseCompFraction_dPressure, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompFraction_dTemperature.Key(), &m_dPhaseCompFraction_dTemperature, false );
-  RegisterViewWrapper( viewKeys.dPhaseCompFraction_dGlobalCompFraction.Key(), &m_dPhaseCompFraction_dGlobalCompFraction, false );
 }
 
 CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
@@ -123,58 +99,12 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
   return clone;
 }
 
-void CompositionalMultiphaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                                             localIndex const numPts )
-{
-  ConstitutiveBase::AllocateConstitutiveData( parent, numPts );
-
-  localIndex const size = parent->size();
-  localIndex const numPhase = numFluidPhases();
-  localIndex const numComp = numFluidComponents();
-
-  this->resize( size );
-
-  m_phaseMoleFraction.resize( size, numPts, numPhase );
-  m_dPhaseMoleFraction_dPressure.resize( size, numPts, numPhase );
-  m_dPhaseMoleFraction_dTemperature.resize( size, numPts, numPhase );
-  m_dPhaseMoleFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
-
-  m_phaseVolumeFraction.resize( size, numPts, numPhase );
-  m_dPhaseVolumeFraction_dPressure.resize( size, numPts, numPhase );
-  m_dPhaseVolumeFraction_dTemperature.resize( size, numPts, numPhase );
-  m_dPhaseVolumeFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
-
-  m_phaseDensity.resize( size, numPts, numPhase );
-  m_dPhaseDensity_dPressure.resize( size, numPts, numPhase );
-  m_dPhaseDensity_dTemperature.resize( size, numPts, numPhase );
-  m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
-
-  m_phaseCompFraction.resize( size, numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dPressure.resize( size, numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dTemperature.resize( size, numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp, numComp );
-}
-
 void CompositionalMultiphaseFluid::FillDocumentationNode()
 {
+  MultiFluidBase::FillDocumentationNode();
+
   DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( CatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Compositional multiphase fluid model" );
-
-  docNode->AllocateChildNode( viewKeys.phases.Key(),
-                              viewKeys.phases.Key(),
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of fluid phases",
-                              "List of fluid phases",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
+  docNode->setShortDescription( "Compositional multiphase fluid model based on PVTPackage" );
 
   docNode->AllocateChildNode( viewKeys.equationsOfState.Key(),
                               viewKeys.equationsOfState.Key(),
@@ -183,19 +113,6 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
                               "string_array",
                               "List of equation of state types for each phase",
                               "List of equation of state types for each phase",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.componentNames.Key(),
-                              viewKeys.componentNames.Key(),
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of component names",
-                              "List of component names",
                               "REQUIRED",
                               "",
                               1,
@@ -270,51 +187,51 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
 
 void CompositionalMultiphaseFluid::ReadXML_PostProcess()
 {
-  if (numFluidComponents() > MAX_NUM_COMPONENTS)
-  {
-    GEOS_ERROR("Number of components exceeds the maximum of " << MAX_NUM_COMPONENTS);
-  }
+  MultiFluidBase::ReadXML_PostProcess();
 
-#define COMPFLUID_CHECK_INPUT_LENGTH(len, expected, attr) \
-  if (integer_conversion<localIndex>(len) != integer_conversion<localIndex>(expected)) \
+  localIndex const NC = numFluidComponents();
+  localIndex const NP = numFluidPhases();
+
+#define COMPFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
+  if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
     GEOS_ERROR("CompositionalMultiphaseFluid: invalid number of entries in " \
                << (attr) << " attribute (" \
-               << (len) << "given, " \
+               << (data).size() << "given, " \
                << (expected) << " expected)"); \
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_equationsOfState.size(), numFluidPhases(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_equationsOfState, NP,
                                viewKeys.equationsOfState.Key())
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_componentCriticalPressure.size(), numFluidComponents(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentCriticalPressure, NC,
                                viewKeys.componentCriticalPressure.Key())
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_componentCriticalTemperature.size(), numFluidComponents(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentCriticalTemperature, NC,
                                viewKeys.componentCriticalTemperature.Key())
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_componentAcentricFactor.size(), numFluidComponents(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentAcentricFactor, NC,
                                viewKeys.componentAcentricFactor.Key())
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeight.size(), numFluidComponents(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeight, NC,
                                viewKeys.componentMolarWeight.Key())
 
   if (m_componentVolumeShift.empty())
   {
-    m_componentVolumeShift.resize(numFluidComponents());
+    m_componentVolumeShift.resize( NC );
     m_componentVolumeShift = 0.0;
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_componentVolumeShift.size(), numFluidComponents(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentVolumeShift, NC,
                                viewKeys.componentVolumeShift.Key())
 
   //if (m_componentBinaryCoeff.empty()) TODO
   {
-    m_componentBinaryCoeff.resize(numFluidComponents(), numFluidComponents());
+    m_componentBinaryCoeff.resize( NC, NC );
     m_componentBinaryCoeff = 0.0;
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH(m_componentBinaryCoeff.size(), numFluidComponents() * numFluidComponents(),
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentBinaryCoeff, NC * NC,
                                viewKeys.componentBinaryCoeff.Key())
 
 #undef CHECK_INPUT_LENGTH
@@ -364,19 +281,42 @@ void CompositionalMultiphaseFluid::createFluid()
 #endif
 }
 
-void CompositionalMultiphaseFluid::InitializePostSubGroups(ManagedGroup * const group)
+void CompositionalMultiphaseFluid::InitializePostSubGroups( ManagedGroup * const group )
 {
+  MultiFluidBase::InitializePostSubGroups( group );
   createFluid();
 }
 
-localIndex CompositionalMultiphaseFluid::numFluidComponents() const
+namespace
 {
-  return integer_conversion<localIndex>(m_componentNames.size());
-}
 
-localIndex CompositionalMultiphaseFluid::numFluidPhases() const
+template<typename T, int DIM>
+struct array_view_helper
 {
-  return integer_conversion<localIndex>(m_phases.size());
+  using type = array_view<T, DIM>;
+};
+
+#ifndef GEOSX_USE_ARRAY_BOUNDS_CHECK
+template<typename T>
+  struct array_view_helper<T, 1>
+  {
+    using type = T *;
+  };
+#endif
+
+template<int DIM>
+using real_array_view = typename array_view_helper<real64, DIM>::type;
+
+// helper struct to represent a var and its derivatives
+template<int DIM>
+struct VarContainer
+{
+  real_array_view<DIM>   value; // variable value
+  real_array_view<DIM>   dPres; // derivative w.r.t. pressure
+  real_array_view<DIM>   dTemp; // derivative w.r.t. temperature
+  real_array_view<DIM+1> dComp; // derivative w.r.t. composition
+};
+
 }
 
 void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const & pres,
