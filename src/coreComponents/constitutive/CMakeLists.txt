@@ -8,7 +8,6 @@ set( constitutive_headers
      ExponentialRelation_impl.hpp
      LinearElasticIsotropic.hpp
      Fluid/CompressibleSinglePhaseFluid.hpp
-     Fluid/CompositionalMultiphaseFluid.hpp
      Solid/PoreVolumeCompressibleSolid.hpp
    )
 #
@@ -19,13 +18,14 @@ set( constitutive_sources
      ConstitutiveBase.cpp
      LinearElasticIsotropic.cpp
      Fluid/CompressibleSinglePhaseFluid.cpp
-     Fluid/CompositionalMultiphaseFluid.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
    )
 
 set( dependencyList dataRepository )
 
-if(ENABLE_PVT_PACKAGE)
+if( ENABLE_PVT_PACKAGE )
+    set( constitutive_headers ${constitutive_headers} Fluid/CompositionalMultiphaseFluid.hpp )
+    set( constitutive_sources ${constitutive_sources} Fluid/CompositionalMultiphaseFluid.cpp )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
 

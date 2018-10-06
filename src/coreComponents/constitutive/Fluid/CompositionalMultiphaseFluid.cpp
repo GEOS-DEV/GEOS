@@ -22,9 +22,9 @@
 
 #include "CompositionalMultiphaseFluid.hpp"
 
-#ifdef GEOSX_USE_PVT_PACKAGE
+// PVTPackage includes
 #include "MultiphaseSystem/CompositionalMultiphaseSystem.hpp"
-#endif
+
 
 using namespace PVTPackage;
 
@@ -53,10 +53,10 @@ std::unique_ptr<ConstitutiveBase>
 CompositionalMultiphaseFluid::DeliverClone(string const & name, ManagedGroup * const parent) const
 {
   auto clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
+
   // TODO actually clone
-#ifdef GEOSX_USE_PVT_PACKAGE
   //clone->m_fluid = new CompositionalMultiphaseSystem(...);
-#endif
+
   return clone;
 }
 
@@ -74,8 +74,6 @@ void CompositionalMultiphaseFluid::FillDocumentationNode()
 void CompositionalMultiphaseFluid::ReadXML_PostProcess()
 {
   // TODO read input
-
-#ifdef GEOSX_USE_PVT_PACKAGE
   std::vector<std::string> Labels = { "N2","C10","C20","H2O" };
   auto Pc = { 34e5,25.3e5,14.6e5,220.5e5 };
   auto Tc = { 126.2,622.0,782.0,647.0 };
@@ -87,9 +85,6 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
                                               { EOS_TYPE::PENG_ROBINSON, EOS_TYPE::PENG_ROBINSON, EOS_TYPE::PENG_ROBINSON },
                                               COMPOSITIONAL_FLASH_TYPE::TRIVIAL,
                                               CompProps);
-#else
-  GEOS_ERROR("Cannot use compositional fluid model without PVTPackage. Rebuild with ENABLE_PVT_PACKAGE=ON");
-#endif
 }
 
 void CompositionalMultiphaseFluid::FinalInitialization(ManagedGroup * const parent)
