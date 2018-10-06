@@ -24,9 +24,9 @@
 
 #include "codingUtilities/Utilities.hpp"
 
-#ifdef GEOSX_USE_PVT_PACKAGE
+// PVTPackage includes
 #include "MultiphaseSystem/CompositionalMultiphaseSystem.hpp"
-#endif
+
 
 using namespace PVTPackage;
 
@@ -41,7 +41,7 @@ namespace constitutive
 
 namespace
 {
-#ifdef GEOSX_USE_PVT_PACKAGE
+
 std::unordered_map<string, PHASE_TYPE> const phaseNameDict =
   {
     { "gas",   PHASE_TYPE::GAS },
@@ -54,7 +54,7 @@ std::unordered_map<string, EOS_TYPE> const eosNameDict =
     { "PR",   EOS_TYPE::PENG_ROBINSON },
     { "SRK",  EOS_TYPE::REDLICH_KWONG_SOAVE }
   };
-#endif
+
 }
 
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
@@ -239,7 +239,6 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
 
 void CompositionalMultiphaseFluid::createFluid()
 {
-#ifdef GEOSX_USE_PVT_PACKAGE
   localIndex const numComp  = numFluidComponents();
   localIndex const numPhase = numFluidPhases();
 
@@ -276,9 +275,7 @@ void CompositionalMultiphaseFluid::createFluid()
   const ComponentProperties CompProps(numComp, components, Mw, Tc, Pc, Omega);
   // TODO choose flash type
   m_fluid = new CompositionalMultiphaseSystem(phases, eos, COMPOSITIONAL_FLASH_TYPE::TRIVIAL, CompProps);
-#else
-  GEOS_ERROR("Cannot use compositional fluid model without PVTPackage. Rebuild with ENABLE_PVT_PACKAGE=ON");
-#endif
+
 }
 
 void CompositionalMultiphaseFluid::InitializePostSubGroups( ManagedGroup * const group )
@@ -325,8 +322,6 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
                                                                     localIndex const k,
                                                                     localIndex const q )
 {
-#ifdef GEOSX_USE_PVT_PACKAGE
-
   // 0. set array views to the element/point data to avoid awkward quadruple indexing
   VarContainer<1> phaseMoleFrac {
     m_phaseMoleFraction[k][q],
@@ -534,8 +529,6 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
       }
     }
   }
-
-#endif
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, std::string const &, ManagedGroup * const )

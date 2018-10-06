@@ -58,8 +58,8 @@ int main( int argc, char *argv[] )
 
 #if defined(RAJA_ENABLE_OPENMP)
   {
-    int noThreads = omp_get_max_threads(); 
-    std::cout<<"No of threads: "<<noThreads<<std::endl;
+//    int noThreads = omp_get_max_threads();
+//    std::cout<<"No of threads: "<<noThreads<<std::endl;
   }
 #endif  
 
@@ -115,6 +115,7 @@ int main( int argc, char *argv[] )
   logger::FinalizeLogger();
 
 #ifdef GEOSX_USE_MPI
+  MPI_Comm_free( &MPI_COMM_GEOSX );
   MPI_Finalize();
 #endif
 
