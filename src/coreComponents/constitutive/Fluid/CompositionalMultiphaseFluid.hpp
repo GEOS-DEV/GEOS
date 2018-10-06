@@ -85,11 +85,6 @@ public:
     static constexpr auto componentMolarWeightString         = "componentMolarWeight";
     static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
     static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
-
-    static constexpr auto phaseMoleFractionString                      = "phaseMoleFraction";                      // xi_p
-    static constexpr auto dPhaseMoleFraction_dPressureString           = "dPhaseMoleFraction_dPressure";           // dXi_p/dP
-    static constexpr auto dPhaseMoleFraction_dTemperatureString        = "dPhaseMoleFraction_dTemperature";        // dXi_p/dT
-    static constexpr auto dPhaseMoleFraction_dGlobalCompFractionString = "dPhaseMoleFraction_dGlobalCompFraction"; // dXi_p/dz_c
     
     using ViewKey = dataRepository::ViewKey;
 
