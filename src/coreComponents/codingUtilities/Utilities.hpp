@@ -36,12 +36,6 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
-//#include "../legacy/Common/GPException.h"
-
 /////////////////////////////////////////////////
 // Forward declaration of templated functions
 
@@ -498,17 +492,7 @@ template< typename T1, typename T2 >
 T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& message )
 {
   typename std::map<T1,T2>::iterator MapIter = Map.find( key );
-  if( MapIter==Map.end()  )
-  {
-    std::cout<<std::endl;
-    std::stringstream st;
-    st << "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n";
-//    throw GPException(st.str().c_str());
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR(st.str());
-#endif
-
-  }
+  GEOS_ERROR_IF(MapIter==Map.end(), "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n");
 
   return MapIter->second;
 }

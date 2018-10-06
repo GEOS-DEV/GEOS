@@ -24,11 +24,7 @@
 #include "mesh/ElementRegionManager.hpp"
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/sidre.hpp"
-#include "sidre/DataStore.hpp"
-#include "sidre/SidreTypes.hpp"
-#include "sidre/IOManager.hpp"
-
+#include "axom/sidre/core/sidre.hpp"
 #include "conduit_blueprint.hpp"
 #include "conduit_relay.hpp"
 #endif

@@ -31,7 +31,7 @@
 
 #ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
-#include "sidre/IOManager.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #endif
 
 namespace geosx

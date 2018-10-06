@@ -30,7 +30,7 @@
 #include "common/GeosxConfig.hpp"
 #include <sstream>
 #ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
+#include "axom/slic/interface/slic.hpp"
 #endif
 
 
