@@ -450,13 +450,34 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
+void ManagedGroup::IntermediateInitializationRecursive( ManagedGroup * const rootGroup)
+{
+  IntermediateInitializationPreSubGroups(rootGroup);
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
+  {
+    this->GetGroup(groupName)->IntermediateInitializationRecursive( rootGroup );
+  }
+
+  IntermediateInitializationPostSubGroups(rootGroup);
+}
+
 void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 {
-  FinalInitialization(rootGroup);
-  for( auto&& subGroup : m_subGroups )
+  FinalInitializationPreSubGroups(rootGroup);
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
   {
-    subGroup.second->FinalInitializationRecursive(rootGroup);
+    this->GetGroup(groupName)->FinalInitializationRecursive( rootGroup );
   }
+
+  FinalInitializationPostSubGroups(rootGroup);
 }
 
 

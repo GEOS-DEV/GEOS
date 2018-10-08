@@ -420,7 +420,7 @@ void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
   }
 }
 
-void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const problemManager )
+void SolidMechanics_LagrangianFEM::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);

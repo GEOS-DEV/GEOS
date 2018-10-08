@@ -70,7 +70,7 @@ public:
   virtual void
   FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual void FinalInitialization( ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitializationPreSubGroups( ManagedGroup * const problemManager ) override final;
 
 
   /**

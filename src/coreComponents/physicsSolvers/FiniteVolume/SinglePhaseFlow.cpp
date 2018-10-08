@@ -316,7 +316,7 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
   }
 }
 
-void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
+void SinglePhaseFlow::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
 

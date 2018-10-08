@@ -205,7 +205,7 @@ void CompressibleSinglePhaseFluid::FluidViscosityCompute( real64 const & pres,
   m_viscosityRelation.Compute( pres, visc, dVisc_dPres );
 }
 
-void CompressibleSinglePhaseFluid::FinalInitialization( ManagedGroup *const parent )
+void CompressibleSinglePhaseFluid::FinalInitializationPreSubGroups(ManagedGroup * const parent)
 {
   m_densityRelation.SetCoefficients( m_referencePressure, m_referenceDensity, m_compressibility );
   m_viscosityRelation.SetCoefficients( m_referencePressure, m_referenceViscosity, m_viscosibility );

@@ -124,7 +124,7 @@ void PoreVolumeCompressibleSolid::PoreVolumeMultiplierCompute(real64 const & pre
   m_poreVolumeRelation.Compute( pres, poro, dPVMult_dPres );
 }
 
-void PoreVolumeCompressibleSolid::FinalInitialization( ManagedGroup *const parent )
+void PoreVolumeCompressibleSolid::FinalInitializationPreSubGroups(ManagedGroup * const parent)
 {
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
