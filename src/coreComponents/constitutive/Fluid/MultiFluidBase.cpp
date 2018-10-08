@@ -74,32 +74,30 @@ void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * co
   localIndex const numPhase = numFluidPhases();
   localIndex const numComp = numFluidComponents();
 
-  this->resize( size );
+  m_phaseFraction.resize( size, numPts, numPhase );
+  m_dPhaseFraction_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseFraction_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
-  m_phaseFraction.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseFraction_dPressure.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseFraction_dTemperature.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseFraction_dGlobalCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
+  m_phaseVolumeFraction.resize( size, numPts, numPhase );
+  m_dPhaseVolumeFraction_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseVolumeFraction_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseVolumeFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
-  m_phaseVolumeFraction.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseVolumeFraction_dPressure.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseVolumeFraction_dTemperature.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseVolumeFraction_dGlobalCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
+  m_phaseDensity.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
-  m_phaseDensity.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseDensity_dPressure.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseDensity_dTemperature.resizeDimension<1,2>( numPts, numPhase );
-  m_dPhaseDensity_dGlobalCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
+  m_phaseCompFraction.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dPressure.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dTemperature.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp, numComp );
 
-  m_phaseCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dPressure.resizeDimension<1,2,3>( numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dTemperature.resizeDimension<1,2,3>( numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dGlobalCompFraction.resizeDimension<1,2,3,4>( numPts, numPhase, numComp, numComp );
-
-  m_totalDensity.resizeDimension<1>( numPts );
-  m_dTotalDensity_dPressure.resizeDimension<1>( numPts );
-  m_dTotalDensity_dTemperature.resizeDimension<1>( numPts );
-  m_dTotalDensity_dGlobalCompFraction.resizeDimension<1,2>( numPts, numComp );
+  m_totalDensity.resize( size, numPts );
+  m_dTotalDensity_dPressure.resize( size, numPts );
+  m_dTotalDensity_dTemperature.resize( size, numPts );
+  m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, numComp );
 }
 
 MultiFluidBase::~MultiFluidBase()

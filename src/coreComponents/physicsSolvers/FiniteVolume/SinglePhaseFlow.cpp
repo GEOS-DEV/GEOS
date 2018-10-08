@@ -203,9 +203,9 @@ void SinglePhaseFlow::InitializePreSubGroups(ManagedGroup * const rootGroup)
   FlowSolverBase::InitializePreSubGroups(rootGroup);
 }
 
-void SinglePhaseFlow::FinalInitialization( ManagedGroup * const rootGroup )
+void SinglePhaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
 {
-  FlowSolverBase::FinalInitialization( rootGroup );
+  FlowSolverBase::FinalInitializationPreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 

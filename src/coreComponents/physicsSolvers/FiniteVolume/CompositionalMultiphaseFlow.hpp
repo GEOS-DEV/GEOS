@@ -85,9 +85,11 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const rootGroup ) override;
+
+  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
   /**
    * @defgroup Solver Interface Functions

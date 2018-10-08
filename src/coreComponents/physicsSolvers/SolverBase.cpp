@@ -444,9 +444,5 @@ systemSolverInterface::EpetraBlockSystem * SolverBase::getLinearSystemRepository
                                                                     blockSystemRepositoryString ) );
 }
 
-void SolverBase::FinalInitialization(ManagedGroup * const group)
-{
-
-}
 
 } /* namespace ANST */

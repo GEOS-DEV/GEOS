@@ -404,7 +404,7 @@ public:
       { "localIndex_array3d",   TypeIDs::localIndex_array3d_id },
       { "globalIndex_array3d",  TypeIDs::globalIndex_array3d_id },
       { "real32_array3d", TypeIDs::real32_array3d_id },
-      { "real64_array3d", TypeIDs::real64_array2d_id },
+      { "real64_array3d", TypeIDs::real64_array3d_id },
 
       { "string",        TypeIDs::string_id },
       { "string_array",  TypeIDs::string_array_id },
@@ -907,6 +907,71 @@ public:
     case ( TypeIDs::r2Sym_array_id ):
     {
       return lambda( r2Sym_array(1) );
+      break;
+    }
+    case ( TypeIDs::integer_array2d_id ):
+    {
+      return lambda( integer_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array2d_id ):
+    {
+      return lambda( localIndex_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array2d_id ):
+    {
+      return lambda( globalIndex_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::real32_array2d_id ):
+    {
+      return lambda( real32_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::real64_array2d_id ):
+    {
+      return lambda( real64_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::r1_array2d_id ):
+    {
+      return lambda( r1_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::r2_array2d_id ):
+    {
+      return lambda( r2_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::r2Sym_array2d_id ):
+    {
+      return lambda( r2Sym_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::integer_array3d_id ):
+    {
+      return lambda( integer_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array3d_id ):
+    {
+      return lambda( localIndex_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array3d_id ):
+    {
+      return lambda( globalIndex_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::real32_array3d_id ):
+    {
+      return lambda( real32_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::real64_array3d_id ):
+    {
+      return lambda( real64_array3d(1, 1, 1) );
       break;
     }
     case ( TypeIDs::string_id ):

@@ -347,8 +347,6 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
 
   // compute number of DOF per cell
   m_numDofPerCell = m_numComponents + 1;
-
-  ResizeFields(domain);
 }
 
 void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
@@ -367,18 +365,27 @@ void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
       cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity).resizeDimension<1>(m_numPhases);
       cellBlock->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction).resizeDimension<1,2>(m_numPhases, m_numComponents);
       cellBlock->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.dGlobalCompMassFraction_dGlobalCompDensity).resizeDimension<1,2>(m_numComponents, m_numComponents);
-      cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.blockLocalDofNumber).resizeDimension<1>(m_numDofPerCell);
+      cellBlock->getReference<array2d<globalIndex>>(viewKeysCompMultiphaseFlow.blockLocalDofNumber).resizeDimension<1>(m_numDofPerCell);
     });
 
     {
       FaceManager * const faceManager = meshLevel->getFaceManager();
 
-      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity).resizeDimension<1>(m_numPhases);
-      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseViscosity).resizeDimension<1>(m_numPhases);
-      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseRelativePermeability).resizeDimension<1>(m_numPhases);
-      faceManager->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction).resizeDimension<1,2>(m_numPhases, m_numComponents);;
+      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity.Key()).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseViscosity.Key()).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseRelativePermeability.Key()).resizeDimension<1>(m_numPhases);
+      faceManager->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction.Key()).resizeDimension<1,2>(m_numPhases, m_numComponents);;
     }
   }
+}
+
+void CompositionalMultiphaseFlow::IntermediateInitializationPreSubGroups( ManagedGroup * const rootGroup )
+{
+  FlowSolverBase::IntermediateInitializationPreSubGroups( rootGroup );
+
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+
+  ResizeFields( domain );
 }
 
 void CompositionalMultiphaseFlow::UpdateComponentFraction( DomainPartition * domain )
@@ -474,9 +481,9 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * domain
   });
 }
 
-void CompositionalMultiphaseFlow::FinalInitialization( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
 {
-  FlowSolverBase::FinalInitialization( rootGroup );
+  FlowSolverBase::FinalInitializationPreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 

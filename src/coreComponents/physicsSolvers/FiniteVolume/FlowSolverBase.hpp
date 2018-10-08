@@ -82,7 +82,7 @@ public:
 
   virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 
-  virtual void FinalInitialization(ManagedGroup * const rootGroup) override;
+  virtual void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

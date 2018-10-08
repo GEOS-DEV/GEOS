@@ -85,6 +85,8 @@ int main( int argc, char *argv[] )
 
   problemManager.Initialize( &problemManager );
 
+  problemManager.IntermediateInitializationRecursive( &problemManager );
+
   problemManager.ApplyInitialConditions();
 
   problemManager.FinalInitializationRecursive( &problemManager );

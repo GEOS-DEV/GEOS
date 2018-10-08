@@ -70,7 +70,7 @@ public:
   
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
   virtual void ReadXML_PostProcess() override final;
 

@@ -359,11 +359,6 @@ public:
     return &m_systemSolverParameters;
   }
 
-  void FinalInitialization(ManagedGroup * const group) override;
-
-//  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
-//  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
-
 protected:
   /// This is a wrapper for the linear solver package
   systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
