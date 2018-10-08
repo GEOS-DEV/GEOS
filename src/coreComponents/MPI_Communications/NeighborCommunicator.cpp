@@ -593,6 +593,8 @@ void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > co
                                               MeshLevel * const mesh,
                                               int const commID )
 {
+  GEOSX_MARK_FUNCTION;
+
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -713,6 +715,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
                                                 MeshLevel * const mesh,
                                                 int const commID )
 {
+  GEOSX_MARK_FUNCTION;
 
   buffer_type const & receiveBuffer = ReceiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
