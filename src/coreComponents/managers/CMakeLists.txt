@@ -20,7 +20,6 @@ set(managers_headers
     Functions/NewFunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
-    Inputs/InputManager.hpp
     NumericalMethodsManager.hpp
     BoundaryConditions/BoundaryConditionBase.hpp
     BoundaryConditions/BoundaryConditionManager.hpp
@@ -48,7 +47,6 @@ set(managers_sources
     Functions/NewFunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
-    Inputs/InputManager.cpp
     NumericalMethodsManager.cpp
     BoundaryConditions/BoundaryConditionBase.cpp
     BoundaryConditions/BoundaryConditionManager.cpp
