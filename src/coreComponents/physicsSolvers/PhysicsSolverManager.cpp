@@ -74,7 +74,7 @@ void PhysicsSolverManager::CreateChild( string const & childKey, string const & 
 {
   if( SolverBase::CatalogInterface::hasKeyName(childKey) )
   {
-    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
+    GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
     this->RegisterGroup( childName,
                          SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
   }

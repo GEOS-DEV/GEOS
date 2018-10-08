@@ -73,10 +73,10 @@ T2* stlMapLookupPointer( std::map<T1,T2>& Map, const T1& key );
 
 
 template< typename T1, typename T2 >
-const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key, const std::string& message="" );
+const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key );
 
 template< typename T1, typename T2 >
-T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& message="" );
+T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key );
 
 
 real64_array logspace(realT start, realT stop, int count=100);
@@ -489,19 +489,23 @@ const T2* stlMapLookupPointer( const std::map<T1,T2>& Map, const T1& key )
 
 
 template< typename T1, typename T2 >
-T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& message )
+T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key )
 {
   typename std::map<T1,T2>::iterator MapIter = Map.find( key );
+<<<<<<< HEAD
   GEOS_ERROR_IF(MapIter==Map.end(), "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n");
 
+=======
+  GEOS_ERROR_IF(MapIter==Map.end(), "Key not found: " << key);
+>>>>>>> develop
   return MapIter->second;
 }
 
 
 template< typename T1, typename T2 >
-const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key, const std::string& message )
+const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key)
 {
-  return (stlMapLookup( const_cast<std::map<T1,T2>&>(Map), key, message ));
+  return (stlMapLookup( const_cast<std::map<T1,T2>&>(Map), key ));
 }
 
 
