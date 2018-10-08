@@ -45,6 +45,16 @@
     }                                                         \
   } while (false)
 
+#define GEOS_LOG_RANK(msg)                                    \
+  do {                                                        \
+    std::cout << "Rank "<<geosx::logger::rank<<": "<<msg << std::endl; \
+  } while (false)
+
+#define GEOS_LOG(msg)                                    \
+  do {                                                        \
+    std::cout << msg << std::endl;                            \
+  } while (false)
+
 #ifndef USE_SLIC_ERROR
 #define GEOS_ERROR_IF(EXP, msg)                               \
   do {                                                        \

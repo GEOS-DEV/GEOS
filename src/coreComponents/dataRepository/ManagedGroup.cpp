@@ -80,6 +80,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
   m_size(0),
+  m_capacity(0),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_name(name)
 {
@@ -158,6 +159,7 @@ ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_sidreGroup( std::move(source.m_sidreGroup) ),
 #endif
   m_size( source.m_size ),
+  m_capacity( source.m_capacity ),
   m_restart_flags( source.m_restart_flags ),
   m_name( source.m_name )
 {}

@@ -254,8 +254,6 @@ void testLaplaceOperator()
 
 }
 
-
-
 TEST(testLAOperations,testEpetraLAOperations)
 {
 
