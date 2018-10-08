@@ -157,7 +157,7 @@
                fieldName="globalCompMassFraction"
                component="0"
                dataType="real64"
-               scale="0.1"/>
+               scale="0.099"/>
 
     <Dirichlet name="initialComposition_C10"
                initialCondition="1"
@@ -184,7 +184,7 @@
                fieldName="globalCompMassFraction"
                component="3"
                dataType="real64"
-               scale="0.0"/>
+               scale="0.001"/>
 
     <!-- Injection pressure: ~10 bar -->
 
@@ -246,7 +246,7 @@
                fieldName="globalCompMassFraction"
                component="0"
                dataType="real64"
-               scale="0.1"/>
+               scale="0.099"/>
 
     <Dirichlet name="sinkTermComposition_C10"
                setNames="source"
@@ -270,7 +270,7 @@
                fieldName="globalCompMassFraction"
                component="3"
                dataType="real64"
-               scale="0.0"/>
+               scale="0.001"/>
 
   </BoundaryConditions>
 

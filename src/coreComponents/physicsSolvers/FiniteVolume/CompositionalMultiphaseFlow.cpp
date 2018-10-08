@@ -58,7 +58,6 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   m_numDofPerCell( 0 )
 {
   // set the blockID for the block system interface
-  //getLinearSystemRepository()->SetBlockID(BlockIDs::fluidPressureBlock, this->getName());
   getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
   this->RegisterViewWrapper( viewKeysCompMultiphaseFlow.temperature.Key(), &m_temperature, false );
@@ -1693,8 +1692,8 @@ real64
 CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
                                                     DomainPartition * const domain )
 {
-  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
-  Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
