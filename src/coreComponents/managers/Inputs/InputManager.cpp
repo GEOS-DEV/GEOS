@@ -17,34 +17,22 @@
  */
 
 /*
- * MeshBodyManager.hpp
+ * ProblemManager.cpp
  *
  *  Created on: Oct 4, 2018
  *      Author: Antoine Mazuyer
  */
 
-#pragma once
-
-#include "dataRepository/ManagedGroup.hpp"
+#include "InputManager.hpp"
 
 namespace geosx
 {
 
- class MeshBody;
+using namespace dataRepository;
 
-/*!
-* @brief Abstract Manager class for the inputs of GEOSX
-* @details This class handles meshes and properties that
-* can be inputed to GEOSX
-*/
-class MeshBodyManager : public dataRepository::ManagedGroup
-{
-public:
-  MeshBodyManager( const std::string& name,
-                      dataRepository::ManagedGroup * const parent );
-
-
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
-};
+InputManager::InputManager( const std::string& name,
+                                        ManagedGroup * const parent ):
+  ManagedGroup( name, parent )
+{}
 
 } //namespace

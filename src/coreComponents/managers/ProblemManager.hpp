@@ -40,6 +40,7 @@
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
+#include "Inputs/InputManager.hpp"
 
 namespace geosx
 {
@@ -185,7 +186,6 @@ public:
     dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
-    dataRepository::GroupKey meshBodyManager = { "MeshBody" };
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };
     dataRepository::GroupKey outputManager = { "Outputs" };
   } groupKeys;
@@ -197,6 +197,9 @@ private:
   //SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
+
+  string m_inputManagerName;
+  InputManager * m_inputManager;
 };
 
 } /* namespace geosx */
