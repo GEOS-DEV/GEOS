@@ -38,11 +38,9 @@ class MeshLevel;
 
 class MeshBody : public dataRepository::ManagedGroup
 {
-
 public:
   MeshBody( string const & name,
             ManagedGroup * const parent );
-
   virtual ~MeshBody();
 
   MeshLevel * CreateMeshLevel( integer const newLevel );
@@ -65,12 +63,6 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< MeshBody, std::string const &,
         ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
-   
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
-
-private:
-  /// Type of the mesh generator for this MeshBody
-  string m_meshGeneratorType;
 
 };
 

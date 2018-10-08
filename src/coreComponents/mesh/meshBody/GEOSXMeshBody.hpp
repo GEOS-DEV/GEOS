@@ -33,8 +33,6 @@ public:
 GEOSXMeshBody( const std::string& name,
                   ManagedGroup * const parent );
 
-virtual void CreateChild( string const & childKey, string const & childName ) override;
-
 static string CatalogName() { return "GEOSXMeshBody"; }
 
 };

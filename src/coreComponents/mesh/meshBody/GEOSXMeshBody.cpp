@@ -33,17 +33,5 @@ GEOSXMeshBody::GEOSXMeshBody( const std::string& name,
 {
 }
 
-void GEOSXMeshBody::CreateChild( string const & childKey, string const & childName ) {
-    if( childKey == "Mesh" ) {
-    }
-    else if( childKey == "Properties") {
-        //TODO : Implement this case
-    }
-    else
-    {
-        GEOS_ERROR(childKey << "is not a valid key that can be nested in " << CatalogName());
-    }
-}
-
 REGISTER_CATALOG_ENTRY(MeshBody, GEOSXMeshBody, std::string const &, ManagedGroup * const)
 } // namespace

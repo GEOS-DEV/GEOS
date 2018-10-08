@@ -55,17 +55,4 @@ MeshBody::CatalogInterface::CatalogType& MeshBody::GetCatalog()
   return catalog;
 }
 
-void MeshBody::CreateChild( string const & childKey, string const & childName )
-{
-    if( childKey == "Mesh" ) {
-    }
-    else if( childKey == "Properties") {
-        //TODO : Implement this case ---> next PR !
-    }
-    else
-    {
-        GEOS_ERROR(childKey << "is not a valid key that can be nested in " << CatalogName());
-    }
-}
-
 } /* namespace geosx */

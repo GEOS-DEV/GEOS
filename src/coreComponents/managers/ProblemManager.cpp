@@ -660,7 +660,7 @@ void ProblemManager::ParseInputFile()
 
   {
     MeshBodyManager * meshBodyManager = this->GetGroup<MeshBodyManager>(groupKeys.meshBodyManager);
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("MeshBodies");
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("MeshBody");
     meshBodyManager->AddChildren(topLevelNode);
     meshBodyManager->SetDocumentationNodes();
     meshBodyManager->ReadXML(topLevelNode);

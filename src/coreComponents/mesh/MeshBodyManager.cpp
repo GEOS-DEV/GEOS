@@ -38,7 +38,8 @@ MeshBodyManager::MeshBodyManager( const std::string& name,
 
 void MeshBodyManager::CreateChild( string const & childKey, string const & childName  ) {
     std::cout << "Using a MeshBody provided by " << childKey << " named " << childName << std::endl;
-    std::unique_ptr<MeshBody> meshBody = std::unique_ptr(new MeshBody);
+    std::unique_ptr<MeshBody> meshBody =
+        MeshBody::CatalogInterface::Factory( childKey, childName, this );
     this->RegisterGroup<MeshBody>( childKey, std::move(meshBody) );
 }
 
