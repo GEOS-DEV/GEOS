@@ -24,9 +24,11 @@
  */
 
 #include "CommunicationTools.hpp"
+
+#include "common/TimingMacros.hpp"
+#include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "NeighborCommunicator.hpp"
-#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -440,6 +442,7 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
                                                   array1d<NeighborCommunicator> & neighbors,
                                                   MPI_iCommData & icomm )
 {
+  GEOSX_MARK_FUNCTION;
   icomm.commID = CommunicationTools::reserveCommID();
   icomm.fieldNames.insert(fieldNames.begin(), fieldNames.end() );
   icomm.resize( neighbors.size() );
@@ -459,6 +462,8 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors,
                                             MPI_iCommData & icomm )
 {
+  GEOSX_MARK_FUNCTION;
+
 #if 0
   for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
   {

@@ -23,6 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
 #include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "BoundaryConditionBase.hpp"
@@ -170,6 +171,7 @@ public:
                                string const & fieldName,
                                LAMBDA && lambda ) const
   {
+    GEOSX_MARK_FUNCTION;
     for( auto & subGroup : this->GetSubGroups() )
     {
       BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
