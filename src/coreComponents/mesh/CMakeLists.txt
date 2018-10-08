@@ -17,7 +17,6 @@ set(mesh_headers
     NodeManager.hpp
     ToElementRelation.hpp
     MeshBodyManager.hpp
-    meshBody/GEOSXMeshBody.hpp
   )
 
 
@@ -38,7 +37,6 @@ set(mesh_sources
     NodeManager.cpp
     ToElementRelation.cpp
     MeshBodyManager.cpp
-    meshBody/GEOSXMeshBody.cpp
    )
 
 blt_add_library( NAME                  mesh
