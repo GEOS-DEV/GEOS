@@ -1673,11 +1673,41 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * con
 }
 
 void
-CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * object,
+CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                         real64 const time_n, real64 const dt,
                                                         EpetraBlockSystem * const blockSystem )
 {
+  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
 
+  // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
+  // if the boundary condition should be applied to this subregion
+  bcManager->ApplyBoundaryCondition( time_n + dt,
+                                     domain,
+                                     "ElementRegions",
+                                     viewKeysCompMultiphaseFlow.pressure.Key(),
+                                     [&]( BoundaryConditionBase const * const bc,
+                                          string const &,
+                                          set<localIndex> const & lset,
+                                          ManagedGroup * subRegion,
+                                          string const & ) -> void
+  {
+    auto & dofMap = subRegion->getReference<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber );
+    auto & pres   = subRegion->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure );
+    auto & dPres  = subRegion->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure );
+
+    // call the application of the boundary condition to alter the matrix and rhs
+    bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
+                                                time_n + dt,
+                                                subRegion,
+                                                dofMap,
+                                                1,
+                                                blockSystem,
+                                                BlockIDs::compositionalBlock,
+                                                [&] (localIndex const a) -> real64
+    {
+      return pres[a] + dPres[a];
+    });
+  });
 }
 
 void

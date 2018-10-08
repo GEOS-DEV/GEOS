@@ -822,57 +822,36 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                  EpetraBlockSystem * const blockSystem )
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ElementRegionManager::ElementViewAccessor<globalIndex_array>
-  blockLocalDofNumber = elemManager->
-                        ConstructViewAccessor<globalIndex_array>( viewKeysSinglePhaseFlow.blockLocalDofNumber.Key() );
-
-  ElementRegionManager::ElementViewAccessor<real64_array>
-    pres = elemManager->ConstructViewAccessor<real64_array>( viewKeysSinglePhaseFlow.pressure.Key() );
-
-  ElementRegionManager::ElementViewAccessor<real64_array>
-    dPres = elemManager->ConstructViewAccessor<real64_array>(viewKeysSinglePhaseFlow.deltaPressure.Key());
-
-
-  // loop through cell block sub-regions
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
+  // if the boundary condition should be applied to this subregion
+  bcManager->ApplyBoundaryCondition( time_n + dt,
+                                     domain,
+                                     "ElementRegions",
+                                     viewKeysSinglePhaseFlow.pressure.Key(),
+                                     [&]( BoundaryConditionBase const * const bc,
+                                          string const &,
+                                          set<localIndex> const & lset,
+                                          ManagedGroup * subRegion,
+                                          string const & ) -> void
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr)
+    auto & dofMap = subRegion->getReference<array1d<globalIndex>>( viewKeysSinglePhaseFlow.blockLocalDofNumber );
+    auto & pres   = subRegion->getReference<array1d<real64>>( viewKeysSinglePhaseFlow.pressure );
+    auto & dPres  = subRegion->getReference<array1d<real64>>( viewKeysSinglePhaseFlow.deltaPressure );
+
+    // call the application of the boundary condition to alter the matrix and rhs
+    bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
+                                                 time_n + dt,
+                                                 subRegion,
+                                                 dofMap,
+                                                 1,
+                                                 blockSystem,
+                                                 BlockIDs::fluidPressureBlock,
+                                                 [&] (localIndex const a) -> real64
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
-
-
-
-      // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
-      // if the boundary condition should be applied to this subregion
-      bcManager->ApplyBoundaryCondition( time_n + dt,
-                                         domain,
-                                         "ElementRegions",
-                                         viewKeysSinglePhaseFlow.pressure.Key(),
-                                         [&]( BoundaryConditionBase const * const bc,
-                                              string const &,
-                                              set<localIndex> const & lset,
-                                              ManagedGroup *,
-                                              string const & ) -> void
-      {
-        // call the application of the boundary condition to alter the matrix and rhs
-        bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
-                                                     time_n + dt,
-                                                     subRegion,
-                                                     blockLocalDofNumber[er][esr].get(),
-                                                     1,
-                                                     blockSystem,
-                                                     BlockIDs::fluidPressureBlock,
-                                                     [&] (localIndex const a) -> real64
-        {
-          return pres[er][esr][a] + dPres[er][esr][a];
-        });
-      });
-    }
-  }
+      return pres[a] + dPres[a];
+    });
+  });
 }
 
 
