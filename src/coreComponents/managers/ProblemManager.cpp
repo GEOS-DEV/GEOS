@@ -25,9 +25,7 @@
 
 #include "ProblemManager.hpp"
 
-#include <stdexcept>
 #include <vector>
-
 
 #include "DomainPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
@@ -272,7 +270,7 @@ void ProblemManager::FillDocumentationNode()
   // meshDocNode->setShortDescription("Mesh Generators");
 }
 
-void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
+void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->RegisterDocumentationNodes();
@@ -322,7 +320,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
   // Handle special cases
   if (parse.error())
   {
-    throw std::invalid_argument("Bad input arguments");
+    GEOS_ERROR("Bad input arguments");
   }
 
   if (options[HELP] || (argc == 0))
@@ -334,8 +332,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
 
   if (options[INPUT].count() == 0)
   {
-    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
-    exit(1);
+    GEOS_ERROR("An input xml must be specified!");
   }
 
 
@@ -414,7 +411,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
 }
 
 
-bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartFileName )
+bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFileName )
 {
   // Set the options structs and parse
   enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
@@ -445,7 +442,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
   // Handle special cases
   if (parse.error())
   {
-    throw std::invalid_argument("Bad input arguments");
+    GEOS_ERROR("Bad input arguments");
   }
 
   if (options[HELP] || (argc == 0))
@@ -457,8 +454,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
 
   if (options[INPUT].count() == 0)
   {
-    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
-    exit(1);
+    GEOS_ERROR("An input xml must be specified!");
   }
 
   // Iterate over the remaining inputs
@@ -539,20 +535,20 @@ void ProblemManager::InitializePythonInterpreter()
 {  
 #ifdef GEOSX_USE_PYTHON
   // Initialize python and numpy
-  std::cout << "Loading python interpreter" << std::endl;
+  GEOS_LOG_RANK_0("Loading python interpreter");
 
   // Check to make sure the appropriate environment variables are set
   if (getenv("GPAC_SCHEMA") == NULL)
   {
-    throw std::invalid_argument("GPAC_SCHEMA must be defined to use the new preprocessor!");
+    GEOS_ERROR("GPAC_SCHEMA must be defined to use the new preprocessor!");
   }
   if (getenv("GEOS_PYTHONPATH") == NULL)
   {
-    throw std::invalid_argument("GEOS_PYTHONPATH must be defined to use the new preprocessor!");
+    GEOS_ERROR("GEOS_PYTHONPATH must be defined to use the new preprocessor!");
   }
   if (getenv("GEOS_PYTHONHOME") == NULL)
   {
-    throw std::invalid_argument("GEOS_PYTHONHOME must be defined to use the new preprocessor!");
+    GEOS_ERROR("GEOS_PYTHONHOME must be defined to use the new preprocessor!");
   }
 
   setenv("PYTHONPATH", getenv("GEOS_PYTHONPATH"), 1);
@@ -567,7 +563,7 @@ void ProblemManager::ClosePythonInterpreter()
 {
 #ifdef GEOSX_USE_PYTHON
   // Add any other cleanup here
-  std::cout << "Closing python interpreter" << std::endl;
+  GEOS_LOG_RANK_0("Closing python interpreter");
   Py_Finalize();
 #endif
 }
@@ -587,7 +583,7 @@ void ProblemManager::ParseInputFile()
   if (pModule == NULL)
   {
     PyErr_Print();
-    throw std::invalid_argument("Could not find the pygeos module in GEOS_PYTHONPATH!");
+    GEOS_ERROR("Could not find the pygeos module in GEOS_PYTHONPATH!");
   }
 
   // Call the xml preprocessor
@@ -605,7 +601,7 @@ void ProblemManager::ParseInputFile()
   Py_DECREF(pModule);
 
 #else
-  std::cout << "Warning: GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files" << std::endl;
+  GEOS_LOG_RANK_0("GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files");
 #endif
 
 
@@ -613,9 +609,9 @@ void ProblemManager::ParseInputFile()
   xmlResult = xmlDocument.load_file(inputFileName.c_str());
   if (!xmlResult)
   {
-    std::cout << "XML parsed with errors!" << std::endl;
-    std::cout << "Error description: " << xmlResult.description() << std::endl;
-    std::cout << "Error offset: " << xmlResult.offset << std::endl;
+    GEOS_LOG_RANK_0("XML parsed with errors!");
+    GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
   xmlProblemNode = xmlDocument.child("Problem");
 

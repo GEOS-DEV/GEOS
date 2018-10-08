@@ -54,7 +54,7 @@ void GeometricObjectManager::FillDocumentationNode()
 
 void GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Adding Geometric Object: " << childKey << ", " << childName << std::endl;
+  GEOS_LOG_RANK("Adding Geometric Object: " << childKey << ", " << childName);
   std::unique_ptr<SimpleGeometricObjectBase> geometriObject = SimpleGeometricObjectBase::CatalogInterface::Factory( childKey, childName, this );
   this->RegisterGroup<SimpleGeometricObjectBase>( childName, std::move(geometriObject) );
 }
