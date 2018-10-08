@@ -4,7 +4,9 @@
 #
 set(common_headers
     integer_conversion.hpp
-    DataTypes.hpp )
+    ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
+    DataTypes.hpp
+    TimingMacros.hpp )
 
 #
 # Specify all sources
