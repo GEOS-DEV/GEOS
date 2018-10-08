@@ -492,12 +492,7 @@ template< typename T1, typename T2 >
 T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key )
 {
   typename std::map<T1,T2>::iterator MapIter = Map.find( key );
-<<<<<<< HEAD
-  GEOS_ERROR_IF(MapIter==Map.end(), "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n");
-
-=======
   GEOS_ERROR_IF(MapIter==Map.end(), "Key not found: " << key);
->>>>>>> develop
   return MapIter->second;
 }
 
