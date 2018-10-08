@@ -197,9 +197,20 @@ private:
   void UpdateConstitutiveModels( DomainPartition * domain );
 
   /**
+   * @brief Initialize all variables from initial conditions
+   * @param domain the domain containing the mesh and fields
+   *
+   * Initialize all variables from initial conditions. This calculating primary variable values
+   * from prescribed intermediate values (i.e. global densities from global mass fractions)
+   * and any applicable hydrostatic equilibration of the domain
+   */
+  void InitializeFluidState( DomainPartition * domain );
+
+  /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
    */
+
   void BackupFields( DomainPartition * domain );
 
   /**

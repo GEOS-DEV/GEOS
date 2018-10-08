@@ -381,57 +381,6 @@ void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
   }
 }
 
-void CompositionalMultiphaseFlow::FinalInitialization( ManagedGroup * const rootGroup )
-{
-  FlowSolverBase::FinalInitialization( rootGroup );
-
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  //TODO this is a hack until the sets are fixed to include ghosts!!
-  std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.pressure.Key());
-  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.globalCompDensity.Key());
-  CommunicationTools::SynchronizeFields(fieldNames,
-                                        domain->getMeshBody(0)->getMeshLevel(0),
-                                        domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
-
-  // set mass fraction flag on main model
-  {
-    ConstitutiveBase * const fluid = constitutiveManager->GetConstitituveRelation( this->m_fluidName );
-    MultiFluidBase * const mpFluid = fluid->group_cast<MultiFluidBase *>();
-    mpFluid->setMassFractionFlag( true ); // this formulation uses mass fractions
-  }
-
-  // set mass fraction flag on subregion models
-  auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>( constitutiveManager );
-  elemManager->forCellBlocksComplete( [&] ( localIndex er,
-                                            localIndex esr,
-                                            ElementRegion * elementRegion,
-                                            CellBlockSubRegion * cellBlock ) -> void
-  {
-    ConstitutiveBase * fluid = constitutiveRelations[er][esr][m_fluidIndex];
-    MultiFluidBase * mpFluid = fluid->group_cast<MultiFluidBase *>();
-    mpFluid->setMassFractionFlag( true ); // this formulation uses mass fractions
-  });
-}
-
-real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
-                                                real64 const & dt,
-                                                integer const cycleNumber,
-                                                DomainPartition * domain )
-{
-  // currently the only method is implicit time integration
-  return this->NonlinearImplicitStep( time_n,
-                                      dt,
-                                      cycleNumber,
-                                      domain,
-                                      getLinearSystemRepository() );
-}
-
 void CompositionalMultiphaseFlow::UpdateComponentFraction( DomainPartition * domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -492,6 +441,91 @@ void CompositionalMultiphaseFlow::UpdateConstitutiveModels( DomainPartition * do
 
     constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( pres[er][esr][ei], ei, 0 ); // solid
   });
+}
+
+void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+
+  auto compDens     = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompDensity.Key() );
+  auto compMassFrac = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompMassFraction.Key() );
+
+  auto totalDens    = elemManager->ConstructMaterialViewAccessor<array2d<real64>>( MultiFluidBase::
+                                                                                   viewKeyStruct::
+                                                                                   totalDensityString,
+                                                                                   constitutiveManager );
+
+  // 1. Assume global mass fractions have been prescribed.
+  // Update constitutive state to get fluid density.
+  UpdateConstitutiveModels( domain );
+
+  // 2. Back-calculate global component densities from mass fractions and total fluid density
+  // in order to initialize the primary solution variables
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei ) -> void
+  {
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+    {
+      compDens[er][esr][ei][ic] = totalDens[er][esr][m_fluidIndex][ei][0] * compMassFrac[er][esr][ei][ic];
+    }
+  });
+}
+
+void CompositionalMultiphaseFlow::FinalInitialization( ManagedGroup * const rootGroup )
+{
+  FlowSolverBase::FinalInitialization( rootGroup );
+
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+
+  //TODO this is a hack until the sets are fixed to include ghosts!!
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.pressure.Key());
+  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.globalCompDensity.Key());
+  CommunicationTools::SynchronizeFields(fieldNames,
+                                        domain->getMeshBody(0)->getMeshLevel(0),
+                                        domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+
+  // set mass fraction flag on main model
+  {
+    ConstitutiveBase * const fluid = constitutiveManager->GetConstitituveRelation( this->m_fluidName );
+    MultiFluidBase * const mpFluid = fluid->group_cast<MultiFluidBase *>();
+    mpFluid->setMassFractionFlag( true ); // this formulation uses mass fractions
+  }
+
+  // set mass fraction flag on subregion models
+  auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>( constitutiveManager );
+  elemManager->forCellBlocksComplete( [&] ( localIndex er,
+                                            localIndex esr,
+                                            ElementRegion * elementRegion,
+                                            CellBlockSubRegion * cellBlock ) -> void
+  {
+    ConstitutiveBase * fluid = constitutiveRelations[er][esr][m_fluidIndex];
+    MultiFluidBase * mpFluid = fluid->group_cast<MultiFluidBase *>();
+    mpFluid->setMassFractionFlag( true ); // this formulation uses mass fractions
+  });
+
+  // Initialize primary variables from applied initial conditions
+  InitializeFluidState( domain );
+}
+
+real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
+                                                real64 const & dt,
+                                                integer const cycleNumber,
+                                                DomainPartition * domain )
+{
+  // currently the only method is implicit time integration
+  return this->NonlinearImplicitStep( time_n,
+                                      dt,
+                                      cycleNumber,
+                                      domain,
+                                      getLinearSystemRepository() );
 }
 
 void CompositionalMultiphaseFlow::BackupFields( DomainPartition * domain )

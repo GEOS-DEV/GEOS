@@ -138,6 +138,8 @@
                dataType="real64"
                scale="0.05"/>
 
+    <!-- Initial pressure: ~5 bar -->
+
     <Dirichlet name="initialPressure"
                initialCondition="1"
                setNames="all"
@@ -146,55 +148,129 @@
                dataType="real64"
                scale="5e6"/>
 
+    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
+
     <Dirichlet name="initialComposition_N2"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMoleFraction"
+               fieldName="globalCompMassFraction"
                component="0"
                dataType="real64"
-               scale="0.25"/>
+               scale="0.1"/>
 
     <Dirichlet name="initialComposition_C10"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMoleFraction"
+               fieldName="globalCompMassFraction"
                component="1"
                dataType="real64"
-               scale="0.25"/>
+               scale="0.3"/>
 
     <Dirichlet name="initialComposition_C20"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMoleFraction"
+               fieldName="globalCompMassFraction"
                component="2"
                dataType="real64"
-               scale="0.25"/>
+               scale="0.6"/>
 
     <Dirichlet name="initialComposition_H20"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMoleFraction"
+               fieldName="globalCompMassFraction"
                component="3"
                dataType="real64"
-               scale="0.25"/>
+               scale="0.0"/>
 
-    <Dirichlet name="sourceTerm"
+    <!-- Injection pressure: ~10 bar -->
+
+    <Dirichlet name="sourceTermPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="Scalar"
                scale="1e7"
                setNames="source"/>
 
+    <!-- Injection stream: almost pure water (trace of other components just in case) -->
+
+    <Dirichlet name="sourceTermComposition_N2"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="0"
+               dataType="real64"
+               scale="0.001"/>
+
+    <Dirichlet name="sourceTermComposition_C10"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="1"
+               dataType="real64"
+               scale="0.001"/>
+
+    <Dirichlet name="sourceTermComposition_C20"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="2"
+               dataType="real64"
+               scale="0.001"/>
+
+    <Dirichlet name="sourceTermComposition_H20"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="3"
+               dataType="real64"
+               scale="0.997"/>
+
+    <!-- Production pressure: ~1 bar, close to stock tank conditions -->
+
     <Dirichlet name="sinkTerm"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="Scalar"
-               scale="0.0"
+               scale="1e5"
                setNames="sink"/>
+
+    <!-- Production stream: same as initial (should not matter due to upwinding) -->
+
+    <Dirichlet name="sinkTermComposition_N2"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="0"
+               dataType="real64"
+               scale="0.1"/>
+
+    <Dirichlet name="sinkTermComposition_C10"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="1"
+               dataType="real64"
+               scale="0.3"/>
+
+    <Dirichlet name="sinkTermComposition_C20"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="2"
+               dataType="real64"
+               scale="0.6"/>
+
+    <Dirichlet name="sinkTermComposition_H20"
+               setNames="source"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="globalCompMassFraction"
+               component="3"
+               dataType="real64"
+               scale="0.0"/>
 
   </BoundaryConditions>
 

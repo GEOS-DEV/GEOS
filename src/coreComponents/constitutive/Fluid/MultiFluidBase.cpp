@@ -42,22 +42,27 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   RegisterViewWrapper( viewKeysMultiFluidBase.phaseFraction.Key(), &m_phaseFraction, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseFraction_dPressure.Key(), &m_dPhaseFraction_dPressure, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseFraction_dTemperature.Key(), &m_dPhaseFraction_dTemperature, false );
-  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseFraction_dGlobalCompFraction, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseFraction_dGlobalCompFraction.Key(), &m_dPhaseFraction_dGlobalCompFraction, false );
 
   RegisterViewWrapper( viewKeysMultiFluidBase.phaseVolumeFraction.Key(), &m_phaseVolumeFraction, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseVolumeFraction_dPressure.Key(), &m_dPhaseVolumeFraction_dPressure, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseVolumeFraction_dTemperature.Key(), &m_dPhaseVolumeFraction_dTemperature, false );
-  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseVolumeFraction_dGlobalCompMoleFraction.Key(), &m_dPhaseVolumeFraction_dGlobalCompFraction, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseVolumeFraction_dGlobalCompFraction.Key(), &m_dPhaseVolumeFraction_dGlobalCompFraction, false );
 
   RegisterViewWrapper( viewKeysMultiFluidBase.phaseDensity.Key(), &m_phaseDensity, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseDensity_dPressure.Key(), &m_dPhaseDensity_dPressure, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseDensity_dTemperature.Key(), &m_dPhaseDensity_dTemperature, false );
-  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseDensity_dGlobalCompMoleFraction.Key(), &m_dPhaseDensity_dGlobalCompFraction, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseDensity_dGlobalCompFraction.Key(), &m_dPhaseDensity_dGlobalCompFraction, false );
 
   RegisterViewWrapper( viewKeysMultiFluidBase.phaseCompFraction.Key(), &m_phaseCompFraction, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseCompFraction_dPressure.Key(), &m_dPhaseCompFraction_dPressure, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseCompFraction_dTemperature.Key(), &m_dPhaseCompFraction_dTemperature, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseCompFraction_dGlobalCompFraction.Key(), &m_dPhaseCompFraction_dGlobalCompFraction, false );
+
+  RegisterViewWrapper( viewKeysMultiFluidBase.totalDensity.Key(), &m_totalDensity, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dTotalDensity_dPressure.Key(), &m_dTotalDensity_dPressure, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dTotalDensity_dTemperature.Key(), &m_dTotalDensity_dTemperature, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dTotalDensity_dGlobalCompFraction.Key(), &m_dTotalDensity_dGlobalCompFraction, false );
 }
 
 void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
@@ -71,25 +76,30 @@ void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * co
 
   this->resize( size );
 
-  m_phaseFraction.resize( size, numPts, numPhase );
-  m_dPhaseFraction_dPressure.resize( size, numPts, numPhase );
-  m_dPhaseFraction_dTemperature.resize( size, numPts, numPhase );
-  m_dPhaseFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
+  m_phaseFraction.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseFraction_dPressure.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseFraction_dTemperature.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseFraction_dGlobalCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
 
-  m_phaseVolumeFraction.resize( size, numPts, numPhase );
-  m_dPhaseVolumeFraction_dPressure.resize( size, numPts, numPhase );
-  m_dPhaseVolumeFraction_dTemperature.resize( size, numPts, numPhase );
-  m_dPhaseVolumeFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
+  m_phaseVolumeFraction.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseVolumeFraction_dPressure.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseVolumeFraction_dTemperature.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseVolumeFraction_dGlobalCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
 
-  m_phaseDensity.resize( size, numPts, numPhase );
-  m_dPhaseDensity_dPressure.resize( size, numPts, numPhase );
-  m_dPhaseDensity_dTemperature.resize( size, numPts, numPhase );
-  m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
+  m_phaseDensity.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseDensity_dPressure.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseDensity_dTemperature.resizeDimension<1,2>( numPts, numPhase );
+  m_dPhaseDensity_dGlobalCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
 
-  m_phaseCompFraction.resize( size, numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dPressure.resize( size, numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dTemperature.resize( size, numPts, numPhase, numComp );
-  m_dPhaseCompFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp, numComp );
+  m_phaseCompFraction.resizeDimension<1,2,3>( numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dPressure.resizeDimension<1,2,3>( numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dTemperature.resizeDimension<1,2,3>( numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dGlobalCompFraction.resizeDimension<1,2,3,4>( numPts, numPhase, numComp, numComp );
+
+  m_totalDensity.resizeDimension<1>( numPts );
+  m_dTotalDensity_dPressure.resizeDimension<1>( numPts );
+  m_dTotalDensity_dTemperature.resizeDimension<1>( numPts );
+  m_dTotalDensity_dGlobalCompFraction.resizeDimension<1,2>( numPts, numComp );
 }
 
 MultiFluidBase::~MultiFluidBase()

@@ -89,10 +89,10 @@ struct BcEqual
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
+   * @param[in] component The index along second dimension of 2d array.
    * @param[in] value The value of the boundary condition to apply to @p field.
    *
-   * This function performs field[index] = value for all values of field[index].
+   * This function performs field[index][component] = value.
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
@@ -101,10 +101,7 @@ struct BcEqual
                 int const component,
                 real64 const & value )
   {
-    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-    {
-      field[index][a] = static_cast<T>(value);
-    }
+    field[index][component] = static_cast<T>(value);
   }
 
   /**
