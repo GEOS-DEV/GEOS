@@ -92,10 +92,9 @@ void Blueprint::write(int cycle) const
     std::ostringstream msg;
     msg << "does not conform to the blueprint:";
     info.to_json_stream(msg);
-    GEOS_LOG_RANK(msg);
-    info.print();
+    GEOS_LOG_RANK(msg.str());
 
-    GEOS_ERROR(msg);
+    GEOS_ERROR(msg.str());
   }
 
   conduit::Node root_node;
@@ -109,9 +108,9 @@ void Blueprint::write(int cycle) const
     std::ostringstream msg;
     msg << "index does not conform to the blueprint:";
     info.to_json_stream(msg);
-    GEOS_LOG_RANK(msg);
+    GEOS_LOG_RANK(msg.str());
 
-    GEOS_ERROR(msg);
+    GEOS_ERROR(msg.str());
   }
 
   const std::string root_output_path = m_output_path + "_" + std::to_string( cycle ) + ".root";
