@@ -416,19 +416,23 @@ public:
     }
   }
 
-  virtual void Initialize( ManagedGroup * const group );
-
   virtual void InitializationOrder( string_array & order );
+
+  virtual void Initialize( ManagedGroup * const group );
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
+
+  virtual void IntermediateInitializationOrder( string_array & order );
 
   virtual void IntermediateInitializationRecursive( ManagedGroup * const group );
 
   virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const group ) {}
 
   virtual void IntermediateInitializationPostSubGroups( ManagedGroup * const group ) {}
+
+  virtual void FinalInitializationOrder( string_array & order );
 
   virtual void FinalInitializationRecursive( ManagedGroup * const group );
 

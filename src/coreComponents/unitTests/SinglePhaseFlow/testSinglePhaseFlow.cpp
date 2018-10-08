@@ -148,6 +148,7 @@ void runProblem(ProblemManager & problemManager, int argc, char** argv)
   problemManager.ParseInputFile();
 
   problemManager.Initialize(&problemManager);
+  problemManager.IntermediateInitializationRecursive(&problemManager);
   problemManager.ApplyInitialConditions();
   problemManager.FinalInitializationRecursive(&problemManager);
 
