@@ -43,6 +43,10 @@ public:
   MeshBody( string const & name,
             ManagedGroup * const parent );
 
+  MeshBody( string const & name,
+            ManagedGroup * const parent,
+            string const & meshBodyGeneratorType);
+
   virtual ~MeshBody();
 
   MeshLevel * CreateMeshLevel( integer const newLevel );
@@ -70,7 +74,7 @@ public:
 
 private:
   /// Type of the mesh generator for this MeshBody
-  string m_meshGeneratorType;
+  string m_meshBodyGeneratorType;
 
 };
 

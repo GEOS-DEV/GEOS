@@ -37,6 +37,13 @@ MeshBody::MeshBody( string const & name,
   RegisterViewWrapper<integer>( viewKeys.meshLevels );
 }
 
+MeshBody::MeshBody( string const & name,
+                    ManagedGroup * const parent,
+                    string const & meshBodyGeneratorType) :
+    MeshBody( name, parent)
+{
+}
+
 MeshBody::~MeshBody()
 {
   // TODO Auto-generated destructor stub
