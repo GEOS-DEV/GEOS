@@ -33,7 +33,6 @@
 
 #include "mpi.h"
 #include "pmpio.h"
-#include "common/Logger.hpp"
 
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/InterObjectRelation.hpp"

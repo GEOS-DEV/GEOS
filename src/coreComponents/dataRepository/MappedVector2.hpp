@@ -233,7 +233,6 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
     key = m_values.size() - 1;
     m_keyLookup.insert( std::make_pair(keyName,key) );
 
-//    std::cout<<&(*m_objects[key])<<std::endl;
     m_mapForIteration.insert({keyName,&(*(m_values[key]))});
     m_mapForConstIteration.insert({keyName,&(*(m_values[key]))});
   }

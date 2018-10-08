@@ -38,8 +38,8 @@
 #include <vector>
 
 #include "common/GeosxConfig.hpp"
-#include "common/Logger.hpp"
 #include "Macros.hpp"
+#include "Logger.hpp"
 #include "ManagedArray.hpp"
 #include "SortedArray.hpp"
 #include "math/TensorT/TensorT.h"

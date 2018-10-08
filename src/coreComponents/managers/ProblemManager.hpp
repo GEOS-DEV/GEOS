@@ -57,7 +57,7 @@ struct Arg : public option::Arg
 {
   static option::ArgStatus Unknown(const option::Option& option, bool /*error*/)
   {
-    std::cout << "Unknown option: " << option.name << std::endl;
+    GEOS_LOG_RANK("Unknown option: " << option.name);
     return option::ARG_ILLEGAL;
   }
 
@@ -69,7 +69,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    std::cout << "Error: " << option.name << " requires a non-empty argument!" << std::endl;
+    GEOS_LOG_RANK("Error: " << option.name << " requires a non-empty argument!");
     return option::ARG_ILLEGAL;
   }
 
@@ -83,7 +83,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    std::cout << "Error: " << option.name << " requires a long-int argument!" << std::endl;
+    GEOS_LOG_RANK("Error: " << option.name << " requires a long-int argument!");
     return option::ARG_ILLEGAL;
   }
 
