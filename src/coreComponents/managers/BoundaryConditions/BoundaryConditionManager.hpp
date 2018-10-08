@@ -179,16 +179,12 @@ public:
           ( !isInitialCondition && bc->GetObjectPath().find(fieldPath) != string::npos ) )
       {
         string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
-//        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
         localIndex const targetPathLength = integer_conversion<localIndex>(targetPath.size());
         string const targetName = bc->GetFieldName();
-//        std::cout<<"targetName = "<<targetName<<std::endl;
 
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
         {
-//          std::cout<<bc->getName()<<std::endl;
-
           MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
                                         getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -197,11 +193,8 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-//            std::cout<<targetPath[pathLevel]<<std::endl;
-
             targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
-//            std::cout<<"processedPath="<<processedPath<<std::endl;
 
             GEOS_ERROR_IF( targetGroup == nullptr,
                          "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );

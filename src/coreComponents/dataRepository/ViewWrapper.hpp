@@ -31,7 +31,6 @@
 #include "KeyNames.hpp"
 #include "common/integer_conversion.hpp"
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
 

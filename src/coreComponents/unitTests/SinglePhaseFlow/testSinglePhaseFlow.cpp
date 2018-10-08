@@ -27,7 +27,7 @@
 #pragma clang diagnostic push
 #endif
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include <cmath>
 #include <mpi.h>

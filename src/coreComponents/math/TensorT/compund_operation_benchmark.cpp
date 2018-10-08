@@ -87,19 +87,19 @@ int main(int argc, char* argv[] )
 
 
   for( int i=0 ; i<9 ; ++i )
-    std::cout<<e[i]<<std::endl;
-  std::cout<<std::endl;
+    GEOS_LOG(e[i]);
+  GEOS_LOG("");
 
 
   for( int i=0 ; i<3 ; ++i )
     for( int j=0 ; j<3 ; ++j )
     {
-      std::cout<<E(i,j)<<std::endl;
+      GEOS_LOG(E(i,j));
     }
-  std::cout<<std::endl;
+  GEOS_LOG("");
 
-  std::cout<<"baseline CPU time    = "<<t2-t1<<std::endl;
-  std::cout<<"TensorClass CPU time = "<<t3-t2<<std::endl;
+  GEOS_LOG("baseline CPU time    = "<<t2-t1);
+  GEOS_LOG("TensorClass CPU time = "<<t3-t2);
 
 
   return 0;
