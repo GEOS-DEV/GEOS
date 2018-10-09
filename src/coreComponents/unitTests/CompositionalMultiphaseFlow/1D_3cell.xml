@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="2"
+                                 verboseLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"
@@ -24,10 +24,10 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 10"
+                  xCoords="0, 3"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="10"
+                  nx="3"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
@@ -35,15 +35,15 @@
 
   <Geometry>
     <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="2000.0">
+  <Events maxTime="200.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="20.0"
+                   forceDt="100.0"
                    target="/Solvers/compflow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep

@@ -235,8 +235,8 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes( ManagedGroup * co
       docNode->AllocateChildNode( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key(),
                                   viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key(),
                                   -1,
-                                  "globalIndex_array2d",
-                                  "globalIndex_array2d",
+                                  "globalIndex_array",
+                                  "globalIndex_array",
                                   "Pressure DOF index",
                                   "Pressure DOF index",
                                   "0",
@@ -364,7 +364,6 @@ void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
       cellBlock->getReference<array2d<real64>>(viewKeysCompMultiphaseFlow.phaseDensity).resizeDimension<1>(m_numPhases);
       cellBlock->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.phaseComponentMassFraction).resizeDimension<1,2>(m_numPhases, m_numComponents);
       cellBlock->getReference<array3d<real64>>(viewKeysCompMultiphaseFlow.dGlobalCompMassFraction_dGlobalCompDensity).resizeDimension<1,2>(m_numComponents, m_numComponents);
-      cellBlock->getReference<array2d<globalIndex>>(viewKeysCompMultiphaseFlow.blockLocalDofNumber).resizeDimension<1>(m_numDofPerCell);
     });
 
     {
@@ -614,7 +613,7 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
   ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
 
   auto blockLocalDofNumber =
-    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key(), string() );
+    elementRegionManager->ConstructViewAccessor<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key(), string() );
 
   ElementRegionManager::ElementViewAccessor< integer_array >
     ghostRank = elementRegionManager->
@@ -664,11 +663,8 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
   {
     if( ghostRank[er][esr][ei] < 0 )
     {
-      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-      {
-        blockLocalDofNumber[er][esr][ei][idof] = firstLocalRow + localCount + offset;
-        localCount += 1;
-      }
+      blockLocalDofNumber[er][esr][ei] = firstLocalRow + localCount + offset;
+      localCount += 1;
     }
   });
 
@@ -682,7 +678,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
 
   auto blockLocalDofNumber =
-    elementRegionManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+    elementRegionManager->ConstructViewAccessor<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
 
   auto elemGhostRank =
     elementRegionManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -706,10 +702,10 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
     elementLocalDofIndexRow.resize(numElems * m_numDofPerCell);
     stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
     {
+      globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
       for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
       {
-        elementLocalDofIndexRow[i * m_numDofPerCell + idof] =
-          blockLocalDofNumber[cell.region][cell.subRegion][cell.index][idof];
+        elementLocalDofIndexRow[i * m_numDofPerCell + idof] = offset + idof;
       }
     });
 
@@ -717,10 +713,10 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
     elementLocalDofIndexCol.resize(stencilSize * m_numDofPerCell);
     stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
     {
+      globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
       for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
       {
-        elementLocalDofIndexCol[i * m_numDofPerCell + idof] =
-          blockLocalDofNumber[cell.region][cell.subRegion][cell.index][idof];
+        elementLocalDofIndexCol[i * m_numDofPerCell + idof] = offset + idof;
       }
     });
 
@@ -739,9 +735,10 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   {
     if (elemGhostRank[er][esr][ei] < 0)
     {
+      globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[er][esr][ei];
       for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
       {
-        elementLocalDofIndexRow[idof] = blockLocalDofNumber[er][esr][ei][idof];
+        elementLocalDofIndexRow[idof] = offset + idof;
       }
 
       sparsity->InsertGlobalIndices( integer_conversion<int>(m_numDofPerCell),
@@ -760,10 +757,11 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
-          CellDescriptor const & c = point.cellIndex;
+          CellDescriptor const & cell = point.cellIndex;
+          globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
           for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
           {
-            elementLocalDofIndexRow[idof] = blockLocalDofNumber[c.region][c.subRegion][c.index][idof];
+            elementLocalDofIndexRow[idof] = offset + idof;
           }
         }
       });
@@ -775,11 +773,11 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
-          CellDescriptor const & c = point.cellIndex;
+          CellDescriptor const & cell = point.cellIndex;
+          globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
           for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
           {
-            elementLocalDofIndexCol[counter * m_numDofPerCell + idof] =
-              blockLocalDofNumber[c.region][c.subRegion][c.index][idof];
+            elementLocalDofIndexCol[counter * m_numDofPerCell + idof] = offset + idof;
           }
           ++counter;
         }
@@ -809,7 +807,6 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
   {
     numLocalRows += subRegion->size() - subRegion->GetNumberOfGhosts();
   });
-  numLocalRows *= m_numDofPerCell;
 
   localIndex_array displacementIndices;
   SetNumRowsAndTrilinosIndices( mesh,
@@ -826,19 +823,18 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
 
 
   // construct row map, and set a pointer to the row map
-  Epetra_Map * const
-    rowMap = blockSystem->
-      SetRowMap( BlockIDs::compositionalBlock,
-                 std::make_unique<Epetra_Map>( numGlobalRows,
-                                               numLocalRows,
-                                               0,
-                                               m_linearSolverWrapper.m_epetraComm ) );
+  Epetra_Map * const rowMap =
+    blockSystem->SetRowMap( BlockIDs::compositionalBlock,
+                            std::make_unique<Epetra_Map>( numGlobalRows * m_numDofPerCell,
+                                                          numLocalRows * m_numDofPerCell,
+                                                          0,
+                                                          m_linearSolverWrapper.m_epetraComm ) );
 
   // construct sparsity matrix, set a pointer to the sparsity pattern matrix
-  Epetra_FECrsGraph * const
-    sparsity = blockSystem->SetSparsity( BlockIDs::compositionalBlock,
-                                         BlockIDs::compositionalBlock,
-                                         std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
+  Epetra_FECrsGraph * const sparsity =
+    blockSystem->SetSparsity( BlockIDs::compositionalBlock,
+                              BlockIDs::compositionalBlock,
+                              std::make_unique<Epetra_FECrsGraph>(Copy, *rowMap, 0) );
 
 
 
@@ -910,7 +906,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
     elemManager->ConstructViewAccessor<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   auto blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array2d<globalIndex >>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+    elemManager->ConstructViewAccessor<array1d<globalIndex >>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
 
   auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
   auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
@@ -1005,7 +1001,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
   localIndex const NDOF = m_numDofPerCell;
 
   // using Epetra types
-  array1d<long long> localAccumDOF( NC );
+  array1d<long long> localAccumDOF( NDOF );
   array1d<double> localAccum( NC );
   array2d<double> localAccumJacobian( NC, NDOF );
 
@@ -1023,10 +1019,10 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
     for (localIndex esr = 0; esr < elemRegion->numSubRegions(); ++esr)
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
 
       // set up array views to reduce amount of indexing
-      arrayView2d<globalIndex const> const dofNumber = blockLocalDofNumber[er][esr].get();
+      arrayView1d<globalIndex const> const dofNumber = blockLocalDofNumber[er][esr].get();
       arrayView2d<real64 const> const pVMultSub = pVMult[er][esr][m_solidIndex].get();
       arrayView2d<real64 const> const dPVMult_dPresSub = dPVMult_dPres[er][esr][m_solidIndex].get();
 
@@ -1047,7 +1043,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
 
       arrayView3d<real64 const> const dCompMassFrac_dCompDensSub = dCompMassFrac_dCompDens[er][esr].get();
 
-      for (localIndex ei = 0; ei < cellBlockSubRegion->size(); ++ei)
+      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
       {
         if (elemGhostRank[er][esr][ei] < 0)
         {
@@ -1056,33 +1052,34 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
           localAccumJacobian = 0.0;
 
           // set DOF indices for this block
-          for (localIndex ic = 0; ic < NC; ++ic)
+          globalIndex const offset = NDOF * dofNumber[ei];
+          for (localIndex idof = 0; idof < NDOF; ++idof)
           {
-            localAccumDOF[ic] = integer_conversion<long long>(dofNumber[ei][ic]);
+            localAccumDOF[idof] = integer_conversion<long long>(offset + idof);
           }
 
-            // compute fluid-independent (pore volume) part
-            real64 const volNew   = volume[er][esr][ei];
-            real64 const volOld   = volume[er][esr][ei];
-            real64 const dVol_dP  = 0.0; // used in poroelastic solver
+          // compute fluid-independent (pore volume) part
+          real64 const volNew   = volume[er][esr][ei];
+          real64 const volOld   = volume[er][esr][ei];
+          real64 const dVol_dP  = 0.0; // used in poroelastic solver
 
-            real64 const poroNew  = porosityRef[er][esr][ei] * pVMultSub[ei][0];
-            real64 const poroOld  = porosityOld[er][esr][ei];
-            real64 const dPoro_dP = porosityRef[er][esr][ei] * dPVMult_dPresSub[ei][0];
+          real64 const poroNew  = porosityRef[er][esr][ei] * pVMultSub[ei][0];
+          real64 const poroOld  = porosityOld[er][esr][ei];
+          real64 const dPoro_dP = porosityRef[er][esr][ei] * dPVMult_dPresSub[ei][0];
 
-            real64 const poreVolNew = volNew * poroNew;
-            real64 const poreVolOld = volOld * poroOld;
-            real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
+          real64 const poreVolNew = volNew * poroNew;
+          real64 const poreVolOld = volOld * poroOld;
+          real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
 
-            // sum contributions to component mass accumulation from each phase
-            for (localIndex ip = 0; ip < NP; ++ip)
-            {
-              real64 const phaseMassNew = poreVolNew * phaseVolFracSub[ei][0][ip] * phaseDensSub[ei][0][ip];
-              real64 const phaseMassOld = poreVolOld * phaseVolFracOldSub[ei][ip] * phaseDensOldSub[ei][ip];
+          // sum contributions to component mass accumulation from each phase
+          for (localIndex ip = 0; ip < NP; ++ip)
+          {
+            real64 const phaseMassNew = poreVolNew * phaseVolFracSub[ei][0][ip] * phaseDensSub[ei][0][ip];
+            real64 const phaseMassOld = poreVolOld * phaseVolFracOldSub[ei][ip] * phaseDensOldSub[ei][ip];
 
-              real64 const dPhaseMass_dP = dPoreVol_dP * phaseVolFracSub[ei][0][ip] * phaseDensSub[ei][0][ip]
-                                           + poreVolNew * (dPhaseVolFrac_dPresSub[ei][0][ip] * phaseDensSub[ei][0][ip]
-                                                         + phaseVolFracSub[ei][0][ip] * dPhaseDens_dPresSub[ei][0][ip]);
+            real64 const dPhaseMass_dP = dPoreVol_dP * phaseVolFracSub[ei][0][ip] * phaseDensSub[ei][0][ip]
+                                         + poreVolNew * (dPhaseVolFrac_dPresSub[ei][0][ip] * phaseDensSub[ei][0][ip]
+                                                       + phaseVolFracSub[ei][0][ip] * dPhaseDens_dPresSub[ei][0][ip]);
 
             for (localIndex jc = 0; jc < NC; ++jc)
             {
@@ -1131,9 +1128,10 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
 
           jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
                                          localAccumDOF.data(),
-                                         integer_conversion<int>( NC ),
+                                         integer_conversion<int>( NDOF ),
                                          localAccumDOF.data(),
-                                         localAccumJacobian.data() );
+                                         localAccumJacobian.data(),
+                                         Epetra_FECrsMatrix::ROW_MAJOR );
         }
       }
     }
@@ -1166,14 +1164,11 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
-
   auto elemGhostRank =
     elemManager->ConstructViewAccessor<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   auto blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array2d<globalIndex >>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+    elemManager->ConstructViewAccessor<array1d<globalIndex >>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
 
   auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
   auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
@@ -1286,20 +1281,21 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
     dCompFlux_dC.resizeDimension<0>( stencilSize );
 
     // resize local matrices and vectors
-    dofColIndices.resize( stencilSize * NC );
+    dofColIndices.resize( stencilSize * NDOF );
     localFluxJacobian.resizeDimension<1>( stencilSize * NDOF );
 
     // set equation indices for both connected cells
     stencil.forConnected( [&] ( auto const & cell,
-                               localIndex i ) -> void
+                                localIndex i ) -> void
     {
       localIndex const er  = cell.region;
       localIndex const esr = cell.subRegion;
       localIndex const ei  = cell.index;
 
+      globalIndex const offset = NDOF * blockLocalDofNumber[er][esr][ei];
       for (localIndex ic = 0; ic < NC; ++ic)
       {
-        eqnRowIndices[i * NC + ic] = blockLocalDofNumber[er][esr][ei][ic];
+        eqnRowIndices[i * NC + ic] = offset + ic;
       }
     });
 
@@ -1376,9 +1372,10 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
         localIndex const esr = cell.subRegion;
         localIndex const ei  = cell.index;
 
-        for (localIndex jc = 0; jc < NC; ++jc)
+        globalIndex const offset = NDOF * blockLocalDofNumber[er][esr][ei];
+        for (localIndex jdof = 0; jdof < NDOF; ++jdof)
         {
-          dofColIndices[i * NC + jc] = blockLocalDofNumber[er][esr][ei][jc];
+          dofColIndices[i * NDOF + jdof] = offset + jdof;
         }
 
         real64 const gravD = gravDepth[er][esr][ei];
@@ -1391,7 +1388,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
         for (localIndex jc = 0; jc < NC; ++jc)
         {
           real64 const dGrav_dC = m_gravityFlag ? dDensMean_dC[i][jc] * gravD : 0.0;
-          dPhaseFlux_dC[i][jc] = w * (1.0 + dGrav_dC);
+          dPhaseFlux_dC[i][jc] = w * dGrav_dC;
         }
       });
 
@@ -1431,7 +1428,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
           dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
           for (localIndex jc = 0; jc < NC; ++jc)
           {
-           dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+            dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
           }
         }
 
@@ -1458,7 +1455,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
 
         for (localIndex jc = 0; jc < NC; ++jc)
         {
-          localIndex const localDofIndexComp = ke * NDOF + jc + 1;
+          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
           localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
           localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
         }
@@ -1483,9 +1480,10 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
 
     jacobian->SumIntoGlobalValues( integer_conversion<int>( numElems * NC ),
                                    eqnRowIndices.data(),
-                                   integer_conversion<int>( stencilSize * NC ),
+                                   integer_conversion<int>( stencilSize * NDOF ),
                                    dofColIndices.data(),
-                                   localFluxJacobian.data() );
+                                   localFluxJacobian.data(),
+                                   Epetra_FECrsMatrix::ROW_MAJOR );
 
   });
 }
@@ -1507,14 +1505,11 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
-
   auto elemGhostRank =
     elemManager->ConstructViewAccessor<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   auto blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array2d<globalIndex >>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+    elemManager->ConstructViewAccessor<array1d<globalIndex >>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
 
   auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
   auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
@@ -1580,7 +1575,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
       CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
       // set up array views to reduce amount of indexing
-      arrayView2d<globalIndex const> const dofNumber = blockLocalDofNumber[er][esr].get();
+      arrayView1d<globalIndex const> const dofNumber = blockLocalDofNumber[er][esr].get();
 
       arrayView2d<real64 const> const pVMultSub = pVMult[er][esr][m_solidIndex].get();
       arrayView2d<real64 const> const dPVMult_dPresSub = dPVMult_dPres[er][esr][m_solidIndex].get();
@@ -1606,10 +1601,11 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
           real64 const dPoreVol_dP = dVol_dP * poro + vol * dPoro_dP;
 
           // get equation/dof indices
-          globalIndex const eqnIndex = dofNumber[ei][NDOF-1];
+          globalIndex const offset = NDOF * dofNumber[ei];
+          globalIndex const localVolBalanceEqnIndex = offset + NC;
           for (localIndex jdof = 0; jdof < NDOF; ++jdof)
           {
-            localVolBalanceDOF[jdof] = dofNumber[ei][jdof];
+            localVolBalanceDOF[jdof] = offset + jdof;
           }
 
           real64 localVolBalance = 1.0;
@@ -1643,14 +1639,15 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition * 
 
           // add contribution to global residual and dRdP
           residual->SumIntoGlobalValues( 1,
-                                         &eqnIndex,
+                                         &localVolBalanceEqnIndex,
                                          &localVolBalance );
 
           jacobian->SumIntoGlobalValues( 1,
-                                         &eqnIndex,
-                                         integer_conversion<int>( NC ),
+                                         &localVolBalanceEqnIndex,
+                                         integer_conversion<int>( NDOF ),
                                          localVolBalanceDOF.data(),
-                                         localVolBalanceJacobian.data() );
+                                         localVolBalanceJacobian.data(),
+                                         Epetra_FECrsMatrix::ROW_MAJOR );
         }
       }
     }
@@ -1697,13 +1694,13 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain
 
     // call the application of the boundary condition to alter the matrix and rhs
     bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
-                                                time_n + dt,
-                                                subRegion,
-                                                dofMap,
-                                                1,
-                                                blockSystem,
-                                                BlockIDs::compositionalBlock,
-                                                [&] (localIndex const a) -> real64
+                                                 time_n + dt,
+                                                 subRegion,
+                                                 dofMap,
+                                                 integer_conversion<integer>(m_numDofPerCell),
+                                                 blockSystem,
+                                                 BlockIDs::compositionalBlock,
+                                                 [&] (localIndex const a) -> real64
     {
       return pres[a] + dPres[a];
     });
@@ -1732,7 +1729,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
     elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   auto blockLocalDofNumber = elemManager->
-    ConstructViewAccessor<array2d<globalIndex>>(viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key());
+    ConstructViewAccessor<array1d<globalIndex>>(viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key());
 
   auto refPoro = elemManager->ConstructViewAccessor<real64_array>(viewKeysCompMultiphaseFlow.referencePorosity.Key());
   auto volume  = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
@@ -1750,9 +1747,10 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
     if (elemGhostRank[er][esr][ei] < 0)
     {
       real64 cell_norm = 0.0;
+      globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[er][esr][ei];
       for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
       {
-        int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][ei][idof]));
+        int const lid = rowMap->LID(integer_conversion<int>(offset + idof));
         real64 const val = localResidual[lid] / (refPoro[er][esr][ei] * volume[er][esr][ei]);
         cell_norm += val * val;
       }
@@ -1806,10 +1804,10 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
   solution->ExtractView(&local_solution,&dummy);
 
   auto blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array2d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+    elemManager->ConstructViewAccessor<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
 
   auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
-  auto dCompDens = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key() );
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key() );
 
   auto elemGhostRank =
     elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -1821,16 +1819,17 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
   {
     if( elemGhostRank[er][esr][ei] < 0 )
     {
+      globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[er][esr][ei];
       // extract solution and apply to dP
       {
-        int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][ei][0]));
+        int const lid = rowMap->LID(integer_conversion<int>(offset));
         dPres[er][esr][ei] += scalingFactor * local_solution[lid];
       }
 
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
       {
-        int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][ei][ic+1]));
-        dCompDens[er][esr][ei] += scalingFactor * local_solution[lid];
+        int const lid = rowMap->LID(integer_conversion<int>(offset + ic + 1));
+        dCompDens[er][esr][ei][ic] += scalingFactor * local_solution[lid];
       }
     }
   });
