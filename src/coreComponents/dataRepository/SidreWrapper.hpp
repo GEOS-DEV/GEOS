@@ -30,8 +30,7 @@
 #include <string>
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/DataStore.hpp"
-#include "sidre/IOManager.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #endif
 #include <mpi.h>
 
