@@ -44,8 +44,7 @@
 
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/sidre.hpp"
-#include "sidre/SidreTypes.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #include "SidreWrapper.hpp"
 #endif
 
@@ -995,8 +994,7 @@ public:
       localIndex element_size = elementSize();
 
       int ndims = numDimensions();
-//      axom::sidre::SidreLength dims[ndims + 1];
-      axom::sidre::SidreLength dims[10];
+      axom::sidre::IndexType dims[10];
       for (int dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
@@ -1049,8 +1047,7 @@ public:
       localIndex element_size = elementSize();
 
       int ndims = numDimensions();
-//      axom::sidre::SidreLength dims[ndims + 1];
-      axom::sidre::SidreLength dims[10];
+      axom::sidre::IndexType dims[10];
       for (int dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
@@ -1168,7 +1165,7 @@ public:
   {
 #ifdef GEOSX_USE_ATK
     view = (view != nullptr) ? view : getSidreView();
-    view->setExternalDataPtr(AXOM_NULLPTR);
+    view->setExternalDataPtr(nullptr);
 #endif
   }
 
@@ -1208,7 +1205,7 @@ public:
       localIndex num_elements = numElementsFromByteSize(byte_size);
 
       int ndims = view->getNumDimensions();
-      axom::sidre::SidreLength dims[10];
+      axom::sidre::IndexType dims[10];
       view->getShape(ndims, dims);
 
       if ( byte_size > num_elements * sidre_size )
