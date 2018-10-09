@@ -479,7 +479,7 @@ trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid GID ) const
 // Wrapper to print the trilinos output of the matrix
 void EpetraSparseMatrix::print() const
 {
-  std::cout << *m_matrix.get() << std::endl;
+  GEOS_LOG(*m_matrix.get());
 }
 
 // Returns the infinity norm of the matrix.

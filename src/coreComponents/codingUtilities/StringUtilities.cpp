@@ -224,15 +224,13 @@ bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::str
     std::map<std::string,std::string>::const_iterator itr = parameterMap.find(paramName);
     if(itr == endMap)
     {
-      // throw GPException("Error: Undefined model parameter: " + paramName +
-      // ".");
       std::map<std::string,std::string>::const_iterator itrB  = parameterMap.begin();
       while(itrB != parameterMap.end())
       {
-        std::cout << itrB->first << std::endl;
         ++itrB;
       }
-      std::cout << "Error: Undefined model parameter: " + paramName + "." << std::endl; exit(1);
+
+      GEOS_ERROR("Error: Undefined model parameter: " << paramName << ".");
     }
 
     const std::string& replaceStr = itr->second;
