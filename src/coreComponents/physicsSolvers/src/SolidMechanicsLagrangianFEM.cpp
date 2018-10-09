@@ -489,24 +489,6 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
       }
     }
   }
-
-  real64_array & faceArea  = faceManager->getReference<real64_array>(FaceManager::
-                                                                     viewKeyStruct::
-                                                                     faceAreaString);
-  array1d<array1d<localIndex>> const & facesToNodes = faceManager->nodeList();
-  r1_array const & X = nodes->referencePosition();
-
-
-  R1Tensor faceNormal, faceCenter;
-
-  // loop over faces and calculate faceArea, faceNormal and faceCenter
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
-  {
-    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(facesToNodes[kf],
-                                                             X,
-                                                             faceCenter,
-                                                             faceNormal);
-  }
 }
 
 real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,

@@ -103,6 +103,7 @@ public:
     static constexpr auto elementListString           = "elemList";
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
+    constexpr static auto faceNormalString = "faceNormal";
 
     dataRepository::ViewKey nodeList              = { nodeListString };
     dataRepository::ViewKey edgeList              = { edgeListString };

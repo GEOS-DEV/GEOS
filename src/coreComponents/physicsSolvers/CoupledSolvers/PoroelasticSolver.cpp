@@ -218,7 +218,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::FullyImplicit )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+    GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }
   return dtReturn;
 }
