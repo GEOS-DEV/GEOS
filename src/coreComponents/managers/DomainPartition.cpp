@@ -29,7 +29,7 @@
 
 #include "common/TimingMacros.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "managers/ObjectManagerBase.hpp"

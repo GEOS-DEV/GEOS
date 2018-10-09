@@ -39,7 +39,7 @@
 #include "ml_MultiLevelPreconditioner.h"
 #include "EpetraExt_MatrixMatrix.h"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx

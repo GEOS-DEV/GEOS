@@ -41,7 +41,7 @@
 
 #include "SiloFile.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
