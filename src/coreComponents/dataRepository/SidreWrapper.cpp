@@ -25,10 +25,6 @@
 #include "SidreWrapper.hpp"
 #include "dataRepository/Buffer.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 #include <string>
 #include <cstdio>
 #include <mpi.h>
