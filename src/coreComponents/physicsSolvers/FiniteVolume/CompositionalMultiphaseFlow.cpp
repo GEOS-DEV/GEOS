@@ -634,7 +634,7 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
                                                 gather.data(),
                                                 1 );
 
-  GEOS_ASSERT( numLocalRows == numLocalRowsToSend, "number of local rows inconsistent" );
+  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
 
   // find the first local row on this partition, and find the number of total global rows.
   localIndex firstLocalRow = 0;
@@ -672,7 +672,7 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
     }
   });
 
-  GEOS_ASSERT(localCount == numLocalRows, "Number of DOF assigned does not match numLocalRows" );
+  GEOS_ERROR_IF( localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
 
 void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * const domain,
