@@ -125,6 +125,20 @@ void FaceManager::FillDocumentationNode()
                               0,
                               1 );
 
+  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
+                              viewKeyStruct::faceNormalString,
+                              -1,
+                              "r1_array",
+                              "r1_array",
+                              "Face normal ",
+                              "Face normal",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
+
+
 }
 
 void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
@@ -275,6 +289,33 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   SortAllFaceNodes( nodeManager, elementManager);
 
   SetDomainBoundaryObjects( nodeManager );
+
+
+
+
+
+
+  real64_array & faceArea  = getReference<real64_array>( viewKeyStruct::
+                                                         faceAreaString);
+
+  r1_array & faceNormal = getReference<real64_array>( viewKeyStruct::
+                                                     faceNormalString);
+
+  r1_array & faceCenter = getReference<real64_array>( viewKeyStruct::
+                                                      faceCenterString);
+
+  r1_array const & X = nodes->referencePosition();
+
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(m_nodeList[kf],
+                                                             X,
+                                                             faceCenter[kf],
+                                                             faceNormal[kf]);
+  }
+
 }
 
 void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
