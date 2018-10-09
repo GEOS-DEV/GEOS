@@ -104,7 +104,7 @@ void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
     if( childNode.name() == string("ElementRegion") )
     {
       std::string regionName = childNode.attribute("name").value();
-      std::cout<<regionName<<std::endl;
+      GEOS_LOG_RANK_0(regionName);
 
       ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
       elemRegion->SetDocumentationNodes();
