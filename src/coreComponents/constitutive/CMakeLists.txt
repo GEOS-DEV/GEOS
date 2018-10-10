@@ -21,20 +21,6 @@ set( constitutive_sources
      Solid/PoreVolumeCompressibleSolid.cpp
    )
 
-set( dependencyList dataRepository )
-
-if( ENABLE_PVT_PACKAGE )
-    set( constitutive_headers ${constitutive_headers} Fluid/CompositionalMultiphaseFluid.hpp )
-    set( constitutive_sources ${constitutive_sources} Fluid/CompositionalMultiphaseFluid.cpp )
-    set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if( ENABLE_PAMELA )
-    set( constitutive_headers ${constitutive_headers} Fluid/CompositionalMultiphaseFluid.hpp )
-    set( constitutive_sources ${constitutive_sources} Fluid/CompositionalMultiphaseFluid.cpp )
-    set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
 
 blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
