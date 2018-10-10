@@ -274,7 +274,7 @@ void CompositionalMultiphaseFluid::createFluid()
 
   const ComponentProperties CompProps(numComp, components, Mw, Tc, Pc, Omega);
   // TODO choose flash type
-  m_fluid = new CompositionalMultiphaseSystem(phases, eos, COMPOSITIONAL_FLASH_TYPE::TRIVIAL, CompProps);
+  m_fluid = new CompositionalMultiphaseSystem(phases, eos, COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, CompProps);
 
 }
 

@@ -59,7 +59,7 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseCompFraction_dTemperature.Key(), &m_dPhaseCompFraction_dTemperature, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseCompFraction_dGlobalCompFraction.Key(), &m_dPhaseCompFraction_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeysMultiFluidBase.totalDensity.Key(), &m_totalDensity, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.totalDensity.Key(), &m_totalDensity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeysMultiFluidBase.dTotalDensity_dPressure.Key(), &m_dTotalDensity_dPressure, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dTotalDensity_dTemperature.Key(), &m_dTotalDensity_dTemperature, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dTotalDensity_dGlobalCompFraction.Key(), &m_dTotalDensity_dGlobalCompFraction, false );
