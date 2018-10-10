@@ -299,6 +299,15 @@ public:
 
   }
 
+  void SetGhostRankForSenders( localIndex_array const & indicesToSend )
+  {
+    for( auto index : indicesToSend )
+    {
+//      GEOS_ERROR_IF( m_ghostRank[index] >= 0, "trying to set ghostRank of non-locally owned index: m_ghostRank["<<index<<"]="<<m_ghostRank[index] );
+      m_ghostRank[index] = -1;
+    }
+  }
+
   localIndex GetNumberOfGhosts() const;
 
   localIndex GetNumberOfLocalIndices() const;
