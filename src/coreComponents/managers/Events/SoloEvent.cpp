@@ -86,19 +86,6 @@ void SoloEvent::FillDocumentationNode()
                               0,
                               1,
                               0 );
-
-  docNode->AllocateChildNode( SoloEventViewKeys.eventHasTriggered.Key(),
-                              SoloEventViewKeys.eventHasTriggered.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "event trigger flag",
-                              "event trigger flag",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
 }
 
 
@@ -110,10 +97,10 @@ void SoloEvent::EstimateEventTiming(real64 const time,
 {
   real64 const targetTime = this->getReference<real64>(SoloEventViewKeys.targetTime);
   integer const targetCycle = this->getReference<integer>(SoloEventViewKeys.targetCycle);
-  integer const eventHasTriggered = this->getReference<integer>(EventBase::viewKeys.eventHasTriggered);
+  integer const lastCycle = this->getReference<integer>(EventBase::viewKeys.lastCycle);
   
   // Check event status
-  if (eventHasTriggered == 0)
+  if (lastCycle < 0)
   {
     if (targetTime >= 0.0)
     {
@@ -141,7 +128,7 @@ void SoloEvent::EstimateEventTiming(real64 const time,
 
 real64 SoloEvent::GetTimestepRequest(real64 const time)
 {
-  integer const targetExactTimestep = this->getReference<integer>(EventBase::viewKeys.targetExactTimestep);
+  integer const targetExactTimestep = this->getReference<integer>(SoloEventViewKeys.targetExactTimestep);
   real64 const targetTime = this->getReference<real64>(SoloEventViewKeys.targetTime);
   
   real64 requestedDt = EventBase::GetTimestepRequest(time);
