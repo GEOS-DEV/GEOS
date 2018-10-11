@@ -100,7 +100,7 @@ void SiloOutput::Execute(real64 const& time_n,
 
   silo.Initialize(PMPIO_WRITE , numFiles );
   silo.WaitForBatonWrite(rank, cycleNumber, eventProgress, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n, 0);
+  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();
