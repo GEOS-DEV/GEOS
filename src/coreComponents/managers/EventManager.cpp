@@ -209,17 +209,17 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   array1d<real64> receive_buffer(2 * comm_size);
 
   // Setup event targets, sequence indicators
-  array1d<integer> eventCounters(2);
+  integer eventCounter = 0;
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     subEvent->GetTargetReferences();
-    subEvent->GetExecutionOrder(eventCounters);
+    eventCounter = subEvent->GetExecutionOrder(eventCounter);
   });
 
   // Set the progress indicators
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->SetProgressIndicator(eventCounters);
+    subEvent->SetProgressIndicator(eventCounter);
   });
 
   // Inform user if it appears this is a mid-loop restart
