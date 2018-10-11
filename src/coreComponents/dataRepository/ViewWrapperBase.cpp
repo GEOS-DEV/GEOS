@@ -28,9 +28,6 @@
 #include "ManagedGroup.hpp"
 #include "RestartFlags.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
 
 namespace geosx
 {
@@ -50,7 +47,7 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
 #endif
 {
 #ifdef GEOSX_USE_ATK
-  SLIC_ERROR_IF(parent==nullptr,"parameter WrapperCollection * const parent must not be nullptr");
+  GEOS_ERROR_IF(parent==nullptr,"parameter WrapperCollection * const parent must not be nullptr");
 
   if( parent->getSidreGroup()->hasView(name) )
   {

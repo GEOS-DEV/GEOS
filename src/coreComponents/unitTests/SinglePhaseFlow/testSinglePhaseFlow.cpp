@@ -27,7 +27,7 @@
 #pragma clang diagnostic push
 #endif
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include <cmath>
 #include <mpi.h>
@@ -51,7 +51,7 @@ using namespace dataRepository;
 
 #ifdef GEOSX_USE_ATK
 using namespace axom;
-#include "slic/GenericOutputStream.hpp"
+#include "axom/slic/streams/GenericOutputStream.hpp"
 #endif
 
 namespace
