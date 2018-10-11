@@ -173,19 +173,6 @@ void EventBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.isPostTimeStep.Key(),
-                              viewKeys.isPostTimeStep.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "post time-step flag",
-                              "if this flag is set, then it will call targets with time = time+dt (EventManager will attempt to set this if not defined)",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
   docNode->AllocateChildNode( viewKeys.currentSubEvent.Key(),
                               viewKeys.currentSubEvent.Key(),
                               -1,
@@ -327,19 +314,11 @@ void EventBase::Step(real64 const time,
                      integer const cycle,
                      dataRepository::ManagedGroup * domain )
 {
-  integer const isPostTimeStep = this->getReference<integer>(viewKeys.isPostTimeStep);
   integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
 
   if (m_target != nullptr)
   {
-    if (isPostTimeStep == 1)
-    {
-      m_target->Execute(time + dt, dt, cycle, m_eventProgress, domain);
-    }
-    else
-    {
-      m_target->Execute(time, dt, cycle, m_eventProgress, domain);
-    }
+    m_target->Execute(time, dt, cycle, m_eventProgress, domain);
   }
 
   // Iterage using the managed integer currentSubEvent, which will
@@ -427,47 +406,32 @@ integer EventBase::GetExitFlag()
 
 
 
-void EventBase::GetExecutionOrder(array1d<integer> & eventCounters)
+integer EventBase::GetExecutionOrder(integer eventCounter)
 {
   // Set the event count
-  m_eventCount = eventCounters[0];
-  ++eventCounters[0];
-
-  // Check to see if the target is derived from SolverBase
-  if ( m_target != nullptr )
-  {
-    if ( m_target->GetTimestepBehavior() > 0 )
-    {
-      eventCounters[1] = m_eventCount;
-    }
-  }
+  m_eventCount = eventCounter;
+  ++eventCounter;
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->GetExecutionOrder(eventCounters);
-  });  
+    eventCounter = subEvent->GetExecutionOrder(eventCounter);
+  });
+
+  return eventCounter;  
 }
 
 
-void EventBase::SetProgressIndicator(array1d<integer> & eventCounters)
+void EventBase::SetProgressIndicator(integer eventCounter)
 {
-  integer& isPostTimeStep = *(this->getData<integer>(viewKeys.isPostTimeStep));
-
-  // Set the timestep flag if not defined
-  if (isPostTimeStep == -1)
-  {
-    isPostTimeStep = (m_eventCount > eventCounters[1]) ? 1 : 0;
-  }
-
   // Calculate the event progress indicator
   // This is defined as the percent completion through the executaion loop
   // with respect to the beginning of the event.
-  m_eventProgress = static_cast<real64>(m_eventCount) / static_cast<real64>(eventCounters[0]);
+  m_eventProgress = static_cast<real64>(m_eventCount) / static_cast<real64>(eventCounter);
 
   // Do this for child events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->SetProgressIndicator(eventCounters);
+    subEvent->SetProgressIndicator(eventCounter);
   });
 }
 
