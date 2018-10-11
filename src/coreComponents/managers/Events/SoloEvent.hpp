@@ -69,7 +69,6 @@ public:
     dataRepository::ViewKey targetTime = { "targetTime" };
     dataRepository::ViewKey targetCycle = { "targetCycle" };
     dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
-    dataRepository::ViewKey functionName = { "eventHasTriggered" };
   } SoloEventViewKeys;
 
 };
