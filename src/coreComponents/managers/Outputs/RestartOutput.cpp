@@ -74,7 +74,9 @@ void RestartOutput::Execute(real64 const& time_n,
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
   BoundaryConditionManager::get()->prepareToWrite();
-  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
+  int numFiles;
+  MPI_Comm_size( MPI_COMM_GEOSX, &numFiles );
+  SidreWrapper::writeTree( numFiles, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
   problemManager->finishWriting();
   NewFunctionManager::Instance()->finishWriting();
   BoundaryConditionManager::get()->finishWriting();

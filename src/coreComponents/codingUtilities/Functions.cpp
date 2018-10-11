@@ -212,14 +212,13 @@ void SymbolicFunction::ReadXML(TICPP::HierarchicalDataNode* hdn){
       else if(keyValue.size()==1)
       {
         std::string& constant = keyValue[0];
-        throw GPException("SymbolicFunction: Undefined constant " + constant + ".");
+        GEOS_ERROR("SymbolicFunction: Undefined constant " + constant + ".");
       }
     }
   }
 
   int err  = m_fParser.Parse(fStr.c_str(), Vars);
-  if(err >= 0)
-    throw GPException("Error detected in SymbolicFunction expression: '"+ fStr+ "' at character " + toString(err+1) + "." );
+  GEOS_ERROR_IF(err >= 0, "Error detected in SymbolicFunction expression: '"+ fStr+ "' at character " + toString(err+1) + "." );
   m_fParser.Optimize();
 }
 
@@ -256,7 +255,7 @@ void Lookup4DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
   }
   else
   {
-    throw GPException("Lookup4DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR("Lookup4DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
@@ -292,7 +291,7 @@ void Lookup3DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
   }
   else
   {
-    throw GPException("Lookup3DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR("Lookup3DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
@@ -334,7 +333,7 @@ void Lookup2DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
   }
   else
   {
-    throw GPException("Lookup2DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR("Lookup2DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
@@ -377,7 +376,7 @@ void Lookup1DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
   }
   else
   {
-    throw GPException("Lookup1DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR("Lookup1DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
@@ -395,10 +394,7 @@ REGISTER_Function( Lookup1DTable )
 realT EvaluateStringFunction(const std::string& fString){
   FunctionParser fParser;
   int err = fParser.Parse(fString.c_str(), "");
-  if(err >=0)
-  {
-    throw GPException("Error detected in EvaluateStringFunction expression: '"+ fString+ "' at character " + toString(err+1) + "." );
-  }
+  GEOS_ERROR_IF(err >= 0, "Error detected in EvaluateStringFunction expression: '"+ fString+ "' at character " + toString(err+1) + "." );
   const double Dummy=0;
   return fParser.Eval(&Dummy);
 }
@@ -431,8 +427,7 @@ Function* newFunction(const std::string& FunctionName, TICPP::HierarchicalDataNo
   FunctionInitializer* FunctionInitializer = getFunctionCatalogue()[FunctionName];
   Function *theNewFunction = NULL;
 
-  if(!FunctionInitializer)
-    throw GPException("Could not create unrecognized Function"+ FunctionName);
+  GEOS_ERROR_IF(!FunctionInitializer, "Could not create unrecognized Function"+ FunctionName);
 
   theNewFunction = FunctionInitializer->initializeFunction( hdn,pm );
 

@@ -61,8 +61,8 @@ int main(int argc, char** argv)
 #endif
 
   global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>(global_argc)];
-  for( int i=0 ; i<argc ; ++i )
+  global_argv = new char*[global_argc];
+  for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];
     std::cout<<argv[i]<<std::endl;

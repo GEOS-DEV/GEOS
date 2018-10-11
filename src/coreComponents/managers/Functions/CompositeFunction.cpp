@@ -123,10 +123,7 @@ void CompositeFunction::InitializeFunction()
   parserContext.addBuiltIns();
   std::string expression = getData<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
-  if (err != mathpresso::kErrorOk)
-  {
-    throw std::invalid_argument("JIT Compiler Error");
-  }
+  GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
 
   // Grab pointers to sub functions
   NewFunctionManager * functionManager = NewFunctionManager::Instance();

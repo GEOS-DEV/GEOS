@@ -126,18 +126,6 @@ void UniformStrainHexahedron::reinit(const std::vector<R1TensorT<3> > &mapped_su
   CalculateShapeFunctionDerivative(  z, x, b[1] );
   CalculateShapeFunctionDerivative(  x, y, b[2] );
 
-  /*
-     for( int i=0 ; i<3 ; ++i )
-     {
-     std::cout<<"i, b: "<<i;
-     for( int a=0 ; a<8 ; ++a )
-     {
-      std::cout<<", "<<b[i][a];
-     }
-     std::cout<<std::endl;
-     }
-   */
-
   data[q].jacobian_determinant = 0.0;
   for( int a=0 ; a<8 ; ++a )
   {
@@ -145,22 +133,12 @@ void UniformStrainHexahedron::reinit(const std::vector<R1TensorT<3> > &mapped_su
   }
   data[q].jacobian_determinant /= 3.0;
 
-  //std::cout<<"data[q].jacobian_determinant =
-  // "<<data[q].jacobian_determinant<<std::endl;
-
-
   for( int a=0 ; a<8 ; ++a )
   {
     data[q].mapped_gradients[a](0) = b[0][m_nodeOrdering[a]] / data[q].jacobian_determinant;
     data[q].mapped_gradients[a](1) = b[1][m_nodeOrdering[a]] / data[q].jacobian_determinant;
     data[q].mapped_gradients[a](2) = b[2][m_nodeOrdering[a]] / data[q].jacobian_determinant;
-
-    //std::cout<<"data[q].mapped_gradients[a] =
-    // "<<data[q].mapped_gradients[a]<<std::endl;
   }
-  //std::cout<<"data[q].jacobian_determinant =
-  // "<<data[q].jacobian_determinant<<std::endl;
-
 }
 
 void UniformStrainHexahedron::zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
@@ -296,28 +274,11 @@ void CalculateFBHourGlassModes( const array1d<R1Tensor>& xpos,
       xGamma += temp;
     }
 
-#if WRITEOUT==1
-    std::cout<<"xGamma["<<mode<<"] = "<<xGamma<<std::endl;
-#endif
     for( int a=0 ; a<8 ; ++a )
     {
       gamma[mode][a] = Gamma[mode][a] - Dot( dNdx(a), xGamma);
     }
   }
-
-#if WRITEOUT==1
-  std::cout<<std::endl;
-  for( int mode=0 ; mode<4 ; ++mode )
-  {
-    std::cout<<"gamma["<<mode<<"] = ";
-    for( int a=0 ; a<8 ; ++a )
-    {
-      std::cout<<gamma[mode][a]<<" , ";
-    }
-    std::cout<<std::endl;
-  }
-#endif
-
 }
 
 
@@ -368,13 +329,6 @@ CalcFBHourForce( const array1d<R1Tensor>& vel,
     q[mode] *= 1.0/sqrt(8.0);
   }
 
-#if WRITEOUT==1
-  for( int mode=0 ; mode<4 ; ++mode )
-  {
-    std::cout<<"q["<<mode<<"] = "<<q[mode]<<std::endl;
-  }
-
-#endif
   hgforce = 0.0;
   for( int a=0 ; a<8 ; ++a )
   {
@@ -385,11 +339,4 @@ CalcFBHourForce( const array1d<R1Tensor>& vel,
       hgforce[a] -= temp;
     }
   }
-
-#if WRITEOUT==1
-  for( int a=0 ; a<8 ; ++a )
-  {
-    std::cout<<hgforce[a]<<std::endl;
-  }
-#endif
 }

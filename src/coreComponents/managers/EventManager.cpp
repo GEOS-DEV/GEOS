@@ -180,7 +180,7 @@ void EventManager::ReadXML_PostProcess()
 
 void EventManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
+  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -231,10 +231,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   // Run problem
   while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
-    if (rank == 0)
-    {
-      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-    }
+    GEOS_LOG_RANK_0("Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle);
 
     // Iterage using the managed integer currentSubEvent and real64 currentMaxDt,
     // which will allow restart runs to pick up where they left off.
@@ -275,9 +272,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       exitFlag += subEvent->GetExitFlag();
     
       // Debug information
-      if ((verbosity > 0) && (rank == 0))
+      if (verbosity > 0)
       {
-        std::cout << "     Event: " << currentSubEvent << " (" << subEvent->getName() << "), f=" << eventForecast << std::endl;
+        GEOS_LOG_RANK_0("     Event: " << subEvent->getName() << ", f=" << eventForecast);
       }
     }
 
@@ -313,18 +310,13 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     #endif
   }
 
-
   // Cleanup
-  if (rank == 0)
-  {
-    std::cout << "Cleaning up events" << std::endl;
-  }
+  GEOS_LOG_RANK_0("Cleaning up events");
   
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     subEvent->Cleanup(time, cycle, 0, domain);     
   });
-
 }
 
 } /* namespace geosx */

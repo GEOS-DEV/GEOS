@@ -51,7 +51,7 @@ void OutputManager::FillDocumentationNode()
 
 void OutputManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Adding Output: " << childKey << ", " << childName << std::endl;
+  GEOS_LOG_RANK_0("Adding Output: " << childKey << ", " << childName);
   std::unique_ptr<OutputBase> output = OutputBase::CatalogInterface::Factory( childKey, childName, this );
   this->RegisterGroup<OutputBase>( childName, std::move(output) );
 }
