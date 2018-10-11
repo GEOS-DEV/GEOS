@@ -274,7 +274,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       // Debug information
       if (verbosity > 0)
       {
-        GEOS_LOG_RANK_0("     Event: " << subEvent->getName() << ", f=" << eventForecast);
+        GEOS_LOG_RANK_0("     Event: " << currentSubEvent << " (" << subEvent->getName() << "), f=" << eventForecast);
       }
     }
 
