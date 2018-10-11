@@ -223,9 +223,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   });
 
   // Inform user if it appears this is a mid-loop restart
-  if ((currentSubEvent > 0) && (rank == 0))
+  if ((currentSubEvent > 0))
   {
-    std::cout << "The restart-file was written during step " << currentSubEvent << " of the event loop.  Resuming from that point." << std::endl;
+    GEOS_LOG_RANK_0("The restart-file was written during step " << currentSubEvent << " of the event loop.  Resuming from that point.");
   }
 
   // Run problem

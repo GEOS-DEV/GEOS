@@ -167,6 +167,7 @@ public:
     dataRepository::ViewKey substepFactor = { "substepFactor" };
 
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
+    dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
   } viewKeys;
 
   ///Catalog interface

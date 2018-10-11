@@ -421,16 +421,16 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   }
   else
   {
-    sprintf(baseFileName, "%s_%03d_%06d",
+    sprintf(baseFileName, "%s_%06d%03d",
             m_plotFileRoot.c_str(),
-            eventProgressPercent,
-            cycleNum);
+            cycleNum,
+            eventProgressPercent);
 
     sprintf(fileName,
-            "%s_%03d_%06d.%03d",
+            "%s_%06d%03d.%03d",
             m_plotFileRoot.c_str(),
-            eventProgressPercent,
             cycleNum,
+            eventProgressPercent,
             groupRank);
   }
   sprintf(dirName, "domain_%05d", domainNumber);

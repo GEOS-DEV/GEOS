@@ -186,6 +186,19 @@ void EventBase::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.isTargetExecuting.Key(),
+                              viewKeys.isTargetExecuting.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "Flag to indicate whether the event target is executing",
+                              "Flag to indicate whether the event target is executing.  This helps to avoid double-executions.",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
 }
 
 
@@ -314,12 +327,17 @@ void EventBase::Step(real64 const time,
                      integer const cycle,
                      dataRepository::ManagedGroup * domain )
 {
+  // currentSubEvent indicates which child event was active when the restart was written
+  // isTargetExecuting blocks double-execution of the target during restarts, and is useful debug information in outputs
   integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
+  integer& isTargetExecuting = *(this->getData<integer>(viewKeys.isTargetExecuting));
 
-  if (m_target != nullptr)
+  if ((m_target != nullptr) && (isTargetExecuting == 0))
   {
+    isTargetExecuting = 1;
     m_target->Execute(time, dt, cycle, m_eventProgress, domain);
   }
+  isTargetExecuting = 0;
 
   // Iterage using the managed integer currentSubEvent, which will
   // allow restart runs to pick up where they left off.
