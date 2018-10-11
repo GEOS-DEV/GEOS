@@ -31,7 +31,7 @@
 
 #ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
-#include "sidre/IOManager.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #endif
 
 namespace geosx
@@ -349,7 +349,7 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
     {
       if( !this->hasView(childName) )
       {
-        //GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
+        // GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
       }
     }
   }
@@ -358,7 +358,7 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 
 void ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Child not recognized: " << childKey << ", " << childName << std::endl;
+  GEOS_LOG_RANK("Child not recognized: " << childKey << ", " << childName);
 }
 
 
@@ -406,12 +406,12 @@ void ManagedGroup::PrintDataHierarchy(integer indent)
 {
   for( auto& view : this->wrappers() )
   {
-    std::cout<<string(indent, '\t')<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
+    GEOS_LOG(string(indent, '\t')<<view.second->getName()<<", "<<view.second->get_typeid().name());
   }
 
   for( auto& group : this->m_subGroups )
   {
-    std::cout<<string(indent, '\t')<<group.first<<':'<<std::endl;
+    GEOS_LOG(string(indent, '\t')<<group.first<<':');
     group.second->PrintDataHierarchy(indent + 1);
   }
 }
@@ -427,7 +427,6 @@ void ManagedGroup::InitializationOrder( string_array & order )
 void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static localIndex indent = 0;
- // std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on"<<this->getName()<<" of type"<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
 
   InitializePreSubGroups(group);
 

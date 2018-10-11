@@ -30,10 +30,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include <slic/slic.hpp>
-#endif
-
 
 using namespace cxx_utilities;
 
@@ -75,19 +71,8 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
       }
       else
       {
-        if( defVal == "REQUIRED" )
-        {
-          string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
-#ifdef GEOSX_USE_ATK
-          SLIC_ERROR( message );
-#endif
-        }
-        else
-        {
-          stringutilities::StringToType( xmlVal, defVal );
-        }
-
-
+        GEOS_ERROR_IF(defVal == "REQUIRED", "variable " + subDocNode.getName() + " is required in " + targetNode.path() );
+        stringutilities::StringToType( xmlVal, defVal );
       }
       localIndex const size = multidimensionalArray::integer_conversion<localIndex>(xmlVal.size());
       dataView.resize( size );
@@ -95,8 +80,6 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
 //        decltype(a) * data = dataView.pointer();
       cxx_utilities::equateStlVector(data,xmlVal);
     });
-
-
 }
 
 

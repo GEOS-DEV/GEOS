@@ -290,7 +290,7 @@ void R4minSymTensorT<T_dim>::Aij_to_Bklmn( const R2TensorT<6>& A)
 {
   int n_dim = 6;
   if (T_dim!=3)
-    std::cout<< "R4minSymTensorT<T_dim>::Aij_to_Bklmn not implemented for T_dim /= 3";
+    GEOS_WARNING("R4minSymTensorT<T_dim>::Aij_to_Bklmn not implemented for T_dim /= 3");
   else
   {
 
@@ -313,7 +313,7 @@ template<int T_dim>
 void R4minSymTensorT<T_dim>::Inverse_4( R4minSymTensorT<T_dim>& A )
 {
   if (T_dim!=3)
-    std::cout<< "R4minSymTensorT<T_dim>::Inverse_4 not implemented for T_dim /= 3";
+    GEOS_WARNING("R4minSymTensorT<T_dim>::Inverse_4 not implemented for T_dim /= 3");
   else
   {
     R2TensorT<6> B;
