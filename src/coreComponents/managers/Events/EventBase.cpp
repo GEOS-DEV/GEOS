@@ -173,8 +173,8 @@ void EventBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( periodicEventViewKeys.targetExactStartStop.Key(),
-                              periodicEventViewKeys.targetExactStartStop.Key(),
+  docNode->AllocateChildNode( viewKeys.targetExactStartStop.Key(),
+                              viewKeys.targetExactStartStop.Key(),
                               -1,
                               "integer",
                               "integer",
