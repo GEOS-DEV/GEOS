@@ -135,7 +135,7 @@ real64 SoloEvent::GetTimestepRequest(real64 const time)
 
   if ((targetTime > 0) && (targetExactTimestep > 0))
   {
-    requestedDt = std::max(requestedDt, targetTime - time);
+    requestedDt = std::min(requestedDt, targetTime - time);
   }
 
   return requestedDt;

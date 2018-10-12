@@ -173,6 +173,19 @@ void EventBase::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( periodicEventViewKeys.targetExactStartStop.Key(),
+                              periodicEventViewKeys.targetExactStartStop.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "allows timesteps to be truncated to match the start/stop times exactly",
+                              "allows timesteps to be truncated to match the start/stop times exactly",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
   docNode->AllocateChildNode( viewKeys.currentSubEvent.Key(),
                               viewKeys.currentSubEvent.Key(),
                               -1,
@@ -183,7 +196,7 @@ void EventBase::FillDocumentationNode()
                               "0",
                               "",
                               0,
-                              1,
+                              0,
                               0 );
 
   docNode->AllocateChildNode( viewKeys.isTargetExecuting.Key(),
@@ -196,7 +209,7 @@ void EventBase::FillDocumentationNode()
                               "0",
                               "",
                               0,
-                              1,
+                              0,
                               0 );
 
 }
@@ -372,6 +385,7 @@ real64 EventBase::GetTimestepRequest(real64 const time)
   real64 const forceDt = this->getReference<real64>(viewKeys.forceDt);
   integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
   integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
+  integer const targetExactStartStop = this->getReference<integer>(viewKeys.targetExactStartStop);
 
   if (forceDt > 0)
   {
@@ -397,6 +411,21 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     if (allowSubstep > 0)
     {
       nextDt *= substepFactor;
+    }
+  }
+
+  if (targetExactStartStop == 1)
+  {
+    real64 const beginTime = this->getReference<real64>(viewKeys.beginTime);
+    real64 const endTime = this->getReference<real64>(viewKeys.endTime);
+
+    if (time < beginTime)
+    {
+      nextDt = std::min(beginTime - time, nextDt);
+    }
+    else if (time < endTime)
+    {
+      nextDt = std::min(endTime - time, nextDt);
     }
   }
 

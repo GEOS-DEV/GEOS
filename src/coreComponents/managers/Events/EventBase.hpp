@@ -167,6 +167,7 @@ public:
     dataRepository::ViewKey allowSuperstep = { "allowSuperstep" };
     dataRepository::ViewKey allowSubstep = { "allowSubstep" };
     dataRepository::ViewKey substepFactor = { "substepFactor" };
+    dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
 
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
