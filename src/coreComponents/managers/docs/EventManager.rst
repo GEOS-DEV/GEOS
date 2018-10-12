@@ -39,6 +39,7 @@ Event candidates are indicated by appending children to the Event block.  These 
 * ``allowSuperstep`` - This will override the time-stepping behavior for its targets, and is explained further below (integer, optional)
 * ``allowSubstep`` - This will override the time-stepping behavior for its targets, and is explained further below (integer, optional)
 * ``substepFactor`` - This sets the substepping behavior for the target (integer, optional)
+* ``targetExactStartStop`` - This will cause the event to target the start/stop boundaries exactly (bool, default = 0)
 
 
 PeriodicEvent
@@ -57,9 +58,18 @@ The primary type of event used in GEOSX is of type ``PeriodicEvent``.  As its na
 
 HaltEvent
 -----------
-The other event type used in GEOSX is of the type ``HaltEvent``.  This event will track the wall clock, and if it is executed it will set a flag that instructs the manager to exit.  The unique attribute for this object is:
+The second event type used in GEOSX is of the type ``HaltEvent``.  This event will track the wall clock, and if it is executed it will set a flag that instructs the manager to exit.  The unique attribute for this object is:
 
 * ``maxRunTime`` - The event will trigger once (wallTime > maxRunTime) (real64)
+
+
+SoloEvent
+-----------
+The third event type used in GEOSX is of the type ``SoloEvent``.  This event will execute once once the conditions are met (Note: if targetCycle or targetTime are not specified, the event will trigger on the first cycle).  The unique attribute for this object is:
+
+* ``targetCycle`` - The event will trigger once (cycle = targetCycle). (integer)
+* ``targetTime`` - The event will trigger once (time >= targetTime) (real64)
+* ``targetExactTimestep`` - If this is set, will allow the event to limit its timestep requests in an attempt to execute on integer multiples of timeFrequency. (bool, optional)
 
 
 Basic Event Execution Rules
