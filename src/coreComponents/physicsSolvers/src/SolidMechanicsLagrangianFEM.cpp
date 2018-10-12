@@ -440,9 +440,15 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
   rho = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >("density",
                                                                                constitutiveManager);
 
+  m_elemsAttachedToSendOrReceiveNodes.resize( elementRegionManager->numRegions() );
+  m_elemsNotAttachedToSendOrReceiveNodes.resize( elementRegionManager->numRegions() );
+
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+    m_elemsAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
+    m_elemsNotAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
+
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       CellBlockSubRegion const * const cellBlock = elemRegion->GetSubRegion(esr);
@@ -460,19 +466,28 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
         {
           mass[nodeList[q]] += rho[er][esr][0][k][q] * detJq[q];
         }
+
+        bool isAttachedToGhostNode = false;
+        for( localIndex a=0 ; a<cellBlock->numNodesPerElement() ; ++a )
+        {
+          if( nodes->GhostRank()[nodeList[a]] >= -1 )
+          {
+            isAttachedToGhostNode = true;
+          }
+        }
+
+        if( isAttachedToGhostNode )
+        {
+          m_elemsAttachedToSendOrReceiveNodes[er][esr].insert(k);
+        }
+        else
+        {
+          m_elemsNotAttachedToSendOrReceiveNodes[er][esr].insert(k);
+        }
+
       }
     }
   }
-
-  real64 totalMass = 0;
-  for( localIndex a=0 ; a<nodes->size() ; ++a )
-  {
-    // std::cout<<"mass["<<a<<"] = "<<mass[a]<<std::endl;
-    totalMass += mass[a];
-  }
-  std::cout<<"totalMass = "<<totalMass<<std::endl;
-
-
 
   FaceManager * const faceManager = mesh->getFaceManager();
   integer_array & junk = faceManager->getReference<integer_array>("junk");
@@ -491,7 +506,7 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
   real64 dtReturn = dt;
 
   SolverBase * const
-  surfaceGenerator =  this->getParent()->GetGroup("SurfaceGen")->group_cast<SolverBase*>();
+  surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
@@ -703,28 +718,30 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 #if !defined(EXTERNAL_KERNELS)         
 
-      //          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
-      for( localIndex k=0 ; k<cellBlock->size() ; ++k )
+   ::geosx::raja::forall_in_range<elemPolicy>
+      (0, cellBlock->size(), GEOSX_LAMBDA ( globalIndex k) mutable        
       {
-        r1_array uhat_local( numNodesPerElement );
-        r1_array u_local( numNodesPerElement );
-        r1_array f_local( numNodesPerElement );
 
-        f_local = R1Tensor(0.0);
+        //Note: inumNodesPerElement are defined by a macro. The value is 8. 
+        R1Tensor uhat_local[inumNodesPerElement];
+        R1Tensor u_local[inumNodesPerElement];
+        R1Tensor f_local[inumNodesPerElement];
+
+        for(localIndex i=0; i<inumNodesPerElement; ++i) f_local[i] = 0.0;
+
         localIndex const * const nodelist = elemsToNodes[k];
 
         CopyGlobalToLocal( nodelist,
                            u, uhat,
-                           u_local.data(), uhat_local.data(), numNodesPerElement );
-
+                           u_local, uhat_local, numNodesPerElement );
 
         //Compute Quadrature
         for(auto q = 0 ; q<numQuadraturePoints ; ++q)
         {
 
           R2Tensor dUhatdX, dUdX;
-          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q] );
-          CalculateGradient( dUdX,u_local, dNdX[k][q] );
+          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q], numNodesPerElement);
+          CalculateGradient( dUdX,u_local, dNdX[k][q], numNodesPerElement);
 
           R2Tensor F,L, Finv;
 
@@ -775,15 +792,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
 
           //----------------------
-
-          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local.size(), f_local.data() );
+          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, numNodesPerElement, f_local);
 
         }//quadrature loop
 
+        AddLocalToGlobal(nodelist, f_local, acc, numNodesPerElement);
 
-        AddLocalToGlobal(nodelist, f_local.data(), acc, numNodesPerElement);
-
-      } //Element loop
+      }); //Element loop
 #else// defined(EXTERNAL_KERNELS) 
 
       //
@@ -981,6 +996,109 @@ CommunicationTools::SynchronizeFields( fieldNames,
 return dt;
 }
 
+template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
+                                                            localIndex const esr,
+                                                            set<localIndex> const & elementList,
+                                                            array2d<localIndex> const & elemsToNodes,
+                                                            array3d< R1Tensor > const & dNdX,
+                                                            array2d<real64> const & detJ,
+                                                            r1_array const & u,
+                                                            r1_array const & uhat,
+                                                            r1_array const & acc,
+                                                            ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                                            real64 const dt )
+{
+  raja::forall_in_set<elemPolicy>( elementList.data(),
+                                   elementList.size(),
+                                   GEOSX_LAMBDA ( globalIndex k) mutable
+  {
+    R1Tensor uhat_local[ NUM_NODES_PER_ELEM ];
+    R1Tensor u_local[ NUM_NODES_PER_ELEM ];
+    R1Tensor f_local[ NUM_NODES_PER_ELEM ];
+
+    for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+    {
+      f_local[a] = 0;
+    }
+    localIndex const * const nodelist = elemsToNodes[k];
+
+    CopyGlobalToLocal( nodelist,
+                       u, uhat,
+                       u_local, uhat_local, NUM_NODES_PER_ELEM );
+
+
+    //Compute Quadrature
+    for(auto q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
+    {
+
+      R2Tensor dUhatdX, dUdX;
+      CalculateGradient( dUhatdX,uhat_local, dNdX[k][q] );
+      CalculateGradient( dUdX,u_local, dNdX[k][q] );
+
+      R2Tensor F,L, Finv;
+
+      {
+        // calculate dv/dX
+        R2Tensor dvdX = dUhatdX;
+        dvdX *= 1.0 / dt;
+
+        // calculate du/dX
+        F = dUhatdX;
+        F *= 0.5;
+        F += dUdX;
+        F.PlusIdentity(1.0);
+
+        // calculate dX/du
+        Finv.Inverse(F);
+
+        // chain rule: calculate dv/du = dv/dX * dX/du
+        L.AijBjk(dvdX, Finv);
+      }
+
+      // calculate gradient (end of step)
+      F = dUhatdX;
+      F += dUdX;
+      F.PlusIdentity(1.0);
+      real64 detF = F.Det();
+
+
+      // calculate element volume
+      //        detJ_np1(k,q) = detJ(k,q) * detF;
+      //        volume[k] += detJ_np1(k,q);
+      //        initVolume += detJ(k,q);
+
+
+      Finv.Inverse(F);
+
+
+      //-------------------------[Incremental Kinematics]----------------------------------
+      R2Tensor Rot;
+      R2SymTensor Dadt;
+      HughesWinget(Rot, Dadt, L, dt);
+      //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
+
+      constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
+
+      R2SymTensor TotalStress;
+      TotalStress = devStress[er][esr][0][k][q];
+      TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
+
+      //----------------------
+
+      Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, NUM_NODES_PER_ELEM, f_local );
+
+    }//quadrature loop
+
+
+    AddLocalToGlobal( nodelist, f_local.data(), acc, NUM_NODES_PER_ELEM );
+
+  } END_FOR //Element loop
+
+  return dt;
+}
 
 void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
                                                                  DomainPartition & domain,

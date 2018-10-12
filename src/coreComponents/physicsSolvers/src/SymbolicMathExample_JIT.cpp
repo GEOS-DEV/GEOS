@@ -133,17 +133,17 @@ void SymbolicMathExample_JIT::Initialize( ManagedGroup * const problemManager )
     dataRepository::ManagedGroup * targetObject = domain->GetGroup<ManagedGroup>(targetObjectStr);
     if (targetObject->hasView(targetName))
     {
-      std::cout << "Symbolic expression is setting " << targetObjectStr << "/" << targetName << std::endl;
+      GEOS_LOG("Symbolic expression is setting " << targetObjectStr << "/" << targetName);
     }
     else
     {
-      std::cout << "Target view wrapper is not present..  Initializing " << targetObjectStr << "/" << targetName << std::endl;
+      GEOS_LOG("Target view wrapper is not present..  Initializing " << targetObjectStr << "/" << targetName);
       targetObject->RegisterViewWrapper<real64_array>(targetName);
     }
   }
   else
   {
-    throw std::invalid_argument("No matching group for symbolic solver: " + targetObjectStr);
+   GEOS_ERROR("No matching group for symbolic solver: " + targetObjectStr);
   }
 }
 
@@ -184,10 +184,7 @@ real64 SymbolicMathExample_JIT::SolverStep( real64 const& time_n,
   }
 
   // Throw an error if the function evaluation methods return different results
-  if (error > 1e-6)
-  {
-    throw std::logic_error("Serial and vector function evaluation do not match!");
-  }
+  GEOS_ERROR_IF(error > 1e-6, "Serial and vector function evaluation do not match!");
   return dt;
 }
 

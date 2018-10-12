@@ -67,24 +67,17 @@ public:
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
-  template< typename T_indices >
-  unsigned int PackEdges( const T_indices& sendedges,
-                          const NodeManager& nodeManager,
-                          const FaceManager& faceManager,
-//                          bufvector& buffer,
-                          const bool packConnectivityToGlobal,
-                          const bool packFields,
-                          const bool packMaps,
-                          const bool packSets  ) const;
 
-  unsigned int UnpackEdges( const char*& buffer,
-                            const NodeManager& nodeManager,
-                            const FaceManager& faceManager,
-                            localIndex_array& edgeReceiveLocalIndices,
-                            const bool unpackConnectivityToLocal,
-                            const bool unpackFields,
-                            const bool unpackMaps,
-                            const bool unpackSets  );
+  void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+                                                        array1d<globalIndex_array>& edgesToNodes ) override final;
+
+  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList ) const override;
+
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                localIndex_array const & packList ) override;
+
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
@@ -160,6 +153,11 @@ public:
 private:
   FixedOneToManyRelation m_toNodesRelation;
   UnorderedVariableOneToManyRelation m_toFacesRelation;
+
+
+  template<bool DOPACK>
+  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const;
 
 };
 }
