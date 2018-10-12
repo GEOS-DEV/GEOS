@@ -139,7 +139,7 @@ void ObjectManagerBase::FillDocumentationNode()
 
 void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 {
-  m_ghostRank=-1;
+  m_ghostRank=-2;
 }
 
 
@@ -561,7 +561,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
       // get the local index of the node
       localIndex b = iterG2L->second;
       unpackedLocalIndices(a) = b;
-      if( ( sendingRank < rank && m_ghostRank[b] == -1) || ( sendingRank < m_ghostRank[b] ) )
+      if( ( sendingRank < rank && m_ghostRank[b] <= -1) || ( sendingRank < m_ghostRank[b] ) )
       {
         m_ghostRank[b] = sendingRank;
       }

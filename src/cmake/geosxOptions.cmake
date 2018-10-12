@@ -44,6 +44,7 @@ else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
 
+option( ENABLE_PAMELA "Enables building with PAMELA" ON )
 
 #set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
 #set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )
