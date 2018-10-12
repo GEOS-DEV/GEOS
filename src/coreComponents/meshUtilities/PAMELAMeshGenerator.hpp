@@ -27,6 +27,10 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/Utilities.hpp"
+
+//This is an include of PAMELA
+#include "Mesh/Mesh.hpp"
+
 #include "MeshGeneratorBase.hpp"
 
 #ifdef USE_ATK
