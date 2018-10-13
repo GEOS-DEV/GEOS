@@ -19,6 +19,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_
 #define SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_
 
+#include "common/GeosxConfig.hpp"
+
 #ifdef GEOSX_USE_CALIPER
 #include <caliper/cali.h>
 
