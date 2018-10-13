@@ -34,9 +34,9 @@ namespace constitutive
 
 MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const parent )
   : ConstitutiveBase( name, parent ),
-    m_useMassFractions( false )
+    m_useMass( false )
 {
-  RegisterViewWrapper( viewKeysMultiFluidBase.phases.Key(), &m_phases, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.phases.Key(), &m_phaseNames, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.componentNames.Key(), &m_componentNames, false );
 
   RegisterViewWrapper( viewKeysMultiFluidBase.phaseFraction.Key(), &m_phaseFraction, false );
@@ -151,19 +151,31 @@ localIndex MultiFluidBase::numFluidComponents() const
   return integer_conversion<localIndex>(m_componentNames.size());
 }
 
+string const & MultiFluidBase::componentName(localIndex ic) const
+{
+  GEOS_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
+  return m_componentNames[ic];
+}
+
 localIndex MultiFluidBase::numFluidPhases() const
 {
-  return integer_conversion<localIndex>(m_phases.size());
+  return integer_conversion<localIndex>(m_phaseNames.size());
 }
 
-bool MultiFluidBase::getMassFractionFlag() const
+string const & MultiFluidBase::phaseName(localIndex ip) const
 {
-  return m_useMassFractions;
+  GEOS_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
+  return m_phaseNames[ip];
 }
 
-void MultiFluidBase::setMassFractionFlag(bool flag)
+bool MultiFluidBase::getMassFlag() const
 {
-  m_useMassFractions = flag;
+  return m_useMass;
+}
+
+void MultiFluidBase::setMassFlag(bool flag)
+{
+  m_useMass = flag;
 }
 
 } //namespace constitutive

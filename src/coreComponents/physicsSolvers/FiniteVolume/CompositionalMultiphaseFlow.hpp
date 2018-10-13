@@ -145,6 +145,7 @@ public:
 
     // inputs
     ViewKey temperature = { "temperature" };
+    ViewKey useMassFlag = { "useMass" };
 
     ViewKey blockLocalDofNumber    = { "blockLocalDofNumber_CompositionalMultiphaseFlow" };
 
@@ -157,13 +158,13 @@ public:
     ViewKey deltaGlobalCompDensity = { "deltaGlobalCompDensity" };
 
     // intermediate values for constitutive model input
-    ViewKey globalCompMassFraction                     = { "globalCompMassFraction" };
-    ViewKey dGlobalCompMassFraction_dGlobalCompDensity = { "dGlobalCompMassFraction_dGlobalCompDensity" };
+    ViewKey globalCompFraction                     = { "globalCompFraction" };
+    ViewKey dGlobalCompFraction_dGlobalCompDensity = { "dGlobalCompFraction_dGlobalCompDensity" };
 
     // these are used to store last converged time step values
     ViewKey phaseVolumeFraction        = { "phaseVolumeFraction" };
     ViewKey phaseDensity               = { "phaseDensity" };
-    ViewKey phaseComponentMassFraction = { "phaseComponentMassFraction" };
+    ViewKey phaseComponentFraction     = { "phaseComponentFraction" };
     ViewKey phaseViscosity             = { "phaseViscosity" };
     ViewKey phaseRelativePermeability  = { "phaseRelativePermeability" };
     ViewKey porosity                   = { "porosity" };
@@ -187,7 +188,7 @@ private:
   void ResizeFields( DomainPartition * domain );
 
   /**
-   * @brief Recompute component mass fractions from primary variables (component densities)
+   * @brief Recompute component fractions from primary variables (component densities)
    * @param domain the domain containing the mesh and fields
    */
   void UpdateComponentFraction( DomainPartition * domain );
@@ -203,7 +204,7 @@ private:
    * @param domain the domain containing the mesh and fields
    *
    * Initialize all variables from initial conditions. This calculating primary variable values
-   * from prescribed intermediate values (i.e. global densities from global mass fractions)
+   * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
   void InitializeFluidState( DomainPartition * domain );
@@ -313,6 +314,9 @@ private:
 
   /// the (uniform) temperature
   real64 m_temperature;
+
+  /// flag indicating whether mass or molar formulation should be used
+  integer m_useMass;
 };
 
 } // namespace geosx

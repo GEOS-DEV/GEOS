@@ -81,9 +81,9 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
 {
   auto clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
 
-  clone->m_useMassFractions = this->m_useMassFractions;
+  clone->m_useMass = this->m_useMass;
 
-  clone->m_phases           = this->m_phases;
+  clone->m_phaseNames       = this->m_phaseNames;
   clone->m_equationsOfState = this->m_equationsOfState;
   clone->m_componentNames   = this->m_componentNames;
 
@@ -247,13 +247,13 @@ void CompositionalMultiphaseFluid::createFluid()
 
   for (localIndex ip = 0; ip < numPhase; ++ip)
   {
-    if (phaseNameDict.find(m_phases[ip]) != phaseNameDict.end())
+    if (phaseNameDict.find(m_phaseNames[ip]) != phaseNameDict.end())
     {
-      phases[ip] = phaseNameDict.at(m_phases[ip]);
+      phases[ip] = phaseNameDict.at(m_phaseNames[ip]);
     }
     else
     {
-      GEOS_ERROR("CompositionalMultiphaseFluid: invalid phase label: " << m_phases[ip]);
+      GEOS_ERROR("CompositionalMultiphaseFluid: invalid phase label: " << m_phaseNames[ip]);
     }
 
     if (eosNameDict.find(m_equationsOfState[ip]) != eosNameDict.end())
@@ -375,7 +375,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
   std::vector<double> compMoleFrac( NC );
   array2d<real64> dCompMoleFrac_dCompMassFrac;
 
-  if (m_useMassFractions)
+  if (m_useMass)
   {
     dCompMoleFrac_dCompMassFrac.resize( NC, NC );
     dCompMoleFrac_dCompMassFrac = 0.0;
@@ -416,12 +416,12 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
 
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    PHASE_TYPE phase = phaseNameDict.at(m_phases[ip]);
+    PHASE_TYPE phase = phaseNameDict.at(m_phaseNames[ip]);
     PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
 
     auto const & frac = split.PhaseMoleFraction.at(phase);
     auto const & comp = props.MoleComposition;
-    auto const & dens = m_useMassFractions ? props.MassDensity : props.MoleDensity;
+    auto const & dens = m_useMass ? props.MassDensity : props.MoleDensity;
 
     phaseFrac.value[ip] = frac.value;
     phaseFrac.dPres[ip] = frac.dP;
@@ -454,7 +454,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
 
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    PHASE_TYPE phase = phaseNameDict.at(m_phases[ip]);
+    PHASE_TYPE phase = phaseNameDict.at(m_phaseNames[ip]);
     PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
 
     auto const & phaseMolarDens = props.MoleDensity;
@@ -513,7 +513,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
     }
   }
 
-  if (m_useMassFractions)
+  if (m_useMass)
   {
     // 6. Convert output mole fractions to mass fractions
     // At this point, phase and total densities are already mass densities
@@ -533,7 +533,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
     // 6.2. Finally, convert fractions
     for (localIndex ip = 0; ip < NP; ++ip)
     {
-      PHASE_TYPE phase = phaseNameDict.at(m_phases[ip]);
+      PHASE_TYPE phase = phaseNameDict.at(m_phaseNames[ip]);
       PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
 
       auto const & phaseMW = props.MolecularWeight;

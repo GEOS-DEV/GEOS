@@ -53,11 +53,15 @@ public:
 
   localIndex numFluidComponents() const;
 
+  string const & componentName( localIndex ic ) const;
+
   localIndex numFluidPhases() const;
 
-  bool getMassFractionFlag() const;
+  string const & phaseName( localIndex ip ) const;
 
-  void setMassFractionFlag( bool flag );
+  bool getMassFlag() const;
+
+  void setMassFlag(bool flag);
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -124,10 +128,10 @@ public:
 protected:
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  bool m_useMassFractions;
+  bool m_useMass;
 
   // general fluid composition information
-  string_array m_phases;
+  string_array m_phaseNames;
   string_array m_componentNames;
 
   array3d<real64> m_phaseFraction;
