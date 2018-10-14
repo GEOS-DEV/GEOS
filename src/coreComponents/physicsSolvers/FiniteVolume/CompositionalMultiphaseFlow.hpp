@@ -141,33 +141,61 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
+    // inputs
+    static constexpr auto temperatureString = "temperature";
+    static constexpr auto useMassFlagString = "useMass";
+
+    static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
+
+    // primary solution field
+    static constexpr auto pressureString      = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto facePressureString  = "facePressure";
+    static constexpr auto bcPressureString    = "bcPressure";
+
+    static constexpr auto globalCompDensityString      = "globalCompDensity";
+    static constexpr auto deltaGlobalCompDensityString = "deltaGlobalCompDensity";
+
+    // intermediate values for constitutive model input
+    static constexpr auto globalCompFractionString                     = "globalCompFraction";
+    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dGlobalCompFraction_dGlobalCompDensity";
+
+    // these are used to store last converged time step values
+    static constexpr auto phaseVolumeFractionString        = "phaseVolumeFraction";
+    static constexpr auto phaseDensityString               = "phaseDensity";
+    static constexpr auto phaseComponentFractionString     = "phaseComponentFraction";
+    static constexpr auto phaseViscosityString             = "phaseViscosity";
+    static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
+    static constexpr auto porosityString                   = "porosity";
+    
     using ViewKey = dataRepository::ViewKey;
 
     // inputs
-    ViewKey temperature = { "temperature" };
-    ViewKey useMassFlag = { "useMass" };
+    ViewKey temperature = { temperatureString };
+    ViewKey useMassFlag = { useMassFlagString };
 
-    ViewKey blockLocalDofNumber    = { "blockLocalDofNumber_CompositionalMultiphaseFlow" };
+    ViewKey blockLocalDofNumber    = { blockLocalDofNumberString };
 
     // primary solution field
-    ViewKey pressure      = { "pressure" };
-    ViewKey deltaPressure = { "deltaPressure" };
-    ViewKey facePressure  = { "facePressure" };
+    ViewKey pressure      = { pressureString };
+    ViewKey deltaPressure = { deltaPressureString };
+    ViewKey facePressure  = { facePressureString };
+    ViewKey bcPressure    = { bcPressureString };
 
-    ViewKey globalCompDensity      = { "globalCompDensity" };
-    ViewKey deltaGlobalCompDensity = { "deltaGlobalCompDensity" };
+    ViewKey globalCompDensity      = { globalCompDensityString };
+    ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
 
     // intermediate values for constitutive model input
-    ViewKey globalCompFraction                     = { "globalCompFraction" };
-    ViewKey dGlobalCompFraction_dGlobalCompDensity = { "dGlobalCompFraction_dGlobalCompDensity" };
+    ViewKey globalCompFraction                     = { globalCompFractionString };
+    ViewKey dGlobalCompFraction_dGlobalCompDensity = { dGlobalCompFraction_dGlobalCompDensityString };
 
     // these are used to store last converged time step values
-    ViewKey phaseVolumeFraction        = { "phaseVolumeFraction" };
-    ViewKey phaseDensity               = { "phaseDensity" };
-    ViewKey phaseComponentFraction     = { "phaseComponentFraction" };
-    ViewKey phaseViscosity             = { "phaseViscosity" };
-    ViewKey phaseRelativePermeability  = { "phaseRelativePermeability" };
-    ViewKey porosity                   = { "porosity" };
+    ViewKey phaseVolumeFraction        = { phaseVolumeFractionString };
+    ViewKey phaseDensity               = { phaseDensityString };
+    ViewKey phaseComponentFraction     = { phaseComponentFractionString };
+    ViewKey phaseViscosity             = { phaseViscosityString };
+    ViewKey phaseRelativePermeability  = { phaseRelativePermeabilityString };
+    ViewKey porosity                   = { porosityString };
 
   } viewKeysCompMultiphaseFlow;
 
@@ -192,6 +220,50 @@ private:
    * @param domain the domain containing the mesh and fields
    */
   void UpdateComponentFraction( DomainPartition * domain );
+
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
+   * @param targetSet the set to call model updates on
+   */
+  void UpdateFluidModel( ManagedGroup * dataGroup,
+                         set<localIndex> const & targetSet,
+                         string const & pressureFieldName = viewKeyStruct::pressureString,
+                         string const & deltaPressureFieldName = viewKeyStruct::deltaPressureString,
+                         string const & compFracFieldName = viewKeyStruct::globalCompFractionString );
+
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
+   * @param setName name of the set to call model updates on
+   */
+  void UpdateFluidModel( ManagedGroup * dataGroup, string const & setName );
+
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateFluidModels( DomainPartition * domain );
+
+  /**
+ * @brief Update all relevant solid models using current values of pressure
+ * @param dataGroup the group storing the required fields
+ * @param targetSet the set to call model updates on
+ */
+  void UpdateSolidModel( ManagedGroup * dataGroup, set<localIndex> const & targetSet );
+
+  /**
+   * @brief Update all relevant solid models using current values of pressure
+   * @param dataGroup the group storing the required fields
+   * @param setName name of the set to call model updates on
+   */
+  void UpdateSolidModel( ManagedGroup * dataGroup, string const & setName );
+
+  /**
+   * @brief Update all relevant solid models using current values of pressure
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateSolidModels( DomainPartition * domain );
 
   /**
    * @brief Update all relevant constitutive models using current values of pressure and composition

@@ -142,6 +142,20 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes( ManagedGroup * co
                                   0,
                                   1 );
 
+      // TODO this needs to be allocated on BC sets only
+      docNode->AllocateChildNode( viewKeysCompMultiphaseFlow.bcPressure.Key(),
+                                  viewKeysCompMultiphaseFlow.bcPressure.Key(),
+                                  -1,
+                                  "real64_array",
+                                  "real64_array",
+                                  "Boundary condition pressure",
+                                  "Boundary condition pressure",
+                                  "",
+                                  elemManager->getName(),
+                                  1,
+                                  0,
+                                  1 );
+
       docNode->AllocateChildNode( viewKeysCompMultiphaseFlow.globalCompDensity.Key(),
                                   viewKeysCompMultiphaseFlow.globalCompDensity.Key(),
                                   -1,
@@ -437,29 +451,126 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( DomainPartition * dom
   });
 }
 
-void CompositionalMultiphaseFlow::UpdateConstitutiveModels( DomainPartition * domain )
+void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * dataGroup,
+                                                    set<localIndex> const & targetSet,
+                                                    string const & pressureFieldName,
+                                                    string const & deltaPressureFieldName,
+                                                    string const & compFracFieldName )
+{
+  // TODO for now can only be a subregion; this will change in the future
+  CellBlockSubRegion * subRegion = dataGroup->group_cast<CellBlockSubRegion *>();
+
+  GEOS_ERROR_IF( subRegion == nullptr, "Target data group is not a subregion" );
+
+  ManagedGroup * const constitutiveGroup = subRegion->GetConstitutiveModels();
+  MultiFluidBase * const fluid = constitutiveGroup->GetGroup<MultiFluidBase>( m_fluidIndex ); // TODO could be incorrect
+
+  GEOS_ERROR_IF( fluid == nullptr, "Fluid model does not exist in subregion " << subRegion->getName() );
+
+  // TODO get rid of this branching if/when formulation changed from P_{n}+dP to P_{n+1}
+  if ( !deltaPressureFieldName.empty() )
+  {
+    auto const & pres = dataGroup->getReference<array1d<real64>>(pressureFieldName);
+    auto const & dPres = dataGroup->getReference<array1d<real64>>(deltaPressureFieldName);
+    auto const & compFrac = dataGroup->getReference<array2d<real64>>(compFracFieldName);
+
+    // TODO make this a RAJA loop?
+    for (localIndex a : targetSet)
+    {
+      fluid->StateUpdatePointMultiphaseFluid( pres[a] + dPres[a], m_temperature,
+                                              static_cast<real64 const *>(compFrac[a]),
+                                              a, 0 );
+    }
+  }
+  else
+  {
+    auto const & pres = dataGroup->getReference<array1d<real64>>(pressureFieldName);
+    auto const & compFrac = dataGroup->getReference<array2d<real64>>(compFracFieldName);
+
+    // TODO make this a RAJA loop?
+    for (localIndex a : targetSet)
+    {
+      fluid->StateUpdatePointMultiphaseFluid( pres[a], m_temperature,
+                                              static_cast<real64 const *>(compFrac[a]),
+                                              a, 0 );
+    }
+  }
+}
+
+void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * dataGroup, string const & setName )
+{
+  ManagedGroup * sets = dataGroup->GetGroup( keys::sets );
+
+  GEOS_ERROR_IF( sets == nullptr, "Target group does not contain sets" );
+
+  set<localIndex> const & targetSet = sets->getReference<set<localIndex>>( setName );
+  UpdateFluidModel( dataGroup, targetSet );
+}
+
+void CompositionalMultiphaseFlow::UpdateFluidModels( DomainPartition * domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
-  auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>( constitutiveManager );
-
-  auto pres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
-  auto dPres    = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
-  auto compFrac = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompFraction.Key() );
-
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const ei ) -> void
+  elemManager->forCellBlocksComplete( [&] ( localIndex er,
+                                            localIndex esr,
+                                            ElementRegion * region,
+                                            CellBlockSubRegion * subregion ) -> void
   {
-    constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointMultiphaseFluid( pres[er][esr][ei] + dPres[er][esr][ei],
-                                                                                   m_temperature,
-                                                                                   static_cast<real64 const *>(compFrac[er][esr][ei]),
-                                                                                   ei, 0 ); // fluid
-
-    constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( pres[er][esr][ei], ei, 0 ); // solid
+    UpdateFluidModel( subregion, "all" );
   });
+}
+
+void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup, set<localIndex> const & targetSet )
+{
+  // TODO for now can only be a subregion; this will change in the future
+  CellBlockSubRegion * subRegion = dataGroup->group_cast<CellBlockSubRegion *>();
+
+  GEOS_ERROR_IF( subRegion == nullptr, "Target data group is not a subregion" );
+
+  ManagedGroup * const constitutiveGroup = subRegion->GetConstitutiveModels();
+  ConstitutiveBase * const solid = constitutiveGroup->GetGroup<ConstitutiveBase>( m_solidIndex ); // TODO could be incorrect
+
+  GEOS_ERROR_IF( solid == nullptr, "Solid model does not exist in subregion " << subRegion->getName() );
+
+  auto const & pres     = dataGroup->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
+  auto const & dPres    = dataGroup->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
+
+  // TODO make this a RAJA loop?
+  for ( localIndex a : targetSet)
+  {
+    solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
+  }
+}
+
+void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup, string const & setName )
+{
+  ManagedGroup * sets = dataGroup->GetGroup( keys::sets );
+
+  GEOS_ERROR_IF( sets == nullptr, "Target group does not contain sets" );
+
+  set<localIndex> const & targetSet = sets->getReference<set<localIndex>>( setName );
+  UpdateSolidModel( dataGroup, targetSet );
+}
+
+void CompositionalMultiphaseFlow::UpdateSolidModels( DomainPartition * domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  elemManager->forCellBlocksComplete( [&] ( localIndex er,
+                                            localIndex esr,
+                                            ElementRegion * region,
+                                            CellBlockSubRegion * subregion ) -> void
+  {
+    UpdateSolidModel( subregion, "all" );
+  });
+}
+
+void CompositionalMultiphaseFlow::UpdateConstitutiveModels( DomainPartition * domain )
+{
+  UpdateFluidModels( domain );
+  UpdateSolidModels( domain );
 }
 
 void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * domain )
@@ -1697,27 +1808,130 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain
                                      viewKeysCompMultiphaseFlow.pressure.Key(),
                                      [&]( BoundaryConditionBase const * const bc,
                                           string const &,
-                                          set<localIndex> const & lset,
+                                          set<localIndex> const & targetSet,
                                           ManagedGroup * subRegion,
                                           string const & ) -> void
   {
-    auto & dofMap = subRegion->getReference<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
-    auto & pres   = subRegion->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
-    auto & dPres  = subRegion->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
-
-    // 1.1. apply the pressure boundary condition to alter the matrix and rhs
-    bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
-                                                 time_n + dt,
-                                                 subRegion,
-                                                 dofMap,
-                                                 integer_conversion<integer>(m_numDofPerCell),
-                                                 blockSystem,
-                                                 BlockIDs::compositionalBlock,
-                                                 [&] (localIndex const a) -> real64
-    {
-      return pres[a] + dPres[a];
-    });
+    // 1.1. Apply BC to set the field values
+    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
+                                                time_n + dt,
+                                                subRegion,
+                                                viewKeysCompMultiphaseFlow.bcPressure.Key() );
   });
+
+  // TODO how to check consistency between pressure and composition BC?
+
+  // 2. Apply composition BC (global component fraction) and store them for constitutive call
+  bcManager->ApplyBoundaryCondition( time_n + dt,
+                                     domain,
+                                     "ElementRegions",
+                                     viewKeysCompMultiphaseFlow.globalCompFraction.Key(),
+                                     [&] ( BoundaryConditionBase const * const bc,
+                                           string const &,
+                                           set<localIndex> const & targetSet,
+                                           ManagedGroup * subRegion,
+                                           string const & ) -> void
+  {
+    // 2.1. Apply BC to set the field values
+    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
+                                                time_n + dt,
+                                                subRegion,
+                                                viewKeysCompMultiphaseFlow.globalCompFraction.Key() );
+  });
+
+  // 3. Call constitutive update on boundary set cells to get total density
+  bcManager->ApplyBoundaryCondition( time_n + dt,
+                                     domain,
+                                     "ElementRegions",
+                                     viewKeysCompMultiphaseFlow.pressure.Key(),
+                                     [&] ( BoundaryConditionBase const * const bc,
+                                           string const & setName,
+                                           set<localIndex> const & targetSet,
+                                           ManagedGroup * subRegion,
+                                           string const & ) -> void
+  {
+    UpdateFluidModel( subRegion, targetSet,
+                      viewKeyStruct::bcPressureString,
+                      "",
+                      viewKeyStruct::globalCompFractionString );
+  });
+
+  // 4. Back-calculate target global component densities and apply to the system
+  bcManager->ApplyBoundaryCondition( time_n + dt,
+                                     domain,
+                                     "ElementRegions",
+                                     viewKeysCompMultiphaseFlow.pressure.Key(),
+                                     [&] ( BoundaryConditionBase const * const bc,
+                                           string const & setName,
+                                           set<localIndex> const & targetSet,
+                                           ManagedGroup * targetGroup,
+                                           string const & ) -> void
+  {
+    // TODO for now can only be a subregion; this will change in the future
+    CellBlockSubRegion * subRegion = targetGroup->group_cast<CellBlockSubRegion *>();
+
+    GEOS_ERROR_IF( subRegion == nullptr, "Target data group is not a subregion" );
+
+    ManagedGroup * const constitutiveGroup = subRegion->GetConstitutiveModels();
+    MultiFluidBase * const fluid = constitutiveGroup->GetGroup<MultiFluidBase>( m_fluidIndex ); // TODO could be incorrect
+
+    GEOS_ERROR_IF( fluid == nullptr, "Fluid model does not exist in subregion " << subRegion->getName() );
+
+    auto const & pres      = subRegion->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
+    auto const & dPres     = subRegion->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
+    auto const & bcPres    = subRegion->getReference<array1d<real64>>( viewKeysCompMultiphaseFlow.bcPressure.Key() );
+    auto const & compFrac  = subRegion->getReference<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompFraction.Key() );
+    auto const & compDens  = subRegion->getReference<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompDensity.Key() );
+    auto const & dCompDens = subRegion->getReference<array2d<real64>>( viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key() );
+
+    auto const & totalDens = fluid->getReference<array2d<real64>>( MultiFluidBase::viewKeyStruct::totalDensityString );
+
+    auto const & dofNumber = subRegion->getReference<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+
+    Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+    array1d<real64> rhsContribution( targetSet.size() * m_numDofPerCell );
+    array1d<globalIndex> dof( targetSet.size() * m_numDofPerCell );
+
+    integer counter = 0;
+
+    for (localIndex a : targetSet)
+    {
+      globalIndex const offset = m_numDofPerCell * dofNumber[a];
+      dof[counter] = offset;
+
+      // 4.1. Apply pressure to the matrix
+      BcEqual::ApplyBcValue( dof[counter],
+                             blockSystem,
+                             BlockIDs::compositionalBlock,
+                             rhsContribution[counter],
+                             bcPres[a],
+                             pres[a] + dPres[a] );
+
+      ++counter;
+
+      // 4.2. For each component, apply target global density value
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      {
+        dof[counter] = offset + ic + 1;
+
+        BcEqual::ApplyBcValue( dof[counter],
+                               blockSystem,
+                               BlockIDs::compositionalBlock,
+                               rhsContribution[counter],
+                               totalDens[a][0] * compFrac[a][ic],
+                               compDens[a][ic] + dCompDens[a][ic] );
+
+        ++counter;
+      }
+
+      // 4.3. Apply accumulated rhs values
+      BcEqual::ReplaceGlobalValues( rhs,
+                                    counter,
+                                    dof.data(),
+                                    rhsContribution.data() );
+    }
+  });
+
 }
 
 void
