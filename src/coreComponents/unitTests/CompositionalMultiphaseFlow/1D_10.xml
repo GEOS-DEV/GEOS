@@ -243,7 +243,7 @@
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
 
     <Dirichlet name="sinkTermComposition_N2"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
@@ -251,7 +251,7 @@
                scale="0.099"/>
 
     <Dirichlet name="sinkTermComposition_C10"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
@@ -259,7 +259,7 @@
                scale="0.3"/>
 
     <Dirichlet name="sinkTermComposition_C20"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
@@ -267,7 +267,7 @@
                scale="0.6"/>
 
     <Dirichlet name="sinkTermComposition_H20"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="3"
