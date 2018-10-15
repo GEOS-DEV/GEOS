@@ -12,11 +12,12 @@
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"
                                  solidName="rock"
-                                 temperature="297.15">
+                                 temperature="297.15"
+                                 useMass="0">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
-                              maxIterNewton="8"
+                              maxIterNewton="2"
                               useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
@@ -155,7 +156,7 @@
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="0"
                dataType="real64"
                scale="0.099"/>
@@ -164,7 +165,7 @@
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="1"
                dataType="real64"
                scale="0.3"/>
@@ -173,7 +174,7 @@
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="2"
                dataType="real64"
                scale="0.6"/>
@@ -182,7 +183,7 @@
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="3"
                dataType="real64"
                scale="0.001"/>
@@ -192,7 +193,6 @@
     <Dirichlet name="sourceTermPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               component="0"
                dataType="Scalar"
                scale="1e7"
                setNames="source"/>
@@ -202,15 +202,15 @@
     <Dirichlet name="sourceTermComposition_N2"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
-               component="1"
+               fieldName="globalCompFraction"
+               component="0"
                dataType="real64"
                scale="0.001"/>
 
     <Dirichlet name="sourceTermComposition_C10"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="1"
                dataType="real64"
                scale="0.001"/>
@@ -218,7 +218,7 @@
     <Dirichlet name="sourceTermComposition_C20"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="2"
                dataType="real64"
                scale="0.001"/>
@@ -226,7 +226,7 @@
     <Dirichlet name="sourceTermComposition_H20"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="3"
                dataType="real64"
                scale="0.997"/>
@@ -243,33 +243,33 @@
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
 
     <Dirichlet name="sinkTermComposition_N2"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="0"
                dataType="real64"
                scale="0.099"/>
 
     <Dirichlet name="sinkTermComposition_C10"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="1"
                dataType="real64"
                scale="0.3"/>
 
     <Dirichlet name="sinkTermComposition_C20"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="2"
                dataType="real64"
                scale="0.6"/>
 
     <Dirichlet name="sinkTermComposition_H20"
-               setNames="source"
+               setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompMassFraction"
+               fieldName="globalCompFraction"
                component="3"
                dataType="real64"
                scale="0.001"/>
