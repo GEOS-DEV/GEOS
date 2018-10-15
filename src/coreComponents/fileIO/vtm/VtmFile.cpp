@@ -25,7 +25,7 @@
 
 #include "VtmFile.hpp"
 
-#include "common/Logger.hpp"
+#include "Logger.hpp"
 #include "mesh/MeshBody.hpp"
 
 #ifdef GEOSX_USE_MPI
