@@ -36,12 +36,6 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
-//#include "../legacy/Common/GPException.h"
-
 /////////////////////////////////////////////////
 // Forward declaration of templated functions
 

@@ -41,7 +41,7 @@ DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
+  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
