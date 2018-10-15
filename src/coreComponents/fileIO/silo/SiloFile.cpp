@@ -41,7 +41,7 @@
 
 #include "SiloFile.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
@@ -280,6 +280,10 @@ template<> int GetTensorRank<long long unsigned int> ()
 {
   return DB_VARTYPE_SCALAR;
 }
+template<> int GetTensorRank<long long int> ()
+{
+  return DB_VARTYPE_SCALAR;
+}
 template<> int GetTensorRank<string> ()
 {
   return DB_VARTYPE_SCALAR;
@@ -353,7 +357,7 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
   m_numGroups = numGroups;
 
   MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_GEOSX);
-  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
+//  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
   m_baton = PMPIO_Init( m_numGroups,
                         readwrite,

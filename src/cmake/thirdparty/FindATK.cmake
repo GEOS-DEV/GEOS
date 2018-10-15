@@ -55,10 +55,10 @@ if( EXISTS ${ATK_DIR})
 
     set(ATK_CMAKE ${ATK_DIR}/lib/cmake)
 
-    if(NOT EXISTS ${ATK_CMAKE}/axom_utils-targets.cmake)
-        MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_CMAKE}/axom_utils-targets.cmake)")
+    if(NOT EXISTS ${ATK_CMAKE}/core-targets.cmake)
+        MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_CMAKE}/core-targets.cmake)")
     endif()
-    include(${ATK_CMAKE}/axom_utils-targets.cmake)
+    include(${ATK_CMAKE}/core-targets.cmake)
 
 
     #if(ENABLE_MPI)
@@ -81,7 +81,7 @@ if( EXISTS ${ATK_DIR})
 
     include("${ATK_CMAKE}/fmt-targets.cmake")
     include("${ATK_CMAKE}/sparsehash-targets.cmake")
-    include(${ATK_CMAKE}/sidre-targets.cmake)
+    include("${ATK_CMAKE}/sidre-targets.cmake")
 
 
     #include("${ATK_CMAKE}/lumberjack-targets.cmake")

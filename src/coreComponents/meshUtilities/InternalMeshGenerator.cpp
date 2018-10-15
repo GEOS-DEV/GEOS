@@ -30,10 +30,8 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
 #include <algorithm>
-//#include "managers/TableManager.hpp"
-//#include "SimpleGeometricObjects.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
@@ -350,9 +348,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     }
     else
     {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
-#endif
+      GEOS_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
     }
   }
 
@@ -891,9 +887,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-// #ifdef GEOSX_USE_ATK
-//                    SLIC_ERROR("not implemented");
-// #endif
+//                  GEOS_ERROR("not implemented");
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
