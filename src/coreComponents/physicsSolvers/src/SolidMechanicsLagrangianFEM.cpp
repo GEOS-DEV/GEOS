@@ -160,9 +160,6 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
 {
   getLinearSystemRepository()->
     SetBlockID( BlockIDs::displacementBlock, this->getName() );
-
-  m_icomm.commID = CommunicationTools::reserveCommID();
-
 }
 
 
@@ -518,21 +515,7 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
-//    MPI_Barrier( MPI_COMM_GEOSX );
-//    timeval tim;
-//    gettimeofday(&tim, nullptr);
-//    real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
-
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
-
-//    MPI_Barrier( MPI_COMM_GEOSX );
-//    gettimeofday(&tim, nullptr);
-//    real64 t_end = tim.tv_sec + (tim.tv_usec / 1000000.0);
-//    GEOS_LOG_RANK_0("TotalTimeForStep = " << std::setprecision(3) << t_end - t_start << "s");
-
-
-
-
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
@@ -583,7 +566,17 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   r1_array & uhat = nodes->getReference<r1_array>(keys::IncrementalDisplacement);
   r1_array & acc  = nodes->getReference<r1_array>(keys::Acceleration);
 
+  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back("Velocity");
+
   GEOSX_MARK_END(initialization);  
+
+
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames,
+                                                    mesh,
+                                                    neighbors,
+                                                    m_icomm );
 
   bcManager->ApplyBoundaryConditionToField( time_n,
                                             domain,
@@ -638,10 +631,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back("Velocity");
 
-  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
