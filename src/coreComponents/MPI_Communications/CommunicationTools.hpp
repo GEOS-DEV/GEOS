@@ -37,26 +37,7 @@ class ObjectManagerBase;
 class NeighborCommunicator;
 class MeshLevel;
 
-class MPI_iCommData
-{
-public:
-  void resize( localIndex numMessages )
-  {
-    mpiSendBufferRequest.resize( numMessages );
-    mpiRecvBufferRequest.resize( numMessages );
-    mpiSendBufferStatus.resize( numMessages );
-    mpiRecvBufferStatus.resize( numMessages );
-    size = static_cast<int>(numMessages);
-  }
-
-  int size;
-  int commID;
-  std::map<string, string_array > fieldNames;
-  array1d<MPI_Request> mpiSendBufferRequest;
-  array1d<MPI_Request> mpiRecvBufferRequest;
-  array1d<MPI_Status>  mpiSendBufferStatus;
-  array1d<MPI_Status>  mpiRecvBufferStatus;
-};
+class MPI_iCommData;
 
 
 class CommunicationTools
@@ -95,6 +76,47 @@ public:
                                  array1d<NeighborCommunicator> & neighbors,
                                  MPI_iCommData & icomm );
 
+};
+
+
+class MPI_iCommData
+{
+public:
+
+  MPI_iCommData():
+    size(0),
+    commID(-1),
+    fieldNames(),
+    mpiSendBufferRequest(),
+    mpiRecvBufferRequest(),
+    mpiSendBufferStatus(),
+    mpiRecvBufferStatus()
+  {}
+
+  ~MPI_iCommData()
+  {
+    if( commID >= 0 )
+    {
+      CommunicationTools::releaseCommID(commID);
+    }
+  }
+
+  void resize( localIndex numMessages )
+  {
+    mpiSendBufferRequest.resize( numMessages );
+    mpiRecvBufferRequest.resize( numMessages );
+    mpiSendBufferStatus.resize( numMessages );
+    mpiRecvBufferStatus.resize( numMessages );
+    size = static_cast<int>(numMessages);
+  }
+
+  int size;
+  int commID;
+  std::map<string, string_array > fieldNames;
+  array1d<MPI_Request> mpiSendBufferRequest;
+  array1d<MPI_Request> mpiRecvBufferRequest;
+  array1d<MPI_Status>  mpiSendBufferStatus;
+  array1d<MPI_Status>  mpiRecvBufferStatus;
 };
 
 } /* namespace geosx */

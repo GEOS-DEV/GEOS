@@ -22,8 +22,6 @@
 #ifdef GEOSX_USE_CALIPER
 #include <caliper/cali.h>
 
-#define GEOSX_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
-
 #define DO_STRINGIFY(arg) #arg
 #define GEOSX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,DO_STRINGIFY(loopName))
 #define GEOSX_MARK_LOOP_END(loop) CALI_CXX_MARK_LOOP_END(loop)

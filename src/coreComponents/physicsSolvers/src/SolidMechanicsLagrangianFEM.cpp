@@ -24,6 +24,7 @@
 #include <vector>
 #include <math.h>
 
+#include <sys/time.h>
 
 #include "common/TimingMacros.hpp"
 
@@ -159,6 +160,8 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
 {
   getLinearSystemRepository()->
     SetBlockID( BlockIDs::displacementBlock, this->getName() );
+
+  m_icomm.commID = CommunicationTools::reserveCommID();
 
 }
 
@@ -515,7 +518,21 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
+//    MPI_Barrier( MPI_COMM_GEOSX );
+//    timeval tim;
+//    gettimeofday(&tim, nullptr);
+//    real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
+
+//    MPI_Barrier( MPI_COMM_GEOSX );
+//    gettimeofday(&tim, nullptr);
+//    real64 t_end = tim.tv_sec + (tim.tv_usec / 1000000.0);
+//    GEOS_LOG_RANK_0("TotalTimeForStep = " << std::setprecision(3) << t_end - t_start << "s");
+
+
+
+
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
@@ -624,7 +641,6 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("Velocity");
 
-  MPI_iCommData icomm;
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   //Step 5. Calculate deformation input to constitutive model and update state to
@@ -695,7 +711,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   CommunicationTools::SynchronizePackSendRecv( fieldNames,
                                                mesh,
                                                neighbors,
-                                               icomm );
+                                               m_icomm );
 
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -761,7 +777,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
 
 
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
+  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_icomm );
 
 
   (void) cycleNumber;
@@ -786,7 +802,6 @@ real64 SolidMechanics_LagrangianFEM::ElementKernelSelector( localIndex const er,
                                                             localIndex NUM_NODES_PER_ELEM,
                                                             localIndex NUM_QUADRATURE_POINTS )
 {
-  GEOSX_MARK_FUNCTION;
 
   real64 rval = 0;
 
@@ -826,6 +841,10 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
                                                             ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
                                                             real64 const dt )
 {
+
+  ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
+  void * data = nullptr;
+  constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
   raja::forall_in_set<elemPolicy>( elementList.data(),
                                    elementList.size(),
                                    GEOSX_LAMBDA ( globalIndex k) mutable
@@ -845,8 +864,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
                        u_local, uhat_local, NUM_NODES_PER_ELEM );
 
 
+
+    real64 * restrict const meanStressq = meanStress[er][esr][0][k];
+
+    R2SymTensor * restrict const devStressq = devStress[er][esr][0][k];
+
     //Compute Quadrature
-    for(auto q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
+    for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
     {
 
       R2Tensor dUhatdX, dUdX;
@@ -896,10 +920,26 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
       //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
 
       constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
+//      update(Dadt, Rot, k, q, data, 0);
+//      ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+//      ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+//      {
+//        real64 volumeStrain = Dadt.Trace();
+//        meanStressq[q] += volumeStrain * 20e9;
+//
+//        R2SymTensor temp = Dadt;
+//        temp.PlusIdentity( -volumeStrain / 3.0 );
+//        temp *= 2.0 * 10e9;
+//        devStressq[q] += temp;
+//
+//
+//        temp.QijAjkQlk( devStressq[q], Rot );
+//        devStressq[q] = temp;
+//      }
 
       R2SymTensor TotalStress;
-      TotalStress = devStress[er][esr][0][k][q];
-      TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
+      TotalStress = devStressq[q];
+      TotalStress.PlusIdentity( meanStressq[q] );
 
       //----------------------
 

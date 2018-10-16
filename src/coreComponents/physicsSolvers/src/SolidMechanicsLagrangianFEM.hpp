@@ -26,6 +26,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "common/TimingMacros.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 
 #include "mesh/MeshForLoopInterface.hpp"
 //#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
@@ -251,6 +252,7 @@ private:
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
   set<localIndex> m_sendOrRecieveNodes;
   set<localIndex> m_nonSendOrRecieveNodes;
+  MPI_iCommData m_icomm;
 
   SolidMechanics_LagrangianFEM();
 
