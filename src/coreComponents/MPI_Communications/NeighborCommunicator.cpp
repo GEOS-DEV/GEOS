@@ -778,6 +778,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
+
   localIndex_array &
   nodeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToReceive );
 
