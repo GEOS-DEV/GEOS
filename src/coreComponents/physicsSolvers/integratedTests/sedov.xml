@@ -13,17 +13,17 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 256"
-                  yCoords="0, 128"
-                  zCoords="0, 128"
-                  nx="256"
-                  ny="128"
-                  nz="128"
+                  xCoords="0, 20"
+                  yCoords="0, 20"
+                  zCoords="0, 20"
+                  nx="20"
+                  ny="20"
+                  nz="20"
                   cellBlockNames="cb1"/>
   </Mesh>
 
 
-  <Events maxTime="5.0e-3">
+  <Events maxTime="1.0e-3">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -33,15 +33,15 @@
     <!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <!-- PeriodicEvent name="outputs"
+    <PeriodicEvent name="outputs"
                    timeFrequency="1e-6"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" /-->
+                   target="/Outputs/siloOutput" />
 
-    <!-- PeriodicEvent name="restarts"
+    <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/-->
+                   target="/Outputs/sidreRestart"/>
   </Events>
 
 
