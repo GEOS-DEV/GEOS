@@ -23,7 +23,7 @@ set(MPI_Communications_sources
 blt_add_library( NAME                  MPI_Communications
                  SOURCES               ${MPI_Communications_sources}
                  HEADERS               ${MPI_Communications_headers}
-                 DEPENDS_ON            fileIO common trilinos caliper
+                 DEPENDS_ON            fileIO common trilinos
                )
                
 target_include_directories( MPI_Communications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
