@@ -21,7 +21,8 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           MPI
                           PYTHON
                           RAJA 
-                          TRILINOS )
+                          TRILINOS
+                          PAMELA)
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
     if( ${DEP}_FOUND OR ENABLE_${DEP} )
