@@ -110,7 +110,7 @@ trilinosTypes::lid EpetraVector::localSize() const
 // Print vector to the terminal in Trilinos format.
 void EpetraVector::print() const
 {
-  std::cout << *m_vector.get() << std::endl;
+  GEOS_LOG(*m_vector.get());
 }
 
 // Accessors

@@ -453,7 +453,7 @@ inline realT R2SymTensorT< T_dim >::Det(void) const
                                t_data[3]));
   else
   {
-    std::cout << "R2TensorT::Det() not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
   }
 
   return det;
@@ -489,7 +489,7 @@ inline realT R2SymTensorT< T_dim >::Inner(void) const
            * (this->t_data[3]) + 2 * (this->t_data[4]) * (this->t_data[4]) + this->t_data[5] * (this->t_data[5]);
   else
   {
-    std::cout << "R2TensorT::Inner() not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
   }
 
   return rval;
@@ -557,7 +557,7 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
   }
   else
   {
-    std::cout<<"R2SymTensorT::Inverse( R2TensorT ) not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
   }
   return det;
 }
@@ -574,7 +574,7 @@ inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::EigenVals not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::EigenVals not implemented for dimension != 3");
     return;
   }
 
@@ -668,7 +668,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::EigenVecs not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::EigenVecs not implemented for dimension != 3");
     return;
   }
 
@@ -852,7 +852,7 @@ inline void R2SymTensorT< T_dim >::EigenVector(const realT lambda, R1TensorT< T_
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::EigenVector not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::EigenVector not implemented for dimension != 3");
     return;
   }
 
@@ -900,7 +900,7 @@ void R2SymTensorT< T_dim >::Sqrt()
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::Sqrt not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::Sqrt not implemented for dimension != 3");
     return;
   }
 
@@ -996,7 +996,7 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
   }
   else
   {
-    std::cout << "R2SymTensorT::AijBjk(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijBjk(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
@@ -1033,7 +1033,7 @@ inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
   }
   else
   {
-    std::cout << "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
@@ -1067,7 +1067,7 @@ inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
   }
   else
   {
-    std::cout << "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
@@ -1120,7 +1120,7 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
   }
   else
   {
-    std::cout << "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3");
   }
 
 }
@@ -1155,7 +1155,7 @@ inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_d
   }
   else
   {
-    std::cout<<"R2SymTensorT::AijAkj_plus_Aik_plus_Aki not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::AijAkj_plus_Aik_plus_Aki not implemented for dimension > 3");
     return;
   }
 }
@@ -1190,7 +1190,7 @@ inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_d
   }
   else
   {
-    std::cout<<"R2SymTensorT::AjiAjk_plus_Aik_plus_Aki not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::AjiAjk_plus_Aik_plus_Aki not implemented for dimension > 3");
     return;
   }
 }
@@ -1226,7 +1226,7 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
   }
   else
   {
-    std::cout<<"R2SymTensorT::AijAkj_m_Aik_m_Aki not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::AijAkj_m_Aik_m_Aki not implemented for dimension > 3");
     return;
   }
 }
@@ -1292,7 +1292,7 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
   }
   else
   {
-    std::cout << "R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3");
   }
 
 }
@@ -1379,7 +1379,7 @@ inline void R2SymTensorT< T_dim >::dyadic_ab_plus_ba(const R1TensorT< T_dim >& a
   }
   else
   {
-    std::cout << "R2SymTensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension )> 3");
   }
 }
 

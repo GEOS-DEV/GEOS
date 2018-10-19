@@ -36,12 +36,6 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
-//#include "../legacy/Common/GPException.h"
-
 /////////////////////////////////////////////////
 // Forward declaration of templated functions
 
@@ -79,10 +73,10 @@ T2* stlMapLookupPointer( std::map<T1,T2>& Map, const T1& key );
 
 
 template< typename T1, typename T2 >
-const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key, const std::string& message="" );
+const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key );
 
 template< typename T1, typename T2 >
-T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& message="" );
+T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key );
 
 
 real64_array logspace(realT start, realT stop, int count=100);
@@ -327,7 +321,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
   }
 }
 
-template< typename T >
+template< typename T , typename atomicPol=atomicPolicy>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               const array1d< T >& localField,
                               array1d< T >& globalField)
@@ -336,19 +330,23 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 
   for( typename array1d<T>::size_type a=0 ; a<N ; ++a )
   {
-    globalField[ globalToLocalRelation[a] ] += localField[a];
+    geosx::raja::atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
   }
 }
 
-template< typename T >
+template< typename T , typename atomicPol=atomicPolicy>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              T const * __restrict__ const localField,
+                              R1Tensor const * __restrict__ const localField,
                               array1d< T >& globalField,
                               localIndex const N )
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    globalField[ globalToLocalRelation[a] ] += localField[a];
+    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
+    real64 const * __restrict__ const lData = localField[a].Data();
+    geosx::raja::atomicAdd<atomicPol>( &gData[0], lData[0] );
+    geosx::raja::atomicAdd<atomicPol>( &gData[1], lData[1] );
+    geosx::raja::atomicAdd<atomicPol>( &gData[2], lData[2] );
   }
 }
 
@@ -371,7 +369,6 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
                                     R1Tensor * __restrict__ const globalField,
                                     localIndex const N )
 {
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
@@ -382,27 +379,6 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
     }
   }
 }
-
-//01-22-2018 - Hack, we will have to fix. 
-#ifdef USE_OPENMP
-template<>
-inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localIndex* __restrict__ const globalToLocalRelation,
-                                         R1Tensor const * __restrict__ const localField,
-                                         R1Tensor * __restrict__ const globalField,
-                                         localIndex const N )
-{
-
-  for( typename array1d<R1Tensor>::size_type a=0 ; a<N ; ++a )
-    {
-      double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
-      double const * const rhs = localField[a].Data();
-      for( int i=0; i<3; ++i )
-        {          
-          geosx::raja::atomicAdd<RAJA::atomic::omp_atomic>(&lhs[i],rhs[i]);
-        }
-    }
-}
-#endif
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
@@ -513,29 +489,18 @@ const T2* stlMapLookupPointer( const std::map<T1,T2>& Map, const T1& key )
 
 
 template< typename T1, typename T2 >
-T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& message )
+T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key )
 {
   typename std::map<T1,T2>::iterator MapIter = Map.find( key );
-  if( MapIter==Map.end()  )
-  {
-    std::cout<<std::endl;
-    std::stringstream st;
-    st << "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n";
-//    throw GPException(st.str().c_str());
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR(st.str());
-#endif
-
-  }
-
+  GEOS_ERROR_IF(MapIter==Map.end(), "Key not found: " << key);
   return MapIter->second;
 }
 
 
 template< typename T1, typename T2 >
-const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key, const std::string& message )
+const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key)
 {
-  return (stlMapLookup( const_cast<std::map<T1,T2>&>(Map), key, message ));
+  return (stlMapLookup( const_cast<std::map<T1,T2>&>(Map), key ));
 }
 
 

@@ -25,10 +25,6 @@
 
 #include "LinearElasticIsotropic.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 namespace geosx
 {
 using namespace dataRepository;
@@ -40,24 +36,26 @@ namespace constitutive
 static inline void UpdateStatePoint( R2SymTensor const & D,
                                      R2Tensor const & Rot,
                                      localIndex const i,
+                                     localIndex const q,
                                      void * dataPtrs,
                                      integer const systemAssembleFlag )
 {
 
-  LinearElasticIsotropic::dataPointers * castedDataPtrs = reinterpret_cast<LinearElasticIsotropic::dataPointers *>(dataPtrs);
+  LinearElasticIsotropic::dataPointers * restrict const
+  castedDataPtrs = reinterpret_cast<LinearElasticIsotropic::dataPointers *>(dataPtrs);
   real64 volumeStrain = D.Trace();
-  castedDataPtrs->m_meanStress[i] += volumeStrain * castedDataPtrs->m_bulkModulus[0];
-
-  R2SymTensor temp = D;
-  temp.PlusIdentity( -volumeStrain / 3.0 );
-  temp *= 2.0 * castedDataPtrs->m_shearModulus[0];
-  castedDataPtrs->m_deviatorStress[i] += temp;
-
-
-  temp.QijAjkQlk( castedDataPtrs->m_deviatorStress[i], Rot );
-  castedDataPtrs->m_deviatorStress[i] = temp;
-
-  temp.PlusIdentity( castedDataPtrs->m_meanStress[i] );
+  (*castedDataPtrs->m_meanStress)[i][q] += volumeStrain * castedDataPtrs->m_bulkModulus0[0];
+//
+//  R2SymTensor temp = D;
+//  temp.PlusIdentity( -volumeStrain / 3.0 );
+//  temp *= 2.0 * castedDataPtrs->m_shearModulus0[0];
+//  (*castedDataPtrs->m_deviatorStress)[i][q] += temp;
+//
+//
+//  temp.QijAjkQlk( (*castedDataPtrs->m_deviatorStress)[i][q], Rot );
+//  (*castedDataPtrs->m_deviatorStress)[i][q] = temp;
+//
+//  temp.PlusIdentity( (*castedDataPtrs->m_meanStress)[i][q] );
 }
 
 
@@ -250,10 +248,12 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
 void LinearElasticIsotropic::SetParamStatePointers( void *& data )
 {
 
-  this->m_dataPointers.m_bulkModulus = &m_bulkModulus0;
-  this->m_dataPointers.m_shearModulus = &m_shearModulus0;
-  this->m_dataPointers.m_meanStress = m_meanStress.data();
-  this->m_dataPointers.m_deviatorStress = m_deviatorStress.data();
+  this->m_dataPointers.m_bulkModulus0 = &m_bulkModulus0;
+  this->m_dataPointers.m_shearModulus0 = &m_shearModulus0;
+  this->m_dataPointers.m_bulkModulus = &m_bulkModulus;
+  this->m_dataPointers.m_shearModulus = &m_shearModulus;
+  this->m_dataPointers.m_meanStress = &m_meanStress;
+  this->m_dataPointers.m_deviatorStress = &m_deviatorStress;
 
   data = reinterpret_cast<void*>(&m_dataPointers);
 }
