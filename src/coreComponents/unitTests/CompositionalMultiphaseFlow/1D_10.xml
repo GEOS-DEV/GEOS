@@ -197,7 +197,7 @@
                scale="1e7"
                setNames="source"/>
 
-    <!-- Injection stream: almost pure water (trace of other components just in case) -->
+    <!-- Injection stream: mostly water -->
 
     <Dirichlet name="sourceTermComposition_N2"
                setNames="source"
@@ -205,7 +205,7 @@
                fieldName="globalCompFraction"
                component="0"
                dataType="real64"
-               scale="0.001"/>
+               scale="0.1"/>
 
     <Dirichlet name="sourceTermComposition_C10"
                setNames="source"
@@ -213,7 +213,7 @@
                fieldName="globalCompFraction"
                component="1"
                dataType="real64"
-               scale="0.001"/>
+               scale="0.1"/>
 
     <Dirichlet name="sourceTermComposition_C20"
                setNames="source"
@@ -221,7 +221,7 @@
                fieldName="globalCompFraction"
                component="2"
                dataType="real64"
-               scale="0.001"/>
+               scale="0.1"/>
 
     <Dirichlet name="sourceTermComposition_H20"
                setNames="source"
@@ -229,7 +229,7 @@
                fieldName="globalCompFraction"
                component="3"
                dataType="real64"
-               scale="0.997"/>
+               scale="0.7"/>
 
     <!-- Production pressure: ~1 bar, close to stock tank conditions -->
 
