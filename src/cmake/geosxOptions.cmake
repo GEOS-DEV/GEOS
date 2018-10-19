@@ -46,6 +46,7 @@ endif()
 
 option( ENABLE_PVT_PACKAGE "Enables building with PVTPackage" ON )
 
+option( ENABLE_PAMELA "Enables building with PAMELA" ON )
 
 #set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
 #set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )

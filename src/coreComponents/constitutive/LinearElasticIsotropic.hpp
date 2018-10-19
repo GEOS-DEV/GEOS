@@ -130,10 +130,12 @@ public:
 
   struct dataPointers
   {
-    real64 * m_bulkModulus = nullptr;
-    real64 * m_shearModulus = nullptr;
-    R2SymTensor * m_deviatorStress = nullptr;
-    real64 * m_meanStress = nullptr;
+    real64 * restrict m_bulkModulus0;
+    real64 * restrict m_shearModulus0;
+    array2d<real64> * restrict m_bulkModulus = nullptr;
+    array2d<real64> * restrict m_shearModulus = nullptr;
+    array2d<R2SymTensor> * restrict m_deviatorStress = nullptr;
+    array2d<real64> * restrict m_meanStress = nullptr;
   } m_dataPointers;
 
 private:
