@@ -45,7 +45,7 @@
 #include "math/TensorT/TensorT.h"
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/SidreTypes.hpp"
+#include "axom/sidre/core/SidreTypes.hpp"
 #endif
 
 #ifdef GEOSX_USE_MPI

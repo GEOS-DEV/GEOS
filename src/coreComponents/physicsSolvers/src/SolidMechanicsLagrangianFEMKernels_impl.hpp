@@ -1226,6 +1226,24 @@ void OnePoint(T const & dydx, U & y,
 }
 
 
+//One array present
+template<typename T, typename U>
+void OnePoint(T const & dydx,
+              U & y,
+              real64 const dx,
+              localIndex * const indices,
+              localIndex const length)
+{
+  FORALL_IN_SET( a, indices, length )
+  {
+    y[a][0] += dx*dydx[a][0];
+    y[a][1] += dx*dydx[a][1];
+    y[a][2] += dx*dydx[a][2];
+  } END_FOR
+
+}
+
+
 //Three arrays present
 template<typename T, typename U>
 void OnePoint( T const dydx_0,
