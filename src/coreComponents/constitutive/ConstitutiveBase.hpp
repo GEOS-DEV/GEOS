@@ -73,6 +73,7 @@ public:
   typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
                                          R2Tensor const & Rot,
                                          localIndex const i,
+                                         localIndex const q,
                                          void * dataPtrs,
                                          integer const systemAssembleFlag );
 
