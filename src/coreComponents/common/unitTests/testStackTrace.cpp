@@ -51,7 +51,6 @@
 //------------------------------------------------------------------------------
 //TEST(testStackTrace,stackTrace)
 //{
-//  std::cout<<"calling handler0"<<std::endl;
 //  geosx::stacktrace::handler0(0);
 //}
 #include <execinfo.h>

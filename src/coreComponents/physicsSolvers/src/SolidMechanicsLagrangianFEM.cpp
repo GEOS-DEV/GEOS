@@ -24,6 +24,7 @@
 #include <vector>
 #include <math.h>
 
+#include <sys/time.h>
 
 #include "common/TimingMacros.hpp"
 
@@ -159,7 +160,6 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
 {
   getLinearSystemRepository()->
     SetBlockID( BlockIDs::displacementBlock, this->getName() );
-
 }
 
 
@@ -440,9 +440,15 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
   rho = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >("density",
                                                                                constitutiveManager);
 
+  m_elemsAttachedToSendOrReceiveNodes.resize( elementRegionManager->numRegions() );
+  m_elemsNotAttachedToSendOrReceiveNodes.resize( elementRegionManager->numRegions() );
+
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+    m_elemsAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
+    m_elemsNotAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
+
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       CellBlockSubRegion const * const cellBlock = elemRegion->GetSubRegion(esr);
@@ -460,19 +466,33 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
         {
           mass[nodeList[q]] += rho[er][esr][0][k][q] * detJq[q];
         }
+
+        bool isAttachedToGhostNode = false;
+        for( localIndex a=0 ; a<cellBlock->numNodesPerElement() ; ++a )
+        {
+          if( nodes->GhostRank()[nodeList[a]] >= -1 )
+          {
+            isAttachedToGhostNode = true;
+            m_sendOrRecieveNodes.insert( nodeList[a] );
+          }
+          else
+          {
+            m_nonSendOrRecieveNodes.insert( nodeList[a] );
+          }
+        }
+
+        if( isAttachedToGhostNode )
+        {
+          m_elemsAttachedToSendOrReceiveNodes[er][esr].insert(k);
+        }
+        else
+        {
+          m_elemsNotAttachedToSendOrReceiveNodes[er][esr].insert(k);
+        }
+
       }
     }
   }
-
-  real64 totalMass = 0;
-  for( localIndex a=0 ; a<nodes->size() ; ++a )
-  {
-    // std::cout<<"mass["<<a<<"] = "<<mass[a]<<std::endl;
-    totalMass += mass[a];
-  }
-  std::cout<<"totalMass = "<<totalMass<<std::endl;
-
-
 
   FaceManager * const faceManager = mesh->getFaceManager();
   integer_array & junk = faceManager->getReference<integer_array>("junk");
@@ -525,8 +545,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                                    const int cycleNumber,
                                                    DomainPartition * const domain )
 {
-  GEOSX_MARK_BEGIN(initialization);
+  GEOSX_MARK_FUNCTION;
 
+  GEOSX_MARK_BEGIN(initialization);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
@@ -541,85 +562,42 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   real64_array const & mass = nodes->getReference<real64_array>(keys::Mass);
   r1_array &           vel  = nodes->getReference<r1_array>(keys::Velocity);
 
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
-
   r1_array &    u = nodes->getReference<r1_array>(keys::TotalDisplacement);
   r1_array & uhat = nodes->getReference<r1_array>(keys::IncrementalDisplacement);
   r1_array & acc  = nodes->getReference<r1_array>(keys::Acceleration);
 
-#elif defined(OBJECT_OF_ARRAYS_LAYOUT)
-
-  static geosxData acc_x = new double[numNodes];
-  static geosxData acc_y = new double[numNodes];
-  static geosxData acc_z = new double[numNodes];
-
-  static geosxData uhat_x = new double[numNodes]; 
-  static geosxData uhat_y = new double[numNodes]; 
-  static geosxData uhat_z = new double[numNodes]; 
-
-  static geosxData u_x = new double[numNodes]; 
-  static geosxData u_y = new double[numNodes]; 
-  static geosxData u_z = new double[numNodes];
-
-  static bool setIc = true;
-  if(setIc){    
-    std::memset(acc_x, 0, numNodes*sizeof(double));
-    std::memset(acc_y, 0, numNodes*sizeof(double));
-    std::memset(acc_z, 0, numNodes*sizeof(double));
-
-    std::memset(uhat_x, 0, numNodes*sizeof(double));
-    std::memset(uhat_y, 0, numNodes*sizeof(double));
-    std::memset(uhat_z, 0, numNodes*sizeof(double));
-
-    std::memset(u_x, 0, numNodes*sizeof(double));
-    std::memset(u_y, 0, numNodes*sizeof(double));
-    std::memset(u_z, 0, numNodes*sizeof(double));
-    setIc = false;
-  }
-
-#else
-  GEOS_ERROR("Invalid data layout");
-#endif
+  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back("Velocity");
 
   GEOSX_MARK_END(initialization);  
 
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
+
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames,
+                                                    mesh,
+                                                    neighbors,
+                                                    m_icomm );
+
   bcManager->ApplyBoundaryConditionToField( time_n,
                                             domain,
                                             "nodeManager",
                                             keys::Acceleration );
-#endif    
+
+  GEOSX_MARK_BEGIN(firstVelocityUpdate);
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
-#else
-  SolidMechanicsLagrangianFEMKernels::OnePoint( acc_x, acc_y, acc_z,
-                                                vel, dt/2, numNodes );
-#endif
-
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  //  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
+  GEOSX_MARK_END(firstVelocityUpdate);
 
   bcManager->ApplyBoundaryConditionToField( time_n,
                                             domain,
                                             "nodeManager",
                                             keys::Velocity );
 
-#endif  
-
   //                     dydx, dy,   y, dx, length
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
-#else
-  SolidMechanicsLagrangianFEMKernels::OnePoint(vel,uhat_x,uhat_y,uhat_z,
-                                               u_x, u_y, u_z, dt, numNodes );
-#endif  
 
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  //  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
-  //                                     nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
 
   bcManager->ApplyBoundaryConditionToField( time_n+dt,
                                             domain,
@@ -627,29 +605,19 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                                             keys::TotalDisplacement,
                                             [&]( BoundaryConditionBase const * const bc,
                                                 set<localIndex> const & targetSet )->void
-                                                {
+  {
     integer const component = bc->GetComponent();
     for( auto a : targetSet )
     {
       uhat[a][component] = u[a][component] - u[a][component];
       vel[a][component]  = uhat[a][component] / dt;
     }
-                                                });
+  });
 
-
-#endif  
-
-  //Set memory to zero
 
   FORALL_NODES( a, 0, numNodes )
   {
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
     acc[a] = 0;
-#else
-    acc_x[a] = 0;
-    acc_y[a] = 0;
-    acc_z[a] = 0; 
-#endif    
   } END_FOR
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
@@ -662,6 +630,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
 
 
   //Step 5. Calculate deformation input to constitutive model and update state to
@@ -681,306 +650,303 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       array2d<real64> const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
-      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
+      array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
 
-      //Storage for holding intermediate results
-#if defined(EXTERNAL_KERNELS) && defined(THREE_KERNEL_UPDATE) 
-      static geosxData Dadt = new double[localMatSz*inumQuadraturePoints*elementList.size()];
-      static geosxData Rot  = new double[localMatSz*inumQuadraturePoints*elementList.size()];
-      static geosxData detF = new double[inumQuadraturePoints*elementList.size()];
-      static geosxData inverseF = new double[localMatSz*inumQuadraturePoints*elementList.size()];
-#endif
-
-      //
-      //Internal GEOSX Kernel
-      //
-
-      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-
-#if !defined(EXTERNAL_KERNELS)         
-
-      //          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
-      for( localIndex k=0 ; k<cellBlock->size() ; ++k )
-      {
-        r1_array uhat_local( numNodesPerElement );
-        r1_array u_local( numNodesPerElement );
-        r1_array f_local( numNodesPerElement );
-
-        f_local = R1Tensor(0.0);
-        localIndex const * const nodelist = elemsToNodes[k];
-
-        CopyGlobalToLocal( nodelist,
-                           u, uhat,
-                           u_local.data(), uhat_local.data(), numNodesPerElement );
+      GEOSX_MARK_BEGIN(externalElemsLoop);
 
 
-        //Compute Quadrature
-        for(auto q = 0 ; q<numQuadraturePoints ; ++q)
-        {
+      ElementKernelSelector( er,
+                             esr,
+                             this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
+                             elemsToNodes,
+                             dNdX,
+                             detJ,
+                             u,
+                             uhat,
+                             acc,
+                             constitutiveRelations,
+                             meanStress,
+                             devStress,
+                             dt,
+                             numNodesPerElement,
+                             numQuadraturePoints );
 
-          R2Tensor dUhatdX, dUdX;
-          CalculateGradient( dUhatdX,uhat_local, dNdX[k][q] );
-          CalculateGradient( dUdX,u_local, dNdX[k][q] );
-
-          R2Tensor F,L, Finv;
-
-          {
-            // calculate dv/dX
-            R2Tensor dvdX = dUhatdX;
-            dvdX *= 1.0 / dt;
-
-            // calculate du/dX
-            F = dUhatdX;
-            F *= 0.5;
-            F += dUdX;
-            F.PlusIdentity(1.0);
-
-            // calculate dX/du
-            Finv.Inverse(F);
-
-            // chain rule: calculate dv/du = dv/dX * dX/du
-            L.AijBjk(dvdX, Finv);
-          }
-
-          // calculate gradient (end of step)
-          F = dUhatdX;
-          F += dUdX;
-          F.PlusIdentity(1.0);
-          real64 detF = F.Det();
-
-
-          // calculate element volume
-          //        detJ_np1(k,q) = detJ(k,q) * detF;
-          //        volume[k] += detJ_np1(k,q);
-          //        initVolume += detJ(k,q);
-
-
-          Finv.Inverse(F);
-
-
-          //-------------------------[Incremental Kinematics]----------------------------------
-          R2Tensor Rot;
-          R2SymTensor Dadt;
-          HughesWinget(Rot, Dadt, L, dt);
-          //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
-
-          constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
-
-          R2SymTensor TotalStress;
-          TotalStress = devStress[er][esr][0][k][q];
-          TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
-
-          //----------------------
-
-          Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local.size(), f_local.data() );
-
-        }//quadrature loop
-
-
-        AddLocalToGlobal(nodelist, f_local.data(), acc, numNodesPerElement);
-
-      } //Element loop
-#else// defined(EXTERNAL_KERNELS) 
-
-      //
-      // Setup for external kernels
-      //
-
-      //Setup pointers
-      const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
-      geosxData imeanStress   = static_cast<real64*>(&(meanStress[er][esr][0][0][0])); //Symmetric tensors
-      geosxData idevStress    = devStress[er][esr][0][0][0].Data();
-      localIndex const *  iconstitutiveMap = reinterpret_cast<localIndex const*>(constitutiveMap.second.data());
-      const real64 * idetJ  = detJ.data();
-
-      //Setup pointer for the external constitutive update
-      void (*externConstitutiveUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
-          localIndex m, localIndex q, globalIndex k, geosxData devStressData2,
-          geosxData meanStress2, real64 shearModulus2, real64 bulkModulus2, localIndex NoElem);
-      externConstitutiveUpdate = UpdateStatePoint;
-
-#if defined(COMPUTE_SHAPE_FUN)
-      static bool computeP = true;
-      static P_Wrapper P;
-      if(computeP)
-      {
-        generateP(P, 8, 8);
-        computeP = false;
-      }
-#endif
-
-
-#if defined(ARRAY_OF_OBJECTS_LAYOUT)
-
-      //Setup pointers
-      geosxData  ivel = static_cast<real64*>(vel[0].Data());
-      geosxData iuhat = static_cast<real64*>(uhat[0].Data());
-      geosxData iu = static_cast<real64*>(u[0].Data());
-      geosxData idNdX = const_cast<real64*>(dNdX[0][0][0].Data());
-
-      //Calculation is done in a monolithic kernel
-#if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
-
-
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<elemPolicy>(elementList.size(),elementList.data(), dt,
-                                                                           elemsToNodes.data(), iu, iuhat, idNdX,
-                                                                           iconstitutiveMap, idevStress, imeanStress,
-                                                                           shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
-#elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
-
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<elemPolicy>(elementList.size(),elementList, dt,
-                                                                                 elemsToNodes.data(), iu, iuhat, Xptr, P,
-                                                                                 iconstitutiveMap, idevStress, imeanStress,
-                                                                                 shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
-      //Calculation is split across three kernels
-#elif defined(THREE_KERNEL_UPDATE)
-
-      //Kinematic step
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
-                                                                                     iconstitutiveMap, idevStress, imeanStress,
-                                                                                     shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
-      //Constitutive step
-      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
-                                                                               imeanStress, shearModulus, bulkModulus);
-
-      //Integration step
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
-                                                                                       iconstitutiveMap, idevStress, imeanStress,
-                                                                                       shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
-#else
-
-      //Throw error if invalid kernel is asked for
-      GEOS_ERROR("Invalid External Kernel");
-
-#endif // THREE_KERNEL UPDATE
-
-
-#elif defined(OBJECT_OF_ARRAYS_LAYOUT)
-
-      //Split the shape function derivatives into three arrays
-      static geosxData dNdX_x = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-      static geosxData dNdX_y = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-      static geosxData dNdX_z = new double[inumNodesPerElement*inumQuadraturePoints*elementList.size()];
-
-      static bool copy = true;
-      if(copy){
-
-        //Generate shape function derivatives
-        //const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
-        make_dNdX(dNdX_x, dNdX_y, dNdX_z,
-                  Xptr, elemsToNodes.data(),elementList.size(), inumNodesPerElement, inumQuadraturePoints);
-
-        //Verify correctness
-        for(localIndex k = 0; k < elementList.size(); ++k){
-          for(localIndex a = 0; a < inumNodesPerElement; ++a){
-            for(localIndex q = 0; q < inumQuadraturePoints; ++q){
-              localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
-              assert( std::abs( dNdX_x[id] - dNdX[k][a][q][0]) < 1e-12);
-              assert( std::abs( dNdX_y[id] - dNdX[k][a][q][1]) < 1e-12);
-              assert( std::abs( dNdX_z[id] - dNdX[k][a][q][2]) < 1e-12);
-            }
-          }
-        }
-        std::cout<<"Successful copy !"<<std::endl;
-        copy = false;
-      }
-
-#if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
-
-      //Carry out computation in a monolithic kernel
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
-                                                                           u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
-                                                                           iconstitutiveMap, idevStress, imeanStress, shearModulus,
-                                                                           bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
-#elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
-
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
-                                                                                 u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, Xptr, P,
-                                                                                 iconstitutiveMap, idevStress, imeanStress, shearModulus,
-                                                                                 bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
-
-#elif defined(THREE_KERNEL_UPDATE)
-      //Kinematic step
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
-                                                                                     uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
-                                                                                     iconstitutiveMap, idevStress, imeanStress,
-                                                                                     shearModulus, bulkModulus, detJ.data(),
-                                                                                     acc_x, acc_y, acc_z,
-                                                                                     Dadt, Rot, detF, inverseF);
-      //Constitutive step
-      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
-                                                                               imeanStress, shearModulus, bulkModulus);
-
-      //Integration step
-      SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
-                                                                                       uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
-                                                                                       iconstitutiveMap, idevStress, imeanStress,
-                                                                                       shearModulus, bulkModulus, detJ.data(),
-                                                                                       acc_x, acc_y, acc_z,
-                                                                                       Dadt, Rot, detF, inverseF);
-#endif //defined THREE_KERNEL_UPDATE
-
-
-#else
-
-      GEOS_ERROR("Invalid External Kernel");
-
-#endif //if defined(OBJECT_OF_ARRAYS_LAYOUT)
-
-
-#endif// If !defined(EXTERNAL_KERNELS)
-
-      GEOSX_MARK_LOOP_END(elemLoop);
+      GEOSX_MARK_END(externalElemsLoop);
 
     } //Element Region
 
   } //Element Manager
 
 
-//Compute Force : Point-wise computations
-FORALL_NODES( a, 0, numNodes )
-{
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)    
-  acc[a] /=mass[a];
-#else    
-  acc_x[a] /=mass[a];
-  acc_y[a] /=mass[a];
-  acc_z[a] /=mass[a];
-#endif
-} END_FOR
+  //Compute Force : Point-wise computations
+  FORALL_NODES_IN_SET( a, m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size() )
+  {
+    acc[a] /=mass[a];
+  } END_FOR
+
+  // apply this over a set
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc,
+                                                vel,
+                                                (dt/2),
+                                                m_sendOrRecieveNodes.data(),
+                                                m_sendOrRecieveNodes.size() );
+
+  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
 
 
-//Integration::OnePoint( acc, vel, dt/2, numNodes );
-
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)      
-SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
-#else  
-SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
-#endif  
-
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
-//bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
-bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
-
-#endif
-
-std::map<string, string_array > fieldNames;
-fieldNames["node"].push_back("Velocity");
-
-CommunicationTools::SynchronizeFields( fieldNames,
-                                       mesh,
-                                       domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizePackSendRecv( fieldNames,
+                                               mesh,
+                                               neighbors,
+                                               m_icomm );
 
 
-(void) cycleNumber;
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion * const elementRegion = elemManager->GetRegion(er);
 
-return dt;
+    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
+      //always needed
+      array3d< R1Tensor > const & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
+
+      array2d<real64> const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
+
+      array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
+
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
+
+      GEOSX_MARK_BEGIN(internalElemsLoop);
+
+
+      ElementKernelSelector( er,
+                             esr,
+                             this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
+                             elemsToNodes,
+                             dNdX,
+                             detJ,
+                             u,
+                             uhat,
+                             acc,
+                             constitutiveRelations,
+                             meanStress,
+                             devStress,
+                             dt,
+                             numNodesPerElement,
+                             numQuadraturePoints );
+
+      GEOSX_MARK_END(internalElemsLoop);
+
+    } //Element Region
+
+  } //Element Manager
+
+
+  //Compute Force : Point-wise computations
+  FORALL_NODES_IN_SET( a, m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size() )
+  {
+    acc[a] /=mass[a];
+  } END_FOR
+
+  // apply this over a set
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc,
+                                                vel,
+                                                (dt/2),
+                                                m_nonSendOrRecieveNodes.data(),
+                                                m_nonSendOrRecieveNodes.size());
+
+  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+
+
+  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_icomm );
+
+
+  (void) cycleNumber;
+
+  return dt;
 }
 
+
+real64 SolidMechanics_LagrangianFEM::ElementKernelSelector( localIndex const er,
+                                                            localIndex const esr,
+                                                            set<localIndex> const & elementList,
+                                                            array2d<localIndex> const & elemsToNodes,
+                                                            array3d< R1Tensor > const & dNdX,
+                                                            array2d<real64> const & detJ,
+                                                            r1_array const & u,
+                                                            r1_array const & uhat,
+                                                            r1_array & acc,
+                                                            ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                                            real64 const dt,
+                                                            localIndex NUM_NODES_PER_ELEM,
+                                                            localIndex NUM_QUADRATURE_POINTS )
+{
+
+  real64 rval = 0;
+
+  if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
+  {
+    rval =
+    ExplicitElementKernel<8,8>( er,
+                                esr,
+                                elementList,
+                                elemsToNodes,
+                                dNdX,
+                                detJ,
+                                u,
+                                uhat,
+                                acc,
+                                constitutiveRelations,
+                                meanStress,
+                                devStress,
+                                dt );
+  }
+
+  return rval;
+}
+
+template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
+                                                            localIndex const esr,
+                                                            set<localIndex> const & elementList,
+                                                            array2d<localIndex> const & elemsToNodes,
+                                                            array3d< R1Tensor > const & dNdX,
+                                                            array2d<real64> const & detJ,
+                                                            r1_array const & u,
+                                                            r1_array const & uhat,
+                                                            r1_array & acc,
+                                                            ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                                            real64 const dt )
+{
+
+  ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
+  void * data = nullptr;
+  constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
+  raja::forall_in_set<elemPolicy>( elementList.data(),
+                                   elementList.size(),
+                                   GEOSX_LAMBDA ( globalIndex k) mutable
+  {
+    R1Tensor uhat_local[ NUM_NODES_PER_ELEM ];
+    R1Tensor u_local[ NUM_NODES_PER_ELEM ];
+    R1Tensor f_local[ NUM_NODES_PER_ELEM ];
+
+    for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+    {
+      f_local[a] = 0;
+    }
+    localIndex const * const nodelist = elemsToNodes[k];
+
+    CopyGlobalToLocal( nodelist,
+                       u, uhat,
+                       u_local, uhat_local, NUM_NODES_PER_ELEM );
+
+
+
+    real64 * restrict const meanStressq = meanStress[er][esr][0][k];
+
+    R2SymTensor * restrict const devStressq = devStress[er][esr][0][k];
+
+    //Compute Quadrature
+    for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
+    {
+
+      R2Tensor dUhatdX, dUdX;
+      CalculateGradient( dUhatdX, uhat_local, dNdX[k][q], NUM_NODES_PER_ELEM );
+      CalculateGradient( dUdX, u_local, dNdX[k][q], NUM_NODES_PER_ELEM );
+
+      R2Tensor F,L, Finv;
+
+      {
+        // calculate dv/dX
+        R2Tensor dvdX = dUhatdX;
+        dvdX *= 1.0 / dt;
+
+        // calculate du/dX
+        F = dUhatdX;
+        F *= 0.5;
+        F += dUdX;
+        F.PlusIdentity(1.0);
+
+        // calculate dX/du
+        Finv.Inverse(F);
+
+        // chain rule: calculate dv/du = dv/dX * dX/du
+        L.AijBjk(dvdX, Finv);
+      }
+
+      // calculate gradient (end of step)
+      F = dUhatdX;
+      F += dUdX;
+      F.PlusIdentity(1.0);
+      real64 detF = F.Det();
+
+
+      // calculate element volume
+      //        detJ_np1(k,q) = detJ(k,q) * detF;
+      //        volume[k] += detJ_np1(k,q);
+      //        initVolume += detJ(k,q);
+
+
+      Finv.Inverse(F);
+
+
+      //-------------------------[Incremental Kinematics]----------------------------------
+      R2Tensor Rot;
+      R2SymTensor Dadt;
+      HughesWinget(Rot, Dadt, L, dt);
+      //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
+
+      constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
+//      update(Dadt, Rot, k, q, data, 0);
+//      ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+//      ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+//      {
+//        real64 volumeStrain = Dadt.Trace();
+//        meanStressq[q] += volumeStrain * 20e9;
+//
+//        R2SymTensor temp = Dadt;
+//        temp.PlusIdentity( -volumeStrain / 3.0 );
+//        temp *= 2.0 * 10e9;
+//        devStressq[q] += temp;
+//
+//
+//        temp.QijAjkQlk( devStressq[q], Rot );
+//        devStressq[q] = temp;
+//      }
+
+      R2SymTensor TotalStress;
+      TotalStress = devStressq[q];
+      TotalStress.PlusIdentity( meanStressq[q] );
+
+      //----------------------
+
+      Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, NUM_NODES_PER_ELEM, f_local );
+
+    }//quadrature loop
+
+
+    AddLocalToGlobal( nodelist,
+                      f_local,
+                      acc.data(),
+                      NUM_NODES_PER_ELEM );
+
+  } END_FOR //Element loop
+
+  return dt;
+}
 
 void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
                                                                  DomainPartition & domain,

@@ -38,14 +38,14 @@
 #include <vector>
 
 #include "common/GeosxConfig.hpp"
-#include "common/Logger.hpp"
 #include "Macros.hpp"
+#include "Logger.hpp"
 #include "ManagedArray.hpp"
 #include "SortedArray.hpp"
 #include "math/TensorT/TensorT.h"
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/SidreTypes.hpp"
+#include "axom/sidre/core/SidreTypes.hpp"
 #endif
 
 #ifdef GEOSX_USE_MPI
