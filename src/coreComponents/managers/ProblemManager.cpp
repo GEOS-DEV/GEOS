@@ -275,18 +275,18 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->RegisterDocumentationNodes();
 
-  ViewWrapper<std::string>::rtype inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
-  ViewWrapper<std::string>::rtype restartFileName = commandLine->getData<std::string>(viewKeys.restartFileName);
-  integer& beginFromRestart = *(commandLine->getData<integer>(viewKeys.beginFromRestart));
-  integer& xPartitionsOverride = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
-  integer& yPartitionsOverride = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
-  integer& zPartitionsOverride = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
-  integer& overridePartitionNumbers = *(commandLine->getData<integer>(viewKeys.overridePartitionNumbers));
-  ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
-  integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
+  std::string& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
+  std::string& restartFileName = commandLine->getReference<std::string>(viewKeys.restartFileName);
+  integer& beginFromRestart = commandLine->getReference<integer>(viewKeys.beginFromRestart);
+  integer& xPartitionsOverride = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
+  integer& yPartitionsOverride = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
+  integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
+  integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
+  std::string&  schemaName = commandLine->getReference<std::string>(keys::schema);
+  integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
   schemaLevel = 0;
-  ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
-  ViewWrapper<std::string>::rtype outputDirectory = commandLine->getData<std::string>(viewKeys.outputDirectory);
+  std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
+  std::string& outputDirectory = commandLine->getReference<std::string>(viewKeys.outputDirectory);
   outputDirectory = ".";
   problemName = "";
 
@@ -575,7 +575,7 @@ void ProblemManager::ParseInputFile()
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
+  std::string const& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
 
 
 #ifdef GEOSX_USE_PYTHON
@@ -657,10 +657,10 @@ void ProblemManager::ParseInputFile()
   }
 
   // Documentation output
-  ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
+  std::string const & schemaName = commandLine->getReference<std::string>(keys::schema);
   if (schemaName.empty() == 0)
   {
-    integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
+    integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
     ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
   }
 }
@@ -703,9 +703,9 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   domain->RegisterDocumentationNodes();
 
   ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  integer const & xparCL = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
-  integer const & yparCL = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
-  integer const & zparCL = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
+  integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
+  integer const & yparCL = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
+  integer const & zparCL = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
   bool repartition = false;

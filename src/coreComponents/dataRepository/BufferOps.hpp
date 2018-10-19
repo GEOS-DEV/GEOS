@@ -146,19 +146,19 @@ namespace bufferOps
             int NDIM,
             typename INDEX_TYPE=std::int_fast32_t >
   typename std::enable_if<
-  is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+  is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value,
   localIndex >::type
   Pack( char*& buffer,
-        multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var );
+        LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var );
 
   template< typename T,
             int NDIM,
             typename INDEX_TYPE=std::int_fast32_t >
   typename std::enable_if<
-  is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+  is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> >::value,
   localIndex >::type
   Unpack( char const *& buffer,
-          multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var );
+          LvArray::Array<T,NDIM,INDEX_TYPE> & var );
 
 
 
@@ -202,10 +202,10 @@ namespace bufferOps
             typename T_indices,
             typename INDEX_TYPE=std::int_fast32_t >
   typename std::enable_if<
-  is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+  is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value,
   localIndex >::type
   Pack( char*& buffer,
-        multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var,
+        LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var,
         const T_indices& indices );
 
   template< typename T,
@@ -213,8 +213,8 @@ namespace bufferOps
             typename T_indices,
             typename INDEX_TYPE=std::int_fast32_t >
   localIndex Unpack( char const *& buffer,
-                            multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var,
-                            const T_indices & indices );
+                     LvArray::ArrayView<T,NDIM,INDEX_TYPE> & var,
+                     const T_indices & indices );
 
 
   template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
@@ -235,64 +235,6 @@ namespace bufferOps
 
   ///@}
 
-
-
-
-
-
-
-//  template< bool DO_PACKING >
-//  localIndex Pack( char*& buffer,
-//            localIndex const * const var,
-//            localIndex const length,
-//            globalIndex_array const & localToGlobalMap );
-
-//  localIndex Unpack( char const *& buffer,
-//              localIndex_array & var,
-//              map<globalIndex,localIndex> const & globalToLocalMap );
-
-
-//  template< bool DO_PACKING >
-//  localIndex Pack( char*& buffer,
-//            multidimensionalArray::ManagedArray<localIndex,2,localIndex> const & var,
-//            localIndex_array const & indices,
-//            globalIndex_array const & localToGlobalMap );
-//
-//  localIndex Unpack( char const *& buffer,
-//              multidimensionalArray::ManagedArray<localIndex,2,localIndex> & var,
-//              localIndex_array const & indices,
-//              globalIndex_array const & globalToLocalMap );
-
-//
-//  template< bool DO_PACKING >
-//  int Pack( char*& buffer,
-//            array1d< localIndex_array > const & var,
-//            localIndex_array const & indices,
-//            globalIndex_array const & localToGlobalMap );
-//
-//  int Unpack( char const *& buffer,
-//              array1d< localIndex_array > & var,
-//              localIndex_array const & indices,
-//              map<globalIndex,localIndex> const & globalToLocalMap,
-//              map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap );
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   template< typename... VARPACK >
   localIndex PackSize( VARPACK const &&...  pack )
   {
@@ -306,12 +248,6 @@ namespace bufferOps
     char* junk = nullptr;
     return Pack<false>( junk, pack... );
   }
-
-
-
-
-
-
 
 
   template< bool DO_PACKING, typename T >

@@ -180,7 +180,7 @@ public:
 
   string const & getNumericalMethod() const
   {
-    return this->getData<string>(dataRepository::keys::numericalMethod);
+    return this->getReference<string>(dataRepository::keys::numericalMethod);
   }
 
 

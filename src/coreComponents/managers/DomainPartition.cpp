@@ -164,11 +164,10 @@ void DomainPartition::GenerateSets(  )
         set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          localIndex const * const nodelist = elemsToNodes[k];
           integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {
-            if( nodeInSet[setName][nodelist[a]] == 1 )
+            if( nodeInSet[setName][elemsToNodes[k][a]] == 1 )
             {
               ++count;
             }

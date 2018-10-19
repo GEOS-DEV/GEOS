@@ -340,15 +340,15 @@ public:
 
   template<typename OUTTYPE, typename TYPE>
   void WriteMaterialDataField( string const & meshName,
-                                         string const & fieldName,
-                                         ElementRegionManager::MaterialViewAccessor< array2d<TYPE> const > const & field,
-                                         ElementRegionManager const * const elementManager,
-                                         constitutive::ConstitutiveManager const * const constitutiveManager,
-                                         int const centering,
-                                         int const cycleNumber,
-                                         real64 const problemTime,
-                                         string const & multiRoot,
-                                         string_array const & materialNames );
+                               string const & fieldName,
+                               ElementRegionManager::MaterialViewAccessor< arrayView2d<TYPE> > const & field,
+                               ElementRegionManager const * const elementManager,
+                               constitutive::ConstitutiveManager const * const constitutiveManager,
+                               int const centering,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot,
+                               string_array const & materialNames );
 
   /**
    * find the silo mesh type that we are attempting to reference
@@ -777,7 +777,7 @@ void SiloFile::WriteDataField( string const & meshName,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteMaterialDataField( string const & meshName,
                                        string const & fieldName,
-                                       ElementRegionManager::MaterialViewAccessor< array2d<TYPE> const > const & field,
+                                       ElementRegionManager::MaterialViewAccessor< arrayView2d<TYPE> > const & field,
                                        ElementRegionManager const * const elementManager,
                                        constitutive::ConstitutiveManager const * const constitutiveManager,
                                        int const centering,
@@ -842,7 +842,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
         for( localIndex matIndex=0 ; matIndex<numMatInRegion ; ++matIndex )
         {
-//          if( field[er][esr][matIndices[matIndex]].getPtr() != nullptr )
+          if( field[er][esr][matIndices[matIndex]].size() > 0 )
           {
             activeMaterialNames.push_back( constitutiveManager->GetConstitituveRelation( matIndices[matIndex] )->getName() );
             mixlen += subRegion->size();
@@ -908,7 +908,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
               varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
               for( localIndex a=0 ; a<numMatInRegion ; ++a )
               {
-                if( field[er][esr][matIndices[a]].getPtr() != nullptr )
+                if( field[er][esr][matIndices[a]].size() > 0 )
                 {
                   mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[a]][k][0], i);
                 }

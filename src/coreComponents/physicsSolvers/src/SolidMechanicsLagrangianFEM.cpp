@@ -422,7 +422,7 @@ void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::
 
 void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
 {
-  string tiOption = this->getReference<string>(solidMechanicsViewKeys.timeIntegrationOption);
+  string const& tiOption = this->getReference<string>(solidMechanicsViewKeys.timeIntegrationOption);
 
   if( tiOption == "ExplicitDynamic" )
   {
@@ -438,7 +438,7 @@ void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
   }
   else
   {
-    GEOS_ERROR("invalid time integration option");
+    GEOS_ERROR("invalid time integration option: " << tiOption);
   }
 }
 
@@ -456,11 +456,11 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
 //  ConstitutiveManager::constitutiveMaps const & constitutiveMaps =
 // constitutiveManager->GetMaps(0);
 
-  ViewWrapper<real64_array>::rtype mass = nodes->getData<real64_array>(keys::Mass);
-//  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
+  real64_array& mass = nodes->getReference<real64_array>(keys::Mass);
+//  ViewWrapper<real64_array>::rtype K = elems.getReference<real64_array>(keys::K);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
-  rho = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >("density",
+  rho = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64>, array2d<real64> >("density",
                                                                                constitutiveManager);
 
   m_elemsAttachedToSendOrReceiveNodes.resize( elementRegionManager->numRegions() );
@@ -478,29 +478,27 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
 
       auto const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
       auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(cellBlock->viewKeys().constitutiveMap);
-      FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+      FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
 //      array2d<real64> & rho = cellBlock->getReference< array2d<real64> >( string("density"));
 
       for( localIndex k=0 ; k < cellBlock->size() ; ++k )
       {
-        localIndex const * const nodeList = elemsToNodes[k];
-        real64 const * detJq = detJ[k];
         for( localIndex q=0 ; q<constitutiveMap.second.size(1) ; ++q )
         {
-          mass[nodeList[q]] += rho[er][esr][0][k][q] * detJq[q];
+          mass[elemsToNodes[k][q]] += rho[er][esr][0][k][q] * detJ[k][q];
         }
 
         bool isAttachedToGhostNode = false;
         for( localIndex a=0 ; a<cellBlock->numNodesPerElement() ; ++a )
         {
-          if( nodes->GhostRank()[nodeList[a]] >= -1 )
+          if( nodes->GhostRank()[elemsToNodes[k][a]] >= -1 )
           {
             isAttachedToGhostNode = true;
-            m_sendOrRecieveNodes.insert( nodeList[a] );
+            m_sendOrRecieveNodes.insert( elemsToNodes[k][a] );
           }
           else
           {
-            m_nonSendOrRecieveNodes.insert( nodeList[a] );
+            m_nonSendOrRecieveNodes.insert( elemsToNodes[k][a] );
           }
         }
 
@@ -639,11 +637,11 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   } END_FOR
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
-  meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64> >("MeanStress",
+  meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64>, array2d<real64> >("MeanStress",
                                                                              constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> >
-  devStress = elemManager->ConstructMaterialViewAccessor< array2d<R2SymTensor> >("DeviatorStress",
+  devStress = elemManager->ConstructMaterialViewAccessor< array2d<R2SymTensor>, array2d<R2SymTensor> >("DeviatorStress",
                                                                                  constitutiveManager);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
@@ -659,7 +657,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
 
-    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
     FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
@@ -733,7 +731,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
 
-    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
     FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
@@ -835,9 +833,9 @@ real64 SolidMechanics_LagrangianFEM::ElementKernelSelector( localIndex const er,
                                                             r1_array const & u,
                                                             r1_array const & uhat,
                                                             r1_array & acc,
-                                                            ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-                                                            ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
-                                                            ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                                            ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<real64> >& meanStress,
+                                                            ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> >& devStress,
                                                             real64 const dt,
                                                             localIndex NUM_NODES_PER_ELEM,
                                                             localIndex NUM_QUADRATURE_POINTS )
@@ -893,14 +891,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
     R1Tensor u_local[ NUM_NODES_PER_ELEM ];
     R1Tensor f_local[ NUM_NODES_PER_ELEM ];
 
-    localIndex const * restrict const nodelist = elemsToNodes[k];
-
-    CopyGlobalToLocal<R1Tensor,NUM_NODES_PER_ELEM>( nodelist,
+    CopyGlobalToLocal<R1Tensor,NUM_NODES_PER_ELEM>( elemsToNodes[k],
                                                     u, uhat,
                                                     u_local, uhat_local );
-
-    real64 const * restrict const meanStressq = meanStress[er][esr][0][k];
-    R2SymTensor const * restrict const devStressq = devStress[er][esr][0][k];
 
     //Compute Quadrature
     for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
@@ -935,23 +928,21 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
       HughesWinget(Rot, Dadt, Ldt);
 
       constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
-//      update(Dadt, Rot, k, q, data, 0);
 
       R2SymTensor TotalStress;
-      TotalStress = devStressq[q];
-      TotalStress.PlusIdentity( meanStressq[q] );
+      TotalStress = devStress[er][esr][0][k][q];
+      TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
 
       Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local );
-
     }//quadrature loop
 
 
-    AddLocalToGlobal( nodelist,
+    AddLocalToGlobal( elemsToNodes.data(k),
                       f_local,
                       acc.data(),
                       NUM_NODES_PER_ELEM );
 
-  } END_FOR //Element loop
+  });
 
   return dt;
 }
@@ -989,6 +980,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
                                                     real64 const time,
                                                     systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
+<<<<<<< 9ba386864774960aaee71b2731c5d3f3be73a711
   BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
   NewFunctionManager * const functionManager = NewFunctionManager::Instance();
 
@@ -1081,6 +1073,84 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
     }
   });
 
+=======
+//  string const functionName =
+// bc->getReference<string>(dataRepository::keys::functionName);
+//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+//
+//  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( blockID );
+//
+//  Epetra_IntSerialDenseVector  node_dof(set.size());
+//  Epetra_SerialDenseVector     node_rhs(set.size());
+//
+// / const& dataRepository::<integer_array> dofMap =
+// object->getReference<integer_array>(dofMapName);
+//
+//
+//  if( functionName.empty() )
+//  {
+//
+//    integer counter=0;
+//    for( auto a : set )
+//    {
+//      node_dof(counter) = dim*dofMap[a]+component;
+//      this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>(
+// node_dof(counter),
+//                                                                blockSystem,
+//                                                                blockID,
+//                                                                node_rhs(counter),
+//                                                                m_scale,
+//                                                                rtTypes::value(field[a],component));
+//      ++counter;
+//    }
+//    rhs->SumIntoGlobalValues(node_dof, node_rhs);
+//  }
+//  else
+//  {
+//    FunctionBase const * const function  =
+// functionManager->GetGroup<FunctionBase>(functionName);
+//    if( function!=nullptr)
+//    {
+//      if( function->isFunctionOfTime()==2 )
+//      {
+//        real64 value = m_scale * function->Evaluate( &time );
+//        integer counter=0;
+//        for( auto a : set )
+//        {
+//          node_dof(counter) = dim*dofMap[a]+component;
+//          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>(
+// node_dof(counter),
+//                                                                    blockSystem,
+//                                                                   blockID,
+//                                                                   node_rhs(counter),
+//                                                                   value,
+//                                                                   rtTypes::value(field[a],component));
+//            ++counter;
+//          }
+//            rhs->SumIntoGlobalValues(node_dof, node_rhs);
+//        }
+//        else
+//        {
+//          real64_array result(set.size());
+//          function->Evaluate( dataGroup, time, set, result );
+//          integer counter=0;
+//          for( auto a : set )
+//          {
+//            node_dof(counter) = dim*dofMap[a]+component;
+//            this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>(
+// node_dof(counter),
+//                                                     blockSystem,
+//                                                     blockID,
+//                                                     node_rhs(counter),
+//                                                     result[counter],
+//                                                     rtTypes::value(field[a],component));
+//            ++counter;
+//          }
+//          rhs->SumIntoGlobalValues(node_dof, node_rhs);
+//        }
+//      }
+//    }
+>>>>>>> Passes all unit tests in GEOSX repo
 }
 
 void
@@ -1096,13 +1166,13 @@ ImplicitStepSetup( real64 const& time_n,
 
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-    view_rtype_const<r1_array> v_n = nodeManager->getData<r1_array>(keys::Velocity);
-    view_rtype_const<r1_array> a_n = nodeManager->getData<r1_array>(keys::Acceleration);
-    view_rtype<r1_array> vtilde   = nodeManager->getData<r1_array>(solidMechanicsViewKeys.vTilde);
-    view_rtype<r1_array> uhatTilde   = nodeManager->getData<r1_array>(solidMechanicsViewKeys.uhatTilde);
+    r1_array const& v_n = nodeManager->getReference<r1_array>(keys::Velocity);
+    r1_array const& a_n = nodeManager->getReference<r1_array>(keys::Acceleration);
+    r1_array& vtilde   = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.vTilde);
+    r1_array& uhatTilde   = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.uhatTilde);
 
-    view_rtype<r1_array> uhat  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
-    view_rtype<r1_array> disp = nodeManager->getData<r1_array>(keys::TotalDisplacement);
+    r1_array& uhat  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
+    r1_array& disp = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
 
     localIndex const numNodes = nodeManager->size();
     real64 const newmarkGamma = this->getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
@@ -1122,14 +1192,14 @@ ImplicitStepSetup( real64 const& time_n,
   else if( this->m_timeIntegrationOption == timeIntegrationOption::QuasiStatic  )
   {
 
-    view_rtype<r1_array> uhat  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
+    r1_array& uhat  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
     integer const useVelocityEstimateForQS = this->getReference<integer>(solidMechanicsViewKeys.useVelocityEstimateForQS);
     localIndex const numNodes = nodeManager->size();
 
     if( useVelocityEstimateForQS==1 )
     {
-      view_rtype_const<r1_array> v_n = nodeManager->getData<r1_array>(keys::Velocity);
-      view_rtype<r1_array> disp = nodeManager->getData<r1_array>(keys::TotalDisplacement);
+      r1_array const& v_n = nodeManager->getReference<r1_array>(keys::Velocity);
+      r1_array& disp = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
 
       for( auto a = 0 ; a < numNodes ; ++a )
       {
@@ -1160,14 +1230,14 @@ void SolidMechanics_LagrangianFEM::ImplicitStepComplete( real64 const & time_n,
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
 
-  view_rtype<r1_array> v_n = nodeManager->getData<r1_array>(keys::Velocity);
-  view_rtype<r1_array> uhat  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
+  r1_array& v_n = nodeManager->getReference<r1_array>(keys::Velocity);
+  r1_array& uhat  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-    view_rtype<r1_array> a_n = nodeManager->getData<r1_array>(keys::Acceleration);
-    view_rtype<r1_array> vtilde    = nodeManager->getData<r1_array>(solidMechanicsViewKeys.vTilde);
-    view_rtype<r1_array> uhatTilde = nodeManager->getData<r1_array>(solidMechanicsViewKeys.uhatTilde);
+    r1_array& a_n = nodeManager->getReference<r1_array>(keys::Acceleration);
+    r1_array& vtilde    = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.vTilde);
+    r1_array& uhatTilde = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.uhatTilde);
     real64 const newmarkGamma = this->getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
     real64 const newmarkBeta = this->getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
 
@@ -1374,27 +1444,25 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
 
   elemManager->forElementRegions([&](ElementRegion const * const elementRegion)
     {
-      auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+      auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
 
       elementRegion->forCellBlocks([&](CellBlockSubRegion const * const cellBlock)
       {
         localIndex const numElems = cellBlock->size();
-        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (dim*numNodesPerElement);
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
-          localIndex const * const localNodeIndices = elemsToNodes[k];
-
           for( localIndex a=0 ; a<numNodesPerElement ; ++a )
           {
             for(localIndex i=0 ; i<numNodesPerElement ; ++i)
             {
               for( int d=0 ; d<dim ; ++d )
               {
-                elementLocalDofIndex[i*dim+d] = dim*static_cast<int>(trilinos_index[localNodeIndices[i]])+d;
+                elementLocalDofIndex[i*dim+d] = dim*static_cast<int>(trilinos_index[elemsToNodes[k][i]])+d;
               }
             }
 
@@ -1436,13 +1504,14 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   matrix->Scale(0.0);
   rhs->Scale(0.0);
 
-  view_rtype_const<r1_array> disp = nodeManager->getData<r1_array>(keys::TotalDisplacement);
-  view_rtype_const<r1_array> uhat = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
-  view_rtype_const<r1_array> vel  = nodeManager->getData<r1_array>(keys::Velocity);
+  r1_array const& disp = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
+  r1_array const& uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
+  r1_array const& vel  = nodeManager->getReference<r1_array>(keys::Velocity);
 
 
-  view_rtype_const<r1_array> uhattilde = nullptr;
-  view_rtype_const<r1_array> vtilde = nullptr;
+  // What????!?!?!?!?!
+  // r1_array const* uhattilde = nullptr;
+  // r1_array const* vtilde = nullptr;
 
   globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
 
@@ -1463,15 +1532,15 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
     FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
       CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
 
-      multidimensionalArray::ManagedArray<R1Tensor, 3> const &
-      dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
+      LvArray::Array<R1Tensor, 3> const &
+      dNdX = cellBlock->getReference< LvArray::Array<R1Tensor, 3> >(keys::dNdX);
 
       array2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
@@ -1505,12 +1574,10 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
         if(elemGhostRank[k] < 0)
         {
-          localIndex const * const localNodeIndices = elemsToNodes[k];
-
           for( localIndex a=0 ; a<numNodesPerElement ; ++a)
           {
 
-            localIndex localNodeIndex = localNodeIndices[a];
+            localIndex localNodeIndex = elemsToNodes[k][a];
 
             for( int i=0 ; i<dim ; ++i )
             {
@@ -1523,14 +1590,14 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
           if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
           {
-            CopyGlobalToLocal( localNodeIndices,
-                               disp, uhat, vtilde, uhattilde,
-                               u_local.data(), uhat_local.data(), vtilde_local.data(), uhattilde_local.data(),
-                               numNodesPerElement );
+            // CopyGlobalToLocal( elemsToNodes.data(k),
+            //                    disp.data(), uhat.data(), vtilde.data(), uhattilde.data(),
+            //                    u_local.data(), uhat_local.data(), vtilde_local.data(), uhattilde_local.data(),
+            //                    numNodesPerElement );
           }
           else
           {
-            CopyGlobalToLocal( localNodeIndices,
+            CopyGlobalToLocal( elemsToNodes.data(k),
                                disp, uhat,
                                u_local.data(), uhat_local.data(),
                                numNodesPerElement );
@@ -1705,13 +1772,13 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
 
 realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real64 const density,
                                                                            FiniteElementBase const * const fe,
-                                                                           const array_view<R1Tensor,2>& dNdX,
-                                                                           const realT* const detJ,
+                                                                           arraySlice2d<R1Tensor> const& dNdX,
+                                                                           arraySlice1d<realT> const& detJ,
                                                                            R2SymTensor const * const refStress,
-                                                                           array1d<R1Tensor> const & u,
-                                                                           array1d<R1Tensor> const & uhat,
-                                                                           array1d<R1Tensor> const & uhattilde,
-                                                                           array1d<R1Tensor> const & vtilde,
+                                                                           r1_array const& u,
+                                                                           r1_array const& uhat,
+                                                                           r1_array const& uhattilde,
+                                                                           r1_array const& vtilde,
                                                                            realT const dt,
                                                                            Epetra_SerialDenseMatrix& dRdU,
                                                                            Epetra_SerialDenseVector& R,
@@ -1719,10 +1786,10 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
 {
   const integer dim = 3;
   realT maxForce = 0;
-  realT amass = *this->getData<real64>(solidMechanicsViewKeys.massDamping);
-  realT astiff = *this->getData<real64>(solidMechanicsViewKeys.stiffnessDamping);
-  real64 const newmarkBeta = *(getData<real64>(solidMechanicsViewKeys.newmarkBeta));
-  real64 const newmarkGamma = *(getData<real64>(solidMechanicsViewKeys.newmarkGamma));
+  realT amass = getReference<real64>(solidMechanicsViewKeys.massDamping);
+  realT astiff = getReference<real64>(solidMechanicsViewKeys.stiffnessDamping);
+  real64 const newmarkBeta = getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
+  real64 const newmarkGamma = getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
 
 
 //  if( LagrangeSolverBase::m_2dOption==LagrangeSolverBase::PlaneStress )
@@ -1757,12 +1824,12 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
     for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
     {
 //      realT const * const dNdXa = dNdX(q,a).Data();
-      dNdXa = dNdX(q,a);
+      dNdXa = dNdX[q][a];
 
       for( integer b=0 ; b<fe->dofs_per_element() ; ++b )
       {
 //        realT const * const dNdXb = dNdX(q,b).Data();
-        dNdXb = dNdX(q,b);
+        dNdXb = dNdX[q][b];
 
         if( dim==3 )
         {
@@ -1823,7 +1890,7 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
       stress0 *= detJq;
       for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
       {
-        dNdXa = dNdX(q,a);
+        dNdXa = dNdX[q][a];
 
         temp.AijBj(stress0,dNdXa);
         realT maxf = temp.MaxVal();
@@ -1915,11 +1982,11 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
   solution->ExtractView(&local_solution,&solutionLength);
 
 
-  view_rtype_const<globalIndex_array> trilinos_index = nodeManager->getData< globalIndex_array >(solidMechanicsViewKeys.trilinosIndex);
+  globalIndex_array const& trilinos_index = nodeManager->getReference< globalIndex_array >(solidMechanicsViewKeys.trilinosIndex);
 
-  view_rtype<r1_array> X        = nodeManager->getData<r1_array>(nodeManager->viewKeys.referencePosition);
-  view_rtype<r1_array> disp     = nodeManager->getData<r1_array>(keys::TotalDisplacement);
-  view_rtype<r1_array> incdisp  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
+  r1_array& X        = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
+  r1_array& disp     = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
+  r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   localIndex const numNodes = nodeManager->size();
   realT maxpos = 0.0;
@@ -1988,7 +2055,7 @@ void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  view_rtype<r1_array> incdisp  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
+  r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   // TODO need to finish this rewind
   FORALL_NODES( a, 0, nodeManager->size() )

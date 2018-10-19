@@ -786,11 +786,10 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
                                           real64 const problemTime)
 {
 
-  auto const
-  constitutiveMap = elementManager->
-                    ConstructViewAccessor<
-    std::pair< array2d<localIndex>,array2d<localIndex> >
-    >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
+  ElementRegionManager::ElementViewAccessor< std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> > > const
+  constitutiveMap = elementManager->ConstructViewAccessor< std::pair< array2d<localIndex>, array2d<localIndex> >, 
+                                                           std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> >
+      >( std::string(CellBlockSubRegion::viewKeyStruct::constitutiveMapString) );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
@@ -823,9 +822,9 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
-        localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+        localIndex const matIndex1 = constitutiveMap[er][esr].first[k][0];
         // matIndex2 is the index of the point within material specified in matIndex1
-        localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+        localIndex const matIndex2 = constitutiveMap[er][esr].second[k][0];
 
         matlist[elemCount++] = matIndex1;
       }
@@ -1147,8 +1146,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   for( auto fieldName : fieldNames )
   {
-    ElementRegionManager::MaterialViewAccessor< array2d<real64> const >
-    field = elementManager->ConstructMaterialViewAccessor< array2d<real64>  >( fieldName,
+    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
+    field = elementManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( fieldName,
                                                                                constitutiveManager);
 
     WriteMaterialDataField< real64 >( meshName,
@@ -1646,12 +1645,11 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         const integer_array nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
-          localIndex const * const elemToNodeMap = elemsToNodes[k];
-
+          integer_array const & nodeOrdering = SiloNodeOrdering();
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
-            elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+            elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
           }
 
           if( elemGhostRank[k] >= 0 )

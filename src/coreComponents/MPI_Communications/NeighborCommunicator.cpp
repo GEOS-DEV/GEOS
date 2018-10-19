@@ -302,17 +302,23 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
   localIndex_array & edgeAdjacencyList = edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.adjacencyList );;
   localIndex_array & faceAdjacencyList = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.adjacencyList );
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
-  elementAdjacencyList =
-    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::viewKeyStruct::adjacencyListString,
-                                                         std::to_string( this->m_neighborRank ) );
+  {
+    ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>>
+    elementAdjacencyList =
+      elemManager.ConstructReferenceAccessor<localIndex_array>( ObjectManagerBase::viewKeyStruct::adjacencyListString,
+                                                           std::to_string( this->m_neighborRank ) );
 
-  mesh->GenerateAdjacencyLists( nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.matchedPartitionBoundaryObjects ),
-                                nodeAdjacencyList,
-                                edgeAdjacencyList,
-                                faceAdjacencyList,
-                                elementAdjacencyList,
-                                depth );
+    mesh->GenerateAdjacencyLists( nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.matchedPartitionBoundaryObjects ),
+                                  nodeAdjacencyList,
+                                  edgeAdjacencyList,
+                                  faceAdjacencyList,
+                                  elementAdjacencyList,
+                                  depth );
+  }
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>> const elementAdjacencyList =
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::viewKeyStruct::adjacencyListString,
+                                                           std::to_string( this->m_neighborRank ) );
 
   int bufferSize = 0;
 
@@ -396,8 +402,8 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
 // nodeManager.viewKeys.ghostsToReceive );
 //  localIndex_array & faceGhostsToReceive = faceNeighborData->getReference<localIndex_array>(
 // faceManager.viewKeys.ghostsToReceive );
-  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyReceiveList =
-    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
+  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>> elementAdjacencyReceiveList =
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
                                                          std::to_string( this->m_neighborRank ) );
 
 
@@ -410,7 +416,12 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
   localIndex_array faceUnpackList;
   unpackedSize += faceManager.UnpackGlobalMaps( receiveBufferPtr, faceUnpackList, 0 );
 
-  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, elementAdjacencyReceiveList );
+  {
+    ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>> elementAdjacencyReceiveListArray =
+      elemManager.ConstructReferenceAccessor<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
+                                                           std::to_string( this->m_neighborRank ) );
+    unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, elementAdjacencyReceiveListArray );
+  }
 
 
   unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUnpackList );
@@ -458,23 +469,13 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   localIndex_array & edgeGhostsToSend = edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToSend );
   localIndex_array & faceGhostsToSend = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToSend );
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
-  elementGhostToSend =
-    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::
-                                                         viewKeyStruct::
-                                                         ghostsToSendString,
-                                                         std::to_string( this->m_neighborRank ) );
-
-
-
-
   localIndex_array const & nodeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToReceive );
   localIndex_array const & edgeGhostsToReceive = edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToReceive );
   localIndex_array const & faceGhostsToReceive = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToReceive );
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
+  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>>
   elementGhostToReceive =
-    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::
                                                          viewKeyStruct::ghostsToReceiveString,
                                                          std::to_string( this->m_neighborRank ) );
 
@@ -506,8 +507,8 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
 
       bufferSize+= bufferOps::Pack<false>( sendBufferPtr,
-                                           elementGhostToReceive[er][esr].get().data(),
-                                           elementGhostToReceive[er][esr].get().size(),
+                                           elementGhostToReceive[er][esr].data(),
+                                           elementGhostToReceive[er][esr].size(),
                                            subRegion->m_localToGlobalMap );
     }
   }
@@ -540,8 +541,8 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
 
       packedSize+= bufferOps::Pack<true>( sendBufferPtr,
-                                          elementGhostToReceive[er][esr].get().data(),
-                                          elementGhostToReceive[er][esr].get().size(),
+                                          elementGhostToReceive[er][esr].data(),
+                                          elementGhostToReceive[er][esr].size(),
                                           subRegion->m_localToGlobalMap );
     }
   }
@@ -571,6 +572,13 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   nodeManager.SetGhostRankForSenders( nodeGhostsToSend );
   edgeManager.SetGhostRankForSenders( edgeGhostsToSend );
   faceManager.SetGhostRankForSenders( faceGhostsToSend );
+
+  ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>>
+  elementGhostToSend =
+    elemManager.ConstructReferenceAccessor<localIndex_array>( ObjectManagerBase::
+                                                         viewKeyStruct::
+                                                         ghostsToSendString,
+                                                         std::to_string( this->m_neighborRank ) );
 
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
@@ -625,9 +633,8 @@ int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > c
 
 
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
-  elementGhostToSend =
-    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::
+  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>> const elementGhostToSend =
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::
                                                          viewKeyStruct::
                                                          ghostsToSendString,
                                                          std::to_string( this->m_neighborRank ) );
@@ -702,9 +709,8 @@ void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array 
 
 
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
-  elementGhostToSend =
-    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::
+  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>> const elementGhostToSend =
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::
                                                          viewKeyStruct::
                                                          ghostsToSendString,
                                                          std::to_string( this->m_neighborRank ) );
@@ -739,7 +745,7 @@ void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array 
       {
         CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
 
-        packedSize += subRegion->Pack( sendBufferPtr, fieldNames.at( "elems" ), elementGhostToSend[er][esr].get(), 0 );
+        packedSize += subRegion->Pack( sendBufferPtr, fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0 );
       }
     }
   }
@@ -789,9 +795,8 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
   localIndex_array &
   faceGhostsToReceive = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToReceive );
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
-  elementGhostToReceive =
-    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::
+  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>> elementGhostToReceive =
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::
                                                          viewKeyStruct::ghostsToReceiveString,
                                                          std::to_string( this->m_neighborRank ) );
 
@@ -821,7 +826,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
       {
         CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion( esr );
 
-        unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr].get(), 0 );
+        unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr], 0 );
       }
     }
   }

@@ -76,46 +76,46 @@ public:
   using dataRepository::ManagedGroup::Pack;
 
   virtual localIndex PackSize( string_array const & wrapperNames,
-                        localIndex_array const & packList,
+                        arrayView1d<localIndex> const & packList,
                         integer const recursive ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
                     string_array const & wrapperNames,
-                    localIndex_array const & packList,
+                    arrayView1d<localIndex> const & packList,
                     integer const recursive )  const override;
 
 //  virtual int Unpack( buffer_unit_type const *& buffer,
 //                      integer const recursive )  override;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
-                      localIndex_array & packList,
+                      arrayView1d<localIndex> & packList,
                       integer const recursive )  override;
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
 
 
-  virtual localIndex PackGlobalMapsSize( localIndex_array const & packList,
+  virtual localIndex PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
                                   integer const recursive ) const;
 
   virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList,
+                              arrayView1d<localIndex> const & packList,
                               integer const recursive ) const;
 
   void SetReceiveLists(  );
 
 
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const
   { return 0; }
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const
+                              arrayView1d<localIndex> const & packList ) const
   { return 0;}
 
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList )
+                                arrayView1d<localIndex> const & packList )
   { return 0;}
 
 
@@ -128,12 +128,12 @@ private:
   template< bool DOPACK >
   localIndex PackPrivate( buffer_unit_type * & buffer,
                    string_array const & wrapperNames,
-                   localIndex_array const & packList,
+                   arrayView1d<localIndex> const & packList,
                    integer const recursive ) const;
 
   template< bool DOPACK >
   localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                             localIndex_array const & packList,
+                             arrayView1d<localIndex> const & packList,
                              integer const recursive ) const;
 
 //  template< bool DOPACK >
@@ -193,36 +193,32 @@ public:
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
-  typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
+  array1d< typename Field<FIELDKEY>::Type >& GetFieldData()
   {
-    return const_cast<typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ObjectManagerBase&>(*this).
-                                                                                                               GetFieldData<FIELDKEY>());
+    return this->getReference< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
   }
-
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
-  typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
+  array1d< typename Field<FIELDKEY>::Type > const & GetFieldData() const
   {
-    return this->getData< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
+    return this->getReference< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
   }
 
 
   /// returns reference to specified field
   template< typename TYPE >
-  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype GetFieldData( const std::string& fieldName )
+  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype GetFieldData( const std::string& name )
   {
-    return const_cast<typename dataRepository::ViewWrapper<array1d<TYPE> >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<TYPE>(fieldName));
+    return this->getReference< array1d<TYPE> >( name );
   }
 
   /// returns const reference to specified field
   template< typename TYPE >
   typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype_const GetFieldData( const std::string& name ) const
   {
-    return this->getData< array1d<TYPE> >( name );
+    return this->getReference< array1d<TYPE> >( name );
   }
-
-
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
@@ -230,7 +226,6 @@ public:
   {
     return &this->getReference< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
   }
-
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
@@ -252,8 +247,6 @@ public:
   {
     return &this->getReference< TYPE >( fieldName );
   }
-
-
 
   /// add a data field to a member
   template< typename T >
@@ -299,7 +292,7 @@ public:
 
   }
 
-  void SetGhostRankForSenders( localIndex_array const & indicesToSend )
+  void SetGhostRankForSenders( arrayView1d<localIndex> const & indicesToSend )
   {
     for( auto index : indicesToSend )
     {
@@ -409,10 +402,6 @@ public:
   integer_array m_ghostRank;
 
   real64 m_overAllocationFactor = 1.1;
-
-//  localIndex_array m_ghostToSend;
- // localIndex_array m_ghostToReceive;
-
 
 };
 

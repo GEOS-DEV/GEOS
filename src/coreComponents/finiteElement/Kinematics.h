@@ -80,7 +80,7 @@ inline void CalculateGradient( R2Tensor& Gradient,
 
 
 inline void CalculateGradient(R2Tensor& Gradient, const R1Tensor * disp,
-                              const multidimensionalArray::ArrayView<R1Tensor, 1, geosx::localIndex> dNdX,
+                              const arraySlice1d<R1Tensor> dNdX,
                               const localIndex numNodes)
 {
   Gradient.dyadic_ab( disp[0], dNdX[0] );

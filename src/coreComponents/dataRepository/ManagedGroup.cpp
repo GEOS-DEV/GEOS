@@ -239,21 +239,29 @@ void ManagedGroup::RegisterDocumentationNodes()
 
       string defVal = subNode.second.getDefault();
 
+      if (defVal == "ExplicitDynamic")
+      {
+        double TEMP = 10;
+        TEMP *= 2;
+      }
+
       if( subNode.second.getIsInput() && defVal != "NONE" )
       {
         rtTypes::ApplyTypeLambda2 ( typeID,
                                     [&]( auto a, auto b ) -> void
         {
-
           ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
           std::vector<decltype(b)> values;
           stringutilities::StringToType( values, defVal );
-          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
+          localIndex const size = LvArray::integer_conversion<localIndex>(values.size());
           dataView.resize( size );
-          typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-          cxx_utilities::equateStlVector(data,values);
+          decltype(a) & data = dataView.reference();
+          cxx_utilities::equateStlVector(data, values);
         });
       }
+
+
+
 //      else if( defVal != "NONE" && defVal != "" )
 //      {
 //        rtTypes::ApplyTypeLambda2( typeID,
@@ -263,7 +271,7 @@ void ManagedGroup::RegisterDocumentationNodes()
 //          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
 //          std::vector<decltype(b)> values;
 //          stringutilities::StringToType( values, defVal );
-//          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
+//          localIndex const size = LvArray::integer_conversion<localIndex>(values.size());
 //          if( size != 1 )
 //          {
 //            GEOS_ERROR("Expect size of default value to be a scalar");
@@ -460,7 +468,7 @@ void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 
 
 localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
-                            localIndex_array const & packList,
+                            arrayView1d<localIndex> const & packList,
                             integer const recursive ) const
 {
   localIndex packedSize = 0;
@@ -518,14 +526,14 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
 localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
                             integer const recursive ) const
 {
-  localIndex_array nullArray;
+  arrayView1d<localIndex> nullArray;
   return PackSize(wrapperNames,nullArray,recursive);
 }
 
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                                string_array const & wrapperNames,
-                               localIndex_array const & packList,
+                               arrayView1d<localIndex> const & packList,
                                integer const recursive ) const
 {
   localIndex packedSize = 0;
@@ -585,12 +593,12 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                             string_array const & wrapperNames,
                             integer const recursive ) const
 {
-  localIndex_array nullArray;
+  arrayView1d<localIndex> nullArray;
   return Pack( buffer, wrapperNames, nullArray, recursive );
 }
 
 localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
-                          localIndex_array & packList,
+                          arrayView1d<localIndex> & packList,
                           integer const recursive )
 {
   localIndex unpackedSize = 0;

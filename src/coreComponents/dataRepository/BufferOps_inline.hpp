@@ -296,7 +296,7 @@ localIndex Unpack( char const *& buffer, set<T> & setToRead )
 template< bool DO_PACKING >
 localIndex Pack( char *& buffer,
                  set<localIndex> const & var,
-                 array1d<globalIndex> const & localToGlobal )
+                 arrayView1d<globalIndex> const & localToGlobal )
 {
 
   localIndex sizeOfPackedChars = 0;
@@ -459,10 +459,10 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
 typename std::enable_if<
-is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value,
 localIndex >::type
 Pack( char*& buffer,
-      multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var )
+      LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var )
 {
   localIndex sizeOfPackedChars = 0;
 
@@ -481,10 +481,10 @@ Pack( char*& buffer,
 
 template< typename T, int NDIM, typename INDEX_TYPE >
 typename std::enable_if<
-is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> >::value,
 localIndex >::type
 Unpack( char const *& buffer,
-        multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var )
+        LvArray::Array<T,NDIM,INDEX_TYPE> & var )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -515,10 +515,10 @@ template< bool DO_PACKING,
           typename T_indices,
           typename INDEX_TYPE >
 typename std::enable_if<
-is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value,
 localIndex >::type
 Pack( char*& buffer,
-      multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var,
+      LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var,
       const T_indices& indices )
 {
 
@@ -543,7 +543,7 @@ template< typename T,
           typename T_indices,
           typename INDEX_TYPE >
 localIndex Unpack( char const *& buffer,
-                   multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var,
+                   LvArray::ArrayView<T,NDIM,INDEX_TYPE> & var,
                    const T_indices& indices )
 {
   localIndex sizeOfUnpackedChars = 0;
@@ -559,10 +559,7 @@ localIndex Unpack( char const *& buffer,
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-//    string test;
-//    sizeOfUnpackedChars += Unpack( buffer, test);
-    localIndex temp = strides[var.getSingleParameterResizeIndex()];
-    sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), temp );
+    sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), strides[0] );
   }
 
   return sizeOfUnpackedChars;
@@ -574,7 +571,7 @@ template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
           localIndex const * const var,
           localIndex const length,
-          globalIndex_array const & localToGlobalMap )
+          arrayView1d<globalIndex> const & localToGlobalMap )
 {
   localIndex sizeOfPackedChars = 0;
 
@@ -595,9 +592,8 @@ localIndex Pack( char*& buffer,
 }
 
 inline
-localIndex Unpack( char const *& buffer,
-            localIndex_array & var,
-            map<globalIndex,localIndex> const & globalToLocalMap )
+localIndex Unpack( char const *& buffer, localIndex_array & var,
+                   map<globalIndex,localIndex> const & globalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -643,16 +639,12 @@ localIndex Unpack( char const *& buffer,
 }
 
 
-
-
-
-
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-          array1d< localIndex_array > const & var,
-          localIndex_array const & indices,
-          globalIndex_array const & localToGlobalMap,
-          globalIndex_array const & relatedObjectLocalToGlobalMap )
+          arrayView1d<localIndex_array> const & var,
+          arrayView1d<localIndex> const & indices,
+          arrayView1d<globalIndex> const & localToGlobalMap,
+          arrayView1d<globalIndex> const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars=0;
 
@@ -669,8 +661,8 @@ localIndex Pack( char*& buffer,
 
 inline
 localIndex Unpack( char const *& buffer,
-            array1d< localIndex_array > & var,
-            localIndex_array const & indices,
+            arrayView1d<localIndex_array> & var,
+            arrayView1d<localIndex> const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap,
             map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
 {
@@ -697,10 +689,10 @@ localIndex Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-                 array1d< set<localIndex> > const & var,
-                 localIndex_array const & indices,
-                 globalIndex_array const & localToGlobalMap,
-                 globalIndex_array const & relatedObjectLocalToGlobalMap )
+                 arrayView1d< set<localIndex> > const & var,
+                 arrayView1d<localIndex> const & indices,
+                 arrayView1d<globalIndex> const & localToGlobalMap,
+                 arrayView1d<globalIndex> const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars=0;
 
@@ -717,8 +709,8 @@ localIndex Pack( char*& buffer,
 
 inline
 localIndex Unpack( char const *& buffer,
-                   array1d< set<localIndex> > & var,
-                   localIndex_array const & indices,
+                   arrayView1d< set<localIndex> > & var,
+                   arrayView1d<localIndex> const & indices,
                    map<globalIndex,localIndex> const & globalToLocalMap,
                    map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
 {
@@ -747,9 +739,9 @@ localIndex Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-          array2d<localIndex> const & var,
-          localIndex_array const & indices,
-          globalIndex_array const & localToGlobalMap )
+          arrayView2d<localIndex> const & var,
+          arrayView1d<localIndex> const & indices,
+          arrayView1d<globalIndex> const & localToGlobalMap )
 {
   localIndex sizeOfPackedChars = 0;
 
@@ -768,8 +760,8 @@ localIndex Pack( char*& buffer,
 
 inline
 localIndex Unpack( char const *& buffer,
-            array2d<localIndex> & var,
-            localIndex_array const & indices,
+            arrayView2d<localIndex> & var,
+            arrayView1d<localIndex> const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
@@ -789,8 +781,7 @@ localIndex Unpack( char const *& buffer,
                    "global index "<<gi<<" unpacked from buffer does equal the lookup "
                    <<li<<" for localIndex "<<li<<" on this rank");
 
-    localIndex * const varSlice = var[li];
-    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
+    sizeOfUnpackedChars += Unpack( buffer, var.data(li), var.size(1) );
   }
 
 
@@ -800,10 +791,10 @@ localIndex Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-          array2d<localIndex> const & var,
-          localIndex_array const & indices,
-          globalIndex_array const & localToGlobalMap,
-          globalIndex_array const & relatedObjectLocalToGlobalMap )
+          arrayView2d<localIndex> const & var,
+          arrayView1d<localIndex> const & indices,
+          arrayView1d<globalIndex> const & localToGlobalMap,
+          arrayView1d<globalIndex> const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars = 0;
 
@@ -813,7 +804,7 @@ localIndex Pack( char*& buffer,
     localIndex li = indices[a];
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
 
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1), relatedObjectLocalToGlobalMap );
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(li), var.size(1), relatedObjectLocalToGlobalMap );
   }
 
   return sizeOfPackedChars;
@@ -822,8 +813,8 @@ localIndex Pack( char*& buffer,
 
 inline
 localIndex Unpack( char const *& buffer,
-            array2d<localIndex> & var,
-            localIndex_array const & indices,
+            arrayView2d<localIndex> & var,
+            arrayView1d<localIndex> const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap,
             map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
 {
@@ -844,7 +835,7 @@ localIndex Unpack( char const *& buffer,
                    "global index "<<gi<<" unpacked from buffer does equal the lookup "
                    <<li<<" for localIndex "<<li<<" on this rank");
 
-    sizeOfUnpackedChars += Unpack( buffer, var[li], var.size(1), relatedObjectGlobalToLocalMap );
+    sizeOfUnpackedChars += Unpack( buffer, var.data(li), var.size(1), relatedObjectGlobalToLocalMap );
   }
 
 

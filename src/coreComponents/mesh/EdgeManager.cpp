@@ -710,21 +710,21 @@ void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
 
 
 
-localIndex EdgeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex EdgeManager::PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 localIndex EdgeManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                        localIndex_array const & packList ) const
+                                        arrayView1d<localIndex> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template<bool DOPACK>
 localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               localIndex_array const & packList ) const
+                                               arrayView1d<localIndex> const & packList ) const
 {
   localIndex packedSize = 0;
 
@@ -750,7 +750,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array const & packList )
+                                          arrayView1d<localIndex> const & packList )
 {
   localIndex unPackedSize = 0;
 

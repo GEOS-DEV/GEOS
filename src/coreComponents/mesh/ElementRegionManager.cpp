@@ -175,7 +175,7 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
 }
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
-              ElementViewAccessor<localIndex_array> const & packList ) const
+              ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackPrivate<false>( junk, wrapperNames, packList );
@@ -183,7 +183,7 @@ int ElementRegionManager::PackSize( string_array const & wrapperNames,
 
 int ElementRegionManager::Pack( buffer_unit_type * & buffer,
           string_array const & wrapperNames,
-          ElementViewAccessor<localIndex_array> const & packList ) const
+          ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   return PackPrivate<true>( buffer, wrapperNames, packList );
 }
@@ -192,7 +192,7 @@ template< bool DOPACK >
 int
 ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
                                    string_array const & wrapperNames,
-                                   ElementViewAccessor<localIndex_array> const & packList ) const
+                                   ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   int packedSize = 0;
 
@@ -212,7 +212,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       packedSize += bufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
 
-      localIndex_array const & elemList = packList[kReg][kSubReg];
+      arrayView1d<localIndex> const elemList = packList[kReg][kSubReg];
       if( DOPACK )
       {
         packedSize += subRegion->Pack( buffer, wrapperNames, elemList, 0 );
@@ -228,14 +228,14 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 }
 //template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
 //                                                      string_array const &,
-//                                                      ElementViewAccessor<localIndex_array> const & ) const;
+//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
 //template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
 //                                                      string_array const &,
-//                                                      ElementViewAccessor<localIndex_array> const & ) const;
+//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
 
 int
 ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
-                              ElementViewAccessor<localIndex_array> & packList )
+                              ElementViewAccessor<arrayView1d<localIndex>> & packList )
 {
   int unpackedSize = 0;
 
@@ -259,7 +259,7 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG??
-      localIndex_array & elemList = packList[kReg][kSubReg];
+      arrayView1d<localIndex> elemList = packList[kReg][kSubReg];
 
       unpackedSize += subRegion->Unpack( buffer, elemList, 0 );
     }
@@ -269,21 +269,21 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
 }
 
 
- int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+ int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackGlobalMapsPrivate<false>( junk, packList);
 }
 
  int ElementRegionManager::PackGlobalMaps( buffer_unit_type * & buffer,
-                                           ElementViewAccessor<localIndex_array> const & packList ) const
+                                           ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   return PackGlobalMapsPrivate<true>( buffer, packList);
 }
 template< bool DOPACK >
 int
 ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                             ElementViewAccessor<localIndex_array> const & packList ) const
+                                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   int packedSize = 0;
 
@@ -300,7 +300,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       packedSize += bufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
 
-      localIndex_array const & elemList = packList[kReg][kSubReg];
+      arrayView1d<localIndex> const elemList = packList[kReg][kSubReg];
       if( DOPACK )
       {
         packedSize += subRegion->PackGlobalMaps( buffer, elemList, 0 );
@@ -320,7 +320,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
 int
 ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
-                                        ElementViewAccessor<localIndex_array> & packList )
+                                        ElementViewAccessor<ReferenceWrapper<localIndex_array>> & packList )
 {
   int unpackedSize = 0;
 
@@ -346,7 +346,7 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG
-      localIndex_array & elemList = packList[kReg][kSubReg];
+      localIndex_array & elemList = packList[kReg][kSubReg].get();
 
       unpackedSize += subRegion->UnpackGlobalMaps( buffer, elemList, 0 );
     }
@@ -358,14 +358,14 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
 
 
 
-int ElementRegionManager::PackUpDownMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+int ElementRegionManager::PackUpDownMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList);
 }
 
 int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                          ElementViewAccessor<localIndex_array> const & packList ) const
+                                          ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList);
 }
@@ -373,7 +373,7 @@ int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
 template< bool DOPACK >
 int
 ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                             ElementViewAccessor<localIndex_array> const & packList ) const
+                                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {
   int packedSize = 0;
 
@@ -390,7 +390,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       packedSize += bufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
 
-      localIndex_array const & elemList = packList[kReg][kSubReg];
+      arrayView1d<localIndex> const elemList = packList[kReg][kSubReg];
       if( DOPACK )
       {
         packedSize += subRegion->PackUpDownMaps( buffer, elemList );
@@ -407,16 +407,16 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 //template int
 //ElementRegionManager::
 //PackUpDownMapsPrivate<true>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<localIndex_array> const & packList ) const;
+//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 //template int
 //ElementRegionManager::
 //PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<localIndex_array> const & packList ) const;
+//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
 
 int
 ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                        ElementViewAccessor<localIndex_array> const & packList )
+                                        ElementViewAccessor<arrayView1d<localIndex>> const & packList )
 {
   int unpackedSize = 0;
 
@@ -442,7 +442,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG
-      localIndex_array const & elemList = packList[kReg][kSubReg];
+      arrayView1d<localIndex> const elemList = packList[kReg][kSubReg];
 
       unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList );
     }
