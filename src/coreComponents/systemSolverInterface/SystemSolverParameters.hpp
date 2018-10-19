@@ -68,26 +68,25 @@ public:
   struct groupKeysStruct
   {} groupKeys;
 
-  integer  verbose() const              { return *(this->getData<integer>( viewKeys.verbosity )); }
-  string  solverType() const            { return this->getData<string>( viewKeys.solverType ); }
-  real64 krylovTol() const            { return *(this->getData<real64>( viewKeys.krylovTol )); }
-  integer  numKrylovIter() const        { return *(this->getData<integer>( viewKeys.numKrylovIter )); }
-  integer  kspace() const               { return *(this->getData<integer>( viewKeys.kspace )); }
-  real64 ilut_fill() const            { return *(this->getData<real64>( viewKeys.ilut_fill )); }
-  real64 ilut_drop() const            { return *(this->getData<real64>( viewKeys.ilut_drop )); }
-  integer   useMLPrecond() const         { return *(this->getData<integer>( viewKeys.useMLPrecond )); }
-  integer   useInnerSolver() const       { return *(this->getData<integer>( viewKeys.useInnerSolver )); }
-  integer  scalingOption() const        { return *(this->getData<integer>( viewKeys.scalingOption )); }
-  integer   useBicgstab() const          { return *(this->getData<integer>( viewKeys.useBicgstab )); }
-  integer   useDirectSolver() const      { return *(this->getData<integer>( viewKeys.useDirectSolver )); }
-  real64 KrylovResidualInit() const   { return *(this->getData<real64>( viewKeys.KrylovResidualInit )); }
-  real64 KrylovResidualFinal() const  { return *(this->getData<real64>( viewKeys.KrylovResidualFinal )); }
-  integer   useNewtonSolve() const       { return *(this->getData<integer>( viewKeys.useNewtonSolve )); }
-  real64 newtonTol() const            { return *(this->getData<real64>( viewKeys.newtonTol )); }
-  integer  maxIterNewton() const        { return *(this->getData<integer>( viewKeys.maxIterNewton )); }
-  integer const & numNewtonIterations() const        { return this->getReference<integer>( viewKeys.numNewtonIterations); }
-  integer & numNewtonIterations()        { return this->getReference<integer>( viewKeys.numNewtonIterations); }
-
+  integer  verbose() const                    { return this->getReference<integer>( viewKeys.verbosity ); }
+  string  solverType() const                  { return this->getData<string>( viewKeys.solverType ); }
+  real64 krylovTol() const                    { return this->getReference<real64>( viewKeys.krylovTol ); }
+  integer  numKrylovIter() const              { return this->getReference<integer>( viewKeys.numKrylovIter ); }
+  integer  kspace() const                     { return this->getReference<integer>( viewKeys.kspace ); }
+  real64 ilut_fill() const                    { return this->getReference<real64>( viewKeys.ilut_fill ); }
+  real64 ilut_drop() const                    { return this->getReference<real64>( viewKeys.ilut_drop ); }
+  integer   useMLPrecond() const              { return this->getReference<integer>( viewKeys.useMLPrecond ); }
+  integer   useInnerSolver() const            { return this->getReference<integer>( viewKeys.useInnerSolver ); }
+  integer  scalingOption() const              { return this->getReference<integer>( viewKeys.scalingOption ); }
+  integer   useBicgstab() const               { return this->getReference<integer>( viewKeys.useBicgstab ); }
+  integer   useDirectSolver() const           { return this->getReference<integer>( viewKeys.useDirectSolver ); }
+  real64 KrylovResidualInit() const           { return this->getReference<real64>( viewKeys.KrylovResidualInit ); }
+  real64 KrylovResidualFinal() const          { return this->getReference<real64>( viewKeys.KrylovResidualFinal ); }
+  integer   useNewtonSolve() const            { return this->getReference<integer>( viewKeys.useNewtonSolve ); }
+  real64 newtonTol() const                    { return this->getReference<real64>( viewKeys.newtonTol ); }
+  integer  maxIterNewton() const              { return this->getReference<integer>( viewKeys.maxIterNewton ); }
+  integer const & numNewtonIterations() const { return this->getReference<integer>( viewKeys.numNewtonIterations); }
+  integer & numNewtonIterations()             { return this->getReference<integer>( viewKeys.numNewtonIterations); }
 
 };
 

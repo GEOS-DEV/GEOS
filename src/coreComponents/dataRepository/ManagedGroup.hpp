@@ -525,7 +525,7 @@ public:
                         integer const recursive ) const;
 
   virtual localIndex PackSize( string_array const & wrapperNames,
-                        localIndex_array const & packList,
+                        arrayView1d<localIndex> const & packList,
                         integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
@@ -534,11 +534,11 @@ public:
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
                     string_array const & wrapperNames,
-                    localIndex_array const & packList,
+                    arrayView1d<localIndex> const & packList,
                     integer const recursive ) const;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
-                      localIndex_array & packList,
+                      arrayView1d<localIndex> & packList,
                       integer const recursive );
 
 
@@ -610,34 +610,10 @@ public:
   { return getWrapper<T>( string( key ) ); }
 
 
-
-
-
   indexType getWrapperIndex( std::string const & name ) const
   {
     return m_wrappers.getIndex(name);
   }
-
-
-
-
-
-
-  template< typename T, typename LOOKUP_TYPE >
-  view_rtype_const<T> getData( LOOKUP_TYPE const index ) const
-  { return getWrapper<T>(index)->data(); }
-
-  template< typename T, typename LOOKUP_TYPE >
-  view_rtype<T> getData( LOOKUP_TYPE const index )
-  { return getWrapper<T>(index)->data(); }
-
-  template< typename T >
-  view_rtype_const<T> getData( char const * const name ) const
-  { return getWrapper<T>( string(name) )->data(); }
-
-  template< typename T >
-  view_rtype<T> getData( char const * const name )
-  { return getWrapper<T>( string(name) )->data(); }
 
 
   template< typename T, typename LOOKUP_TYPE >
@@ -646,7 +622,7 @@ public:
     ViewWrapper<T> const * wrapper = getWrapper<T>(lookup);
     if( wrapper == nullptr )
     {
-      GEOS_ERROR( "ManagedGroup::getReferenceT(): call to getWrapper results in nullptr" );
+      GEOS_ERROR( "ManagedGroup::getReferenceT(): call to getWrapper results in nullptr: " << lookup );
     }
     return wrapper->reference();
   }

@@ -1635,24 +1635,23 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         // loop over all nodes on element
         if( verboseLevel() )
           std::cout<<"    m_ElementToNodeMap = ( ";
-        localIndex* const elementToNodeMap = elemsToNodes[elemIndex];
         for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
         {
-          elemCenter += X[ elementToNodeMap[a] ];
+          elemCenter += X[ elemsToNodes[elemIndex][a] ];
           // if the node was just split
-          if( elementToNodeMap[a] == nodeID )
+          if( elemsToNodes[elemIndex][a] == nodeID )
           {
 
             if( verboseLevel() )
-              std::cout<<elementToNodeMap[a]<<"->"<<newNodeIndex<<", ";
+              std::cout<<elemsToNodes[elemIndex][a]<<"->"<<newNodeIndex<<", ";
 
-            elementToNodeMap[a] = newNodeIndex;
+            elemsToNodes[elemIndex][a] = newNodeIndex;
 
             insert( nodeManager.toElementRelation(), newNodeIndex, regionIndex, subRegionIndex, elemIndex );
             erase( nodeManager.toElementRelation(), nodeID, regionIndex, subRegionIndex, elemIndex );
           }
           else if( verboseLevel() )
-            std::cout<<elementToNodeMap[a]<<", ";
+            std::cout<<elemsToNodes[elemIndex][a]<<", ";
         }
         elemCenter /= elemsToNodes.size( 1 );
         if( verboseLevel() )
@@ -1664,12 +1663,12 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           {
             if( verboseLevel() )
             {
-              std::cout<<"    nodeToElemMaps["<<elementToNodeMap[a]<<"] = ( ";
-              for( localIndex k=0 ; k<nodesToElementRegions[elementToNodeMap[a]].size() ; ++k )
+              std::cout<<"    nodeToElemMaps["<<elemsToNodes[elemIndex][a]<<"] = ( ";
+              for( localIndex k=0 ; k<nodesToElementRegions[elemsToNodes[elemIndex][a]].size() ; ++k )
               {
-                std::cout<<"["<<nodesToElementRegions[elementToNodeMap[a]][k]<<","
-                         <<nodesToElementSubRegions[elementToNodeMap[a]][k]<<","
-                         <<nodesToElementIndex[elementToNodeMap[a]][k]<<"] , ";
+                std::cout<<"["<<nodesToElementRegions[elemsToNodes[elemIndex][a]][k]<<","
+                         <<nodesToElementSubRegions[elemsToNodes[elemIndex][a]][k]<<","
+                         <<nodesToElementIndex[elemsToNodes[elemIndex][a]][k]<<"] , ";
               }
               std::cout<<" )"<<std::endl;
             }
@@ -1697,8 +1696,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         std::cout<<"  Looping over all faces on element (parent and child):"<<std::endl;
       }
 
-
-      localIndex* const elemToFaces = elemsToFaces[elemIndex];
       // we need to build a list of faces that is elemToFaces FOLLOWED by any
       // parent face of those indicated in elemToFaces
 
@@ -1707,7 +1704,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       {
 
         // set both faceID and newFaceID to the parent face.
-        localIndex const faceIndex = elemToFaces[kf];
+        localIndex const faceIndex = elemsToFaces[elemIndex][kf];
         //        map<localIndex,localIndex>::iterator iterSplitFace = splitFaces.find(faceIndex);
         bool const isNewFace = (splitFaces.count( faceIndex )>0) ? true : false;
         localIndex const newFaceIndex = isNewFace ? childFaceIndex[faceIndex] : faceIndex;
@@ -1719,7 +1716,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         {
           // replace the parent face with the child face in elementToFace. Now
           // faceID is the parent face, and newFaceID is the child face.
-          elemToFaces[kf] = childFaceIndex[faceIndex];
+          elemsToFaces[elemIndex][kf] = childFaceIndex[faceIndex];
 
 
 
@@ -1867,26 +1864,25 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           }
 
           {
-            localIndex* const nodeIndex = edgesToNodes[edgeIndex];
             for( localIndex a=0 ; a<edgesToNodes.size( 1 ) ; ++a )
             {
-              if( nodeIndex[a] == nodeID )
+              if( edgesToNodes[edgeIndex][a] == nodeID )
               {
 
                 if( verboseLevel() )
-                  std::cout<<nodeIndex[a];
+                  std::cout<<edgesToNodes[edgeIndex][a];
 
-                nodeIndex[a] = newNodeIndex;
+                edgesToNodes[edgeIndex][a] = newNodeIndex;
                 nodesToEdges[nodeID].erase( edgeIndex );
 
                 if( verboseLevel() )
-                  std::cout<<"->"<<nodeIndex[a]<<", ";
+                  std::cout<<"->"<<edgesToNodes[edgeIndex][a]<<", ";
 
               }
               else if( verboseLevel() )
-                std::cout<<nodeIndex[a]<<", ";
+                std::cout<<edgesToNodes[edgeIndex][a]<<", ";
 
-              nodesToEdges[nodeIndex[a]].insert( edgeIndex );
+              nodesToEdges[edgesToNodes[edgeIndex][a]].insert( edgeIndex );
             }
             if( verboseLevel() )
               std::cout<<")";

@@ -227,8 +227,8 @@ void EventBase::CreateChild( string const & childKey, string const & childName )
 
 void EventBase::InitializePreSubGroups( ManagedGroup * const group )
 {
-  real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
-  integer& lastCycle = *(this->getData<integer>(viewKeys.lastCycle));
+  real64& lastTime = this->getReference<real64>(viewKeys.lastTime);
+  integer& lastCycle = this->getReference<integer>(viewKeys.lastCycle);
 
   lastTime = std::numeric_limits<real64>::min();
   lastCycle = std::numeric_limits<integer>::min();
@@ -317,9 +317,8 @@ void EventBase::Execute(real64 const& time_n,
                         ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
-
-  real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
-  integer& lastCycle = *(this->getData<integer>(viewKeys.lastCycle));
+  real64& lastTime = this->getReference<real64>(viewKeys.lastTime);
+  integer& lastCycle = this->getReference<integer>(viewKeys.lastCycle);
   integer const allowSuperstep = this->getReference<integer>(viewKeys.allowSuperstep);
   integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
   integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);

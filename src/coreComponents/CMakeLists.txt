@@ -17,24 +17,19 @@ set( subdirs
      python
      systemSolverInterface
      linearAlgebraInterface
+     cxx-utilities
      )
-
-add_subdirectory(cxx-utilities/src)
-
-
 
 set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
 set( geosx_core_defines "" )
 
-set( coreLibs "cxx-utilities" )
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
     if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
       list( APPEND coreLibs ${lib} )
     endif()
 endforeach()
-
 
 # Python config
 set( extraComponentsListLink "")
@@ -60,7 +55,7 @@ blt_combine_static_libraries( NAME          geosx_core
                               LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG} 
                               LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                             )
-                            
+
 #set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

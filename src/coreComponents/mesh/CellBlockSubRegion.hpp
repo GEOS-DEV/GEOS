@@ -65,13 +65,13 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const override;
+                              arrayView1d<localIndex> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList ) override;
+                                arrayView1d<localIndex> const & packList ) override;
 
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
@@ -112,7 +112,7 @@ public:
   // TODO this needs to be stored by the FiniteElementManager!!
   std::pair< array2d< localIndex >, array2d< localIndex > > m_constitutiveMapView;
 
-  multidimensionalArray::ManagedArray< R1Tensor, 3 > m_dNdX;
+  LvArray::Array< R1Tensor, 3 > m_dNdX;
 
   dataRepository::ManagedGroup const * GetConstitutiveModels() const
   { return &m_constitutiveModels; }
@@ -125,7 +125,7 @@ private:
 
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                             localIndex_array const & packList ) const;
+                             arrayView1d<localIndex> const & packList ) const;
 
 
 };

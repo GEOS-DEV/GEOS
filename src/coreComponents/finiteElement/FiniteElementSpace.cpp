@@ -99,9 +99,9 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   // registration.
 
   //Ensure data is contiguous
-  auto dNdXView       = cellBlock->RegisterViewWrapper< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+  auto dNdXView       = cellBlock->RegisterViewWrapper< LvArray::Array< R1Tensor, 3 > >(keys::dNdX);
   dNdXView->setSizedFromParent(1);
-  multidimensionalArray::ManagedArray< R1Tensor, 3 > &  dNdX = dNdXView->reference();
+  LvArray::Array< R1Tensor, 3 > &  dNdX = dNdXView->reference();
   dNdX.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
 
   auto & constitutiveMapView = *(cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString));
@@ -121,7 +121,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
-  auto & dNdX            = cellBlock->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+  auto & dNdX            = cellBlock->getReference< LvArray::Array< R1Tensor, 3 > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
   FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
@@ -130,9 +130,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 
   for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
   {
-    localIndex const * const elemToNodeMap = elemsToNodes[k];
-
-    CopyGlobalToLocal(elemToNodeMap, X, X_elemLocal);
+    CopyGlobalToLocal(elemsToNodes.data(k), X, X_elemLocal);
 
     m_finiteElement->reinit(X_elemLocal);
 
@@ -151,8 +149,8 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 
 void FiniteElementSpace::ReadXML_PostProcess()
 {
-  auto const & basisName = this->getData<string>(keys::basis);
-  auto const & quadratureName = this->getData<string>(keys::quadrature);
+  auto const & basisName = this->getReference<string>(keys::basis);
+  auto const & quadratureName = this->getReference<string>(keys::quadrature);
 
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
@@ -161,8 +159,8 @@ void FiniteElementSpace::ReadXML_PostProcess()
   ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
   ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
   
-  m_basis = basisManager->getData<BasisBase>(basisName);
-  m_quadrature = quadratureManager->getData<QuadratureBase>(quadratureName);
+  m_basis = &(basisManager->getReference<BasisBase>(basisName));
+  m_quadrature = &(quadratureManager->getReference<QuadratureBase>(quadratureName));
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 }
 

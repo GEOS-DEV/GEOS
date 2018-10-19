@@ -121,7 +121,7 @@ void CompositeFunction::InitializeFunction()
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
   parserContext.addBuiltIns();
-  std::string expression = getData<std::string>(keys::expression);
+  std::string const& expression = getReference<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
   GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
 

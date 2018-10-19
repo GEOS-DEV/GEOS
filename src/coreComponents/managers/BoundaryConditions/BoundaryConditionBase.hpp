@@ -54,7 +54,7 @@ struct BcEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array1d<T> & field,
+  ApplyBcValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -75,7 +75,7 @@ struct BcEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array1d<T> & field,
+  ApplyBcValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -96,7 +96,7 @@ struct BcEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array2d<T> & field,
+  ApplyBcValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -120,7 +120,7 @@ struct BcEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array2d<T> & field,
+  ApplyBcValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -201,7 +201,7 @@ struct BcAdd
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array1d<T> & field,
+  ApplyBcValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -222,7 +222,7 @@ struct BcAdd
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array1d<T> & field,
+  ApplyBcValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -242,7 +242,7 @@ struct BcAdd
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array2d<T> & field,
+  ApplyBcValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -266,7 +266,7 @@ struct BcAdd
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array2d<T> & field,
+  ApplyBcValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -451,7 +451,7 @@ public:
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   real64 const time,
                                   dataRepository::ManagedGroup * dataGroup,
-                                  globalIndex_array const & dofMap,
+                                  arrayView1d<globalIndex> const & dofMap,
                                   integer const & dofDim,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                   systemSolverInterface::BlockIDs const blockID,
@@ -584,7 +584,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
 {
 
   integer const component = GetComponent();
-  string const functionName = getData<string>( viewKeyStruct::functionNameString );
+  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
@@ -647,14 +647,14 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
 #if 1
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( vw->get_typeid());
-  globalIndex_array const & dofMap = dataGroup->getReference<globalIndex_array>( dofMapName );
+  arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<arrayView1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type ) -> void
     {
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-      dataRepository::view_rtype<fieldType> field = view.data();
+      fieldType & field = view.reference();
 
       this->ApplyBoundaryConditionToSystem<BC_OP>( targetSet,
                                                    time,
@@ -765,14 +765,14 @@ BoundaryConditionBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const time,
                                 dataRepository::ManagedGroup * dataGroup,
-                                globalIndex_array const & dofMap,
+                                arrayView1d<globalIndex> const & dofMap,
                                 integer const & dofDim,
                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                 systemSolverInterface::BlockIDs const blockID,
                                 LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
-  string const functionName = getData<string>( viewKeyStruct::functionNameString );
+  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   integer const numBlocks = blockSystem->numBlocks();

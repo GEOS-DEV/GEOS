@@ -74,11 +74,10 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
         GEOS_ERROR_IF(defVal == "REQUIRED", "variable " + subDocNode.getName() + " is required in " + targetNode.path() );
         stringutilities::StringToType( xmlVal, defVal );
       }
-      localIndex const size = multidimensionalArray::integer_conversion<localIndex>(xmlVal.size());
+      localIndex const size = LvArray::integer_conversion<localIndex>(xmlVal.size());
       dataView.resize( size );
-      typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-//        decltype(a) * data = dataView.pointer();
-      cxx_utilities::equateStlVector(data,xmlVal);
+      decltype(a) & data = dataView.reference();
+      cxx_utilities::equateStlVector(data, xmlVal);
     });
 }
 

@@ -36,7 +36,6 @@
 namespace geosx
 {
 using namespace dataRepository;
-using namespace multidimensionalArray;
 
 // *********************************************************************************************************************
 /**
@@ -213,10 +212,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        localIndex const * const nodeList = elemsToNodes[ke];
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
-          localIndex nodeIndex = nodeList[a];
+          localIndex nodeIndex = elemsToNodes[ke][a];
           toElementRegionList[nodeIndex].push_back( kReg );
           toElementSubRegionList[nodeIndex].push_back( kSubReg );
           toElementList[nodeIndex].push_back( ke );
@@ -240,7 +238,7 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 }
 
 //**************************************************************************************************
-localIndex NodeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex NodeManager::PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
@@ -248,7 +246,7 @@ localIndex NodeManager::PackUpDownMapsSize( localIndex_array const & packList ) 
 
 //**************************************************************************************************
 localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                             localIndex_array const & packList ) const
+                             arrayView1d<localIndex> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
@@ -256,7 +254,7 @@ localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
 //**************************************************************************************************
 template< bool DOPACK >
 localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               localIndex_array const & packList ) const
+                                               arrayView1d<localIndex> const & packList ) const
 {
   localIndex packedSize = 0;
 
@@ -284,7 +282,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 //**************************************************************************************************
 localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                               localIndex_array const & packList )
+                               arrayView1d<localIndex> const & packList )
 {
   localIndex unPackedSize = 0;
 

@@ -34,25 +34,25 @@ namespace bufferOps
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
                  OrderedVariableToManyElementRelation const & var,
-                 array1d<localIndex> const & packList,
+                 arrayView1d<localIndex> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
                  FixedToManyElementRelation const & var,
-                 array1d<localIndex> const & packList,
+                 arrayView1d<localIndex> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
 
 
 localIndex Unpack( char const * & buffer,
                    OrderedVariableToManyElementRelation & var,
-                   array1d<localIndex> const & packList,
+                   arrayView1d<localIndex> const & packList,
                    ElementRegionManager const * const elementRegionManager );
 
 localIndex Unpack( char const * & buffer,
                    FixedToManyElementRelation & var,
-                   array1d<localIndex> const & packList,
+                   arrayView1d<localIndex> const & packList,
                    ElementRegionManager const * const elementRegionManager );
 }
 }

@@ -189,11 +189,11 @@ void EventManager::CreateChild( string const & childKey, string const & childNam
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
-  real64& time = *(this->getData<real64>(viewKeys.time));
-  real64& dt = *(this->getData<real64>(viewKeys.dt));
-  integer& cycle = *(this->getData<integer>(viewKeys.cycle));
-  integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
-  real64& currentMaxDt = *(this->getData<real64>(viewKeys.currentMaxDt));
+  real64& time = this->getReference<real64>(viewKeys.time);
+  real64& dt = this->getReference<real64>(viewKeys.dt);
+  integer& cycle = this->getReference<integer>(viewKeys.cycle);
+  integer& currentSubEvent = this->getReference<integer>(viewKeys.currentSubEvent);
+  real64& currentMaxDt = this->getReference<real64>(viewKeys.currentMaxDt);
   real64 const maxTime = this->getReference<real64>(viewKeys.maxTime);
   integer const maxCycle = this->getReference<integer>(viewKeys.maxCycle);
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
