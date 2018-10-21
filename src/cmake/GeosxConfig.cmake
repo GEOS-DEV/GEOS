@@ -23,7 +23,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           RAJA 
                           TRILINOS
                           PVT_PACKAGE
-                          PAMELA)
+                          PAMELA )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
     if( ${DEP}_FOUND OR ENABLE_${DEP} )
