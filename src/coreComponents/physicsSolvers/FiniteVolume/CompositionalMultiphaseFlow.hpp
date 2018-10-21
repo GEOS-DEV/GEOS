@@ -160,14 +160,21 @@ public:
     static constexpr auto globalCompFractionString                     = "globalCompFraction";
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dGlobalCompFraction_dGlobalCompDensity";
 
+    // intermediate values for saturations
+    static constexpr auto phaseVolumeFractionString                     = "phaseVolumeFraction";
+    static constexpr auto dPhaseVolumeFraction_dPressureString          = "dPhaseVolumeFraction_dPressure";
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dPhaseVolumeFraction_dGlobalCompDensity";
+
     // these are used to store last converged time step values
-    static constexpr auto phaseVolumeFractionString        = "phaseVolumeFraction";
-    static constexpr auto phaseDensityString               = "phaseDensity";
-    static constexpr auto phaseComponentFractionString     = "phaseComponentFraction";
+    static constexpr auto phaseVolumeFractionOldString     = "phaseVolumeFractionOld";
+    static constexpr auto phaseDensityOldString            = "phaseDensityOld";
+    static constexpr auto phaseComponentFractionOldString  = "phaseComponentFractionOld";
+    static constexpr auto porosityOldString                = "porosityOld";
+
+    // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
-    static constexpr auto porosityString                   = "porosity";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     // inputs
@@ -189,13 +196,20 @@ public:
     ViewKey globalCompFraction                     = { globalCompFractionString };
     ViewKey dGlobalCompFraction_dGlobalCompDensity = { dGlobalCompFraction_dGlobalCompDensityString };
 
+    // intermediate values for saturations
+    ViewKey phaseVolumeFraction                     = { phaseVolumeFractionString };
+    ViewKey dPhaseVolumeFraction_dPressure          = { dPhaseVolumeFraction_dPressureString };
+    ViewKey dPhaseVolumeFraction_dGlobalCompDensity = { dPhaseVolumeFraction_dGlobalCompDensityString };
+
     // these are used to store last converged time step values
-    ViewKey phaseVolumeFraction        = { phaseVolumeFractionString };
-    ViewKey phaseDensity               = { phaseDensityString };
-    ViewKey phaseComponentFraction     = { phaseComponentFractionString };
+    ViewKey phaseVolumeFractionOld     = { phaseVolumeFractionOldString };
+    ViewKey phaseDensityOld            = { phaseDensityOldString };
+    ViewKey phaseComponentFractionOld  = { phaseComponentFractionOldString };
+    ViewKey porosityOld                = { porosityOldString };
+
+    // these are allocated on faces for BC application until we can get constitutive models on faces
     ViewKey phaseViscosity             = { phaseViscosityString };
     ViewKey phaseRelativePermeability  = { phaseRelativePermeabilityString };
-    ViewKey porosity                   = { porosityString };
 
   } viewKeysCompMultiphaseFlow;
 
@@ -220,6 +234,12 @@ private:
    * @param domain the domain containing the mesh and fields
    */
   void UpdateComponentFraction( DomainPartition * domain );
+
+  /**
+   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdatePhaseVolumeFraction( DomainPartition * domain );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition

@@ -346,13 +346,6 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
     m_dPhaseDensity_dGlobalCompFraction[k][q]
   };
 
-  VarContainer<1> phaseVolFrac {
-    m_phaseVolumeFraction[k][q],
-    m_dPhaseVolumeFraction_dPressure[k][q],
-    m_dPhaseVolumeFraction_dTemperature[k][q],
-    m_dPhaseVolumeFraction_dGlobalCompFraction[k][q]
-  };
-
   VarContainer<2> phaseCompFrac {
     m_phaseCompFraction[k][q],
     m_dPhaseCompFraction_dPressure[k][q],
@@ -383,7 +376,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
     real64 totalMolality = 0.0;
     for (localIndex ic = 0; ic < NC; ++ic)
     {
-      compMoleFrac[ic] = composition[ic] / m_componentMolarWeight[ic]; // this is molality (units of mol/kg)
+      compMoleFrac[ic] = composition[ic] / m_componentMolarWeight[ic]; // this is molality (units of mole/mass)
       dCompMoleFrac_dCompMassFrac[ic][ic] = 1.0 / m_componentMolarWeight[ic];
       totalMolality += compMoleFrac[ic];
     }
@@ -408,12 +401,10 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
   }
 
   // 2. Trigger PVTPackage compute and get back phase split
-
   m_fluid->Update(pres, temp, compMoleFrac);
   MultiphaseSystemProperties const & split = m_fluid->get_MultiphaseSystemProperties();
 
   // 3. Extract phase split, phase properties and derivatives from PVTPackage
-
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     PHASE_TYPE phase = phaseNameDict.at(m_phaseNames[ip]);
@@ -445,145 +436,131 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
     }
   }
 
-  // 4. Compute phase volume fractions and derivatives, requires two passes for normalization
-
-  real64 totalMolDensInv = 0.0;
-  real64 dTotalMolDensInv_dP = 0.0;
-  real64 dTotalMolDensInv_dT = 0.0;
-  real64 dTotalMolDensInv_dC[MAX_NUM_COMPONENTS]{};
-
-  for (localIndex ip = 0; ip < NP; ++ip)
-  {
-    PHASE_TYPE phase = phaseNameDict.at(m_phaseNames[ip]);
-    PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
-
-    auto const & phaseMolarDens = props.MoleDensity;
-
-    phaseVolFrac.value[ip] = phaseFrac.value[ip] / phaseMolarDens.value;
-
-    phaseVolFrac.dPres[ip] =
-      (phaseFrac.dPres[ip] - phaseVolFrac.value[ip] * phaseMolarDens.dP) / phaseMolarDens.value;
-
-    phaseVolFrac.dTemp[ip] =
-      (phaseFrac.dTemp[ip] - phaseVolFrac.value[ip] * phaseMolarDens.dT) / phaseMolarDens.value;
-
-    totalMolDensInv += phaseVolFrac.value[ip];
-    dTotalMolDensInv_dP += phaseVolFrac.dPres[ip];
-    dTotalMolDensInv_dT += phaseVolFrac.dTemp[ip];
-
-    for (localIndex jc = 0; jc < NC; ++jc)
-    {
-      phaseVolFrac.dComp[ip][jc] =
-        (phaseFrac.dComp[ip][jc] - phaseVolFrac.value[ip] * phaseMolarDens.dz[jc]) / phaseMolarDens.value;
-
-      dTotalMolDensInv_dC[jc] += phaseVolFrac.dComp[ip][jc];
-    }
-  }
-  // normalization pass
-  for (localIndex ip = 0; ip < NP; ++ip)
-  {
-    phaseVolFrac.value[ip] /= totalMolDensInv;
-    phaseVolFrac.dPres[ip] = (phaseVolFrac.dPres[ip] - phaseVolFrac.value[ip] * dTotalMolDensInv_dP) / totalMolDensInv;
-    phaseVolFrac.dTemp[ip] = (phaseVolFrac.dTemp[ip] - phaseVolFrac.value[ip] * dTotalMolDensInv_dT) / totalMolDensInv;
-
-    for (localIndex ic = 0; ic < NC; ++ic)
-    {
-      phaseVolFrac.dComp[ip][ic] -= phaseVolFrac.value[ip] * dTotalMolDensInv_dC[ic];
-      phaseVolFrac.dComp[ip][ic] /= totalMolDensInv;
-    }
-  }
-
-  // 5. Compute total fluid mass/molar density
-  totalDens.value = 0.0;
-  totalDens.dPres = 0.0;
-  totalDens.dTemp = 0.0;
-  for (localIndex jc = 0; jc < NC; ++jc)
-  {
-    totalDens.dComp[jc] = 0.0;
-  }
-  for (localIndex ip = 0; ip < NP; ++ip)
-  {
-    totalDens.value += phaseDens.value[ip] * phaseVolFrac.value[ip];
-    totalDens.dPres += phaseDens.dPres[ip] * phaseVolFrac.value[ip] + phaseDens.value[ip] * phaseVolFrac.dPres[ip];
-    totalDens.dTemp += phaseDens.dTemp[ip] * phaseVolFrac.value[ip] + phaseDens.value[ip] * phaseVolFrac.dTemp[ip];
-
-    for (localIndex jc = 0; jc < NC; ++jc)
-    {
-      totalDens.dComp[jc] += phaseDens.dComp[ip][jc] * phaseVolFrac.value[ip] + phaseDens.value[ip] * phaseVolFrac.dComp[ip][jc];
-    }
-  }
-
+  // 4. if mass variables used instead of molar, perform the conversion
   if (m_useMass)
   {
-    // 6. Convert output mole fractions to mass fractions
-    // At this point, phase and total densities are already mass densities
+    // 4.1. Convert phase fractions (requires two passes)
+    real64 totalMass = 0.0;
+    real64 dTotalMass_dP = 0.0;
+    real64 dTotalMass_dT = 0.0;
+    real64 dTotalMass_dC[MAX_NUM_COMPONENTS]{};
 
-    // 6.1. Compute total molar weight and derivatives
-    real64 dTotalMW_dC[MAX_NUM_COMPONENTS]{};
-
-    real64 const totalMW = totalDens.value * totalMolDensInv;
-    real64 const dTotalMW_dP = totalDens.dPres * totalMolDensInv + totalDens.value * dTotalMolDensInv_dP;
-    real64 const dTotalMW_dT = totalDens.dTemp * totalMolDensInv + totalDens.value * dTotalMolDensInv_dT;
-
-    for (localIndex jc = 0; jc < NC; ++jc)
-    {
-      dTotalMW_dC[jc] = totalDens.dComp[jc] * totalMolDensInv + totalDens.value * dTotalMolDensInv_dC[jc];
-    }
-
-    // 6.2. Finally, convert fractions
+    // 4.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
     for (localIndex ip = 0; ip < NP; ++ip)
     {
       PHASE_TYPE phase = phaseNameDict.at(m_phaseNames[ip]);
       PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
 
       auto const & phaseMW = props.MolecularWeight;
+      real64 const nu = phaseFrac.value[ip];
 
-      phaseFrac.value[ip] *= phaseMW.value / totalMW;
-      phaseFrac.dPres[ip] = phaseFrac.dPres[ip] * phaseMW.value / totalMW
-                          + phaseFrac.value[ip] * (phaseMW.dP / phaseMW.value - dTotalMW_dP / totalMW);
-      phaseFrac.dTemp[ip] = phaseFrac.dTemp[ip] * phaseMW.value / totalMW
-                            + phaseFrac.value[ip] * (phaseMW.dT / phaseMW.value - dTotalMW_dT / totalMW);
+      phaseFrac.value[ip] *= phaseMW.value;
+      phaseFrac.dPres[ip] = phaseFrac.dPres[ip] * phaseMW.value + nu * phaseMW.dP;
+      phaseFrac.dTemp[ip] = phaseFrac.dTemp[ip] * phaseMW.value + nu * phaseMW.dT;
+
+      totalMass += phaseFrac.value[ip];
+      dTotalMass_dP += phaseFrac.dPres[ip];
+      dTotalMass_dT += phaseFrac.dTemp[ip];
 
       for (localIndex jc = 0; jc < NC; ++jc)
       {
-        phaseFrac.dComp[ip][jc] = phaseFrac.dComp[ip][jc] * phaseMW.value / totalMW
-                                + phaseFrac.value[ip] * (phaseMW.dz[jc] / phaseMW.value - dTotalMW_dC[jc] / totalMW);
+        phaseFrac.dComp[ip][jc] = phaseFrac.dComp[ip][jc] * phaseMW.value + nu * phaseMW.dz[jc];
+        dTotalMass_dC[jc] += phaseFrac.dComp[ip][jc];
       }
+    }
+
+    // 4.1.2. Normalize to get mass fractions
+    real64 const totalMassInv = 1.0 / totalMass;
+    for (localIndex ip = 0; ip < NP; ++ip)
+    {
+      phaseFrac.value[ip] *= totalMassInv;
+      phaseFrac.dPres[ip] = (phaseFrac.dPres[ip] - phaseFrac.value[ip] * dTotalMass_dP) * totalMassInv;
+      phaseFrac.dTemp[ip] = (phaseFrac.dTemp[ip] - phaseFrac.value[ip] * dTotalMass_dT) * totalMassInv;
+
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        phaseFrac.dComp[ip][jc] = (phaseFrac.dComp[ip][jc] - phaseFrac.value[ip] * dTotalMass_dC[jc]) * totalMassInv;
+      }
+    }
+
+    // 4.2. Convert phase compositions
+    for (localIndex ip = 0; ip < NP; ++ip)
+    {
+      PHASE_TYPE phase = phaseNameDict.at(m_phaseNames[ip]);
+      PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
+
+      auto const & phaseMW = props.MolecularWeight;
+      real64 const phaseMWInv = 1.0 / phaseMW.value;
 
       for (localIndex ic = 0; ic < NC; ++ic)
       {
 
         real64 const compMW = m_componentMolarWeight[ic];
 
-        phaseCompFrac.value[ip][ic] = phaseCompFrac.value[ip][ic] * compMW / phaseMW.value;
+        phaseCompFrac.value[ip][ic] = phaseCompFrac.value[ip][ic] * compMW * phaseMWInv;
         phaseCompFrac.dPres[ip][ic] =
-          (phaseCompFrac.dPres[ip][ic] * compMW - phaseCompFrac.value[ip][ic] * phaseMW.dP) / phaseMW.value;
+          (phaseCompFrac.dPres[ip][ic] * compMW - phaseCompFrac.value[ip][ic] * phaseMW.dP) * phaseMWInv;
         phaseCompFrac.dTemp[ip][ic] =
-          (phaseCompFrac.dTemp[ip][ic] * compMW - phaseCompFrac.value[ip][ic] * phaseMW.dT) / phaseMW.value;
+          (phaseCompFrac.dTemp[ip][ic] * compMW - phaseCompFrac.value[ip][ic] * phaseMW.dT) * phaseMWInv;
 
         for (localIndex jc = 0; jc < NC; ++jc)
         {
           phaseCompFrac.dComp[ip][ic][jc] =
-            (phaseCompFrac.dComp[ip][ic][jc] * compMW - phaseCompFrac.value[ip][ic] * phaseMW.dz[jc]) / phaseMW.value;
+            (phaseCompFrac.dComp[ip][ic][jc] * compMW - phaseCompFrac.value[ip][ic] * phaseMW.dz[jc]) * phaseMWInv;
         }
       }
     }
 
-    // 7. Update derivatives w.r.t. mole fractions to derivatives w.r.t mass fractions
-
+    // 4.3. Update derivatives w.r.t. mole fractions to derivatives w.r.t mass fractions
     array1d<real64> work( NC );
     for (localIndex ip = 0; ip < NP; ++ip)
     {
       applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, phaseFrac.dComp[ip], work );
       applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, phaseDens.dComp[ip], work );
-      applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, phaseVolFrac.dComp[ip], work );
 
       for (localIndex ic = 0; ic < NC; ++ic)
       {
         applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, phaseCompFrac.dComp[ip][ic], work );
       }
     }
-    applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, totalDens.dComp, work );
+  }
+
+  // 5. Compute total fluid mass/molar density and derivatives
+  {
+    totalDens.value = 0.0;
+    totalDens.dPres = 0.0;
+    totalDens.dTemp = 0.0;
+    for (localIndex jc = 0; jc < NC; ++jc)
+    {
+      totalDens.dComp[jc] = 0.0;
+    }
+
+    // 5.1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
+    for (localIndex ip = 0; ip < NP; ++ip)
+    {
+      real64 const densInv = 1.0 / phaseDens.value[ip];
+      real64 const value = phaseFrac.value[ip] * densInv;
+
+      totalDens.value += value;
+      totalDens.dPres += (phaseFrac.dPres[ip] - value * phaseDens.dPres[ip]) * densInv;
+      totalDens.dTemp += (phaseFrac.dTemp[ip] - value * phaseDens.dTemp[ip]) * densInv;
+
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        totalDens.dComp[jc] += (phaseFrac.dComp[ip][jc] - value * phaseDens.dComp[ip][jc]) * densInv;
+      }
+    }
+
+    // 5.2. Invert the previous quantity to get actual density
+    totalDens.value = 1.0 / totalDens.value;
+    real64 const minusDens2 = -totalDens.value * totalDens.value;
+    totalDens.dPres *= minusDens2;
+    totalDens.dTemp *= minusDens2;
+
+    for (localIndex jc = 0; jc < NC; ++jc)
+    {
+      totalDens.dComp[jc] *= minusDens2;
+    }
   }
 }
 
