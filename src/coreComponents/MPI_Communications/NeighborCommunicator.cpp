@@ -25,6 +25,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "NeighborCommunicator.hpp"
+#include "managers/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
 #include <sys/time.h>
 
@@ -365,7 +366,6 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
   this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
 }
 
-
 void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
                                          int const commID )
 {
@@ -413,6 +413,9 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
 
 }
 
+
+
+
 void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                              int const commID )
 {
@@ -430,15 +433,6 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   ManagedGroup * const faceNeighborData = faceManager.
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
-
-//  integer_array & nodeGhostRank = nodeManager.GhostRank();
-//  integer_array & edgeGhostRank = edgeManager.GhostRank();
-//  integer_array & faceGhostRank = faceManager.GhostRank();
-//
-//  ElementRegionManager::ElementViewAccessor<integer_array>
-//  elementGhostRank = elemManager.ConstructViewAccessor<integer_array>( ObjectManagerBase::
-//                                                                       viewKeyStruct::
-//                                                                       ghostRankString );
 
 
   localIndex_array & nodeGhostsToSend = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );

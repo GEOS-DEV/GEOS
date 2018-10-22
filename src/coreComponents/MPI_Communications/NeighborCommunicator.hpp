@@ -31,6 +31,7 @@
 #include <vector>
 #include "common/DataTypes.hpp"
 #include "common/integer_conversion.hpp"
+#include "dataRepository/ReferenceWrapper.hpp"
 
 namespace geosx
 {
@@ -43,8 +44,7 @@ inline int CommTag( int const senderRank, int const receiverRank, int const comm
 }
 
 class MeshLevel;
-
-
+class ObjectManagerBase;
 class NeighborCommunicator
 {
 public:
@@ -162,7 +162,6 @@ public:
 
   void UnpackGhosts( MeshLevel * const meshLevel,
                      int const commID );
-
 
   void RebuildSyncLists( MeshLevel * const meshLevel,
                          int const commID );
