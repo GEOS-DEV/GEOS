@@ -126,6 +126,10 @@ public:
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
+  virtual bool
+  CheckSystemSolution(systemSolverInterface::EpetraBlockSystem const * const blockSystem, real64 const scalingFactor,
+                      DomainPartition * const domain) override;
+
   virtual void
   ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        real64 const scalingFactor,

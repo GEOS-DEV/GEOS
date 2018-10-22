@@ -1169,10 +1169,10 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   AssembleFluxTerms( domain, blockSystem, time_n, dt );
   AssembleVolumeBalanceTerms( domain, blockSystem, time_n, dt );
 
-  jacobian->GlobalAssemble(true);
+  jacobian->GlobalAssemble(false);
   residual->GlobalAssemble();
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() >= 3 )
   {
     jacobian->Print(std::cout);
     residual->Print(std::cout);
@@ -1922,14 +1922,21 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * con
                                                            EpetraBlockSystem * const blockSystem,
                                                            real64 const time_n, real64 const dt )
 {
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
+                                                                BlockIDs::compositionalBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
+  jacobian->GlobalAssemble(true);
+  residual->GlobalAssemble();
+
   if (verboseLevel() >= 2)
   {
-    blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock )->Print( std::cout );
-    blockSystem->GetResidualVector( BlockIDs::compositionalBlock )->Print( std::cout );
+    jacobian->Print( std::cout );
+    residual->Print( std::cout );
   }
 }
 
@@ -2152,6 +2159,68 @@ void CompositionalMultiphaseFlow::SolveSystem( EpetraBlockSystem * const blockSy
   {
     solution->Print(std::cout);
   }
+}
+
+bool
+CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * const blockSystem,
+                                                  real64 const scalingFactor,
+                                                  DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
+  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
+
+  int dummy;
+  double* local_solution = nullptr;
+  solution->ExtractView(&local_solution,&dummy);
+
+  auto blockLocalDofNumber =
+    elemManager->ConstructViewAccessor<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+
+  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
+  auto compDens  = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompDensity.Key() );
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key() );
+
+  auto elemGhostRank =
+    elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  bool result = true;
+
+  // TODO use reduction over mesh
+  // loop over all elements to update incremental pressure
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei )->void
+  {
+    if( elemGhostRank[er][esr][ei] < 0 )
+    {
+      globalIndex const offset = m_numDofPerCell * blockLocalDofNumber[er][esr][ei];
+      // extract solution and apply to dP
+      {
+        int const lid = rowMap->LID(integer_conversion<int>(offset));
+        real64 const newPres = pres[er][esr][ei] + dPres[er][esr][ei] + scalingFactor * local_solution[lid];
+        if (newPres < 0.0)
+        {
+          result = false;
+        }
+      }
+
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      {
+        int const lid = rowMap->LID(integer_conversion<int>(offset + ic + 1));
+        real64 const newDens = compDens[er][esr][ei][ic] + dCompDens[er][esr][ei][ic] + scalingFactor * local_solution[lid];
+        if (newDens < 0.0)
+        {
+          result = false;
+        }
+      }
+    }
+  });
+
+  return result;
 }
 
 void
