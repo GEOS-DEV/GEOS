@@ -17,18 +17,19 @@
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
-                              maxIterNewton="8"
-                              useDirectSolver="1"/>
+                              maxIterNewton="2"
+                              useDirectSolver="1"
+                              ilut_fill="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 10"
+                  xCoords="0, 3"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="10"
+                  nx="3"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
@@ -36,15 +37,15 @@
 
   <Geometry>
     <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="2000.0">
+  <Events maxTime="200.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="20.0"
+                   forceDt="100.0"
                    target="/Solvers/compflow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
@@ -81,19 +82,11 @@
   </ElementRegions>
 
   <Constitutive>
-    <CompositionalMultiphaseFluid name="fluid1"
-                                  phaseNames="oil gas"
-                                  equationsOfState="PR PR"
-                                  componentNames="N2 C10 C20 H2O"
-                                  componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"
-                                  componentCriticalTemperature="126.2,622.0,782.0,647.0"
-                                  componentAcentricFactor="0.04,0.443,0.816,0.344"
-                                  componentMolarWeight="28e-3,134e-3,275e-3,18e-3"
-                                  componentVolumeShift="0 0 0 0"
-                                  componentBinaryCoeff="0 0 0 0
-                                                        0 0 0 0
-                                                        0 0 0 0
-                                                        0 0 0 0"/>
+    <BlackOilFluid name="fluid1"
+                   phaseNames="oil gas water"
+                   surfaceDensities="800.0 1.0 1000.0"
+                   molarWeights="90.0 16.0 18.0"
+                   tableFiles="pvto.txt pvtg.txt pvtw.txt"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"

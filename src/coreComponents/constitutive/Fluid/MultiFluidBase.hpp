@@ -65,7 +65,7 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phasesString           = "phases";
+    static constexpr auto phaseNamesString       = "phaseNames";
     static constexpr auto componentNamesString   = "componentNames";
 
     static constexpr auto phaseFractionString                            = "phaseFraction";                            // xi_p
@@ -90,8 +90,8 @@ public:
 
     using ViewKey = dataRepository::ViewKey;
 
-    ViewKey phases           = { phasesString };
-    ViewKey componentNames   = { componentNamesString };
+    ViewKey phaseNames     = { phaseNamesString };
+    ViewKey componentNames = { componentNamesString };
 
     ViewKey phaseFraction                            = { phaseFractionString };                            // xi_p
     ViewKey dPhaseFraction_dPressure                 = { dPhaseFraction_dPressureString };                 // dXi_p/dP

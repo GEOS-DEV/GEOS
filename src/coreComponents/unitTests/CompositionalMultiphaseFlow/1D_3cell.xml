@@ -83,7 +83,7 @@
 
   <Constitutive>
     <CompositionalMultiphaseFluid name="fluid1"
-                                  phases="oil gas"
+                                  phaseNames="oil gas"
                                   equationsOfState="PR PR"
                                   componentNames="N2 C10 C20 H2O"
                                   componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"

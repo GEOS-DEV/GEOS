@@ -36,7 +36,7 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   : ConstitutiveBase( name, parent ),
     m_useMass( false )
 {
-  RegisterViewWrapper( viewKeysMultiFluidBase.phases.Key(), &m_phaseNames, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.phaseNames.Key(), &m_phaseNames, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.componentNames.Key(), &m_componentNames, false );
 
   RegisterViewWrapper( viewKeysMultiFluidBase.phaseFraction.Key(), &m_phaseFraction, false );
@@ -103,8 +103,8 @@ void MultiFluidBase::FillDocumentationNode()
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "Multi-component multiphase fluid model" );
 
-  docNode->AllocateChildNode( viewKeysMultiFluidBase.phases.Key(),
-                              viewKeysMultiFluidBase.phases.Key(),
+  docNode->AllocateChildNode( viewKeysMultiFluidBase.phaseNames.Key(),
+                              viewKeysMultiFluidBase.phaseNames.Key(),
                               -1,
                               "string_array",
                               "string_array",
@@ -123,7 +123,7 @@ void MultiFluidBase::FillDocumentationNode()
                               "string_array",
                               "List of component names",
                               "List of component names",
-                              "REQUIRED",
+                              "",
                               "",
                               1,
                               1,
@@ -132,8 +132,11 @@ void MultiFluidBase::FillDocumentationNode()
 
 void MultiFluidBase::ReadXML_PostProcess()
 {
-    GEOS_ERROR_IF(numFluidComponents() > MAX_NUM_COMPONENTS,
-      "MultiFluidBase: Number of fluid components exceeds the maximum of " << MAX_NUM_COMPONENTS);
+  GEOS_ERROR_IF( numFluidComponents() == 0,
+    "MultiFluidBase: No fluid components specified" );
+
+  GEOS_ERROR_IF( numFluidComponents() > MAX_NUM_COMPONENTS,
+    "MultiFluidBase: Number of fluid components exceeds the maximum of " << MAX_NUM_COMPONENTS );
 }
 
 localIndex MultiFluidBase::numFluidComponents() const

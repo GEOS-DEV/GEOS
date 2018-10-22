@@ -26,8 +26,16 @@ set( constitutive_sources
 set( dependencyList dataRepository )
 
 if( ENABLE_PVT_PACKAGE )
-    set( constitutive_headers ${constitutive_headers} Fluid/CompositionalMultiphaseFluid.hpp )
-    set( constitutive_sources ${constitutive_sources} Fluid/CompositionalMultiphaseFluid.cpp )
+    set( constitutive_headers
+         ${constitutive_headers}
+         Fluid/CompositionalMultiphaseFluid.hpp
+         Fluid/BlackOilFluid.hpp
+       )
+    set( constitutive_sources
+         ${constitutive_sources}
+         Fluid/CompositionalMultiphaseFluid.cpp
+         Fluid/BlackOilFluid.cpp
+       )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
 

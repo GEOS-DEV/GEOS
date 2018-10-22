@@ -17,15 +17,15 @@
  */
 
 /**
-  * @file CompositionalMultiphaseFluid.cpp
+  * @file BlackOilFluid.cpp
   */
 
-#include "CompositionalMultiphaseFluid.hpp"
+#include "BlackOilFluid.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
 // PVTPackage includes
-#include "MultiphaseSystem/CompositionalMultiphaseSystem.hpp"
+#include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
 
 
 using namespace PVTPackage;
@@ -49,201 +49,124 @@ std::unordered_map<string, PHASE_TYPE> const phaseNameDict =
     { "water", PHASE_TYPE::LIQUID_WATER_RICH }
   };
 
-std::unordered_map<string, EOS_TYPE> const eosNameDict =
-  {
-    { "PR",   EOS_TYPE::PENG_ROBINSON },
-    { "SRK",  EOS_TYPE::REDLICH_KWONG_SOAVE }
-  };
-
 }
 
-CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
+BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidBase( name, parent ),
     m_fluid( nullptr )
 {
-  RegisterViewWrapper( viewKeys.equationsOfState.Key(), &m_equationsOfState, false );
+  RegisterViewWrapper( viewKeys.surfaceDensities.Key(), &m_surfaceDensities, false );
+  RegisterViewWrapper( viewKeys.molarWeights.Key(), &m_molarWeights, false );
 
-  RegisterViewWrapper( viewKeys.componentCriticalPressure.Key(), &m_componentCriticalPressure, false );
-  RegisterViewWrapper( viewKeys.componentCriticalTemperature.Key(), &m_componentCriticalTemperature, false );
-  RegisterViewWrapper( viewKeys.componentAcentricFactor.Key(), &m_componentAcentricFactor, false );
-  RegisterViewWrapper( viewKeys.componentMolarWeight.Key(), &m_componentMolarWeight, false );
-  RegisterViewWrapper( viewKeys.componentVolumeShift.Key(), &m_componentVolumeShift, false );
-  RegisterViewWrapper( viewKeys.componentBinaryCoeff.Key(), &m_componentBinaryCoeff, false );
+  RegisterViewWrapper( viewKeys.tableFiles.Key(), &m_tableFiles, false );
 }
 
-CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
+BlackOilFluid::~BlackOilFluid()
 {
   delete m_fluid;
 }
 
 std::unique_ptr<ConstitutiveBase>
-CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
+BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
 {
-  auto clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
+  auto clone = std::make_unique<BlackOilFluid>( name, parent );
 
   clone->m_useMass = this->m_useMass;
 
-  clone->m_phaseNames       = this->m_phaseNames;
-  clone->m_equationsOfState = this->m_equationsOfState;
-  clone->m_componentNames   = this->m_componentNames;
+  clone->m_phaseNames     = this->m_phaseNames;
+  clone->m_componentNames = this->m_componentNames;
 
-  clone->m_componentCriticalPressure    = this->m_componentCriticalPressure;
-  clone->m_componentCriticalTemperature = this->m_componentCriticalTemperature;
-  clone->m_componentAcentricFactor      = this->m_componentAcentricFactor;
-  clone->m_componentMolarWeight         = this->m_componentMolarWeight;
-  clone->m_componentVolumeShift         = this->m_componentVolumeShift;
-  clone->m_componentBinaryCoeff         = this->m_componentBinaryCoeff;
+  clone->m_surfaceDensities    = this->m_surfaceDensities;
+  clone->m_molarWeights        = this->m_molarWeights;
+
+  clone->m_tableFiles = this->m_tableFiles;
 
   clone->createFluid();
 
   return clone;
 }
 
-void CompositionalMultiphaseFluid::FillDocumentationNode()
+void BlackOilFluid::FillDocumentationNode()
 {
   MultiFluidBase::FillDocumentationNode();
 
   DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setShortDescription( "Compositional multiphase fluid model based on PVTPackage" );
+  docNode->setShortDescription( "Black-oil fluid model based on PVTPackage" );
 
-  docNode->AllocateChildNode( viewKeys.equationsOfState.Key(),
-                              viewKeys.equationsOfState.Key(),
+  docNode->AllocateChildNode( viewKeys.surfaceDensities.Key(),
+                              viewKeys.surfaceDensities.Key(),
+                              -1,
+                              "real64_array",
+                              "real64_array",
+                              "List of surface densities for each phase",
+                              "List of surface densities for each phase",
+                              "REQUIRED",
+                              "",
+                              1,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.molarWeights.Key(),
+                              viewKeys.molarWeights.Key(),
+                              -1,
+                              "real64_array",
+                              "real64_array",
+                              "List of molar weights for each phase",
+                              "List of molar weights for each phase",
+                              "REQUIRED",
+                              "",
+                              1,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.tableFiles.Key(),
+                              viewKeys.tableFiles.Key(),
                               -1,
                               "string_array",
                               "string_array",
-                              "List of equation of state types for each phase",
-                              "List of equation of state types for each phase",
+                              "List of filenames with input PVT tables",
+                              "List of filenames with input PVT tables",
                               "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.componentCriticalPressure.Key(),
-                              viewKeys.componentCriticalPressure.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component critical pressures",
-                              "Component critical pressures",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.componentCriticalTemperature.Key(),
-                              viewKeys.componentCriticalTemperature.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component critical temperatures",
-                              "Component critical temperatures",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.componentAcentricFactor.Key(),
-                              viewKeys.componentAcentricFactor.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component acentric factors",
-                              "Component acentric factors",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.componentMolarWeight.Key(),
-                              viewKeys.componentMolarWeight.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component molar weights",
-                              "Component molar weights",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.componentVolumeShift.Key(),
-                              viewKeys.componentVolumeShift.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component volume shifts",
-                              "Component volume shifts",
-                              "",
                               "",
                               1,
                               1,
                               0 );
 }
 
-void CompositionalMultiphaseFluid::ReadXML_PostProcess()
+void BlackOilFluid::ReadXML_PostProcess()
 {
+  m_componentNames = m_phaseNames;
+
   MultiFluidBase::ReadXML_PostProcess();
 
-  localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
 
 #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR("CompositionalMultiphaseFluid: invalid number of entries in " \
+    GEOS_ERROR("BlackOilFluid: invalid number of entries in " \
                << (attr) << " attribute (" \
                << (data).size() << "given, " \
                << (expected) << " expected)"); \
   }
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_equationsOfState, NP,
-                               viewKeys.equationsOfState.Key())
+  BOFLUID_CHECK_INPUT_LENGTH(m_surfaceDensities, NP,
+                             viewKeys.surfaceDensities.Key())
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentCriticalPressure, NC,
-                               viewKeys.componentCriticalPressure.Key())
+  BOFLUID_CHECK_INPUT_LENGTH(m_molarWeights, NP,
+                             viewKeys.surfaceDensities.Key())
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentCriticalTemperature, NC,
-                               viewKeys.componentCriticalTemperature.Key())
-
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentAcentricFactor, NC,
-                               viewKeys.componentAcentricFactor.Key())
-
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeight, NC,
-                               viewKeys.componentMolarWeight.Key())
-
-  if (m_componentVolumeShift.empty())
-  {
-    m_componentVolumeShift.resize( NC );
-    m_componentVolumeShift = 0.0;
-  }
-
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentVolumeShift, NC,
-                               viewKeys.componentVolumeShift.Key())
-
-  //if (m_componentBinaryCoeff.empty()) TODO
-  {
-    m_componentBinaryCoeff.resize( NC, NC );
-    m_componentBinaryCoeff = 0.0;
-  }
-
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentBinaryCoeff, NC * NC,
-                               viewKeys.componentBinaryCoeff.Key())
+  BOFLUID_CHECK_INPUT_LENGTH(m_tableFiles, NP,
+                             viewKeys.surfaceDensities.Key())
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
 }
 
-void CompositionalMultiphaseFluid::createFluid()
+void BlackOilFluid::createFluid()
 {
-  localIndex const numComp  = numFluidComponents();
   localIndex const numPhase = numFluidPhases();
 
   std::vector<PHASE_TYPE> phases(numPhase);
-  std::vector<EOS_TYPE> eos(numPhase);
 
   for (localIndex ip = 0; ip < numPhase; ++ip)
   {
@@ -255,30 +178,17 @@ void CompositionalMultiphaseFluid::createFluid()
     {
       GEOS_ERROR("CompositionalMultiphaseFluid: invalid phase label: " << m_phaseNames[ip]);
     }
-
-    if (eosNameDict.find(m_equationsOfState[ip]) != eosNameDict.end())
-    {
-      eos[ip] = eosNameDict.at(m_equationsOfState[ip]);
-    }
-    else
-    {
-      GEOS_ERROR("CompositionalMultiphaseFluid: invalid EOS label: " << m_equationsOfState[ip]);
-    }
   }
 
-  std::vector<std::string> components(m_componentNames.begin(), m_componentNames.end());
-  std::vector<double> Pc(m_componentCriticalPressure.begin(), m_componentCriticalPressure.end());
-  std::vector<double> Tc(m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end());
-  std::vector<double> Mw(m_componentMolarWeight.begin(), m_componentMolarWeight.end());
-  std::vector<double> Omega(m_componentAcentricFactor.begin(), m_componentAcentricFactor.end());
+  std::vector<std::string> tableFiles(m_tableFiles.begin(), m_tableFiles.end());
+  std::vector<double> densities(m_surfaceDensities.begin(), m_surfaceDensities.end());
+  std::vector<double> molarWeights(m_molarWeights.begin(), m_molarWeights.end());
 
-  const ComponentProperties CompProps(numComp, components, Mw, Tc, Pc, Omega);
-  // TODO choose flash type
-  m_fluid = new CompositionalMultiphaseSystem(phases, eos, COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, CompProps);
+  m_fluid = new BlackOilMultiphaseSystem( phases, tableFiles, densities, molarWeights );
 
 }
 
-void CompositionalMultiphaseFluid::InitializePostSubGroups( ManagedGroup * const group )
+void BlackOilFluid::InitializePostSubGroups( ManagedGroup * const group )
 {
   MultiFluidBase::InitializePostSubGroups( group );
   createFluid();
@@ -325,11 +235,11 @@ struct VarContainer
 
 }
 
-void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const & pres,
-                                                                    real64 const & temp,
-                                                                    real64 const * composition,
-                                                                    localIndex const k,
-                                                                    localIndex const q )
+void BlackOilFluid::StateUpdatePointMultiphaseFluid( real64 const & pres,
+                                                     real64 const & temp,
+                                                     real64 const * composition,
+                                                     localIndex const k,
+                                                     localIndex const q )
 {
   // 0. set array views to the element/point data to avoid awkward quadruple indexing
   VarContainer<1> phaseFrac {
@@ -376,8 +286,8 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
     real64 totalMolality = 0.0;
     for (localIndex ic = 0; ic < NC; ++ic)
     {
-      compMoleFrac[ic] = composition[ic] / m_componentMolarWeight[ic]; // this is molality (units of mole/mass)
-      dCompMoleFrac_dCompMassFrac[ic][ic] = 1.0 / m_componentMolarWeight[ic];
+      compMoleFrac[ic] = composition[ic] / m_molarWeights[ic]; // this is molality (units of mole/mass)
+      dCompMoleFrac_dCompMassFrac[ic][ic] = 1.0 / m_molarWeights[ic];
       totalMolality += compMoleFrac[ic];
     }
 
@@ -387,7 +297,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
 
       for (localIndex jc = 0; jc < NC; ++jc)
       {
-        dCompMoleFrac_dCompMassFrac[ic][jc] = -compMoleFrac[ic] / m_componentMolarWeight[jc];
+        dCompMoleFrac_dCompMassFrac[ic][jc] = -compMoleFrac[ic] / m_molarWeights[jc];
         dCompMoleFrac_dCompMassFrac[ic][jc] /= totalMolality;
       }
     }
@@ -495,7 +405,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
       for (localIndex ic = 0; ic < NC; ++ic)
       {
 
-        real64 const compMW = m_componentMolarWeight[ic];
+        real64 const compMW = m_molarWeights[ic];
 
         phaseCompFrac.value[ip][ic] = phaseCompFrac.value[ip][ic] * compMW * phaseMWInv;
         phaseCompFrac.dPres[ip][ic] =
@@ -564,7 +474,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, ManagedGroup * const )
 } // namespace constitutive
 
 } // namespace geosx
