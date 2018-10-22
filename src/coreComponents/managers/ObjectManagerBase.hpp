@@ -85,9 +85,6 @@ public:
                            arrayView1d<localIndex const> const & packList,
                            integer const recursive )  const override;
 
-//  virtual int Unpack( buffer_unit_type const *& buffer,
-//                      integer const recursive )  override;
-
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
                              arrayView1d<localIndex> & packList,
                              integer const recursive )  override;
@@ -96,11 +93,11 @@ public:
 
 
   virtual localIndex PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
-                                  integer const recursive ) const;
+                                         integer const recursive ) const;
 
   virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
-                              arrayView1d<localIndex> const & packList,
-                              integer const recursive ) const;
+                                     arrayView1d<localIndex> const & packList,
+                                     integer const recursive ) const;
 
   void SetReceiveLists(  );
 
@@ -115,7 +112,7 @@ public:
 
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList )
+                                       array1d<localIndex> & packList )
   { return 0;}
 
 
@@ -379,6 +376,11 @@ public:
   integer_array m_ghostRank;
 
   real64 m_overAllocationFactor = 1.1;
+
+  globalIndex m_maxGlobalIndex = -1;
+
+//  localIndex_array m_ghostToSend;
+ // localIndex_array m_ghostToReceive;
 
 };
 
