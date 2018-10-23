@@ -35,7 +35,7 @@ typedef RAJA::atomic::cuda_atomic atomicPolicy;
 
 typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
 
-#elif 0//defined(RAJA_ENABLE_OPENMP)
+#elif defined(RAJA_ENABLE_OPENMP)
 typedef RAJA::omp_parallel_for_exec elemPolicy;
 typedef RAJA::omp_parallel_for_exec onePointPolicy;
 
