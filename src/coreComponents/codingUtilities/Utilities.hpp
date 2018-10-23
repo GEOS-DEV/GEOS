@@ -797,7 +797,7 @@ inline void copy( localIndex N, VEC1 && v1, VEC2 && v2 )
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline void applyChainRule(localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 && df_dx)
+inline void applyChainRule( localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 && df_dx )
 {
   // this could use some dense linear algebra
   for (localIndex i = 0; i < N; ++i)
@@ -811,7 +811,7 @@ inline void applyChainRule(localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 &&
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline void applyChainRuleInPlace(localIndex N, MATRIX && dy_dx, VEC1 && df_dxy, VEC2 && work )
+inline void applyChainRuleInPlace( localIndex N, MATRIX && dy_dx, VEC1 && df_dxy, VEC2 && work )
 {
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );

@@ -256,6 +256,13 @@ void BlackOilFluid::StateUpdatePointMultiphaseFluid( real64 const & pres,
     m_dPhaseDensity_dGlobalCompFraction[k][q]
   };
 
+  VarContainer<1> phaseVisc {
+    m_phaseViscosity[k][q],
+    m_dPhaseViscosity_dPressure[k][q],
+    m_dPhaseViscosity_dTemperature[k][q],
+    m_dPhaseViscosity_dGlobalCompFraction[k][q]
+  };
+
   VarContainer<2> phaseCompFrac {
     m_phaseCompFraction[k][q],
     m_dPhaseCompFraction_dPressure[k][q],
@@ -332,10 +339,16 @@ void BlackOilFluid::StateUpdatePointMultiphaseFluid( real64 const & pres,
     phaseDens.dPres[ip] = dens.dP;
     phaseDens.dTemp[ip] = dens.dT;
 
+    // TODO
+    phaseVisc.value[ip] = 1.0;
+    phaseVisc.dPres[ip] = 0.0;
+    phaseVisc.dTemp[ip] = 0.0;
+
     for (localIndex ic = 0; ic < NC; ++ic)
     {
       phaseFrac.dComp[ip][ic] = frac.dz[ic];
       phaseDens.dComp[ip][ic] = dens.dz[ic];
+      phaseVisc.dComp[ip][ic] = 0.0; // TODO
 
       phaseCompFrac.value[ip][ic] = comp.value[ic];
       phaseCompFrac.dPres[ip][ic] = comp.dP[ic];

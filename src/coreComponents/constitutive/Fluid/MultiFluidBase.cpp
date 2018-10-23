@@ -49,6 +49,11 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseDensity_dTemperature.Key(), &m_dPhaseDensity_dTemperature, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseDensity_dGlobalCompFraction.Key(), &m_dPhaseDensity_dGlobalCompFraction, false );
 
+  RegisterViewWrapper( viewKeysMultiFluidBase.phaseViscosity.Key(), &m_phaseViscosity, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseViscosity_dPressure.Key(), &m_dPhaseViscosity_dPressure, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseViscosity_dTemperature.Key(), &m_dPhaseViscosity_dTemperature, false );
+  RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseViscosity_dGlobalCompFraction.Key(), &m_dPhaseViscosity_dGlobalCompFraction, false );
+
   RegisterViewWrapper( viewKeysMultiFluidBase.phaseCompFraction.Key(), &m_phaseCompFraction, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseCompFraction_dPressure.Key(), &m_dPhaseCompFraction_dPressure, false );
   RegisterViewWrapper( viewKeysMultiFluidBase.dPhaseCompFraction_dTemperature.Key(), &m_dPhaseCompFraction_dTemperature, false );
@@ -78,6 +83,11 @@ void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * co
   m_dPhaseDensity_dPressure.resize( size, numPts, numPhase );
   m_dPhaseDensity_dTemperature.resize( size, numPts, numPhase );
   m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
+
+  m_phaseViscosity.resize( size, numPts, numPhase );
+  m_dPhaseViscosity_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseViscosity_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseViscosity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
   m_phaseCompFraction.resize( size, numPts, numPhase, numComp );
   m_dPhaseCompFraction_dPressure.resize( size, numPts, numPhase, numComp );
