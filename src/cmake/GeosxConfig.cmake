@@ -22,8 +22,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           PYTHON
                           RAJA 
                           TRILINOS
-                          PVT_PACKAGE
-                          PAMELA )
+                          ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
     if( ${DEP}_FOUND OR ENABLE_${DEP} )
