@@ -118,9 +118,9 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   //TODO for the moment we only consider on mesh level "Level0"
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
-  arrayView1d<R1Tensor> X = nodeManager->referencePosition();
   //CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   ElementRegionManager * elementManager = meshBody->getMeshLevel(0)->getElemManager();
+  CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
 
   //TODO for the moment we only write the polyhedron and the associated vertices
   auto polyhedronCollection = m_pamelaMesh->get_PolyhedronCollection();
@@ -133,12 +133,27 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     auto regionPtr = regionItr->second;
     auto regionName = regionPtr->Label;
 
+    std::cout << "Nombe de sous groupes : " << elementManager->numSubGroups() << std::endl;
+    for( int i = 0 ; i < elementManager->numSubGroups() ; i++) {
+      std::cout << elementManager->GetSubGroups()[i]->getName() << std::endl;
+    }
+    /*
     // Check if the region is declared.
     GEOS_ERROR_IF(!elementManager->GetRegion(regionName), "Region " + regionName +
-        "found in the mesh file but not declared in the XML command file");
-    auto region = elementManager->GetRegion(regionName);
+        " found in the mesh file but not declared in the XML command file");
+    */
+    //auto region = elementManager->GetGroup(keys::elementRegions)->RegisterGroup<ElementRegion>(regionName);
+    //std::cout << "region name " << region ->getName() << std::endl;
+
+    //std::cout << "Nombe de sous groupes : " << region->numSubGroups() << std::endl;
+    //for( int i = 0 ; i < region->numSubGroups() ; i++) {
+    //  std::cout << region->GetSubGroups()[i]->getName() << std::endl;
+    //}
 
     // Iterate on vertices
+    nodeManager->resize(regionPtr->Points.size());
+    arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+    std::cout << "nombre d points " << regionPtr->Points.size() << std::endl;
     for(auto verticesIterator = regionPtr->Points.begin() ;
         verticesIterator != regionPtr->Points.end(); verticesIterator++) {
       real64 * const pointData = X[(*verticesIterator)->get_globalIndex()].Data();
@@ -155,8 +170,15 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         auto cellBlockPAMELA = cellBlockIterator->second;
         auto cellBlockType = cellBlockPAMELA->ElementType;
         auto cellBlockName = ElementToLabel.at(cellBlockType);
+     //   std::cout << "sub reg " << region->GetGroup(keys::cellBlockSubRegions) << std::endl;
+        //CellBlock * cellBlock = cellBlockManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("WEDGE");
+        //CellBlockSubRegion * cellBlock =
+        //  region->GetGroup(keys::cellBlockSubRegions)->RegisterGroup<CellBlockSubRegion>(cellBlockName);
         CellBlock * cellBlock =
-          elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
+          cellBlockManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
+          cellBlock->SetDocumentationNodes();
+          cellBlock->RegisterDocumentationNodes();
+          cellBlock->ReadXML_PostProcess();
 
         if( cellBlockName == "HEX") {
           auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
@@ -168,6 +190,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
           for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
               cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
               cellItr++ ) {
+            //std::cout << (*cellItr)->get_globalIndex() << std::endl;
             auto cellIndex = (*cellItr)->get_globalIndex();
             auto cornerList = (*cellItr)->get_vertexList();
             cellToVertex[cellIndex][0] =
