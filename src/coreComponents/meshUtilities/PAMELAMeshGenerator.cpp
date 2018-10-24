@@ -51,12 +51,10 @@ using namespace dataRepository;
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
   MeshGeneratorBase( name, parent )
 {
-    // TODO : To be written --> Next PR !
 }
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {
-    // TODO : To be written --> Next PR !
 }
 
 void PAMELAMeshGenerator::FillDocumentationNode()
@@ -82,7 +80,6 @@ void PAMELAMeshGenerator::FillDocumentationNode()
 
 void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
-    // TODO : To be written --> Next PR !
 }
 
 void PAMELAMeshGenerator::ReadXML_PostProcess()
@@ -90,6 +87,12 @@ void PAMELAMeshGenerator::ReadXML_PostProcess()
     m_pamelaMesh = 
       std::unique_ptr< PAMELA::Mesh >
       (PAMELA::MeshFactory::makeMesh(this->getReference<string>(keys::filePath)));
+    m_pamelaMesh->CreateFacesFromCells();
+    m_pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
+                                                 PAMELA::ELEMENTS::FAMILY::POLYGON);
+    m_pamelaMesh->CreateLineGroupWithAdjacency(
+        "TopologicalC2C", m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency(PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYGON));
+
 }
 
 void PAMELAMeshGenerator::RemapMesh(dataRepository::ManagedGroup * const domain)
@@ -119,7 +122,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
   //CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
-  ElementRegionManager * elementManager = meshBody->getMeshLevel(0)->getElemManager();
   CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
 
   //TODO for the moment we only write the polyhedron and the associated vertices
@@ -131,29 +133,10 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   // First loop which iterate on the regions
   for(auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end();++regionItr) {
     auto regionPtr = regionItr->second;
-    auto regionName = regionPtr->Label;
-
-    std::cout << "Nombe de sous groupes : " << elementManager->numSubGroups() << std::endl;
-    for( int i = 0 ; i < elementManager->numSubGroups() ; i++) {
-      std::cout << elementManager->GetSubGroups()[i]->getName() << std::endl;
-    }
-    /*
-    // Check if the region is declared.
-    GEOS_ERROR_IF(!elementManager->GetRegion(regionName), "Region " + regionName +
-        " found in the mesh file but not declared in the XML command file");
-    */
-    //auto region = elementManager->GetGroup(keys::elementRegions)->RegisterGroup<ElementRegion>(regionName);
-    //std::cout << "region name " << region ->getName() << std::endl;
-
-    //std::cout << "Nombe de sous groupes : " << region->numSubGroups() << std::endl;
-    //for( int i = 0 ; i < region->numSubGroups() ; i++) {
-    //  std::cout << region->GetSubGroups()[i]->getName() << std::endl;
-    //}
 
     // Iterate on vertices
     nodeManager->resize(regionPtr->Points.size());
     arrayView1d<R1Tensor> X = nodeManager->referencePosition();
-    std::cout << "nombre d points " << regionPtr->Points.size() << std::endl;
     for(auto verticesIterator = regionPtr->Points.begin() ;
         verticesIterator != regionPtr->Points.end(); verticesIterator++) {
       real64 * const pointData = X[(*verticesIterator)->get_globalIndex()].Data();
@@ -170,10 +153,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         auto cellBlockPAMELA = cellBlockIterator->second;
         auto cellBlockType = cellBlockPAMELA->ElementType;
         auto cellBlockName = ElementToLabel.at(cellBlockType);
-     //   std::cout << "sub reg " << region->GetGroup(keys::cellBlockSubRegions) << std::endl;
-        //CellBlock * cellBlock = cellBlockManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("WEDGE");
-        //CellBlockSubRegion * cellBlock =
-        //  region->GetGroup(keys::cellBlockSubRegions)->RegisterGroup<CellBlockSubRegion>(cellBlockName);
         CellBlock * cellBlock =
           cellBlockManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
           cellBlock->SetDocumentationNodes();
@@ -190,32 +169,30 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
           for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
               cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
               cellItr++ ) {
-            //std::cout << (*cellItr)->get_globalIndex() << std::endl;
             auto cellIndex = (*cellItr)->get_globalIndex();
             auto cornerList = (*cellItr)->get_vertexList();
+
             cellToVertex[cellIndex][0] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[0]->get_globalIndex());
+              cornerList[0]->get_globalIndex();
             cellToVertex[cellIndex][1] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[1]->get_globalIndex());
+              cornerList[1]->get_globalIndex();
             cellToVertex[cellIndex][2] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[3]->get_globalIndex());
+              cornerList[3]->get_globalIndex();
             cellToVertex[cellIndex][3] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[2]->get_globalIndex());
+              cornerList[2]->get_globalIndex();
             cellToVertex[cellIndex][4] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[4]->get_globalIndex());
+              cornerList[4]->get_globalIndex();
             cellToVertex[cellIndex][5] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[5]->get_globalIndex());
+              cornerList[5]->get_globalIndex();
             cellToVertex[cellIndex][6] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[7]->get_globalIndex());
+              cornerList[7]->get_globalIndex();
             cellToVertex[cellIndex][7] =
-              regionPtr->GlobalToLocalPointMapping.at(cornerList[6]->get_globalIndex());
+              cornerList[6]->get_globalIndex();
           }
         }
       }
     }
   }
-  // Writting nodes in GEOSX data structure
-  //for( int vertexIndex = 0 ; vertexIndex < polyhedronCollection-
 }
 
 void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
