@@ -104,7 +104,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               ObjectManagerBase const & compositionObject,
                                               array1d<NeighborCommunicator> & neighbors )
 {
-
+  GEOSX_MARK_FUNCTION;
   integer_array & ghostRank = object.getReference<integer_array>( object.m_ObjectManagerBaseViewKeys.ghostRank );
   ghostRank = -2;
 
@@ -344,6 +344,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                      array1d<NeighborCommunicator> & allNeighbors )//,
 //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
 {
+  GEOSX_MARK_FUNCTION;
   integer_array const & ghostRank = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.ghostRank );
   integer_array & domainBoundaryIndicator = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
   globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->m_ObjectManagerBaseViewKeys.localToGlobalMap );
@@ -410,6 +411,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
                                      array1d<NeighborCommunicator> & neighbors )
 {
+  GEOSX_MARK_FUNCTION;
   int commID = CommunicationTools::reserveCommID();
 
   for( auto & neighbor : neighbors )
@@ -477,9 +479,6 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
 
   }
 
-  MPI_Waitall( icomm.size,
-               icomm.mpiSizeSendBufferRequest.data(),
-               icomm.mpiSizeSendBufferStatus.data() );
 
   for( int count=0 ; count<neighbors.size() ; ++count )
   {
@@ -537,6 +536,10 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
   }
 
 #endif
+  MPI_Waitall( icomm.size,
+               icomm.mpiSizeSendBufferRequest.data(),
+               icomm.mpiSizeSendBufferStatus.data() );
+
   MPI_Waitall( icomm.size,
                icomm.mpiSendBufferRequest.data(),
                icomm.mpiSendBufferStatus.data() );
