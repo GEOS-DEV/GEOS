@@ -186,6 +186,7 @@ void DomainPartition::GenerateSets(  )
 
 void DomainPartition::SetupCommunications()
 {
+  GEOSX_MARK_FUNCTION;
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );

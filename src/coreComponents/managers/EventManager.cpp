@@ -188,6 +188,7 @@ void EventManager::CreateChild( string const & childKey, string const & childNam
 
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
+  GEOSX_MARK_FUNCTION;
   real64& time = *(this->getData<real64>(viewKeys.time));
   real64& dt = *(this->getData<real64>(viewKeys.dt));
   integer& cycle = *(this->getData<integer>(viewKeys.cycle));
@@ -288,6 +289,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     currentSubEvent = 0;
 
     #if USE_MPI
+
+    GEOSX_MARK_BEGIN("EventManager::MPI calls");
+
       send_buffer[0] = dt;
       send_buffer[1] = static_cast<real64>(exitFlag);
       MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -307,6 +311,8 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       {
         exitFlag = 1;
       }
+      GEOSX_MARK_END("EventManager::MPI calls");
+
     #endif
   }
 
