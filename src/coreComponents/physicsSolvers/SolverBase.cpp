@@ -158,7 +158,8 @@ real64 SolverBase::SolverStep( real64 const& time_n,
 
 void SolverBase::Execute( real64 const& time_n,
                           real64 const& dt,
-                          const integer cycleNumber,
+                          integer const cycleNumber,
+                          integer const eventCounter,
                           real64 const & eventProgress,
                           ManagedGroup * domain )
 {

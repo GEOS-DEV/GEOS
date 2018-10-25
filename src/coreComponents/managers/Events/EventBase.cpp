@@ -310,7 +310,8 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 void EventBase::Execute(real64 const& time_n,
                         real64 const& dt,
                         const integer cycleNumber,
-                        real64 const & eventProgress,
+                        integer const ,
+                        real64 const & ,
                         ManagedGroup * domain)
 {
   real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
@@ -358,7 +359,7 @@ void EventBase::Step(real64 const time,
   if ((m_target != nullptr) && (isTargetExecuting == 0))
   {
     isTargetExecuting = 1;
-    m_target->Execute(time, dt, cycle, m_eventProgress, domain);
+    m_target->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
   }
   isTargetExecuting = 0;
 
@@ -370,7 +371,7 @@ void EventBase::Step(real64 const time,
 
     if (subEvent->GetForecast() <= 0)
     {
-      subEvent->Execute(time, dt, cycle, m_eventProgress, domain);
+      subEvent->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
     }
   }
 
@@ -434,18 +435,19 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
 
 void EventBase::Cleanup(real64 const& time_n,
-                        const int cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
                         real64 const & eventProgress,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)
   {
-    m_target->Cleanup(time_n, cycleNumber, m_eventProgress, domain);
+    m_target->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time_n, cycleNumber, m_eventProgress, domain);
+    subEvent->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
   });
 }
 

@@ -51,7 +51,8 @@ public:
    */
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
                         real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) = 0;
 
@@ -67,7 +68,8 @@ public:
    * This method is called as the code exits the main run loop
    */
   virtual void Cleanup( real64 const & time_n,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
                         real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) {}
 
