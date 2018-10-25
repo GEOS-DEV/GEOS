@@ -494,9 +494,7 @@ void EventBase::SetProgressIndicator(array1d<integer> & eventCounters)
   // This is defined as the percent completion through the executaion loop
   // with respect to the beginning of the event.
   m_eventProgress = static_cast<real64>(m_timeStepEventCount) / static_cast<real64>(eventCounters[1]);
-
-  std::cout << this->getName() << ", count = " << m_eventCount << ", progress = " << m_eventProgress << std::endl;
-
+  
   // Do this for child events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
