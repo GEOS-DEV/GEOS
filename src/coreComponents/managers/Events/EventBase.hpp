@@ -143,7 +143,7 @@ public:
 
 
   /// This method is used to count the number of events/sub-events
-  integer GetExecutionOrder(integer eventCounter);
+  void GetExecutionOrder(array1d<integer> & eventCounters);
 
   /**
    * This method is used to determine how to handle the timestamp for an event
@@ -151,7 +151,7 @@ public:
    * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
    * will be time + dt.
    */
-  void SetProgressIndicator(integer eventCounter);
+  void SetProgressIndicator(array1d<integer> & eventCounters);
 
 
   /// A pointer to the optional event target
@@ -193,6 +193,7 @@ private:
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
   integer m_eventCount = 0;
+  integer m_timeStepEventCount = 0;
   real64 m_eventProgress = 0;
 };
 

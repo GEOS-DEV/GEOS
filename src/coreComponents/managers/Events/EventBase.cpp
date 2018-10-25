@@ -465,32 +465,42 @@ integer EventBase::GetExitFlag()
 
 
 
-integer EventBase::GetExecutionOrder(integer eventCounter)
+void EventBase::GetExecutionOrder(array1d<integer> & eventCounters)
 {
-  // Set the event count
-  m_eventCount = eventCounter;
-  ++eventCounter;
+  // The first entry counts all events, the second tracks solver events
+  m_eventCount = eventCounters[0];
+  m_timeStepEventCount = eventCounters[1];
+
+  // Increment counters
+  ++eventCounters[0];
+  if (m_target != nullptr)
+  {
+    if (m_target->GetTimestepBehavior() > 0)
+    {
+      ++eventCounters[1];
+    }
+  }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    eventCounter = subEvent->GetExecutionOrder(eventCounter);
+    subEvent->GetExecutionOrder(eventCounters);
   });
-
-  return eventCounter;  
 }
 
 
-void EventBase::SetProgressIndicator(integer eventCounter)
+void EventBase::SetProgressIndicator(array1d<integer> & eventCounters)
 {
   // Calculate the event progress indicator
   // This is defined as the percent completion through the executaion loop
   // with respect to the beginning of the event.
-  m_eventProgress = static_cast<real64>(m_eventCount) / static_cast<real64>(eventCounter);
+  m_eventProgress = static_cast<real64>(m_timeStepEventCount) / static_cast<real64>(eventCounters[1]);
+
+  std::cout << this->getName() << ", count = " << m_eventCount << ", progress = " << m_eventProgress << std::endl;
 
   // Do this for child events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->SetProgressIndicator(eventCounter);
+    subEvent->SetProgressIndicator(eventCounters);
   });
 }
 
