@@ -530,7 +530,7 @@ Pack( char*& buffer,
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, string("test") );
+//    sizeOfPackedChars += Pack<DO_PACKING>( buffer, string("test") );
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(indices[a]), var.strides()[0] );
   }
   return sizeOfPackedChars;
@@ -552,10 +552,15 @@ localIndex Unpack( char const *& buffer,
   INDEX_TYPE strides[NDIM];
   sizeOfUnpackedChars += Unpack( buffer, strides, NDIM );
 
+  for( int dim=0 ; dim<NDIM ; ++dim )
+  {
+    GEOS_ERROR_IF( strides[dim]!= var.strides()[dim], "strides do not match");
+  }
+
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    string test;
-    sizeOfUnpackedChars += Unpack( buffer, test );
+//    string test;
+//    sizeOfUnpackedChars += Unpack( buffer, test);
     localIndex temp = strides[var.getSingleParameterResizeIndex()];
     sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), temp );
   }
