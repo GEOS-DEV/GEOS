@@ -876,8 +876,8 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
       real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
 
-      potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] + gravTerm);
-      dFlux_dP[i] = w * (1.0 + dGrav_dP);
+      potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
+      dFlux_dP[i] = w * (1.0 - dGrav_dP);
     });
 
     // upwinding of fluid properties (make this an option?)
