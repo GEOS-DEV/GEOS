@@ -72,8 +72,9 @@ public:
    */
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        const integer cycleNumber,
-                        real64 const & eventProgress,
+                        integer const cycleNumber,
+                        integer const ,
+                        real64 const & ,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -89,7 +90,8 @@ public:
    * This method is called as the code exits the main run loop
    */
   virtual void Cleanup( real64 const & time_n,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
                         real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
@@ -183,6 +185,9 @@ public:
 
   integer GetExitFlag();
   void SetExitFlag(integer flag){ m_exitFlag = flag; }
+
+  integer GetEventCount() const { return m_eventCount; }
+  real64  GetEventProgress() const { return m_eventProgress; }
 
 private:
   integer m_eventForecast = 0;

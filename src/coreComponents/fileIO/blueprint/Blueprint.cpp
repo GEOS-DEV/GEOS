@@ -66,8 +66,8 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
 
 
 
-void Blueprint::write(int cycle,
-                      real64 const & eventProgress) const
+void Blueprint::write( int cycle,
+                       integer const eventCounter ) const
 {
 #ifdef GEOSX_USE_ATK
   const string mesh_name = "bp_mesh";
@@ -114,8 +114,7 @@ void Blueprint::write(int cycle,
   // Build the file-name
   char baseFileName[200] = { 0 };
 
-  integer eventProgressPercent = static_cast<integer>(eventProgress * 100.0);
-  sprintf(baseFileName, "_%06d%03d", cycle, eventProgressPercent);
+  sprintf(baseFileName, "_%06d%03d", cycle, eventCounter);
 
   const std::string root_output_path = m_output_path + baseFileName + ".root";
   const std::string output_path = m_output_path + baseFileName + ".hdf5";

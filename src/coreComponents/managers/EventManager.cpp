@@ -258,7 +258,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
       if (eventForecast <= 0)
       {
-        subEvent->Execute(time, dt, cycle, 0, domain);
+        subEvent->Execute(time, dt, cycle, 0, 0, domain);
       }
 
       // Estimate the time-step for the next cycle
@@ -315,7 +315,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time, cycle, 0, domain);     
+    subEvent->Cleanup(time, cycle, 0, 0, domain);
   });
 }
 

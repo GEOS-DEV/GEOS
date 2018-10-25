@@ -53,7 +53,8 @@ void BlueprintOutput::FillDocumentationNode()
 
 void BlueprintOutput::Execute(real64 const& time_n,
                               real64 const& dt,
-                              const integer cycleNumber,
+                              integer const cycleNumber,
+                              integer const eventCounter,
                               real64 const & eventProgress,
                               ManagedGroup * domain)
 {
@@ -64,7 +65,7 @@ void BlueprintOutput::Execute(real64 const& time_n,
                      *meshLevel->getElemManager(),
                      "bp_plot", MPI_COMM_GEOSX);
   
-  bpWriter.write(cycleNumber, eventProgress);
+  bpWriter.write(cycleNumber, eventCounter );
 }
 
 

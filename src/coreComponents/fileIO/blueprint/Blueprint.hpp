@@ -52,7 +52,7 @@ public:
   ~Blueprint()
   {}
 
-  void write(int cycle, real64 const & eventProgress) const;
+  void write(int cycle, integer const eventCounter ) const;
 
 private:
   void addNodes(axom::sidre::Group* coords, axom::sidre::Group* fields) const;

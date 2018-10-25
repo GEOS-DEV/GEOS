@@ -396,7 +396,7 @@ void SiloFile::Finish()
  */
 void SiloFile::WaitForBatonWrite( int const domainNumber,
                                   int const cycleNum,
-                                  real64 const & eventProgress,
+                                  integer const eventCounter,
                                   bool const isRestart )
 {
 
@@ -409,7 +409,6 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   char baseFileName[200] = { 0 };
   char dirName[200] = { 0 };
 
-  integer eventProgressPercent = static_cast<integer>(eventProgress * 100.0);
   
 
   if( isRestart )
@@ -421,16 +420,16 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   }
   else
   {
-    sprintf(baseFileName, "%s_%06d%03d",
+    sprintf(baseFileName, "%s_%06d%02d",
             m_plotFileRoot.c_str(),
             cycleNum,
-            eventProgressPercent);
+            eventCounter);
 
     sprintf(fileName,
-            "%s_%06d%03d.%03d",
+            "%s_%06d%02d.%03d",
             m_plotFileRoot.c_str(),
             cycleNum,
-            eventProgressPercent,
+            eventCounter,
             groupRank);
   }
   sprintf(dirName, "domain_%05d", domainNumber);
