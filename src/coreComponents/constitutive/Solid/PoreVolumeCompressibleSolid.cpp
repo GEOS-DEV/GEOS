@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+* @file PoreVolumeCompressibleSolid.cpp
+*/
+
 #include "PoreVolumeCompressibleSolid.hpp"
 
 namespace geosx
