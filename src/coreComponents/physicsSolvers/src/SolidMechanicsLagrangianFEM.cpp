@@ -1058,7 +1058,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
             for( localIndex a=0 ; a<numNodes ; ++a )
             {
               nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
-              nodeRHS[a] = result[a] * faceArea[kf] / numNodes;
+              nodeRHS[a] = result[kf] * faceArea[kf] / numNodes;
             }
             rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
           }
