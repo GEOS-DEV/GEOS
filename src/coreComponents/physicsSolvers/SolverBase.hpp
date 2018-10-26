@@ -74,7 +74,7 @@ public:
   SolverBase& operator=( SolverBase const & ) = default;
   SolverBase& operator=( SolverBase&& ) = default;
 
-
+  void ReadXML_PostProcess() override;
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 

@@ -60,19 +60,12 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
     }
     else
     {
-      center = 0.0;
       for( localIndex_array::size_type a=0 ; a<n ; ++a )
-      {
-        center += points[a];
-      }
-      std::cout << "Randy's bug: area = " << area << std::endl;
-      for( localIndex_array::size_type a=0 ; a<n ; ++a )
-        std::cout << points[pointsIndices[a]](0) << " "
-                  << points[pointsIndices[a]](1) << " "
-                  << points[pointsIndices[a]](2) << " "
-                  << pointsIndices[a] << std::endl;
-      GEOS_ERROR("");
-      center /= n;
+        GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
+                      << points[pointsIndices[a]](1) << " "
+                      << points[pointsIndices[a]](2) << " "
+                      << pointsIndices[a]);
+      GEOS_ERROR("Negative area found");
     }
   }
   else if( n==1 )

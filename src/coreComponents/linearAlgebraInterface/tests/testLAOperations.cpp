@@ -741,6 +741,16 @@ void testGEOSXBlockSolvers()
 
 //@}
 
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#if __clang_major__ >= 5
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+#endif
+
 /*! @name Ctest tests.
  * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
  */
@@ -766,7 +776,6 @@ TEST(testLAOperations,testEpetraLAOperations)
  */
 TEST(testLAOperations,testHypreLAOperations)
 {
-
   //testLaplaceOperator<HypreInterface>();
   //testGEOSXSolvers<HypreInterface>();
   //testGEOSXBlockSolvers<HypreInterface>();

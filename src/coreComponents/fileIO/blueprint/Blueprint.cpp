@@ -19,16 +19,12 @@
 #include "common/GeosxConfig.hpp"
 
 #include "Blueprint.hpp"
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/sidre.hpp"
-#include "sidre/DataStore.hpp"
-#include "sidre/SidreTypes.hpp"
-#include "sidre/IOManager.hpp"
-
+#include "axom/sidre/core/sidre.hpp"
 #include "conduit_blueprint.hpp"
 #include "conduit_relay.hpp"
 #endif
@@ -89,11 +85,12 @@ void Blueprint::write(int cycle) const
   ds.getRoot()->createNativeLayout( mesh_node );
   if( !conduit::blueprint::verify( "mesh", mesh_node[ mesh_name ], info ) )
   {
-    std::cout << "does not conform to the blueprint:";
-    info.print();
-    std::cout << std::endl;
+    std::ostringstream msg;
+    msg << "does not conform to the blueprint:";
+    info.to_json_stream(msg);
+    GEOS_LOG_RANK(msg.str());
 
-    GEOS_ERROR( "Does not conform to the blueprint. See above errors" );
+    GEOS_ERROR(msg.str());
   }
 
   conduit::Node root_node;
@@ -104,11 +101,12 @@ void Blueprint::write(int cycle) const
   info.reset();
   if ( !conduit::blueprint::mesh::index::verify( index[ mesh_name ], info ) )
   {
-    std::cout << "index does not conform to the blueprint:";
-    info.print();
-    std::cout << std::endl;
+    std::ostringstream msg;
+    msg << "index does not conform to the blueprint:";
+    info.to_json_stream(msg);
+    GEOS_LOG_RANK(msg.str());
 
-    GEOS_ERROR( "Does not conform to the blueprint. See above errors" );
+    GEOS_ERROR(msg.str());
   }
 
   const std::string root_output_path = m_output_path + "_" + std::to_string( cycle ) + ".root";

@@ -48,7 +48,6 @@ void QuadratureRuleManager::FillDocumentationNode()
 
 void QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Quadrature Rule: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey );
   this->RegisterViewWrapper( childName, std::move(quadrature) )->setRestartFlags(RestartFlags::NO_WRITE);
 }

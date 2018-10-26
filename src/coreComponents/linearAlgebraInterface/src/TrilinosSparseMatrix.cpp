@@ -677,7 +677,9 @@ trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid const GID )
 void EpetraSparseMatrix::print() const
 {
   if( m_matrix.get() != nullptr )
-    std::cout << *m_matrix.get() << std::endl;
+  {
+    std::cout << *m_matrix << std::endl;
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

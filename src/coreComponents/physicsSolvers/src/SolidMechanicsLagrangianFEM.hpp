@@ -26,6 +26,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "common/TimingMacros.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 
 #include "mesh/MeshForLoopInterface.hpp"
 //#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
@@ -148,6 +149,40 @@ public:
                                  real64 const & dt,
                                  DomainPartition * const domain ) override;
 
+  /**@}*/
+
+  real64 ElementKernelSelector( localIndex const er,
+                                localIndex const esr,
+                                set<localIndex> const & elementList,
+                                array2d<localIndex> const & elemsToNodes,
+                                array3d< R1Tensor > const & dNdX,
+                                array2d<real64> const & detJ,
+                                r1_array const & u,
+                                r1_array const & uhat,
+                                r1_array & acc,
+                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+                                ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+                                ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                real64 const dt,
+                                localIndex NUM_NODES_PER_ELEM,
+                                localIndex NUM_QUADRATURE_POINTS );
+
+  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+  real64 ExplicitElementKernel( localIndex const er,
+                                localIndex const esr,
+                                set<localIndex> const & elementList,
+                                array2d<localIndex> const & elemsToNodes,
+                                array3d< R1Tensor > const & dNdX,
+                                array2d<real64> const & detJ,
+                                r1_array const & u,
+                                r1_array const & uhat,
+                                r1_array & acc,
+                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+                                ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
+                                ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                real64 const dt );
+
+
   realT CalculateElementResidualAndDerivative( real64 const density,
                                                FiniteElementBase const * const fe,
                                                const array_view<R1Tensor,2>& dNdX,
@@ -198,6 +233,8 @@ public:
     dataRepository::ViewKey trilinosIndex = { "trilinosIndex" };
     dataRepository::ViewKey ghostRank = { "ghostRank" };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
+
+
   } solidMechanicsViewKeys;
 
   struct groupKeyStruct
@@ -210,6 +247,13 @@ private:
   real64 m_maxForce;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
+
+  array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
+  array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
+  set<localIndex> m_sendOrRecieveNodes;
+  set<localIndex> m_nonSendOrRecieveNodes;
+  MPI_iCommData m_icomm;
+
   SolidMechanics_LagrangianFEM();
 
 };

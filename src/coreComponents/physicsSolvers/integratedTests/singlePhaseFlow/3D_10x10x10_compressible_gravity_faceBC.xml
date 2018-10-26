@@ -24,36 +24,41 @@
                   elementTypes="C3D8" 
                   xCoords="0, 10"
                   yCoords="0, 10"
-                  zCoords="0, 1"
+                  zCoords="0, 10"
                   nx="10"
                   ny="10"
-                  nz="1"
+                  nz="10"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 1.01"/>
-    <Box name="right"  type="0" xMin=" 9.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  0.01, 1.01"/>
-    <Box name="top"    type="0" xMin="-0.01,  9.99, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 10.01"/>
+    <Box name="sink"   type="0" xMin=" 9.99, -0.01, -0.01" xMax="10.01, 10.01, 10.01"/>
   </Geometry>
 
 
-  <Events maxTime="1.0">
+  <Events maxTime="5000.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0"
+                   forceDt="20.0"
                    target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   cycleFrequency="1"
+                   timeFrequency="100.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="1e99"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"
+                   endTime="-1" />
   </Events>
+
 
   <NumericalMethods>
     <BasisFunctions>
@@ -88,13 +93,13 @@
     <CompressibleSinglePhaseFluid name="water"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="0.0"
+                                  compressibility="5e-10"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
-                                 compressibility="0.0"/>
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <InitialConditions>
@@ -143,23 +148,25 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="real64"
-               scale="0.0"/>
+               scale="5e6"/>
 
-    <Dirichlet name="boundaryPressure"
+    <Dirichlet name="sourceTerm"
                objectPath="faceManager"
                fieldName="facePressure"
                dataType="Scalar"
-               functionName="boundaryPressureFunc"
-               scale="1.0e7"
-               setNames="left right bottom top"/>
+               scale="1e7"
+               setNames="source"/>
+
+    <Dirichlet name="sinkTerm"
+               objectPath="faceManager"
+               fieldName="facePressure"
+               dataType="Scalar"
+               scale="0.0"
+               setNames="sink"/>
   </BoundaryConditions>
 
   <Functions>
-    <SymbolicFunction name="boundaryPressureFunc"
-                      inputVarNames="faceCenter"
-                      inputVarTypes=""
-                      variableNames="x y z"
-                      expression="cos(2*PI*x/10)*cos(2*PI*y/10)"/>
+
   </Functions>
 
   <Partition>
@@ -167,8 +174,7 @@
   </Partition>
 
   <Outputs>
-      <Silo name="siloOutput"/>
+    <Silo name="siloOutput"/>
+    <Restart name="sidreRestart"/>
   </Outputs>
-
-
 </Problem>
