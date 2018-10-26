@@ -1025,7 +1025,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
     else
     {
       FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-      GEOS_ASSERT( function!=nullptr, "SolidMechanicsLagrangianFEM::ApplyTractionBC() application function not found");
+      assert( function!=nullptr);
 
         if( function->isFunctionOfTime()==2 )
         {

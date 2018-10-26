@@ -79,7 +79,7 @@
 
     <PeriodicEvent name="solverApplication1"
                    beginTime="10"
-                   endTime="8000"   
+                   endTime="8402"   
                    forceDt="600.0"
                    target="/Solvers/poroSolve" />
 
