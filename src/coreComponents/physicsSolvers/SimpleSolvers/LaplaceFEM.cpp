@@ -194,12 +194,12 @@ real64 LaplaceFEM::SolverStep( real64 const& time_n,
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
+    dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
-    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(), getLinearSystemRepository() );
+    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain, getLinearSystemRepository() );
   }
   return dtReturn;
 }

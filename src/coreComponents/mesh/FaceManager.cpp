@@ -26,6 +26,7 @@
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -99,6 +100,44 @@ void FaceManager::FillDocumentationNode()
 //                              0,
 //                              0 );
 
+  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
+                              viewKeyStruct::faceAreaString,
+                              -1,
+                              "real64_array",
+                              "real64_array",
+                              "Face surface area",
+                              "Face surface area",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
+
+  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
+                              viewKeyStruct::faceCenterString,
+                              -1,
+                              "r1_array",
+                              "r1_array",
+                              "Face centroid coordinates",
+                              "Face centroid coordinates",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
+
+  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
+                              viewKeyStruct::faceNormalString,
+                              -1,
+                              "r1_array",
+                              "r1_array",
+                              "Face normal ",
+                              "Face normal",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
 
 
 }
@@ -251,6 +290,33 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   SortAllFaceNodes( nodeManager, elementManager);
 
   SetDomainBoundaryObjects( nodeManager );
+
+
+
+
+
+
+  real64_array & faceArea  = getReference<real64_array>( viewKeyStruct::
+                                                         faceAreaString);
+
+  r1_array & faceNormal = getReference<r1_array>( viewKeyStruct::
+                                                     faceNormalString);
+
+  r1_array & faceCenter = getReference<r1_array>( viewKeyStruct::
+                                                      faceCenterString);
+
+  r1_array const & X = nodeManager->referencePosition();
+
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+  for (localIndex kf = 0; kf < this->size(); ++kf)
+  {
+    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(m_nodeList[kf],
+                                                             X,
+                                                             faceCenter[kf],
+                                                             faceNormal[kf]);
+  }
+
 }
 
 void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
@@ -282,7 +348,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
       arrayView1d<localIndex const> nodelist = faceToNodesMap[k];
-      for( localIndex a=0 ; a<nodelist.size() ; ++a )
+      for( localIndex a=0 ; a<faceToNodesMap[k].size() ; ++a )
       {
         nodeDomainBoundaryIndicator[nodelist[a]] = 1;
       }
@@ -365,17 +431,18 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
     CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( elemSubRegionList[kf][0] );
     R1Tensor const elementCenter = subRegion->GetElementCenter( elemList[kf][0], *nodeManager );
     
+    const localIndex numFaceNodes = nodeList()[kf].size();
     arrayView1d<localIndex> faceNodes = nodeList()[kf];
-    
-    SortFaceNodes( X, elementCenter, faceNodes );
+
+    SortFaceNodes( X, elementCenter, faceNodes, numFaceNodes );
   } );
 }
 
 void FaceManager::SortFaceNodes( array1d<R1Tensor> const & X,
                                  R1Tensor const & elementCenter,
-                                 arrayView1d<localIndex> faceNodes )
+                                 arrayView1d<localIndex> faceNodes,
+                                 localIndex const numFaceNodes )
 {
-  localIndex const numFaceNodes = faceNodes.size();
   localIndex const firstNodeIndex = faceNodes[0];
 
   // get face center (average vertex location) and store node coordinates
