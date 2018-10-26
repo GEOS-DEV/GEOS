@@ -18,9 +18,12 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           FPARSER
                           HYPRE
                           MATHPRESSO
+			  METIS
                           MPI
+			  PARMETIS
                           PYTHON
                           RAJA 
+			  SUPERLU_DIST
                           TRILINOS )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
