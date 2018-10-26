@@ -23,8 +23,11 @@
  *      Author: settgast
  */
 
+#include "common/TimingMacros.hpp"
 #include "NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
+#include <sys/time.h>
+
 
 namespace geosx
 {
@@ -41,7 +44,7 @@ NeighborCommunicator::NeighborCommunicator():
   m_mpiRecvBufferRequest(),
   m_mpiSendBufferStatus(),
   m_mpiRecvBufferStatus()
-{}
+{GEOSX_MARK_FUNCTION;}
 
 //NeighborCommunicator::~NeighborCommunicator()
 //{
@@ -91,7 +94,7 @@ void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
                                                         MPI_Request& mpiRecvRequest,
                                                         MPI_Comm mpiComm )
 {
-  m_sendBufferSize[commID] = integer_conversion<int>( m_sendBuffer[commID].size());
+//  m_sendBufferSize[commID] = integer_conversion<int>( m_sendBuffer[commID].size());
   MPI_iSendReceive( &m_sendBufferSize[commID], 1, mpiSendRequest,
                     &m_receiveBufferSize[commID],
                     1, mpiRecvRequest,
@@ -308,7 +311,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
                                 edgeAdjacencyList,
                                 faceAdjacencyList,
                                 elementAdjacencyList,
-                                2 );
+                                depth );
 
   int bufferSize = 0;
 
@@ -329,9 +332,9 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
 
 
 
-  buffer_type & sendBuffer = SendBuffer( commID );
-  sendBuffer.resize( bufferSize );
+  resizeSendBuffer( commID, bufferSize );
 
+  buffer_type & sendBuffer = SendBuffer( commID );
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int packedSize = 0;
@@ -362,6 +365,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
 void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
                                          int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -439,6 +443,15 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
+//  integer_array & nodeGhostRank = nodeManager.GhostRank();
+//  integer_array & edgeGhostRank = edgeManager.GhostRank();
+//  integer_array & faceGhostRank = faceManager.GhostRank();
+//
+//  ElementRegionManager::ElementViewAccessor<integer_array>
+//  elementGhostRank = elemManager.ConstructViewAccessor<integer_array>( ObjectManagerBase::
+//                                                                       viewKeyStruct::
+//                                                                       ghostRankString );
+
 
   localIndex_array & nodeGhostsToSend = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
   localIndex_array & edgeGhostsToSend = edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToSend );
@@ -453,8 +466,9 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
 
 
+
   localIndex_array const & nodeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToReceive );
-  localIndex_array const & edgeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToReceive );
+  localIndex_array const & edgeGhostsToReceive = edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToReceive );
   localIndex_array const & faceGhostsToReceive = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToReceive );
 
   ElementRegionManager::ElementViewAccessor<localIndex_array>
@@ -497,8 +511,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     }
   }
 
-
-  sendBuffer.resize( bufferSize );
+  this->resizeSendBuffer( commID, bufferSize );
 
   int packedSize = 0;
   packedSize += bufferOps::Pack<true>( sendBufferPtr,
@@ -553,26 +566,36 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                      faceGhostsToSend,
                                      faceManager.m_globalToLocalMap );
 
+
+  nodeManager.SetGhostRankForSenders( nodeGhostsToSend );
+  edgeManager.SetGhostRankForSenders( edgeGhostsToSend );
+  faceManager.SetGhostRankForSenders( faceGhostsToSend );
+
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elemManager.GetRegion( er );
+    ElementRegion * const elemRegion = elemManager.GetRegion( er );
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion( esr );
 
       unpackedSize+= bufferOps::Unpack( receiveBufferPtr,
                                         elementGhostToSend[er][esr].get(),
                                         subRegion->m_globalToLocalMap );
+
+      subRegion->SetGhostRankForSenders( elementGhostToSend[er][esr].get() );
+
     }
   }
 
 }
 
 
-void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > const & fieldNames,
-                                              MeshLevel * const mesh,
-                                              int const commID )
+int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > const & fieldNames,
+                                               MeshLevel * const mesh,
+                                               int const commID )
 {
+  GEOSX_MARK_FUNCTION;
+
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -639,13 +662,55 @@ void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > co
     }
   }
 
+  this->m_sendBufferSize[commID] = bufferSize;
+  return bufferSize;
+}
 
-//  bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
-//
-//
+
+void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array > const & fieldNames,
+                                                  MeshLevel * const mesh,
+                                                  int const commID )
+{
+  GEOSX_MARK_FUNCTION;
+
+  NodeManager & nodeManager = *(mesh->getNodeManager());
+  EdgeManager & edgeManager = *(mesh->getEdgeManager());
+  FaceManager & faceManager = *(mesh->getFaceManager());
+  ElementRegionManager & elemManager = *(mesh->getElemManager());
+  ManagedGroup * const
+  nodeNeighborData = nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->
+                     GetGroup( std::to_string( this->m_neighborRank ) );
+
+  ManagedGroup * const
+  edgeNeighborData = edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->
+                     GetGroup( std::to_string( this->m_neighborRank ) );
+
+  ManagedGroup * const
+  faceNeighborData = faceManager.GetGroup( faceManager.groupKeys.neighborData )->
+                     GetGroup( std::to_string( this->m_neighborRank ) );
+
+
+  localIndex_array const &
+  nodeGhostsToSend = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
+
+  localIndex_array const &
+  edgeGhostsToSend = edgeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
+
+  localIndex_array const &
+  faceGhostsToSend = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToSend );
+
+
+
+  ElementRegionManager::ElementViewAccessor<localIndex_array>
+  elementGhostToSend =
+    elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::
+                                                         viewKeyStruct::
+                                                         ghostsToSendString,
+                                                         std::to_string( this->m_neighborRank ) );
+
+
   buffer_type & sendBuffer = SendBuffer( commID );
-  sendBuffer.resize( bufferSize );
-
+  int const bufferSize =  integer_conversion<int>(sendBuffer.size());
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int packedSize = 0;
@@ -678,18 +743,21 @@ void NeighborCommunicator::PackBufferForSync( std::map<string, string_array > co
     }
   }
 
-
   GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
-  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
 
-
-//  MPI_WaitAll( commID );
 }
+
+void NeighborCommunicator::SendRecvBuffers( int const commID )
+{
+  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
+}
+
 
 void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
                                                 MeshLevel * const mesh,
                                                 int const commID )
 {
+  GEOSX_MARK_FUNCTION;
 
   buffer_type const & receiveBuffer = ReceiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
@@ -710,6 +778,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
+
   localIndex_array &
   nodeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToReceive );
 
@@ -725,13 +794,6 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
                                                          viewKeyStruct::ghostsToReceiveString,
                                                          std::to_string( this->m_neighborRank ) );
 
-  //
-//
-//  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyReceiveList;
-//
-//  elemManager.ConstructViewAccessor( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
-//                                     std::to_string( this->m_neighborRank ),
-//                                     elementAdjacencyReceiveList );
   int unpackedSize = 0;
 
   if( fieldNames.count( "node" ) > 0 )
@@ -762,11 +824,8 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
       }
     }
   }
-//  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyReceiveList);
-//
-//  std::cout<<"herro"<<std::endl;
-//
 
+//  GEOS_LOG_RANK("unpackedSize = "<<unpackedSize);
 }
 
 

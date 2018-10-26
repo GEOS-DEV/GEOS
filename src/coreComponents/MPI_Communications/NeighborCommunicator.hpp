@@ -36,9 +36,10 @@ namespace geosx
 {
 inline int CommTag( int const senderRank, int const receiverRank, int const comm )
 {
-  int m_size;
-  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
-  return senderRank * m_size + receiverRank + m_size * m_size * comm;
+//  int m_size;
+//  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
+//  return senderRank * m_size + receiverRank + m_size * m_size * comm;
+  return comm;
 }
 
 class MeshLevel;
@@ -166,9 +167,15 @@ public:
   void RebuildSyncLists( MeshLevel * const meshLevel,
                          int const commID );
 
-  void PackBufferForSync( std::map<string, string_array > const & fieldNames,
-                          MeshLevel * const meshLevel,
-                          int const commID );
+  void PackCommBufferForSync( std::map<string, string_array > const & fieldNames,
+                              MeshLevel * const meshLevel,
+                              int const commID );
+
+  int PackCommSizeForSync( std::map<string, string_array > const & fieldNames,
+                           MeshLevel * const meshLevel,
+                           int const commID );
+
+  void SendRecvBuffers( int const commID );
 
   void UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
                             MeshLevel * const meshLevel,
@@ -192,6 +199,16 @@ public:
     return m_receiveBuffer[commID];
   }
 
+  int const & ReceiveBufferSize( int commID ) const
+  {
+    return m_receiveBufferSize[commID];
+  }
+  int & ReceiveBufferSize( int commID )
+  {
+    return m_receiveBufferSize[commID];
+  }
+
+
   buffer_type const & SendBuffer( int commID ) const
   {
     return m_sendBuffer[commID];
@@ -199,6 +216,18 @@ public:
   buffer_type & SendBuffer( int commID )
   {
     return m_sendBuffer[commID];
+  }
+
+  void resizeSendBuffer( int const commID, int const newSize )
+  {
+    m_sendBufferSize[commID] = newSize;
+    m_sendBuffer[commID].resize(newSize);
+  }
+
+  void resizeRecvBuffer( int const commID, int const newSize )
+  {
+    m_receiveBufferSize[commID] = newSize;
+    m_receiveBuffer[commID].resize(newSize);
   }
 
   void AddNeighborGroupToMesh( MeshLevel * const mesh ) const;

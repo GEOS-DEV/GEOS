@@ -110,8 +110,7 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
       topo = ElementTypes::HEXES;
       break;
     default:
-      cout << "There is no default case";
-      throw GPException("There is no default case");
+      GEOS_ERROR("There is no default case");
       break;
     }
 
@@ -142,7 +141,6 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
     switch (solver)
     {
     case SolverTypes::SMOOTH_OFF:
-      cout << "Why are you here?  No smoothing to be done...";
       return;
     case SolverTypes::LAPLACE:
       MesquiteRelaxer::RunLaplace(topo,num_iter);
@@ -160,10 +158,10 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
       MesquiteRelaxer::RunSteepestDescent(topo,num_iter,patch);
       break;
     case SolverTypes::BOUNDARY:
-      cout << "Not Implemented yet";
+      GEOS_LOG_RANK("Not Implemented yet");
       return;
     default:
-      cout << "There is no default case";
+      GEOS_LOG_RANK("There is no default case");
       break;
     }
   }
@@ -219,7 +217,7 @@ void MesquiteRelaxer::ConstructMesh( unsigned long num_nod,
     type=HEXAHEDRON;
     break;
   default:
-    throw GPException("invalid topo");
+    GEOS_ERROR("invalid topo");
   }
   ;
 
@@ -243,8 +241,6 @@ void MesquiteRelaxer::RunLaplace(const ElementTypes topo, const int num_iter)
 
   //Solver
   LaplacianSmoother solver;
-  if (err)
-    cout << err << endl;
   //   Solver: set parameters
 
   //   Solver: set termination
@@ -257,11 +253,7 @@ void MesquiteRelaxer::RunLaplace(const ElementTypes topo, const int num_iter)
 
   //Add quality and assessor schemes to queue
   queue1.add_quality_assessor(&assessor,err);
-  if (err)
-    cout << err << endl;
   queue1.set_master_quality_improver(&solver,err);
-  if (err)
-    cout << err << endl;
 
   switch (topo)
   {
@@ -269,19 +261,15 @@ void MesquiteRelaxer::RunLaplace(const ElementTypes topo, const int num_iter)
   case ElementTypes::QUADS:
   {
 //     queue1.run_instructions( &mesh, &domain, err);
-    //cout << "Im using tris";
     break;
   }
   case ElementTypes::TETS:
   case ElementTypes::HEXES:
   {
     queue1.run_instructions( &mesh, err);
-    //cout << "Im using tets";
     break;
   }
   }
-  if (err)
-    cout << err << endl;
 
   queue1.clear();
   mesh.release();
@@ -305,8 +293,6 @@ void MesquiteRelaxer::RunSmartLaplace(const ElementTypes topo, const int num_ite
 
   //Solver
   SmartLaplacianSmoother solver( &objective_function );
-  if (err)
-    cout << err << endl;
 
   //   Solver: set parameters
 
@@ -316,16 +302,10 @@ void MesquiteRelaxer::RunSmartLaplace(const ElementTypes topo, const int num_ite
 
   //Quality Assessment
   assessor.add_quality_assessment( &inverse_metric );
-  if (err)
-    cout << err << endl;
 
   //Add quality and assessor schemes to queue
   queue1.set_master_quality_improver( &solver, err );
-  if (err)
-    cout << err << endl;
   queue1.add_quality_assessor( &assessor, err );
-  if (err)
-    cout << err << endl;
 
   switch (topo)
   {
@@ -333,19 +313,15 @@ void MesquiteRelaxer::RunSmartLaplace(const ElementTypes topo, const int num_ite
   case ElementTypes::QUADS:
   {
 //     queue1.run_instructions( &mesh, &domain, err);
-    //cout << "Im using tris";
     break;
   }
   case ElementTypes::TETS:
   case ElementTypes::HEXES:
   {
     queue1.run_instructions( &mesh, err);
-    //cout << "Im using tets";
     break;
   }
   }
-  if (err)
-    cout << err << endl;
 
   queue1.clear();
   mesh.release();
@@ -373,8 +349,6 @@ void MesquiteRelaxer::RunConjugateGradient(const ElementTypes topo,
 
   //Solver
   ConjugateGradient solver( &objective_function );
-  if (err)
-    cout << err << endl;
 
   //   Solver: set parameters
   switch (patch)
@@ -435,11 +409,7 @@ void MesquiteRelaxer::RunConjugateGradient(const ElementTypes topo,
 
   //Add quality and assessor schemes to queue
   queue1.set_master_quality_improver( &solver, err );
-  if (err)
-    cout << err << endl;
   queue1.add_quality_assessor( &assessor, err );
-  if (err)
-    cout << err << endl;
 
   switch (topo)
   {
@@ -447,19 +417,15 @@ void MesquiteRelaxer::RunConjugateGradient(const ElementTypes topo,
   case ElementTypes::QUADS:
   {
     //    queue1.run_instructions( &mesh, &domain, err);
-    //cout << "Im using tris";
     break;
   }
   case ElementTypes::TETS:
   case ElementTypes::HEXES:
   {
     queue1.run_instructions( &mesh, err);
-    //cout << "Im using tets";
     break;
   }
   }
-  if (err)
-    cout << err << endl;
 
   queue1.clear();
   mesh.release();
@@ -486,8 +452,6 @@ void MesquiteRelaxer::RunFeasibleNewton(const ElementTypes topo,
 
   //Solver
   FeasibleNewton solver( &objective_function );
-  if (err)
-    cout << err << endl;
 
   //   Solver: set parameters
   switch (patch)
@@ -549,11 +513,7 @@ void MesquiteRelaxer::RunFeasibleNewton(const ElementTypes topo,
 
   //Add quality and assessor schemes to queue
   queue1.set_master_quality_improver( &solver, err );
-  if (err)
-    cout << err << endl;
   queue1.add_quality_assessor( &assessor, err );
-  if (err)
-    cout << err << endl;
 
   switch (topo)
   {
@@ -561,19 +521,15 @@ void MesquiteRelaxer::RunFeasibleNewton(const ElementTypes topo,
   case ElementTypes::QUADS:
   {
     //    queue1.run_instructions( &mesh, &domain, err);
-    //cout << "Im using tris";
     break;
   }
   case ElementTypes::TETS:
   case ElementTypes::HEXES:
   {
     queue1.run_instructions( &mesh, err);
-    //cout << "Im using tets";
     break;
   }
   }
-  if (err)
-    cout << err << endl;
 
   queue1.clear();
   mesh.release();
@@ -601,8 +557,6 @@ void MesquiteRelaxer::RunSteepestDescent(const ElementTypes topo,
 
   //Solver
   SteepestDescent solver( &objective_function );
-  if (err)
-    cout << err << endl;
 
   //   Solver: set parameters
   switch (patch)
@@ -663,11 +617,7 @@ void MesquiteRelaxer::RunSteepestDescent(const ElementTypes topo,
 
   //Add quality and assessor schemes to queue
   queue1.set_master_quality_improver( &solver, err );
-  if (err)
-    cout << err << endl;
   queue1.add_quality_assessor( &assessor, err );
-  if (err)
-    cout << err << endl;
 
   switch (topo)
   {
@@ -675,19 +625,15 @@ void MesquiteRelaxer::RunSteepestDescent(const ElementTypes topo,
   case ElementTypes::QUADS:
   {
 //     queue1.run_instructions( &mesh, &domain, err);
-    //cout << "Im using tris";
     break;
   }
   case ElementTypes::TETS:
   case ElementTypes::HEXES:
   {
     queue1.run_instructions( &mesh, err);
-    //cout << "Im using tets";
     break;
   }
   }
-  if (err)
-    cout << err << endl;
 
   queue1.clear();
   mesh.release();

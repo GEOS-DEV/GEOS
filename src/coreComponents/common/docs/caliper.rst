@@ -80,3 +80,12 @@ Post running application, the output will be of the following form (where time i
      elemLoop            79.000000 
        scatter         4210.000000 
     setup                28.000000 
+
+
+To print min/max/avg time per MPI rank for annotated regions, one may export the following variables
+
+* ``CALI_SERVICES_ENABLE=aggregate,event,mpi,mpireport,timestamp``
+* ``CALI_TIMER_SNAPSHOT_DURATION=true``
+* ``CALI_TIMER_INCLUSIVE_DURATION=false``
+* ``CALI_MPIREPORT_CONFIG="SELECT statistics(sum#time.duration) GROUP BY annotation,function,loop FORMAT tree"``
+

@@ -23,7 +23,6 @@
 
 #include "common/DataTypes.hpp"
 //#include "codingUtilities/Utilities.hpp"
-#include "common/Logger.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include <type_traits>

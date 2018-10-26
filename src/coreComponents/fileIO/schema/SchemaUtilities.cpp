@@ -66,7 +66,7 @@ void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
     // Default regex to string
     if( regex->second.empty())
     {
-      std::cout << "Warning: schema regex not defined for " << regex->first << "...  Defaulting to limited string" << std::endl;
+      GEOS_WARNING("schema regex not defined for " << regex->first << "...  Defaulting to limited string");
       patternNode.append_attribute("value") = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
     }
     else

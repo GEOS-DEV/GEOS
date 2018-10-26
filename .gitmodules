@@ -4,6 +4,12 @@
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
 	url = ../../LLNL/blt.git
+[submodule "src/externalComponents/PVTPackage"]
+	path = src/externalComponents/PVTPackage
+	url = ../PVTPackage.git
 [submodule "integratedTests"]
 	path = integratedTests
 	url = ../integratedTests.git
+[submodule "src/externalComponents/PAMELA"]
+	path = src/externalComponents/PAMELA
+	url = ../PAMELA.git
