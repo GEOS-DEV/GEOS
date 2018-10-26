@@ -26,6 +26,7 @@
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -298,17 +299,17 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   real64_array & faceArea  = getReference<real64_array>( viewKeyStruct::
                                                          faceAreaString);
 
-  r1_array & faceNormal = getReference<real64_array>( viewKeyStruct::
+  r1_array & faceNormal = getReference<r1_array>( viewKeyStruct::
                                                      faceNormalString);
 
-  r1_array & faceCenter = getReference<real64_array>( viewKeyStruct::
+  r1_array & faceCenter = getReference<r1_array>( viewKeyStruct::
                                                       faceCenterString);
 
-  r1_array const & X = nodes->referencePosition();
+  r1_array const & X = nodeManager->referencePosition();
 
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  for (localIndex kf = 0; kf < this->size(); ++kf)
   {
     faceArea[kf] = computationalGeometry::Centroid_3DPolygon(m_nodeList[kf],
                                                              X,

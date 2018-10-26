@@ -24,8 +24,8 @@
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
+                              newtonTol="1.0e-3"
+                              maxIterNewton="10"
                               verbosityFlag="2"/>
     </SolidMechanics_LagrangianFEM>
   
@@ -59,12 +59,12 @@
   </Geometry>
 
 
-  <Events maxTime="1e3">
+  <Events maxTime="500">
     <!--This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="50"
+                   timeFrequency="20"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
@@ -72,14 +72,20 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplication0"
                    beginTime="0"
-                   endTime="200"   
-                   forceDt="50.0"
+                   endTime="0.02"   
+                   forceDt="0.01"
+                   target="/Solvers/poroSolve" />
+
+    <PeriodicEvent name="solverApplication0"
+                   beginTime="0.02"
+                   endTime="500"   
+                   forceDt="20.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="solverApplication1"
-                   beginTime="200"
-                   endTime="5e3"   
-                   forceDt="50.0"
+                   beginTime="500"
+                   endTime="2e3"   
+                   forceDt="100.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="restarts"
@@ -235,8 +241,8 @@
   </BoundaryConditions>
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="1.0, 2.0, 1e7" values="1.0, 2.0, 2.0" />
-    <TableFunction     name="timeFunction2"         inputVarNames="time"  inputVarTypes="" coordinates="1.0, 2.0, 6e4" values="1.0, 1.0, 1.0" />
+    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.01, 0.02, 1e7" values="1.0, 2.0, 2.0" />
+    <TableFunction     name="timeFunction2"         inputVarNames="time"  inputVarTypes="" coordinates="0.01, 0.02, 1e7" values="1.0, 1.0, 1.0" />
     <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
