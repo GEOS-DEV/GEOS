@@ -789,9 +789,11 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
   string_array activeMaterialNames;
 
+//  double missingValue = 0.0;
   DBoptlist *optlist = DBMakeOptlist(5);
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
+//  DBAddOption(optlist, DBOPT_MISSING_VALUE, &missingValue);
 
   char * regionpnames[ 100 ];
 
@@ -837,7 +839,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
         for( localIndex matIndex=0 ; matIndex<numMatInRegion ; ++matIndex )
         {
-          if( field[er][esr][matIndices[matIndex]].getPtr() != nullptr )
+//          if( field[er][esr][matIndices[matIndex]].getPtr() != nullptr )
           {
             activeMaterialNames.push_back( constitutiveManager->GetConstitituveRelation( matIndices[matIndex] )->getName() );
             mixlen += subRegion->size();
@@ -906,6 +908,10 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                 if( field[er][esr][matIndices[a]].getPtr() != nullptr )
                 {
                   mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[a]][k][0], i);
+                }
+                else
+                {
+                  mixvarsData[i][mixlen2++] = 0.0;
                 }
               }
             }

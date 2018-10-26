@@ -32,22 +32,6 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-//  RegisterViewWrapper<integer>( viewKeys.verbosity );
-//  RegisterViewWrapper<real64>( viewKeys.krylovTol );
-//  RegisterViewWrapper<integer>( viewKeys.numKrylovIter );
-//  RegisterViewWrapper<integer>( viewKeys.kspace );
-//  RegisterViewWrapper<real64>( viewKeys.ilut_fill );
-//  RegisterViewWrapper<real64>( viewKeys.ilut_drop )->data();
-//  RegisterViewWrapper<integer>( viewKeys.useMLPrecond );
-//  RegisterViewWrapper<integer>( viewKeys.useInnerSolver );
-//  RegisterViewWrapper<integer>( viewKeys.scalingOption );
-//  RegisterViewWrapper<integer>( viewKeys.useBicgstab );
-//  RegisterViewWrapper<integer>( viewKeys.useDirectSolver );
-//  RegisterViewWrapper<real64>( viewKeys.KrylovResidualInit );
-//  RegisterViewWrapper<real64>( viewKeys.KrylovResidualFinal );
-//  RegisterViewWrapper<integer>( viewKeys.useNewtonSolve );
-//  RegisterViewWrapper<real64>( viewKeys.newtonTol );
-//  RegisterViewWrapper<integer>( viewKeys.maxIterNewton );
 }
 
 SystemSolverParameters::~SystemSolverParameters()
@@ -172,6 +156,19 @@ void SystemSolverParameters::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.numNewtonIterations.Key(),
+                              viewKeys.numNewtonIterations.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "verbosity level",
+                              "verbosity level",
+                              "5",
+                              "",
+                              0,
+                              1,
+                              0 );
+
   docNode->AllocateChildNode( viewKeys.maxIterNewton.Key(),
                               viewKeys.maxIterNewton.Key(),
                               -1,
@@ -184,7 +181,6 @@ void SystemSolverParameters::FillDocumentationNode()
                               0,
                               1,
                               0 );
-
   docNode->AllocateChildNode( viewKeys.scalingOption.Key(),
                               viewKeys.scalingOption.Key(),
                               -1,

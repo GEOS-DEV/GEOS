@@ -61,6 +61,7 @@ public:
     dataRepository::ViewKey useNewtonSolve      = { "useNewtonSolve" };
     dataRepository::ViewKey newtonTol           = { "newtonTol" };
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
+    dataRepository::ViewKey numNewtonIterations = { "numberOfNewtonIterations" };
 
   } viewKeys;
 
@@ -84,6 +85,8 @@ public:
   integer   useNewtonSolve() const       { return *(this->getData<integer>( viewKeys.useNewtonSolve )); }
   real64 newtonTol() const            { return *(this->getData<real64>( viewKeys.newtonTol )); }
   integer  maxIterNewton() const        { return *(this->getData<integer>( viewKeys.maxIterNewton )); }
+  integer const & numNewtonIterations() const        { return this->getReference<integer>( viewKeys.numNewtonIterations); }
+  integer & numNewtonIterations()        { return this->getReference<integer>( viewKeys.numNewtonIterations); }
 
 
 };

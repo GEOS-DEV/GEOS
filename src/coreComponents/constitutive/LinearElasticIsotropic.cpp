@@ -60,7 +60,8 @@ static inline void UpdateStatePoint( R2SymTensor const & D,
 
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
-  ConstitutiveBase( name, parent )
+  ConstitutiveBase( name, parent ),
+  m_poreVolumeRelation( ExponentApproximationType::Linear )
 {
   this->RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 );
   this->RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 );
@@ -69,9 +70,15 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   this->RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 );
   this->RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 );
 
-
   this->RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 );
   this->RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 );
+
+  this->RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 );
+
+  this->RegisterViewWrapper( viewKeys().compressibility.Key(), &m_compressibility, 0 );
+  this->RegisterViewWrapper( viewKeys().referencePressure.Key(), &m_referencePressure, 0 );
+  this->RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 );
 
 }
 
@@ -96,6 +103,12 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_meanStress = m_meanStress;
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
 
+  newConstitutiveRelation->m_compressibility   = this->m_compressibility;
+  newConstitutiveRelation->m_referencePressure  = this->m_referencePressure;
+  newConstitutiveRelation->m_biotCoefficient   = this->m_biotCoefficient;
+
+  newConstitutiveRelation->m_poreVolumeRelation  = this->m_poreVolumeRelation;
+
   std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
 
   return rval;
@@ -112,6 +125,9 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_shearModulus.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_poreVolumeMultiplier = 1.0;
 
   m_bulkModulus = m_bulkModulus0;
   m_density = m_density0;
@@ -193,6 +209,46 @@ void LinearElasticIsotropic::FillDocumentationNode()
                               1,
                               1,
                               0 );
+
+  docNode->AllocateChildNode( viewKeys().biotCoefficient.Key(),
+                              viewKeys().biotCoefficient.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Biot's coefficient",
+                              "Biot's coefficient",
+                              "0",
+                              "",
+                              1,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys().compressibility.Key(),
+                              viewKeys().compressibility.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Fluid Bulk Modulus",
+                              "Fluid Bulk Modulus",
+                              "-1",
+                              "",
+                              1,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys().referencePressure.Key(),
+                              viewKeys().referencePressure.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Reference pressure",
+                              "Reference pressure",
+                              "0",
+                              "",
+                              1,
+                              1,
+                              0 );
+
 }
 
 void LinearElasticIsotropic::ReadXML_PostProcess()
@@ -237,12 +293,26 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
       E = 9 * K * G / ( 3 * K + G );
       nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
     }
+    m_compressibility = 1 / K;
   }
-  else
+  else if (m_compressibility <= 0)
   {
     string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
     GEOS_ERROR( message );
   }
+}
+
+void LinearElasticIsotropic::PoreVolumeMultiplierCompute(real64 const & pres,
+                                                              localIndex const i,
+                                                              real64 & poro,
+                                                              real64 & dPVMult_dPres)
+{
+  m_poreVolumeRelation.Compute( pres, poro, dPVMult_dPres );
+}
+
+void LinearElasticIsotropic::FinalInitialization( ManagedGroup *const parent )
+{
+  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
 
 void LinearElasticIsotropic::SetParamStatePointers( void *& data )
