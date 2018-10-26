@@ -255,7 +255,7 @@ find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
            NO_SYSTEM_ENVIRONMENT_PATH
            NO_CMAKE_SYSTEM_PATH)
 
-set( caliper_lib_list caliper caliper-reader caliper-common  gotcha )
+set( caliper_lib_list caliper caliper-reader caliper-common gotcha caliper-mpi )
                        
 message(INFO "looking for libs in ${CALIPER_DIR}")
 blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES

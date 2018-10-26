@@ -51,8 +51,11 @@ inline void getAbsolutePath(const std::string & path, std::string & absolute_pat
   }
   else
   {
-    getcwd(abs_file_path, PATH_MAX + 1);
-    GEOS_ERROR("Could not get the absolute path for " << path << " from "  << abs_file_path);
+    char const * ret = getcwd(abs_file_path, PATH_MAX + 1);
+    if (ret != nullptr)
+      GEOS_ERROR("Could not get the absolute path for " << path << " from "  << abs_file_path);
+    else
+      GEOS_ERROR("Could not get the absolute path for " << path);
   }
 }
 

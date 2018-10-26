@@ -402,7 +402,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
     ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-    wrapper->Unpack(buffer,packList);
+    unpackedSize += wrapper->Unpack(buffer,packList);
   }
 
 
