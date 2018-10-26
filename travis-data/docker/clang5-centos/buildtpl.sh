@@ -6,7 +6,7 @@ sudo scl enable llvm-toolset-7 bash
 git clone https://github.com/GEOSX/thirdPartyLibs.git
 cd thirdPartyLibs
 git submodule update --init --recursive
-python scripts/config-build.py -hc host-configs/default.cmake -bt Release -DNUM_PROC:STRING=4
+python scripts/config-build.py -hc host-configs/default.cmake -bt Release -DNUM_PROC:STRING=2
 cd build-default-release
 make
 cd ..

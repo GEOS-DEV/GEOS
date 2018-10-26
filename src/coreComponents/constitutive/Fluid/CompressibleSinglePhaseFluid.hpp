@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+  * @file CompressibleSinglePhaseFluid.hpp
+  */
+
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPRESSIBLESINGLEPHASEFLUID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPRESSIBLESINGLEPHASEFLUID_HPP_
 
@@ -39,6 +43,7 @@ namespace constitutive
 class CompressibleSinglePhaseFluid : public ConstitutiveBase
 {
 public:
+
   CompressibleSinglePhaseFluid( std::string const & name, ManagedGroup * const parent );
 
   virtual ~CompressibleSinglePhaseFluid() override;
