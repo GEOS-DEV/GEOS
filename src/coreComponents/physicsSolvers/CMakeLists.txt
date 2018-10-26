@@ -5,8 +5,9 @@
 set(physicsSolvers_headers
     PhysicsSolverManager.hpp
     SolverBase.hpp
+    CoupledSolvers/PoroelasticSolver.hpp
     FiniteVolume/SinglePhaseFlow.hpp
-    SimpleSolvers/LaplaceFEM.hpp
+    SimpleSolvers/LaplaceFEM.hpp 
     src/SolidMechanicsLagrangianFEM.hpp
     surfaceGeneration/SurfaceGenerator.hpp
     src/DummySolver.hpp
@@ -18,6 +19,7 @@ set(physicsSolvers_headers
 set(physicsSolvers_sources
     PhysicsSolverManager.cpp
     SolverBase.cpp
+    CoupledSolvers/PoroelasticSolver.cpp
     FiniteVolume/SinglePhaseFlow.cpp
     SimpleSolvers/LaplaceFEM.cpp
     src/SolidMechanicsLagrangianFEM.cpp
