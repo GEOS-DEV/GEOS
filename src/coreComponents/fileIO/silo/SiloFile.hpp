@@ -93,7 +93,10 @@ public:
    * This function requests the write baton from silo PMPIO. The involves determining
    * the file names, and opening the file for write.
    */
-  void WaitForBatonWrite( int const domainNumber, int const cycleNum, bool const isRestart );
+  void WaitForBatonWrite( int const domainNumber,
+                          int const cycleNum,
+                          integer const eventCounter,
+                          bool const isRestart );
 
   /**
    * @brief Wait for the Baton when reading using PMPIO

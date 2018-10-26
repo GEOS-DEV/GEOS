@@ -43,6 +43,9 @@ SolverBase::SolverBase( std::string const & name,
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
 //  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
 
+  // This sets a flag to indicate that this object increments time
+  this->SetTimestepBehavior(1);
+
 //  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
 
 }
@@ -158,9 +161,9 @@ void SolverBase::ReadXML_PostProcess()
 
 
 real64 SolverBase::SolverStep( real64 const& time_n,
-                               real64 const& dt,
-                               const int cycleNumber,
-                               DomainPartition * domain )
+                           real64 const& dt,
+                           const integer cycleNumber,
+                           DomainPartition * domain )
 {
   return 0;
 }
@@ -168,7 +171,9 @@ real64 SolverBase::SolverStep( real64 const& time_n,
 
 void SolverBase::Execute( real64 const& time_n,
                           real64 const& dt,
-                          const int cycleNumber,
+                          integer const cycleNumber,
+                          integer const eventCounter,
+                          real64 const & eventProgress,
                           ManagedGroup * domain )
 {
   if( dt > 0 )
