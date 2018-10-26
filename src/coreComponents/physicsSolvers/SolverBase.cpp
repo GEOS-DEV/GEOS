@@ -43,11 +43,6 @@ SolverBase::SolverBase( std::string const & name,
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
 //  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
 
-  if( this->globalGravityVector() != nullptr )
-  {
-    m_gravityVector=*globalGravityVector();
-  }
-
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior(1);
 
@@ -147,6 +142,24 @@ void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
 }
 
 
+//void SolverBase::CreateChild( string const & childKey, string const & childName )
+//{
+//  if( CatalogInterface::hasKeyName(childKey) )
+//  {
+//    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
+//    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
+//  }
+
+
+void SolverBase::ReadXML_PostProcess()
+{
+  if( this->globalGravityVector() != nullptr )
+  {
+    m_gravityVector=*globalGravityVector();
+  }
+}
+
+
 real64 SolverBase::SolverStep( real64 const& time_n,
                            real64 const& dt,
                            const integer cycleNumber,
@@ -168,7 +181,6 @@ void SolverBase::Execute( real64 const& time_n,
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
   }
 }
-
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
@@ -198,6 +210,7 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   // return the achieved timestep
   return dt;
 }
+
 
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           real64 const & dt,
@@ -341,7 +354,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   return stepDt;
 }
 
-
 real64 SolverBase::ExplicitStep( real64 const & time_n,
                                  real64 const & dt,
                                  integer const cycleNumber,
@@ -359,6 +371,7 @@ void SolverBase::ImplicitStepSetup( real64 const& time_n,
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
 
+
 void SolverBase::AssembleSystem( DomainPartition * const domain,
                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                  real64 const time,
@@ -366,7 +379,6 @@ void SolverBase::AssembleSystem( DomainPartition * const domain,
 {
   GEOS_ERROR( "SolverBase::Assemble called!. Should be overridden." );
 }
-
 
 void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
                                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
@@ -403,13 +415,13 @@ void SolverBase::ResetStateToBeginningOfStep( DomainPartition * const )
   GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }
 
+
 void SolverBase::ImplicitStepComplete( real64 const & time,
                                        real64 const & dt,
                                        DomainPartition * const domain )
 {
   GEOS_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
-
 
 void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                               SystemSolverParameters const * const params,
@@ -435,13 +447,7 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 }
 
-//void SolverBase::CreateChild( string const & childKey, string const & childName )
-//{
-//  if( CatalogInterface::hasKeyName(childKey) )
-//  {
-//    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
-//    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
-//  }
+
 //}
 
 
@@ -455,7 +461,6 @@ R1Tensor const * SolverBase::globalGravityVector() const
 
   return rval;
 }
-
 
 systemSolverInterface::EpetraBlockSystem const * SolverBase::getLinearSystemRepository() const
 {

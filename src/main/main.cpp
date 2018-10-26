@@ -26,9 +26,9 @@
 #include "managers/ProblemManager.hpp"
 
 
-#ifdef USE_OPENMP
-#include <omp.h>
-#endif
+//#ifdef USE_OPENMP
+//#include <omp.h>
+//#endif
 
 using namespace geosx;
 
@@ -56,11 +56,11 @@ int main( int argc, char *argv[] )
   logger::InitializeLogger():
 #endif
 
-#if defined(RAJA_ENABLE_OPENMP)
-  {
-    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
-  }
-#endif
+//#if defined(RAJA_ENABLE_OPENMP)
+//  {
+//    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
+//  }
+//#endif
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 

@@ -24,9 +24,11 @@
  */
 
 #include "CommunicationTools.hpp"
+
+#include "common/TimingMacros.hpp"
+#include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "NeighborCommunicator.hpp"
-#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -433,6 +435,28 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
 }
 
 
+void CommunicationTools::SynchronizePackSendRecvSizes( const std::map<string, string_array >& fieldNames,
+                                                       MeshLevel * const mesh,
+                                                       array1d<NeighborCommunicator> & neighbors,
+                                                       MPI_iCommData & icomm )
+{
+  GEOSX_MARK_FUNCTION;
+  icomm.fieldNames.insert(fieldNames.begin(), fieldNames.end() );
+  icomm.resize( neighbors.size() );
+
+  for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
+  {
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    int const bufferSize = neighbor.PackCommSizeForSync( fieldNames, mesh, icomm.commID );
+
+    neighbor.MPI_iSendReceiveBufferSizes( icomm.commID,
+                                          icomm.mpiSizeSendBufferRequest[neighborIndex],
+                                          icomm.mpiSizeRecvBufferRequest[neighborIndex],
+                                          MPI_COMM_GEOSX );
+
+    neighbor.resizeSendBuffer( icomm.commID, bufferSize );
+  }
+}
 
 
 void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
@@ -440,32 +464,62 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
                                                   array1d<NeighborCommunicator> & neighbors,
                                                   MPI_iCommData & icomm )
 {
-  icomm.commID = CommunicationTools::reserveCommID();
-  icomm.fieldNames.insert(fieldNames.begin(), fieldNames.end() );
-  icomm.resize( neighbors.size() );
+  GEOSX_MARK_FUNCTION;
 
+  MPI_iCommData sizeComm;
+
+  //  raja::forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,[&] ( int neighborIndex)->void
   for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    neighbor.PackBufferForSync( fieldNames, mesh, icomm.commID );
-    neighbor.MPI_iSendReceive( icomm.commID,
-                               icomm.mpiSendBufferRequest[neighborIndex],
-                               icomm.mpiRecvBufferRequest[neighborIndex],
-                               MPI_COMM_GEOSX );
+
+    neighbor.PackCommBufferForSync( fieldNames, mesh, icomm.commID );
+
   }
+
+  MPI_Waitall( icomm.size,
+               icomm.mpiSizeSendBufferRequest.data(),
+               icomm.mpiSizeSendBufferStatus.data() );
+
+  for( int count=0 ; count<neighbors.size() ; ++count )
+  {
+    int neighborIndex;
+    MPI_Waitany( icomm.size,
+                 icomm.mpiSizeRecvBufferRequest.data(),
+                 &neighborIndex,
+                 icomm.mpiSizeRecvBufferStatus.data() );
+
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+    neighbor.MPI_iSendReceiveBuffers( icomm.commID,
+                                      icomm.mpiSendBufferRequest[neighborIndex],
+                                      icomm.mpiRecvBufferRequest[neighborIndex],
+                                      MPI_COMM_GEOSX );
+  }
+
+
 }
 
 void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors,
                                             MPI_iCommData & icomm )
 {
+  GEOSX_MARK_FUNCTION;
+
 #if 0
-  for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
+//  raja::forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,
+//                                                      [&] ( int neighborIndex )->void
+
+#pragma omp parallel for
+  for( localIndex neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
   {
+    std::cout<<"thread "<<omp_get_thread_num()<<" of "<<omp_get_num_threads()<<std::endl;
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    MPI_Waitall( 1, &( mpiRecvBufferRequest[neighborIndex] ), &( mpiRecvBufferStatus[neighborIndex] ) );
-    neighbor.UnpackBufferForSync( fieldNames, mesh, commID );
-    MPI_Waitall( 1, &( mpiSendBufferRequest[commID] ), &( mpiSendBufferStatus[commID] ) );
+    MPI_Wait( &( icomm.mpiRecvBufferRequest[neighborIndex] ),
+              &( icomm.mpiRecvBufferStatus[neighborIndex] ) );
+
+    neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID );
+
   }
 #else
 
@@ -482,13 +536,11 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
     neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID );
   }
 
-
+#endif
   MPI_Waitall( icomm.size,
                icomm.mpiSendBufferRequest.data(),
                icomm.mpiSendBufferStatus.data() );
-#endif
 
-  CommunicationTools::releaseCommID( icomm.commID );
 }
 
 void CommunicationTools::SynchronizeFields( const std::map<string, string_array >& fieldNames,
@@ -496,6 +548,7 @@ void CommunicationTools::SynchronizeFields( const std::map<string, string_array 
                                             array1d<NeighborCommunicator> & neighbors )
 {
   MPI_iCommData icomm;
+  SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
   SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
   SynchronizeUnpack( mesh, neighbors, icomm );
 }
