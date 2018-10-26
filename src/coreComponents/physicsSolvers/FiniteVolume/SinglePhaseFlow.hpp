@@ -199,6 +199,7 @@ public:
     constexpr static auto densityString = "density";
     constexpr static auto viscosityString = "viscosity";
     constexpr static auto porosityString = "porosity";
+    constexpr static auto oldPorosityString = "oldPorosity";
 
     // input data
     constexpr static auto referencePorosityString = "referencePorosity";
@@ -208,7 +209,9 @@ public:
     constexpr static auto gravityFlagString = "gravityFlag";
     constexpr static auto gravityDepthString = "gravityDepth";
 
-    // misc inputs
+    constexpr static auto volumeString = "volume";
+    constexpr static auto deltaVolumeString = "deltaVolume";
+
     constexpr static auto discretizationString = "discretization";
     constexpr static auto fluidNameString = "fluidName";
     constexpr static auto solidNameString = "solidName";
@@ -222,6 +225,14 @@ public:
   {
   } singlePhaseFlowGroupKeys;
 
+  localIndex fluidIndex() const
+  { return m_fluidIndex; }
+
+  localIndex solidIndex() const
+  { return m_solidIndex; }
+
+  void setPoroElasticCoupling()
+  { m_poroElasticFlag = 1; }
 
 private:
 
@@ -249,6 +260,8 @@ private:
   /// index of the solid constitutive model
   localIndex m_solidIndex;
 
+  /// flag to determine whether or not coupled with solid solver
+  integer m_poroElasticFlag;
 };
 
 

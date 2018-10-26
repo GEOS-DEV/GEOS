@@ -331,7 +331,10 @@ ConstructViewAccessor( string const & viewName,
       if( neighborName.empty() )
       {
         //        viewAccessor[kReg].push_back( subRegion->getReference<VIEWTYPE>(viewName)) ;
-        viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
+        if( subRegion->hasView(viewName) )
+        {
+          viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
+        }
       }
       else
       {
@@ -364,7 +367,10 @@ ConstructViewAccessor( string const & viewName,
 
       if( neighborName.empty() )
       {
-        viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
+        if( subRegion->hasView(viewName) )
+        {
+          viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
+        }
       }
       else
       {
