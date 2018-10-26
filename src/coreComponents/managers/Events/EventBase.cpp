@@ -173,6 +173,45 @@ void EventBase::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.targetExactStartStop.Key(),
+                              viewKeys.targetExactStartStop.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "allows timesteps to be truncated to match the start/stop times exactly",
+                              "allows timesteps to be truncated to match the start/stop times exactly",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.currentSubEvent.Key(),
+                              viewKeys.currentSubEvent.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "index of the current subevent",
+                              "index of the current subevent",
+                              "0",
+                              "",
+                              0,
+                              0,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.isTargetExecuting.Key(),
+                              viewKeys.isTargetExecuting.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "Flag to indicate whether the event target is executing",
+                              "Flag to indicate whether the event target is executing.  This helps to avoid double-executions.",
+                              "0",
+                              "",
+                              0,
+                              0,
+                              0 );
+
 }
 
 
@@ -181,6 +220,16 @@ void EventBase::CreateChild( string const & childKey, string const & childName )
   GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   this->RegisterGroup<EventBase>( childName, std::move(event) );
+}
+
+
+void EventBase::InitializePreSubGroups( ManagedGroup * const group )
+{
+  real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
+  integer& lastCycle = *(this->getData<integer>(viewKeys.lastCycle));
+
+  lastTime = std::numeric_limits<real64>::min();
+  lastCycle = std::numeric_limits<integer>::min();
 }
 
 
@@ -260,7 +309,9 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 
 void EventBase::Execute(real64 const& time_n,
                         real64 const& dt,
-                        const int cycleNumber,
+                        const integer cycleNumber,
+                        integer const ,
+                        real64 const & ,
                         ManagedGroup * domain)
 {
   real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
@@ -300,20 +351,31 @@ void EventBase::Step(real64 const time,
                      integer const cycle,
                      dataRepository::ManagedGroup * domain )
 {
-  // Note: do we need an mpi barrier here?
+  // currentSubEvent indicates which child event was active when the restart was written
+  // isTargetExecuting blocks double-execution of the target during restarts, and is useful debug information in outputs
+  integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
+  integer& isTargetExecuting = *(this->getData<integer>(viewKeys.isTargetExecuting));
 
-  if (m_target != nullptr)
+  if ((m_target != nullptr) && (isTargetExecuting == 0))
   {
-    m_target->Execute(time, dt, cycle, domain);
+    isTargetExecuting = 1;
+    m_target->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
   }
+  isTargetExecuting = 0;
 
-  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  // Iterage using the managed integer currentSubEvent, which will
+  // allow restart runs to pick up where they left off.
+  for ( ; currentSubEvent<this->numSubGroups(); ++currentSubEvent)
   {
+    EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[currentSubEvent] );
+
     if (subEvent->GetForecast() <= 0)
     {
-      subEvent->Execute(time, dt, cycle, domain);
+      subEvent->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
     }
-  });
+  }
+
+  currentSubEvent = 0;
 }
 
 
@@ -324,6 +386,7 @@ real64 EventBase::GetTimestepRequest(real64 const time)
   real64 const forceDt = this->getReference<real64>(viewKeys.forceDt);
   integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
   integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
+  integer const targetExactStartStop = this->getReference<integer>(viewKeys.targetExactStartStop);
 
   if (forceDt > 0)
   {
@@ -352,22 +415,39 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     }
   }
 
+  if (targetExactStartStop == 1)
+  {
+    real64 const beginTime = this->getReference<real64>(viewKeys.beginTime);
+    real64 const endTime = this->getReference<real64>(viewKeys.endTime);
+
+    if (time < beginTime)
+    {
+      nextDt = std::min(beginTime - time, nextDt);
+    }
+    else if (time < endTime)
+    {
+      nextDt = std::min(endTime - time, nextDt);
+    }
+  }
+
   return nextDt;
 }
 
 
 void EventBase::Cleanup(real64 const& time_n,
-                        const int cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const & eventProgress,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)
   {
-    m_target->Cleanup(time_n, cycleNumber, domain);
+    m_target->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time_n, cycleNumber, domain);
+    subEvent->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
   });
 }
 
@@ -381,6 +461,45 @@ integer EventBase::GetExitFlag()
   });
 
   return m_exitFlag;
+}
+
+
+
+void EventBase::GetExecutionOrder(array1d<integer> & eventCounters)
+{
+  // The first entry counts all events, the second tracks solver events
+  m_eventCount = eventCounters[0];
+  m_timeStepEventCount = eventCounters[1];
+
+  // Increment counters
+  ++eventCounters[0];
+  if (m_target != nullptr)
+  {
+    if (m_target->GetTimestepBehavior() > 0)
+    {
+      ++eventCounters[1];
+    }
+  }
+
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->GetExecutionOrder(eventCounters);
+  });
+}
+
+
+void EventBase::SetProgressIndicator(array1d<integer> & eventCounters)
+{
+  // Calculate the event progress indicator
+  // This is defined as the percent completion through the executaion loop
+  // with respect to the beginning of the event.
+  m_eventProgress = static_cast<real64>(m_timeStepEventCount) / static_cast<real64>(eventCounters[1]);
+  
+  // Do this for child events
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->SetProgressIndicator(eventCounters);
+  });
 }
 
 

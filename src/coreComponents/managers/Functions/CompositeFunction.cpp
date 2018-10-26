@@ -105,7 +105,6 @@ void CompositeFunction::FillDocumentationNode()
                               0 );
 
   docNode->getChildNode(keys::inputVarNames)->setDefault("");
-  docNode->getChildNode(keys::inputVarTypes)->setDefault("");
 
 }
 

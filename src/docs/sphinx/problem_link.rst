@@ -1,0 +1,1 @@
+.. include:: ../../../src/coreComponents/managers/docs/ProblemManager.rst

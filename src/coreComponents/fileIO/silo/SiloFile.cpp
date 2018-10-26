@@ -396,6 +396,7 @@ void SiloFile::Finish()
  */
 void SiloFile::WaitForBatonWrite( int const domainNumber,
                                   int const cycleNum,
+                                  integer const eventCounter,
                                   bool const isRestart )
 {
 
@@ -408,23 +409,27 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   char baseFileName[200] = { 0 };
   char dirName[200] = { 0 };
 
+  
+
   if( isRestart )
   {
-
-    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum);
+    // The integrated test repo does not use the eventProgress indicator, so skip it for now
+    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum );
     sprintf( fileName, "%s%s%s_%06d.%03d",
              m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
   }
   else
   {
-    sprintf(baseFileName, "%s_%06d",
-            m_plotFileRoot.c_str(),
-            cycleNum);
-
-    sprintf(fileName,
-            "%s_%06d.%03d",
+    sprintf(baseFileName, "%s_%06d%02d",
             m_plotFileRoot.c_str(),
             cycleNum,
+            eventCounter);
+
+    sprintf(fileName,
+            "%s_%06d%02d.%03d",
+            m_plotFileRoot.c_str(),
+            cycleNum,
+            eventCounter,
             groupRank);
   }
   sprintf(dirName, "domain_%05d", domainNumber);
