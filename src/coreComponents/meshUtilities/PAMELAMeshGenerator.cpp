@@ -50,12 +50,10 @@ using namespace dataRepository;
 
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
   MeshGeneratorBase( name, parent )
-{
-}
+{}
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
-{
-}
+{}
 
 void PAMELAMeshGenerator::FillDocumentationNode()
 {
@@ -79,23 +77,24 @@ void PAMELAMeshGenerator::FillDocumentationNode()
 }
 
 void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
-{
-}
+{}
 
 void PAMELAMeshGenerator::ReadXML_PostProcess()
 {
-    m_pamelaMesh = 
-      std::unique_ptr< PAMELA::Mesh >
-      (PAMELA::MeshFactory::makeMesh(this->getReference<string>(keys::filePath)));
-    m_pamelaMesh->CreateFacesFromCells();
-    m_pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
-                                                 PAMELA::ELEMENTS::FAMILY::POLYGON);
-    m_pamelaMesh->CreateLineGroupWithAdjacency(
-        "TopologicalC2C", m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency(PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYGON));
+  m_pamelaMesh =
+    std::unique_ptr< PAMELA::Mesh >
+      ( PAMELA::MeshFactory::makeMesh( this->getReference<string>( keys::filePath )));
+  m_pamelaMesh->CreateFacesFromCells();
+  m_pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
+                                               PAMELA::ELEMENTS::FAMILY::POLYGON );
+  m_pamelaMesh->CreateLineGroupWithAdjacency(
+    "TopologicalC2C",
+    m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
+                                                               PAMELA::ELEMENTS::FAMILY::POLYGON ));
 
 }
 
-void PAMELAMeshGenerator::RemapMesh(dataRepository::ManagedGroup * const domain)
+void PAMELAMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
 {
   return;
 }
@@ -109,17 +108,17 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
 {
   int nranks = 1;
 #ifdef GEOSX_USE_MPI
-  MPI_Comm_size(MPI_COMM_GEOSX, &nranks);
+  MPI_Comm_size( MPI_COMM_GEOSX, &nranks );
 #endif
 
   // We throw an error if GEOSX in launched with MPI. Multirank will be handle in another PR
-  GEOS_ERROR_IF(nranks > 1, "PAMELA Mesh Generator not yet compatible with multidomains");
+  GEOS_ERROR_IF( nranks > 1, "PAMELA Mesh Generator not yet compatible with multidomains" );
 
-  ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+  ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
+  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>( std::string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
   //CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
@@ -128,17 +127,19 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   auto polyhedronCollection = m_pamelaMesh->get_PolyhedronCollection();
 
   // Use the PartMap of PAMELA to get the mesh
-  auto polyhedronPartMap = std::get<0>(PAMELA::getPolyhedronPartMap(m_pamelaMesh.get()));
-  
+  auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get()));
+
   // First loop which iterate on the regions
-  for(auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end();++regionItr) {
+  for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
+  {
     auto regionPtr = regionItr->second;
 
     // Iterate on vertices
-    nodeManager->resize(regionPtr->Points.size());
+    nodeManager->resize( regionPtr->Points.size());
     arrayView1d<R1Tensor> X = nodeManager->referencePosition();
-    for(auto verticesIterator = regionPtr->Points.begin() ;
-        verticesIterator != regionPtr->Points.end(); verticesIterator++) {
+    for( auto verticesIterator = regionPtr->Points.begin() ;
+         verticesIterator != regionPtr->Points.end() ; verticesIterator++ )
+    {
       real64 * const pointData = X[(*verticesIterator)->get_globalIndex()].Data();
       pointData[0] = (*verticesIterator)->get_coordinates().x;
       pointData[1] = (*verticesIterator)->get_coordinates().y;
@@ -146,29 +147,33 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     }
 
     // Iterate on cell types
-    for(auto cellBlockIterator = regionPtr->SubParts.begin() ;
-        cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++) {
+    for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
+         cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
+    {
       // Check if there is cell of this type
-      if(cellBlockIterator->second->SubCollection.size_owned() > 0) {
+      if( cellBlockIterator->second->SubCollection.size_owned() > 0 )
+      {
         auto cellBlockPAMELA = cellBlockIterator->second;
         auto cellBlockType = cellBlockPAMELA->ElementType;
-        auto cellBlockName = ElementToLabel.at(cellBlockType);
+        auto cellBlockName = ElementToLabel.at( cellBlockType );
         CellBlock * cellBlock =
-          cellBlockManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-          cellBlock->SetDocumentationNodes();
-          cellBlock->RegisterDocumentationNodes();
-          cellBlock->ReadXML_PostProcess();
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( cellBlockName );
+        cellBlock->SetDocumentationNodes();
+        cellBlock->RegisterDocumentationNodes();
+        cellBlock->ReadXML_PostProcess();
 
-        if( cellBlockName == "HEX") {
+        if( cellBlockName == "HEX" )
+        {
           auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
           auto & cellToVertex = cellBlock->nodeList();
-          cellBlock->resize(nbCells);
-          cellToVertex.resize(nbCells, 8 );
-          
+          cellBlock->resize( nbCells );
+          cellToVertex.resize( nbCells, 8 );
+
           // Iterate on cells
-          for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
-              cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
-              cellItr++ ) {
+          for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
+               cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
+               cellItr++ )
+          {
             auto cellIndex = (*cellItr)->get_globalIndex();
             auto cornerList = (*cellItr)->get_vertexList();
 
@@ -196,13 +201,11 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
 }
 
 void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
-    const int index[],
-    const int& iEle,
-    int nodeIDInBox[],
-    const int node_size )
-{
-
-}
+                                                       const int index[],
+                                                       const int& iEle,
+                                                       int nodeIDInBox[],
+                                                       const int node_size )
+{}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )
 }

@@ -53,7 +53,7 @@ class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
   PAMELAMeshGenerator( const std::string& name,
-                         ManagedGroup * const parent );
+                       ManagedGroup * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
 
@@ -71,7 +71,7 @@ public:
                                              const int index[],
                                              const int& iEle,
                                              int nodeIDInBox[],
-                                             const int size) override;
+                                             const int size ) override;
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
@@ -84,14 +84,14 @@ private:
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string> ElementToLabel
     =
     {
-      { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
-      { PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
-      { PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
-      { PAMELA::ELEMENTS::TYPE::VTK_QUAD ,"QUAD" },
-      { PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA" },
-      { PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON , "HEX" },
-      { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
-      { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
+    { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
+    { PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
+    { PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
+    { PAMELA::ELEMENTS::TYPE::VTK_QUAD, "QUAD" },
+    { PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA" },
+    { PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX" },
+    { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
+    { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
     };
 };
 
