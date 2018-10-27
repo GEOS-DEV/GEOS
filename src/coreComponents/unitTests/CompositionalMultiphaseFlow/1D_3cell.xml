@@ -19,6 +19,7 @@
                               newtonTol="1.0e-6"
                               maxIterNewton="2"
                               useDirectSolver="1"
+                              solverType="Klu"
                               ilut_fill="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
