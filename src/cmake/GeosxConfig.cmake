@@ -19,8 +19,10 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           HYPRE
                           MATHPRESSO
                           MPI
+                          OPENMP
                           PYTHON
-                          RAJA 
+                          RAJA
+                          TIMERS
                           TRILINOS
                           ${externalComponentsList} )
 
