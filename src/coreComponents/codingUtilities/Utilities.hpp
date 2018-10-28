@@ -243,6 +243,21 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
   }
 }
 
+template< typename T, int N >
+inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
+                              const array1d< T >& globalField1,
+                              const array1d< T >& globalField2,
+                              T * __restrict__ const localField1,
+                              T * __restrict__ const localField2 )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    localField1[a] = globalField1[ globalToLocalRelation[a] ];
+    localField2[a] = globalField2[ globalToLocalRelation[a] ];
+  }
+}
+
+
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
                               T const * __restrict__ const globalField1,
