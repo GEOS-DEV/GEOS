@@ -56,11 +56,11 @@ int main( int argc, char *argv[] )
   logger::InitializeLogger():
 #endif
 
-//#if defined(RAJA_ENABLE_OPENMP)
-//  {
-//    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
-//  }
-//#endif
+#ifdef GEOSX_USE_OPENMP
+  {
+    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
+  }
+#endif
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
