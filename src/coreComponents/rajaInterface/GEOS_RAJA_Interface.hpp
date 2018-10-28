@@ -51,7 +51,7 @@ typedef RAJA::omp_reduce_ordered reducePolicy;
 typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
 
 #else
-typedef RAJA::seq_exec elemPolicy;
+typedef RAJA::loop_exec elemPolicy;
 typedef RAJA::loop_exec onePointPolicy;
 
 typedef RAJA::loop_exec memSetPolicy;
