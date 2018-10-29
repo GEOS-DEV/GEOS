@@ -394,7 +394,7 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
 
       for (localIndex jc = 0; jc < NC; ++jc)
       {
-        dCompMoleFrac_dCompMassFrac[ic][jc] = -compMoleFrac[ic] / m_componentMolarWeight[jc];
+        dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / m_componentMolarWeight[jc];
         dCompMoleFrac_dCompMassFrac[ic][jc] /= totalMolality;
       }
     }
