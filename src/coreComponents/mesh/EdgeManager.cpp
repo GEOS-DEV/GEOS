@@ -50,6 +50,7 @@ EdgeManager::~EdgeManager()
 
 void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager )
 {
+  GEOSX_MARK_FUNCTION;
   if (faceManager->size() == 0 || nodeManager->size() == 0)
     return;
 

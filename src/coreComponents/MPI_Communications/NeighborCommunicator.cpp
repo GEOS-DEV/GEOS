@@ -44,7 +44,7 @@ NeighborCommunicator::NeighborCommunicator():
   m_mpiRecvBufferRequest(),
   m_mpiSendBufferStatus(),
   m_mpiRecvBufferStatus()
-{GEOSX_MARK_FUNCTION;}
+{}
 
 //NeighborCommunicator::~NeighborCommunicator()
 //{
@@ -280,6 +280,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
                                               MeshLevel * const mesh,
                                               int const commID )
 {
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());

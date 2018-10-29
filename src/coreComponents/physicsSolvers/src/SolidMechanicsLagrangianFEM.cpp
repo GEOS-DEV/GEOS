@@ -83,53 +83,74 @@ void Integrate( const R2SymTensor& fieldvar,
 
 }
 
+template< int N >
+void Integrate( const R2SymTensor& fieldvar,
+                const R1Tensor* const dNdX,
+                real64 const& detJ,
+                real64 const& detF,
+                const R2Tensor& Finv,
+                R1Tensor* const result)
+{
+  real64 const integrationFactor = detJ * detF;
 
-inline void HughesWinget(R2Tensor &Rot, R2SymTensor &Dadt, R2Tensor L, real64 dt){
+  R2Tensor P;
+  P.AijBkj( fieldvar,Finv);
+  P *= integrationFactor;
 
-  R2Tensor Omega;
+  for( int a=0 ; a<N ; ++a )  // loop through all shape functions in
+                                      // element
+  {
+    result[a].minusAijBj( P, dNdX[a] );
+  }
 
-  real64 * Dadt_data = Dadt.Data();
-  real64 * L_data = L.Data();
-
-  real64 *Omega_data = Omega.Data();
-
-  //Omega = 0.5*(L - LT); 
-  Omega_data[0] = 0.5*(L_data[0] - L_data[0]);
-  Omega_data[1] = 0.5*(L_data[1] - L_data[3]);
-  Omega_data[2] = 0.5*(L_data[2] - L_data[6]);
-
-  Omega_data[3] = 0.5*(L_data[3] - L_data[1]);
-  Omega_data[4] = 0.5*(L_data[4] - L_data[4]);
-  Omega_data[5] = 0.5*(L_data[5] - L_data[7]);
-
-  Omega_data[6] = 0.5*(L_data[6] - L_data[2]);
-  Omega_data[7] = 0.5*(L_data[7] - L_data[5]);
-  Omega_data[8] = 0.5*(L_data[8] - L_data[8]);
+}
 
 
-  //Dadt = 0.5*(L + LT)*dt;
-  Dadt_data[0] = L_data[0]*dt;
+inline void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
+{
+
+  real64 * restrict const Dadt_data = Dadt.Data();
+  real64 * restrict const Rot_data = Rot.Data();
+  real64 const * restrict const G_data = G.Data();
+
+
+  //Dadt = 0.5*(G + GT);
+  Dadt_data[0] = G_data[0];
   
-  Dadt_data[1] = 0.5*(L_data[1] + L_data[3])*dt;
-  Dadt_data[2] = L_data[4]*dt;
+  Dadt_data[1] = 0.5*(G_data[1] + G_data[3]);
+  Dadt_data[2] = G_data[4];
   
-  Dadt_data[3] = 0.5*(L_data[6] + L_data[2])*dt;
-  Dadt_data[4] = 0.5*(L_data[7] + L_data[5])*dt;
-  Dadt_data[5] = L_data[8] *dt;
+  Dadt_data[3] = 0.5*(G_data[6] + G_data[2]);
+  Dadt_data[4] = 0.5*(G_data[7] + G_data[5]);
+  Dadt_data[5] = G_data[8];
+
+
+  //Omega = 0.5*(G - GT);
+  real64 const w12 = 0.5*(G_data[1] - G_data[3]);
+  real64 const w13 = 0.5*(G_data[2] - G_data[6]);
+  real64 const w23 = 0.5*(G_data[5] - G_data[7]);
+
+  real64 const w12w12div4 = 0.25*w12*w12;
+  real64 const w13w13div4 = 0.25*w13*w13;
+  real64 const w23w23div4 = 0.25*w23*w23;
+  real64 const w12w13div2 = 0.5*(w12*w13);
+  real64 const w12w23div2 = 0.5*(w12*w23);
+  real64 const w13w23div2 = 0.5*(w13*w23);
+  real64 const invDetIplusOmega = 1.0 / ( 1 + ( w12w12div4 + w13w13div4 + w23w23div4 ) );
+
+  Rot_data[0] = ( 1.0 + (-w12w12div4 - w13w13div4 + w23w23div4) ) * invDetIplusOmega;
+  Rot_data[1] = ( w12 - w13w23div2 ) * invDetIplusOmega;
+  Rot_data[2] = ( w13 + w12w23div2 ) * invDetIplusOmega;
+
+  Rot_data[3] = (-w12 - w13w23div2 ) * invDetIplusOmega;
+  Rot_data[4] = ( 1.0 + (-w12w12div4 + w13w13div4 - w23w23div4) ) * invDetIplusOmega;
+  Rot_data[5] = ( w23 - w12w13div2 ) * invDetIplusOmega;
+
+  Rot_data[6] = (-w13 + w12w23div2 ) * invDetIplusOmega;
+  Rot_data[7] = (-w23 - w12w13div2 ) * invDetIplusOmega;
+  Rot_data[8] = ( 1.0 + ( w12w12div4 - w13w13div4 - w23w23div4) ) * invDetIplusOmega;
   
   
-  R2Tensor IpR, ImR, ImRinv;
-  IpR  = Omega;
-  IpR *= 0.5;
-  IpR.PlusIdentity(1.0);
-  
-  ImR  = Omega;
-  ImR *= -0.5;
-  ImR.PlusIdentity(1.0);                           
-  
-  ImRinv.Inverse(ImR);
-  
-  Rot.AijBjk(ImRinv,ImR);  
 }
 
 inline void LinearElasticIsotropic_Kernel(R2SymTensor &Dadt, R2SymTensor &TotalStress, R2Tensor &Rot,
@@ -540,7 +561,12 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_MARK_BEGIN(initialization);
+  static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
+  static real64 maxTimes[10] = {0.0};
+
+
+  GEOSX_GET_TIME( t0 );
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
@@ -563,7 +589,6 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("Velocity");
 
-  GEOSX_MARK_END(initialization);  
 
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames,
@@ -624,6 +649,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
+  GEOSX_GET_TIME( t1 );
+//  GEOS_LOG_RANK( "     init:             "<<t1-t0 );
 
 
   //Step 5. Calculate deformation input to constitutive model and update state to
@@ -690,12 +717,17 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
 
+  GEOSX_GET_TIME( t2 );
+
 
   CommunicationTools::SynchronizePackSendRecv( fieldNames,
                                                mesh,
                                                neighbors,
                                                m_icomm );
 
+
+  GEOSX_GET_TIME( t3 );
+//  GEOS_LOG_RANK( "     SyncPackSendRecv: "<<t3-t2 );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
@@ -743,6 +775,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   } //Element Manager
 
+  GEOSX_GET_TIME( t4 );
 
   //Compute Force : Point-wise computations
   FORALL_NODES_IN_SET( a, m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size() )
@@ -764,6 +797,30 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
   (void) cycleNumber;
+
+  GEOSX_GET_TIME( tf );
+
+
+
+#ifdef GEOSX_USE_TIMERS
+  GEOSX_MARK_BEGIN("MPI_Barrier");
+  MPI_Barrier(MPI_COMM_GEOSX);
+  GEOSX_MARK_END("MPI_Barrier");
+
+  minTimes[0] = std::min( minTimes[0], t2-t1 );
+  minTimes[1] = std::min( minTimes[1], t4-t3 );
+  minTimes[2] = std::min( minTimes[2], tf-t0 );
+
+
+  maxTimes[0] = std::max( maxTimes[0], t2-t1 );
+  maxTimes[1] = std::max( maxTimes[1], t4-t3 );
+  maxTimes[2] = std::max( maxTimes[2], tf-t0 );
+
+
+  GEOS_LOG_RANK( "     outer loop: "<< (t2-t1)<<", "<<minTimes[0]<<", "<<maxTimes[0] );
+  GEOS_LOG_RANK( "     inner loop: "<< (t4-t3)<<", "<<minTimes[1]<<", "<<maxTimes[1] );
+  GEOS_LOG_RANK( "     total time: "<< (tf-t0)<<", "<<minTimes[2]<<", "<<maxTimes[2] );
+#endif
 
   return dt;
 }
@@ -836,97 +893,55 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
     R1Tensor u_local[ NUM_NODES_PER_ELEM ];
     R1Tensor f_local[ NUM_NODES_PER_ELEM ];
 
-    for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
-    {
-      f_local[a] = 0;
-    }
-    localIndex const * const nodelist = elemsToNodes[k];
+    localIndex const * restrict const nodelist = elemsToNodes[k];
 
-    CopyGlobalToLocal( nodelist,
-                       u, uhat,
-                       u_local, uhat_local, NUM_NODES_PER_ELEM );
+    CopyGlobalToLocal<R1Tensor,NUM_NODES_PER_ELEM>( nodelist,
+                                                    u, uhat,
+                                                    u_local, uhat_local );
 
-
-
-    real64 * restrict const meanStressq = meanStress[er][esr][0][k];
-
-    R2SymTensor * restrict const devStressq = devStress[er][esr][0][k];
+    real64 const * restrict const meanStressq = meanStress[er][esr][0][k];
+    R2SymTensor const * restrict const devStressq = devStress[er][esr][0][k];
 
     //Compute Quadrature
     for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
     {
 
       R2Tensor dUhatdX, dUdX;
-      CalculateGradient( dUhatdX, uhat_local, dNdX[k][q], NUM_NODES_PER_ELEM );
-      CalculateGradient( dUdX, u_local, dNdX[k][q], NUM_NODES_PER_ELEM );
+      CalculateGradient<NUM_NODES_PER_ELEM>( dUhatdX, uhat_local, dNdX[k][q] );
+      CalculateGradient<NUM_NODES_PER_ELEM>( dUdX, u_local, dNdX[k][q] );
 
-      R2Tensor F,L, Finv;
+      R2Tensor F,Ldt, Finv;
 
-      {
-        // calculate dv/dX
-        R2Tensor dvdX = dUhatdX;
-        dvdX *= 1.0 / dt;
+      // calculate du/dX
+      F = dUhatdX;
+      F *= 0.5;
+      F += dUdX;
+      F.PlusIdentity(1.0);
+      Finv.Inverse(F);
 
-        // calculate du/dX
-        F = dUhatdX;
-        F *= 0.5;
-        F += dUdX;
-        F.PlusIdentity(1.0);
-
-        // calculate dX/du
-        Finv.Inverse(F);
-
-        // chain rule: calculate dv/du = dv/dX * dX/du
-        L.AijBjk(dvdX, Finv);
-      }
+      // chain rule: calculate dv/du = dv/dX * dX/du
+      Ldt.AijBjk(dUhatdX, Finv);
 
       // calculate gradient (end of step)
       F = dUhatdX;
       F += dUdX;
       F.PlusIdentity(1.0);
       real64 detF = F.Det();
-
-
-      // calculate element volume
-      //        detJ_np1(k,q) = detJ(k,q) * detF;
-      //        volume[k] += detJ_np1(k,q);
-      //        initVolume += detJ(k,q);
-
-
       Finv.Inverse(F);
 
 
-      //-------------------------[Incremental Kinematics]----------------------------------
       R2Tensor Rot;
       R2SymTensor Dadt;
-      HughesWinget(Rot, Dadt, L, dt);
-      //-----------------------[Compute Total Stress - Linear Elastic Isotropic]-----------
+      HughesWinget(Rot, Dadt, Ldt);
 
       constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
 //      update(Dadt, Rot, k, q, data, 0);
-//      ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
-//      ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
-//      {
-//        real64 volumeStrain = Dadt.Trace();
-//        meanStressq[q] += volumeStrain * 20e9;
-//
-//        R2SymTensor temp = Dadt;
-//        temp.PlusIdentity( -volumeStrain / 3.0 );
-//        temp *= 2.0 * 10e9;
-//        devStressq[q] += temp;
-//
-//
-//        temp.QijAjkQlk( devStressq[q], Rot );
-//        devStressq[q] = temp;
-//      }
 
       R2SymTensor TotalStress;
       TotalStress = devStressq[q];
       TotalStress.PlusIdentity( meanStressq[q] );
 
-      //----------------------
-
-      Integrate( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, NUM_NODES_PER_ELEM, f_local );
+      Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ(k,q), detF, Finv, f_local );
 
     }//quadrature loop
 
