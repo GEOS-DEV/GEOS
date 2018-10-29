@@ -452,7 +452,7 @@ private:
    *
    * @return returns the ordering of nodes for a silo zone type.
    */
-  integer_array SiloNodeOrdering();
+  integer_array SiloNodeOrdering(const string & elementType);
 
 
 

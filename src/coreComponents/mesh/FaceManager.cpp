@@ -156,10 +156,10 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
   m_toElements.setElementRegionManager( elementManager );
 
-  elemRegionList.resize( 4*nodeManager->size() );
-  elemSubRegionList.resize( 4*nodeManager->size() );
-  elemList.resize( 4*nodeManager->size() );
-  node_list.resize( 4*nodeManager->size() );
+  elemRegionList.resize( 20*nodeManager->size() );
+  elemSubRegionList.resize( 20*nodeManager->size() );
+  elemList.resize( 20*nodeManager->size() );  // We need to reserve a lot more space for tets.  These get resized later.
+  node_list.resize( 20*nodeManager->size() );
 
   elemRegionList = -1;
   elemSubRegionList = -1;
