@@ -148,10 +148,13 @@ public:
     static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto facePressureString  = "facePressure";
 
+    static constexpr auto deltaVolumeString = "deltaVolume";
+
     // these are used to store last converged time step values
     static constexpr auto densityString   = "density";
     static constexpr auto viscosityString = "viscosity";
     static constexpr auto porosityString  = "porosity";
+    static constexpr auto oldPorosityString  = "oldPorosity";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -163,10 +166,13 @@ public:
     ViewKey deltaPressure = { deltaPressureString };
     ViewKey facePressure  = { facePressureString };
 
+    ViewKey deltaVolume   = { deltaVolumeString };
+
     // these are used to store last converged time step values
-    ViewKey density   = { densityString };
-    ViewKey viscosity = { viscosityString };
-    ViewKey porosity  = { porosityString };
+    ViewKey density      = { densityString };
+    ViewKey viscosity    = { viscosityString };
+    ViewKey porosity     = { porosityString };
+    ViewKey oldPorosity  = { oldPorosityString };
 
   } viewKeysSinglePhaseFlow;
 

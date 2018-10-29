@@ -43,10 +43,8 @@ SolverBase::SolverBase( std::string const & name,
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
 //  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
 
-  if( this->globalGravityVector() != nullptr )
-  {
-    m_gravityVector=*globalGravityVector();
-  }
+  // This sets a flag to indicate that this object increments time
+  this->SetTimestepBehavior(1);
 
 //  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
 
@@ -116,13 +114,46 @@ void SolverBase::FillDocumentationNode()
 
 void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
+//  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
+//  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+//  {
+//    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
+//
+//    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+//
+//    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
+//      {
+//        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
+//
+//        docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
+//                                    viewKeyStruct::blockLocalDofNumberString,
+//                                    -1,
+//                                    "localIndex_array",
+//                                    "localIndex_array",
+//                                    "verbosity level",
+//                                    "verbosity level",
+//                                    "0",
+//                                    "",
+//                                    0,
+//                                    0,
+//                                    0 );
+//      });
+//  }
+}
 
+
+void SolverBase::ReadXML_PostProcess()
+{
+  if( this->globalGravityVector() != nullptr )
+  {
+    m_gravityVector=*globalGravityVector();
+  }
 }
 
 
 real64 SolverBase::SolverStep( real64 const& time_n,
                                real64 const& dt,
-                               const int cycleNumber,
+                               const integer cycleNumber,
                                DomainPartition * domain )
 {
   return 0;
@@ -131,7 +162,9 @@ real64 SolverBase::SolverStep( real64 const& time_n,
 
 void SolverBase::Execute( real64 const& time_n,
                           real64 const& dt,
-                          const int cycleNumber,
+                          integer const cycleNumber,
+                          integer const eventCounter,
+                          real64 const & eventProgress,
                           ManagedGroup * domain )
 {
   if( dt > 0 )
@@ -140,14 +173,6 @@ void SolverBase::Execute( real64 const& time_n,
   }
 }
 
-
-//void SolverBase::CreateChild( string const & childKey, string const & childName )
-//{
-//  if( CatalogInterface::hasKeyName(childKey) )
-//  {
-//    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
-//    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
-//  }
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
@@ -253,10 +278,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
-  // call setup for physics solver. Pre step allocations etc.
-  ImplicitStepSetup( time_n, stepDt, domain, blockSystem );
-
-  SystemSolverParameters const * const solverParams = getSystemSolverParameters();
+  SystemSolverParameters * const solverParams = getSystemSolverParameters();
   real64 const newtonTol = solverParams->newtonTol();
   integer const maxNewtonIter = solverParams->maxIterNewton();
   integer const maxNumberDtCuts = 2;
@@ -271,7 +293,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     // main Newton loop
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
-    for( int k=0 ; k<maxNewtonIter ; ++k )
+    integer & k = solverParams->numNewtonIterations();
+    for( k=0 ; k<maxNewtonIter ; ++k )
     {
 
       // call assemble to fill the matrix and the rhs
@@ -346,9 +369,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     std::cout<<"Convergence not achieved.";
   }
 
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, stepDt, domain );
-
   // return the achieved timestep
   return stepDt;
 }
@@ -369,7 +389,6 @@ void SolverBase::ImplicitStepSetup( real64 const& time_n,
 {
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
-
 
 void SolverBase::AssembleSystem( DomainPartition * const domain,
                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
@@ -414,7 +433,6 @@ void SolverBase::ResetStateToBeginningOfStep( DomainPartition * const )
   GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }
 
-
 void SolverBase::ImplicitStepComplete( real64 const & time,
                                        real64 const & dt,
                                        DomainPartition * const domain )
@@ -445,10 +463,6 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
   }
 
 }
-
-
-//}
-
 
 R1Tensor const * SolverBase::globalGravityVector() const
 {

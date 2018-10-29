@@ -387,7 +387,10 @@ public:
       }
       else
       {
-        ClearRow( m_matrix[blockRow][col].get(), rowIndex, 0.0 );
+        if( m_matrix[blockRow][col].get() != nullptr )
+        {
+          ClearRow( m_matrix[blockRow][col].get(), rowIndex, 0.0 );
+        }
       }
     }
     return (LARGE);

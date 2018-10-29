@@ -84,6 +84,12 @@ public:
 
   virtual void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
+  void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
+
+  localIndex fluidIndex() const { return m_fluidIndex; }
+
+  localIndex solidIndex() const { return m_solidIndex; }
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     using ViewKey = dataRepository::ViewKey;
@@ -136,6 +142,9 @@ protected:
 
   /// index of the solid constitutive model
   localIndex m_solidIndex;
+
+  /// flag to determine whether or not coupled with solid solver
+  integer m_poroElasticFlag;
 
 };
 

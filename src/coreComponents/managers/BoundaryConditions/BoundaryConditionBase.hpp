@@ -579,7 +579,8 @@ public:
     return m_initialCondition;
   }
 
-
+  real64 GetScale() const
+  { return m_scale; }
 
 private:
 

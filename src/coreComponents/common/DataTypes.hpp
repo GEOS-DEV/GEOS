@@ -131,8 +131,14 @@ using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 template< typename T >
 using array1d = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
+#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
 template< typename T >
 using arrayView1d = multidimensionalArray::ArrayView<T,1,localIndex>;
+#else
+template< typename T >
+using arrayView1d = T *;
+
+#endif
 
 template< typename T >
 using array2d = multidimensionalArray::ManagedArray<T,2,localIndex>;

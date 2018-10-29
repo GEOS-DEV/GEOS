@@ -34,6 +34,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
+class DomainPartition;
 
 class NewComponent : public SolverBase
 {

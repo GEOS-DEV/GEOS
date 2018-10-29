@@ -36,7 +36,8 @@ using namespace multidimensionalArray;
 FlowSolverBase::FlowSolverBase( std::string const & name,
                                 ManagedGroup * const parent )
   : SolverBase( name, parent ),
-    m_gravityFlag(1)
+    m_gravityFlag(1),
+    m_poroElasticFlag(0)
 {
   this->RegisterViewWrapper(viewKeysFlowSolverBase.gravityFlag.Key(),    &m_gravityFlag,        false);
   this->RegisterViewWrapper(viewKeysFlowSolverBase.discretization.Key(), &m_discretizationName, false);
