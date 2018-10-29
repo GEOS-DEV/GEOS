@@ -144,6 +144,7 @@ void FaceManager::FillDocumentationNode()
 
 void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
 {
+  GEOSX_MARK_FUNCTION;
   localIndex numFaces = 0;
   localIndex_array tempNodeList;
   array1d<localIndex_array> facesByLowestNode(nodeManager->size());
