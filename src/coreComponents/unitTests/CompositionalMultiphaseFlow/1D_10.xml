@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="2"
+                                 verboseLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"
@@ -17,8 +17,11 @@
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
-                              maxIterNewton="8"
-                              useDirectSolver="1"/>
+                              maxIterNewton="2"
+                              useDirectSolver="0"
+                              solverType="Klu"
+                              ilut_fill="0"
+                              ilut_drop="0"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   
