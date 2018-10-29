@@ -825,12 +825,21 @@ real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
                                                 integer const cycleNumber,
                                                 DomainPartition * domain )
 {
+  real64 dt_return = dt;
+
+  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+
   // currently the only method is implicit time integration
-  return this->NonlinearImplicitStep( time_n,
-                                      dt,
-                                      cycleNumber,
-                                      domain,
-                                      getLinearSystemRepository() );
+  dt_return= this->NonlinearImplicitStep( time_n,
+                                          dt,
+                                          cycleNumber,
+                                          domain,
+                                          getLinearSystemRepository() );
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dt_return, domain );
+
+  return dt_return;
 }
 
 void CompositionalMultiphaseFlow::BackupFields( DomainPartition * domain )
