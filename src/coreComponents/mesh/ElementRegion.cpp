@@ -282,7 +282,7 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
       feSpace->ApplySpaceToTargetCells(subRegion);
 
 
-      feSpace->CalculateShapeFunctionGradients( X, subRegion);
+      //feSpace->CalculateShapeFunctionGradients( X, subRegion);
 
 //    feSpace
     });

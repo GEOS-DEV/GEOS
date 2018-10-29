@@ -1382,10 +1382,49 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
 
 
-integer_array SiloFile::SiloNodeOrdering()
+integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
 {
 
   integer_array nodeOrdering;
+  if (!elementType.compare(0, 4, "C3D4"))
+  {
+    nodeOrdering.resize(4);
+    nodeOrdering[0] = 1;
+    nodeOrdering[1] = 0;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 3;
+  }
+  else if (!elementType.compare(0, 4, "C3D8"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 1;
+    nodeOrdering[2] = 3;
+    nodeOrdering[3] = 2;
+    nodeOrdering[4] = 4;
+    nodeOrdering[5] = 5;
+    nodeOrdering[6] = 7;
+    nodeOrdering[7] = 6;
+  }
+  else if (!elementType.compare(0, 4, "C3D6"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 4;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 2;
+    nodeOrdering[5] = 5;
+  }
+  else if (!elementType.compare(0, 4, "C3D5"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 4;
+  }
 
 //  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
 //  {
@@ -1410,27 +1449,8 @@ integer_array SiloFile::SiloNodeOrdering()
 //    nodeOrdering[2] = 3;
 //    nodeOrdering[3] = 2;
 //  }
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D4"))
-//  {
-//    nodeOrdering.resize(4);
-//    nodeOrdering[0] = 1;
-//    nodeOrdering[1] = 0;
-//    nodeOrdering[2] = 2;
-//    nodeOrdering[3] = 3;
-//  }
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D8") ||
-// !m_elementGeometryID.compare(0, 4, "C3D6"))
-//  {
-  nodeOrdering.resize(8);
-  nodeOrdering[0] = 0;
-  nodeOrdering[1] = 1;
-  nodeOrdering[2] = 3;
-  nodeOrdering[3] = 2;
-  nodeOrdering[4] = 4;
-  nodeOrdering[5] = 5;
-  nodeOrdering[6] = 7;
-  nodeOrdering[7] = 6;
-//  }
+/*//  else */
+
 //  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
 //  {
 //    nodeOrdering.resize(3);
@@ -1622,12 +1642,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         integer_array const & elemGhostRank = cellBlock->GhostRank();
 
 
-
+        string elementType = cellBlock -> GetElementType();
+        const integer_array nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
           localIndex const * const elemToNodeMap = elemsToNodes[k];
 
-          const integer_array nodeOrdering = SiloNodeOrdering();
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
@@ -1651,19 +1671,25 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
         shapecnt[count] = static_cast<int>(cellBlock->size());
 
-//      if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D8") )
-//      {
+
+      if (! elementType.compare(0, 4, "C3D8") )
+      {
         shapetype[count] = DB_ZONETYPE_HEX;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D6") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_HEX;
-//        writeArbitraryPolygon = true;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D4") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_TET;
-//      }
+      }
+      else if ( !elementType.compare(0, 4, "C3D4") )
+      {
+        shapetype[count] = DB_ZONETYPE_TET;
+      }
+      else if ( !elementType.compare(0, 4, "C3D6") )
+      {
+        shapetype[count] = DB_ZONETYPE_PRISM;
+        writeArbitraryPolygon = true;
+      }
+      else if ( !elementType.compare(0, 4, "C3D5") )
+      {
+        shapetype[count] = DB_ZONETYPE_PYRAMID;
+        writeArbitraryPolygon = true; 
+      }
 //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
 // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
 //      {

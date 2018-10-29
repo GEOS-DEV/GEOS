@@ -62,9 +62,8 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   m_toNodesRelation.SetRelatedObject( nodeManager );
   m_toFacesRelation.SetRelatedObject( faceManager );
 
-  m_toNodesRelation.resize(4 * nodeManager->size());
-  m_toFacesRelation.resize(4 * nodeManager->size());
-
+  m_toNodesRelation.resize(8 * nodeManager->size());
+  m_toFacesRelation.resize(8 * nodeManager->size());
 
   UnorderedVariableOneToManyRelation & nodeToEdgeMap = nodeManager->edgeList();
   // this will be used to hold a list pairs that store the 2nd node in the edge,
