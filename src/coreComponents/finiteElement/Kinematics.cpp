@@ -146,19 +146,4 @@ void IncrementalRotation( const R2TensorT<3>& A,
 
 }
 
-
-
-void CalculatePhantomGradient( R2TensorT<3>& Gradient,
-                               const int* bConnectivity,
-                               const array1d<R1TensorT<3> >& disp,
-                               const array2d<R1TensorT<3> >& dNdX )
-
-{
-  Gradient = 0.0;
-  for( int side=1 ; side<=2 ; ++side )
-    for( int a=1 ; a<=4 ; ++a )
-      Gradient.plus_dyadic_ab( disp(bConnectivity[(side-1)*4+a-1]), dNdX(side,a));
-
-}
-
 }

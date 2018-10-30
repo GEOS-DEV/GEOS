@@ -622,7 +622,12 @@ public:
     ViewWrapper<T> const * wrapper = getWrapper<T>(lookup);
     if( wrapper == nullptr )
     {
-      GEOS_ERROR( "ManagedGroup::getReferenceT(): call to getWrapper results in nullptr: " << lookup );
+      if ( hasView(lookup) )
+      {
+        wrapper = getWrapper<T>(lookup);
+        GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+      }
+      GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
     return wrapper->reference();
   }
@@ -671,9 +676,10 @@ public:
     return (m_subGroups[name] != nullptr);
   }
 
-  bool hasView( std::string const & name ) const
+  template< typename LOOKUP_TYPE >
+  bool hasView( LOOKUP_TYPE const & lookup ) const
   {
-    return (m_wrappers[name] != nullptr);
+    return (m_wrappers[lookup] != nullptr);
   }
 
   inline const string getName() const

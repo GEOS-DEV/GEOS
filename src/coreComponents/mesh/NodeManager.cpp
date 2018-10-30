@@ -152,14 +152,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
     /// <li> Loop over all nodes for each edge
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-//<<<<<<< HEAD
       m_toEdgesRelation[edgeToNodes[ke][a]].insert(ke);
-//=======
-//      /// <ul>
-//      /// <li> Set the nodeToEdge relation using the current node and edge indices
-//      m_toEdgesRelation[a].insert(ke);
-//      /// </ul>
-//>>>>>>> develop
     }
   }
   /// </ol>
@@ -258,25 +251,25 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toEdgesRelation,
-                                         packList,
-                                         this->m_localToGlobalMap,
-                                         m_toEdgesRelation.RelatedObjectLocalToGlobal() );
+  packedSize += Packing::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+  packedSize += Packing::Pack<DOPACK>( buffer,
+                                       m_toEdgesRelation,
+                                       packList,
+                                       this->m_localToGlobalMap,
+                                       m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toFacesRelation,
-                                         packList,
-                                         this->m_localToGlobalMap,
-                                         m_toFacesRelation.RelatedObjectLocalToGlobal() );
+  packedSize += Packing::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
+  packedSize += Packing::Pack<DOPACK>( buffer,
+                                       m_toFacesRelation,
+                                       packList,
+                                       this->m_localToGlobalMap,
+                                       m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+  packedSize += Packing::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         this->m_toElements,
-                                         packList,
-                                         m_toElements.getElementRegionManager() );
+                                       this->m_toElements,
+                                       packList,
+                                       m_toElements.getElementRegionManager() );
   return packedSize;
 }
 
@@ -287,28 +280,28 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   localIndex unPackedSize = 0;
 
   string temp;
-  unPackedSize += bufferOps::Unpack( buffer, temp );
+  unPackedSize += Packing::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toEdgesRelation,
-                                     packList,
-                                     this->m_globalToLocalMap,
-                                     m_toEdgesRelation.RelatedObjectGlobalToLocal() );
+  unPackedSize += Packing::Unpack( buffer,
+                                   m_toEdgesRelation,
+                                   packList,
+                                   this->m_globalToLocalMap,
+                                   m_toEdgesRelation.RelatedObjectGlobalToLocal() );
 
-  unPackedSize += bufferOps::Unpack( buffer, temp );
+  unPackedSize += Packing::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toFacesRelation,
-                                     packList,
-                                     this->m_globalToLocalMap,
-                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
+  unPackedSize += Packing::Unpack( buffer,
+                                   m_toFacesRelation,
+                                   packList,
+                                   this->m_globalToLocalMap,
+                                   m_toFacesRelation.RelatedObjectGlobalToLocal() );
 
-  unPackedSize += bufferOps::Unpack( buffer, temp );
+  unPackedSize += Packing::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
-                                     this->m_toElements,
-                                     packList,
-                                     m_toElements.getElementRegionManager() );
+                                   this->m_toElements,
+                                   packList,
+                                   m_toElements.getElementRegionManager() );
 
   return unPackedSize;
 }

@@ -317,8 +317,7 @@ private:
 
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor<LHS>
-ElementRegionManager::
-ConstructViewAccessor( string const & viewName, string const & neighborName ) const
+ElementRegionManager::ConstructViewAccessor( string const & viewName, string const & neighborName ) const
 {
   ElementViewAccessor<LHS> viewAccessor;
   viewAccessor.resize( numRegions() );
@@ -329,16 +328,16 @@ ConstructViewAccessor( string const & viewName, string const & neighborName ) co
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ManagedGroup const * group = elemRegion->GetSubRegion(kSubReg);
 
-      if( neighborName.empty() )
+      if( !neighborName.empty() )
       {
-        viewAccessor[kReg][kSubReg] = subRegion->getReference<VIEWTYPE>(viewName);
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
-      else
+
+      if ( group->hasView(viewName) )
       {
-        viewAccessor[kReg][kSubReg] = subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName);
+        viewAccessor[kReg][kSubReg] = group->getReference<VIEWTYPE>(viewName);
       }
     }
   }
@@ -360,16 +359,16 @@ ConstructViewAccessor( string const & viewName, string const & neighborName )
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ManagedGroup * group = elemRegion->GetSubRegion(kSubReg);
 
-      if( neighborName.empty() )
+      if( !neighborName.empty() )
       {
-        viewAccessor[kReg][kSubReg] = subRegion->getReference<VIEWTYPE>(viewName);
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
-      else
+
+      if ( group->hasView(viewName) )
       {
-        viewAccessor[kReg][kSubReg] = subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName);
+        viewAccessor[kReg][kSubReg] = group->getReference<VIEWTYPE>(viewName);
       }
     }
   }
@@ -390,19 +389,16 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ManagedGroup const * group = elemRegion->GetSubRegion(kSubReg);
 
-      if( neighborName.empty() )
+      if( !neighborName.empty() )
       {
-        if( subRegion->hasView(viewName) )
-        {
-          viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
-        }
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
-      else
+
+      if ( group->hasView(viewName) )
       {
-        viewAccessor[kReg][kSubReg].set(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+        viewAccessor[kReg][kSubReg].set(group->getReference<VIEWTYPE>(viewName));
       }
     }
   }
@@ -423,59 +419,21 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ManagedGroup * group = elemRegion->GetSubRegion(kSubReg);
 
-      if( neighborName.empty() )
+      if( !neighborName.empty() )
       {
-        if( subRegion->hasView(viewName) )
-        {
-          viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
-        }
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
-      else
+
+      if ( group->hasView(viewName) )
       {
-        viewAccessor[kReg][kSubReg].set(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+        viewAccessor[kReg][kSubReg].set(group->getReference<VIEWTYPE>(viewName));
       }
     }
   }
   return viewAccessor;
 }
-
-
-// template< typename VIEWTYPE >
-// ElementRegionManager::ElementViewAccessor<VIEWTYPE>
-// ElementRegionManager::
-// ConstructViewAccessor( string const & viewName,
-//                        string const & neighborName )
-// {
-//   ElementViewAccessor<VIEWTYPE> viewAccessor;
-//   viewAccessor.resize( numRegions() );
-//   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
-//   {
-//     ElementRegion * const elemRegion = GetRegion(kReg);
-//     viewAccessor[kReg].resize( elemRegion->numSubRegions() );
-
-//     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
-//     {
-//       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
-
-//       if( neighborName.empty() )
-//       {
-//         viewAccessor[kReg][kSubReg] = subRegion->getReference<VIEWTYPE>(viewName);
-//       }
-//       else
-//       {
-//         viewAccessor[kReg][kSubReg] = subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-//                                         GetGroup(neighborName)->getReference<VIEWTYPE>(viewName);
-//       }
-//     }
-//   }
-//   return viewAccessor;
-// }
-
-
-
 
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::MaterialViewAccessor<LHS>
@@ -516,58 +474,6 @@ ConstructMaterialViewAccessor( string const & viewName,
   }
   return accessor;
 }
-
-/**
- * @tparam VIEWTYPE is the type that you would like to return inside the MaterialViewAccessor
- * @tparam REPOTYPE is the type that the data is stored as inside the repository
- * @param viewName The name of the material data field
- * @return a ElementRegionManager::MaterialViewAccessor<VIEWTYPE> that contains the data
- *
- * This function extracts data from the material arrays and provides multi-dimensional array-like
- * access to the data. The resulting return type is dereferenced using square bracket operators with
- * each level being, accessor[elementRegionIndex][elementSubRegionIndex][materialTypeIndex].
- *
- *
- */
-// template< typename VIEWTYPE >
-// ElementRegionManager::MaterialViewAccessor<VIEWTYPE>
-// ElementRegionManager::
-// ConstructMaterialViewAccessor( string const & viewName,
-//                                constitutive::ConstitutiveManager const * const cm  )
-// {
-//   MaterialViewAccessor<VIEWTYPE> accessor;
-//   accessor.resize( numRegions() );
-//   for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
-//   {
-//     ElementRegion * const elemRegion = GetRegion(kReg);
-//     accessor[kReg].resize( elemRegion->numSubRegions() );
-
-//     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
-//     {
-//       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
-//       dataRepository::ManagedGroup * const
-//       constitutiveGroup = subRegion->GetConstitutiveModels();
-//       accessor[kReg][kSubReg].resize( cm->numSubGroups() );
-
-//       for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
-//       {
-//         dataRepository::ManagedGroup * const
-//         constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
-//         if( constitutiveRelation != nullptr )
-//         {
-//           dataRepository::ViewWrapper<VIEWTYPE> * const
-//           wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
-
-//           if( wrapper != nullptr )
-//           {
-//             accessor[kReg][kSubReg][matIndex].set(constitutiveRelation->getReference<VIEWTYPE>(viewName));
-//           }
-//         }
-//       }
-//     }
-//   }
-//   return accessor;
-// }
 
 template< typename CONSTITUTIVE_TYPE >
 ElementRegionManager::ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE>

@@ -149,7 +149,7 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                 const auto & mesh = meshBlock.mesh();
                 /// Write nodes
                 nodeManager->resize(mesh.NumVertices());
-                arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+                arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
                 for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
                 {
                     real64 * const tensorData = X[a].Data();
