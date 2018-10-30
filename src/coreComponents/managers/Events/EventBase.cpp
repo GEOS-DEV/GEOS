@@ -357,8 +357,8 @@ void EventBase::Step(real64 const time,
   GEOSX_MARK_FUNCTION;
   // currentSubEvent indicates which child event was active when the restart was written
   // isTargetExecuting blocks double-execution of the target during restarts, and is useful debug information in outputs
-  integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
-  integer& isTargetExecuting = *(this->getData<integer>(viewKeys.isTargetExecuting));
+  integer& currentSubEvent = this->getReference<integer>(viewKeys.currentSubEvent);
+  integer& isTargetExecuting = this->getReference<integer>(viewKeys.isTargetExecuting);
 
   if ((m_target != nullptr) && (isTargetExecuting == 0))
   {

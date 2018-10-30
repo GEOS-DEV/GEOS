@@ -367,30 +367,34 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ConstitutiveManager * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager =
+    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
+    elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  auto pres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::pressureString);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const pvmult =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
+                                                                                        constitutiveManager );
 
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-  constitutiveRelations = elemManager->
-                          ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dens =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
+                                                                                        constitutiveManager);
 
-  auto densOld = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::densityString);
+  ElementRegionManager::ElementViewAccessor< arrayView1d<real64> > const pres =
+    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >(viewKeyStruct::pressureString);
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
-  pvmult = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
-                                                                            constitutiveManager );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> densOld =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::densityString);
 
-  auto poro = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::porosityString);
-  auto poroOld = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::oldPorosityString);
-  auto poroRef = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::referencePorosityString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::porosityString);
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
-  dens = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::
-                                                                        viewKeyStruct::
-                                                                        densityString,
-                                                                        constitutiveManager);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poroOld =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldPorosityString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroRef =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::referencePorosityString);
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -455,7 +459,7 @@ ImplicitStepSetup( real64 const& time_n,
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::densityString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poroOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::porosityString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldPorosityString);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dens =
     elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
@@ -762,23 +766,27 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
   //***** extract data required for assembly of system *****
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  ConstitutiveManager * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager =
+    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const * numericalMethodManager = domain->
-    getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager const * numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteVolumeManager const * fvManager = numericalMethodManager->
-    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+  FiniteVolumeManager const * fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
+  FluxApproximationBase const * fluxApprox =
+    fvManager->getFluxApproximation(m_discretizationName);
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
-                                                               BlockIDs::fluidPressureBlock);
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
+  FluxApproximationBase::CellStencil const & stencilCollection =fluxApprox->getStencil();
+
+  Epetra_FECrsMatrix * const jacobian =
+    blockSystem->GetMatrix(BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock);
+  
+  Epetra_FEVector * const residual =
+    blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
 
   jacobian->Scale(0.0);
   residual->Scale(0.0);
@@ -807,8 +815,11 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const densOld =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::densityString);
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poro =
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::porosityString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldPorosityString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroRef =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::referencePorosityString);
@@ -901,17 +912,28 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     }
   }//);
 
-
   constexpr localIndex numElems = 2;
-  globalIndex eqnRowIndices[numElems] = { -1, -1 };
+
+  globalIndex_array eqnRowIndices(numElems);
+  eqnRowIndices = -1;
+
   globalIndex_array dofColIndices;
-  real64 localFlux[numElems] = { 0.0, 0.0 };
+
+  real64_array localFlux(numElems);
+  localFlux = 0;
+
   array2d<real64> localFluxJacobian;
 
   // temporary working arrays
-  real64 densWeight[numElems] = { 0.5, 0.5 };
-  real64 mobility[numElems] = { 0.0, 0.0 };
-  real64 dMobility_dP[numElems] = { 0.0, 0.0 };
+  real64_array densWeight(numElems);
+  densWeight = 0.5;
+
+  real64_array mobility(numElems);
+  mobility = 0.0;
+
+  real64_array dMobility_dP(numElems);
+  dMobility_dP = 0.0;
+
   real64_array dDensMean_dP, dFlux_dP;
 
   stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
@@ -931,8 +953,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
     // calculate quantities on primary connected cells
     real64 densMean = 0.0;
-    stencil.forConnected([&] (auto const & cell,
-                              localIndex i) -> void
+    stencil.forConnected([&] (auto const & cell, localIndex i) -> void
     {
       localIndex const er  = cell.region;
       localIndex const esr = cell.subRegion;
@@ -983,7 +1004,10 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     // compute the final flux and derivatives
     real64 const flux = mobility[k_up] * potDif;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
+    {
       dFlux_dP[ke] *= mobility[k_up];
+    }
+
     dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
 
     //***** end flux terms *****
@@ -999,11 +1023,10 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     }
 
     // Add to global residual/jacobian
-    jacobian->SumIntoGlobalValues(2, eqnRowIndices,
-                                  integer_conversion<int>(stencilSize), dofColIndices.data(),
+    jacobian->SumIntoGlobalValues(2, eqnRowIndices.data(), integer_conversion<int>(stencilSize), dofColIndices.data(),
                                   localFluxJacobian.data());
 
-    residual->SumIntoGlobalValues(2, eqnRowIndices, localFlux);
+    residual->SumIntoGlobalValues(2, eqnRowIndices.data(), localFlux.data());
   });
 
   jacobian->GlobalAssemble(true);
@@ -1011,11 +1034,11 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
   if( verboseLevel() >= 2 )
   {
-    jacobian->Print(std::cout);
-    residual->Print(std::cout);
+    GEOS_LOG_RANK("After SinglePhaseFlow::AssembleSystem");
+    GEOS_LOG_RANK("\nJacobain\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual\n" << *residual);
   }
 }
-
 
 
 void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
@@ -1037,8 +1060,9 @@ void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
                                                               BlockIDs::fluidPressureBlock );
     Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-    dRdP->Print(std::cout);
-    residual->Print(std::cout);
+    GEOS_LOG_RANK("After SinglePhaseFlow::ApplyBoundaryCondition");
+    GEOS_LOG_RANK("\ndRdP\n" << *dRdP );
+    GEOS_LOG_RANK("\nresidual\n" << *residual );
   }
 
 }
@@ -1072,33 +1096,22 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
     {
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
 
-
-
       // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
       // if the boundary condition should be applied to this subregion
-      bcManager->ApplyBoundaryCondition( time + dt,
-                                         domain,
-                                         "ElementRegions",
-                                         viewKeyStruct::pressureString,
-                                         [&]( BoundaryConditionBase const * const bc,
-                                              string const &,
-                                              set<localIndex> const & lset,
-                                              ManagedGroup *,
-                                              string const & ) -> void
-      {
-        // call the application of the boundary condition to alter the matrix and rhs
-        bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
-                                                     time + dt,
-                                                     subRegion,
-                                                     blockLocalDofNumber[er][esr],
-                                                     1,
-                                                     blockSystem,
-                                                     BlockIDs::fluidPressureBlock,
-                                                     [&] (localIndex const a) -> real64
+      bcManager->ApplyBoundaryCondition( time + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+        [&]( BoundaryConditionBase const * const bc, string const &, set<localIndex> const & lset,
+             ManagedGroup *, string const & ) -> void
         {
-          return pres[er][esr][a] + dPres[er][esr][a];
-        });
-      });
+          // call the application of the boundary condition to alter the matrix and rhs
+          bc->ApplyBoundaryConditionToSystem<BcEqual>( lset, time + dt, subRegion, blockLocalDofNumber[er][esr],
+                                                      1, blockSystem, BlockIDs::fluidPressureBlock,
+            [&] (localIndex const a) -> real64
+            {
+              return pres[er][esr][a] + dPres[er][esr][a];
+            }
+          );
+        }
+      );
     }
   }
 }
@@ -1112,26 +1125,24 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager * const faceManager = mesh->getFaceManager();
 
-  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
-  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  array2d<localIndex> const & elemList           = faceManager->elementList();
+  arrayView2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
+  arrayView2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
+  arrayView2d<localIndex> const & elemList           = faceManager->elementList();
 
-  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
-                                                                                 viewKeyStruct::ghostRankString);
+  arrayView1d<integer> const & faceGhostRank =
+    faceManager->getReference<integer_array>(ObjectManagerBase::viewKeyStruct::ghostRankString);
 
-  ConstitutiveManager * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager =
+    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
-  NumericalMethodsManager * const numericalMethodManager = domain->
-    getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager * const numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteVolumeManager * const fvManager = numericalMethodManager->
-    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+  FiniteVolumeManager * const fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
-                                                               BlockIDs::fluidPressureBlock);
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock);
   Epetra_FEVector * const residual = blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const elemGhostRank =
@@ -1161,24 +1172,24 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
-    dens = elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
-                                                                              constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dens =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
+                                                                                        constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
-    dDens_dPres = elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
-                                                                                     constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dDens_dPres =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
+                                                                                        constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
-    visc = elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::viscosityString,
-                                                                              constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const visc =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::viscosityString,
+                                                                                        constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
-    dVisc_dPres = elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
-                                                                                     constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dVisc_dPres =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
+                                                                                        constitutiveManager);
 
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-    constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
+    elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   // use ArrayView to make capture by value easy in lambdas
   arrayView1d<real64>& presFace = faceManager->getReference<real64_array>( viewKeyStruct::facePressureString );
@@ -1443,7 +1454,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
   {
     if (elemGhostRank[er][esr][k] < 0)
     {
-      int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][k]));
+      int const lid = rowMap->LID(blockLocalDofNumber[er][esr][k]);
       real64 const val = localResidual[lid] / (refPoro[er][esr][k] * volume[er][esr][k]);
       return val * val;
     }
@@ -1451,7 +1462,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
   });
 
   // compute global residual norm
-  realT globalResidualNorm;
+  real64 globalResidualNorm;
   MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalResidualNorm);
@@ -1572,9 +1583,9 @@ void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
 
   if( verboseLevel() >= 2 )
   {
-    solution->Print(std::cout);
+    GEOS_LOG_RANK("After SinglePhaseFlow::SolveSystem");
+    GEOS_LOG_RANK("\nsolution\n" << *solution);
   }
-
 }
 
 void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )

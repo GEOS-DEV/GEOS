@@ -70,7 +70,7 @@ public:
   void SortAllFaceNodes( NodeManager const * const nodeManager,
                          ElementRegionManager const * const elemManager);
 
-  void SortFaceNodes( array1d<R1Tensor> const & X,
+  void SortFaceNodes( arrayView1d<R1Tensor> const & X,
                       R1Tensor const & elemCenter,
                       arrayView1d<localIndex> & faceNodes,
                       localIndex const numFaceNodes );

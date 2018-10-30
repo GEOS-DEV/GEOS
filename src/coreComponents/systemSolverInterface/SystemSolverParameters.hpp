@@ -69,7 +69,7 @@ public:
   {} groupKeys;
 
   integer  verbose() const                    { return this->getReference<integer>( viewKeys.verbosity ); }
-  string  solverType() const                  { return this->getData<string>( viewKeys.solverType ); }
+  string  solverType() const                  { return this->getReference<string>( viewKeys.solverType ); }
   real64 krylovTol() const                    { return this->getReference<real64>( viewKeys.krylovTol ); }
   integer  numKrylovIter() const              { return this->getReference<integer>( viewKeys.numKrylovIter ); }
   integer  kspace() const                     { return this->getReference<integer>( viewKeys.kspace ); }

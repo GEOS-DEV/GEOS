@@ -924,8 +924,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                                              int const cycleNumber,
                                              real64 const problemTime)
 {
-
-
   string name = "materials";
   int const nmat = constitutiveManager->GetSubGroups().size();
   array1d<int> matnos(nmat);
@@ -940,7 +938,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
     materialNames[matIndex] = materialNameStrings[matIndex].c_str();
   }
-
 
   int ndims = 1;
   int dims = 0;
@@ -1146,9 +1143,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   for( auto fieldName : fieldNames )
   {
-    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
-    field = elementManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( fieldName,
-                                                                               constitutiveManager);
+    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const field =
+      elementManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( fieldName, constitutiveManager);
 
     WriteMaterialDataField< real64 >( meshName,
                                       fieldName,
@@ -1642,10 +1638,9 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
         string elementType = cellBlock -> GetElementType();
-        const integer_array nodeOrdering = SiloNodeOrdering(elementType);
+        integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
-          integer_array const & nodeOrdering = SiloNodeOrdering();
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {

@@ -136,16 +136,6 @@ private:
                              arrayView1d<localIndex> const & packList,
                              integer const recursive ) const;
 
-//  template< bool DOPACK >
-//  int UnpackPrivate( buffer_unit_type const *& buffer,
-//                     localIndex_array const & packList,
-//                     integer const recursive );
-
-
-//  cxx_utilities::DocumentationNode * m_docNode;
-
-
-
   //**********************************************************************************************************************
   // functions for compatibility with old data structure
   // TODO Deprecate or modernize all these suckers
@@ -161,13 +151,6 @@ public:
   }
 
   using dataRepository::ManagedGroup::resize;
-
-//    localIndex m_DataLengths;
-//
-//    localIndex DataLengths() const { return size(); }
-
-
-
 
   void WriteSilo( SiloFile& siloFile,
                   const std::string& meshname,
@@ -189,8 +172,6 @@ public:
                  const std::string& regionName = "none",
                  const localIndex_array& mask = localIndex_array() );
 
-
-
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
   array1d< typename Field<FIELDKEY>::Type >& GetFieldData()
@@ -204,7 +185,6 @@ public:
   {
     return this->getReference< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
   }
-
 
   /// returns reference to specified field
   template< typename TYPE >
@@ -258,7 +238,6 @@ public:
     return 0;
   }
 
-
   /// add a data field to a member
   template< FieldKey FIELDKEY >
   int AddKeyedDataField()
@@ -288,9 +267,7 @@ public:
 
   virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const ,
                                                                 array1d<globalIndex_array>&  )
-  {
-
-  }
+  {}
 
   void SetGhostRankForSenders( arrayView1d<localIndex> const & indicesToSend )
   {
