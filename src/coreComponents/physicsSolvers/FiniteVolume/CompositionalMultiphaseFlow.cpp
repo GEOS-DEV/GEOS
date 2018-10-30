@@ -2323,6 +2323,116 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
   });
 }
 
+bool CompositionalMultiphaseFlow::testNumericalJacobian( DomainPartition * domain,
+                                                         EpetraBlockSystem * blockSystem,
+                                                         real64 const time_n,
+                                                         real64 const dt,
+                                                         double perturbParameter,
+                                                         double checkTolerance )
+{
+  Epetra_FECrsMatrix const * jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
+  Epetra_FEVector const * residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  Epetra_Map      const * rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
+
+  // get a view into local residual vector
+  int localSizeInt;
+  double* localResidual = nullptr;
+  residual->ExtractView(&localResidual, &localSizeInt);
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  auto elemGhostRank =
+    elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
+  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
+  auto compDens  = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompDensity.Key() );
+  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key() );
+
+  auto blockLocalDofNumber =
+    elemManager->ConstructViewAccessor<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
+
+  // assemble the analytical residual
+  ResetStateToBeginningOfStep( domain );
+  AssembleSystem( domain, blockSystem, time_n, dt );
+
+  // copy the analytical residual
+  auto residualOrig = std::make_unique<Epetra_FEVector>( *residual );
+  double* localResidualOrig = nullptr;
+  residual->ExtractView(&localResidualOrig, &localSizeInt);
+
+  // create the numerical jacobian
+  auto jacobianFD = std::make_unique<Epetra_FECrsMatrix>( Copy, jacobian->Graph() );
+
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei ) -> void
+  {
+    if (elemGhostRank[er][esr][ei] >= 0)
+      return;
+
+    globalIndex offset = blockLocalDofNumber[er][esr][ei];
+
+    real64 totalDensity = 0.0;
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+    {
+      totalDensity += compDens[er][esr][ei][ic];
+    }
+
+    {
+      ResetStateToBeginningOfStep(domain);
+      real64 const dP = perturbParameter * std::min(std::fabs(pres[er][esr][ei]), 1e5);
+      dPres[er][esr][ei] = dP;
+      AssembleSystem(domain, blockSystem, time_n, dt);
+      long long const dofIndex = integer_conversion<long long>(offset);
+
+      for (int lid = 0; lid < localSizeInt; ++lid)
+      {
+        real64 dRdP = (localResidualOrig[lid] - localResidual[lid]) / dP;
+        long long gid = rowMap->GID64(lid);
+        jacobianFD->InsertGlobalValues(gid, 1, &dRdP, &dofIndex);
+      }
+    }
+
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+    {
+      ResetStateToBeginningOfStep(domain);
+      real64 const dRho = perturbParameter * totalDensity;
+      dPres[er][esr][ei] = dRho;
+      AssembleSystem(domain, blockSystem, time_n, dt);
+      long long const dofIndex = integer_conversion<long long>(offset + ic + 1);
+
+      for (int lid = 0; lid < localSizeInt; ++lid)
+      {
+        real64 dRdRho = (localResidualOrig[lid] - localResidual[lid]) / dRho;
+        long long gid = rowMap->GID64(lid);
+        jacobianFD->InsertGlobalValues(gid, 1, &dRdRho, &dofIndex);
+      }
+    }
+  });
+
+  // assemble the analytical jacobian
+  ResetStateToBeginningOfStep( domain );
+  AssembleSystem( domain, blockSystem, time_n, dt );
+
+  double * row = nullptr;
+  double * rowFD = nullptr;
+  int numEntries, numEntriesFD;
+  // check the accuracy across local rows
+  for (int i = 0; i < localSizeInt; ++i)
+  {
+    jacobian->ExtractMyRowView( i, numEntries, row );
+    jacobianFD->ExtractMyRowView( i, numEntriesFD, rowFD );
+    for (int j = 0; j < numEntries; ++j)
+    {
+      
+    }
+  }
+
+  return false;
+}
+
 
 REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseFlow, string const &, ManagedGroup * const)
 }// namespace geosx

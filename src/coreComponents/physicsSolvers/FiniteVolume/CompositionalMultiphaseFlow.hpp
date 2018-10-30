@@ -141,6 +141,13 @@ public:
                                      real64 const & dt,
                                      DomainPartition * const domain ) override;
 
+  bool testNumericalJacobian( DomainPartition * domain,
+                              systemSolverInterface::EpetraBlockSystem * blockSystem,
+                              real64 const time_n,
+                              real64 const dt,
+                              double perturbParameter = 1e-12,
+                              double checkTolerance = 1e-6 );
+
   /**@}*/
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
