@@ -409,6 +409,10 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
 
   // 2. Trigger PVTPackage compute and get back phase split
   m_fluid->Update(pres, temp, compMoleFrac);
+
+  GEOS_WARNING_IF( m_fluid->getState() != MultiphaseSystem::State::SUCCESS,
+                   "Phase equilibrium calculations not converged at constitutive point (" << k << "," << q << ")");
+
   MultiphaseSystemProperties const & split = m_fluid->get_MultiphaseSystemProperties();
 
   // 3. Extract phase split, phase properties and derivatives from PVTPackage
