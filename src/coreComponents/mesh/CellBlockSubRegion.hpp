@@ -71,7 +71,7 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) override;
+                                       localIndex_array & packList ) override;
 
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
