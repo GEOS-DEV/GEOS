@@ -416,7 +416,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 int
 ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                        ElementViewAccessor<arrayView1d<localIndex>> const & packList )
+                                        ElementReferenceAccessor<localIndex_array> & packList )
 {
   int unpackedSize = 0;
 
@@ -440,8 +440,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG
-      arrayView1d<localIndex> const & elemList = packList[kReg][kSubReg];
-
+      localIndex_array & elemList = packList[kReg][kSubReg];
       unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList );
     }
   }

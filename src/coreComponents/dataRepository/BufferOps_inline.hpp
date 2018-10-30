@@ -666,24 +666,38 @@ namespace bufferOps
   localIndex
   Unpack( char const *& buffer,
           arrayView1d< set<localIndex> > & var,
-          arrayView1d<localIndex const> const & indices,
+          localIndex_array & indices,
           map<globalIndex,localIndex> const & globalToLocalMap,
           map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
   {
     localIndex sizeOfUnpackedChars=0;
+    localIndex const sizeOfIndicesPassedIn = indices.size();
 
     localIndex numIndicesUnpacked;
     sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+    GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                   "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                   "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
-    for( localIndex a=0 ; a<indices.size() ; ++a )
+    indices.resize(numIndicesUnpacked);
+
+    for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
     {
-      localIndex li = indices[a];
 
       globalIndex gi;
       sizeOfUnpackedChars += Unpack( buffer, gi );
 
-      GEOS_ASSERT_MSG( li == globalToLocalMap.at(gi), "global index " << gi << " unpacked from buffer does equal the lookup "
-                       << li << " for localIndex " << li << " on this rank" );
+      localIndex & li = indices[a];
+      if( sizeOfIndicesPassedIn > 0 )
+      {
+        GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+                       "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                       <<li<<" for localIndex "<<li<<" on this rank");
+      }
+      else
+      {
+        li = globalToLocalMap.at(gi);
+      }
 
       sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
     }
@@ -715,29 +729,42 @@ namespace bufferOps
   localIndex
   Unpack( char const *& buffer,
           arrayView2d<localIndex> & var,
-          arrayView1d<localIndex> const & indices,
+          array1d<localIndex> & indices,
           map<globalIndex,localIndex> const & globalToLocalMap )
   {
     localIndex sizeOfUnpackedChars = 0;
+    localIndex const sizeOfIndicesPassedIn = indices.size();
 
     localIndex numIndicesUnpacked;
     sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-    GEOS_ASSERT_MSG( numIndicesUnpacked == indices.size(), "Incorrect number of indices unpacked. " <<
-                     numIndicesUnpacked << " != " << indices.size() );
 
-    for( localIndex a=0 ; a<indices.size() ; ++a )
+    GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                   "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                   "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+    indices.resize(numIndicesUnpacked);
+
+    for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
     {
-      localIndex li = indices[a];
-
       globalIndex gi;
       sizeOfUnpackedChars += Unpack( buffer, gi );
 
-      GEOS_ASSERT_MSG( li == globalToLocalMap.at(gi), "global index " << gi << " unpacked from buffer does equal the lookup"
-                       << " for localIndex " << li << " on this rank");
+      localIndex & li = indices[a];
+      if( sizeOfIndicesPassedIn > 0 )
+      {
+        GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+                       "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                       <<li<<" for localIndex "<<li<<" on this rank");
+      }
+      else
+      {
+        li = globalToLocalMap.at(gi);
+      }
 
-      arraySlice1d<localIndex> slice = var[li];
-      sizeOfUnpackedChars += Unpack( buffer, slice, var.size(1) );
+      localIndex * const varSlice = var[li];
+      sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
     }
+
 
     return sizeOfUnpackedChars;
   }
@@ -770,30 +797,40 @@ namespace bufferOps
   localIndex
   Unpack( char const *& buffer,
           arrayView2d<localIndex> & var,
-          arrayView1d<localIndex const> const & indices,
+          localIndex_array & indices,
           map<globalIndex,localIndex> const & globalToLocalMap,
           map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
   {
     localIndex sizeOfUnpackedChars = 0;
+    localIndex const sizeOfIndicesPassedIn = indices.size();
 
     localIndex numIndicesUnpacked;
     sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-    GEOS_ASSERT_MSG( numIndicesUnpacked == indices.size(), "Incorrect number of indices unpacked. " <<
-                     numIndicesUnpacked << " != " << indices.size() );
+    GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                   "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                   "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
-    const localIndex dim1_length = var.size(1);
-    for( localIndex a=0 ; a<indices.size() ; ++a )
+    indices.resize(numIndicesUnpacked);
+
+    for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
     {
-      localIndex li = indices[a];
-
       globalIndex gi;
       sizeOfUnpackedChars += Unpack( buffer, gi );
 
-      GEOS_ASSERT_MSG( li == globalToLocalMap.at(gi), "global index " << gi << " unpacked from buffer does equal the lookup"
-                       << " for localIndex " << li << " on this rank" );
+      localIndex & li = indices[a];
+      if( sizeOfIndicesPassedIn > 0 )
+      {
+        GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+                       "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                       <<li<<" for localIndex "<<li<<" on this rank");
+      }
+      else
+      {
+        li = globalToLocalMap.at(gi);
+      }
 
-      arraySlice1d<localIndex> slice = var[li];
-      sizeOfUnpackedChars += Unpack( buffer, slice, dim1_length, relatedObjectGlobalToLocalMap );
+      arraySlice1d<localIndex> varSlice = var[li];
+      sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1), relatedObjectGlobalToLocalMap );
     }
 
     return sizeOfUnpackedChars;

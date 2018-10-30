@@ -59,6 +59,9 @@ public:
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< VIEWTYPE > > ;
 
+  template< typename VIEWTYPE >
+  using ElementReferenceAccessor = array1d< array1d< ReferenceWrapper<VIEWTYPE> > > ;
+
   /**
    * The MaterialViewAccessor at the ElementRegionManager level is an 3d array that contains a
    * ReferenceWrapper around the VIEWTYPE. The dimensions are denoted as follows:
@@ -290,7 +293,7 @@ public:
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                        ElementViewAccessor<arrayView1d<localIndex>> const & packList );
+                        ElementReferenceAccessor<localIndex_array> & packList );
 
 
 

@@ -389,12 +389,10 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
   localIndex_array faceUnpackList;
   unpackedSize += faceManager.UnpackGlobalMaps( receiveBufferPtr, faceUnpackList, 0 );
 
-  {
-    ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>> elementAdjacencyReceiveListArray =
+    ElementRegionManager::ElementReferenceAccessor<localIndex_array> elementAdjacencyReceiveListArray =
       elemManager.ConstructReferenceAccessor<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
                                                            std::to_string( this->m_neighborRank ) );
     unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, elementAdjacencyReceiveListArray );
-  }
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>> elementAdjacencyReceiveList =
     elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
@@ -403,7 +401,7 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
   unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUnpackList );
   unpackedSize += edgeManager.UnpackUpDownMaps( receiveBufferPtr, edgeUnpackList );
   unpackedSize += faceManager.UnpackUpDownMaps( receiveBufferPtr, faceUnpackList );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveList );
+  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveListArray );
 
 
   unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeUnpackList, 0 );
