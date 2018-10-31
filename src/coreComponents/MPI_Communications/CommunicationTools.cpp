@@ -428,7 +428,7 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
   // set the global indices as if they were all local to this process
   for( auto const a : indexList )
   {
-    GEOS_ERROR_IF( object.m_localToGlobalMap[a] == -1,
+    GEOS_ERROR_IF( object.m_localToGlobalMap[a] != -1,
                    "existing object.m_localToGlobalMap[a]="<<object.m_localToGlobalMap[a]<<
                    ", but it should equal -1.");
 

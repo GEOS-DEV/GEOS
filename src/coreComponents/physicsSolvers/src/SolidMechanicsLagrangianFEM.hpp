@@ -241,7 +241,7 @@ public:
 
 private:
 
-  real64 m_maxForce;
+  real64 m_maxForce = 0.0;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
 

@@ -1,8 +1,8 @@
-message( "Entering /src/externalComponents/CMakeLists.txt")
+message( "Entering src/externalComponents/CMakeLists.txt")
 
 
 
-set(externalComponentsList "" CACHE STRING "" FORCE)
+set(externalComponents "")
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 foreach(child ${children})
@@ -10,21 +10,26 @@ foreach(child ${children})
     if( EXISTS "${CMAKE_CURRENT_LIST_DIR}/${child}/CMakeLists.txt" AND ENABLE_${child} )
       add_subdirectory(${child})
       set( ENABLE_${child} ON CACHE BOOL "" FORCE )
-      list( APPEND externalComponentsList ${child} )
+      list( APPEND externalComponents ${child} )
     else()
       set( ENABLE_${child} OFF CACHE BOOL "" FORCE )
     endif()
   endif()
 endforeach()
+set(externalComponentsList "${externalComponents}" CACHE STRING "" FORCE)
+
+
+set( externalComponentsLinkList "" )
 
 if( ${BUILD_SHARED_LIBS} )
-  set( externalComponentsLinkList ${externalComponentsList} PARENT_SCOPE )
+  set( externalComponentsLinkList ${externalComponentsList} )
 else()
-  set(externalComponentsLinkList "" PARENT_SCOPE )
   foreach(component ${externalComponentsList})
-    set( externalComponentsLinkList ${externalComponentsLinkList} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} PARENT_SCOPE ) 
+    set( externalComponentsLinkList ${externalComponentsLinkList} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
   endforeach()
 endif()
+
+set( externalComponentsLinkList ${externalComponentsLinkList} PARENT_SCOPE )
 
 
 

@@ -119,11 +119,8 @@ public:
 /**@}*/
 
 
-  int SeparationDriver( NodeManager& nodeManager,
-                        EdgeManager& edgeManager,
-                        FaceManager& faceManager,
-                        ElementRegionManager& elementManager,
-                        SpatialPartition& partition,
+  int SeparationDriver( MeshLevel * const mesh,
+                        array1d<NeighborCommunicator> & neighbors,
                         const bool prefrac,
                         const realT time );
 private:
