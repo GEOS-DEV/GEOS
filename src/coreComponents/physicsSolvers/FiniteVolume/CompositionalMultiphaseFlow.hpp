@@ -33,6 +33,11 @@ namespace geosx
 namespace dataRepository
 {
 class ManagedGroup;
+
+namespace keys
+{
+string const compositionalMultiphaseFlow = "CompositionalMultiphaseFlow";
+}
 }
 class BoundaryConditionBase;
 class FiniteElementBase;
@@ -79,7 +84,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "CompositionalMultiphaseFlow"; }
+  static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
   virtual void FillDocumentationNode() override;
 
@@ -141,12 +146,12 @@ public:
                                      real64 const & dt,
                                      DomainPartition * const domain ) override;
 
-  bool testNumericalJacobian( DomainPartition * domain,
-                              systemSolverInterface::EpetraBlockSystem * blockSystem,
-                              real64 const time_n,
-                              real64 const dt,
-                              double perturbParameter = 1e-12,
-                              double checkTolerance = 1e-6 );
+  bool TestNumericalJacobian(DomainPartition * domain,
+                             systemSolverInterface::EpetraBlockSystem * blockSystem,
+                             real64 const time_n,
+                             real64 const dt,
+                             double perturbParameter = 1e-6,
+                             double relTol = 1e-4 );
 
   /**@}*/
 

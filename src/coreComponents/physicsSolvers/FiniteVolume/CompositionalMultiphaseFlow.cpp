@@ -2323,12 +2323,12 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
   });
 }
 
-bool CompositionalMultiphaseFlow::testNumericalJacobian( DomainPartition * domain,
+bool CompositionalMultiphaseFlow::TestNumericalJacobian( DomainPartition * domain,
                                                          EpetraBlockSystem * blockSystem,
                                                          real64 const time_n,
                                                          real64 const dt,
                                                          double perturbParameter,
-                                                         double checkTolerance )
+                                                         double relTol )
 {
   Epetra_FECrsMatrix const * jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
   Epetra_FEVector const * residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
@@ -2360,10 +2360,11 @@ bool CompositionalMultiphaseFlow::testNumericalJacobian( DomainPartition * domai
   // copy the analytical residual
   auto residualOrig = std::make_unique<Epetra_FEVector>( *residual );
   double* localResidualOrig = nullptr;
-  residual->ExtractView(&localResidualOrig, &localSizeInt);
+  residualOrig->ExtractView(&localResidualOrig, &localSizeInt);
 
   // create the numerical jacobian
   auto jacobianFD = std::make_unique<Epetra_FECrsMatrix>( Copy, jacobian->Graph() );
+  jacobianFD->Scale( 0.0 );
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -2372,7 +2373,7 @@ bool CompositionalMultiphaseFlow::testNumericalJacobian( DomainPartition * domai
     if (elemGhostRank[er][esr][ei] >= 0)
       return;
 
-    globalIndex offset = blockLocalDofNumber[er][esr][ei];
+    globalIndex offset = blockLocalDofNumber[er][esr][ei] * m_numDofPerCell;
 
     real64 totalDensity = 0.0;
     for (localIndex ic = 0; ic < m_numComponents; ++ic)
@@ -2390,8 +2391,11 @@ bool CompositionalMultiphaseFlow::testNumericalJacobian( DomainPartition * domai
       for (int lid = 0; lid < localSizeInt; ++lid)
       {
         real64 dRdP = (localResidualOrig[lid] - localResidual[lid]) / dP;
-        long long gid = rowMap->GID64(lid);
-        jacobianFD->InsertGlobalValues(gid, 1, &dRdP, &dofIndex);
+        if (std::fabs(dRdP) > 0.0)
+        {
+          long long gid = rowMap->GID64(lid);
+          jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
+        }
       }
     }
 
@@ -2399,38 +2403,84 @@ bool CompositionalMultiphaseFlow::testNumericalJacobian( DomainPartition * domai
     {
       ResetStateToBeginningOfStep(domain);
       real64 const dRho = perturbParameter * totalDensity;
-      dPres[er][esr][ei] = dRho;
+      dCompDens[er][esr][ei][ic] = dRho;
       AssembleSystem(domain, blockSystem, time_n, dt);
       long long const dofIndex = integer_conversion<long long>(offset + ic + 1);
 
       for (int lid = 0; lid < localSizeInt; ++lid)
       {
         real64 dRdRho = (localResidualOrig[lid] - localResidual[lid]) / dRho;
-        long long gid = rowMap->GID64(lid);
-        jacobianFD->InsertGlobalValues(gid, 1, &dRdRho, &dofIndex);
+        if (std::fabs(dRdRho) > 0.0)
+        {
+          long long gid = rowMap->GID64(lid);
+          jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
+        }
       }
     }
   });
+
+  jacobianFD->GlobalAssemble(true);
 
   // assemble the analytical jacobian
   ResetStateToBeginningOfStep( domain );
   AssembleSystem( domain, blockSystem, time_n, dt );
 
+#if 1
+  jacobian->Print(std::cout);
+  jacobianFD->Print(std::cout);
+#endif
+
+  bool result = true;
   double * row = nullptr;
   double * rowFD = nullptr;
   int numEntries, numEntriesFD;
+  int * indices = nullptr;
+  int* indicesFD = nullptr;
+
   // check the accuracy across local rows
   for (int i = 0; i < localSizeInt; ++i)
   {
-    jacobian->ExtractMyRowView( i, numEntries, row );
-    jacobianFD->ExtractMyRowView( i, numEntriesFD, rowFD );
-    for (int j = 0; j < numEntries; ++j)
+    jacobian->ExtractMyRowView( i, numEntries, row, indices );
+    jacobianFD->ExtractMyRowView( i, numEntriesFD, rowFD, indicesFD );
+
+    if (numEntries != numEntriesFD)
     {
-      
+      GEOS_LOG( "Number of entries in local row " << i
+                << " of analytical and numerical jacobians does not match: "
+                << numEntries << " != " << numEntriesFD);
+      result = false;
+    }
+    for (int j = 0, jFD = 0; j < numEntries && jFD < numEntriesFD; ++j, ++jFD)
+    {
+      while (j < numEntries && jFD < numEntriesFD && indices[j] != indices[jFD])
+      {
+        while (j < numEntries && indices[j] < indicesFD[jFD])
+        {
+          GEOS_LOG( "Entry (" << i << ", " << indices[j] << ") in analytical jacobian does not have a match" );
+          result = false;
+          j++;
+        }
+        while (jFD < numEntriesFD && indicesFD[jFD] < indices[j])
+        {
+          GEOS_LOG( "Entry (" << i << ", " << indicesFD[jFD] << ") in numerical jacobian does not have a match" );
+          result = false;
+          jFD++;
+        }
+      }
+      if (j < numEntries && jFD < numEntriesFD)
+      {
+        double const delta = std::fabs(row[j] - rowFD[j]);
+        double const value = std::fmax(std::fabs(row[j]), std::fabs(rowFD[jFD]));
+        if (value > 0 && delta / value > relTol)
+        {
+          GEOS_LOG( "Entry (" << i << ", " << indices[j] << ") mismatch in rel tol: " << delta/value << " > " << relTol );
+          result = false;
+        }
+      }
     }
   }
 
-  return false;
+  return result;
 }
 
 

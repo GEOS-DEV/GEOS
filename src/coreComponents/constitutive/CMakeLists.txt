@@ -25,7 +25,7 @@ set( constitutive_sources
 
 set( dependencyList dataRepository )
 
-if( ENABLE_PVT_PACKAGE )
+if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
          Fluid/CompositionalMultiphaseFluid.hpp
