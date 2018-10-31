@@ -102,8 +102,33 @@ inline void CalculateGradient(R2Tensor& Gradient,
   }
 }
 
+template< int N >
+inline void CalculateGradient(R2Tensor& Gradient,
+                              const R1Tensor * disp,
+                              const R1TensorT<3> * dNdX )
+{
+  Gradient.dyadic_ab( disp[0], dNdX[0] );
+  for( auto a=1 ; a<N ; ++a )
+  {
+    Gradient.plus_dyadic_ab( disp[a], dNdX[a] );
+  }
+}
 
- 
+template< int N >
+inline void CalculateGradients( R2Tensor& Gradient0,
+                                R2Tensor& Gradient1,
+                                R1Tensor const * restrict const var0,
+                                R1Tensor const * restrict const var1,
+                                R1TensorT<3> const * restrict const dNdX )
+{
+  Gradient0.dyadic_ab( var0[0], dNdX[0] );
+  Gradient1.dyadic_ab( var1[0], dNdX[0] );
+  for( localIndex a=1 ; a<N ; ++a )
+  {
+    Gradient0.plus_dyadic_ab( var0[a], dNdX[a] );
+    Gradient1.plus_dyadic_ab( var1[a], dNdX[a] );
+  }
+}
 void CalculatePhantomGradient( R2TensorT<3>& Gradient,
                                const int* bConnectivity,
                                const array1d<R1TensorT<3> >& disp,

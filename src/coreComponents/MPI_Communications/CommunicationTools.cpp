@@ -104,7 +104,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               ObjectManagerBase const & compositionObject,
                                               array1d<NeighborCommunicator> & neighbors )
 {
-
+  GEOSX_MARK_FUNCTION;
   integer_array & ghostRank = object.getReference<integer_array>( object.m_ObjectManagerBaseViewKeys.ghostRank );
   ghostRank = -2;
 
@@ -195,44 +195,93 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     }
   }
 
-  int commID = reserveCommID();
 
-  // send the composition buffers
+  MPI_iCommData commData;
+  commData.resize(neighbors.size());
+//  int commID = reserveCommID();
+//
+//  // send the composition buffers
+//  {
+//    int const sendSize = integer_conversion<int const>( objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex));
+//
+//    for( localIndex in = 0 ; in < neighbors.size() ; ++in )
+//    {
+//      NeighborCommunicator & neighbor = neighbors[in];
+//
+//      neighbor.MPI_iSendReceive( reinterpret_cast<const char*>( objectToCompositionObjectSendBuffer.data() ),
+//                                 sendSize,
+//                                 commID,
+//                                 MPI_COMM_GEOSX );
+//    }
+//    for( localIndex in = 0 ; in < neighbors.size() ; ++in )
+//    {
+//      neighbors[in].MPI_WaitAll( commID );
+//    }
+//  }
+
+  array1d<int>  receiveBufferSizes(neighbors.size());
+  array1d< globalIndex_array > receiveBuffers(neighbors.size());
+
+  int const sendSize = integer_conversion<int const>( objectToCompositionObjectSendBuffer.size() );
+
+  for( localIndex neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
   {
-    int const sendSize = integer_conversion<int const>( objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex));
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    neighbor.MPI_iSendReceive( &sendSize,
+                               1,
+                               commData.mpiSizeSendBufferRequest[neighborIndex],
+                               &(receiveBufferSizes[neighborIndex]),
+                               1,
+                               commData.mpiSizeRecvBufferRequest[neighborIndex],
+                               commData.sizeCommID,
+                               MPI_COMM_GEOSX );
+  }
 
-    for( localIndex in = 0 ; in < neighbors.size() ; ++in )
-    {
-      NeighborCommunicator & neighbor = neighbors[in];
 
-      neighbor.MPI_iSendReceive( reinterpret_cast<const char*>( objectToCompositionObjectSendBuffer.data() ),
-                                 sendSize,
-                                 commID,
-                                 MPI_COMM_GEOSX );
-    }
-    for( localIndex in = 0 ; in < neighbors.size() ; ++in )
-    {
-      neighbors[in].MPI_WaitAll( commID );
-    }
+  for( int count=0 ; count<neighbors.size() ; ++count )
+  {
+    int neighborIndex;
+    MPI_Waitany( commData.size,
+                 commData.mpiSizeRecvBufferRequest.data(),
+                 &neighborIndex,
+                 commData.mpiSizeRecvBufferStatus.data() );
+
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+    receiveBuffers[neighborIndex].resize( receiveBufferSizes[neighborIndex] );
+    neighbor.MPI_iSendReceive( objectToCompositionObjectSendBuffer.data(),
+                               sendSize,
+                               commData.mpiSendBufferRequest[neighborIndex],
+                               receiveBuffers[neighborIndex].data(),
+                               receiveBufferSizes[neighborIndex],
+                               commData.mpiRecvBufferRequest[neighborIndex],
+                               commData.commID,
+                               MPI_COMM_GEOSX );
+
   }
 
   // unpack the data from neighbor->tempNeighborData.neighborNumbers[DomainPartition::FiniteElementNodeManager] to
   // the local arrays
 
   // object to receive the neighbor data
-  // this baby is and Array (for each neighbor) of maps, with the key of lowest composition index, and a value
-  // containing
-  // an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
+  // this baby is an Array (for each neighbor) of maps, with the key of lowest composition index, and a value
+  // containing an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
   array1d<map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > > >
   neighborCompositionObjects( neighbors.size() );
 
-  {
-    for( localIndex neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
+
+    for( int count=0 ; count<neighbors.size() ; ++count )
     {
+      int neighborIndex;
+      MPI_Waitany( commData.size,
+                   commData.mpiRecvBufferRequest.data(),
+                   &neighborIndex,
+                   commData.mpiRecvBufferStatus.data() );
+
       NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
-      globalIndex const * recBuffer = reinterpret_cast<globalIndex const *>( neighbor.ReceiveBuffer( commID ).data() );
-      localIndex recBufferSize = integer_conversion<localIndex>( neighbor.ReceiveBuffer( commID ).size() / sizeof(globalIndex));
+      globalIndex const * recBuffer = receiveBuffers[neighborIndex].data();
+      localIndex recBufferSize = receiveBufferSizes[neighborIndex];
       globalIndex const * endBuffer = recBuffer + recBufferSize;
       // iterate over data that was just received
       while( recBuffer < endBuffer )
@@ -260,15 +309,14 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
         neighborCompositionObjects[neighborIndex][firstCompositionIndex].push_back( tempComp );
       }
-    }
-  }
-  releaseCommID( commID );
-
-  // now check to see if the global index is valid. We do this by checking the contents of neighborCompositionObjects
-  // with indexByFirstCompositionIndex
-  for( localIndex neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
-  {
-    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+//    }
+//
+//
+//  // now check to see if the global index is valid. We do this by checking the contents of neighborCompositionObjects
+//  // with indexByFirstCompositionIndex
+//  for( localIndex neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
+//  {
+//    NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
     // Set iterators to the beginning of each indexByFirstCompositionIndex,
     // and neighborCompositionObjects[neighborNum].
@@ -344,6 +392,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                      array1d<NeighborCommunicator> & allNeighbors )//,
 //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
 {
+  GEOSX_MARK_FUNCTION;
   integer_array const & ghostRank = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.ghostRank );
   integer_array & domainBoundaryIndicator = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
   globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->m_ObjectManagerBaseViewKeys.localToGlobalMap );
@@ -410,6 +459,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
                                      array1d<NeighborCommunicator> & neighbors )
 {
+  GEOSX_MARK_FUNCTION;
   int commID = CommunicationTools::reserveCommID();
 
   for( auto & neighbor : neighbors )
@@ -477,9 +527,6 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
 
   }
 
-  MPI_Waitall( icomm.size,
-               icomm.mpiSizeSendBufferRequest.data(),
-               icomm.mpiSizeSendBufferStatus.data() );
 
   for( int count=0 ; count<neighbors.size() ; ++count )
   {
@@ -537,6 +584,10 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
   }
 
 #endif
+  MPI_Waitall( icomm.size,
+               icomm.mpiSizeSendBufferRequest.data(),
+               icomm.mpiSizeSendBufferStatus.data() );
+
   MPI_Waitall( icomm.size,
                icomm.mpiSendBufferRequest.data(),
                icomm.mpiSendBufferStatus.data() );

@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+* @file PoreVolumeCompressibleSolid.cpp
+*/
+
 #include "PoreVolumeCompressibleSolid.hpp"
 
 namespace geosx
@@ -37,7 +41,6 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
 
   RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 );
   RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 );
-
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;

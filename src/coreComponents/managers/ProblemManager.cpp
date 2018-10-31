@@ -425,7 +425,7 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
+    {SCHEMALEVEL, 0, "l", "schema_level", Arg::NonEmpty, "\t-l, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -571,6 +571,7 @@ void ProblemManager::ClosePythonInterpreter()
 
 void ProblemManager::ParseInputFile()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
@@ -809,6 +810,7 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 
 void ProblemManager::ApplyInitialConditions()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
   domain->GenerateSets();
 

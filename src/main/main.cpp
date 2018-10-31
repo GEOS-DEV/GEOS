@@ -56,11 +56,11 @@ int main( int argc, char *argv[] )
   logger::InitializeLogger():
 #endif
 
-//#if defined(RAJA_ENABLE_OPENMP)
-//  {
-//    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
-//  }
-//#endif
+#ifdef GEOSX_USE_OPENMP
+  {
+    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
+  }
+#endif
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
@@ -78,31 +78,36 @@ int main( int argc, char *argv[] )
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
 
+
   problemManager.ParseInputFile();
 
+  GEOSX_MARK_BEGIN("problemManager.Initialize");
   problemManager.Initialize( &problemManager );
+  GEOSX_MARK_END("problemManager.Initialize");
 
   problemManager.ApplyInitialConditions();
 
+  GEOSX_MARK_BEGIN("problemManager.FinalInitializationRecursive");
   problemManager.FinalInitializationRecursive( &problemManager );
+  GEOSX_MARK_END("problemManager.FinalInitializationRecursive");
 
   if (restart) {
     problemManager.ReadRestartOverwrite( restartFileName );
   }
 
+  MPI_Barrier(MPI_COMM_GEOSX);
   GEOS_LOG_RANK_0("Running simulation");
 
-  GEOSX_MARK_BEGIN("RunSimulation");
   gettimeofday(&tim, nullptr);
-  const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0) - t_start;
+  const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   problemManager.RunSimulation();
 
-  GEOSX_MARK_END("RunSimulation");
   gettimeofday(&tim, nullptr);
-  const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0) - t_start - t_initialize;
+  const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(3) << t_initialize << "s, run time = " << t_run << "s");
+  GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
+                  "s, run time = " << t_run-t_initialize << "s");
 
   problemManager.ClosePythonInterpreter();
 

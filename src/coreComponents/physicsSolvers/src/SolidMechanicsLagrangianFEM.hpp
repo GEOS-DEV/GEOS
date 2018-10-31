@@ -207,11 +207,10 @@ public:
                 real64 time,
                 systemSolverInterface::EpetraBlockSystem & blockSystem );
 
-  void TractionBC( dataRepository::ManagedGroup * const object,
-                   BoundaryConditionBase const* const bc,
-                   set<localIndex> const & set,
-                   real64 time,
-                   systemSolverInterface::EpetraBlockSystem & blockSystem );
+
+  void ApplyTractionBC( DomainPartition * const domain,
+                        real64 const time,
+                        systemSolverInterface::EpetraBlockSystem & blockSystem );
 
 
   enum class timeIntegrationOption

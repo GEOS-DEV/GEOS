@@ -19,8 +19,12 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_
 #define SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_
 
+#include "common/GeosxConfig.hpp"
+
 #ifdef GEOSX_USE_CALIPER
 #include <caliper/cali.h>
+#include <sys/time.h>
+
 
 #define DO_STRINGIFY(arg) #arg
 #define GEOSX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,DO_STRINGIFY(loopName))
@@ -41,6 +45,20 @@
 #define GEOSX_MARK_BEGIN(name)
 #define GEOSX_MARK_END(name)
 #endif
+
+#ifdef GEOSX_USE_TIMERS
+#define GEOSX_GET_TIME( time )                                                 \
+  real64 time;                                                                 \
+  do                                                                           \
+  {                                                                            \
+    timeval tim;                                                               \
+    gettimeofday(&tim, nullptr);                                               \
+    time = tim.tv_sec + (tim.tv_usec / 1000000.0);                             \
+  } while (false)
+#else
+#define GEOSX_GET_TIME( time )
+#endif
+
 
 
 #endif
