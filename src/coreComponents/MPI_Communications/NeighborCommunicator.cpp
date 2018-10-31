@@ -214,6 +214,13 @@ int NeighborCommunicator::Rank()
   return rank;
 }
 
+int NeighborCommunicator::MPISize()
+{
+  int size = -1;
+  MPI_Comm_size( MPI_COMM_GEOSX, &size );
+  return size;
+}
+
 void NeighborCommunicator::Clear()
 {
   for( int i = 0 ; i < maxComm ; ++i )

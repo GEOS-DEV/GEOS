@@ -180,7 +180,8 @@ public:
                             MeshLevel * const meshLevel,
                             int const commID );
 
-  int Rank();
+  static int Rank();
+  static int MPISize();
 
   void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
   int NeighborRank() const { return m_neighborRank; }

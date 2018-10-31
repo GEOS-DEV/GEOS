@@ -1495,6 +1495,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   MPI_Comm_size(MPI_COMM_GEOSX, &size);
   array1d<real64> globalValues( size * 2 );
+  globalValues = 0;
   MPI_Gather( localResidual,
               2,
               MPI_DOUBLE,
