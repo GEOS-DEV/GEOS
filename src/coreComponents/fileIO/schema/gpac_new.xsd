@@ -252,10 +252,15 @@
   <xsd:attribute name="file" type="xsd:string"/>
 </xsd:complexType>
 
+<xsd:complexType name="PAMELAMeshGenerator">
+  <xsd:attribute name="file" type="xsd:string"/>
+</xsd:complexType>
+
 <xsd:complexType name="MeshesType">
   <xsd:sequence>
     <xsd:element name="InternalMesh" type="InternalMesh" minOccurs="0" maxOccurs="unbounded"/>
     <xsd:element name="MeshFile" type="MeshFile" minOccurs="0" maxOccurs="unbounded"/>
+    <xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGenerator" minOccurs="0" maxOccurs="unbounded"/>
   </xsd:sequence>
 </xsd:complexType>
 
