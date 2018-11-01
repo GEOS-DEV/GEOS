@@ -16,22 +16,22 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * TrilinosSolver.hpp
+/**
+ * @file TrilinosSolver.hpp
  *
  *  Created on: Aug 9, 2018
- *      Author: Matthias
+ *      Author: Matthias Cremon
  */
 
-#ifndef TRILINOSSOLVER_HPP_
-#define TRILINOSSOLVER_HPP_
+#ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSSOLVER_HPP_
+#define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSSOLVER_HPP_
 
-#include "EpetraSparseMatrix.hpp"
-#include "EpetraVector.hpp"
 #include <AztecOO.h>
 #include <Amesos.h>
 #include "ml_MultiLevelPreconditioner.h"
 #include "ml_epetra_utils.h"
+#include "TrilinosSparseMatrix.hpp"
+#include "TrilinosVector.hpp"
 
 namespace geosx
 {
@@ -57,7 +57,7 @@ public:
    * @brief Copy constructor.
    *
    */
-  TrilinosSolver( const TrilinosSolver &Solver );
+  TrilinosSolver( TrilinosSolver const &Solver );
 
   /**
    * @brief Virtual destructor.
@@ -69,15 +69,15 @@ public:
   //! @name Solvers
   //@{
   /**
-   * @brief Solve system.
+   * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
    *
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void solve( EpetraSparseMatrix &Mat,
-              EpetraVector &rhs,
               EpetraVector &sol,
-              integer max_iter,
-              real64 newton_tol,
+              EpetraVector &rhs,
+              integer const max_iter,
+              real64 const newton_tol,
               std::unique_ptr<Epetra_Operator> Prec = nullptr );
 
   /**
@@ -86,20 +86,20 @@ public:
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void ml_solve( EpetraSparseMatrix &Mat,
-                 EpetraVector &rhs,
                  EpetraVector &sol,
-                 integer max_iter,
-                 real64 newton_tol,
+                 EpetraVector &rhs,
+                 integer const max_iter,
+                 real64 const newton_tol,
                  std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec = nullptr );
 
   /**
-   * @brief Solve system using a direct solver.
+   * @brief Solve system using a direct solver (KLU).
    *
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void dsolve( EpetraSparseMatrix &Mat,
-               EpetraVector &rhs,
-               EpetraVector &sol );
+               EpetraVector &sol,
+               EpetraVector &rhs );
   //@}
 
 protected:
