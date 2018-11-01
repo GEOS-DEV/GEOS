@@ -46,6 +46,8 @@ blt_add_library( NAME                  constitutive
                  DEPENDS_ON            ${dependencyList}
                )
                
-target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks(PREFIX constitutive )
+add_subdirectory( unitTests )
+
+geosx_add_code_checks( PREFIX constitutive )

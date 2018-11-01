@@ -31,6 +31,47 @@ namespace geosx
 namespace constitutive
 {
 
+namespace detail
+{
+
+template<typename T, int DIM>
+struct array_view_helper
+{
+  using type = array_view<T, DIM>;
+};
+
+#ifndef GEOSX_USE_ARRAY_BOUNDS_CHECK
+// special tratment since there is no implicit conversion double * -> array_view<T, 1>
+template<typename T>
+struct array_view_helper<T, 1>
+{
+  using type = T *;
+};
+#endif
+
+// an array view of DIM=0 decays to a reference to scalar
+template<typename T>
+struct array_view_helper<T, 0>
+{
+  using type = T &;
+};
+
+template<int DIM>
+using real_array_view = typename array_view_helper<real64, DIM>::type;
+
+}
+
+// helper struct to represent a var and its derivatives
+template<int DIM>
+struct CompositionalVarContainer
+{
+  detail::real_array_view<DIM>   value; // variable value
+  detail::real_array_view<DIM>   dPres; // derivative w.r.t. pressure
+  detail::real_array_view<DIM>   dTemp; // derivative w.r.t. temperature
+  detail::real_array_view<DIM+1> dComp; // derivative w.r.t. composition
+};
+
+
 class MultiFluidBase : public ConstitutiveBase
 {
 public:
@@ -83,7 +124,7 @@ public:
     static constexpr auto dPhaseViscosity_dTemperatureString             = "dPhaseViscosity_dTemperature";           // dMu_p/dT
     static constexpr auto dPhaseViscosity_dGlobalCompFractionString      = "dPhaseViscosity_dGlobalCompFraction";    // dMu_p/dz
 
-    static constexpr auto phaseComponentFractionString                   = "phaseComponentFraction";                 // x_cp
+    static constexpr auto phaseCompFractionString                        = "phaseCompFraction";                      // x_cp
     static constexpr auto dPhaseCompFraction_dPressureString             = "dPhaseCompFraction_dPressure";           // dx_cp/dP
     static constexpr auto dPhaseCompFraction_dTemperatureString          = "dPhaseCompFraction_dTemperature";        // dx_cp/dT
     static constexpr auto dPhaseCompFraction_dGlobalCompFractionString   = "dPhaseCompFraction_dGlobalCompFraction"; // dx_cp/dz
@@ -113,7 +154,7 @@ public:
     ViewKey dPhaseViscosity_dTemperature             = { dPhaseViscosity_dTemperatureString };             // dRho_p/dT
     ViewKey dPhaseViscosity_dGlobalCompFraction      = { dPhaseViscosity_dGlobalCompFractionString };      // dRho_p/dz
 
-    ViewKey phaseCompFraction                        = { phaseComponentFractionString };                   // x_cp
+    ViewKey phaseCompFraction                        = { phaseCompFractionString };                        // x_cp
     ViewKey dPhaseCompFraction_dPressure             = { dPhaseCompFraction_dPressureString };             // dx_cp/dP
     ViewKey dPhaseCompFraction_dTemperature          = { dPhaseCompFraction_dTemperatureString };          // dx_cp/dT
     ViewKey dPhaseCompFraction_dGlobalCompFraction   = { dPhaseCompFraction_dGlobalCompFractionString };   // dx_cp/dz

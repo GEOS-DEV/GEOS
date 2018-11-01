@@ -7,13 +7,13 @@
     gravityVector="0.0,0.0,-9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="1"
+                                 verboseLevel="2"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"
                                  solidName="rock"
                                  temperature="297.15"
-                                 useMass="0">
+                                 useMass="1">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"

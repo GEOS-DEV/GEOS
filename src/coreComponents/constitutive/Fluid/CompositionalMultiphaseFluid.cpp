@@ -192,7 +192,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
 
-#define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
+#define COMPFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
     GEOS_ERROR("CompositionalMultiphaseFluid: invalid number of entries in " \
@@ -201,19 +201,19 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
                << (expected) << " expected)"); \
   }
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_equationsOfState, NP,
+  COMPFLUID_CHECK_INPUT_LENGTH(m_equationsOfState, NP,
                                viewKeys.equationsOfState.Key())
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentCriticalPressure, NC,
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentCriticalPressure, NC,
                                viewKeys.componentCriticalPressure.Key())
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentCriticalTemperature, NC,
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentCriticalTemperature, NC,
                                viewKeys.componentCriticalTemperature.Key())
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentAcentricFactor, NC,
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentAcentricFactor, NC,
                                viewKeys.componentAcentricFactor.Key())
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeight, NC,
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentMolarWeight, NC,
                                viewKeys.componentMolarWeight.Key())
 
   if (m_componentVolumeShift.empty())
@@ -222,7 +222,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
     m_componentVolumeShift = 0.0;
   }
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentVolumeShift, NC,
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentVolumeShift, NC,
                                viewKeys.componentVolumeShift.Key())
 
   //if (m_componentBinaryCoeff.empty()) TODO
@@ -231,10 +231,10 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
     m_componentBinaryCoeff = 0.0;
   }
 
-  BOFLUID_CHECK_INPUT_LENGTH(m_componentBinaryCoeff, NC * NC,
+  COMPFLUID_CHECK_INPUT_LENGTH(m_componentBinaryCoeff, NC * NC,
                                viewKeys.componentBinaryCoeff.Key())
 
-#undef BOFLUID_CHECK_INPUT_LENGTH
+#undef COMPFLUID_CHECK_INPUT_LENGTH
 }
 
 void CompositionalMultiphaseFluid::createFluid()
@@ -284,47 +284,6 @@ void CompositionalMultiphaseFluid::InitializePostSubGroups( ManagedGroup * const
   createFluid();
 }
 
-namespace
-{
-
-template<typename T, int DIM>
-struct array_view_helper
-{
-  using type = array_view<T, DIM>;
-};
-
-#ifndef GEOSX_USE_ARRAY_BOUNDS_CHECK
-// special tratment since there is no implicit conversion double * -> array_view<T, 1>
-template<typename T>
-struct array_view_helper<T, 1>
-{
-  using type = T *;
-};
-#endif
-
-// an array view of DIM=0 decays to a reference to scalar
-template<typename T>
-struct array_view_helper<T, 0>
-{
-  using type = T &;
-};
-
-template<int DIM>
-using real_array_view = typename array_view_helper<real64, DIM>::type;
-
-
-// helper struct to represent a var and its derivatives
-template<int DIM>
-struct VarContainer
-{
-  real_array_view<DIM>   value; // variable value
-  real_array_view<DIM>   dPres; // derivative w.r.t. pressure
-  real_array_view<DIM>   dTemp; // derivative w.r.t. temperature
-  real_array_view<DIM+1> dComp; // derivative w.r.t. composition
-};
-
-}
-
 void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const & pres,
                                                                     real64 const & temp,
                                                                     real64 const * composition,
@@ -332,35 +291,35 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
                                                                     localIndex const q )
 {
   // 0. set array views to the element/point data to avoid awkward quadruple indexing
-  VarContainer<1> phaseFrac {
+  CompositionalVarContainer<1> phaseFrac {
     m_phaseFraction[k][q],
     m_dPhaseFraction_dPressure[k][q],
     m_dPhaseFraction_dTemperature[k][q],
     m_dPhaseFraction_dGlobalCompFraction[k][q]
   };
 
-  VarContainer<1> phaseDens {
+  CompositionalVarContainer<1> phaseDens {
     m_phaseDensity[k][q],
     m_dPhaseDensity_dPressure[k][q],
     m_dPhaseDensity_dTemperature[k][q],
     m_dPhaseDensity_dGlobalCompFraction[k][q]
   };
 
-  VarContainer<1> phaseVisc {
+  CompositionalVarContainer<1> phaseVisc {
     m_phaseViscosity[k][q],
     m_dPhaseViscosity_dPressure[k][q],
     m_dPhaseViscosity_dTemperature[k][q],
     m_dPhaseViscosity_dGlobalCompFraction[k][q]
   };
 
-  VarContainer<2> phaseCompFrac {
+  CompositionalVarContainer<2> phaseCompFrac {
     m_phaseCompFraction[k][q],
     m_dPhaseCompFraction_dPressure[k][q],
     m_dPhaseCompFraction_dTemperature[k][q],
     m_dPhaseCompFraction_dGlobalCompFraction[k][q]
   };
 
-  VarContainer<0> totalDens {
+  CompositionalVarContainer<0> totalDens {
     m_totalDensity[k][q],
     m_dTotalDensity_dPressure[k][q],
     m_dTotalDensity_dTemperature[k][q],

@@ -871,7 +871,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * domain )
   auto const phaseCompMassFrac =
     elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
-                                                                   phaseComponentFractionString,
+                                                                   phaseCompFractionString,
                                                                    constitutiveManager );
 
 // backup some fields used in time derivative approximation
@@ -1250,7 +1250,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
   auto phaseCompFrac =
     elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
-                                                                   phaseComponentFractionString,
+                                                                   phaseCompFractionString,
                                                                    constitutiveManager );
 
   auto dPhaseCompFrac_dPres =
@@ -1503,7 +1503,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
   auto phaseCompFrac =
     elemManager->ConstructMaterialViewAccessor< array4d<real64> >( MultiFluidBase::
                                                                    viewKeyStruct::
-                                                                   phaseComponentFractionString,
+                                                                   phaseCompFractionString,
                                                                    constitutiveManager );
 
   auto dPhaseCompFrac_dPres =
