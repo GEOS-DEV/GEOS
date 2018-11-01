@@ -205,6 +205,10 @@ public:
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
+  string GetElementType() const { return m_elementType; }
+
+  void SetElementType( string const & elementType);
+
 private:
   /// The number of nodes per element in this cell block
   localIndex m_numNodesPerElement;
@@ -230,9 +234,8 @@ private:
   /// The member level field for the element volume
   array1d< real64 > m_elementVolume;
 
-
 //  CellBlock& operator=(const CellBlock& rhs);
-//  string & m_elementType;
+  string m_elementType;
 
 };
 

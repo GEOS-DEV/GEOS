@@ -7,7 +7,7 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="1"
+                                  verboseLevel="0"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               useMLPrecond="1"
@@ -127,13 +127,16 @@
                setNames="zneg zpos"/>
                
     <Dirichlet name="xposconstraint" 
-               objectPath="nodeManager" 
-               fieldName="Force" 
+               objectPath="faceManager" 
+               fieldName="Traction" 
                dataType="Vector" 
                component="1" 
                scale="1.0e6" 
                functionName="timeFunction"
                setNames="xpos"/>
+    <!-- Dirichlet name="xposconstraint" component="1" fieldName="Traction" dataType="Vector" object="Face" scale="1.0e5" setNames="xpos"/-->
+
+
   </BoundaryConditions>
 
 

@@ -237,9 +237,13 @@ public:
   /// add identity
   void PlusIdentity(const realT rhs)
   {
-    int c = 0;
-    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
-      this->t_data[c] += rhs;
+//    int c = 0;
+//    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
+//      this->t_data[c] += rhs;
+//
+    this->t_data[0] += rhs;
+    this->t_data[2] += rhs;
+    this->t_data[5] += rhs;
   }
 
   void
@@ -419,15 +423,20 @@ inline realT R2SymTensorT< T_dim >::Trace(void) const
   realT trace = 0;
   int c = 0;
 
-  if (T_dim == 2)
-    trace = this->t_data[0] + this->t_data[2];
-  else if (T_dim == 3)
-    trace = this->t_data[0] + this->t_data[2] + this->t_data[5];
-  else
-    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
-      trace += this->t_data[c];
+  for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
+    trace += this->t_data[c];
   return trace;
 }
+
+template<>
+inline realT R2SymTensorT< 3 >::Trace(void) const
+{
+  realT trace = 0;
+  int c = 0;
+
+  return trace = this->t_data[0] + this->t_data[2] + this->t_data[5];
+}
+
 
 /**
  * @author Randolph Settgast
@@ -1245,15 +1254,15 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, const R2TensorT< T_dim >& Q)
 {
-  if (T_dim == 2)
-  {
-    this->t_data[0] = Q.t_data[0] * Q.t_data[0] * A.t_data[0] + 2 * Q.t_data[0] * Q.t_data[1] * A.t_data[1] + Q.t_data[1] * Q.t_data[1] * A.t_data[2];
-    this->t_data[1] = Q.t_data[0] * Q.t_data[3] * A.t_data[0] + Q.t_data[0] * Q.t_data[4] * A.t_data[1] + Q.t_data[1] * Q.t_data[3] * A.t_data[1] + Q.t_data[1]
-                      * Q.t_data[4] * A.t_data[2];
-    this->t_data[2] = Q.t_data[3] * Q.t_data[3] * A.t_data[0] + 2 * Q.t_data[3] * Q.t_data[4] * A.t_data[1] + Q.t_data[4] * Q.t_data[4] * A.t_data[2];
-  }
-  else if (T_dim == 3)
-  {
+//  if (T_dim == 2)
+//  {
+//    this->t_data[0] = Q.t_data[0] * Q.t_data[0] * A.t_data[0] + 2 * Q.t_data[0] * Q.t_data[1] * A.t_data[1] + Q.t_data[1] * Q.t_data[1] * A.t_data[2];
+//    this->t_data[1] = Q.t_data[0] * Q.t_data[3] * A.t_data[0] + Q.t_data[0] * Q.t_data[4] * A.t_data[1] + Q.t_data[1] * Q.t_data[3] * A.t_data[1] + Q.t_data[1]
+//                      * Q.t_data[4] * A.t_data[2];
+//    this->t_data[2] = Q.t_data[3] * Q.t_data[3] * A.t_data[0] + 2 * Q.t_data[3] * Q.t_data[4] * A.t_data[1] + Q.t_data[4] * Q.t_data[4] * A.t_data[2];
+//  }
+//  else if (T_dim == 3)
+//  {
     realT o1,o2,o3,o4,o5,o6,o7,o8,o9,o10,o11,o12,o13,o14,o15,o16,o17,o18,o19,o20,o21,o22,o23,o24;
     o1 = A.t_data[0] * Q.t_data[3];
     o2 = A.t_data[1] * Q.t_data[4];
@@ -1289,11 +1298,11 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
     this->t_data[3] = o16 * Q.t_data[0] + o20 * Q.t_data[1] + o24 * Q.t_data[2];
     this->t_data[4] = o16 * Q.t_data[3] + o20 * Q.t_data[4] + o24 * Q.t_data[5];
     this->t_data[5] = o16 * Q.t_data[6] + o20 * Q.t_data[7] + o24 * Q.t_data[8];
-  }
-  else
-  {
-    GEOS_WARNING("R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3");
-  }
+//  }
+//  else
+//  {
+//    GEOS_WARNING("R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3");
+//  }
 
 }
 

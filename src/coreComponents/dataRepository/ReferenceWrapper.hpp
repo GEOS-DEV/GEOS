@@ -186,6 +186,11 @@ public:
     return *m_ref;
   }
 
+  inline bool isValid() const
+  {
+    return m_ref;
+  }
+
   /**
    * @brief const accessor for m_ref
    * @return const reference to wrapped value

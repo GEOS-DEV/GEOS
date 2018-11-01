@@ -76,6 +76,8 @@ public:
     dataRepository::ViewKey maxTime = { "maxTime" };
     dataRepository::ViewKey maxCycle = { "maxCycle" };
     dataRepository::ViewKey verbosity = { "verbosity" };
+    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
+    dataRepository::ViewKey currentMaxDt = { "currentMaxDt" };
   } viewKeys;
 
   /// Catalog interface

@@ -20,10 +20,12 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           MATHPRESSO
                           METIS
                           MPI
+                          OPENMP
                           PARMETIS
                           PYTHON
                           RAJA 
                           SUPERLU_DIST
+                          TIMERS
                           TRILINOS
                           ${externalComponentsList} )
 

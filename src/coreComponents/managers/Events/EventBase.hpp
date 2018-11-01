@@ -53,6 +53,8 @@ public:
   EventBase& operator=( EventBase const & ) = default;
   EventBase& operator=( EventBase&& ) = default;
 
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
+
   /**
    * If the event forecast is equal to 1, then signal the targets to prepare for execution
    * during the next cycle.
@@ -70,7 +72,9 @@ public:
    */
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const ,
+                        real64 const & ,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -86,7 +90,9 @@ public:
    * This method is called as the code exits the main run loop
    */
   virtual void Cleanup( real64 const & time_n,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
 
@@ -135,6 +141,19 @@ public:
    */
   virtual real64 GetTimestepRequest(real64 const time) override;
 
+
+  /// This method is used to count the number of events/sub-events
+  void GetExecutionOrder(array1d<integer> & eventCounters);
+
+  /**
+   * This method is used to determine how to handle the timestamp for an event
+   * If the event occurs after anything targeting a SolverBase object, then
+   * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
+   * will be time + dt.
+   */
+  void SetProgressIndicator(array1d<integer> & eventCounters);
+
+
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
 
@@ -150,6 +169,10 @@ public:
     dataRepository::ViewKey allowSuperstep = { "allowSuperstep" };
     dataRepository::ViewKey allowSubstep = { "allowSubstep" };
     dataRepository::ViewKey substepFactor = { "substepFactor" };
+    dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
+
+    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
+    dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
   } viewKeys;
 
   ///Catalog interface
@@ -163,9 +186,15 @@ public:
   integer GetExitFlag();
   void SetExitFlag(integer flag){ m_exitFlag = flag; }
 
+  integer GetEventCount() const { return m_eventCount; }
+  real64  GetEventProgress() const { return m_eventProgress; }
+
 private:
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
+  integer m_eventCount = 0;
+  integer m_timeStepEventCount = 0;
+  real64 m_eventProgress = 0;
 };
 
 } /* namespace geosx */
