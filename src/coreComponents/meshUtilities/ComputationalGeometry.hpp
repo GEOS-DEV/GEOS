@@ -50,6 +50,12 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
 
 real64 HexVolume( R1Tensor const * const points );
 
+real64 TetVolume( R1Tensor const * const points );
+
+real64 WedgeVolume( R1Tensor const * const points );
+
+real64 PyramidVolume( R1Tensor const * const points );
+
 inline void VectorDifference( array1d< R1Tensor > const & X,
                               localIndex const index0,
                               localIndex const index1,
