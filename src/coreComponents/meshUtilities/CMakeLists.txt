@@ -33,6 +33,7 @@ set(meshUtilities_sources
 
 set( dependencyList fileIO common trilinos )
 
+set(ENABLE_PAMELA ON)
 if( ENABLE_PAMELA )
     set( meshUtilities_headers ${meshUtilities_headers} PAMELAMeshGenerator.hpp )
     set( meshUtilities_sources ${meshUtilities_sources} PAMELAMeshGenerator.cpp)

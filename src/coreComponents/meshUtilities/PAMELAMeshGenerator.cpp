@@ -164,6 +164,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
 
         if( cellBlockName == "HEX" )
         {
+          cellBlock -> SetElementType("C3D8");
           auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
           auto & cellToVertex = cellBlock->nodeList();
           cellBlock->resize( nbCells );
