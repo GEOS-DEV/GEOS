@@ -2,8 +2,12 @@
 # Specify all headers
 #
 set( linearAlgebraInterface_headers
-     EpetraSparseMatrix.hpp
-     EpetraVector.hpp
+     solver_CG.hpp
+     solver_BiCGSTAB.hpp
+     BlockMatrixView.hpp
+     BlockVectorView.hpp
+     TrilinosSparseMatrix.hpp
+     TrilinosVector.hpp
      InterfaceTypes.hpp
      TrilinosSolver.hpp
      TrilinosInterface.hpp
@@ -13,8 +17,8 @@ set( linearAlgebraInterface_headers
 # Specify all sources
 #
 set( linearAlgebraInterface_sources
-     EpetraSparseMatrix.cpp
-     EpetraVector.cpp
+     TrilinosSparseMatrix.cpp
+     TrilinosVector.cpp
      TrilinosSolver.cpp)
 
 set( dependencyList common trilinos hypre mpi)

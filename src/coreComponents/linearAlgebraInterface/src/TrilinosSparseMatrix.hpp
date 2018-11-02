@@ -18,12 +18,15 @@
 
 /**
  * @file EpetraSparseMatrix.hpp
+ *
+ *  Created on: Jul 24, 2018
+ *  Author: Matthias Cremon
+ *
  */
 
 #ifndef EPETRASPARSEMATRIX_HPP_
 #define EPETRASPARSEMATRIX_HPP_
 
-#include "EpetraVector.hpp"
 #include "InterfaceTypes.hpp"
 #include <Epetra_Comm.h>
 #include <Epetra_MpiComm.h>
@@ -32,6 +35,7 @@
 #include <Epetra_CrsMatrix.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include "common/DataTypes.hpp"
+#include "TrilinosVector.hpp"
 
 namespace geosx
 {
@@ -56,8 +60,10 @@ public:
 
   /**
    * @brief Copy constructor.
+   *
+   * Create new matrix from matrix <tt>in_mat</tt>.
    */
-  EpetraSparseMatrix( EpetraSparseMatrix const &in_matrix );
+  EpetraSparseMatrix( EpetraSparseMatrix const &in_mat );
 
   /**
    * @brief Virtual destructor.
@@ -92,31 +98,6 @@ public:
                trilinosTypes::gid const m_nColGlobal,
                trilinosTypes::lid const nMaxEntriesPerRow = 0 );
 
-  // TODO see if we need a vector of nnz
-  //  /**
-  //   * @brief Create a square matrix from number of unknowns.
-  //   *
-  //   * \param comm MPI communicator.
-  //   * \param m_nRowGlobal Global number of unknowns.
-  //   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
-  //   */
-  //  void create( MPI_Comm const comm,
-  //               trilinosTypes::lid const m_nRowGlobal,
-  //               std::vector<trilinosTypes::lid> const nMaxEntriesPerRow );
-  //
-  //  /**
-  //   * @brief Create a square matrix from number of unknowns.
-  //   *
-  //   * \param comm MPI communicator.
-  //   * \param m_nRowGlobal Global number of rows.
-  //   * \param m_nColGlobal Global number of columns.
-  //   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
-  //   */
-  //  void create( MPI_Comm const comm,
-  //               trilinosTypes::gid const m_nRowGlobal,
-  //               trilinosTypes::gid const m_nColGlobal,
-  //               std::vector<trilinosTypes::lid> const nMaxEntriesPerRow );
-
   /**
    * @brief Create a square matrix from Epetra_Map.
    *
@@ -149,7 +130,7 @@ public:
    *
    * \param Epetra_CrsGraph existing graph.
    */
-  void create( Epetra_CrsGraph &graph );
+  void create( Epetra_CrsGraph const &graph );
 
   /**
    * @brief Create a matrix from an existing Epetra_CrsMatrix.
@@ -200,6 +181,19 @@ public:
             trilinosTypes::lid const nCols,
             real64 const *values,
             trilinosTypes::gid const *cols );
+
+  /**
+   * @brief Add dense matrix.
+   *
+   * Adds the matrix <tt>values</tt> to the sparse matrix, at locations specified
+   * by <tt>indices</tt>.
+   *
+   * \param indices Vector of indices.
+   * \param values Values.
+   */
+  void add( array1d<trilinosTypes::gid> const rowIndices,
+            array1d<trilinosTypes::gid> const colIndices,
+            array2d<real64> const values);
 
   /**
    * @brief Add to one element.
@@ -272,51 +266,87 @@ public:
   //@{
   /**
    * @brief Matrix/Vector multiplication.
+   *
+   * Compute <tt>Ax = b<tt>.
+   *
+   * \param src Input vector (x).
+   * \param dst Output vector (b).
+   *
    */
   void multiply( EpetraVector const &src,
                  EpetraVector &dst ) const;
 
   /**
-   * @brief Compute residual r = Ax - b.
+   * @brief Compute residual <tt>r = Ax - b</tt>.
+   *
+   * \param x Input solution.
+   * \param b Input right hand side.
+   * \param r Output residual.
+   *
    */
   void residual( EpetraVector const &x,
                  EpetraVector const &b,
-                 EpetraVector &res ) const;
+                 EpetraVector &r ) const;
 
   /**
-   * @brief Compute "gaxpy" res = alpha*A*x + beta*b.
+   * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
+   *
+   * @note The naming convention follows the BLAS library.
+   *
+   * \param alpha Scalar factor for added matvec product.
+   * \param x Input vector.
+   * \param beta Scalar factor for right hand side.
+   * \param y Output vector.
+   * \param useTranspose Boolean, set to true to use <tt>A^T</tt>.
+   *
    */
-  void gaxpy( real64 alpha,
-              EpetraVector const &x,
-              real64 beta,
-              EpetraVector const &b,
-              EpetraVector &res,
-              bool useTranspose=false );
+  void gemv( real64 const alpha,
+             EpetraVector const &x,
+             real64 const beta,
+             EpetraVector &y,
+             bool useTranspose=false );
 
   /**
    * @brief Multiply all elements by scalingFactor.
+   *
+   * \param scalingFactor Scaling factor.
+   *
    */
-  void scale( real64 scalingFactor );
+  void scale( real64 const scalingFactor );
 
   /**
    * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
+   *
+   * \param vec Vector to pre-multiply with.
+   *
    */
   void leftScale( EpetraVector const &vec );
 
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
+   *
+   * \param vec Vector to post-multiply with.
+   *
    */
   void rightScale( EpetraVector const &vec );
 
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
    * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
+   *
+   * \param vec vecLeft to pre-multiply with.
+   * \param vec vecRight to post-multiply with.
+   *
    */
   void leftRightScale( EpetraVector const &vecLeft,
                        EpetraVector const &vecRight );
 
   /**
    * @brief Clear a row and multiplies the diagonal term by <tt>factor</tt>.
+   *
+   * \param row Index of the row to be cleared.
+   * \param factor Scaling factor for diagonal element.
+   *
    */
   void clearRow( trilinosTypes::gid const row,
                  real64 const factor );
@@ -333,7 +363,7 @@ public:
   void getRow( trilinosTypes::gid GlobalRow,
                trilinosTypes::lid &NumEntries,
                real64* Values,
-               trilinosTypes::gid* Indices );
+               trilinosTypes::gid* Indices ) const;
 
   /**
    * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
@@ -342,7 +372,7 @@ public:
   void getRow( trilinosTypes::gid GlobalRow,
                trilinosTypes::lid &NumEntries,
                std::vector<real64> &vecValues,
-               std::vector<trilinosTypes::gid> &vecIndices );
+               std::vector<trilinosTypes::gid> &vecIndices ) const;
 
   /**
    * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
@@ -351,7 +381,7 @@ public:
   void getLocalRow( trilinosTypes::lid myRow,
                     trilinosTypes::lid & NumEntries,
                     real64 * & Values,
-                    trilinosTypes::lid * & Indices );
+                    trilinosTypes::lid * & Indices ) const;
 
   /**
    * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
@@ -360,7 +390,7 @@ public:
   void getLocalRow( trilinosTypes::lid myRow,
                     trilinosTypes::lid &NumEntries,
                     std::vector<real64> &vecValues,
-                    std::vector<trilinosTypes::lid> &vecIndices );
+                    std::vector<trilinosTypes::lid> &vecIndices ) const;
 
   /**
    * @brief Returns a pointer to the underlying matrix.
@@ -421,7 +451,7 @@ public:
    * @brief Wrapper for LID function. Returns the local map of the corresponding global index.
    * Returns -1 if the global row is not owned by the processor.
    */
-  trilinosTypes::lid rowMapLID( trilinosTypes::gid GID ) const;
+  trilinosTypes::lid rowMapLID( trilinosTypes::gid const GID ) const;
 
   /**
    * @brief Returns the infinity norm of the matrix.
