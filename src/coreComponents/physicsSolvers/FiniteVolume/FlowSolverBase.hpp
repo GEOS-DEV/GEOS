@@ -90,6 +90,8 @@ public:
 
   localIndex solidIndex() const { return m_solidIndex; }
 
+  localIndex numDofPerCell() const { return m_numDofPerCell; }
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     using ViewKey = dataRepository::ViewKey;
@@ -145,6 +147,9 @@ protected:
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
+
+  /// the number of Degrees of Freedom per cell
+  localIndex m_numDofPerCell;
 
 };
 

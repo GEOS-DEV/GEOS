@@ -54,14 +54,23 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
-  m_numComponents( 0 ),
-  m_numDofPerCell( 0 )
+  m_numComponents( 0 )
 {
   // set the blockID for the block system interface
   getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
   this->RegisterViewWrapper( viewKeysCompMultiphaseFlow.temperature.Key(), &m_temperature, false );
   this->RegisterViewWrapper( viewKeysCompMultiphaseFlow.useMassFlag.Key(), &m_useMass, false );
+}
+
+localIndex CompositionalMultiphaseFlow::numFluidComponents() const
+{
+  return m_numComponents;
+}
+
+localIndex CompositionalMultiphaseFlow::numFluidPhases() const
+{
+  return m_numPhases;
 }
 
 void CompositionalMultiphaseFlow::FillDocumentationNode()
@@ -743,6 +752,13 @@ void CompositionalMultiphaseFlow::UpdateConstitutiveModels( DomainPartition * do
 {
   UpdateFluidModels( domain );
   UpdateSolidModels( domain );
+}
+
+void CompositionalMultiphaseFlow::UpdateState( DomainPartition * domain )
+{
+  UpdateComponentFraction( domain );
+  UpdateConstitutiveModels( domain );
+  UpdatePhaseVolumeFraction( domain );
 }
 
 void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * domain )
@@ -2274,9 +2290,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
                                          mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
-  UpdateComponentFraction( domain );
-  UpdateConstitutiveModels( domain );
-  UpdatePhaseVolumeFraction( domain );
+  UpdateState( domain );
 }
 
 void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep(DomainPartition * const domain)
@@ -2296,9 +2310,7 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep(DomainPartition * 
       dCompDens[er][esr][ei][ic] = 0.0;
   });
 
-  UpdateComponentFraction( domain );
-  UpdateConstitutiveModels( domain );
-  UpdatePhaseVolumeFraction( domain );
+  UpdateState( domain );
 }
 
 void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
@@ -2321,166 +2333,6 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
     for (localIndex ic = 0; ic < m_numComponents; ++ic)
       compDens[er][esr][ei][ic] += dCompDens[er][esr][ei][ic];
   });
-}
-
-bool CompositionalMultiphaseFlow::TestNumericalJacobian( DomainPartition * domain,
-                                                         EpetraBlockSystem * blockSystem,
-                                                         real64 const time_n,
-                                                         real64 const dt,
-                                                         double perturbParameter,
-                                                         double relTol )
-{
-  Epetra_FECrsMatrix const * jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
-  Epetra_FEVector const * residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-  Epetra_Map      const * rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
-
-  // get a view into local residual vector
-  int localSizeInt;
-  double* localResidual = nullptr;
-  residual->ExtractView(&localResidual, &localSizeInt);
-
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  auto elemGhostRank =
-    elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-
-  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.pressure.Key() );
-  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( viewKeysCompMultiphaseFlow.deltaPressure.Key() );
-  auto compDens  = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.globalCompDensity.Key() );
-  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>( viewKeysCompMultiphaseFlow.deltaGlobalCompDensity.Key() );
-
-  auto blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>>( viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key() );
-
-  // assemble the analytical residual
-  ResetStateToBeginningOfStep( domain );
-  AssembleSystem( domain, blockSystem, time_n, dt );
-
-  // copy the analytical residual
-  auto residualOrig = std::make_unique<Epetra_FEVector>( *residual );
-  double* localResidualOrig = nullptr;
-  residualOrig->ExtractView(&localResidualOrig, &localSizeInt);
-
-  // create the numerical jacobian
-  auto jacobianFD = std::make_unique<Epetra_FECrsMatrix>( Copy, jacobian->Graph() );
-  jacobianFD->Scale( 0.0 );
-
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const ei ) -> void
-  {
-    if (elemGhostRank[er][esr][ei] >= 0)
-      return;
-
-    globalIndex offset = blockLocalDofNumber[er][esr][ei] * m_numDofPerCell;
-
-    real64 totalDensity = 0.0;
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
-    {
-      totalDensity += compDens[er][esr][ei][ic];
-    }
-
-    {
-      ResetStateToBeginningOfStep(domain);
-      real64 const dP = perturbParameter * std::min(std::fabs(pres[er][esr][ei]), 1e5);
-      dPres[er][esr][ei] = dP;
-      AssembleSystem(domain, blockSystem, time_n, dt);
-      long long const dofIndex = integer_conversion<long long>(offset);
-
-      for (int lid = 0; lid < localSizeInt; ++lid)
-      {
-        real64 dRdP = (localResidualOrig[lid] - localResidual[lid]) / dP;
-        if (std::fabs(dRdP) > 0.0)
-        {
-          long long gid = rowMap->GID64(lid);
-          jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
-        }
-      }
-    }
-
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
-    {
-      ResetStateToBeginningOfStep(domain);
-      real64 const dRho = perturbParameter * totalDensity;
-      dCompDens[er][esr][ei][ic] = dRho;
-      AssembleSystem(domain, blockSystem, time_n, dt);
-      long long const dofIndex = integer_conversion<long long>(offset + ic + 1);
-
-      for (int lid = 0; lid < localSizeInt; ++lid)
-      {
-        real64 dRdRho = (localResidualOrig[lid] - localResidual[lid]) / dRho;
-        if (std::fabs(dRdRho) > 0.0)
-        {
-          long long gid = rowMap->GID64(lid);
-          jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
-        }
-      }
-    }
-  });
-
-  jacobianFD->GlobalAssemble(true);
-
-  // assemble the analytical jacobian
-  ResetStateToBeginningOfStep( domain );
-  AssembleSystem( domain, blockSystem, time_n, dt );
-
-#if 1
-  jacobian->Print(std::cout);
-  jacobianFD->Print(std::cout);
-#endif
-
-  bool result = true;
-  double * row = nullptr;
-  double * rowFD = nullptr;
-  int numEntries, numEntriesFD;
-  int * indices = nullptr;
-  int* indicesFD = nullptr;
-
-  // check the accuracy across local rows
-  for (int i = 0; i < localSizeInt; ++i)
-  {
-    jacobian->ExtractMyRowView( i, numEntries, row, indices );
-    jacobianFD->ExtractMyRowView( i, numEntriesFD, rowFD, indicesFD );
-
-    if (numEntries != numEntriesFD)
-    {
-      GEOS_LOG( "Number of entries in local row " << i
-                << " of analytical and numerical jacobians does not match: "
-                << numEntries << " != " << numEntriesFD);
-      result = false;
-    }
-    for (int j = 0, jFD = 0; j < numEntries && jFD < numEntriesFD; ++j, ++jFD)
-    {
-      while (j < numEntries && jFD < numEntriesFD && indices[j] != indices[jFD])
-      {
-        while (j < numEntries && indices[j] < indicesFD[jFD])
-        {
-          GEOS_LOG( "Entry (" << i << ", " << indices[j] << ") in analytical jacobian does not have a match" );
-          result = false;
-          j++;
-        }
-        while (jFD < numEntriesFD && indicesFD[jFD] < indices[j])
-        {
-          GEOS_LOG( "Entry (" << i << ", " << indicesFD[jFD] << ") in numerical jacobian does not have a match" );
-          result = false;
-          jFD++;
-        }
-      }
-      if (j < numEntries && jFD < numEntriesFD)
-      {
-        double const delta = std::fabs(row[j] - rowFD[j]);
-        double const value = std::fmax(std::fabs(row[j]), std::fabs(rowFD[jFD]));
-        if (value > 0 && delta / value > relTol)
-        {
-          GEOS_LOG( "Entry (" << i << ", " << indices[j] << ") mismatch in rel tol: " << delta/value << " > " << relTol );
-          result = false;
-        }
-      }
-    }
-  }
-
-  return result;
 }
 
 

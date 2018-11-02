@@ -146,12 +146,15 @@ public:
                                      real64 const & dt,
                                      DomainPartition * const domain ) override;
 
-  bool TestNumericalJacobian(DomainPartition * domain,
-                             systemSolverInterface::EpetraBlockSystem * blockSystem,
-                             real64 const time_n,
-                             real64 const dt,
-                             double perturbParameter = 1e-6,
-                             double relTol = 1e-4 );
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateState( DomainPartition * domain );
+
+  localIndex numFluidComponents() const;
+
+  localIndex numFluidPhases() const;
 
   /**@}*/
 
@@ -416,9 +419,6 @@ private:
 
   /// the number of fluid components
   localIndex m_numComponents;
-
-  /// the number of Degrees of Freedom per cell
-  localIndex m_numDofPerCell;
 
   /// the (uniform) temperature
   real64 m_temperature;

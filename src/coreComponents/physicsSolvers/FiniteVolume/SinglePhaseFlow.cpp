@@ -54,6 +54,8 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
                                   ManagedGroup * const parent ):
   FlowSolverBase(name, parent)
 {
+  m_numDofPerCell = 1;
+
   // set the blockID for the block system interface
   getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }

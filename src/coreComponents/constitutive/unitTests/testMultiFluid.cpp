@@ -327,7 +327,7 @@ TEST(testMultiFluid, numericalDerivativesCompositionalFluid)
   array1d<real64> comp(4);
   comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
 
-  auto sqrtprecision = sqrt(std::numeric_limits<double>::epsilon());
+  auto sqrtprecision = sqrt(std::numeric_limits<real64>::epsilon());
 
   bool derivsAreOk = testNumericalDerivatives( fluid, P, T, comp, sqrtprecision, 1e-3 );
 
