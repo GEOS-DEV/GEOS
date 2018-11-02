@@ -518,7 +518,7 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
 
   MPI_iCommData sizeComm;
 
-  //  raja::forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,[&] ( int neighborIndex)->void
+  //  forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,[&] ( int neighborIndex)->void
   for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
@@ -554,8 +554,8 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
   GEOSX_MARK_FUNCTION;
 
 #if 0
-//  raja::forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,
-//                                                      [&] ( int neighborIndex )->void
+//  forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,
+//                                                   [&] ( int neighborIndex )->void
 
 #pragma omp parallel for
   for( localIndex neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
