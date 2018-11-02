@@ -556,7 +556,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
   }
 
   // loop over all elements and set the dof number if the element is not a ghost
-  raja::ReduceSum< reducePolicy, localIndex  > localCount(0);
+  ReduceSum< reducePolicy, localIndex  > localCount(0);
   forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [=]( localIndex const er,
                                                      localIndex const esr,
                                                      localIndex const k) mutable ->void
