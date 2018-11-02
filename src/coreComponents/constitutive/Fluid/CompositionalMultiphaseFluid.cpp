@@ -397,17 +397,17 @@ void CompositionalMultiphaseFluid::StateUpdatePointMultiphaseFluid( real64 const
     phaseVisc.dPres[ip] = 0.0;
     phaseVisc.dTemp[ip] = 0.0;
 
-    for (localIndex ic = 0; ic < NC; ++ic)
+    for (localIndex jc = 0; jc < NC; ++jc)
     {
-      phaseFrac.dComp[ip][ic] = frac.dz[ic];
-      phaseDens.dComp[ip][ic] = dens.dz[ic];
-      phaseVisc.dComp[ip][ic] = 0.0; // TODO
+      phaseFrac.dComp[ip][jc] = frac.dz[jc];
+      phaseDens.dComp[ip][jc] = dens.dz[jc];
+      phaseVisc.dComp[ip][jc] = 0.0; // TODO
 
-      phaseCompFrac.value[ip][ic] = comp.value[ic];
-      phaseCompFrac.dPres[ip][ic] = comp.dP[ic];
-      phaseCompFrac.dTemp[ip][ic] = comp.dT[ic];
+      phaseCompFrac.value[ip][jc] = comp.value[jc];
+      phaseCompFrac.dPres[ip][jc] = comp.dP[jc];
+      phaseCompFrac.dTemp[ip][jc] = comp.dT[jc];
 
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for (localIndex ic = 0; ic < NC; ++ic)
         phaseCompFrac.dComp[ip][ic][jc] = comp.dz[ic][jc];
     }
   }

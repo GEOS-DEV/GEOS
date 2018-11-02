@@ -56,21 +56,32 @@ struct array_view_helper<T, 0>
   using type = T &;
 };
 
-template<int DIM>
-using real_array_view = typename array_view_helper<real64, DIM>::type;
-
 }
+
+template<int DIM>
+using real_array_view = typename detail::array_view_helper<real64, DIM>::type;
+
+template<int DIM>
+using real_array_const_view = typename detail::array_view_helper<real64 const, DIM>::type;
 
 // helper struct to represent a var and its derivatives
 template<int DIM>
 struct CompositionalVarContainer
 {
-  detail::real_array_view<DIM>   value; // variable value
-  detail::real_array_view<DIM>   dPres; // derivative w.r.t. pressure
-  detail::real_array_view<DIM>   dTemp; // derivative w.r.t. temperature
-  detail::real_array_view<DIM+1> dComp; // derivative w.r.t. composition
+  real_array_view<DIM>   value; // variable value
+  real_array_view<DIM>   dPres; // derivative w.r.t. pressure
+  real_array_view<DIM>   dTemp; // derivative w.r.t. temperature
+  real_array_view<DIM+1> dComp; // derivative w.r.t. composition
 };
 
+template<int DIM>
+struct CompositionalVarConstContainer
+{
+  real_array_const_view<DIM>   value; // variable value
+  real_array_const_view<DIM>   dPres; // derivative w.r.t. pressure
+  real_array_const_view<DIM>   dTemp; // derivative w.r.t. temperature
+  real_array_const_view<DIM+1> dComp; // derivative w.r.t. composition
+};
 
 class MultiFluidBase : public ConstitutiveBase
 {

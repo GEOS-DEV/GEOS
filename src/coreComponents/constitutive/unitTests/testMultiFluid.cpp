@@ -54,6 +54,96 @@ using namespace geosx::dataRepository;
 template<typename T, int NDIM>
 using array = multidimensionalArray::ManagedArray<T,NDIM,localIndex>;
 
+// helper struct to represent a var and its derivatives (always with array views, not pointers)
+template<int DIM>
+struct TestCompositionalVarContainer
+{
+  array_view<real64,DIM>   value; // variable value
+  array_view<real64,DIM>   dPres; // derivative w.r.t. pressure
+  array_view<real64,DIM>   dTemp; // derivative w.r.t. temperature
+  array_view<real64,DIM+1> dComp; // derivative w.r.t. composition
+};
+
+inline bool checkRelativeError( real64 v1, real64 v2, real64 relTol, string const & name )
+{
+  real64 const delta = std::fabs( v1 - v2 );
+  real64 const value = std::fmax( std::fabs(v1), std::fabs(v2) );
+  if (value > 0)
+  {
+    real64 const err = delta / value;
+    if (err > relTol)
+    {
+      GEOS_LOG("[ " << name << " ] relative error: " << err << "(" << v1 << " vs " << v2 << ")");
+      return false;
+    }
+  }
+  return true;
+}
+
+bool checkDerivative( real64 const & valueEps, real64 const & value, real64 const & deriv,
+                      real64 eps, real64 relTol,
+                      string const & name, string const & var )
+{
+  real64 const numDeriv = (valueEps - value) / eps;
+  return checkRelativeError( numDeriv, deriv, relTol, "d(" + name + ")/d(" + var + ")" );
+}
+
+template<int DIM, typename ... Args>
+typename std::enable_if<DIM != 0, bool>::type
+checkDerivative( array_view<real64,DIM> const & valueEps,
+                 array_view<real64,DIM> const & value,
+                 array_view<real64,DIM> const & deriv,
+                 real64 eps, real64 relTol,
+                 string const & name, string const & var,
+                 string_array const & labels,
+                 Args ... label_lists)
+{
+  const auto size = valueEps.size(0);
+
+  bool result = true;
+  for (localIndex i = 0; i < size; ++i)
+  {
+    result &= checkDerivative( valueEps.slice(i), value.slice(i), deriv.slice(i), eps, relTol,
+                               name + "[" + labels[i] + "]", var, label_lists... );
+  }
+
+  return result;
+}
+
+// invert compositional derivative array layout to move innermost slice on the top
+// (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
+template<int DIM>
+array<real64,DIM> invertLayout( array_view<real64,DIM> const & input )
+{
+  array<real64,DIM> output(input);
+  return output;
+}
+
+template<>
+array<real64,2> invertLayout( array_view<real64,2> const & input )
+{
+  array<real64,2> output(input.size(1), input.size(0));
+
+  for (int i = 0; i < input.size(0); ++i)
+    for (int j = 0; j < input.size(1); ++j)
+      output[j][i] = input[i][j];
+
+  return output;
+}
+
+template<>
+array<real64,3> invertLayout( array_view<real64,3> const & input )
+{
+  array<real64,3> output(input.size(2), input.size(0), input.size(1));
+
+  for (int i = 0; i < input.size(0); ++i)
+    for (int j = 0; j < input.size(1); ++j)
+      for (int k = 0; k < input.size(2); ++k)
+      output[k][i][j] = input[i][j][k];
+
+  return output;
+}
+
 bool testNumericalDerivatives( MultiFluidBase * fluid,
                                real64 P,
                                real64 T,
@@ -62,7 +152,6 @@ bool testNumericalDerivatives( MultiFluidBase * fluid,
                                real64 relTol = 1e-4 )
 {
   localIndex const NC = fluid->numFluidComponents();
-  localIndex const NP = fluid->numFluidPhases();
 
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
@@ -75,37 +164,37 @@ bool testNumericalDerivatives( MultiFluidBase * fluid,
 
   // extract data views from both fluids
 #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
-  FLUID->getReference<array<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY )[0][0]
+  FLUID->getReference<array<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY ).slice(0,0)
 
-  CompositionalVarContainer<1> phaseFrac {
+  TestCompositionalVarContainer<1> phaseFrac {
     GET_FLUID_DATA( fluid, 3, phaseFractionString ),
     GET_FLUID_DATA( fluid, 3, dPhaseFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 3, dPhaseFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<1> phaseDens {
+  TestCompositionalVarContainer<1> phaseDens {
     GET_FLUID_DATA( fluid, 3, phaseDensityString ),
     GET_FLUID_DATA( fluid, 3, dPhaseDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, dPhaseDensity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseDensity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<1> phaseVisc {
+  TestCompositionalVarContainer<1> phaseVisc {
     GET_FLUID_DATA( fluid, 3, phaseViscosityString ),
     GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseViscosity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<2> phaseCompFrac {
+  TestCompositionalVarContainer<2> phaseCompFrac {
     GET_FLUID_DATA( fluid, 4, phaseCompFractionString ),
     GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 5, dPhaseCompFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<0> totalDens {
+  TestCompositionalVarContainer<0> totalDens {
     GET_FLUID_DATA( fluid, 2, totalDensityString ),
     GET_FLUID_DATA( fluid, 2, dTotalDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 2, dTotalDensity_dTemperatureString ),
@@ -129,82 +218,61 @@ bool testNumericalDerivatives( MultiFluidBase * fluid,
 
   // update pressure and check derivatives
   {
-    real64 const dP = perturbParameter * std::fmax( P, 1.0 );
+    real64 const dP = perturbParameter * (P + perturbParameter);
     fluidCopy->StateUpdatePointMultiphaseFluid( P + dP, T, composition.data(), 0, 0 );
 
-    // check phase fraction derivatives
-    for (localIndex ip = 0; ip < NP; ++ip)
-    {
-      real64 const numDeriv = (phaseFracCopy[ip] - phaseFrac.value[ip]) / dP;
-      real64 const anlDeriv = phaseFrac.dPres[ip];
-      real64 const delta = std::fabs( anlDeriv - numDeriv );
-      real64 const value = std::fmax( std::fabs(anlDeriv), std::fabs(numDeriv) );
-      if (value > 0 && delta / value > relTol)
-      {
-        GEOS_LOG( "d(phaseFrac[" << phases[ip] << "])/dP mismatch in rel tol: " << delta/value << " > " << relTol );
-        result = false;
-      }
-    }
+    result &= checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, "phaseFrac", "P", phases );
+    result &= checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, "phaseDens", "P", phases );
+    result &= checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dPres, dP, relTol, "phaseVisc", "P", phases );
+    result &= checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres, dP, relTol, "totalDens", "P" );
+    result &= checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dPres,
+                               dP, relTol, "phaseCompFrac", "P", phases, components );
+  }
 
-    // check phase density derivatives
-    for (localIndex ip = 0; ip < NP; ++ip)
-    {
-      real64 const numDeriv = (phaseDensCopy[ip] - phaseDens.value[ip]) / dP;
-      real64 const anlDeriv = phaseDens.dPres[ip];
-      real64 const delta = std::fabs( anlDeriv - numDeriv );
-      real64 const value = std::fmax( std::fabs(anlDeriv), std::fabs(numDeriv) );
-      if (value > 0 && delta / value > relTol)
-      {
-        GEOS_LOG( "d(phaseDens[" << phases[ip] << "])/dP mismatch in rel tol: " << delta/value << " > " << relTol );
-        result = false;
-      }
-    }
+  // update temperature and check derivatives
+  {
+    real64 const dT = perturbParameter * (T + perturbParameter);
+    fluidCopy->StateUpdatePointMultiphaseFluid( P, T + dT, composition.data(), 0, 0 );
 
-    // check phase viscosity derivatives
-    for (localIndex ip = 0; ip < NP; ++ip)
-    {
-      real64 const numDeriv = (phaseViscCopy[ip] - phaseVisc.value[ip]) / dP;
-      real64 const anlDeriv = phaseVisc.dPres[ip];
-      real64 const delta = std::fabs( anlDeriv - numDeriv );
-      real64 const value = std::fmax( std::fabs(anlDeriv), std::fabs(numDeriv) );
-      if (value > 0 && delta / value > relTol)
-      {
-        GEOS_LOG( "d(phaseVisc[" << phases[ip] << "])/dP mismatch in rel tol: " << delta/value << " > " << relTol );
-        result = false;
-      }
-    }
+    result &= checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, "phaseFrac", "T", phases );
+    result &= checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, "phaseDens", "T", phases );
+    result &= checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dTemp, dT, relTol, "phaseVisc", "T", phases );
+    result &= checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp, dT, relTol, "totalDens", "T" );
+    result &= checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dTemp,
+                               dT, relTol, "phaseCompFrac", "T", phases, components );
+  }
 
-    // check phase component fractions derivatives
-    for (localIndex ip = 0; ip < NP; ++ip)
-    {
-      for (localIndex ic = 0; ic < NC; ++ic)
-      {
-        real64 const numDeriv = (phaseCompFracCopy[ip][ic] - phaseCompFrac.value[ip][ic]) / dP;
-        real64 const anlDeriv = phaseCompFrac.dPres[ip][ic];
-        real64 const delta = std::fabs(anlDeriv - numDeriv);
-        real64 const value = std::fmax(std::fabs(anlDeriv), std::fabs(numDeriv));
-        if (value > 0 && delta / value > relTol)
-        {
-          GEOS_LOG( "d(phaseCompFrac[" << phases[ip] << "][" << components[ic] << "])/dP mismatch in rel tol: "
-                    << delta / value << " > " << relTol );
-          result = false;
-        }
-      }
-    }
+  // update temperature and check derivatives
+  auto dPhaseFrac_dC     = invertLayout(phaseFrac.dComp);
+  auto dPhaseDens_dC     = invertLayout(phaseDens.dComp);
+  auto dPhaseVisc_dC     = invertLayout(phaseVisc.dComp);
+  auto dTotalDens_dC     = invertLayout(totalDens.dComp);
+  auto dPhaseCompFrac_dC = invertLayout(phaseCompFrac.dComp);
 
-    // check total density derivatives
-    {
-      real64 const numDeriv = (totalDensCopy - totalDens.value) / dP;
-      real64 const anlDeriv = totalDens.dPres;
-      real64 const delta = std::fabs( anlDeriv - numDeriv );
-      real64 const value = std::fmax( std::fabs(anlDeriv), std::fabs(numDeriv) );
-      if (value > 0 && delta / value > relTol)
-      {
-        GEOS_LOG( "d(totalDens)/dP mismatch in rel tol: " << delta/value << " > " << relTol );
-        result = false;
-      }
-    }
-  };
+  array1d<real64> compNew;
+  for (localIndex jc = 0; jc < NC; ++jc)
+  {
+    real64 const dC = perturbParameter * (composition[jc] + perturbParameter);
+    compNew = composition;
+    compNew[jc] += dC;
+
+    // renormalize
+    real64 sum = 0.0;
+    for (localIndex ic = 0; ic < NC; ++ic)
+      sum += compNew[ic];
+    for (localIndex ic = 0; ic < NC; ++ic)
+      compNew[ic] /= sum;
+
+    fluidCopy->StateUpdatePointMultiphaseFluid( P, T, compNew.data(), 0, 0 );
+    string var = "C[" + components[jc] + "]";
+
+    result &= checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC.slice(jc), dC, relTol, "phaseFrac", var, phases );
+    result &= checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC.slice(jc), dC, relTol, "phaseDens", var, phases );
+    result &= checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC.slice(jc), dC, relTol, "phaseVisc", var, phases );
+    result &= checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC.slice(jc), dC, relTol, "totalDens", var );
+    result &= checkDerivative( phaseCompFracCopy, phaseCompFrac.value, dPhaseCompFrac_dC.slice(jc),
+                               dC, relTol, "phaseCompFrac", var, phases, components );
+  }
 
   return result;
 }
@@ -244,7 +312,7 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
   return fluid;
 }
 
-TEST(testMultiFluid, numericalDerivativesCompMutliFluid)
+TEST(testMultiFluid, numericalDerivativesCompositionalFluid)
 {
   auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
   parent->resize( 1 );
@@ -259,7 +327,9 @@ TEST(testMultiFluid, numericalDerivativesCompMutliFluid)
   array1d<real64> comp(4);
   comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
 
-  bool derivsAreOk = testNumericalDerivatives( fluid, P, T, comp, 1e-8, 1e-5 );
+  auto sqrtprecision = sqrt(std::numeric_limits<double>::epsilon());
+
+  bool derivsAreOk = testNumericalDerivatives( fluid, P, T, comp, sqrtprecision, 1e-3 );
 
   EXPECT_TRUE( derivsAreOk );
 }
