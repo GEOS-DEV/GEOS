@@ -61,76 +61,175 @@ int global_argc;
 char** global_argv;
 }
 
-bool compareMatrices( Epetra_FECrsMatrix const * matrix1,
+template<typename T, int NDIM>
+using array = multidimensionalArray::ManagedArray<T,NDIM,localIndex>;
+
+// helper struct to represent a var and its derivatives (always with array views, not pointers)
+template<int DIM>
+struct TestCompositionalVarContainer
+{
+  array_view<real64,DIM>   value; // variable value
+  array_view<real64,DIM>   dPres; // derivative w.r.t. pressure
+  array_view<real64,DIM+1> dComp; // derivative w.r.t. composition
+};
+
+//inline bool checkRelativeError( real64 v1, real64 v2, real64 relTol, string const & name )
+//{
+//  real64 const delta = std::fabs( v1 - v2 );
+//  real64 const value = std::fmax( std::fabs(v1), std::fabs(v2) );
+//  if (value > 0)
+//  {
+//    real64 const err = delta / value;
+//    if (err > relTol)
+//    {
+//      GEOS_LOG("[ " << name << " ] relative error: " << err << "(" << v1 << " vs " << v2 << ")");
+//      return false;
+//    }
+//  }
+//  return true;
+//}
+
+::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *,
+                                                     real64 v1, real64 v2, real64 relTol )
+{
+  real64 const delta = std::fabs( v1 - v2 );
+  real64 const value = std::fmax( std::fabs(v1), std::fabs(v2) );
+  if (delta > relTol * value)
+  {
+    return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
+                                         << " relative error: " << delta / value
+                                         << "(" << v1 << " vs " << v2 << ")" << std::endl;
+  }
+  return ::testing::AssertionSuccess();
+}
+
+void checkRelativeError( real64 v1, real64 v2, real64 relTol )
+{
+  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
+}
+
+void checkRelativeError( real64 v1, real64 v2, real64 relTol, string const & name )
+{
+  SCOPED_TRACE(name);
+  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
+}
+
+void checkDerivative( real64 const & valueEps, real64 const & value, real64 const & deriv,
+                      real64 eps, real64 relTol, string const & name, string const & var )
+{
+  real64 const numDeriv = (valueEps - value) / eps;
+  checkRelativeError( numDeriv, deriv, relTol, "d(" + name + ")/d(" + var + ")" );
+}
+
+template<int DIM, typename ... Args>
+typename std::enable_if<DIM != 0, void>::type
+checkDerivative( array_view<real64,DIM> const & valueEps,
+                 array_view<real64,DIM> const & value,
+                 array_view<real64,DIM> const & deriv,
+                 real64 eps, real64 relTol,
+                 string const & name, string const & var,
+                 string_array const & labels,
+                 Args ... label_lists)
+{
+  const auto size = valueEps.size(0);
+
+  for (localIndex i = 0; i < size; ++i)
+  {
+    checkDerivative( valueEps.slice(i), value.slice(i), deriv.slice(i), eps, relTol,
+                     name + "[" + labels[i] + "]", var, label_lists... );
+  }
+}
+
+// invert compositional derivative array layout to move innermost slice on the top
+// (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
+template<int DIM>
+array<real64,DIM> invertLayout( array_view<real64,DIM> const & input )
+{
+  array<real64,DIM> output(input);
+  return output;
+}
+
+template<>
+array<real64,2> invertLayout( array_view<real64,2> const & input )
+{
+  array<real64,2> output(input.size(1), input.size(0));
+
+  for (int i = 0; i < input.size(0); ++i)
+    for (int j = 0; j < input.size(1); ++j)
+      output[j][i] = input[i][j];
+
+  return output;
+}
+
+template<>
+array<real64,3> invertLayout( array_view<real64,3> const & input )
+{
+  array<real64,3> output(input.size(2), input.size(0), input.size(1));
+
+  for (int i = 0; i < input.size(0); ++i)
+    for (int j = 0; j < input.size(1); ++j)
+      for (int k = 0; k < input.size(2); ++k)
+        output[k][i][j] = input[i][j][k];
+
+  return output;
+}
+
+void compareMatrixRows( int rowNumber, double relTol,
+                        int numRowEntries1, int * indices1, double * values1,
+                        int numRowEntries2, int * indices2, double * values2 )
+{
+  SCOPED_TRACE("Row " + std::to_string(rowNumber));
+
+  EXPECT_EQ( numRowEntries1, numRowEntries2 );
+
+  for (int j1 = 0, j2 = 0; j1 < numRowEntries1 && j2 < numRowEntries2; ++j1, ++j2)
+  {
+    while (j1 < numRowEntries1 && j2 < numRowEntries2 && indices1[j1] != indices1[j2])
+    {
+      while (j1 < numRowEntries1 && indices1[j1] < indices2[j2])
+      {
+        ADD_FAILURE() << "column " << indices1[j1] << ") in matrix 1 does not have a match";
+      }
+      while (j2 < numRowEntries2 && indices2[j2] < indices1[j1])
+      {
+        ADD_FAILURE() << "column " << indices2[j2] << ") in matrix 2 does not have a match";
+      }
+    }
+    if (j1 < numRowEntries1 && j2 < numRowEntries2)
+    {
+      SCOPED_TRACE("Column " + std::to_string(indices1[j1]) );
+
+      checkRelativeError( values1[j1], values2[j1], relTol );
+    }
+  }
+}
+
+void compareMatrices( Epetra_FECrsMatrix const * matrix1,
                       Epetra_FECrsMatrix const * matrix2,
                       real64 relTol )
 {
-#if 1
-  matrix1->Print(std::cout);
-  matrix2->Print(std::cout);
-#endif
+  int numLocalRows1 = matrix1->NumMyRows();
+  int numLocalRows2 = matrix2->NumMyRows();
 
-  int numLocalRows = matrix1->NumMyRows();
-  int numLocalRowsFD = matrix2->NumMyRows();
+  ASSERT_EQ(numLocalRows1, numLocalRows2);
 
-  if (numLocalRows != numLocalRowsFD)
-  {
-    GEOS_LOG("Mismatch in number of local rows: " << numLocalRows << " != " << numLocalRowsFD);
-    return false;
-  }
-
-  bool result = true;
+  int nnz1, nnz2;
+  int * indices1 = nullptr;
+  int * indices2 = nullptr;
   double * row1 = nullptr;
   double * row2 = nullptr;
-  int numEntries1, numEntries2;
-  int * indices1 = nullptr;
-  int* indices2 = nullptr;
 
   // check the accuracy across local rows
-  for (int i = 0; i < numLocalRows; ++i)
+  for (int i = 0; i < numLocalRows1; ++i)
   {
-    matrix1->ExtractMyRowView( i, numEntries1, row1, indices1 );
-    matrix2->ExtractMyRowView( i, numEntries2, row2, indices2 );
+    matrix1->ExtractMyRowView( i, nnz1, row1, indices1 );
+    matrix2->ExtractMyRowView( i, nnz2, row2, indices2 );
 
-    if (numEntries1 != numEntries2)
-    {
-      GEOS_LOG( "Mismatch in number of entries in local row " << i << ": " << numEntries1 << " != " << numEntries2);
-      result = false;
-    }
-    for (int j1 = 0, j2 = 0; j1 < numEntries1 && j2 < numEntries2; ++j1, ++j2)
-    {
-      while (j1 < numEntries1 && j2 < numEntries2 && indices1[j1] != indices1[j2])
-      {
-        while (j1 < numEntries1 && indices1[j1] < indices2[j2])
-        {
-          GEOS_LOG( "Entry (" << i << ", " << indices1[j1] << ") in matrix 1 does not have a match" );
-          result = false;
-          j1++;
-        }
-        while (j2 < numEntries2 && indices2[j2] < indices1[j1])
-        {
-          GEOS_LOG( "Entry (" << i << ", " << indices2[j2] << ") in matrix 2 does not have a match" );
-          result = false;
-          j2++;
-        }
-      }
-      if (j1 < numEntries1 && j2 < numEntries2)
-      {
-        double const delta = std::fabs(row1[j1] - row2[j1]);
-        double const value = std::fmax(std::fabs(row1[j1]), std::fabs(row2[j2]));
-        if (value > 0 && delta / value > relTol)
-        {
-          GEOS_LOG( "Entry (" << i << ", " << indices1[j1] << ") relative error: " << delta/value );
-          result = false;
-        }
-      }
-    }
+    compareMatrixRows( i, relTol, nnz1, indices1, row1, nnz2, indices2, row2 );
   }
-
-  return result;
 }
 
-bool testNumericalJacobian( CompositionalMultiphaseFlow * solver,
+void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
                             DomainPartition * domain,
                             EpetraBlockSystem * blockSystem,
                             real64 const time_n,
@@ -177,60 +276,67 @@ bool testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   auto jacobianFD = std::make_unique<Epetra_FECrsMatrix>( Copy, jacobian->Graph() );
   jacobianFD->Scale( 0.0 );
 
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const ei ) -> void
+  for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
-    if (elemGhostRank[er][esr][ei] >= 0)
-      return;
-
-    globalIndex offset = blockLocalDofNumber[er][esr][ei] * NDOF;
-
-    real64 totalDensity = 0.0;
-    for (localIndex ic = 0; ic < NC; ++ic)
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for (localIndex esr = 0; esr < elemRegion->numSubRegions(); ++esr)
     {
-      totalDensity += compDens[er][esr][ei][ic];
-    }
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
 
-    {
-      solver->ResetStateToBeginningOfStep(domain);
-      real64 const dP = perturbParameter * (pres[er][esr][ei] + perturbParameter);
-      dPres[er][esr][ei] = dP;
-      solver->UpdateState( domain );
-      solver->AssembleSystem(domain, blockSystem, time_n, dt);
-      long long const dofIndex = integer_conversion<long long>(offset);
-
-      for (int lid = 0; lid < localSizeInt; ++lid)
+      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
       {
-        real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
-        if (std::fabs(dRdP) > 0.0)
+        if (elemGhostRank[er][esr][ei] >= 0)
+          continue;
+
+        globalIndex offset = blockLocalDofNumber[er][esr][ei] * NDOF;
+
+        real64 totalDensity = 0.0;
+        for (localIndex ic = 0; ic < NC; ++ic)
         {
-          long long gid = rowMap->GID64(lid);
-          jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
+          totalDensity += compDens[er][esr][ei][ic];
+        }
+
+        {
+          solver->ResetStateToBeginningOfStep(domain);
+          real64 const dP = perturbParameter * (pres[er][esr][ei] + perturbParameter);
+          dPres[er][esr][ei] = dP;
+          solver->UpdateState(domain);
+          solver->AssembleSystem(domain, blockSystem, time_n, dt);
+          long long const dofIndex = integer_conversion<long long>(offset);
+
+          for (int lid = 0; lid < localSizeInt; ++lid)
+          {
+            real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
+            if (std::fabs(dRdP) > 0.0)
+            {
+              long long gid = rowMap->GID64(lid);
+              jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
+            }
+          }
+        }
+
+        for (localIndex ic = 0; ic < NC; ++ic)
+        {
+          solver->ResetStateToBeginningOfStep(domain);
+          real64 const dRho = perturbParameter * totalDensity;
+          dCompDens[er][esr][ei][ic] = dRho;
+          solver->UpdateState(domain);
+          solver->AssembleSystem(domain, blockSystem, time_n, dt);
+          long long const dofIndex = integer_conversion<long long>(offset + ic + 1);
+
+          for (int lid = 0; lid < localSizeInt; ++lid)
+          {
+            real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
+            if (std::fabs(dRdRho) > 0.0)
+            {
+              long long gid = rowMap->GID64(lid);
+              jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
+            }
+          }
         }
       }
     }
-
-    for (localIndex ic = 0; ic < NC; ++ic)
-    {
-      solver->ResetStateToBeginningOfStep(domain);
-      real64 const dRho = perturbParameter * totalDensity;
-      dCompDens[er][esr][ei][ic] = dRho;
-      solver->UpdateState( domain );
-      solver->AssembleSystem(domain, blockSystem, time_n, dt);
-      long long const dofIndex = integer_conversion<long long>(offset + ic + 1);
-
-      for (int lid = 0; lid < localSizeInt; ++lid)
-      {
-        real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
-        if (std::fabs(dRdRho) > 0.0)
-        {
-          long long gid = rowMap->GID64(lid);
-          jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
-        }
-      }
-    }
-  });
+  }
 
   jacobianFD->GlobalAssemble(true);
 
@@ -238,63 +344,91 @@ bool testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   solver->ResetStateToBeginningOfStep( domain );
   solver->AssembleSystem( domain, blockSystem, time_n, dt );
 
-  return compareMatrices( jacobian, jacobianFD.get(), relTol );
+  compareMatrices( jacobian, jacobianFD.get(), relTol );
+
+  if (::testing::Test::HasFatalFailure() || ::testing::Test::HasNonfatalFailure())
+  {
+    jacobian->Print(std::cout);
+    jacobianFD->Print(std::cout);
+  }
 }
 
-TEST(testCompMultiphaseFlow, numericalJacobian)
+
+class CompositionalMultiphaseFlowTest : public ::testing::Test
 {
-  ASSERT_GE(global_argc, 2);
+protected:
 
-  char buf[2][1024];
+  static void SetUpTestCase()
+  {
+    char buf[2][1024];
 
-  char const * workdir  = global_argv[1];
-  char const * filename = "testCompMultiphaseFlowNumJacobian.xml";
+    char const * workdir  = global_argv[1];
+    char const * filename = "testCompMultiphaseFlow.xml";
 
-  strcpy(buf[0], "-i");
-  sprintf(buf[1], "%s/%s", workdir, filename);
+    strcpy(buf[0], "-i");
+    sprintf(buf[1], "%s/%s", workdir, filename);
 
-  constexpr int argc = 3;
-  char * argv[argc] = {
-    global_argv[0],
-    buf[0],
-    buf[1]
-  };
+    constexpr int argc = 3;
+    char * argv[argc] = {
+      global_argv[0],
+      buf[0],
+      buf[1]
+    };
+
+    problemManager.SetDocumentationNodes();
+    problemManager.RegisterDocumentationNodes();
+
+    problemManager.InitializePythonInterpreter();
+    problemManager.ParseCommandLineInput( argc, argv );
+    problemManager.ParseInputFile();
+
+    problemManager.Initialize( &problemManager );
+    problemManager.IntermediateInitializationRecursive( &problemManager );
+    problemManager.ApplyInitialConditions();
+    problemManager.FinalInitializationRecursive( &problemManager );
+
+    solver = problemManager.GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
+  }
+
+  static void TearDownTestCase()
+  {
+
+  }
+
+  static ProblemManager problemManager;
+  static CompositionalMultiphaseFlow * solver;
+
+};
+
+ProblemManager CompositionalMultiphaseFlowTest::problemManager("ProblemManager", nullptr);
+CompositionalMultiphaseFlow * CompositionalMultiphaseFlowTest::solver = nullptr;
 
 
-  ProblemManager problemManager( "ProblemManager", nullptr );
-  problemManager.SetDocumentationNodes();
-  problemManager.RegisterDocumentationNodes();
+TEST_F(CompositionalMultiphaseFlowTest, numericalJacobian)
+{
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const tol = 1e-2;
 
-  problemManager.InitializePythonInterpreter();
-  problemManager.ParseCommandLineInput( argc, argv );
-  problemManager.ParseInputFile();
+  real64 const time = 0.0;
+  real64 const dt = 1.0;
 
-  problemManager.Initialize( &problemManager );
-  problemManager.IntermediateInitializationRecursive( &problemManager );
-  problemManager.ApplyInitialConditions();
-  problemManager.FinalInitializationRecursive( &problemManager );
+  DomainPartition   * domain = problemManager.getDomainPartition();
+  EpetraBlockSystem * system = solver->getLinearSystemRepository();
 
-  CompositionalMultiphaseFlow * solver =
-    problemManager.GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
+  solver->ImplicitStepSetup( time, dt, domain, system );
 
-  real64 const dt = 1;
-
-  solver->ImplicitStepSetup( 0, dt, problemManager.getDomainPartition(), solver->getLinearSystemRepository() );
-
-  auto eps = sqrt(std::numeric_limits<real64>::epsilon());
-
-  bool res = testNumericalJacobian( solver,
-                                    problemManager.getDomainPartition(),
-                                    solver->getLinearSystemRepository(),
-                                    0.0, dt,
-                                    eps, 1e-2 );
-
-  EXPECT_TRUE( res );
+  testNumericalJacobian( solver, domain, system, time, dt, eps, tol );
 }
 
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
+
+  if (argc < 2)
+  {
+    std::cerr << "Usage: testCompMultiphaseFlow <path/to/xml/dir>";
+    return 1;
+  }
 
 #ifdef GEOSX_USE_MPI
   int rank = 0;

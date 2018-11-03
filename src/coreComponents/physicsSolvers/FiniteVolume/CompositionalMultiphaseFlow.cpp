@@ -554,6 +554,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( DomainPartition * d
     elemManager->ConstructViewAccessor<array3d<real64>>( viewKeysCompMultiphaseFlow.dGlobalCompFraction_dGlobalCompDensity.Key() );
 
   localIndex const NC = m_numComponents;
+  localIndex const NP = m_numPhases;
 
   array1d<real64> work( NC );
 
@@ -592,12 +593,12 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( DomainPartition * d
         // compute total density from component partial densities
         real64 totalDensity = 0.0;
         real64 const dTotalDens_dCompDens = 1.0;
-        for (localIndex ic = 0; ic < m_numComponents; ++ic)
+        for (localIndex ic = 0; ic < NC; ++ic)
         {
           totalDensity += compDensSub[ei][ic] + dCompDensSub[ei][ic];
         }
 
-        for (localIndex ip = 0; ip < m_numPhases; ++ip)
+        for (localIndex ip = 0; ip < NP; ++ip)
         {
           // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
           real64 const phaseDensInv = 1.0 / phaseDensSub[ei][0][ip];
@@ -608,7 +609,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( DomainPartition * d
           dPhaseVolFrac_dPresSub[ei][ip] =
             (dPhaseFrac_dPresSub[ei][0][ip] - phaseVolFracSub[ei][ip] * dPhaseDens_dPresSub[ei][0][ip]) * phaseDensInv;
 
-          for (localIndex jc = 0; jc < m_numComponents; ++jc)
+          for (localIndex jc = 0; jc < NC; ++jc)
           {
             dPhaseVolFrac_dCompSub[ei][ip][jc] =
               (dPhaseFrac_dCompSub[ei][0][ip][jc] - phaseVolFracSub[ei][ip] * dPhaseDens_dCompSub[ei][0][ip][jc]) * phaseDensInv;
@@ -618,7 +619,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( DomainPartition * d
           applyChainRuleInPlace( NC, dCompFrac_dCompDensSub[ei], dPhaseVolFrac_dCompSub[ei][ip], work );
 
           // now finalize the computation by multiplying by total density
-          for (localIndex jc = 0; jc < m_numComponents; ++jc)
+          for (localIndex jc = 0; jc < NC; ++jc)
           {
             dPhaseVolFrac_dCompSub[ei][ip][jc] *= totalDensity;
             dPhaseVolFrac_dCompSub[ei][ip][jc] += phaseVolFracSub[ei][ip] * dTotalDens_dCompDens;
@@ -1190,8 +1191,8 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
-  AssembleAccumulationTerms( domain, blockSystem, time_n, dt );
-  AssembleFluxTerms( domain, blockSystem, time_n, dt );
+  //AssembleAccumulationTerms( domain, blockSystem, time_n, dt );
+  //AssembleFluxTerms( domain, blockSystem, time_n, dt );
   AssembleVolumeBalanceTerms( domain, blockSystem, time_n, dt );
 
   jacobian->GlobalAssemble(false);
