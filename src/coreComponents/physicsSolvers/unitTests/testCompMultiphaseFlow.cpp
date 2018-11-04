@@ -161,9 +161,9 @@ array<real64,3> invertLayout( array_view<real64,3> const & input )
   return output;
 }
 
-void compareMatrixRows( int rowNumber, double relTol,
-                        int numRowEntries1, int * indices1, double * values1,
-                        int numRowEntries2, int * indices2, double * values2 )
+void compareMatrixRow( int rowNumber, double relTol,
+                       int numRowEntries1, int * indices1, double * values1,
+                       int numRowEntries2, int * indices2, double * values2 )
 {
   SCOPED_TRACE("Row " + std::to_string(rowNumber));
 
@@ -212,7 +212,7 @@ void compareMatrices( Epetra_FECrsMatrix const * matrix1,
     matrix1->ExtractMyRowView( i, nnz1, row1, indices1 );
     matrix2->ExtractMyRowView( i, nnz2, row2, indices2 );
 
-    compareMatrixRows( i, relTol, nnz1, indices1, row1, nnz2, indices2, row2 );
+    compareMatrixRow( i, relTol, nnz1, indices1, row1, nnz2, indices2, row2 );
   }
 }
 
@@ -302,14 +302,14 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
           }
         }
 
-        for (localIndex ic = 0; ic < NC; ++ic)
+        for (localIndex jc = 0; jc < NC; ++jc)
         {
           solver->ResetStateToBeginningOfStep(domain);
           real64 const dRho = perturbParameter * totalDensity;
-          dCompDens[er][esr][ei][ic] = dRho;
+          dCompDens[er][esr][ei][jc] = dRho;
           solver->UpdateStateAll(domain);
           solver->AssembleSystem(domain, blockSystem, time_n, dt);
-          long long const dofIndex = integer_conversion<long long>(offset + ic + 1);
+          long long const dofIndex = integer_conversion<long long>(offset + jc + 1);
 
           for (int lid = 0; lid < localSizeInt; ++lid)
           {
@@ -573,7 +573,7 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck)
   real64 const tol = 1e-2;
 
   real64 const time = 0.0;
-  real64 const dt = 1.0;
+  real64 const dt = 100.0;
 
   DomainPartition   * domain = problemManager.getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
@@ -586,7 +586,7 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck)
 TEST_F(CompositionalMultiphaseFlowTest, compositionDerivativesNumericalCheck)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-5;
+  real64 const tol = 1e-4;
 
   DomainPartition * domain = problemManager.getDomainPartition();
 
@@ -596,7 +596,7 @@ TEST_F(CompositionalMultiphaseFlowTest, compositionDerivativesNumericalCheck)
 TEST_F(CompositionalMultiphaseFlowTest, phaseVolumeFractionDerivativesNumericalCheck)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-2;
+  real64 const tol = 5e-2; // 5% error
 
   DomainPartition * domain = problemManager.getDomainPartition();
 

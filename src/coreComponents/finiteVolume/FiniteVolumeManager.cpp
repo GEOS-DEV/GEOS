@@ -63,7 +63,7 @@ FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::str
   return this->GetGroup<FluxApproximationBase>(name);
 }
 
-void FiniteVolumeManager::FinalInitializationPreSubGroups(ManagedGroup * const rootGroup)
+void FiniteVolumeManager::IntermediateInitializationPreSubGroups(ManagedGroup * const rootGroup)
 {
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   precomputeFiniteVolumeData(domain);

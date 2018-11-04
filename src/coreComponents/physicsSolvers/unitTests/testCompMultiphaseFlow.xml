@@ -151,6 +151,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="real64"
+               functionName="initialPressureFunc"
                scale="5e6"/>
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
@@ -280,7 +281,11 @@
   </BoundaryConditions>
 
   <Functions>
-
+    <SymbolicFunction name="initialPressureFunc"
+                      inputVarNames="elementCenter"
+                      inputVarTypes=""
+                      variableNames="x y z"
+                      expression="(6-x)/6"/>
   </Functions>
 
   <Partition>
