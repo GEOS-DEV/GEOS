@@ -43,6 +43,11 @@ class BoundaryConditionBase;
 class FiniteElementBase;
 class DomainPartition;
 
+namespace constitutive
+{
+class MultiFluidBase;
+}
+
 /**
  * @class CompositionalMultiphaseFlow
  *
@@ -147,13 +152,87 @@ public:
                                      DomainPartition * const domain ) override;
 
   /**
+   * @brief Recompute component fractions from primary variables (component densities)
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateComponentFraction( ManagedGroup * dataGroup );
+
+  /**
+   * @brief Recompute component fractions from primary variables (component densities)
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateComponentFractionAll( DomainPartition * domain );
+
+  /**
+   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup );
+
+  /**
+   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdatePhaseVolumeFractionAll( DomainPartition * domain );
+
+  /**
+ * @brief Update all relevant fluid models using current values of pressure and composition
+ * @param dataGroup the group storing the required fields
+ */
+  void UpdateFluidModel( ManagedGroup * dataGroup );
+
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateFluidModelAll( DomainPartition * domain );
+
+  /**
+ * @brief Update all relevant solid models using current values of pressure
+ * @param dataGroup the group storing the required fields
+ */
+  void UpdateSolidModel( ManagedGroup * dataGroup );
+
+  /**
+   * @brief Update all relevant solid models using current values of pressure
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateSolidModelAll( DomainPartition * domain );
+
+  /**
+   * @brief Update all relevant constitutive models using current values of pressure and composition
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateConstitutiveModels( ManagedGroup * dataGroup );
+
+  /**
+   * @brief Update all relevant constitutive models using current values of pressure and composition
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateConstitutiveModelsAll(DomainPartition * domain);
+
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateState( DomainPartition * domain );
+  void UpdateState( ManagedGroup * dataGroup );
 
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateStateAll( DomainPartition * domain );
+
+  /**
+   * @brief Get the number of fluid components (species)
+   * @return the number of components
+   */
   localIndex numFluidComponents() const;
 
+  /**
+   * @brief Get the number of fluid phases
+   * @return the number of phases
+   */
   localIndex numFluidPhases() const;
 
   /**@}*/
@@ -240,6 +319,20 @@ public:
 private:
 
   /**
+   * @brief Extract the fluid model used by this solver from a group
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Extract the solid model used by this solver from a group
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::ConstitutiveBase * GetSolidModel( ManagedGroup * dataGroup ) const;
+
+  /**
    * @brief Resize the allocated multidimensional fields
    * @param domain the domain containing the mesh and fields
    *
@@ -247,68 +340,6 @@ private:
    * once the number of phases/components is known (e.g. component fractions)
    */
   void ResizeFields( DomainPartition * domain );
-
-  /**
-   * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateComponentFraction( DomainPartition * domain );
-
-  /**
-   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdatePhaseVolumeFraction( DomainPartition * domain );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
-   * @param targetSet the set to call model updates on
-   */
-  void UpdateFluidModel( ManagedGroup * dataGroup,
-                         set<localIndex> const & targetSet,
-                         string const & pressureFieldName = viewKeyStruct::pressureString,
-                         string const & deltaPressureFieldName = viewKeyStruct::deltaPressureString,
-                         string const & compFracFieldName = viewKeyStruct::globalCompFractionString );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
-   * @param setName name of the set to call model updates on
-   */
-  void UpdateFluidModel( ManagedGroup * dataGroup, string const & setName );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateFluidModels( DomainPartition * domain );
-
-  /**
- * @brief Update all relevant solid models using current values of pressure
- * @param dataGroup the group storing the required fields
- * @param targetSet the set to call model updates on
- */
-  void UpdateSolidModel( ManagedGroup * dataGroup, set<localIndex> const & targetSet );
-
-  /**
-   * @brief Update all relevant solid models using current values of pressure
-   * @param dataGroup the group storing the required fields
-   * @param setName name of the set to call model updates on
-   */
-  void UpdateSolidModel( ManagedGroup * dataGroup, string const & setName );
-
-  /**
-   * @brief Update all relevant solid models using current values of pressure
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateSolidModels( DomainPartition * domain );
-
-  /**
-   * @brief Update all relevant constitutive models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateConstitutiveModels( DomainPartition * domain );
 
   /**
    * @brief Initialize all variables from initial conditions
@@ -324,7 +355,6 @@ private:
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
    */
-
   void BackupFields( DomainPartition * domain );
 
   /**

@@ -805,7 +805,7 @@ inline void applyChainRule( localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 &
     df_dx[i] = 0.0;
     for (localIndex j = 0; j < N; ++j)
     {
-      df_dx[i] += df_dy[j] * dy_dx[i][j];
+      df_dx[i] += df_dy[j] * dy_dx[j][i];
     }
   }
 }
