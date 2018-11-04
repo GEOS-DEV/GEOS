@@ -1171,7 +1171,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
-  AssembleAccumulationTerms( domain, blockSystem, time_n, dt );
+  //AssembleAccumulationTerms( domain, blockSystem, time_n, dt );
   AssembleFluxTerms( domain, blockSystem, time_n, dt );
   AssembleVolumeBalanceTerms( domain, blockSystem, time_n, dt );
 
@@ -1548,7 +1548,12 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
   array1d<real64> dDensMean_dP( numElems );
   array2d<real64> dDensMean_dC( numElems, NC );
 
+  array1d<real64> dGravHead_dP( numElems );
+  array2d<real64> dGravHead_dC( numElems, NC );
+
   // the arrays below are resized for each cell's stencil size
+
+  array1d<real64> dPresGrad_dP( numElems );
 
   array1d<real64> dPhaseFlux_dP( numElems );
   array2d<real64> dPhaseFlux_dC( numElems, NC );
@@ -1570,6 +1575,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
     localFluxJacobian = 0.0;
 
     // resize local working arrays that are stencil-dependent
+    dPresGrad_dP.resizeDimension<0>( stencilSize );
     dPhaseFlux_dP.resizeDimension<0>( stencilSize );
     dPhaseFlux_dC.resizeDimension<0>( stencilSize );
     dCompFlux_dP.resizeDimension<0>( stencilSize );
@@ -1602,7 +1608,14 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
       dDensMean_dP = 0.0;
       dDensMean_dC = 0.0;
 
-      real64 potDif = 0.0;
+      real64 presGrad = 0.0;
+      dPresGrad_dP = 0.0;
+
+      real64 gravHead = 0.0;
+      dGravHead_dP = 0.0;
+      dGravHead_dC = 0.0;
+
+      real64 phaseFlux = 0.0;
       dPhaseFlux_dP = 0.0;
       dPhaseFlux_dC = 0.0;
 
@@ -1675,32 +1688,56 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
           dofColIndices[i * NDOF + jdof] = offset + jdof;
         }
 
-        real64 const gravD = gravDepth[er][esr][ei];
-        real64 const gravHead = m_gravityFlag ? densMean * gravD : 0.0;
-
-        potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] + gravHead);
-        dPhaseFlux_dP[i] += w;
+        presGrad += w * (pres[er][esr][ei] + dPres[er][esr][ei]);
+        dPresGrad_dP[i] += w;
 
         if (m_gravityFlag)
         {
+          real64 const gravD = w * gravDepth[er][esr][ei];
+          gravHead += densMean * gravD;
+
           // need to add contributions from both cells the mean density depends on
           stencil.forConnected( [&] ( CellDescriptor,
                                       localIndex j ) -> void
           {
-            dPhaseFlux_dP[j] += w * dDensMean_dP[j] * gravD;
+            dGravHead_dP[j] += dDensMean_dP[j] * gravD;
             for (localIndex jc = 0; jc < NC; ++jc)
             {
-              dPhaseFlux_dC[j][jc] += w * dDensMean_dC[j][jc] * gravD;
+              dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
             }
           });
         }
       });
 
-      // upwinding of fluid properties
-      localIndex const k_up = (potDif >= 0) ? 0 : 1;
+      // *** upwinding ***
 
-      // compute the phase flux and derivatives
-      real64 const phaseFlux = mobility[k_up] * potDif;
+      // use PPU currently; advanced stuff like IHU would go here
+      // TODO isolate into a kernel?
+
+      // compute phase potential gradient and its derivatives (stored in dPhaseFlux_dX)
+      real64 potGrad = presGrad + gravHead;
+
+      // pressure gradient depends on all points in the stencil
+      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      {
+        dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
+      }
+
+      // gravitational head depends only on the two cells connected (same as mean density)
+      for (localIndex ke = 0; ke < numElems; ++ke)
+      {
+        dPhaseFlux_dP[ke] += dGravHead_dP[ke];
+        for (localIndex jc = 0; jc < NC; ++jc)
+        {
+          dPhaseFlux_dC[ke][jc] += dGravHead_dC[ke][jc];
+        }
+      }
+
+      // choose upstream cell
+      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+      // compute the phase flux and derivatives using upstream cell mobility
+      phaseFlux = mobility[k_up] * potGrad;
       for (localIndex ke = 0; ke < stencilSize; ++ke)
       {
         dPhaseFlux_dP[ke] *= mobility[k_up];
@@ -1709,22 +1746,26 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
           dPhaseFlux_dC[ke][jc] *= mobility[k_up];
         }
       }
-      dPhaseFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
+
+      // add contribution from upstream cell mobility derivatives
+      dPhaseFlux_dP[k_up] += dMobility_dP[k_up] * potGrad;
       for (localIndex jc = 0; jc < NC; ++jc)
       {
-        dPhaseFlux_dC[k_up][jc] += dMobility_dC[k_up][jc] * potDif;
+        dPhaseFlux_dC[k_up][jc] += dMobility_dC[k_up][jc] * potGrad;
       }
 
+      // get global identifiers of the upstream cell
       CellDescriptor cell_up = stencil.connectedIndex( k_up );
       localIndex er_up  = cell_up.region;
       localIndex esr_up = cell_up.subRegion;
       localIndex ei_up  = cell_up.index;
 
+      // slice some constitutive arrays to avoid too much indexing in component loop
       arrayView1d<real64> phaseCompFracSub = phaseCompFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
       arrayView1d<real64> dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
       arrayView2d<real64> dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
 
-      // compute component fluxes and derivatives
+      // compute component fluxes and derivatives using upstream cell composition
       for (localIndex ic = 0; ic < NC; ++ic)
       {
         real64 const ycp = phaseCompFracSub[ic];
@@ -1740,10 +1781,10 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
           }
         }
 
-        // additional derivatives stemming from upwinding of phase composition
+        // additional derivatives stemming from upstream cell phase composition
         dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
 
-        // convert derivatives of component-in-phase fraction from component fractions to densities
+        // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component densities
         applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dPhaseCompFrac_dCompDens );
         for (localIndex jc = 0; jc < NC; ++jc)
         {
@@ -1751,6 +1792,8 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
         }
       }
     }
+
+    // *** end of upwinding
 
     // populate local flux vector and derivatives
     for (localIndex ic = 0; ic < NC; ++ic)

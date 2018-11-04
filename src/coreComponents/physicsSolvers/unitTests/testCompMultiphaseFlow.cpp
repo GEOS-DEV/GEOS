@@ -105,7 +105,7 @@ void checkDerivative( real64 const & valueEps, real64 const & value, real64 cons
                       real64 eps, real64 relTol, string const & name, string const & var )
 {
   real64 const numDeriv = (valueEps - value) / eps;
-  checkRelativeError( numDeriv, deriv, relTol, "d(" + name + ")/d(" + var + ")" );
+  checkRelativeError( deriv, numDeriv, relTol, "d(" + name + ")/d(" + var + ")" );
 }
 
 template<int DIM, typename ... Args>
@@ -570,7 +570,7 @@ CompositionalMultiphaseFlow * CompositionalMultiphaseFlowTest::solver = nullptr;
 TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-2;
+  real64 const tol = 1e-1;
 
   real64 const time = 0.0;
   real64 const dt = 100.0;

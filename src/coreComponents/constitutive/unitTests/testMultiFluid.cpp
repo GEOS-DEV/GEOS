@@ -94,7 +94,7 @@ void checkDerivative( real64 const & valueEps, real64 const & value, real64 cons
                       real64 eps, real64 relTol, string const & name, string const & var )
 {
   real64 const numDeriv = (valueEps - value) / eps;
-  checkRelativeError( numDeriv, deriv, relTol, "d(" + name + ")/d(" + var + ")" );
+  checkRelativeError( deriv, numDeriv, relTol, "d(" + name + ")/d(" + var + ")" );
 }
 
 template<int DIM, typename ... Args>
@@ -169,49 +169,49 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   fluidCopy->AllocateConstitutiveData( fluid->getParent(), 1 );
 
   // extract data views from both fluids
-#define GET_SOLVER_DATA( FLUID, DIM, KEY ) \
+#define GET_FLUID_DATA( FLUID, DIM, KEY ) \
   FLUID->getReference<array<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY ).slice(0,0)
 
   TestCompositionalVarContainer<1> phaseFrac {
-    GET_SOLVER_DATA( fluid, 3, phaseFractionString ),
-    GET_SOLVER_DATA( fluid, 3, dPhaseFraction_dPressureString ),
-    GET_SOLVER_DATA( fluid, 3, dPhaseFraction_dTemperatureString ),
-    GET_SOLVER_DATA( fluid, 4, dPhaseFraction_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, 3, phaseFractionString ),
+    GET_FLUID_DATA( fluid, 3, dPhaseFraction_dPressureString ),
+    GET_FLUID_DATA( fluid, 3, dPhaseFraction_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 4, dPhaseFraction_dGlobalCompFractionString )
   };
 
   TestCompositionalVarContainer<1> phaseDens {
-    GET_SOLVER_DATA( fluid, 3, phaseDensityString ),
-    GET_SOLVER_DATA( fluid, 3, dPhaseDensity_dPressureString ),
-    GET_SOLVER_DATA( fluid, 3, dPhaseDensity_dTemperatureString ),
-    GET_SOLVER_DATA( fluid, 4, dPhaseDensity_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, 3, phaseDensityString ),
+    GET_FLUID_DATA( fluid, 3, dPhaseDensity_dPressureString ),
+    GET_FLUID_DATA( fluid, 3, dPhaseDensity_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 4, dPhaseDensity_dGlobalCompFractionString )
   };
 
   TestCompositionalVarContainer<1> phaseVisc {
-    GET_SOLVER_DATA( fluid, 3, phaseViscosityString ),
-    GET_SOLVER_DATA( fluid, 3, dPhaseViscosity_dPressureString ),
-    GET_SOLVER_DATA( fluid, 3, dPhaseViscosity_dTemperatureString ),
-    GET_SOLVER_DATA( fluid, 4, dPhaseViscosity_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, 3, phaseViscosityString ),
+    GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dPressureString ),
+    GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 4, dPhaseViscosity_dGlobalCompFractionString )
   };
 
   TestCompositionalVarContainer<2> phaseCompFrac {
-    GET_SOLVER_DATA( fluid, 4, phaseCompFractionString ),
-    GET_SOLVER_DATA( fluid, 4, dPhaseCompFraction_dPressureString ),
-    GET_SOLVER_DATA( fluid, 4, dPhaseCompFraction_dTemperatureString ),
-    GET_SOLVER_DATA( fluid, 5, dPhaseCompFraction_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, 4, phaseCompFractionString ),
+    GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dPressureString ),
+    GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 5, dPhaseCompFraction_dGlobalCompFractionString )
   };
 
   TestCompositionalVarContainer<0> totalDens {
-    GET_SOLVER_DATA( fluid, 2, totalDensityString ),
-    GET_SOLVER_DATA( fluid, 2, dTotalDensity_dPressureString ),
-    GET_SOLVER_DATA( fluid, 2, dTotalDensity_dTemperatureString ),
-    GET_SOLVER_DATA( fluid, 3, dTotalDensity_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, 2, totalDensityString ),
+    GET_FLUID_DATA( fluid, 2, dTotalDensity_dPressureString ),
+    GET_FLUID_DATA( fluid, 2, dTotalDensity_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 3, dTotalDensity_dGlobalCompFractionString )
   };
 
-  auto const & phaseFracCopy     = GET_SOLVER_DATA( fluidCopy, 3, phaseFractionString );
-  auto const & phaseDensCopy     = GET_SOLVER_DATA( fluidCopy, 3, phaseDensityString );
-  auto const & phaseViscCopy     = GET_SOLVER_DATA( fluidCopy, 3, phaseViscosityString );
-  auto const & phaseCompFracCopy = GET_SOLVER_DATA( fluidCopy, 4, phaseCompFractionString );
-  auto const & totalDensCopy     = GET_SOLVER_DATA( fluidCopy, 2, totalDensityString );
+  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, 3, phaseFractionString );
+  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, 3, phaseDensityString );
+  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, 3, phaseViscosityString );
+  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, 4, phaseCompFractionString );
+  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, 2, totalDensityString );
 
 #undef GET_SOLVER_DATA
 
