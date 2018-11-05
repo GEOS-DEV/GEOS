@@ -144,7 +144,7 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
       SolverType = "Amesos_Lapack";
     }
 
-    GEOS_LOG( "Solver selected: " << SolverType );
+    //GEOS_LOG( "Solver selected: " << SolverType );
     GEOS_ERROR_IF( !Factory.Query(SolverType), "Requested solver not available: " << SolverType );
 
     Solver = Factory.Create(SolverType, problem);

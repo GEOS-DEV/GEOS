@@ -35,6 +35,10 @@
 
 #include "gtest/gtest.h"
 
+#ifdef __clang__
+#define __null nullptr
+#endif
+
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
