@@ -251,21 +251,21 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 {
   localIndex packedSize = 0;
 
-  packedSize += Packing::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
-  packedSize += Packing::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        m_toEdgesRelation,
                                        packList,
                                        this->m_localToGlobalMap,
                                        m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
-  packedSize += Packing::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
-  packedSize += Packing::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        m_toFacesRelation,
                                        packList,
                                        this->m_localToGlobalMap,
                                        m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
-  packedSize += Packing::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        this->m_toElements,
                                        packList,
@@ -280,23 +280,23 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   localIndex unPackedSize = 0;
 
   string temp;
-  unPackedSize += Packing::Unpack( buffer, temp );
+  unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
-  unPackedSize += Packing::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                    m_toEdgesRelation,
                                    packList,
                                    this->m_globalToLocalMap,
                                    m_toEdgesRelation.RelatedObjectGlobalToLocal() );
 
-  unPackedSize += Packing::Unpack( buffer, temp );
+  unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
-  unPackedSize += Packing::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                    m_toFacesRelation,
                                    packList,
                                    this->m_globalToLocalMap,
                                    m_toFacesRelation.RelatedObjectGlobalToLocal() );
 
-  unPackedSize += Packing::Unpack( buffer, temp );
+  unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                    this->m_toElements,

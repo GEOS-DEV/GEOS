@@ -204,13 +204,13 @@ localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffe
 {
   localIndex packedSize = 0;
 
-  packedSize += Packing::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        nodeList(),
                                        packList,
                                        this->m_localToGlobalMap,
                                        nodeList().RelatedObjectLocalToGlobal() );
 
-  packedSize += Packing::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        faceList(),
                                        packList,
                                        this->m_localToGlobalMap,
@@ -225,13 +225,13 @@ localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buff
 {
   localIndex unPackedSize = 0;
 
-  unPackedSize += Packing::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                    nodeList(),
                                    packList,
                                    this->m_globalToLocalMap,
                                    nodeList().RelatedObjectGlobalToLocal() );
 
-  unPackedSize += Packing::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                    faceList(),
                                    packList,
                                    this->m_globalToLocalMap,
