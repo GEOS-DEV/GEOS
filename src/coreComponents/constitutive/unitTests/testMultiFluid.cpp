@@ -30,15 +30,10 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wglobal-constructors"
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
+#pragma clang diagnostic ignored "-Wused-but-marked-unused"
 #endif
 
-#include <constitutive/Fluid/CompositionalMultiphaseFluid.hpp>
 #include "gtest/gtest.h"
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#define __null nullptr
-#endif
 
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -361,3 +356,7 @@ int main(int argc, char** argv)
 
   return result;
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

@@ -30,15 +30,10 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wglobal-constructors"
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
+#pragma clang diagnostic ignored "-Wused-but-marked-unused"
 #endif
 
-#include <constitutive/Fluid/CompositionalMultiphaseFluid.hpp>
 #include "gtest/gtest.h"
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#define __null nullptr
-#endif
 
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -404,7 +399,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
           auto dZ_dRho = invertLayout( dCompFrac_dCompDens[ei] );
           string var = "compDens[" + components[jc] + "]";
 
-          checkDerivative( compFrac[ei], compFracOrig[ei], dZ_dRho.slice(jc), dCompDens[ei][jc], relTol,
+          checkDerivative( compFrac.slice(ei), compFracOrig.slice(ei), dZ_dRho.slice(jc), dCompDens[ei][jc], relTol,
                            "compFrac", var, components );
         }
 
@@ -479,7 +474,7 @@ void testphaseVolumeFractionNumericalDerivatives(CompositionalMultiphaseFlow * s
         {
           SCOPED_TRACE( "Element " + std::to_string(ei) );
 
-          checkDerivative( phaseVolFrac[ei], phaseVolFracOrig[ei], dPhaseVolFrac_dPres[ei], dPres[ei], relTol,
+          checkDerivative( phaseVolFrac.slice(ei), phaseVolFracOrig.slice(ei), dPhaseVolFrac_dPres.slice(ei), dPres[ei], relTol,
                            "phaseVolFrac", "Pres", phases );
         }
       }
@@ -508,7 +503,7 @@ void testphaseVolumeFractionNumericalDerivatives(CompositionalMultiphaseFlow * s
           auto dS_dRho = invertLayout( dPhaseVolFrac_dCompDens[ei] );
           string var = "compDens[" + components[jc] + "]";
 
-          checkDerivative( phaseVolFrac[ei], phaseVolFracOrig[ei], dS_dRho.slice(jc), dCompDens[ei][jc], relTol,
+          checkDerivative( phaseVolFrac.slice(ei), phaseVolFracOrig.slice(ei), dS_dRho.slice(jc), dCompDens[ei][jc], relTol,
                            "phaseVolFrac", var, phases );
         }
       }
@@ -652,3 +647,7 @@ int main(int argc, char** argv)
 
   return result;
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

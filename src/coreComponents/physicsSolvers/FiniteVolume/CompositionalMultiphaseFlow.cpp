@@ -526,20 +526,20 @@ void applyToSubRegions( DomainPartition * domain, LAMBDA && lambda )
   });
 }
 
-template<typename LAMBDA>
-void applyToSubRegions( DomainPartition const * domain, LAMBDA && lambda )
-{
-  MeshLevel const * mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * elemManager = mesh->getElemManager();
-
-  elemManager->forCellBlocksComplete( [&] ( localIndex er,
-                                            localIndex esr,
-                                            ElementRegion const * region,
-                                            CellBlockSubRegion const * subRegion ) -> void
-  {
-    lambda( subRegion );
-  });
-}
+//template<typename LAMBDA>
+//void applyToSubRegions( DomainPartition const * domain, LAMBDA && lambda )
+//{
+//  MeshLevel const * mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//  ElementRegionManager const * elemManager = mesh->getElemManager();
+//
+//  elemManager->forCellBlocksComplete( [&] ( localIndex er,
+//                                            localIndex esr,
+//                                            ElementRegion const * region,
+//                                            CellBlockSubRegion const * subRegion ) -> void
+//  {
+//    lambda( subRegion );
+//  });
+//}
 
 }
 
@@ -1289,16 +1289,12 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
 
   // using Epetra types
   array1d<long long> localAccumDOF( NDOF );
-  array1d<double> localAccum( NC );
-  array2d<double> localAccumJacobian( NC, NDOF );
-
-  //***** Loop over all elements and assemble the change in volume/density terms *****
-//  forAllElemsInMesh( mesh, [=] ( localIndex const er,
-//                                 localIndex const esr,
-//                                 localIndex const ei ) -> void
+  array1d<double>    localAccum( NC );
+  array2d<double>    localAccumJacobian( NC, NDOF );
 
   // temporary work arrays
   array1d<real64> dPhaseAmount_dC( NC );
+  array1d<real64> dPhaseCompFrac_dC( NC );
 
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
@@ -1308,117 +1304,125 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition * c
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
 
       // set up array views to reduce amount of indexing
-      arrayView1d<globalIndex const> const dofNumber = blockLocalDofNumber[er][esr].get();
-      arrayView2d<real64 const> const pVMultSub = pVMult[er][esr][m_solidIndex].get();
-      arrayView2d<real64 const> const dPVMult_dPresSub = dPVMult_dPres[er][esr][m_solidIndex].get();
+      arrayView1d<globalIndex const> dofNumber = blockLocalDofNumber[er][esr].get();
 
-      arrayView2d<real64 const> const phaseDensOldSub = phaseDensOld[er][esr].get();
-      arrayView3d<real64 const> const phaseDensSub = phaseDens[er][esr][m_fluidIndex].get();
-      arrayView3d<real64 const> const dPhaseDens_dPresSub = dPhaseDens_dPres[er][esr][m_fluidIndex].get();
-      arrayView4d<real64 const> const dPhaseDens_dCompSub = dPhaseDens_dComp[er][esr][m_fluidIndex].get();
+      arrayView1d<real64 const> volumeSub = volume[er][esr].get();
 
-      arrayView2d<real64 const> const phaseVolFracOldSub = phaseVolFracOld[er][esr].get();
-      arrayView2d<real64 const> const phaseVolFracSub = phaseVolFrac[er][esr].get();
-      arrayView2d<real64 const> const dPhaseVolFrac_dPresSub = dPhaseVolFrac_dPres[er][esr].get();
-      arrayView3d<real64 const> const dPhaseVolFrac_dCompSub = dPhaseVolFrac_dComp[er][esr].get();
+      arrayView1d<real64 const> porosityOldSub = porosityOld[er][esr].get();
+      arrayView1d<real64 const> porosityRefSub = porosityRef[er][esr].get();
 
-      arrayView3d<real64 const> const phaseCompFracOldSub = phaseCompFracOld[er][esr].get();
-      arrayView4d<real64 const> const phaseCompFracSub = phaseCompFrac[er][esr][m_fluidIndex].get();
-      arrayView4d<real64 const> const dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er][esr][m_fluidIndex].get();
-      arrayView5d<real64 const> const dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er][esr][m_fluidIndex].get();
+      arrayView2d<real64 const> pVMultSub        = pVMult[er][esr][m_solidIndex].get();
+      arrayView2d<real64 const> dPVMult_dPresSub = dPVMult_dPres[er][esr][m_solidIndex].get();
 
-      arrayView3d<real64 const> const dCompFrac_dCompDensSub = dCompFrac_dCompDens[er][esr].get();
+      arrayView2d<real64 const> phaseDensOldSub     = phaseDensOld[er][esr].get();
+      arrayView3d<real64 const> phaseDensSub        = phaseDens[er][esr][m_fluidIndex].get();
+      arrayView3d<real64 const> dPhaseDens_dPresSub = dPhaseDens_dPres[er][esr][m_fluidIndex].get();
+      arrayView4d<real64 const> dPhaseDens_dCompSub = dPhaseDens_dComp[er][esr][m_fluidIndex].get();
 
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      arrayView2d<real64 const> phaseVolFracOldSub     = phaseVolFracOld[er][esr].get();
+      arrayView2d<real64 const> phaseVolFracSub        = phaseVolFrac[er][esr].get();
+      arrayView2d<real64 const> dPhaseVolFrac_dPresSub = dPhaseVolFrac_dPres[er][esr].get();
+      arrayView3d<real64 const> dPhaseVolFrac_dCompSub = dPhaseVolFrac_dComp[er][esr].get();
+
+      arrayView3d<real64 const> phaseCompFracOldSub     = phaseCompFracOld[er][esr].get();
+      arrayView4d<real64 const> phaseCompFracSub        = phaseCompFrac[er][esr][m_fluidIndex].get();
+      arrayView4d<real64 const> dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er][esr][m_fluidIndex].get();
+      arrayView5d<real64 const> dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er][esr][m_fluidIndex].get();
+
+      arrayView3d<real64 const> dCompFrac_dCompDensSub = dCompFrac_dCompDens[er][esr].get();
+
+      FORALL( ei, 0, subRegion->size())
       {
-        if (elemGhostRank[er][esr][ei] < 0)
-        {
-          // reset the local values
-          localAccum = 0.0;
-          localAccumJacobian = 0.0;
+        if (elemGhostRank[er][esr][ei] >= 0)
+          return;
 
-          // set DOF indices for this block
-          globalIndex const offset = NDOF * dofNumber[ei];
-          for (localIndex idof = 0; idof < NDOF; ++idof)
+        // reset the local values
+        localAccum = 0.0;
+        localAccumJacobian = 0.0;
+
+        // set DOF indices for this block
+        globalIndex const offset = NDOF * dofNumber[ei];
+        for (localIndex idof = 0; idof < NDOF; ++idof)
+        {
+          localAccumDOF[idof] = integer_conversion<long long>(offset + idof);
+        }
+
+        // compute fluid-independent (pore volume) part
+        real64 const volNew   = volumeSub[ei];
+        real64 const volOld   = volumeSub[ei];
+        real64 const dVol_dP  = 0.0; // used in poroelastic solver
+
+        real64 const poroNew  = porosityRefSub[ei] * pVMultSub[ei][0];
+        real64 const poroOld  = porosityOldSub[ei];
+        real64 const dPoro_dP = porosityRefSub[ei] * dPVMult_dPresSub[ei][0];
+
+        real64 const poreVolNew = volNew * poroNew;
+        real64 const poreVolOld = volOld * poroOld;
+        real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
+
+        // sum contributions to component accumulation from each phase
+        for (localIndex ip = 0; ip < NP; ++ip)
+        {
+          real64 const phaseAmountNew = poreVolNew * phaseVolFracSub[ei][ip] * phaseDensSub[ei][0][ip];
+          real64 const phaseAmountOld = poreVolOld * phaseVolFracOldSub[ei][ip] * phaseDensOldSub[ei][ip];
+
+          real64 const dPhaseAmount_dP = dPoreVol_dP * phaseVolFracSub[ei][ip] * phaseDensSub[ei][0][ip]
+                                        + poreVolNew * (dPhaseVolFrac_dPresSub[ei][ip] * phaseDensSub[ei][0][ip]
+                                                             + phaseVolFracSub[ei][ip] * dPhaseDens_dPresSub[ei][0][ip]);
+
+          // assemble density dependence
+          applyChainRule( NC, dCompFrac_dCompDensSub[ei], dPhaseDens_dCompSub[ei][0][ip], dPhaseAmount_dC );
+          for (localIndex jc = 0; jc < NC; ++jc)
           {
-            localAccumDOF[idof] = integer_conversion<long long>(offset + idof);
+            dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc]     * phaseVolFracSub[ei][ip]
+                                + phaseDensSub[ei][0][ip] * dPhaseVolFrac_dCompSub[ei][ip][jc];
+            dPhaseAmount_dC[jc] *= poreVolNew;
           }
 
-          // compute fluid-independent (pore volume) part
-          real64 const volNew   = volume[er][esr][ei];
-          real64 const volOld   = volume[er][esr][ei];
-          real64 const dVol_dP  = 0.0; // used in poroelastic solver
-
-          real64 const poroNew  = porosityRef[er][esr][ei] * pVMultSub[ei][0];
-          real64 const poroOld  = porosityOld[er][esr][ei];
-          real64 const dPoro_dP = porosityRef[er][esr][ei] * dPVMult_dPresSub[ei][0];
-
-          real64 const poreVolNew = volNew * poroNew;
-          real64 const poreVolOld = volOld * poroOld;
-          real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
-
-          // sum contributions to component accumulation from each phase
-          for (localIndex ip = 0; ip < NP; ++ip)
+          // ic - index of component whose conservation equation is assembled
+          // (i.e. row number in local matrix)
+          for (localIndex ic = 0; ic < NC; ++ic)
           {
-            real64 const phaseAmountNew = poreVolNew * phaseVolFracSub[ei][ip] * phaseDensSub[ei][0][ip];
-            real64 const phaseAmountOld = poreVolOld * phaseVolFracOldSub[ei][ip] * phaseDensOldSub[ei][ip];
+            real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFracSub[ei][0][ip][ic];
+            real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOldSub[ei][ip][ic];
 
-            real64 const dPhaseAmount_dP = dPoreVol_dP * phaseVolFracSub[ei][ip] * phaseDensSub[ei][0][ip]
-                                          + poreVolNew * (dPhaseVolFrac_dPresSub[ei][ip] * phaseDensSub[ei][0][ip]
-                                                       + phaseVolFracSub[ei][ip] * dPhaseDens_dPresSub[ei][0][ip]);
+            real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFracSub[ei][0][ip][ic]
+                                             + phaseAmountNew  * dPhaseCompFrac_dPresSub[ei][0][ip][ic];
 
-            // assemble density dependence
-            applyChainRule( NC, dCompFrac_dCompDensSub[ei], dPhaseDens_dCompSub[ei][0][ip], dPhaseAmount_dC );
+            localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
+            localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
+
+            // jc - index of component w.r.t. whose compositional var the derivative is being taken
+            // (i.e. col number in local matrix)
+
+            // assemble phase composition dependence
+            applyChainRule( NC, dCompFrac_dCompDensSub[ei], dPhaseCompFrac_dCompSub[ei][0][ip][ic], dPhaseCompFrac_dC );
             for (localIndex jc = 0; jc < NC; ++jc)
             {
-              dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc]     * phaseVolFracSub[ei][ip]
-                                  + phaseDensSub[ei][0][ip] * dPhaseVolFrac_dCompSub[ei][ip][jc];
-              dPhaseAmount_dC[jc] *= poreVolNew;
-            }
-
-            // ic - index of component whose conservation equation is assembled
-            // (i.e. row number in local matrix)
-            for (localIndex ic = 0; ic < NC; ++ic)
-            {
-              real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFracSub[ei][0][ip][ic];
-              real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOldSub[ei][ip][ic];
-
-              real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFracSub[ei][0][ip][ic]
-                                               + phaseAmountNew  * dPhaseCompFrac_dPresSub[ei][0][ip][ic];
-
-              localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
-              localAccumJacobian[ic][0] = dPhaseCompAmount_dP;
-
-              // jc - index of component w.r.t. whose compositional var the derivative is being taken
-              // (i.e. col number in local matrix)
-
-              // assemble phase composition dependence
-              applyChainRule(NC, dCompFrac_dCompDensSub[ei], dPhaseCompFrac_dCompSub[ei][0][ip][ic], &localAccumJacobian[ic][1]);
-              for (localIndex jc = 0; jc < NC; ++jc)
-              {
-                localAccumJacobian[ic][jc+1] = localAccumJacobian[ic][jc+1]    * phaseAmountNew
-                                             + phaseCompFracSub[ei][0][ip][ic] * dPhaseAmount_dC[jc];
-              }
+              real64 const dPhaseCompAmount_dC =           dPhaseCompFrac_dC[jc] * phaseAmountNew
+                                               + phaseCompFracSub[ei][0][ip][ic] * dPhaseAmount_dC[jc];
+              localAccumJacobian[ic][jc+1] += dPhaseCompAmount_dC;
             }
           }
-
-          // TODO: apply equation/variable change transformation(s)
-
-          // add contribution to global residual and dRdP
-          residual->SumIntoGlobalValues( integer_conversion<int>( NC ),
-                                         localAccumDOF.data(),
-                                         localAccum.data() );
-
-          jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
-                                         localAccumDOF.data(),
-                                         integer_conversion<int>( NDOF ),
-                                         localAccumDOF.data(),
-                                         localAccumJacobian.data(),
-                                         Epetra_FECrsMatrix::ROW_MAJOR );
         }
-      }
+
+        // TODO: apply equation/variable change transformation(s)
+
+        // add contribution to global residual and dRdP
+        residual->SumIntoGlobalValues( integer_conversion<int>( NC ),
+                                       localAccumDOF.data(),
+                                       localAccum.data() );
+
+        jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
+                                       localAccumDOF.data(),
+                                       integer_conversion<int>( NDOF ),
+                                       localAccumDOF.data(),
+                                       localAccumJacobian.data(),
+                                       Epetra_FECrsMatrix::ROW_MAJOR );
+
+      });
     }
-  }//)
+  }
 }
 
 void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const domain,
@@ -1761,9 +1765,9 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition * const dom
       localIndex ei_up  = cell_up.index;
 
       // slice some constitutive arrays to avoid too much indexing in component loop
-      arrayView1d<real64> phaseCompFracSub = phaseCompFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
-      arrayView1d<real64> dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
-      arrayView2d<real64> dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+      auto phaseCompFracSub = phaseCompFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+      auto dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+      auto dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
 
       // compute component fluxes and derivatives using upstream cell composition
       for (localIndex ic = 0; ic < NC; ++ic)
