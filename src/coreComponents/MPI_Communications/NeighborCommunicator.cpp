@@ -460,13 +460,13 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int bufferSize = 0;
-  bufferSize += Packing::Pack<false>( sendBufferPtr, nodeGhostsToReceive, nodeGhostsToReceive.size(), 
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr, nodeGhostsToReceive, nodeGhostsToReceive.size(), 
                                         nodeManager.m_localToGlobalMap );
 
-  bufferSize += Packing::Pack<false>( sendBufferPtr, edgeGhostsToReceive, edgeGhostsToReceive.size(), 
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr, edgeGhostsToReceive, edgeGhostsToReceive.size(), 
                                         edgeManager.m_localToGlobalMap );
 
-  bufferSize += Packing::Pack<false>( sendBufferPtr, faceGhostsToReceive, faceGhostsToReceive.size(), 
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr, faceGhostsToReceive, faceGhostsToReceive.size(), 
                                         faceManager.m_localToGlobalMap );
 
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
@@ -476,7 +476,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     {
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
 
-      bufferSize+= Packing::Pack<false>( sendBufferPtr, elementGhostToReceive[er][esr], 
+      bufferSize+= bufferOps::Pack<false>( sendBufferPtr, elementGhostToReceive[er][esr], 
                                            elementGhostToReceive[er][esr].size(), subRegion->m_localToGlobalMap );
     }
   }
@@ -484,13 +484,13 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   this->resizeSendBuffer( commID, bufferSize );
 
   int packedSize = 0;
-  packedSize += Packing::Pack<true>( sendBufferPtr, nodeGhostsToReceive, nodeGhostsToReceive.size(),
+  packedSize += bufferOps::Pack<true>( sendBufferPtr, nodeGhostsToReceive, nodeGhostsToReceive.size(),
                                        nodeManager.m_localToGlobalMap );
 
-  packedSize += Packing::Pack<true>( sendBufferPtr, edgeGhostsToReceive, edgeGhostsToReceive.size(),
+  packedSize += bufferOps::Pack<true>( sendBufferPtr, edgeGhostsToReceive, edgeGhostsToReceive.size(),
                                        edgeManager.m_localToGlobalMap );
 
-  packedSize += Packing::Pack<true>( sendBufferPtr, faceGhostsToReceive, faceGhostsToReceive.size(),
+  packedSize += bufferOps::Pack<true>( sendBufferPtr, faceGhostsToReceive, faceGhostsToReceive.size(),
                                        faceManager.m_localToGlobalMap );
 
 
@@ -502,7 +502,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     {
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
 
-      packedSize+= Packing::Pack<true>( sendBufferPtr, elementGhostToReceive[er][esr],
+      packedSize+= bufferOps::Pack<true>( sendBufferPtr, elementGhostToReceive[er][esr],
                                           elementGhostToReceive[er][esr].size(), subRegion->m_localToGlobalMap );
     }
   }
@@ -516,11 +516,11 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
   int unpackedSize = 0;
-  unpackedSize += Packing::Unpack( receiveBufferPtr, nodeGhostsToSend, nodeManager.m_globalToLocalMap );
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr, nodeGhostsToSend, nodeManager.m_globalToLocalMap );
 
-  unpackedSize += Packing::Unpack( receiveBufferPtr, edgeGhostsToSend, edgeManager.m_globalToLocalMap );
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr, edgeGhostsToSend, edgeManager.m_globalToLocalMap );
 
-  unpackedSize += Packing::Unpack( receiveBufferPtr, faceGhostsToSend, faceManager.m_globalToLocalMap );
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr, faceGhostsToSend, faceManager.m_globalToLocalMap );
 
 
   nodeManager.SetGhostRankForSenders( nodeGhostsToSend );
@@ -538,7 +538,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     {
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion( esr );
 
-      unpackedSize+= Packing::Unpack( receiveBufferPtr, elementGhostToSend[er][esr].get(),
+      unpackedSize+= bufferOps::Unpack( receiveBufferPtr, elementGhostToSend[er][esr].get(),
                                         subRegion->m_globalToLocalMap );
 
       subRegion->SetGhostRankForSenders( elementGhostToSend[er][esr].get() );
