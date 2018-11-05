@@ -345,7 +345,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 
   for( typename array1d<T>::size_type a=0 ; a<N ; ++a )
   {
-    geosx::atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
+    atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
   }
 }
 
@@ -359,9 +359,9 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
     real64 const * __restrict__ const lData = localField[a].Data();
-    geosx::atomicAdd<atomicPol>( &gData[0], lData[0] );
-    geosx::atomicAdd<atomicPol>( &gData[1], lData[1] );
-    geosx::atomicAdd<atomicPol>( &gData[2], lData[2] );
+    atomicAdd<atomicPol>( &gData[0], lData[0] );
+    atomicAdd<atomicPol>( &gData[1], lData[1] );
+    atomicAdd<atomicPol>( &gData[2], lData[2] );
   }
 }
 
@@ -374,7 +374,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 {
   for( typename array1d<T>::size_type a=0 ; a<N ; ++a )
   {
-    geosx::atomicAdd<atomicPol>(&globalField[globalToLocalRelation[a]],localField[a]);
+    atomicAdd<atomicPol>(&globalField[globalToLocalRelation[a]],localField[a]);
   }
 }
 
@@ -390,7 +390,7 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
     real64 const * __restrict__ const lData = localField[a].Data();
     for( localIndex i=0 ; i<3 ; ++i )
     {
-      geosx::atomicAdd<atomicPol>( &gData[i], lData[i] );
+      atomicAdd<atomicPol>( &gData[i], lData[i] );
     }
   }
 }

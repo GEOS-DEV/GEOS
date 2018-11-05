@@ -30,10 +30,7 @@
 
 namespace geosx
 {
-
-//using namespace raja;
-  
-  
+   
 //-------------
 //Here we want to unpack data and 
 //use one of the templated loops above
@@ -131,10 +128,9 @@ NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body
   ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
   
   ::geosx::forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {      
+  {
       sum += body(index);
   });
-
   
   return sum.get();
 }
@@ -188,3 +184,103 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 
 
 
+//
+// The following code is commented out as it may serve future purpose
+//
+/*
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_elems_by_constitutive( MeshLevel const * const mesh,
+                               constitutive::ConstitutiveManager * const constitutiveManager,
+                               FiniteElementSpaceManager const * const feSpaceManager,
+                               LAMBDA && body )
+{
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+
+
+  for( auto const & regionPair : elementRegions->GetSubGroups() )
+  {
+    dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
+    auto const & numMethodName = elementRegion->getData<string>(dataRepository::keys::numericalMethod);
+    FiniteElementSpace const * const feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    {
+      CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+
+      //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+      multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(dataRepository::keys::dNdX);
+      
+      array_view<real64,2> const & detJ            = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ).View();
+
+      auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+//      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
+//                                                                           constitutiveMap.second.size(0),
+//                                                                           constitutiveMap.second.size(1) );
+      array_view<localIndex,2> constitutiveMapView = constitutiveMap.second.View();
+
+      auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
+      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
+
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      for( auto const & constitutiveGroup : constitutiveGrouping )
+      {
+        string const constitutiveName = constitutiveGroup.first;
+//      localIndex_array const & elementList = constitutiveGroup.second;
+        array_view<localIndex,1> const elementList = constitutiveGroup.second.View();
+
+        constitutive::ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<constitutive::ConstitutiveBase>( constitutiveName );
+
+        void * constitutiveModelData;
+        constitutiveModel->SetParamStatePointers(constitutiveModelData);
+
+        constitutive::ConstitutiveBase::UpdateFunctionPointer
+        constitutiveUpdate = constitutiveModel->GetStateUpdateFunctionPointer();
+
+        ///Local copies --------
+        array_view<real64,1> meanStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress")).View();
+        array_view<R2SymTensor,1> devStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress")).View();
+        //------------------------
+
+        //Element loop is packed with parameters...
+        auto ebody = [=](localIndex index) mutable -> void
+          {body(index,
+                numNodesPerElement,
+                elemsToNodes,
+                feSpace->m_finiteElement->n_quadrature_points(),
+                dNdX,
+                constitutiveMapView,
+                detJ,
+                devStress,
+                meanStress,
+                constitutiveUpdate,
+                constitutiveModelData
+                ); };
+
+        
+        ::geosx::raja::forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
+
+      }
+    }
+  }
+}
+
+#define FOR_ELEMS_FOR_CONSTITUTIVE( mesh, constitutiveManager, feSpaceManager)\
+    for_elems_by_constitutive( mesh,\
+    constitutiveManager,\
+    feSpaceManager,\
+    GEOSX_LAMBDA( localIndex const k,\
+    localIndex const numNodesPerElement,\
+    array_view<localIndex,2> const elemsToNodes,\
+    localIndex const numQuadraturePoints,\
+    multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX,\
+    array_view<localIndex,2> const constitutiveMapView,\
+    array_view<real64,2> const detJ,\
+    array_view<R2SymTensor,1> devStress,\
+    array_view<real64,1> meanStress,\
+    constitutive::ConstitutiveBase::UpdateFunctionPointer constitutiveUpdate,\
+    void * constitutiveModelData\
+    ) mutable -> void
+*/
