@@ -107,12 +107,14 @@ void PAMELAMeshGenerator::CreateChild( string const & childKey, string const & c
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
   int nranks = 1;
+  int proc = 0;
 #ifdef GEOSX_USE_MPI
   MPI_Comm_size( MPI_COMM_GEOSX, &nranks );
+  MPI_Comm_rank(MPI_COMM_GEOSX, &proc);
 #endif
 
   // We throw an error if GEOSX in launched with MPI. Multirank will be handle in another PR
-  GEOS_ERROR_IF( nranks > 1, "PAMELA Mesh Generator not yet compatible with multidomains" );
+//  GEOS_ERROR_IF( nranks > 1, "PAMELA Mesh Generator not yet compatible with multidomains" );
 
   ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
@@ -122,6 +124,8 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   NodeManager * nodeManager = meshLevel0->getNodeManager();
   //CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
+
+  std::cout << "MPI RANK " << proc << " " <<  domain->getName() << std::endl;
 
   //TODO for the moment we only write the polyhedron and the associated vertices
   auto polyhedronCollection = m_pamelaMesh->get_PolyhedronCollection();
@@ -166,6 +170,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         {
           cellBlock -> SetElementType("C3D8");
           auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+          std::cout << "nb cells " << nbCells << std::endl;
           auto & cellToVertex = cellBlock->nodeList();
           cellBlock->resize( nbCells );
           cellToVertex.resize( nbCells, 8 );
