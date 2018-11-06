@@ -65,13 +65,13 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              arrayView1d<localIndex> const & packList ) const override;
+                                     arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                arrayView1d<localIndex> const & packList ) override;
+                                       arrayView1d<localIndex const> const & packList ) override;
 
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
@@ -125,7 +125,7 @@ private:
 
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                             arrayView1d<localIndex> const & packList ) const;
+                                    arrayView1d<localIndex const> const & packList ) const;
 
 
 };

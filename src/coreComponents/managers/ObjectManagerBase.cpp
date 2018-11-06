@@ -242,8 +242,8 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
-                            arrayView1d<localIndex> const & packList,
-                            integer const recursive ) const
+                                        arrayView1d<localIndex const> const & packList,
+                                        integer const recursive ) const
 {
   localIndex packedSize = 0;
   buffer_unit_type * junk;
@@ -259,9 +259,9 @@ localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
 
 
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
-                             string_array const & wrapperNames,
-                             arrayView1d<localIndex> const & packList,
-                             integer const recursive ) const
+                                    string_array const & wrapperNames,
+                                    arrayView1d<localIndex const> const & packList,
+                                    integer const recursive ) const
 {
   localIndex packedSize = 0;
 
@@ -272,9 +272,9 @@ localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
-                                    string_array const & wrapperNames,
-                                    arrayView1d<localIndex> const & packList,
-                                    integer const recursive ) const
+                                           string_array const & wrapperNames,
+                                           arrayView1d<localIndex const> const & packList,
+                                           integer const recursive ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
@@ -360,8 +360,8 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
 
 localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
-                               arrayView1d<localIndex> & packList,
-                               integer const recursive )
+                                      arrayView1d<localIndex> & packList,
+                                      integer const recursive )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -440,8 +440,8 @@ localIndex ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                              arrayView1d<localIndex> const & packList,
-                                              integer const recursive ) const
+                                                     arrayView1d<localIndex const> const & packList,
+                                                     integer const recursive ) const
 {
   localIndex packedSize = bufferOps::Pack<DOPACK>( buffer, this->getName() );
 

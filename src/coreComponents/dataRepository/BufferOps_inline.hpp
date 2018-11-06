@@ -206,7 +206,10 @@ namespace bufferOps
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
   static localIndex
-  Pack( char*&  buffer, T const * const restrict var, arraySlice1d<INDEX_TYPE> const & indices, INDEX_TYPE const length )
+  Pack( char*&  buffer,
+        T const * const restrict var,
+        arraySlice1d<INDEX_TYPE const> const & indices,
+        INDEX_TYPE const length )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
 
@@ -221,7 +224,10 @@ namespace bufferOps
 
   template< typename T, typename INDEX_TYPE >
   static localIndex
-  Unpack( char const *& buffer, T * const restrict var, arraySlice1d<INDEX_TYPE> const & indices, INDEX_TYPE & length )
+  Unpack( char const *& buffer,
+          T * const restrict var,
+          arraySlice1d<INDEX_TYPE const> const & indices,
+          INDEX_TYPE & length )
   {
     localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
@@ -233,12 +239,14 @@ namespace bufferOps
     return sizeOfUnpackedChars;
   }
 
-  #ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
+#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
   static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-  Pack( char*& buffer, arraySlice1d<T> const & var, INDEX_TYPE const length )
+  Pack( char*& buffer,
+        arraySlice1d<T> const & var,
+        INDEX_TYPE const length )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
     sizeOfPackedChars += length * sizeof(T);
@@ -261,7 +269,9 @@ namespace bufferOps
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
   static typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-  Pack( char*& buffer, arraySlice1d<T> const & var, INDEX_TYPE const length )
+  Pack( char*& buffer,
+        arraySlice1d<T> const & var,
+        INDEX_TYPE const length )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
 
@@ -276,7 +286,9 @@ namespace bufferOps
 
   template< typename T, typename INDEX_TYPE >
   static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-  Unpack( char const *& buffer, arraySlice1d<T> & var, INDEX_TYPE const expectedLength )
+  Unpack( char const *& buffer,
+          arraySlice1d<T> & var,
+          INDEX_TYPE const expectedLength )
   {
     INDEX_TYPE length;
     localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -298,7 +310,9 @@ namespace bufferOps
 
   template< typename T, typename INDEX_TYPE >
   static typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-  Unpack( char const *& buffer, arraySlice1d<T> & var, INDEX_TYPE const expectedLength )
+  Unpack( char const *& buffer,
+          arraySlice1d<T> & var,
+          INDEX_TYPE const expectedLength )
   {
     INDEX_TYPE length;
     localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -332,7 +346,10 @@ namespace bufferOps
 
   template< typename T, typename INDEX_TYPE >
   static localIndex
-  Unpack( char const *& buffer, arraySlice1d<T> & var, arraySlice1d<INDEX_TYPE> const & indices, INDEX_TYPE & length )
+  Unpack( char const *& buffer,
+          arraySlice1d<T> & var,
+          arraySlice1d<INDEX_TYPE> const & indices,
+          INDEX_TYPE & length )
   {
     localIndex sizeOfUnpackedChars = 0;
 
@@ -346,7 +363,7 @@ namespace bufferOps
     return sizeOfUnpackedChars;
   }
 
-  #endif /* GEOSX_USE_ARRAY_BOUNDS_CHECK */
+#endif /* GEOSX_USE_ARRAY_BOUNDS_CHECK */
 
 
   template< bool DO_PACKING, typename T >
@@ -383,7 +400,9 @@ namespace bufferOps
   }
 
   template< bool DO_PACKING >
-  static localIndex Pack( char *& buffer, set<localIndex> const & var, arraySlice1d<globalIndex> const & localToGlobal )
+  static localIndex Pack( char *& buffer,
+                          set<localIndex> const & var,
+                          arraySlice1d<globalIndex const> const & localToGlobal )
   {
     const localIndex length = integer_conversion<localIndex>(var.size());
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
@@ -397,7 +416,9 @@ namespace bufferOps
   }
 
   inline
-  static localIndex Unpack( char const *& buffer, set<localIndex> & var, map<globalIndex,localIndex> const & globalToLocalMap )
+  static localIndex Unpack( char const *& buffer,
+                            set<localIndex> & var,
+                            map<globalIndex,localIndex> const & globalToLocalMap )
   {
     var.clear();
     localIndex set_length;
@@ -425,7 +446,8 @@ namespace bufferOps
 
   template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
   static typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
-  Pack( char*& buffer, LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var )
+  Pack( char*& buffer,
+        LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, var.dims(), NDIM );
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.strides(), NDIM );
@@ -466,7 +488,9 @@ namespace bufferOps
 
   template< bool DO_PACKING, typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
   static typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
-  Pack( char*& buffer, LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var, const T_indices& indices )
+  Pack( char*& buffer,
+        LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var,
+        const T_indices& indices )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, var.strides(), NDIM );
 
@@ -502,8 +526,10 @@ namespace bufferOps
 
   template< bool DO_PACKING >
   static localIndex
-  Pack( char*& buffer, arraySlice1d<localIndex> const & var, localIndex const length,
-        arraySlice1d<globalIndex> const & localToGlobalMap )
+  Pack( char*& buffer,
+        arraySlice1d<localIndex const> const & var,
+        localIndex const length,
+        arraySlice1d<globalIndex const> const & localToGlobalMap )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
     sizeOfPackedChars += length*sizeof(globalIndex);
@@ -526,7 +552,9 @@ namespace bufferOps
 
   inline
   static localIndex
-  Unpack( char const *& buffer, localIndex_array & var, map<globalIndex,localIndex> const & globalToLocalMap )
+  Unpack( char const *& buffer,
+          localIndex_array & var,
+          map<globalIndex,localIndex> const & globalToLocalMap )
   {
     localIndex length;
     localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -545,7 +573,9 @@ namespace bufferOps
 
   inline
   static localIndex
-  Unpack( char const *& buffer, arraySlice1d<localIndex> & var, localIndex const expectedLength,
+  Unpack( char const *& buffer,
+          arraySlice1d<localIndex> & var,
+          localIndex const expectedLength,
           map<globalIndex,localIndex> const & globalToLocalMap )
   {
     localIndex sizeOfUnpackedChars = 0;
@@ -570,10 +600,10 @@ namespace bufferOps
   template< bool DO_PACKING >
   static localIndex
   Pack( char*& buffer,
-        arrayView1d<localIndex_array> const & var,
-        arrayView1d<localIndex> const & indices,
-        arrayView1d<globalIndex> const & localToGlobalMap,
-        arrayView1d<globalIndex> const & relatedObjectLocalToGlobalMap )
+        arrayView1d<localIndex_array const> const & var,
+        arrayView1d<localIndex const> const & indices,
+        arrayView1d<globalIndex const> const & localToGlobalMap,
+        arrayView1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
   {
     localIndex sizeOfPackedChars=0;
 
@@ -592,7 +622,7 @@ namespace bufferOps
   static localIndex
   Unpack( char const *& buffer,
           arrayView1d<localIndex_array> & var,
-          arrayView1d<localIndex> const & indices,
+          arrayView1d<localIndex const> const & indices,
           map<globalIndex,localIndex> const & globalToLocalMap,
           map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
   {
@@ -617,10 +647,10 @@ namespace bufferOps
   template< bool DO_PACKING >
   static localIndex
   Pack( char*& buffer,
-        arrayView1d< set<localIndex> > const & var,
-        arrayView1d<localIndex> const & indices,
-        arrayView1d<globalIndex> const & localToGlobalMap,
-        arrayView1d<globalIndex> const & relatedObjectLocalToGlobalMap )
+        arrayView1d< set<localIndex> const > const & var,
+        arrayView1d<localIndex const> const & indices,
+        arrayView1d<globalIndex const> const & localToGlobalMap,
+        arrayView1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, indices.size() );
 
@@ -638,7 +668,7 @@ namespace bufferOps
   static localIndex
   Unpack( char const *& buffer,
           arrayView1d< set<localIndex> > & var,
-          arrayView1d<localIndex> const & indices,
+          arrayView1d<localIndex const> const & indices,
           map<globalIndex,localIndex> const & globalToLocalMap,
           map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
   {
@@ -718,10 +748,10 @@ namespace bufferOps
   template< bool DO_PACKING >
   static localIndex
   Pack( char*& buffer,
-        arrayView2d<localIndex> const & var,
-        arrayView1d<localIndex> const & indices,
-        arraySlice1d<globalIndex> const & localToGlobalMap,
-        arraySlice1d<globalIndex> const & relatedObjectLocalToGlobalMap )
+        arrayView2d<localIndex const> const & var,
+        arrayView1d<localIndex const> const & indices,
+        arraySlice1d<globalIndex const> const & localToGlobalMap,
+        arraySlice1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
   {
     localIndex sizeOfPackedChars = 0;
 
@@ -742,7 +772,7 @@ namespace bufferOps
   static localIndex
   Unpack( char const *& buffer,
           arrayView2d<localIndex> & var,
-          arrayView1d<localIndex> const & indices,
+          arrayView1d<localIndex const> const & indices,
           map<globalIndex,localIndex> const & globalToLocalMap,
           map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
   {

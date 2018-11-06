@@ -71,12 +71,12 @@ public:
   void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                         array1d<globalIndex_array>& edgesToNodes ) override final;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              arrayView1d<localIndex> const & packList ) const override;
+                                     arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                arrayView1d<localIndex> const & packList ) override;
+                                       arrayView1d<localIndex const> const & packList ) override;
 
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
@@ -157,7 +157,7 @@ private:
 
   template<bool DOPACK>
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                             arrayView1d<localIndex> const & packList ) const;
+                                    arrayView1d<localIndex const> const & packList ) const;
 
 };
 }

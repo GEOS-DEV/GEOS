@@ -46,8 +46,8 @@ inline void CalculateGradient( R2Tensor& Gradient,
 }
 
 inline void CalculateGradient(R2Tensor& Gradient,
-                              arraySlice1d<R1Tensor> const & disp,
-                              arraySlice1d<R1Tensor> const & dNdX,
+                              arraySlice1d<R1Tensor const> const & disp,
+                              arraySlice1d<R1Tensor const> const & dNdX,
                               localIndex numNodes)
 {
   Gradient.dyadic_ab( disp[0], dNdX[0] );
@@ -59,8 +59,8 @@ inline void CalculateGradient(R2Tensor& Gradient,
 
 template< int N >
 inline void CalculateGradient(R2Tensor& Gradient,
-                              arraySlice1d<R1Tensor> const & disp,
-                              arraySlice1d<R1Tensor> const & dNdX )
+                              arraySlice1d<R1Tensor const> const & disp,
+                              arraySlice1d<R1Tensor const> const & dNdX )
 {
   Gradient.dyadic_ab( disp[0], dNdX[0] );
   for( auto a=1 ; a<N ; ++a )
@@ -72,9 +72,9 @@ inline void CalculateGradient(R2Tensor& Gradient,
 template< int N >
 inline void CalculateGradients( R2Tensor& Gradient0,
                                 R2Tensor& Gradient1,
-                                arraySlice1d<R1Tensor> const & var0,
-                                arraySlice1d<R1Tensor> const & var1,
-                                arraySlice1d<R1Tensor> const & dNdX )
+                                arraySlice1d<R1Tensor const> const & var0,
+                                arraySlice1d<R1Tensor const> const & var1,
+                                arraySlice1d<R1Tensor const> const & dNdX )
 {
   Gradient0.dyadic_ab( var0[0], dNdX[0] );
   Gradient1.dyadic_ab( var1[0], dNdX[0] );

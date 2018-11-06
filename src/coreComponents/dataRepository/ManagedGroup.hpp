@@ -522,24 +522,24 @@ public:
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
   virtual localIndex PackSize( string_array const & wrapperNames,
-                        integer const recursive ) const;
+                               integer const recursive ) const;
 
   virtual localIndex PackSize( string_array const & wrapperNames,
-                        arrayView1d<localIndex> const & packList,
-                        integer const recursive ) const;
+                               arrayView1d<localIndex const> const & packList,
+                               integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    string_array const & wrapperNames,
-                    integer const recursive ) const;
+                           string_array const & wrapperNames,
+                           integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    string_array const & wrapperNames,
-                    arrayView1d<localIndex> const & packList,
-                    integer const recursive ) const;
+                           string_array const & wrapperNames,
+                           arrayView1d<localIndex const> const & packList,
+                           integer const recursive ) const;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
-                      arrayView1d<localIndex> & packList,
-                      integer const recursive );
+                             arrayView1d<localIndex> & packList,
+                             integer const recursive );
 
 
   //***********************************************************************************************

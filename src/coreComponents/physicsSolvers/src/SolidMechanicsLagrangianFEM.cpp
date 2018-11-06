@@ -83,7 +83,7 @@ void Integrate( const R2SymTensor& fieldvar,
 
 template< int N >
 void Integrate( const R2SymTensor& fieldvar,
-                arraySlice1d<R1Tensor> const & dNdX,
+                arraySlice1d<R1Tensor const> const & dNdX,
                 real64 const& detJ,
                 real64 const& detF,
                 const R2Tensor& Finv,
@@ -1350,13 +1350,13 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
           if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
           {
             GEOS_ERROR("Option not supported");
-            CopyGlobalToLocal( elemsToNodes[k],
+            CopyGlobalToLocal<R1Tensor>( elemsToNodes[k],
                                disp, uhat, vtilde, uhattilde, u_local, uhat_local, vtilde_local, uhattilde_local,
                                numNodesPerElement );
           }
           else
           {
-            CopyGlobalToLocal( elemsToNodes[k], disp, uhat, u_local, uhat_local, numNodesPerElement );
+            CopyGlobalToLocal<R1Tensor>( elemsToNodes[k], disp, uhat, u_local, uhat_local, numNodesPerElement );
           }
 
           R2SymTensor referenceStress;
@@ -1527,8 +1527,8 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
 
 realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real64 const density,
                                                                            FiniteElementBase const * const fe,
-                                                                           arraySlice2d<R1Tensor> const& dNdX,
-                                                                           arraySlice1d<realT> const& detJ,
+                                                                           arraySlice2d<R1Tensor const> const& dNdX,
+                                                                           arraySlice1d<realT const> const& detJ,
                                                                            R2SymTensor const * const refStress,
                                                                            r1_array const& u,
                                                                            r1_array const& uhat,

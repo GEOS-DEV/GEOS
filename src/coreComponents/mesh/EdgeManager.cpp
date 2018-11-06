@@ -710,38 +710,38 @@ void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
 
 
 
-localIndex EdgeManager::PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const
+localIndex EdgeManager::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 localIndex EdgeManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                        arrayView1d<localIndex> const & packList ) const
+                                        arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template<bool DOPACK>
 localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d<localIndex> const & packList ) const
+                                               arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       m_toNodesRelation,
-                                       packList,
-                                       m_localToGlobalMap,
-                                       m_toNodesRelation.RelatedObjectLocalToGlobal() );
+                                         m_toNodesRelation.Base(),
+                                         packList,
+                                         m_localToGlobalMap,
+                                         m_toNodesRelation.RelatedObjectLocalToGlobal() );
 
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       m_toFacesRelation,
-                                       packList,
-                                       m_localToGlobalMap,
-                                       m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                         m_toFacesRelation.Base(),
+                                         packList,
+                                         m_localToGlobalMap,
+                                         m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
 
   return packedSize;
@@ -750,7 +750,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          arrayView1d<localIndex> const & packList )
+                                          arrayView1d<localIndex const> const & packList )
 {
   localIndex unPackedSize = 0;
 
@@ -759,20 +759,20 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                   m_toNodesRelation,
-                                   packList,
-                                   this->m_globalToLocalMap,
-                                   m_toNodesRelation.RelatedObjectGlobalToLocal() );
+                                     m_toNodesRelation,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_toNodesRelation.RelatedObjectGlobalToLocal() );
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
   GEOS_ERROR_IF( faceListString != viewKeyStruct::faceListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                   m_toFacesRelation,
-                                   packList,
-                                   this->m_globalToLocalMap,
-                                   m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                     m_toFacesRelation,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
 
   return unPackedSize;
 }
