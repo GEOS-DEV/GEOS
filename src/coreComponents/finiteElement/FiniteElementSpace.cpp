@@ -118,10 +118,11 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> 
   FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
 
   array1d<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
+  R1Tensor const * const restrict X_ptr = X;
 
   for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
   {
-    CopyGlobalToLocal(elemsToNodes[k], X, X_elemLocal);
+    CopyGlobalToLocal<R1Tensor>(elemsToNodes[k], X, X_elemLocal);
     m_finiteElement->reinit(X_elemLocal);
 
     for( localIndex q = 0 ; q < m_finiteElement->n_quadrature_points() ; ++q )

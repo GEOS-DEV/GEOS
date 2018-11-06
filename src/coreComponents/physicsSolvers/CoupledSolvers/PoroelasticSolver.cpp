@@ -310,7 +310,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
       for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
       {
-        CopyGlobalToLocal( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
+        CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
 
         real64 volumetricStrain = 0.0;
         localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points() ;

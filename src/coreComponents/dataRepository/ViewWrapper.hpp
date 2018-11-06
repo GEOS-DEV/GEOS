@@ -36,7 +36,7 @@
 
 #include "Macros.hpp"
 #include "Buffer.hpp"
-#include "Packing.hpp"
+#include "BufferOps_inline.hpp"
 #include "RestartFlags.hpp"
 
 #include "codingUtilities/GeosxTraits.hpp"
@@ -338,7 +338,7 @@ public:
     return packedSize;
   }
 
-  virtual localIndex Pack( char *& buffer, arrayView1d<localIndex> const & packList ) const override final
+  virtual localIndex Pack( char *& buffer, arrayView1d<localIndex const> const & packList ) const override final
   {
     localIndex packedSize = 0;
 
@@ -362,7 +362,7 @@ public:
     return packedSize;
   }
 
-  virtual localIndex PackSize( arrayView1d<localIndex> const & packList ) const override final
+  virtual localIndex PackSize( arrayView1d<localIndex const> const & packList ) const override final
   {
 
     char * buffer = nullptr;
@@ -387,7 +387,7 @@ public:
     unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
-  virtual localIndex Unpack( char const *& buffer, arrayView1d<localIndex> const & unpackIndices ) override final
+  virtual localIndex Unpack( char const *& buffer, arrayView1d<localIndex const> const & unpackIndices ) override final
   {
     localIndex unpackedSize = 0;
     static_if( bufferOps::is_packable_by_index<T>::value )

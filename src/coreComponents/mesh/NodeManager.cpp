@@ -231,7 +231,7 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 }
 
 //**************************************************************************************************
-localIndex NodeManager::PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const
+localIndex NodeManager::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
@@ -239,7 +239,7 @@ localIndex NodeManager::PackUpDownMapsSize( arrayView1d<localIndex> const & pack
 
 //**************************************************************************************************
 localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                             arrayView1d<localIndex> const & packList ) const
+                                        arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
@@ -247,7 +247,7 @@ localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
 //**************************************************************************************************
 template< bool DOPACK >
 localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d<localIndex> const & packList ) const
+                                               arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
@@ -275,7 +275,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 //**************************************************************************************************
 localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                               arrayView1d<localIndex> const & packList )
+                                          arrayView1d<localIndex const> const & packList )
 {
   localIndex unPackedSize = 0;
 

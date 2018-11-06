@@ -3,7 +3,7 @@
 # Specify all headers
 #
 set(dataRepository_headers
-    BufferOps.hpp
+    BufferOps_inline.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
     ExecutableGroup.hpp

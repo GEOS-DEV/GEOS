@@ -18,7 +18,7 @@
 
 
 #include "BufferOps.hpp"
-#include "dataRepository/Packing.hpp"
+#include "dataRepository/BufferOps_inline.hpp"
 #include "ToElementRelation.hpp"
 #include "ElementRegionManager.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -32,7 +32,7 @@ namespace bufferOps
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
                  OrderedVariableToManyElementRelation const & var,
-                 arrayView1d<localIndex> const & packList,
+                 arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager )
 {
   localIndex sizeOfPackedChars = 0;
@@ -63,17 +63,17 @@ localIndex Pack( char*& buffer,
 }
 template localIndex Pack<true>( char*&,
                                 OrderedVariableToManyElementRelation const &,
-                                arrayView1d<localIndex> const &,
+                                arrayView1d<localIndex const> const &,
                                 ElementRegionManager const * const );
 template localIndex Pack<false>( char*&,
                                  OrderedVariableToManyElementRelation const &,
-                                 arrayView1d<localIndex> const &,
+                                 arrayView1d<localIndex const> const &,
                                  ElementRegionManager const * const );
 
 
 localIndex Unpack( char const * & buffer,
                    OrderedVariableToManyElementRelation & var,
-                   arrayView1d<localIndex> const & packList,
+                   arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager )
 {
   localIndex sizeOfUnpackedChars = 0;
@@ -121,7 +121,7 @@ localIndex Unpack( char const * & buffer,
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
                  FixedToManyElementRelation const & var,
-                 arrayView1d<localIndex> const & packList,
+                 arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager )
 {
   localIndex sizeOfPackedChars = 0;
@@ -161,17 +161,17 @@ localIndex Pack( char*& buffer,
 }
 template localIndex Pack<true>( char*&,
                                 FixedToManyElementRelation const &,
-                                arrayView1d<localIndex> const &,
+                                arrayView1d<localIndex const> const &,
                                 ElementRegionManager const * const );
 template localIndex Pack<false>( char*&,
                                  FixedToManyElementRelation const &,
-                                 arrayView1d<localIndex> const &,
+                                 arrayView1d<localIndex const> const &,
                                  ElementRegionManager const * const );
 
 
 localIndex Unpack( char const * & buffer,
                    FixedToManyElementRelation & var,
-                   arrayView1d<localIndex> const & packList,
+                   arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager )
 {
   localIndex sizeOfUnpackedChars = 0;

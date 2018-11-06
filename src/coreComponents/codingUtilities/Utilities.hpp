@@ -199,8 +199,8 @@ inline void CopyGlobalToLocal(arrayView1d<localIndex> const & globalToLocalRelat
 
 
 template< typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & globalField,
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & globalField,
                               arrayView1d< T >& localField)
 {
   const localIndex N = localField.size();
@@ -228,9 +228,9 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const& globalField1,
-                              arraySlice1d< T > const& globalField2,
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const> const& globalField1,
+                              arraySlice1d< T const> const& globalField2,
                               arraySlice1d< T > & localField1,
                               arraySlice1d< T > & localField2,
                               localIndex N)
@@ -243,9 +243,9 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< typename T, int N >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & globalField1,
-                              arraySlice1d< T > const & globalField2,
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & globalField1,
+                              arraySlice1d< T const > const & globalField2,
                               arraySlice1d< T > & localField1,
                               arraySlice1d< T > & localField2 )
 {
@@ -257,10 +257,10 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & globalField1,
-                              arraySlice1d< T > const & globalField2,
-                              arraySlice1d< T > const & globalField3,
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & globalField1,
+                              arraySlice1d< T const > const & globalField2,
+                              arraySlice1d< T const > const & globalField3,
                               arrayView1d< T > & localField1,
                               arraySlice1d< T > & localField2,
                               arraySlice1d< T  >& localField3 )
@@ -276,11 +276,11 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & globalField1,
-                              arraySlice1d< T > const & globalField2,
-                              arraySlice1d< T > const & globalField3,
-                              arraySlice1d< T > const & globalField4,
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & globalField1,
+                              arraySlice1d< T const > const & globalField2,
+                              arraySlice1d< T const > const & globalField3,
+                              arraySlice1d< T const > const & globalField4,
                               arrayView1d< T >& localField1,
                               arraySlice1d< T >& localField2,
                               arraySlice1d< T >& localField3,
@@ -299,11 +299,11 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
 
 
 template< typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & globalField1,
-                              arraySlice1d< T > const & globalField2,
-                              arraySlice1d< T > const & globalField3,
-                              arraySlice1d< T > const & globalField4,
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & globalField1,
+                              arraySlice1d< T const > const & globalField2,
+                              arraySlice1d< T const > const & globalField3,
+                              arraySlice1d< T const > const & globalField4,
                               arraySlice1d< T > & localField1,
                               arraySlice1d< T > & localField2,
                               arraySlice1d< T > & localField3,
@@ -320,9 +320,9 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< typename T , typename atomicPol=atomicPolicy>
-inline void AddLocalToGlobal( arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & localField,
-                              arraySlice1d< T >& globalField,
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & localField,
+                              arraySlice1d< T const >& globalField,
                               localIndex const N )
 {
   for( localIndex a=0 ; a<N ; ++a )
@@ -332,8 +332,8 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< typename atomicPol=atomicPolicy>
-inline void AddLocalToGlobal( arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d<R1Tensor> const & localField,
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d<R1Tensor const> const & localField,
                               arraySlice1d<R1Tensor>& globalField,
                               localIndex const N )
 {
@@ -348,9 +348,9 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< typename T, typename atomicPol=atomicPolicy >
-inline void AddLocalToGlobal( arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & localField1,
-                              arraySlice1d< T > const & localField2,
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & localField1,
+                              arraySlice1d< T const > const & localField2,
                               arraySlice1d< T > & globalField1,
                               arraySlice1d< T > & globalField2,
                               localIndex const N )

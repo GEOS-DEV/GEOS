@@ -185,8 +185,8 @@ public:
 
   realT CalculateElementResidualAndDerivative( real64 const density,
                                                FiniteElementBase const * const fe,
-                                               arraySlice2d<R1Tensor> const& dNdX,
-                                               arraySlice1d<realT> const& detJ,
+                                               arraySlice2d<R1Tensor const> const& dNdX,
+                                               arraySlice1d<realT const> const& detJ,
                                                R2SymTensor const * const refStress,
                                                r1_array const& u,
                                                r1_array const& uhat,

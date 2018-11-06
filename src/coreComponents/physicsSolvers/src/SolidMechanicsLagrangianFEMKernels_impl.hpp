@@ -1211,7 +1211,9 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex 
 //3. v^{n+1/2} = v^{n} + a^{n} dt/2
 
 //One array present
-void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx, geosx::arraySlice1d<R1Tensor> & y, real64 const dx,
+void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
+              geosx::arraySlice1d<R1Tensor> & y,
+              real64 const dx,
               localIndex const length)
 {
   FORALL( a, 0, length )
@@ -1223,8 +1225,11 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx, geosx::arraySlice1d<R1
 }
 
 //One array present
-void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx, geosx::arraySlice1d<R1Tensor> & y, real64 const dx, 
-              localIndex * const indices, localIndex const length) 
+void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
+              geosx::arraySlice1d<R1Tensor> & y,
+              real64 const dx,
+              localIndex * const indices,
+              localIndex const length)
 {
   FORALL_IN_SET( a, indices, length )
   {
@@ -1235,8 +1240,12 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx, geosx::arraySlice1d<R1
 }
 
 //Three arrays present
-void OnePoint( geosx::arraySlice1d<real64> const & dydx_0, geosx::arraySlice1d<real64> const & dydx_1, geosx::arraySlice1d<real64> const & dydx_2, 
-               geosx::arraySlice1d<R1Tensor> & y, real64 const dx, localIndex const length )
+void OnePoint( geosx::arraySlice1d<real64> const & dydx_0,
+               geosx::arraySlice1d<real64> const & dydx_1,
+               geosx::arraySlice1d<real64> const & dydx_2,
+               geosx::arraySlice1d<R1Tensor> & y,
+               real64 const dx,
+               localIndex const length )
 {  
   FORALL( a, 0, length )
   {
@@ -1246,8 +1255,11 @@ void OnePoint( geosx::arraySlice1d<real64> const & dydx_0, geosx::arraySlice1d<r
   } END_FOR
 }
   
-void OnePoint(geosx::arraySlice1d<R1Tensor> dydx, geosx::arraySlice1d<R1Tensor> dy, geosx::arraySlice1d<R1Tensor> y,
-              real64 const dx, localIndex const length)
+void OnePoint(geosx::arraySlice1d<R1Tensor> dydx,
+              geosx::arraySlice1d<R1Tensor> dy,
+              geosx::arraySlice1d<R1Tensor> y,
+              real64 const dx,
+              localIndex const length)
 {
   FORALL( a, 0, length ) {
     dy[a][0] = dydx[a][0] * dx;

@@ -572,21 +572,21 @@ void FaceManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 }
 
 
-localIndex FaceManager::PackUpDownMapsSize( arrayView1d<localIndex> const & packList ) const
+localIndex FaceManager::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 localIndex FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                 arrayView1d<localIndex> const & packList ) const
+                                        arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template<bool DOPACK>
 localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                        arrayView1d<localIndex> const & packList ) const
+                                               arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
@@ -617,7 +617,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                 arrayView1d<localIndex> const & packList )
+                                          arrayView1d<localIndex const> const & packList )
 {
   localIndex unPackedSize = 0;
 
@@ -626,20 +626,20 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                         m_nodeList,
-                                         packList,
-                                         this->m_globalToLocalMap,
-                                         m_nodeList.RelatedObjectGlobalToLocal() );
+                                     m_nodeList,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_nodeList.RelatedObjectGlobalToLocal() );
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
   GEOS_ERROR_IF( edgeListString != viewKeyStruct::edgeListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                         m_edgeList,
-                                         packList,
-                                         this->m_globalToLocalMap,
-                                         m_edgeList.RelatedObjectGlobalToLocal() );
+                                     m_edgeList,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_edgeList.RelatedObjectGlobalToLocal() );
 
 
   string elementListString;
