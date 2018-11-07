@@ -75,8 +75,8 @@ void Box::FillDocumentationNode()
 
 void Box::ReadXML_PostProcess()
 {
-  m_min = *(this->getData<R1Tensor>(viewKeys.xmin));
-  m_max = *(this->getData<R1Tensor>(viewKeys.xmax));
+  m_min = this->getReference<R1Tensor>(viewKeys.xmin);
+  m_max = this->getReference<R1Tensor>(viewKeys.xmax);
 }
 
 //void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )

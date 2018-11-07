@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.9)
 project(geosx LANGUAGES C CXX)
 set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
+set(CMAKE_ENABLE_EXPORTS ON)
 
 ################################
 # Include blt
@@ -91,9 +92,6 @@ blt_add_executable(NAME geosx
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
-
-
-
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 

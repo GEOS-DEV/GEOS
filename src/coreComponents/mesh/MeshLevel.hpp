@@ -48,7 +48,7 @@ public:
                                localIndex_array & nodeAdjacencyList,
                                localIndex_array & edgeAdjacencyList,
                                localIndex_array & faceAdjacencyList,
-                               ElementRegionManager::ElementViewAccessor<localIndex_array> & elementAdjacencyList,
+                               ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>> & elementAdjacencyList,
                                integer const depth );
 
   struct viewStructKeys

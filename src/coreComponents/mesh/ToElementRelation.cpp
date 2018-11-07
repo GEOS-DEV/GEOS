@@ -25,7 +25,6 @@
 
 #include "ToElementRelation.hpp"
 
-#include "../dataRepository/BufferOps.hpp"
 #include "ElementRegionManager.hpp"
 
 namespace geosx

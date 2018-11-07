@@ -28,75 +28,30 @@
 
 namespace geosx
 {
-void IncrementalKinematics( const R2TensorT<3>& A,
-                            R2SymTensorT<3>& Dadt,
-                            R2TensorT<3>& Rhat );
+void IncrementalKinematics( const R2Tensor& A,
+                            R2SymTensor& Dadt,
+                            R2Tensor& Rhat );
 
-void IncrementalRotation( const R2TensorT<3>& A,
+void IncrementalRotation( const R2Tensor& A,
                           R2TensorT<3>& Rot );
 
-inline void CalculateGradient( R2TensorT<3>& Gradient,
+inline void CalculateGradient( R2Tensor& Gradient,
                                const int* bConnectivity,
-                               const array1d<R1TensorT<3> >& disp,
-                               const array1d<R1TensorT<3> >& dNdX )
-
+                               arraySlice1d<R1Tensor> const & disp,
+                               arraySlice1d<R1Tensor> const & dNdX )
 {
   Gradient = 0.0;
-  for( int a=0 ; a<8 ; ++a )
-    Gradient.plus_dyadic_ab( disp(bConnectivity[a]), dNdX(a));
-
-}
-
-inline void CalculateGradient( R2Tensor& Gradient,
-                               const array1d<R1Tensor >& disp,
-                               const array1d<R1Tensor >& dNdX )
-
-{
-  //Gradient = 0.0;
-  //for( int a=1 ; a<=8 ; ++a )
-  //Gradient.plus_dyadic_ab( disp(bConnectivity[a-1]) , dNdX(a));
-
-  assert( disp.size() == dNdX.size() );
-
-  Gradient.dyadic_ab( disp(0), dNdX(0) );
-  for( auto a=1 ; a<disp.size() ; ++a )
-  {
-    Gradient.plus_dyadic_ab( disp(a), dNdX(a) );
-  }
-}
-
-inline void CalculateGradient( R2Tensor& Gradient,
-                               const array1d<R1Tensor >& disp,
-                               const R1Tensor* const dNdX )
-
-{
-
-  Gradient.dyadic_ab( disp(0), dNdX[0] );
-  for( auto a=1 ; a<disp.size() ; ++a )
-  {
-    Gradient.plus_dyadic_ab( disp(a), dNdX[a] );
-  }
-}
-
-
-inline void CalculateGradient(R2Tensor& Gradient, const R1Tensor * disp,
-                              const multidimensionalArray::ArrayView<R1Tensor, 1, geosx::localIndex> dNdX,
-                              const localIndex numNodes)
-{
-  Gradient.dyadic_ab( disp[0], dNdX[0] );
-  for( auto a=1 ; a<numNodes ; ++a )
-  {
-    Gradient.plus_dyadic_ab( disp[a], dNdX[a] );
-  }
+  for( localIndex a=0 ; a<8 ; ++a )
+    Gradient.plus_dyadic_ab( disp[bConnectivity[a]], dNdX[a]);
 }
 
 inline void CalculateGradient(R2Tensor& Gradient,
-                              const R1Tensor * disp,
-                              const R1TensorT<3> * dNdX,
-                              const localIndex numNodes)
+                              arraySlice1d<R1Tensor const> const & disp,
+                              arraySlice1d<R1Tensor const> const & dNdX,
+                              localIndex numNodes)
 {
   Gradient.dyadic_ab( disp[0], dNdX[0] );
-  for( auto a=1 ; a<numNodes ; ++a )
+  for( localIndex a=1 ; a<numNodes ; ++a )
   {
     Gradient.plus_dyadic_ab( disp[a], dNdX[a] );
   }
@@ -104,8 +59,8 @@ inline void CalculateGradient(R2Tensor& Gradient,
 
 template< int N >
 inline void CalculateGradient(R2Tensor& Gradient,
-                              const R1Tensor * disp,
-                              const R1TensorT<3> * dNdX )
+                              arraySlice1d<R1Tensor const> const & disp,
+                              arraySlice1d<R1Tensor const> const & dNdX )
 {
   Gradient.dyadic_ab( disp[0], dNdX[0] );
   for( auto a=1 ; a<N ; ++a )
@@ -117,9 +72,9 @@ inline void CalculateGradient(R2Tensor& Gradient,
 template< int N >
 inline void CalculateGradients( R2Tensor& Gradient0,
                                 R2Tensor& Gradient1,
-                                R1Tensor const * restrict const var0,
-                                R1Tensor const * restrict const var1,
-                                R1TensorT<3> const * restrict const dNdX )
+                                arraySlice1d<R1Tensor const> const & var0,
+                                arraySlice1d<R1Tensor const> const & var1,
+                                arraySlice1d<R1Tensor const> const & dNdX )
 {
   Gradient0.dyadic_ab( var0[0], dNdX[0] );
   Gradient1.dyadic_ab( var1[0], dNdX[0] );
@@ -129,14 +84,6 @@ inline void CalculateGradients( R2Tensor& Gradient0,
     Gradient1.plus_dyadic_ab( var1[a], dNdX[a] );
   }
 }
-void CalculatePhantomGradient( R2TensorT<3>& Gradient,
-                               const int* bConnectivity,
-                               const array1d<R1TensorT<3> >& disp,
-                               const array2d<R1TensorT<3> >& dNdX );
-
-
-//*****************************************************************************
-
 
 }
 

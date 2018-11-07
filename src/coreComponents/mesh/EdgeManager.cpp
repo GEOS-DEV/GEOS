@@ -710,27 +710,27 @@ void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
 
 
 
-localIndex EdgeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex EdgeManager::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 localIndex EdgeManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                        localIndex_array const & packList ) const
+                                        arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template<bool DOPACK>
 localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               localIndex_array const & packList ) const
+                                               arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toNodesRelation,
+                                         m_toNodesRelation.Base(),
                                          packList,
                                          m_localToGlobalMap,
                                          m_toNodesRelation.RelatedObjectLocalToGlobal() );
@@ -738,7 +738,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toFacesRelation,
+                                         m_toFacesRelation.Base(),
                                          packList,
                                          m_localToGlobalMap,
                                          m_toFacesRelation.RelatedObjectLocalToGlobal() );
@@ -750,7 +750,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array const & packList )
+                                          arrayView1d<localIndex const> const & packList )
 {
   localIndex unPackedSize = 0;
 

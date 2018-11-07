@@ -305,7 +305,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
   m_regionNames = this->getReference<string_array>(keys::cellBlockNames);
   m_elementType = this->getReference<string_array>(keys::elementTypes);
-  m_trianglePattern = *(this->getData<integer>(keys::trianglePattern));
+  m_trianglePattern = this->getReference<integer>(keys::trianglePattern);
 
 
 
@@ -341,7 +341,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     if (m_elementType.size() == 1)
     {
       m_elementType.resize(m_numElePerBox.size());
-      for( size_t i=1 ; i< m_elementType.size() ; ++i )
+      for( localIndex i=1 ; i< m_elementType.size() ; ++i )
       {
         m_elementType[i] = m_elementType[0];
       }
@@ -395,7 +395,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
       if (m_regionNames.size() == 1)
       {
         m_regionNames.resize(numBlocks);
-        for( size_t i=1 ; i< m_elementType.size() ; ++i )
+        for( localIndex i=1 ; i< m_elementType.size() ; ++i )
         {
           m_regionNames[i] = m_regionNames[0];
         }
@@ -681,7 +681,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   nodeManager->resize( numNodes );
-  view_rtype<r1_array> X = nodeManager->getData<r1_array>( keys::referencePositionString );
+  r1_array& X = nodeManager->getReference<r1_array>( keys::referencePositionString );
 
   {
     localIndex localNodeIndex = 0;
