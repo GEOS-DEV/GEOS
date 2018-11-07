@@ -42,7 +42,7 @@ namespace bufferOps
    * @return
    */
   template< bool DO_PACKING, typename T >
-  static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Pack( char*&  buffer, T const & var )
   {
     localIndex const sizeOfPackedChars = sizeof(T);
@@ -61,7 +61,7 @@ namespace bufferOps
    * @return size (in bytes) of unpacked data
    */
   template< typename T>
-  static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Unpack( char const *& buffer, T & var )
   {
     localIndex const sizeOfUnpackedChars = sizeof(T);
@@ -72,7 +72,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-  static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Pack( char*&  buffer, T const * const restrict var, INDEX_TYPE const length )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
@@ -88,8 +88,9 @@ namespace bufferOps
     return sizeOfPackedChars;
   }
 
+
   template< typename T, typename INDEX_TYPE >
-  static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedLength )
   {
     INDEX_TYPE length;
@@ -105,9 +106,8 @@ namespace bufferOps
   }
 
 
-
   template< bool DO_PACKING >
-  static localIndex Pack( char*& buffer, const std::string& var )
+  localIndex Pack( char*& buffer, const std::string& var )
   {
     string::size_type sizeOfPackedChars = var.size();
 
@@ -128,8 +128,7 @@ namespace bufferOps
   }
 
 
-  inline
-  static localIndex Unpack( char const *& buffer, string& var )
+  inline localIndex Unpack( char const *& buffer, string& var )
   {
     localIndex sizeOfUnpackedChars = 0;
     string::size_type stringsize = 0;
@@ -146,7 +145,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T >
-  static typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
+  typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
   Pack( char*& buffer, T const & var )
   {
     localIndex sizeOfPackedChars = 0;
@@ -156,7 +155,7 @@ namespace bufferOps
 
 
   template< typename T >
-  static typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
+  typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
   Unpack( char const *& buffer, T & var )
   {
     localIndex sizeOfUnpackedChars = 0;
@@ -167,10 +166,8 @@ namespace bufferOps
   }
 
 
-
-
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-  static typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
   Pack( char*&  buffer, T const * const restrict var, INDEX_TYPE const length )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
@@ -184,9 +181,8 @@ namespace bufferOps
   }
 
 
-
   template< typename T, typename INDEX_TYPE >
-  static typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
   Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedLength )
   {
     INDEX_TYPE length;
@@ -205,7 +201,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-  static localIndex
+  localIndex
   Pack( char*&  buffer,
         T const * const restrict var,
         arraySlice1d<INDEX_TYPE const> const & indices,
@@ -223,7 +219,7 @@ namespace bufferOps
 
 
   template< typename T, typename INDEX_TYPE >
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           T * const restrict var,
           arraySlice1d<INDEX_TYPE const> const & indices,
@@ -243,7 +239,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-  static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Pack( char*& buffer,
         arraySlice1d<T> const & var,
         INDEX_TYPE const length )
@@ -268,7 +264,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-  static typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
   Pack( char*& buffer,
         arraySlice1d<T> const & var,
         INDEX_TYPE const length )
@@ -285,7 +281,7 @@ namespace bufferOps
 
 
   template< typename T, typename INDEX_TYPE >
-  static typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Unpack( char const *& buffer,
           arraySlice1d<T> & var,
           INDEX_TYPE const expectedLength )
@@ -309,7 +305,7 @@ namespace bufferOps
 
 
   template< typename T, typename INDEX_TYPE >
-  static typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
+  typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
   Unpack( char const *& buffer,
           arraySlice1d<T> & var,
           INDEX_TYPE const expectedLength )
@@ -330,7 +326,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-  static localIndex
+  localIndex
   Pack( char*&  buffer, arraySlice1d<T> const & var, arraySlice1d<INDEX_TYPE> const & indices, INDEX_TYPE const length )
   {
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
@@ -345,7 +341,7 @@ namespace bufferOps
 
 
   template< typename T, typename INDEX_TYPE >
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           arraySlice1d<T> & var,
           arraySlice1d<INDEX_TYPE> const & indices,
@@ -367,7 +363,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T >
-  static localIndex Pack( char *& buffer, set<T> const & var )
+  localIndex Pack( char *& buffer, set<T> const & var )
   {
     const localIndex length = integer_conversion<localIndex>(var.size());
     localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );;
@@ -382,7 +378,7 @@ namespace bufferOps
 
 
   template< typename T>
-  static localIndex Unpack( char const *& buffer, set<T> & var )
+  localIndex Unpack( char const *& buffer, set<T> & var )
   {
     var.clear();
 
@@ -400,7 +396,7 @@ namespace bufferOps
   }
 
   template< bool DO_PACKING >
-  static localIndex Pack( char *& buffer,
+  localIndex Pack( char *& buffer,
                           set<localIndex> const & var,
                           arraySlice1d<globalIndex const> const & localToGlobal )
   {
@@ -416,7 +412,7 @@ namespace bufferOps
   }
 
   inline
-  static localIndex Unpack( char const *& buffer,
+  localIndex Unpack( char const *& buffer,
                             set<localIndex> & var,
                             map<globalIndex,localIndex> const & globalToLocalMap )
   {
@@ -443,9 +439,8 @@ namespace bufferOps
   }
 
 
-
   template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
-  static typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
+  typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
   Pack( char*& buffer,
         LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var )
   {
@@ -462,7 +457,7 @@ namespace bufferOps
 
 
   template< typename T, int NDIM, typename INDEX_TYPE >
-  static typename std::enable_if< bufferOps::is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
+  typename std::enable_if< bufferOps::is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
   Unpack( char const *& buffer, LvArray::Array<T,NDIM,INDEX_TYPE> & var )
   {
     INDEX_TYPE dims[NDIM];
@@ -487,7 +482,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
-  static typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
+  typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
   Pack( char*& buffer,
         LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var,
         const T_indices& indices )
@@ -503,7 +498,7 @@ namespace bufferOps
 
 
   template< typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
-  static localIndex
+  localIndex
   Unpack( char const *& buffer, LvArray::ArrayView<T,NDIM,INDEX_TYPE> & var, const T_indices& indices )
   {
     INDEX_TYPE strides[NDIM];
@@ -525,7 +520,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING >
-  static localIndex
+  localIndex
   Pack( char*& buffer,
         arraySlice1d<localIndex const> const & var,
         localIndex const length,
@@ -551,7 +546,7 @@ namespace bufferOps
 
 
   inline
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           localIndex_array & var,
           map<globalIndex,localIndex> const & globalToLocalMap )
@@ -572,7 +567,7 @@ namespace bufferOps
 
 
   inline
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           arraySlice1d<localIndex> & var,
           localIndex const expectedLength,
@@ -598,7 +593,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING >
-  static localIndex
+  localIndex
   Pack( char*& buffer,
         arrayView1d<localIndex_array const> const & var,
         arrayView1d<localIndex const> const & indices,
@@ -618,8 +613,9 @@ namespace bufferOps
     return sizeOfPackedChars;
   }
 
+
   inline
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           arrayView1d<localIndex_array> & var,
           arrayView1d<localIndex const> const & indices,
@@ -644,8 +640,9 @@ namespace bufferOps
     return sizeOfUnpackedChars;
   }
 
+
   template< bool DO_PACKING >
-  static localIndex
+  localIndex
   Pack( char*& buffer,
         arrayView1d< set<localIndex> const > const & var,
         arrayView1d<localIndex const> const & indices,
@@ -664,8 +661,9 @@ namespace bufferOps
     return sizeOfPackedChars;
   }
 
+
   inline
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           arrayView1d< set<localIndex> > & var,
           arrayView1d<localIndex const> const & indices,
@@ -694,7 +692,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING >
-  static localIndex
+  localIndex
   Pack( char*& buffer,
         arrayView2d<localIndex> const & var,
         arrayView1d<localIndex> const & indices,
@@ -714,7 +712,7 @@ namespace bufferOps
 
 
   inline
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           arrayView2d<localIndex> & var,
           arrayView1d<localIndex> const & indices,
@@ -746,7 +744,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING >
-  static localIndex
+  localIndex
   Pack( char*& buffer,
         arrayView2d<localIndex const> const & var,
         arrayView1d<localIndex const> const & indices,
@@ -769,7 +767,7 @@ namespace bufferOps
 
 
   inline
-  static localIndex
+  localIndex
   Unpack( char const *& buffer,
           arrayView2d<localIndex> & var,
           arrayView1d<localIndex const> const & indices,
@@ -802,9 +800,8 @@ namespace bufferOps
   }
 
 
-
   template< bool DO_PACKING, typename T_KEY, typename T_VAL >
-  static typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value, localIndex >::type
+  typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value, localIndex >::type
   Pack( char*& buffer, map<T_KEY, T_VAL> const & var )
   {
     const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
@@ -819,8 +816,9 @@ namespace bufferOps
     return sizeOfPackedChars;
   }
 
+
   template< typename T_KEY, typename T_VAL >
-  static typename std::enable_if< bufferOps::is_packable_map< map<T_KEY,T_VAL> >::value, localIndex >::type
+  typename std::enable_if< bufferOps::is_packable_map< map<T_KEY,T_VAL> >::value, localIndex >::type
   Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map )
   {
     map.clear();
@@ -841,8 +839,9 @@ namespace bufferOps
     return sizeOfUnpackedChars;
   }
 
+
   template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
-  static typename std::enable_if< bufferOps::is_packable_map< map<T_KEY, T_VAL> >::value && bufferOps::is_packable_by_index<T_VAL>::value, localIndex >::type
+  typename std::enable_if< bufferOps::is_packable_map< map<T_KEY, T_VAL> >::value && bufferOps::is_packable_by_index<T_VAL>::value, localIndex >::type
   Pack( char*& buffer, std::map<T_KEY,T_VAL> const & var, T_INDICES const & packIndices )
   {
     const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
@@ -857,8 +856,9 @@ namespace bufferOps
     return sizeOfPackedChars;
   }
 
+
   template< typename T_KEY, typename T_VAL, typename T_INDICES >
-  static typename std::enable_if< bufferOps::is_packable_map< map<T_KEY,T_VAL> >::value && bufferOps::is_packable_by_index<T_VAL>::value, localIndex >::type
+  typename std::enable_if< bufferOps::is_packable_map< map<T_KEY,T_VAL> >::value && bufferOps::is_packable_by_index<T_VAL>::value, localIndex >::type
   Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map, T_INDICES const & unpackIndices )
   {
     map.clear();
@@ -881,7 +881,7 @@ namespace bufferOps
 
 
   template< typename... VARPACK >
-  static localIndex
+  localIndex
   PackSize( VARPACK const &&...  pack )
   {
     char* junk = nullptr;
@@ -890,7 +890,7 @@ namespace bufferOps
 
 
   template< typename... VARPACK >
-  static localIndex
+  localIndex
   PackSize( VARPACK &&...  pack )
   {
     char* junk = nullptr;
@@ -899,7 +899,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T >
-  static typename std::enable_if< !bufferOps::is_packable<T>::value, localIndex >::type
+  typename std::enable_if< !bufferOps::is_packable<T>::value, localIndex >::type
   Pack( char*&  buffer, T const & var )
   {
     GEOS_ERROR("Trying to pack data type ("<<typeid(T).name()<<") but type is not packable.");
@@ -908,7 +908,7 @@ namespace bufferOps
 
 
   template< typename T >
-  static typename std::enable_if< !bufferOps::is_packable<T>::value, localIndex >::type
+  typename std::enable_if< !bufferOps::is_packable<T>::value, localIndex >::type
   Unpack( char const *& buffer, T & var )
   {
     GEOS_ERROR("Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable.");
@@ -917,7 +917,7 @@ namespace bufferOps
 
 
   template< bool DO_PACKING, typename T, typename T_INDICES >
-  static typename std::enable_if< !bufferOps::is_packable_by_index<T>::value, localIndex >::type
+  typename std::enable_if< !bufferOps::is_packable_by_index<T>::value, localIndex >::type
   Pack( char*&  buffer, T const & var, T_INDICES const& )
   {
     GEOS_ERROR("Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index.");
@@ -926,14 +926,14 @@ namespace bufferOps
 
 
   template< typename T, typename T_INDICES >
-  static typename std::enable_if< !bufferOps::is_packable_by_index<T>::value, localIndex >::type
+  typename std::enable_if< !bufferOps::is_packable_by_index<T>::value, localIndex >::type
   Unpack( char const *& buffer, T & var, T_INDICES const& )
   {
     GEOS_ERROR("Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index.");
     return 0;
   }
 
-}
-}
+} /* namespace bufferOps */
+} /* namespace geosx */
 
 #endif /* DATAREPOSITORY_BUFFEROPS_H_ */
