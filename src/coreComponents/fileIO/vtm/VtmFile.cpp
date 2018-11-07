@@ -792,7 +792,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
 
           nodeManager->resize(mesh.NumVertices());
-          arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+          arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
           std::cout << "node Manager pointer : " << nodeManager << std::endl;
           std::cout << "X pointer : " << X[0].Data() << std::endl;
 

@@ -70,7 +70,7 @@ TEST(testGeosxTraits,test_is_string)
 
 TEST(testGeosxTraits,test_is_array)
 {
-  using arrayType = multidimensionalArray::ManagedArray<int,1,int>;
+  using arrayType = LvArray::Array<int,1,int>;
   EXPECT_TRUE( is_array<arrayType >::value );
 
   EXPECT_FALSE( is_array<int>::value );
@@ -118,10 +118,10 @@ TEST(testGeosxTraits,test_is_noncontainer_type_packable)
 
 TEST(testGeosxTraits,test_is_array_packable)
 {
-  using arrayType = multidimensionalArray::ManagedArray<double,2,long int>;
+  using arrayType = LvArray::Array<double,2,long int>;
   EXPECT_TRUE( is_packable_array<arrayType>::value );
 
-  using arrayType0 = multidimensionalArray::ManagedArray<void,1,int>;
+  using arrayType0 = LvArray::Array<void,1,int>;
   EXPECT_FALSE( is_packable_array<arrayType0>::value );
 
   EXPECT_FALSE( is_packable_array<int>::value );
@@ -138,7 +138,7 @@ TEST(testGeosxTraits,test_is_packable_map)
   using mapType1 = map<string,std::pair<int,int> >;
   EXPECT_FALSE( is_packable_map< mapType1 >::value );
 
-  using arrayType = multidimensionalArray::ManagedArray<int,1,int>;
+  using arrayType = LvArray::Array<int,1,int>;
   using mapType2 = map<string,arrayType>;
   EXPECT_TRUE( is_packable_map< mapType2 >::value );
 

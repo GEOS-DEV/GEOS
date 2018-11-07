@@ -59,7 +59,7 @@ void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     std::string childName = childNode.attribute("name").value();
-    BasisBase * basis = this->getData<BasisBase>(childName);
+    BasisBase * basis = this->getPointer<BasisBase>(childName);
 
     if (basis != nullptr)
     {

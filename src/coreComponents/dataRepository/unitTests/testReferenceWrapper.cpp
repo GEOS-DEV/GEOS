@@ -32,7 +32,7 @@
 #endif
 
 #include "dataRepository/ReferenceWrapper.hpp"
-#include "ManagedArray.hpp"
+#include "Array.hpp"
 
 #include <functional>
 #include <string>
@@ -40,7 +40,7 @@
 #include <vector>
 
 using namespace geosx;
-using namespace multidimensionalArray;
+using namespace LvArray;
 
 TEST(testReferenceWrapper,testIntWrapper)
 {
@@ -64,10 +64,10 @@ TEST(testReferenceWrapper,testIntWrapper)
 
 TEST(testReferenceWrapper,testArrayWrapper)
 {
-  ManagedArray< int, 1 , int > arr;
+  Array< int, 1 , int > arr;
   arr.resize( 4 );
 
-  ReferenceWrapper< ManagedArray< int, 1 , int > > wrappedArr( arr );
+  ReferenceWrapper< Array< int, 1 , int > > wrappedArr( arr );
 
   for( int i=0 ; i<4 ; ++i )
   {
@@ -100,7 +100,7 @@ TEST(testReferenceWrapper,testArrayOfWrappedInts)
 
 TEST(testReferenceWrapper,testOperatorParen)
 {
-  using array2d = ManagedArray< int, 2 , int >;
+  using array2d = Array< int, 2 , int >;
   array2d arr;
   arr.resize( 2,3 );
 
@@ -124,7 +124,7 @@ TEST(testReferenceWrapper,testOperatorParen)
 
 TEST(testReferenceWrapper,testNestedOperatorSquare)
 {
-  using array2d = ManagedArray< int, 2 , int >;
+  using array2d = Array< int, 2 , int >;
   array2d arr;
   arr.resize( 2,3 );
 

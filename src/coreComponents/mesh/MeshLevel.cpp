@@ -80,7 +80,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
                                         localIndex_array & faceAdjacencyList,
-                                        ElementRegionManager::ElementViewAccessor<localIndex_array>& elementAdjacencyList,
+                                        ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>>& elementAdjacencyList,
                                         integer const depth )
 {
   NodeManager * const nodeManager = getNodeManager();
@@ -136,18 +136,16 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
         array2d<localIndex> const & elemsToEdges = subRegion->edgeList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
-          localIndex const * const nodeList = elemsToNodes[elementIndex];
           for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
           {
-            nodeAdjacencySet.insert(nodeList[a]);
+            nodeAdjacencySet.insert(elemsToNodes[elementIndex][a]);
           }
 
-          localIndex const * const faceList = elemsToFaces[elementIndex];
           for( localIndex a=0 ; a<elemsToFaces.size(1) ; ++a )
           {
-            faceAdjacencySet.insert(faceList[a]);
+            faceAdjacencySet.insert(elemsToFaces[elementIndex][a]);
 
-            array1d<localIndex> const & edgeList = faceToEdges[faceList[a]];
+            array1d<localIndex> const & edgeList = faceToEdges[elemsToFaces[elementIndex][a]];
             for( localIndex b=0 ; b<edgeList.size() ; ++b )
             {
               edgeAdjacencySet.insert(edgeList[b]);
