@@ -1171,7 +1171,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
-  //AssembleAccumulationTerms( domain, blockSystem, time_n, dt );
+  AssembleAccumulationTerms( domain, blockSystem, time_n, dt );
   AssembleFluxTerms( domain, blockSystem, time_n, dt );
   AssembleVolumeBalanceTerms( domain, blockSystem, time_n, dt );
 

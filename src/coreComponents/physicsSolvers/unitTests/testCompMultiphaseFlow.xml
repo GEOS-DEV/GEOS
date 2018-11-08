@@ -13,7 +13,7 @@
                                  fluidName="fluid1"
                                  solidName="rock"
                                  temperature="297.15"
-                                 useMass="0">
+                                 useMass="1">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"

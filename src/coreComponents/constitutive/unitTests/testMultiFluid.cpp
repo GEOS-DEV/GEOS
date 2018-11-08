@@ -311,12 +311,13 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
   return fluid;
 }
 
-TEST(testMultiFluid, numericalDerivativesCompositionalFluid)
+TEST(testMultiFluid, numericalDerivatives_compositionalFluid_molar)
 {
   auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
   parent->resize( 1 );
 
   MultiFluidBase * fluid = makeCompositionalFluid( "fluid", parent.get() );
+  fluid->setMassFlag( false );
 
   parent->Initialize( parent.get() );
 
@@ -327,7 +328,29 @@ TEST(testMultiFluid, numericalDerivativesCompositionalFluid)
   comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
 
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-5;
+  real64 const tol = 1e-4;
+
+  testNumericalDerivatives( fluid, P, T, comp, eps, tol );
+}
+
+TEST(testMultiFluid, numericalDerivatives_compositionalFluid_mass)
+{
+  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  parent->resize( 1 );
+
+  MultiFluidBase * fluid = makeCompositionalFluid( "fluid", parent.get() );
+  fluid->setMassFlag( true );
+
+  parent->Initialize( parent.get() );
+
+  // TODO test over a range of values
+  real64 const P = 5e6;
+  real64 const T = 297.15;
+  array1d<real64> comp(4);
+  comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const tol = 1e-2;
 
   testNumericalDerivatives( fluid, P, T, comp, eps, tol );
 }
