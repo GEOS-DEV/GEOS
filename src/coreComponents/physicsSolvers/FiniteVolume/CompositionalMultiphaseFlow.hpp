@@ -242,7 +242,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleAccumulationTerms( DomainPartition * const domain,
+  void AssembleAccumulationTerms( DomainPartition const * const domain,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                   real64 const time_n,
                                   real64 const dt );
@@ -254,7 +254,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleFluxTerms( DomainPartition * const domain,
+  void AssembleFluxTerms( DomainPartition const * const domain,
                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
                           real64 const time_n,
                           real64 const dt );
@@ -266,7 +266,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleVolumeBalanceTerms( DomainPartition * const domain,
+  void AssembleVolumeBalanceTerms( DomainPartition const * const domain,
                                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                    real64 const time_n,
                                    real64 const dt );
@@ -359,28 +359,28 @@ private:
    * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
    * @return
    */
-  constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * dataGroup ) const;
+  constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
 
   /**
    * @brief Extract the fluid model used by this solver from a group (const version)
    * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
    * @return
    */
-  constitutive::MultiFluidBase const * GetFluidModel( ManagedGroup const * dataGroup ) const;
+  constitutive::MultiFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
 
   /**
    * @brief Extract the solid model used by this solver from a group
    * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
    * @return
    */
-  constitutive::ConstitutiveBase * GetSolidModel( ManagedGroup * dataGroup ) const;
+  constitutive::ConstitutiveBase * GetSolidModel( ManagedGroup * const dataGroup ) const;
 
   /**
    * @brief Extract the solid model used by this solver from a group (const version)
    * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
    * @return
    */
-  constitutive::ConstitutiveBase const * GetSolidModel( ManagedGroup const * dataGroup ) const;
+  constitutive::ConstitutiveBase const * GetSolidModel( ManagedGroup const * const dataGroup ) const;
 
   /**
    * @brief Resize the allocated multidimensional fields
@@ -389,7 +389,7 @@ private:
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  void ResizeFields( DomainPartition * domain );
+  void ResizeFields( DomainPartition * const domain );
 
   /**
    * @brief Initialize all variables from initial conditions
@@ -399,13 +399,13 @@ private:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void InitializeFluidState( DomainPartition * domain );
+  void InitializeFluidState( DomainPartition * const domain );
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
    */
-  void BackupFields( DomainPartition * domain );
+  void BackupFields( DomainPartition * const domain );
 
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
@@ -444,7 +444,7 @@ private:
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyDirichletBC_implicit( DomainPartition * object,
+  void ApplyDirichletBC_implicit( DomainPartition * const object,
                                   real64 const time, real64 const dt,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
@@ -454,7 +454,7 @@ private:
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyFaceDirichletBC_implicit( DomainPartition * domain,
+  void ApplyFaceDirichletBC_implicit( DomainPartition * const domain,
                                       real64 const time, real64 const dt,
                                       systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
