@@ -614,11 +614,11 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation)
   solver->ImplicitStepSetup( time, dt, domain, system );
 
 //  testNumericalJacobian( solver, domain, system, eps, tol,
-//                         [&] ( CompositionalMultiphaseFlow * solver,
+//                         [&] ( CompositionalMultiphaseFlow * targetSolver,
 //                               DomainPartition * targetDomain,
 //                               EpetraBlockSystem * targetSystem ) -> void
 //                         {
-//                           solver->AssembleAccumulationTerms( targetDomain, targetSystem, time, dt );
+//                           targetSolver->AssembleAccumulationTerms( targetDomain, targetSystem, time, dt );
 //                         });
 }
 
@@ -636,11 +636,11 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
   solver->ImplicitStepSetup( time, dt, domain, system );
 
   testNumericalJacobian( solver, domain, system, eps, tol,
-                         [&] ( CompositionalMultiphaseFlow * solver,
+                         [&] ( CompositionalMultiphaseFlow * targetSolver,
                                DomainPartition * targetDomain,
                                EpetraBlockSystem * targetSystem ) -> void
                          {
-                           solver->AssembleFluxTerms( targetDomain, targetSystem, time, dt );
+                           targetSolver->AssembleFluxTerms( targetDomain, targetSystem, time, dt );
                          });
 }
 
@@ -658,11 +658,11 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance)
   solver->ImplicitStepSetup( time, dt, domain, system );
 
   testNumericalJacobian( solver, domain, system, eps, tol,
-                         [&] ( CompositionalMultiphaseFlow * solver,
+                         [&] ( CompositionalMultiphaseFlow * targetSolver,
                                DomainPartition * targetDomain,
                                EpetraBlockSystem * targetSystem ) -> void
                          {
-                           solver->AssembleVolumeBalanceTerms( targetDomain, targetSystem, time, dt );
+                           targetSolver->AssembleVolumeBalanceTerms( targetDomain, targetSystem, time, dt );
                          });
 }
 
