@@ -94,22 +94,37 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    // input data
+    static constexpr auto referencePorosityString = "referencePorosity";
+    static constexpr auto permeabilityString      = "permeability";
+
+    // gravity term precomputed values
+    static constexpr auto gravityFlagString  = "gravityFlag";
+    static constexpr auto gravityDepthString = "gravityDepth";
+
+    // misc inputs
+    static constexpr auto discretizationString = "discretization";
+    static constexpr auto fluidNameString      = "fluidName";
+    static constexpr auto solidNameString      = "solidName";
+    static constexpr auto fluidIndexString     = "fluidIndex";
+    static constexpr auto solidIndexString     = "solidIndex";
+
     using ViewKey = dataRepository::ViewKey;
 
     // input data
-    ViewKey referencePorosity = { "referencePorosity" };
-    ViewKey permeability      = { "permeability" };
+    ViewKey referencePorosity = { referencePorosityString };
+    ViewKey permeability      = { permeabilityString };
 
     // gravity term precomputed values
-    ViewKey gravityFlag  = { "gravityFlag" };
-    ViewKey gravityDepth = { "gravityDepth" };
+    ViewKey gravityFlag  = { gravityFlagString };
+    ViewKey gravityDepth = { gravityDepthString };
 
     // misc inputs
-    ViewKey discretization = { "discretization" };
-    ViewKey fluidName      = { "fluidName" };
-    ViewKey solidName      = { "solidName" };
-    ViewKey fluidIndex     = { "fluidIndex" };
-    ViewKey solidIndex     = { "solidIndex" };
+    ViewKey discretization = { discretizationString };
+    ViewKey fluidName      = { fluidNameString };
+    ViewKey solidName      = { solidNameString };
+    ViewKey fluidIndex     = { fluidIndexString };
+    ViewKey solidIndex     = { solidIndexString };
 
   } viewKeysFlowSolverBase;
 

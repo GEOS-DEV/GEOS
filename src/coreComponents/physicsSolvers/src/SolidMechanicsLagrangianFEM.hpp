@@ -154,15 +154,15 @@ public:
   real64 ElementKernelSelector( localIndex const er,
                                 localIndex const esr,
                                 set<localIndex> const & elementList,
-                                array2d<localIndex> const & elemsToNodes,
-                                array3d< R1Tensor > const & dNdX,
-                                array2d<real64> const & detJ,
-                                r1_array const & u,
-                                r1_array const & uhat,
-                                r1_array & acc,
-                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-                                ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
-                                ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                arrayView2d<localIndex> const & elemsToNodes,
+                                arrayView3d< R1Tensor > const & dNdX,
+                                arrayView2d<real64> const & detJ,
+                                arrayView1d<R1Tensor> const & u,
+                                arrayView1d<R1Tensor> const & uhat,
+                                arrayView1d<R1Tensor> & acc,
+                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
                                 real64 const dt,
                                 localIndex NUM_NODES_PER_ELEM,
                                 localIndex NUM_QUADRATURE_POINTS );
@@ -171,27 +171,27 @@ public:
   real64 ExplicitElementKernel( localIndex const er,
                                 localIndex const esr,
                                 set<localIndex> const & elementList,
-                                array2d<localIndex> const & elemsToNodes,
-                                array3d< R1Tensor > const & dNdX,
-                                array2d<real64> const & detJ,
-                                r1_array const & u,
-                                r1_array const & uhat,
-                                r1_array & acc,
+                                arrayView2d<localIndex> const & elemsToNodes,
+                                arrayView3d< R1Tensor > const & dNdX,
+                                arrayView2d<real64> const & detJ,
+                                arrayView1d<R1Tensor> const & u,
+                                arrayView1d<R1Tensor> const & uhat,
+                                arrayView1d<R1Tensor> & acc,
                                 ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-                                ElementRegionManager::MaterialViewAccessor< array2d<real64> > meanStress,
-                                ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> > devStress,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
                                 real64 const dt );
 
 
   realT CalculateElementResidualAndDerivative( real64 const density,
                                                FiniteElementBase const * const fe,
-                                               const array_view<R1Tensor,2>& dNdX,
-                                               const realT* const detJ,
+                                               arraySlice2d<R1Tensor const> const& dNdX,
+                                               arraySlice1d<realT const> const& detJ,
                                                R2SymTensor const * const refStress,
-                                               array1d<R1Tensor> const & u,
-                                               array1d<R1Tensor> const & uhat,
-                                               array1d<R1Tensor> const & uhattilde,
-                                               array1d<R1Tensor> const & vtilde,
+                                               r1_array const& u,
+                                               r1_array const& uhat,
+                                               r1_array const& uhattilde,
+                                               r1_array const& vtilde,
                                                realT const dt,
                                                Epetra_SerialDenseMatrix& dRdU,
                                                Epetra_SerialDenseVector& R,
@@ -232,8 +232,6 @@ public:
     dataRepository::ViewKey trilinosIndex = { "trilinosIndex" };
     dataRepository::ViewKey ghostRank = { "ghostRank" };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-
-
   } solidMechanicsViewKeys;
 
   struct groupKeyStruct
@@ -257,107 +255,7 @@ private:
 
 };
 
-namespace Integration
-{
 
-template<typename T>
-#ifdef USE_CONTAINERARRAY_RETURN_PTR
-void OnePoint( T const * const __restrict__ dydx,
-               T * const __restrict__ dy,
-               T * const __restrict__ y,
-               real64 const dx,
-               localIndex const length )
-#else
-void OnePoint( T const & dydx,
-               T & dy,
-               T & y,
-               real64 const dx,
-               localIndex const length )
-#endif
-{
-
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a){
-      
-    dy[a][0] = dydx[a][0] * dx;
-    dy[a][1] = dydx[a][1] * dx;
-    dy[a][2] = dydx[a][2] * dx;
-    
-    y[a][0] += dy[a][0];
-    y[a][1] += dy[a][1];
-    y[a][2] += dy[a][2];
-    
-  });
-
-}
-
-template<typename T, typename U>
-void OnePoint (U dydx,
-               T dy_1, T dy_2, T dy_3,
-               T y_1, T y_2, T y_3,
-               real64 const dx,
-               localIndex const length)
-{
-  
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
-      
-    dy_1[a] = dydx[a][0] * dx;
-    dy_2[a] = dydx[a][1] * dx;
-    dy_3[a] = dydx[a][2] * dx;
-    
-    y_1[a] += dy_1[a];
-    y_2[a] += dy_2[a];
-    y_3[a] += dy_3[a];
-  });
-  
-}
-
-
-
-template<typename T>
-#ifdef USE_CONTAINERARRAY_RETURN_PTR
-void OnePoint( T const * const __restrict__ dydx,
-               T * const __restrict__ y,
-               real64 const dx,
-               localIndex const length )
-#else
-void OnePoint( T const &  dydx,
-               T & y,
-               real64 const dx,
-               localIndex const length )
-#endif
-{
-
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
-      
-    y[a].plus_cA( dx, dydx[a] );
-    
-    });
-
-}
-
-//Three arrays present
-template<typename T, typename U>
-void OnePoint( T const dydx_0,
-               T const dydx_1,
-               T const dydx_2,
-               U &  y,
-               real64 const dx,
-               localIndex const length )
-{
-  
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
-    //y[a].plus_cA( dx, dydx[a] );
-    y[a][0] += dx*dydx_0[a];
-    y[a][1] += dx*dydx_1[a];
-    y[a][2] += dx*dydx_2[a];
-  });
-
-}
-
-
-
-
-} // namespace integration
 
 } /* namespace geosx */
 

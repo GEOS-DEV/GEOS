@@ -362,11 +362,25 @@ private:
   constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * dataGroup ) const;
 
   /**
+   * @brief Extract the fluid model used by this solver from a group (const version)
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::MultiFluidBase const * GetFluidModel( ManagedGroup const * dataGroup ) const;
+
+  /**
    * @brief Extract the solid model used by this solver from a group
    * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
    * @return
    */
   constitutive::ConstitutiveBase * GetSolidModel( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Extract the solid model used by this solver from a group (const version)
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::ConstitutiveBase const * GetSolidModel( ManagedGroup const * dataGroup ) const;
 
   /**
    * @brief Resize the allocated multidimensional fields

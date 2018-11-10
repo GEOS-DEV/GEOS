@@ -110,12 +110,12 @@ public:
 
   virtual void AssembleSystem( DomainPartition * const domain,
                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time,
+                               real64 const time_n,
                                real64 const dt ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time,
+                                        real64 const time_n,
                                         real64 const dt ) override;
 
   virtual real64
@@ -176,10 +176,15 @@ public:
 
   } viewKeysSinglePhaseFlow;
 
+  viewKeyStruct & viewKeys() { return viewKeysSinglePhaseFlow; }
+  viewKeyStruct const & viewKeys() const { return viewKeysSinglePhaseFlow; }
+
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
   } groupKeysSinglePhaseFlow;
 
+  groupKeyStruct & groupKeys() { return groupKeysSinglePhaseFlow; }
+  groupKeyStruct const & groupKeys() const { return groupKeysSinglePhaseFlow; }
 
 private:
 

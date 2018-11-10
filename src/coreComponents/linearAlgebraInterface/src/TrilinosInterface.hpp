@@ -20,20 +20,20 @@
  * @file TrilinosInterface.hpp
  */
 
-#ifndef SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
-#define SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
+#ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
+#define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 
-#include "EpetraSparseMatrix.hpp"
-#include "EpetraVector.hpp"
 #include "TrilinosSolver.hpp"
+#include "TrilinosSparseMatrix.hpp"
+#include "TrilinosVector.hpp"
+
+namespace geosx
+{
 
 /**
  * \class TrilinosInterface
  * \brief This class holds aliases based on the Trilinos library.
  */
-
-namespace geosx
-{
 
 class TrilinosInterface
 {

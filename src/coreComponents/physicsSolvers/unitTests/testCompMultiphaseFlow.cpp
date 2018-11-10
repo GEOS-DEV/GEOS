@@ -63,15 +63,15 @@ char** global_argv;
 }
 
 template<typename T, int NDIM>
-using array = multidimensionalArray::ManagedArray<T,NDIM,localIndex>;
+using array = LvArray::Array<T,NDIM,localIndex>;
 
 // helper struct to represent a var and its derivatives (always with array views, not pointers)
 template<int DIM>
 struct TestCompositionalVarContainer
 {
-  array_view<real64,DIM>   value; // variable value
-  array_view<real64,DIM>   dPres; // derivative w.r.t. pressure
-  array_view<real64,DIM+1> dComp; // derivative w.r.t. composition
+  array_slice<real64,DIM>   value; // variable value
+  array_slice<real64,DIM>   dPres; // derivative w.r.t. pressure
+  array_slice<real64,DIM+1> dComp; // derivative w.r.t. composition
 };
 
 ::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *,
@@ -109,9 +109,9 @@ void checkDerivative( real64 const & valueEps, real64 const & value, real64 cons
 
 template<int DIM, typename ... Args>
 typename std::enable_if<DIM != 0, void>::type
-checkDerivative( array_view<real64,DIM> const & valueEps,
-                 array_view<real64,DIM> const & value,
-                 array_view<real64,DIM> const & deriv,
+checkDerivative( array_slice<real64,DIM> const & valueEps,
+                 array_slice<real64,DIM> const & value,
+                 array_slice<real64,DIM> const & deriv,
                  real64 eps, real64 relTol,
                  string const & name, string const & var,
                  string_array const & labels,
@@ -128,15 +128,16 @@ checkDerivative( array_view<real64,DIM> const & valueEps,
 
 // invert compositional derivative array layout to move innermost slice on the top
 // (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
-template<int DIM>
-array<real64,DIM> invertLayout( array_view<real64,DIM> const & input )
+array<real64,1> invertLayout( array_slice<real64,1> const & input )
 {
-  array<real64,DIM> output(input);
+  array<real64,1> output(input.size(0));
+  for (int i = 0; i < input.size(0); ++i)
+    output[i] = input[i];
+
   return output;
 }
 
-template<>
-array<real64,2> invertLayout( array_view<real64,2> const & input )
+array<real64,2> invertLayout( array_slice<real64,2> const & input )
 {
   array<real64,2> output(input.size(1), input.size(0));
 
@@ -147,8 +148,7 @@ array<real64,2> invertLayout( array_view<real64,2> const & input )
   return output;
 }
 
-template<>
-array<real64,3> invertLayout( array_view<real64,3> const & input )
+array<real64,3> invertLayout( array_slice<real64,3> const & input )
 {
   array<real64,3> output(input.size(2), input.size(0), input.size(1));
 
@@ -243,13 +243,20 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   auto elemGhostRank =
     elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  auto pres      = elemManager->ConstructViewAccessor<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
-  auto dPres     = elemManager->ConstructViewAccessor<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
-  auto compDens  = elemManager->ConstructViewAccessor<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
-  auto dCompDens = elemManager->ConstructViewAccessor<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+  auto pres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+
+  auto dPres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+
+  auto compDens =
+    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+
+  auto dCompDens =
+    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
   auto blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
+    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );

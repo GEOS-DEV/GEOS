@@ -253,8 +253,8 @@ void LinearElasticIsotropic::FillDocumentationNode()
 
 void LinearElasticIsotropic::ReadXML_PostProcess()
 {
-  real64 & nu = *( getData<real64>( viewKeys().poissonRatio ) );
-  real64 & E  = *( getData<real64>( viewKeys().youngsModulus ) );
+  real64 & nu = getReference<real64>( viewKeys().poissonRatio );
+  real64 & E  = getReference<real64>( viewKeys().youngsModulus );
   real64 & K  = m_bulkModulus0;
   real64 & G  = m_shearModulus0;
 
@@ -342,23 +342,23 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 {
 
   localIndex numberOfMaterialPoints = stateVariables->size();
-  ViewWrapper<real64_array>::rtype_const K = parameters->getData<real64_array>( std::string( "BulkModulus" ));
-  ViewWrapper<real64_array>::rtype_const G = parameters->getData<real64_array>( std::string( "ShearModulus" ));
+  array_view<real64> const & K = parameters->getReference<real64_array>( std::string( "BulkModulus" ));
+  array_view<real64> const & G = parameters->getReference<real64_array>( std::string( "ShearModulus" ));
 
-  ViewWrapper<real64_array>::rtype mean_stress = stateVariables->getData<real64_array>( std::string( "MeanStress" ));
-  ViewWrapper<real64_array>::rtype S11 = stateVariables->getData<real64_array>( std::string( "S11" ));
-  ViewWrapper<real64_array>::rtype S22 = stateVariables->getData<real64_array>( std::string( "S22" ));
-  ViewWrapper<real64_array>::rtype S33 = stateVariables->getData<real64_array>( std::string( "S33" ));
-  ViewWrapper<real64_array>::rtype S23 = stateVariables->getData<real64_array>( std::string( "S23" ));
-  ViewWrapper<real64_array>::rtype S13 = stateVariables->getData<real64_array>( std::string( "S13" ));
-  ViewWrapper<real64_array>::rtype S12 = stateVariables->getData<real64_array>( std::string( "S12" ));
+  array_view<real64>& mean_stress = stateVariables->getReference<real64_array>( std::string( "MeanStress" ));
+  array_view<real64>& S11 = stateVariables->getReference<real64_array>( std::string( "S11" ));
+  array_view<real64>& S22 = stateVariables->getReference<real64_array>( std::string( "S22" ));
+  array_view<real64>& S33 = stateVariables->getReference<real64_array>( std::string( "S33" ));
+  array_view<real64>& S23 = stateVariables->getReference<real64_array>( std::string( "S23" ));
+  array_view<real64>& S13 = stateVariables->getReference<real64_array>( std::string( "S13" ));
+  array_view<real64>& S12 = stateVariables->getReference<real64_array>( std::string( "S12" ));
 
-  ViewWrapper<real64_array>::rtype_const D11 = input->getData<real64_array>( std::string( "D11" ));
-  ViewWrapper<real64_array>::rtype_const D22 = input->getData<real64_array>( std::string( "D22" ));
-  ViewWrapper<real64_array>::rtype_const D33 = input->getData<real64_array>( std::string( "D33" ));
-  ViewWrapper<real64_array>::rtype_const D23 = input->getData<real64_array>( std::string( "D23" ));
-  ViewWrapper<real64_array>::rtype_const D13 = input->getData<real64_array>( std::string( "D13" ));
-  ViewWrapper<real64_array>::rtype_const D12 = input->getData<real64_array>( std::string( "D12" ));
+  array_view<real64> const & D11 = input->getReference<real64_array>( std::string( "D11" ));
+  array_view<real64> const & D22 = input->getReference<real64_array>( std::string( "D22" ));
+  array_view<real64> const & D33 = input->getReference<real64_array>( std::string( "D33" ));
+  array_view<real64> const & D23 = input->getReference<real64_array>( std::string( "D23" ));
+  array_view<real64> const & D13 = input->getReference<real64_array>( std::string( "D13" ));
+  array_view<real64> const & D12 = input->getReference<real64_array>( std::string( "D12" ));
 
   for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
   {
@@ -376,15 +376,15 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 
   if( systemAssembleFlag == 1 )
   {
-    ViewWrapper<real64_array>::rtype K11 = stateVariables->getData<real64_array>( std::string( "K11" ));
-    ViewWrapper<real64_array>::rtype K22 = stateVariables->getData<real64_array>( std::string( "K22" ));
-    ViewWrapper<real64_array>::rtype K33 = stateVariables->getData<real64_array>( std::string( "K33" ));
-    ViewWrapper<real64_array>::rtype K23 = stateVariables->getData<real64_array>( std::string( "K23" ));
-    ViewWrapper<real64_array>::rtype K13 = stateVariables->getData<real64_array>( std::string( "K13" ));
-    ViewWrapper<real64_array>::rtype K12 = stateVariables->getData<real64_array>( std::string( "K12" ));
-    ViewWrapper<real64_array>::rtype K44 = stateVariables->getData<real64_array>( std::string( "K44" ));
-    ViewWrapper<real64_array>::rtype K55 = stateVariables->getData<real64_array>( std::string( "K55" ));
-    ViewWrapper<real64_array>::rtype K66 = stateVariables->getData<real64_array>( std::string( "K66" ));
+    array_view<real64>& K11 = stateVariables->getReference<real64_array>( std::string( "K11" ));
+    array_view<real64>& K22 = stateVariables->getReference<real64_array>( std::string( "K22" ));
+    array_view<real64>& K33 = stateVariables->getReference<real64_array>( std::string( "K33" ));
+    array_view<real64>& K23 = stateVariables->getReference<real64_array>( std::string( "K23" ));
+    array_view<real64>& K13 = stateVariables->getReference<real64_array>( std::string( "K13" ));
+    array_view<real64>& K12 = stateVariables->getReference<real64_array>( std::string( "K12" ));
+    array_view<real64>& K44 = stateVariables->getReference<real64_array>( std::string( "K44" ));
+    array_view<real64>& K55 = stateVariables->getReference<real64_array>( std::string( "K55" ));
+    array_view<real64>& K66 = stateVariables->getReference<real64_array>( std::string( "K66" ));
 
     for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
     {

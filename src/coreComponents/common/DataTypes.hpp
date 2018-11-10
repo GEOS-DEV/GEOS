@@ -40,7 +40,7 @@
 #include "common/GeosxConfig.hpp"
 #include "Macros.hpp"
 #include "Logger.hpp"
-#include "ManagedArray.hpp"
+#include "Array.hpp"
 #include "SortedArray.hpp"
 #include "math/TensorT/TensorT.h"
 
@@ -126,43 +126,55 @@ using buffer_type = std::vector<buffer_unit_type>;
 //***** BEGIN ARRAY TYPEDEFS *****
 
 template< typename T, int NDIM=1 >
-using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
+using array_view = LvArray::ArrayView<T,NDIM,localIndex>;
+
+template< typename T, int NDIM=1 >
+using array_slice = LvArray::ArraySlice<T,NDIM,localIndex>;
 
 template< typename T >
-using array1d = multidimensionalArray::ManagedArray<T,1,localIndex>;
-
-#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
-template< typename T >
-using arrayView1d = multidimensionalArray::ArrayView<T,1,localIndex>;
-#else
-template< typename T >
-using arrayView1d = T *;
-
-#endif
+using array1d = LvArray::Array<T,1,localIndex>;
 
 template< typename T >
-using array2d = multidimensionalArray::ManagedArray<T,2,localIndex>;
+using arrayView1d = array_view<T,1>;
 
 template< typename T >
-using arrayView2d = multidimensionalArray::ArrayView<T,2,localIndex>;
+using arraySlice1d = LvArray::ArraySlice1d<T, localIndex>;
 
 template< typename T >
-using array3d = multidimensionalArray::ManagedArray<T,3,localIndex>;
+using array2d = LvArray::Array<T,2,localIndex>;
 
 template< typename T >
-using arrayView3d = multidimensionalArray::ArrayView<T,3,localIndex>;
+using arrayView2d = array_view<T,2>;
 
 template< typename T >
-using array4d = multidimensionalArray::ManagedArray<T,4,localIndex>;
+using arraySlice2d = LvArray::ArraySlice<T, 2, localIndex>;
 
 template< typename T >
-using arrayView4d = multidimensionalArray::ArrayView<T,4,localIndex>;
+using array3d = LvArray::Array<T,3,localIndex>;
 
 template< typename T >
-using array5d = multidimensionalArray::ManagedArray<T,5,localIndex>;
+using arrayView3d = array_view<T,3>;
 
 template< typename T >
-using arrayView5d = multidimensionalArray::ArrayView<T,5,localIndex>;
+using arraySlice3d = LvArray::ArraySlice<T, 3, localIndex>;
+
+template< typename T >
+using array4d = LvArray::Array<T,4,localIndex>;
+
+template< typename T >
+using arrayView4d = LvArray::ArrayView<T,4,localIndex>;
+
+template< typename T >
+using arraySlice4d = LvArray::ArrayView<T,4,localIndex>;
+
+template< typename T >
+using array5d = LvArray::Array<T,5,localIndex>;
+
+template< typename T >
+using arrayView5d = LvArray::ArrayView<T,5,localIndex>;
+
+template< typename T >
+using arraySlice5d = LvArray::ArrayView<T,5,localIndex>;
 
 template< typename T >
 using set = SortedArray<T>;
@@ -182,8 +194,8 @@ using real32_const_array  = array1d<real32 const>;
 using real64_array        = array1d<real64>;
 using real64_const_array  = array1d<real64 const>;
 
-using string_array        = std::vector<string>;
-using string_const_array  = std::vector<string const>;
+using string_array        = array1d<string>;
+using string_const_array  = array1d<string const>;
 
 using localIndex_array        = array1d<localIndex>;
 using localIndex_const_array  = array1d<localIndex const>;

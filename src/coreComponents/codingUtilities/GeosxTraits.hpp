@@ -74,7 +74,7 @@ template<typename>
 struct is_array : std::false_type {};
 
 template< typename T, int NDIM, typename INDEX_TYPE >
-struct is_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> > : std::true_type{};
+struct is_array< LvArray::Array<T,NDIM,INDEX_TYPE> > : std::true_type{};
 
 
 
@@ -121,12 +121,22 @@ template<typename>
 struct is_packable_array : std::false_type {};
 
 template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >
+struct is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> >
 {
   static constexpr bool value = is_noncontainer_type_packable<T>::value;
 };
-template< typename T, int NDIM, typename INDEX_TYPE>
-constexpr bool is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value;
+
+template<typename T, int NDIM, typename INDEX_TYPE>
+struct is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >
+{
+  static constexpr bool value = is_noncontainer_type_packable<T>::value;
+};
+
+template<typename T, int NDIM, typename INDEX_TYPE>
+struct is_packable_array< LvArray::ArraySlice<T,NDIM,INDEX_TYPE> >
+{
+  static constexpr bool value = is_noncontainer_type_packable<T>::value;
+};
 
 
 template<typename>

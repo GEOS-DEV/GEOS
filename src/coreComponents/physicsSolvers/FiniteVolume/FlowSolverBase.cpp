@@ -31,7 +31,6 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 using namespace systemSolverInterface;
-using namespace multidimensionalArray;
 
 FlowSolverBase::FlowSolverBase( std::string const & name,
                                 ManagedGroup * const parent )
@@ -214,11 +213,11 @@ void FlowSolverBase::PrecomputeData(DomainPartition * const domain)
 
   R1Tensor const & gravityVector = getGravityVector();
 
-  auto elemCenter = elemManager->ConstructViewAccessor< r1_array >( CellBlock::
-                                                                    viewKeyStruct::
-                                                                    elementCenterString );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
+    elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor>>( CellBlock::viewKeyStruct::elementCenterString );
 
-  auto gravityDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeysFlowSolverBase.gravityDepth.Key());
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> gravityDepth =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::gravityDepthString);
 
   // Loop over all the elements and calculate element centers, and element volumes
   forAllElemsInMesh( mesh, [&]( localIndex const er,

@@ -362,13 +362,13 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
-      auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+      auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
 
       for( localIndex subRegionIndex=0 ; subRegionIndex<elementRegion->numSubRegions() ; ++subRegionIndex )
       {
         CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();
-        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
@@ -379,13 +379,11 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
         {
           if( elemGhostRank[k] < 0 )
           {
-            localIndex const * const localNodeIndices = elemsToNodes[k];
-
             for( localIndex a=0 ; a<numNodesPerElement ; ++a )
             {
               for(localIndex i=0 ; i<numNodesPerElement ; ++i)
               {
-                elementLocalDofIndex[i] = trilinos_index[localNodeIndices[i]];
+                elementLocalDofIndex[i] = trilinos_index[elemsToNodes[k][i]];
               }
 
               sparsity->InsertGlobalIndices(integer_conversion<int>(elementLocalDofIndex.size()),
@@ -425,14 +423,14 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
     ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second);
-    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
     FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
       CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second );
 
-      multidimensionalArray::ManagedArray< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+      LvArray::Array< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< LvArray::Array< R1Tensor, 3 > >(keys::dNdX);
 
       array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
 
@@ -452,11 +450,9 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       {
         if(elemGhostRank[k] < 0)
         {
-          localIndex const * const local_index = elemsToNodes[k];
-
           for( int a=0 ; a<numNodesPerElement ; ++a)
           {
-            const localIndex n = local_index[a];
+            const localIndex n = elemsToNodes[k][a];
             element_index[a] = integer_conversion<int>(trilinos_index[n]);
           }
 
@@ -480,10 +476,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
               }
 
             }
-//            element_matrix.Print(std::cout);
           }
-
-//          element_matrix.Print(std::cout);
 
           matrix->SumIntoGlobalValues( element_index,
                                        element_matrix);

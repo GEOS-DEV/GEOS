@@ -188,11 +188,12 @@ void EventManager::CreateChild( string const & childKey, string const & childNam
 
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
-  real64& time = *(this->getData<real64>(viewKeys.time));
-  real64& dt = *(this->getData<real64>(viewKeys.dt));
-  integer& cycle = *(this->getData<integer>(viewKeys.cycle));
-  integer& currentSubEvent = *(this->getData<integer>(viewKeys.currentSubEvent));
-  real64& currentMaxDt = *(this->getData<real64>(viewKeys.currentMaxDt));
+  GEOSX_MARK_FUNCTION;
+  real64& time = this->getReference<real64>(viewKeys.time);
+  real64& dt = this->getReference<real64>(viewKeys.dt);
+  integer& cycle = this->getReference<integer>(viewKeys.cycle);
+  integer& currentSubEvent = this->getReference<integer>(viewKeys.currentSubEvent);
+  real64& currentMaxDt = this->getReference<real64>(viewKeys.currentMaxDt);
   real64 const maxTime = this->getReference<real64>(viewKeys.maxTime);
   integer const maxCycle = this->getReference<integer>(viewKeys.maxCycle);
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
@@ -287,27 +288,32 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     // Reset the subevent counter
     currentSubEvent = 0;
 
-    #if USE_MPI
-      send_buffer[0] = dt;
-      send_buffer[1] = static_cast<real64>(exitFlag);
-      MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#ifdef GEOSX_USE_MPI
+//    MPI_Barrier(MPI_COMM_GEOSX);
+    GEOSX_MARK_BEGIN("EventManager::MPI calls");
 
-      if (rank == 0)
-      {
-        for (integer ii=0; ii<comm_size; ii++)
-        {
-          send_buffer[0] = std::min(send_buffer[0], receive_buffer[2*ii]);
-          send_buffer[1] += receive_buffer[2*ii + 1]; 
-        }
-      }
+    send_buffer[0] = dt;
+    send_buffer[1] = static_cast<real64>(exitFlag);
+    MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX);
 
-      MPI_Bcast(send_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-      dt = send_buffer[0];
-      if (send_buffer[1] > 0.5)
+    if (rank == 0)
+    {
+      for (integer ii=0; ii<comm_size; ii++)
       {
-        exitFlag = 1;
+        send_buffer[0] = std::min(send_buffer[0], receive_buffer[2*ii]);
+        send_buffer[1] += receive_buffer[2*ii + 1];
       }
-    #endif
+    }
+
+    MPI_Bcast(send_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX);
+    dt = send_buffer[0];
+    if (send_buffer[1] > 0.5)
+    {
+      exitFlag = 1;
+    }
+    GEOSX_MARK_END("EventManager::MPI calls");
+
+#endif
   }
 
   // Cleanup
