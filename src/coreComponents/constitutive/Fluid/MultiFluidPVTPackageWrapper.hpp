@@ -58,7 +58,7 @@ public:
 
   virtual void StateUpdatePointMultiFluid( real64 const & pres,
                                            real64 const & temp,
-                                           arraySlice1d<real64> const & composition,
+                                           arraySlice1d<real64 const> const & composition,
                                            localIndex const k,
                                            localIndex const q ) override;
 

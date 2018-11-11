@@ -62,7 +62,7 @@ public:
 
   // RelPerm-specific interface
 
-  virtual void StateUpdatePointRelPerm( arraySlice1d<real64> const & phaseVolFraction ) {}
+  virtual void StateUpdatePointRelPerm( arraySlice1d<real64 const > const & phaseVolFraction ) {}
 
   localIndex numFluidPhases() const;
 
