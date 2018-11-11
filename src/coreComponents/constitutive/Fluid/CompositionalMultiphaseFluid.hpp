@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPOSITIONALMULTIPHASEFLUID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPOSITIONALMULTIPHASEFLUID_HPP_
 
-#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/Fluid/MultiFluidPVTPackageWrapper.hpp"
 
 namespace PVTPackage
 {
@@ -43,7 +43,7 @@ string const compositionalMultiphaseFluid = "CompositionalMultiphaseFluid";
 namespace constitutive
 {
 
-class CompositionalMultiphaseFluid : public MultiFluidBase
+class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
@@ -58,31 +58,17 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override final {}
-
   virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
-
-  virtual void StateUpdatePointMultiphaseFluid(real64 const & pres,
-                                               real64 const & temp,
-                                               real64 const * composition,
-                                               localIndex const k,
-                                               localIndex const q) override;
-
-  struct viewKeyStruct : MultiFluidBase::viewKeyStruct
+  struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
     static constexpr auto equationsOfStateString = "equationsOfState";
 
     static constexpr auto componentCriticalPressureString    = "componentCriticalPressure";
     static constexpr auto componentCriticalTemperatureString = "componentCriticalTemperature";
     static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
-    static constexpr auto componentMolarWeightString         = "componentMolarWeight";
     static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
     static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
     
@@ -93,15 +79,14 @@ public:
     ViewKey componentCriticalPressure    = { componentCriticalPressureString };
     ViewKey componentCriticalTemperature = { componentCriticalTemperatureString };
     ViewKey componentAcentricFactor      = { componentAcentricFactorString };
-    ViewKey componentMolarWeight         = { componentMolarWeightString };
     ViewKey componentVolumeShift         = { componentVolumeShiftString };
     ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
 
-  } viewKeys;
+  } viewKeysCompositionalMultiphaseFluid;
 
 private:
 
-  void createFluid();
+  void createFluid() override;
 
   // names of equations of state to use for each phase
   string_array m_equationsOfState;
@@ -110,12 +95,8 @@ private:
   array1d<real64> m_componentCriticalPressure;
   array1d<real64> m_componentCriticalTemperature;
   array1d<real64> m_componentAcentricFactor;
-  array1d<real64> m_componentMolarWeight;
   array1d<real64> m_componentVolumeShift;
   array2d<real64> m_componentBinaryCoeff;
-
-  // PVTPackage fluid object
-  PVTPackage::CompositionalMultiphaseSystem * m_fluid;
 
 };
 

@@ -142,11 +142,6 @@ public:
     array2d<real64> * restrict m_meanStress = nullptr;
   } m_dataPointers;
 
-  virtual void PoreVolumeMultiplierCompute(real64 const & pres,
-                                           localIndex const i,
-                                           real64 & poro,
-                                           real64 & dPVMult_dPres) override final;
-
   virtual void StateUpdatePointPressure(real64 const & pres,
                                         localIndex const k,
                                         localIndex const q) override final;

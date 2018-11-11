@@ -119,14 +119,6 @@ void PoreVolumeCompressibleSolid::ReadXML_PostProcess()
   }
 }
 
-void PoreVolumeCompressibleSolid::PoreVolumeMultiplierCompute(real64 const & pres,
-                                                              localIndex const i,
-                                                              real64 & poro,
-                                                              real64 & dPVMult_dPres)
-{
-  m_poreVolumeRelation.Compute( pres, poro, dPVMult_dPres );
-}
-
 void PoreVolumeCompressibleSolid::FinalInitializationPreSubGroups( ManagedGroup *const parent )
 {
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );

@@ -17,7 +17,7 @@
  */
 
 /**
-  * @file CompositionalMultiphaseFluid.hpp
+  * @file MultiFluidBase.hpp
   */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_MULTIFLUIDBASE_HPP
@@ -85,8 +85,9 @@ class MultiFluidBase : public ConstitutiveBase
 {
 public:
 
-  // define a limit on number of components (used for optimization purposes)
+  // define a limit on number of components
   static constexpr localIndex MAX_NUM_COMPONENTS = 32;
+  static constexpr localIndex MAX_NUM_PHASES = 4;
 
   MultiFluidBase( std::string const & name, ManagedGroup * const parent );
 
@@ -99,7 +100,18 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
+                            dataRepository::ManagedGroup const * const parameters,
+                            dataRepository::ManagedGroup * const stateVariables,
+                            integer const systemAssembleFlag ) const override {}
+
   // *** MultiphaseFluid-specific interface
+
+  virtual void StateUpdatePointMultiFluid( real64 const & pres,
+                                           real64 const & temp,
+                                           arraySlice1d<real64> const & composition,
+                                           localIndex const k,
+                                           localIndex const q ) {}
 
   localIndex numFluidComponents() const;
 
@@ -115,8 +127,10 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phaseNamesString       = "phaseNames";
-    static constexpr auto componentNamesString   = "componentNames";
+    static constexpr auto componentNamesString       = "componentNames";
+    static constexpr auto componentMolarWeightString = "componentMolarWeight";
+
+    static constexpr auto phaseNamesString     = "phaseNames";
 
     static constexpr auto phaseFractionString                            = "phaseFraction";                          // xi_p
     static constexpr auto dPhaseFraction_dPressureString                 = "dPhaseFraction_dPressure";               // dXi_p/dP
@@ -145,8 +159,10 @@ public:
 
     using ViewKey = dataRepository::ViewKey;
 
+    ViewKey componentNames       = { componentNamesString };
+    ViewKey componentMolarWeight = { componentMolarWeightString };
+
     ViewKey phaseNames     = { phaseNamesString };
-    ViewKey componentNames = { componentNamesString };
 
     ViewKey phaseFraction                            = { phaseFractionString };                            // xi_p
     ViewKey dPhaseFraction_dPressure                 = { dPhaseFraction_dPressureString };                 // dXi_p/dP
@@ -181,8 +197,10 @@ protected:
   bool m_useMass;
 
   // general fluid composition information
-  string_array m_phaseNames;
-  string_array m_componentNames;
+  string_array    m_componentNames;
+  array1d<real64> m_componentMolarWeight;
+
+  string_array    m_phaseNames;
 
   array3d<real64> m_phaseFraction;
   array3d<real64> m_dPhaseFraction_dPressure;

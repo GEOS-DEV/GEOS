@@ -699,9 +699,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
   // FORALL( a, 0, dataGroup->size() )
   for( localIndex a = 0; a < dataGroup->size(); ++a )
   {
-    fluid->StateUpdatePointMultiphaseFluid( pres[a] + dPres[a], m_temperature,
-                                            static_cast<real64 const *>(compFrac[a]),
-                                            a, 0 );
+    fluid->StateUpdatePointMultiFluid(pres[a] + dPres[a], m_temperature, compFrac[a], a, 0);
   }//);
 }
 
@@ -1998,9 +1996,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     for (localIndex a : targetSet)
     {
-      fluid->StateUpdatePointMultiphaseFluid( bcPres[a], m_temperature,
-                                              static_cast<real64 const *>(compFrac[a]),
-                                              a, 0 );
+      fluid->StateUpdatePointMultiFluid(bcPres[a], m_temperature, compFrac[a], a, 0);
 
       globalIndex const offset = m_numDofPerCell * dofNumber[a];
       dof[counter] = offset;

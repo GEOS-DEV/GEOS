@@ -64,11 +64,6 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override final {}
 
-  virtual void PoreVolumeMultiplierCompute(real64 const & pres,
-                                           localIndex const i,
-                                           real64 & poro,
-                                           real64 & dPVMult_dPres) override final;
-
   virtual void StateUpdatePointPressure(real64 const & pres,
                                         localIndex const k,
                                         localIndex const q) override final;

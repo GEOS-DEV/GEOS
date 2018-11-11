@@ -101,21 +101,9 @@ public:
                                       real64 & visc,
                                       real64 & dVisc_dPres ) {}
 
-
-  virtual void PoreVolumeMultiplierCompute( real64 const & pres,
-                                            localIndex const i,
-                                            real64 & poro,
-                                            real64 & dPVMult_dPres ) {}
-
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) {}
-
-  virtual void StateUpdatePointMultiphaseFluid( real64 const & pres,
-                                                real64 const & temp,
-                                                real64 const * composition,
-                                                localIndex const k,
-                                                localIndex const q ) {}
 
   virtual void FillDocumentationNode() override = 0;
 

@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BLACKOILFLUID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BLACKOILFLUID_HPP_
 
-#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/Fluid/MultiFluidPVTPackageWrapper.hpp"
 
 namespace PVTPackage
 {
@@ -43,7 +43,7 @@ string const blackOilFluid = "BlackOilFluid";
 namespace constitutive
 {
 
-class BlackOilFluid : public MultiFluidBase
+class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
@@ -58,50 +58,31 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override final {}
-
   virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
-
-  virtual void StateUpdatePointMultiphaseFluid(real64 const & pres,
-                                               real64 const & temp,
-                                               real64 const * composition,
-                                               localIndex const k,
-                                               localIndex const q) override;
-
-  struct viewKeyStruct : MultiFluidBase::viewKeyStruct
+  struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
     static constexpr auto surfaceDensitiesString = "surfaceDensities";
-    static constexpr auto molarWeightsString = "molarWeights";
     static constexpr auto tableFilesString = "tableFiles";
     
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey surfaceDensities = { surfaceDensitiesString };
-    ViewKey molarWeights     = { molarWeightsString };
     ViewKey tableFiles       = { tableFilesString };
 
-  } viewKeys;
+  } viewKeysBlackOilFluid;
 
 private:
 
-  void createFluid();
+  void createFluid() override;
 
   // Black-oil phase/component description
   array1d<real64> m_surfaceDensities;
-  array1d<real64> m_molarWeights;
 
   // Black-oil table filenames
   string_array m_tableFiles;
-
-  // PVTPackage fluid object
-  PVTPackage::BlackOilMultiphaseSystem * m_fluid;
 
 };
 

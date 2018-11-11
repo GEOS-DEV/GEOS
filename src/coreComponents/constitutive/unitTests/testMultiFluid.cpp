@@ -152,7 +152,7 @@ array<real64,3> invertLayout( array_slice<real64,3> const & input )
 void testNumericalDerivatives( MultiFluidBase * fluid,
                                real64 P,
                                real64 T,
-                               array1d<real64> const & composition,
+                               arraySlice1d<real64> const & composition,
                                real64 perturbParameter,
                                real64 relTol )
 {
@@ -162,7 +162,8 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the fluid to run updates on
-  auto fluidCopy = fluid->DeliverClone( "fluidCopy", nullptr );
+  auto fluidCopyPtr = fluid->DeliverClone( "fluidCopy", nullptr );
+  auto fluidCopy = fluidCopyPtr->group_cast<MultiFluidBase *>();
 
   fluid->AllocateConstitutiveData( fluid->getParent(), 1 );
   fluidCopy->AllocateConstitutiveData( fluid->getParent(), 1 );
@@ -215,12 +216,12 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 #undef GET_SOLVER_DATA
 
   // set the fluid state to current
-  fluid->StateUpdatePointMultiphaseFluid( P, T, composition.data(), 0, 0 );
+  fluid->StateUpdatePointMultiFluid(P, T, composition, 0, 0);
 
   // update pressure and check derivatives
   {
     real64 const dP = perturbParameter * (P + perturbParameter);
-    fluidCopy->StateUpdatePointMultiphaseFluid( P + dP, T, composition.data(), 0, 0 );
+    fluidCopy->StateUpdatePointMultiFluid( P + dP, T, composition, 0, 0 );
 
     checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, "phaseFrac", "Pres", phases );
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, "phaseDens", "Pres", phases );
@@ -233,7 +234,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   // update temperature and check derivatives
   {
     real64 const dT = perturbParameter * (T + perturbParameter);
-    fluidCopy->StateUpdatePointMultiphaseFluid( P, T + dT, composition.data(), 0, 0 );
+    fluidCopy->StateUpdatePointMultiFluid( P, T + dT, composition, 0, 0 );
 
     checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, "phaseFrac", "Temp", phases );
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, "phaseDens", "Temp", phases );
@@ -250,11 +251,14 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   auto dTotalDens_dC     = invertLayout(totalDens.dComp);
   auto dPhaseCompFrac_dC = invertLayout(phaseCompFrac.dComp);
 
-  array1d<real64> compNew;
+  array1d<real64> compNew( NC );
   for (localIndex jc = 0; jc < NC; ++jc)
   {
     real64 const dC = perturbParameter * (composition[jc] + perturbParameter);
-    compNew = composition;
+    for (localIndex ic = 0; ic < NC; ++ic)
+    {
+      compNew[ic] = composition[ic];
+    }
     compNew[jc] += dC;
 
     // renormalize
@@ -264,7 +268,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     for (localIndex ic = 0; ic < NC; ++ic)
       compNew[ic] /= sum;
 
-    fluidCopy->StateUpdatePointMultiphaseFluid( P, T, compNew.data(), 0, 0 );
+    fluidCopy->StateUpdatePointMultiFluid( P, T, compNew, 0, 0 );
     string var = "compFrac[" + components[jc] + "]";
 
     checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC.slice(jc), dC, relTol, "phaseFrac", var, phases );
@@ -280,6 +284,16 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
 {
   auto fluid = parent->RegisterGroup<CompositionalMultiphaseFluid>( name );
 
+  // TODO we should actually create a fake XML node with data, but this seemed easier...
+
+  auto & compNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
+  compNames.resize( 4 );
+  compNames[0] = "N2"; compNames[1] = "C10"; compNames[2] = "C20"; compNames[3] = "H20";
+
+  auto & molarWgt = fluid->getReference<array1d<real64>>( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  molarWgt.resize( 4 );
+  molarWgt[0] = 28e-3; molarWgt[1] = 134e-3; molarWgt[2] = 275e-3; molarWgt[3] = 18e-3;
+
   auto & phaseNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
@@ -287,10 +301,6 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
   auto & eqnOfState = fluid->getReference<string_array>( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString );
   eqnOfState.resize( 2 );
   eqnOfState[0] = "PR"; eqnOfState[1] = "PR";
-
-  auto & compNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
-  compNames.resize( 4 );
-  compNames[0] = "N2"; compNames[1] = "C10"; compNames[2] = "C20"; compNames[3] = "H20";
 
   auto & critPres = fluid->getReference<array1d<real64>>( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString );
   critPres.resize( 4 );
@@ -304,10 +314,7 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
-  auto & molarWgt = fluid->getReference<array1d<real64>>( CompositionalMultiphaseFluid::viewKeyStruct::componentMolarWeightString );
-  molarWgt.resize( 4 );
-  molarWgt[0] = 28e-3; molarWgt[1] = 134e-3; molarWgt[2] = 275e-3; molarWgt[3] = 18e-3;
-
+  fluid->ReadXML_PostProcess();
   return fluid;
 }
 
@@ -320,6 +327,7 @@ TEST(testMultiFluid, numericalDerivatives_compositionalFluid_molar)
   fluid->setMassFlag( false );
 
   parent->Initialize( parent.get() );
+  parent->FinalInitializationRecursive( parent.get() );
 
   // TODO test over a range of values
   real64 const P = 5e6;

@@ -10,6 +10,7 @@ set( constitutive_headers
      Fluid/MultiFluidBase.hpp
      Fluid/CompressibleSinglePhaseFluid.hpp
      Solid/PoreVolumeCompressibleSolid.hpp
+     RelPerm/RelativePermeabilityBase.hpp
    )
 #
 # Specify all sources
@@ -21,6 +22,7 @@ set( constitutive_sources
      Fluid/MultiFluidBase.cpp
      Fluid/CompressibleSinglePhaseFluid.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
+     RelPerm/RelativePermeabilityBase.cpp
    )
 
 set( dependencyList dataRepository )
@@ -28,11 +30,13 @@ set( dependencyList dataRepository )
 if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
+         Fluid/MultiFluidPVTPackageWrapper.hpp
          Fluid/CompositionalMultiphaseFluid.hpp
          Fluid/BlackOilFluid.hpp
        )
     set( constitutive_sources
          ${constitutive_sources}
+         Fluid/MultiFluidPVTPackageWrapper.cpp
          Fluid/CompositionalMultiphaseFluid.cpp
          Fluid/BlackOilFluid.cpp
        )
