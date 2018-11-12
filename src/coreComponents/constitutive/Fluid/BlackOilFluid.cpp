@@ -124,11 +124,8 @@ void BlackOilFluid::ReadXML_PostProcess()
                 << (expected) << " expected)" ); \
   }
 
-  BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP,
-                              viewKeyStruct::surfaceDensitiesString )
-
-  BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP,
-                              viewKeyStruct::surfaceDensitiesString )
+  BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString )
+  BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString )
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
 }

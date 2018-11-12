@@ -24,7 +24,6 @@
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/Fluid/MultiFluidBase.hpp"
 
 namespace geosx
 {
@@ -44,7 +43,7 @@ public:
     static constexpr integer MAX_NUM_PHASES = 3;
   };
 
-  RelativePermeabilityBase( std::string const & name, ManagedGroup * const parent );
+  RelativePermeabilityBase( std::string const & name, dataRepository::ManagedGroup * const parent );
 
   virtual ~RelativePermeabilityBase() override;
 
@@ -52,8 +51,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                         localIndex const numPts ) override;
+  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent, localIndex const numPts ) override;
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
@@ -62,7 +60,9 @@ public:
 
   // RelPerm-specific interface
 
-  virtual void StateUpdatePointRelPerm( arraySlice1d<real64 const > const & phaseVolFraction ) {}
+  virtual void StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
+                                        localIndex const k,
+                                        localIndex const q ) {}
 
   localIndex numFluidPhases() const;
 

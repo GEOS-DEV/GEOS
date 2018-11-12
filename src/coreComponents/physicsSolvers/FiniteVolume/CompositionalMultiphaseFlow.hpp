@@ -23,6 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
+#include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 class Epetra_FECrsGraph;
@@ -176,9 +177,9 @@ public:
   void UpdatePhaseVolumeFractionAll( DomainPartition * domain );
 
   /**
- * @brief Update all relevant fluid models using current values of pressure and composition
- * @param dataGroup the group storing the required fields
- */
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
+   */
   void UpdateFluidModel( ManagedGroup * dataGroup );
 
   /**
@@ -188,9 +189,9 @@ public:
   void UpdateFluidModelAll( DomainPartition * domain );
 
   /**
- * @brief Update all relevant solid models using current values of pressure
- * @param dataGroup the group storing the required fields
- */
+   * @brief Update all relevant solid models using current values of pressure
+   * @param dataGroup the group storing the required fields
+   */
   void UpdateSolidModel( ManagedGroup * dataGroup );
 
   /**
@@ -200,16 +201,16 @@ public:
   void UpdateSolidModelAll( DomainPartition * domain );
 
   /**
-   * @brief Update all relevant constitutive models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
    */
-  void UpdateConstitutiveModels( ManagedGroup * dataGroup );
+  void UpdateRelPermModel( ManagedGroup * dataGroup );
 
   /**
-   * @brief Update all relevant constitutive models using current values of pressure and composition
+   * @brief Update all relevant fluid models using current values of pressure and composition
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateConstitutiveModelsAll(DomainPartition * domain);
+  void UpdateRelPermModelAll( DomainPartition * domain );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -279,6 +280,9 @@ public:
     static constexpr auto temperatureString = "temperature";
     static constexpr auto useMassFlagString = "useMass";
 
+    static constexpr auto relPermNameString  = "relPermName";
+    static constexpr auto relPermIndexString = "relPermIndex";
+
     static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
     // primary solution field
@@ -314,6 +318,9 @@ public:
     // inputs
     ViewKey temperature = { temperatureString };
     ViewKey useMassFlag = { useMassFlagString };
+
+    ViewKey relPermName  = { relPermNameString };
+    ViewKey relPermIndex = { relPermIndexString };
 
     ViewKey blockLocalDofNumber    = { blockLocalDofNumberString };
 
@@ -381,6 +388,20 @@ private:
    * @return
    */
   constitutive::ConstitutiveBase const * GetSolidModel( ManagedGroup const * const dataGroup ) const;
+
+  /**
+   * @brief Extract the relative permeability model used by this solver from a group
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::RelativePermeabilityBase * GetRelPermModel( ManagedGroup * const dataGroup ) const;
+
+  /**
+   * @brief Extract the relative permeability model used by this solver from a group (const version)
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::RelativePermeabilityBase const * GetRelPermModel( ManagedGroup const * const dataGroup ) const;
 
   /**
    * @brief Resize the allocated multidimensional fields
@@ -469,6 +490,12 @@ private:
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
+
+  /// name of the rel perm constitutive model
+  string m_relPermName;
+
+  /// index of the rel perm constitutive model
+  localIndex m_relPermIndex;
 };
 
 } // namespace geosx

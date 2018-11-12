@@ -27,6 +27,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -58,6 +59,9 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
 
   this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false );
   this->RegisterViewWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false );
+
+  this->RegisterViewWrapper( viewKeyStruct::relPermNameString,  &m_relPermName,  false );
+  this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
 }
 
 localIndex CompositionalMultiphaseFlow::numFluidComponents() const
@@ -101,6 +105,19 @@ void CompositionalMultiphaseFlow::FillDocumentationNode()
                               "Use mass formulation instead of molar",
                               "Use mass formulation instead of molar",
                               "0",
+                              "",
+                              1,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::relPermNameString,
+                              viewKeyStruct::relPermNameString,
+                              -1,
+                              "string",
+                              "string",
+                              "Name of the relative permeability constitutive model to use",
+                              "Name of the relative permeability constitutive model to use",
+                              "REQUIRED",
                               "",
                               1,
                               1,
@@ -410,14 +427,15 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
 
   DomainPartition     const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   ConstitutiveManager const * cm     = domain->getConstitutiveManager();
-  MultiFluidBase      const * fluid  = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
 
-  GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
+  RelativePermeabilityBase const * relPerm = cm->GetConstitituveRelation<RelativePermeabilityBase>( m_relPermName );
+  GEOS_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
+  m_relPermIndex = relPerm->getIndexInParent();
 
-  m_numPhases = fluid->numFluidPhases();
+  MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
+
+  m_numPhases     = fluid->numFluidPhases();
   m_numComponents = fluid->numFluidComponents();
-
-  // compute number of DOF per cell
   m_numDofPerCell = m_numComponents + 1;
 }
 
@@ -470,10 +488,10 @@ void CompositionalMultiphaseFlow::IntermediateInitializationPreSubGroups( Manage
 
 MultiFluidBase * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup * dataGroup ) const
 {
-  ManagedGroup * constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  MultiFluidBase * fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
+  MultiFluidBase * const fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
 
   return fluid;
@@ -481,10 +499,10 @@ MultiFluidBase * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup * data
 
 MultiFluidBase const * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup const * dataGroup ) const
 {
-  ManagedGroup const * constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  MultiFluidBase const * fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
+  MultiFluidBase const * const fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
 
   return fluid;
@@ -492,10 +510,10 @@ MultiFluidBase const * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup 
 
 ConstitutiveBase * CompositionalMultiphaseFlow::GetSolidModel( ManagedGroup * dataGroup ) const
 {
-  ManagedGroup * contitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  ManagedGroup * const contitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( contitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  ConstitutiveBase * solid = contitutiveModels->GetGroup<ConstitutiveBase>( m_solidName );
+  ConstitutiveBase * const solid = contitutiveModels->GetGroup<ConstitutiveBase>( m_solidName );
   GEOS_ERROR_IF( solid == nullptr, "Target group does not contain the solid model" );
 
   return solid;
@@ -503,13 +521,35 @@ ConstitutiveBase * CompositionalMultiphaseFlow::GetSolidModel( ManagedGroup * da
 
 ConstitutiveBase const * CompositionalMultiphaseFlow::GetSolidModel( ManagedGroup const * dataGroup ) const
 {
-  ManagedGroup const * contitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  ManagedGroup const * const contitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( contitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  ConstitutiveBase const * solid = contitutiveModels->GetGroup<ConstitutiveBase>( m_solidName );
+  ConstitutiveBase const * const solid = contitutiveModels->GetGroup<ConstitutiveBase>( m_solidName );
   GEOS_ERROR_IF( solid == nullptr, "Target group does not contain the solid model" );
 
   return solid;
+}
+
+RelativePermeabilityBase * CompositionalMultiphaseFlow::GetRelPermModel( ManagedGroup * dataGroup ) const
+{
+  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  RelativePermeabilityBase * const relPerm = constitutiveModels->GetGroup<RelativePermeabilityBase>( m_relPermName );
+  GEOS_ERROR_IF( relPerm == nullptr, "Target group does not contain the relative permeability model" );
+
+  return relPerm;
+}
+
+RelativePermeabilityBase const * CompositionalMultiphaseFlow::GetRelPermModel( ManagedGroup const * dataGroup ) const
+{
+  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  RelativePermeabilityBase const * const relPerm = constitutiveModels->GetGroup<RelativePermeabilityBase>( m_relPermName );
+  GEOS_ERROR_IF( relPerm == nullptr, "Target group does not contain the relative permeability model" );
+
+  return relPerm;
 }
 
 namespace
@@ -732,30 +772,42 @@ void CompositionalMultiphaseFlow::UpdateSolidModelAll( DomainPartition * const d
   });
 }
 
-void CompositionalMultiphaseFlow::UpdateConstitutiveModels( ManagedGroup * const dataGroup )
+void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
 {
-  UpdateFluidModel( dataGroup );
-  UpdateSolidModel( dataGroup );
+  RelativePermeabilityBase * const relPerm = GetRelPermModel( dataGroup );
+
+  arrayView2d<real64> const & phaseVolFrac  = dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+
+  FORALL( a, 0, dataGroup->size() )
+  {
+    relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
+  });
 }
 
-void CompositionalMultiphaseFlow::UpdateConstitutiveModelsAll( DomainPartition * const domain )
+void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const domain )
 {
-  UpdateFluidModelAll(domain);
-  UpdateSolidModelAll(domain);
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion ) -> void
+  {
+    UpdateRelPermModel( subRegion );
+  });
 }
 
 void CompositionalMultiphaseFlow::UpdateState( ManagedGroup * const dataGroup )
 {
   UpdateComponentFraction( dataGroup );
-  UpdateConstitutiveModels( dataGroup );
+  UpdateFluidModel( dataGroup );
   UpdatePhaseVolumeFraction( dataGroup );
+  UpdateSolidModel( dataGroup );
+  UpdateRelPermModel( dataGroup );
 }
 
 void CompositionalMultiphaseFlow::UpdateStateAll( DomainPartition * const domain )
 {
   UpdateComponentFractionAll( domain );
-  UpdateConstitutiveModelsAll( domain );
+  UpdateFluidModelAll( domain );
   UpdatePhaseVolumeFractionAll( domain );
+  UpdateSolidModelAll( domain );
+  UpdateRelPermModelAll( domain );
 }
 
 void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const domain )
@@ -775,8 +827,8 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
                                                                                       constitutiveManager );
 
   // 1. Assume global component fractions have been prescribed.
-  // Update constitutive state to get fluid density.
-  UpdateConstitutiveModelsAll(domain);
+  // Initialize constitutive state to get fluid density.
+  UpdateFluidModelAll( domain );
 
   // 2. Back-calculate global component densities from fractions and total fluid density
   // in order to initialize the primary solution variables
@@ -792,6 +844,12 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
 
   // 3. Calculate phase saturations
   UpdatePhaseVolumeFractionAll(domain);
+
+  // 4. Initialize solid state
+  UpdateSolidModelAll( domain );
+
+  // 5. Initialize rel perm state
+  UpdateRelPermModelAll( domain );
 }
 
 void CompositionalMultiphaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
@@ -1468,6 +1526,13 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   auto const dPhaseCompFrac_dComp =
     elemManager->ConstructMaterialViewAccessor<array5d<real64>, arrayView5d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString,
                                                                                       constitutiveManager );
+  auto const phaseRelPerm =
+    elemManager->ConstructMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString,
+                                                                                      constitutiveManager );
+  auto const dPhaseRelPerm_dPhaseVolFrac =
+    elemManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString,
+                                                                                      constitutiveManager );
+
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
@@ -1588,12 +1653,12 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
         applyChainRule( NC, dCompFrac_dCompDens[er][esr][ei], dPhaseVisc_dComp[er][esr][m_fluidIndex][ei][0][ip], dVisc_dC );
 
         //relative permeability
-        real64 const relPerm = 1.0; // TODO
+        real64 const relPerm = phaseRelPerm[er][esr][m_relPermIndex][ei][0][ip];
         real64 dRelPerm_dP = 0.0;
         dRelPerm_dC = 0.0;
         for (localIndex jp = 0; jp < NP; ++jp)
         {
-          real64 const dRelPerm_dS = 0.0; // TODO
+          real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[er][esr][m_relPermIndex][ei][0][ip][jp];
           dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
 
           for (localIndex jc = 0; jc < NC; ++jc)

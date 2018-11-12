@@ -12,6 +12,7 @@
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"
                                  solidName="rock"
+                                 relPermName="relperm"
                                  temperature="297.15"
                                  useMass="1">
       <SystemSolverParameters name="SystemSolverParameters"
@@ -80,7 +81,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" materialList="fluid1 rock" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" materialList="fluid1 rock relperm" />
   </ElementRegions>
 
   <Constitutive>
@@ -101,6 +102,13 @@
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
                                  compressibility="1e-9"/>
+
+    <BrooksCoreyRelativePermeability name="relperm"
+                                     phaseNames="oil gas"
+                                     phaseMinVolumeFraction="0.1 0.15"
+                                     phaseRelPermExponent="2.0 2.0"
+                                     phaseRelPermMaxValue="0.8 0.9"/>
+
   </Constitutive>
 
   <InitialConditions>

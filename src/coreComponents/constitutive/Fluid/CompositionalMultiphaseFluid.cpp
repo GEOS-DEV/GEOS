@@ -181,17 +181,10 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
                 << (expected) << " expected)"); \
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_equationsOfState, NP,
-                                viewKeyStruct::equationsOfStateString )
-
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalPressure, NC,
-                                viewKeyStruct::componentCriticalPressureString )
-
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalTemperature, NC,
-                                viewKeyStruct::componentCriticalTemperatureString )
-
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentAcentricFactor, NC,
-                                viewKeyStruct::componentAcentricFactorString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString )
 
   if (m_componentVolumeShift.empty())
   {
@@ -199,8 +192,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
     m_componentVolumeShift = 0.0;
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC,
-                                viewKeyStruct::componentVolumeShiftString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString )
 
   //if (m_componentBinaryCoeff.empty()) TODO
   {
@@ -208,8 +200,7 @@ void CompositionalMultiphaseFluid::ReadXML_PostProcess()
     m_componentBinaryCoeff = 0.0;
   }
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentBinaryCoeff, NC * NC,
-                                viewKeyStruct::componentBinaryCoeffString )
+  COMPFLUID_CHECK_INPUT_LENGTH( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString )
 
 #undef COMPFLUID_CHECK_INPUT_LENGTH
 }

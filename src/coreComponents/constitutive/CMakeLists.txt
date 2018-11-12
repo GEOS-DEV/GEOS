@@ -11,6 +11,7 @@ set( constitutive_headers
      Fluid/CompressibleSinglePhaseFluid.hpp
      Solid/PoreVolumeCompressibleSolid.hpp
      RelPerm/RelativePermeabilityBase.hpp
+     RelPerm/BrooksCoreyRelativePermeability.hpp
    )
 #
 # Specify all sources
@@ -23,6 +24,7 @@ set( constitutive_sources
      Fluid/CompressibleSinglePhaseFluid.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
      RelPerm/RelativePermeabilityBase.cpp
+     RelPerm/BrooksCoreyRelativePermeability.cpp
    )
 
 set( dependencyList dataRepository )

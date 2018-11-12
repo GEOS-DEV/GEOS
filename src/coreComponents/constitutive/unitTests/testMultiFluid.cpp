@@ -226,7 +226,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, 4, phaseCompFractionString );
   auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, 2, totalDensityString );
 
-#undef GET_SOLVER_DATA
+#undef GET_FLUID_DATA
 
   // set the fluid state to current
   fluid->StateUpdatePointMultiFluid(P, T, composition, 0, 0);
@@ -257,7 +257,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
                      "phaseCompFrac", "Temp", phases, components );
   }
 
-  // update temperature and check derivatives
+  // update composition and check derivatives
   auto dPhaseFrac_dC     = invertLayout( phaseFrac.dComp, NP, NC );
   auto dPhaseDens_dC     = invertLayout( phaseDens.dComp, NP, NC );
   auto dPhaseVisc_dC     = invertLayout( phaseVisc.dComp, NP, NC );
