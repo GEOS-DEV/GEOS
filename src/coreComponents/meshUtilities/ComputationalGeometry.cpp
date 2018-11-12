@@ -28,14 +28,14 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          R1Tensor& normal )
 {
   R1Tensor v1,v2,vc;
-  const localIndex_array::size_type n = pointsIndices.size();
+  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
 
   if( n>2 )
   {
     const R1Tensor& x0 = points[pointsIndices[0]];
-    for( localIndex_array::size_type a=0 ; a<(n-2) ; ++a )
+    for( localIndex a=0 ; a<(n-2) ; ++a )
     {
       v1  = points[pointsIndices[a+1]];
       v2  = points[pointsIndices[a+2]];
@@ -60,7 +60,7 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
     }
     else
     {
-      for( localIndex_array::size_type a=0 ; a<n ; ++a )
+      for( localIndex a=0 ; a<n ; ++a )
         GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
                       << points[pointsIndices[a]](1) << " "
                       << points[pointsIndices[a]](2) << " "
@@ -110,15 +110,15 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          R1Tensor& normal )
 {
   R1Tensor v1,v2,vc;
-  const localIndex_array::size_type n = pointsIndices.size();
+  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
 
   if( n==3 )
   {
-    const localIndex_array::size_type a0 = pointsIndices[0];
-    const localIndex_array::size_type a1 = pointsIndices[1];
-    const localIndex_array::size_type a2 = pointsIndices[2];
+    const localIndex a0 = pointsIndices[0];
+    const localIndex a1 = pointsIndices[1];
+    const localIndex a2 = pointsIndices[2];
 
     v1  = pointReferences[a1];
     v1 += pointDisplacements[a1];
@@ -171,11 +171,11 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
   }
   else if( n>4 )
   {
-    const localIndex_array::size_type a0 = pointsIndices[0];
-    for( localIndex_array::size_type a=0 ; a<(n-2) ; ++a )
+    const localIndex a0 = pointsIndices[0];
+    for( localIndex a=0 ; a<(n-2) ; ++a )
     {
-      const localIndex_array::size_type a1 = pointsIndices[a+1];
-      const localIndex_array::size_type a2 = pointsIndices[a+2];
+      const localIndex a1 = pointsIndices[a+1];
+      const localIndex a2 = pointsIndices[a+2];
 
       v1  = pointReferences[a1];
       v1 += pointDisplacements[a1];
