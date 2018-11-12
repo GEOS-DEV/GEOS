@@ -126,6 +126,9 @@ using buffer_type = std::vector<buffer_unit_type>;
 //***** BEGIN ARRAY TYPEDEFS *****
 
 template< typename T, int NDIM=1 >
+using array_slice = LvArray::ArraySlice<T,NDIM,localIndex>;
+
+template< typename T, int NDIM=1 >
 using array_view = LvArray::ArrayView<T,NDIM,localIndex>;
 
 template< typename T >

@@ -283,7 +283,7 @@ namespace bufferOps
   template< typename T, typename INDEX_TYPE >
   typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Unpack( char const *& buffer,
-          arraySlice1d<T> & var,
+          array_slice<T,1> & var,
           INDEX_TYPE const expectedLength )
   {
     INDEX_TYPE length;
@@ -307,7 +307,7 @@ namespace bufferOps
   template< typename T, typename INDEX_TYPE >
   typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
   Unpack( char const *& buffer,
-          arraySlice1d<T> & var,
+          array_slice<T,1> & var,
           INDEX_TYPE const expectedLength )
   {
     INDEX_TYPE length;
