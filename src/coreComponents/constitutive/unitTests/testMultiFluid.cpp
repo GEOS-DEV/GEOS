@@ -83,7 +83,7 @@ void checkRelativeError( T v1, T v2, T relTol, string const & name )
 }
 
 template<typename T>
-void checkDerivative( T valueEps, T value, T deriv, T eps, T relTol, string const & name, string const & var )
+void checkDerivative( T valueEps, T value, T deriv, real64 eps, real64 relTol, string const & name, string const & var )
 {
   T numDeriv = (valueEps - value) / eps;
   checkRelativeError( deriv, numDeriv, relTol, "d(" + name + ")/d(" + var + ")" );
@@ -94,7 +94,7 @@ void
 checkDerivative( arraySlice1d<T> const & valueEps,
                  arraySlice1d<T> const & value,
                  arraySlice1d<T> const & deriv,
-                 T eps, T relTol,
+                 real64 eps, real64 relTol,
                  string const & name, string const & var,
                  string_array const & labels,
                  Args ... label_lists )
@@ -113,12 +113,12 @@ typename std::enable_if<(DIM > 1), void>::type
 checkDerivative( array_slice<T,DIM> const & valueEps,
                  array_slice<T,DIM> const & value,
                  array_slice<T,DIM> const & deriv,
-                 T eps, T relTol,
+                 real64 eps, real64 relTol,
                  string const & name, string const & var,
                  string_array const & labels,
                  Args ... label_lists )
 {
-  const auto size = labels.size(0);
+  localIndex const size = labels.size(0);
 
   for (localIndex i = 0; i < size; ++i)
   {
