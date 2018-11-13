@@ -916,7 +916,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       }
     }
     
-    for( string_array::size_type a=0 ; a<activeMaterialNames.size() ; ++a )
+    for( localIndex a=0 ; a<activeMaterialNames.size() ; ++a )
     {
       regionpnames[a] = const_cast<char*> (activeMaterialNames[a].c_str());
     }

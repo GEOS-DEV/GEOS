@@ -159,10 +159,10 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
 //      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
 //                                                                           constitutiveMap.second.size(0),
 //                                                                           constitutiveMap.second.size(1) );
-      arrayView2d<localIndex> constitutiveMapView = constitutiveMap.second;
+      arrayView2d<localIndex> const & constitutiveMapView = constitutiveMap.second;
 
       auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
-      arrayView2d<localIndex> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -170,7 +170,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
       {
         string const constitutiveName = constitutiveGroup.first;
 //      localIndex_array const & elementList = constitutiveGroup.second;
-        arrayView1d<localIndex> const elementList = constitutiveGroup.second;
+        arrayView1d<localIndex> const & elementList = constitutiveGroup.second;
 
         constitutive::ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<constitutive::ConstitutiveBase>( constitutiveName );
 
@@ -181,8 +181,8 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         constitutiveUpdate = constitutiveModel->GetStateUpdateFunctionPointer();
 
         ///Local copies --------
-        arrayView1d<real64> meanStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress"));
-        arrayView1d<R2SymTensor> devStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress"));
+        arrayView1d<real64> const & meanStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress"));
+        arrayView1d<R2SymTensor> const & devStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress"));
         //------------------------
 
         //Element loop is packed with parameters...
