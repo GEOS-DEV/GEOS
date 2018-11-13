@@ -215,7 +215,7 @@ return dt;
 void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
                                     real64 const& dt,
                                     DomainPartition * const domain,
-                                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                    systemSolverInterface::LinearSystemRepository * const blockSystem )
 {
   SetupSystem( domain, blockSystem );
 }
@@ -292,7 +292,7 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
 
 void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
-                                                   EpetraBlockSystem * const blockSystem )
+                                                   LinearSystemRepository * const blockSystem )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
@@ -401,7 +401,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
 
 
 void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
-                                                EpetraBlockSystem * const blockSystem,
+                                                LinearSystemRepository * const blockSystem,
                                                 real64 const time_n,
                                                 real64 const dt )
 {
@@ -502,7 +502,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 }
 
 
-void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+void LaplaceFEM::ApplySystemSolution( LinearSystemRepository const * const blockSystem,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
@@ -532,7 +532,7 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
 
 }
 void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
-                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                          systemSolverInterface::LinearSystemRepository * const blockSystem,
                                           real64 const time_n,
                                           real64 const dt )
 {
@@ -553,7 +553,7 @@ void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
 
 }
 
-void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+void LaplaceFEM::SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                               SystemSolverParameters const * const params )
 {
   SolverBase::SolveSystem( blockSystem, params, BlockIDs::dummyScalarBlock );
@@ -561,7 +561,7 @@ void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             DomainPartition & domain,
-                                            EpetraBlockSystem & blockSystem )
+                                            LinearSystemRepository & blockSystem )
 {
 
   BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();

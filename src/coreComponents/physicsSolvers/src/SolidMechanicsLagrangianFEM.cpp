@@ -852,7 +852,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
 
 void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
                                                                  DomainPartition & domain,
-                                                                 EpetraBlockSystem & blockSystem )
+                                                                 LinearSystemRepository & blockSystem )
 {
 
   BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
@@ -881,7 +881,7 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
 
 void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const domain,
                                                     real64 const time,
-                                                    systemSolverInterface::EpetraBlockSystem & blockSystem )
+                                                    systemSolverInterface::LinearSystemRepository & blockSystem )
 {
   BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
   NewFunctionManager * const functionManager = NewFunctionManager::Instance();
@@ -977,7 +977,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
 void
 SolidMechanics_LagrangianFEM::
 ImplicitStepSetup( real64 const& time_n, real64 const& dt, DomainPartition * const domain,
-                   systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                   systemSolverInterface::LinearSystemRepository * const blockSystem )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
@@ -1145,7 +1145,7 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
 
 
 void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domain,
-                                                   EpetraBlockSystem * const blockSystem )
+                                                   LinearSystemRepository * const blockSystem )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
@@ -1238,7 +1238,7 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
 
 
 void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  domain,
-                                                EpetraBlockSystem * const blockSystem,
+                                                LinearSystemRepository * const blockSystem,
                                                 real64 const time_n,
                                                 real64 const dt )
 {
@@ -1409,7 +1409,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 void
 SolidMechanics_LagrangianFEM::
 ApplyBoundaryConditions( DomainPartition * const domain,
-                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                         systemSolverInterface::LinearSystemRepository * const blockSystem,
                          real64 const time_n,
                          real64 const dt )
 {
@@ -1469,7 +1469,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 
 real64
 SolidMechanics_LagrangianFEM::
-CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem, DomainPartition *const domain)
+CalculateResidualNorm(systemSolverInterface::LinearSystemRepository const *const blockSystem, DomainPartition *const domain)
 {
 
   Epetra_FEVector const * const
@@ -1723,7 +1723,7 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
 
 
 
-void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+void SolidMechanics_LagrangianFEM::ApplySystemSolution( LinearSystemRepository const * const blockSystem,
                                                         real64 const scalingFactor,
                                                         DomainPartition * const domain )
 {
@@ -1782,7 +1782,7 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 
 }
 
-void SolidMechanics_LagrangianFEM::SolveSystem( EpetraBlockSystem * const blockSystem,
+void SolidMechanics_LagrangianFEM::SolveSystem( LinearSystemRepository * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const

@@ -3,7 +3,7 @@
 # Specify all headers
 #
 set(systemSolverInterface_headers
-    EpetraBlockSystem.hpp
+    LinearSystemRepository.hpp
     LinearSolverWrapper.hpp
     SystemSolverParameters.hpp
     )
@@ -12,7 +12,7 @@ set(systemSolverInterface_headers
 # Specify all sources
 #
 set(systemSolverInterface_sources
-    EpetraBlockSystem.cpp
+    LinearSystemRepository.cpp
     SystemSolverParameters.cpp
     LinearSolverWrapper.cpp
    )

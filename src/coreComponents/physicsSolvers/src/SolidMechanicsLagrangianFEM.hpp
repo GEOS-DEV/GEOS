@@ -93,7 +93,7 @@ public:
 
 
   void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+                     systemSolverInterface::LinearSystemRepository * const blockSystem );
 
   void SetSparsityPattern( DomainPartition const * const domain,
                            Epetra_FECrsGraph * const sparsity );
@@ -121,27 +121,27 @@ public:
   virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
                               DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+                              systemSolverInterface::LinearSystemRepository * const blockSystem ) override;
 
   virtual void AssembleSystem ( DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                  systemSolverInterface::LinearSystemRepository * const blockSystem,
                                   real64 const time,
                                   real64 const dt ) override;
 
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+  virtual void SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
-  virtual void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  virtual void ApplySystemSolution( systemSolverInterface::LinearSystemRepository const * const blockSystem,
                             real64 const scalingFactor,
                             DomainPartition * const domain  ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        systemSolverInterface::LinearSystemRepository * const blockSystem,
                                         real64 const time,
                                         real64 const dt ) override;
 
   virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem, DomainPartition *const domain) override;
+  CalculateResidualNorm(systemSolverInterface::LinearSystemRepository const *const blockSystem, DomainPartition *const domain) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
@@ -199,18 +199,18 @@ public:
 
   void ApplyDisplacementBC_implicit( real64 const time,
                                      DomainPartition & domain,
-                                     systemSolverInterface::EpetraBlockSystem & blockSystem  );
+                                     systemSolverInterface::LinearSystemRepository & blockSystem  );
 
   void ForceBC( dataRepository::ManagedGroup * const object,
                 BoundaryConditionBase const* const bc,
                 set<localIndex> const & set,
                 real64 time,
-                systemSolverInterface::EpetraBlockSystem & blockSystem );
+                systemSolverInterface::LinearSystemRepository & blockSystem );
 
 
   void ApplyTractionBC( DomainPartition * const domain,
                         real64 const time,
-                        systemSolverInterface::EpetraBlockSystem & blockSystem );
+                        systemSolverInterface::LinearSystemRepository & blockSystem );
 
 
   enum class timeIntegrationOption

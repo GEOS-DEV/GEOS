@@ -41,7 +41,7 @@ class DomainPartition;
 
 namespace systemSolverInterface
 {
-class EpetraBlockSystem;
+class LinearSystemRepository;
 class LinearSolverWrapper;
 enum class BlockIDs;
 }
@@ -142,7 +142,7 @@ public:
                                         real64 const & dt,
                                         integer const cycleNumber,
                                         DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem );
+                                        systemSolverInterface::LinearSystemRepository * const blockSystem );
 
   /**
    * @brief Function for a linear implicit integration step
@@ -162,7 +162,7 @@ public:
                                      real64 const & dt,
                                      integer const cycleNumber,
                                      DomainPartition * const domain,
-                                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+                                     systemSolverInterface::LinearSystemRepository * const blockSystem );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -179,7 +179,7 @@ public:
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
                                   DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
+                                  systemSolverInterface::LinearSystemRepository * const blockSystem );
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -199,7 +199,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               systemSolverInterface::LinearSystemRepository * const blockSystem,
                                real64 const time,
                                real64 const dt );
 
@@ -214,7 +214,7 @@ public:
    * completion of the system assembly, but is separated for use in coupled solvers.
    */
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        systemSolverInterface::LinearSystemRepository * const blockSystem,
                                         real64 const time,
                                         real64 const dt );
 
@@ -228,7 +228,7 @@ public:
    * a tolerance.
    */
   virtual real64
-  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+  CalculateResidualNorm( systemSolverInterface::LinearSystemRepository const *const blockSystem,
                          DomainPartition * const domain );
 
   /**
@@ -242,7 +242,7 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+  virtual void SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                             SystemSolverParameters const * const params );
 
 
@@ -267,7 +267,7 @@ public:
    *
    */
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  ApplySystemSolution( systemSolverInterface::LinearSystemRepository const * const blockSystem,
                        real64 const scalingFactor,
                        DomainPartition * const domain );
 
@@ -304,7 +304,7 @@ public:
   /**@}*/
 
 
-  void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+  void SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                     SystemSolverParameters const * const params,
                     systemSolverInterface::BlockIDs const blockID );
 
@@ -340,8 +340,8 @@ public:
   R1Tensor       & getGravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
 
-  systemSolverInterface::EpetraBlockSystem * getLinearSystemRepository();
-  systemSolverInterface::EpetraBlockSystem const * getLinearSystemRepository() const;
+  systemSolverInterface::LinearSystemRepository * getLinearSystemRepository();
+  systemSolverInterface::LinearSystemRepository const * getLinearSystemRepository() const;
 
   integer verboseLevel() const { return m_verboseLevel; }
 

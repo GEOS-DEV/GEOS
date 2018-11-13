@@ -23,14 +23,14 @@
  *      Author: settgast
  */
 
-#include "EpetraBlockSystem.hpp"
+#include "LinearSystemRepository.hpp"
 
 namespace geosx
 {
 namespace systemSolverInterface
 {
 
-EpetraBlockSystem::EpetraBlockSystem():
+LinearSystemRepository::LinearSystemRepository():
   m_blockID(),
   m_blockIndex(),
   m_solverNames(),
@@ -49,7 +49,7 @@ EpetraBlockSystem::EpetraBlockSystem():
   }
 }
 
-EpetraBlockSystem::~EpetraBlockSystem()
+LinearSystemRepository::~LinearSystemRepository()
 {
   // TODO Auto-generated destructor stub
 }

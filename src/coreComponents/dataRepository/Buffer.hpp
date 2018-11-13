@@ -46,7 +46,7 @@ template <typename IndexType, typename WeightType> class StencilCollection;
 
 namespace systemSolverInterface
 {
-class EpetraBlockSystem;
+class LinearSystemRepository;
 }
 
 namespace dataRepository
@@ -698,7 +698,7 @@ public:
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
                                  std::is_same<T, NeighborCommunicator>::value ||
-                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, localIndex>::type
+                                 std::is_same<T, systemSolverInterface::LinearSystemRepository>::value, localIndex>::type
   packed_size(const T & data)
   {
     GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!"); 
@@ -712,7 +712,7 @@ public:
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
                                  std::is_same<T, NeighborCommunicator>::value ||
-                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, void *>::type
+                                 std::is_same<T, systemSolverInterface::LinearSystemRepository>::value, void *>::type
   pack(const T & data, localIndex & byte_size, void * buffer=nullptr)
   {
     GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!"); 
@@ -727,7 +727,7 @@ public:
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
                                  std::is_same<T, NeighborCommunicator>::value ||
-                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, localIndex>::type
+                                 std::is_same<T, systemSolverInterface::LinearSystemRepository>::value, localIndex>::type
   unpack(T & data, const void * buffer, localIndex byte_size=-1)
   { 
     GEOS_ERROR("You shouldn't be unpacking a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!");

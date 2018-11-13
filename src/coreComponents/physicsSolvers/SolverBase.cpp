@@ -17,10 +17,11 @@
  */
 
 #include "SolverBase.hpp"
+
+#include "../systemSolverInterface/LinearSystemRepository.hpp"
 #include "PhysicsSolverManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace geosx
 {
@@ -186,7 +187,7 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition * const domain,
-                                       systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                       systemSolverInterface::LinearSystemRepository * const blockSystem )
 {
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain, blockSystem );
@@ -216,7 +217,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           real64 const & dt,
                                           integer const cycleNumber,
                                           DomainPartition * const domain,
-                                          systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                          systemSolverInterface::LinearSystemRepository * const blockSystem )
 {
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
@@ -361,14 +362,14 @@ real64 SolverBase::ExplicitStep( real64 const & time_n,
 void SolverBase::ImplicitStepSetup( real64 const& time_n,
                                     real64 const& dt,
                                     DomainPartition * const domain,
-                                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                    systemSolverInterface::LinearSystemRepository * const blockSystem )
 {
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
 
 
 void SolverBase::AssembleSystem( DomainPartition * const domain,
-                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                 systemSolverInterface::LinearSystemRepository * const blockSystem,
                                  real64 const time,
                                  real64 const dt )
 {
@@ -376,7 +377,7 @@ void SolverBase::AssembleSystem( DomainPartition * const domain,
 }
 
 void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
-                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                          systemSolverInterface::LinearSystemRepository * const blockSystem,
                                           real64 const time,
                                           real64 const dt )
 {
@@ -385,20 +386,20 @@ void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
 
 real64
 SolverBase::
-CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+CalculateResidualNorm( systemSolverInterface::LinearSystemRepository const *const blockSystem,
                        DomainPartition * const domain )
 {
   GEOS_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden." );
   return 0;
 }
 
-void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+void SolverBase::SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                               SystemSolverParameters const * const params )
 {
   GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden." );
 }
 
-void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+void SolverBase::ApplySystemSolution( systemSolverInterface::LinearSystemRepository const * const blockSystem,
                                       real64 const scalingFactor,
                                       DomainPartition * const )
 {
@@ -418,7 +419,7 @@ void SolverBase::ImplicitStepComplete( real64 const & time,
   GEOS_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
-void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+void SolverBase::SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                               SystemSolverParameters const * const params,
                               systemSolverInterface::BlockIDs const blockID )
 {
@@ -457,18 +458,18 @@ R1Tensor const * SolverBase::globalGravityVector() const
   return rval;
 }
 
-systemSolverInterface::EpetraBlockSystem const * SolverBase::getLinearSystemRepository() const
+systemSolverInterface::LinearSystemRepository const * SolverBase::getLinearSystemRepository() const
 {
   return &( getParent()->
-            getReference<systemSolverInterface::EpetraBlockSystem>( PhysicsSolverManager::
+            getReference<systemSolverInterface::LinearSystemRepository>( PhysicsSolverManager::
                                                                     viewKeyStruct::
                                                                     blockSystemRepositoryString ) );
 }
 
-systemSolverInterface::EpetraBlockSystem * SolverBase::getLinearSystemRepository()
+systemSolverInterface::LinearSystemRepository * SolverBase::getLinearSystemRepository()
 {
   return &( getParent()->
-            getReference<systemSolverInterface::EpetraBlockSystem>( PhysicsSolverManager::
+            getReference<systemSolverInterface::LinearSystemRepository>( PhysicsSolverManager::
                                                                     viewKeyStruct::
                                                                     blockSystemRepositoryString ) );
 }

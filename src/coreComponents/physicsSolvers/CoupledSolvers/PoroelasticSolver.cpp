@@ -146,7 +146,7 @@ void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGrou
 void PoroelasticSolver::ImplicitStepSetup( real64 const& time_n,
                                            real64 const& dt,
                                            DomainPartition * const domain,
-                                           systemSolverInterface::EpetraBlockSystem * const blockSystem)
+                                           systemSolverInterface::LinearSystemRepository * const blockSystem)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();

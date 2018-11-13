@@ -26,8 +26,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_SYSTEMSOLVERINTERFACE_LINEARSOLVERWRAPPER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_SYSTEMSOLVERINTERFACE_LINEARSOLVERWRAPPER_HPP_
 
+#include "LinearSystemRepository.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace geosx
 {
@@ -40,7 +40,7 @@ public:
   LinearSolverWrapper();
   virtual ~LinearSolverWrapper();
 
-  void SolveSingleBlockSystem( EpetraBlockSystem * const system,
+  void SolveSingleBlockSystem( LinearSystemRepository * const system,
                                SystemSolverParameters const * const params,
                                BlockIDs const blockID );
 

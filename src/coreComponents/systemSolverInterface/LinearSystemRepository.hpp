@@ -96,7 +96,7 @@ static double ClearRow ( Epetra_FECrsMatrix * matrix,
  * @author settgast
  * @note class to hold the epetra system matrices and vectors.
  */
-class EpetraBlockSystem
+class LinearSystemRepository
 {
 public:
   constexpr static int MAX_NUM_BLOCKS = 3;
@@ -127,15 +127,15 @@ public:
   }
 
 
-  EpetraBlockSystem();
+  LinearSystemRepository();
 
-  EpetraBlockSystem( EpetraBlockSystem const & ) = delete;
-  EpetraBlockSystem( EpetraBlockSystem && ) = delete;
-  EpetraBlockSystem& operator=( EpetraBlockSystem const & ) = delete;
-  EpetraBlockSystem& operator=( EpetraBlockSystem && ) = delete;
+  LinearSystemRepository( LinearSystemRepository const & ) = delete;
+  LinearSystemRepository( LinearSystemRepository && ) = delete;
+  LinearSystemRepository& operator=( LinearSystemRepository const & ) = delete;
+  LinearSystemRepository& operator=( LinearSystemRepository && ) = delete;
 
 
-  ~EpetraBlockSystem();
+  ~LinearSystemRepository();
 
 
 
@@ -215,7 +215,7 @@ public:
 
   Epetra_Map * GetRowMap( const int index )
   {
-    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>(this)->GetRowMap(index) );
+    return const_cast<Epetra_Map *>( const_cast<LinearSystemRepository const *>(this)->GetRowMap(index) );
   }
 
 
@@ -227,7 +227,7 @@ public:
 
   Epetra_Map * GetRowMap( const BlockIDs dofID )
   {
-    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>(this)->GetRowMap(dofID) );
+    return const_cast<Epetra_Map *>( const_cast<LinearSystemRepository const *>(this)->GetRowMap(dofID) );
   }
 
 
@@ -251,7 +251,7 @@ public:
 
   Epetra_FEVector * GetSolutionVector( int const index )
   {
-    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>(this)->GetSolutionVector(index) );
+    return const_cast<Epetra_FEVector *>( const_cast<LinearSystemRepository const *>(this)->GetSolutionVector(index) );
   }
 
 
@@ -263,7 +263,7 @@ public:
 
   Epetra_FEVector * GetSolutionVector( BlockIDs const dofID )
   {
-    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>(this)->GetSolutionVector(dofID) );
+    return const_cast<Epetra_FEVector *>( const_cast<LinearSystemRepository const *>(this)->GetSolutionVector(dofID) );
   }
 
 
@@ -421,8 +421,8 @@ private:
   std::unique_ptr<Epetra_FECrsMatrix> m_matrix[MAX_NUM_BLOCKS][MAX_NUM_BLOCKS];
 
 
-  EpetraBlockSystem( EpetraBlockSystem& );
-  EpetraBlockSystem& operator=(EpetraBlockSystem&);
+  LinearSystemRepository( LinearSystemRepository& );
+  LinearSystemRepository& operator=(LinearSystemRepository&);
 
 };
 

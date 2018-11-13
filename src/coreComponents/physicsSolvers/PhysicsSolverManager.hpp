@@ -19,8 +19,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
+#include "../systemSolverInterface/LinearSystemRepository.hpp"
 #include "dataRepository/ManagedGroup.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace pugi
 {
@@ -64,7 +64,7 @@ private:
   R1Tensor m_gravityVector;
 
   /// this is a block structured linear system object used to hold the system
-  systemSolverInterface::EpetraBlockSystem m_blockSystemRepository;
+  systemSolverInterface::LinearSystemRepository m_blockSystemRepository;
 
 };
 

@@ -95,7 +95,7 @@ LinearSolverWrapper::~LinearSolverWrapper()
 }
 
 
-void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const blockSystem,
+void LinearSolverWrapper::SolveSingleBlockSystem( LinearSystemRepository * const blockSystem,
                                                   SystemSolverParameters const * const params,
                                                   BlockIDs const blockID)
 {

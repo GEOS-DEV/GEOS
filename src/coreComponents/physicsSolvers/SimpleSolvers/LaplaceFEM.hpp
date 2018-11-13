@@ -87,27 +87,27 @@ public:
   virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
                               DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+                              systemSolverInterface::LinearSystemRepository * const blockSystem ) override;
 
 
   virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               systemSolverInterface::LinearSystemRepository * const blockSystem,
                                real64 const time,
                                real64 const dt ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        systemSolverInterface::LinearSystemRepository * const blockSystem,
                                         real64 const time,
                                         real64 const dt ) override;
 
 //  virtual real64
 //  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
 
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+  virtual void SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  ApplySystemSolution( systemSolverInterface::LinearSystemRepository const * const blockSystem,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
@@ -130,7 +130,7 @@ public:
 //                           DomainPartition * const domain );
 
   void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+                     systemSolverInterface::LinearSystemRepository * const blockSystem );
 
   void SetSparsityPattern( DomainPartition const * const domain,
                            Epetra_FECrsGraph * const sparsity );
@@ -146,7 +146,7 @@ public:
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DomainPartition & domain,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem );
+                                  systemSolverInterface::LinearSystemRepository & blockSystem );
 
 
 

@@ -49,7 +49,7 @@ public:
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
                                   DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem) override final;
+                                  systemSolverInterface::LinearSystemRepository * const blockSystem) override final;
 
   virtual void ImplicitStepComplete( real64 const& time_n,
                                      real64 const& dt,

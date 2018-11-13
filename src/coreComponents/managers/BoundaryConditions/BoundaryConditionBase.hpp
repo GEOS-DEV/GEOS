@@ -23,12 +23,12 @@
 #ifndef BOUNDARYCONDITIONBASE_H
 #define BOUNDARYCONDITIONBASE_H
 
+#include "../../systemSolverInterface/LinearSystemRepository.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace geosx
 {
@@ -146,7 +146,7 @@ struct BcEqual
    * the difference between \p bcValue and \p fieldValue.
    */
   static inline void ApplyBcValue( globalIndex const dof,
-                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            systemSolverInterface::LinearSystemRepository * const blockSystem,
                             systemSolverInterface::BlockIDs const blockID,
                             real64 & rhs,
                             real64 const & bcValue,
@@ -288,7 +288,7 @@ struct BcAdd
    *
    */
   static inline void ApplyBcValue( globalIndex const dof,
-                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            systemSolverInterface::LinearSystemRepository * const blockSystem,
                             systemSolverInterface::BlockIDs const blockID,
                             real64 & rhs,
                             real64 const & bcValue,
@@ -418,7 +418,7 @@ public:
                                        string const & fieldName,
                                        string const & dofMapName,
                                        integer const & dofDim,
-                                       systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                       systemSolverInterface::LinearSystemRepository * const blockSystem,
                                        systemSolverInterface::BlockIDs const blockID ) const;
 
 
@@ -453,7 +453,7 @@ public:
                                   dataRepository::ManagedGroup * dataGroup,
                                   arrayView1d<globalIndex> const & dofMap,
                                   integer const & dofDim,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                  systemSolverInterface::LinearSystemRepository * const blockSystem,
                                   systemSolverInterface::BlockIDs const blockID,
                                   LAMBDA && lambda ) const;
 
@@ -640,7 +640,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
                                                             string const & fieldName,
                                                             string const & dofMapName,
                                                             integer const & dofDim,
-                                                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                            systemSolverInterface::LinearSystemRepository * const blockSystem,
                                                             systemSolverInterface::BlockIDs const blockID ) const
 {
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
@@ -673,7 +673,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 dataRepository::ManagedGroup * dataGroup,
                                 arrayView1d<globalIndex> const & dofMap,
                                 integer const & dofDim,
-                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                systemSolverInterface::LinearSystemRepository * const blockSystem,
                                 systemSolverInterface::BlockIDs const blockID,
                                 LAMBDA && lambda ) const
 {

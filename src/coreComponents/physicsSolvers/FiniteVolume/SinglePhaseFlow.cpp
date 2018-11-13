@@ -25,6 +25,7 @@
 #include <vector>
 #include <cmath>
 
+#include "../../systemSolverInterface/LinearSystemRepository.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -39,7 +40,6 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -438,7 +438,7 @@ void SinglePhaseFlow::
 ImplicitStepSetup( real64 const& time_n,
                    real64 const& dt,
                    DomainPartition * const domain,
-                   systemSolverInterface::EpetraBlockSystem * const blockSystem)
+                   systemSolverInterface::LinearSystemRepository * const blockSystem)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -585,7 +585,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
 }
 
 void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
-                                         EpetraBlockSystem * const blockSystem )
+                                         LinearSystemRepository * const blockSystem )
 {
   // assume that there is only a single MeshLevel for now
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -759,7 +759,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
 }
 
 void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
-                                     EpetraBlockSystem * const blockSystem,
+                                     LinearSystemRepository * const blockSystem,
                                      real64 const time_n,
                                      real64 const dt)
 {
@@ -1042,7 +1042,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
 
 void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
-                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                              systemSolverInterface::LinearSystemRepository * const blockSystem,
                                               real64 const time_n,
                                               real64 const dt)
 {
@@ -1073,7 +1073,7 @@ void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
  */
 void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                  real64 const time, real64 const dt,
-                                                 EpetraBlockSystem * const blockSystem )
+                                                 LinearSystemRepository * const blockSystem )
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -1118,7 +1118,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                                     real64 const time, real64 const dt,
-                                                    EpetraBlockSystem * const blockSystem)
+                                                    LinearSystemRepository * const blockSystem)
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -1420,7 +1420,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
 real64
 SinglePhaseFlow::
-CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+CalculateResidualNorm(systemSolverInterface::LinearSystemRepository const * const blockSystem,
                       DomainPartition * const domain)
 {
 
@@ -1469,7 +1469,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
 }
 
 
-void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+void SinglePhaseFlow::ApplySystemSolution( LinearSystemRepository const * const blockSystem,
                                            real64 const scalingFactor,
                                            DomainPartition * const domain )
 {
@@ -1565,7 +1565,7 @@ void SinglePhaseFlow::PrecomputeData(DomainPartition * const domain)
   }
 }
 
-void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
+void SinglePhaseFlow::SolveSystem( LinearSystemRepository * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const

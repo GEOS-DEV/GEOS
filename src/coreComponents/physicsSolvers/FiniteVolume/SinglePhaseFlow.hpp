@@ -102,28 +102,28 @@ public:
   virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
                               DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+                              systemSolverInterface::LinearSystemRepository * const blockSystem ) override;
 
 
   virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               systemSolverInterface::LinearSystemRepository * const blockSystem,
                                real64 const time,
                                real64 const dt ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        systemSolverInterface::LinearSystemRepository * const blockSystem,
                                         real64 const time,
                                         real64 const dt ) override;
 
   virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+  CalculateResidualNorm(systemSolverInterface::LinearSystemRepository const *const blockSystem,
                         DomainPartition *const domain) override;
 
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+  virtual void SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  ApplySystemSolution( systemSolverInterface::LinearSystemRepository const * const blockSystem,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
@@ -135,7 +135,7 @@ public:
   /**@}*/
 
   void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+                     systemSolverInterface::LinearSystemRepository * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system
@@ -172,7 +172,7 @@ public:
    */
   void ApplyDirichletBC_implicit( DomainPartition * object,
                                   real64 const time, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
+                                  systemSolverInterface::LinearSystemRepository * const blockSystem);
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
@@ -182,7 +182,7 @@ public:
    */
   void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                      real64 const time, real64 const dt,
-                                     systemSolverInterface::EpetraBlockSystem * const blockSystem);
+                                     systemSolverInterface::LinearSystemRepository * const blockSystem);
 
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
