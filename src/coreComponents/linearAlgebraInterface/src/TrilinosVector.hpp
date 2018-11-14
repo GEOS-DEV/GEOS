@@ -44,6 +44,10 @@ namespace geosx
 class EpetraVector
 {
 public:
+
+  using lid = trilinosTypes::lid;
+  using gid = trilinosTypes::gid;
+
   //! @name Constructor/Destructor Methods
   //@{
 
@@ -146,6 +150,11 @@ public:
    */
   void add( array1d<integer> const elements,
             array1d<real64> const values );
+
+
+  void add( lid const numIndices,
+            gid const * const elements,
+            real64 const * const values );
 
   /**
    * @brief Construct vector from std::vector.
@@ -254,6 +263,19 @@ public:
    */
   trilinosTypes::lid localSize() const;
 
+
+  /**
+   *
+   * @return Returns a pointer to the const data in the vector
+   */
+  real64 const * getValues() const;
+
+  /**
+   *
+   * @return Returns a pointer to the data in the vector
+   */
+  real64 * getValues();
+
   /**
    * @brief Returns element i of the vector.
    */
@@ -277,7 +299,7 @@ public:
   /**
    * @brief Print the vector in Trilinos format to the terminal.
    */
-  void print() const;
+  void print( std::ostream & outputStream ) const;
 
   //@}
 

@@ -421,24 +421,24 @@ void SolverBase::ImplicitStepComplete( real64 const & time,
 
 void SolverBase::SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                               SystemSolverParameters const * const params,
-                              systemSolverInterface::BlockIDs const blockID )
+                              string const & blockID )
 {
-  Epetra_FEVector * const
-  solution = blockSystem->GetSolutionVector( blockID );
+  typename LAI::ParallelVector * const
+  solution = blockSystem->GetSolutionVector<LAI::ParallelVector>( blockID );
 
-  Epetra_FEVector * const
-  residual = blockSystem->GetResidualVector( blockID );
-  residual->Scale( -1.0 );
+  typename LAI::ParallelVector * const
+  residual = blockSystem->GetResidualVector<LAI::ParallelVector>( blockID );
+  residual->scale( -1.0 );
 
-  solution->Scale( 0.0 );
+  solution->scale( 0.0 );
 
-  m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
-                                                params,
-                                                blockID );
+  m_linearSolverWrapper.SolveSingleBlockSystem<LAI>( blockSystem,
+                                                     params,
+                                                     blockID );
 
   if( verboseLevel() >= 2 )
   {
-    solution->Print( std::cout );
+    solution->print( std::cout );
   }
 
 }

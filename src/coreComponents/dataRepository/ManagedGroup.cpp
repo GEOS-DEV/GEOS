@@ -29,10 +29,7 @@
 #include "common/TimingMacros.hpp"
 #include <mpi.h>
 
-#ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
-#include "axom/sidre/core/sidre.hpp"
-#endif
 
 namespace geosx
 {

@@ -27,10 +27,12 @@
 
 namespace geosx
 {
+using namespace dataRepository;
 namespace systemSolverInterface
 {
 
 LinearSystemRepository::LinearSystemRepository():
+  ManagedGroup( "LinearSystemRepository", nullptr ),
   m_blockID(),
   m_blockIndex(),
   m_solverNames(),
@@ -43,10 +45,10 @@ LinearSystemRepository::LinearSystemRepository():
   m_sparsity(),
   m_matrix()
 {
-  for( int i=0 ; i<MAX_NUM_BLOCKS ; ++i )
-  {
-    m_blockID[i] = BlockIDs::invalidBlock;
-  }
+//  for( int i=0 ; i<MAX_NUM_BLOCKS ; ++i )
+//  {
+//    m_blockID[i] = BlockIDs::invalidBlock;
+//  }
 }
 
 LinearSystemRepository::~LinearSystemRepository()

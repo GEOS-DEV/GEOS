@@ -66,8 +66,8 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
   SolverBase( name, parent )
 {
 //  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
-  getLinearSystemRepository()->
-    SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
+//  getLinearSystemRepository()->
+//    SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
 
 }
 

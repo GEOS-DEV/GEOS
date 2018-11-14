@@ -215,6 +215,14 @@ public:
     return static_cast< ViewWrapper<T> const & >(base);
   }
 
+
+  ViewWrapper<T> * setRestartFlag( RestartFlags flags )
+  {
+    setRestartFlags(flags);
+    return this;
+  }
+
+
 //  template< bool DO_PACKING >
 //  struct pack_wrapper
 //  {
@@ -878,9 +886,13 @@ public:
 
   virtual bool shouldRegisterDataPtr() const override
   {
+#ifdef GEOSX_USE_ATK
     std::type_index type_index = std::type_index(elementTypeID());
     axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
     return sidre_type_id != axom::sidre::TypeID::NO_TYPE_ID;
+#else
+    return false;
+#endif
   }
 
 

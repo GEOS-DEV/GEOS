@@ -73,6 +73,35 @@ public:
 
 
 
+
+  template <typename T>
+  static typename std::enable_if<!std::is_arithmetic<T>::value, localIndex>::type
+  packed_size(const T & value)
+  {
+    return sizeof(T);
+  }
+
+
+  template <typename T>
+  static typename std::enable_if<!std::is_arithmetic<T>::value, void *>::type
+  pack(const T & value, localIndex & byte_size, void * buffer=nullptr)
+  {
+    T * buff = reinterpret_cast<T *>(buffer);
+    return buff;
+  }
+
+
+  template <typename T>
+  static typename std::enable_if<!std::is_arithmetic<T>::value, localIndex>::type
+  unpack(T & value, const void * buffer, localIndex byte_size=-1)
+  {
+    const T * buff = reinterpret_cast<const T *>(buffer);
+    return sizeof(T);
+  }
+
+
+
+
   /* Arithmetic type
    * Format:
    *   T data
@@ -691,6 +720,7 @@ public:
   }
 
 
+  class Epetra_Map;
 
   template <typename T>
   static typename std::enable_if<std::is_same<T, BasisBase>::value ||
@@ -698,6 +728,7 @@ public:
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
                                  std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, Epetra_Map>::value ||
                                  std::is_same<T, systemSolverInterface::LinearSystemRepository>::value, localIndex>::type
   packed_size(const T & data)
   {
@@ -712,6 +743,7 @@ public:
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
                                  std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, Epetra_Map>::value ||
                                  std::is_same<T, systemSolverInterface::LinearSystemRepository>::value, void *>::type
   pack(const T & data, localIndex & byte_size, void * buffer=nullptr)
   {
@@ -727,6 +759,7 @@ public:
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
                                  std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, Epetra_Map>::value ||
                                  std::is_same<T, systemSolverInterface::LinearSystemRepository>::value, localIndex>::type
   unpack(T & data, const void * buffer, localIndex byte_size=-1)
   { 

@@ -21,9 +21,11 @@
 #include <cmath>
 #include <iostream>
 #include <sys/time.h>
+#include <iomanip>
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
+#include "dataRepository/SidreWrapper.hpp"
 
 
 //#ifdef USE_OPENMP

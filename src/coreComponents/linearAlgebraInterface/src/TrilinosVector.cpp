@@ -34,6 +34,8 @@
 // Include the corresponding header file.
 #include "TrilinosVector.hpp"
 
+#include <ostream>
+
 // Put everything under the geosx namespace.
 namespace geosx
 {
@@ -119,6 +121,15 @@ void EpetraVector::add( array1d<integer> const elements,
 {
   m_vector->SumIntoGlobalValues( static_cast<integer>(elements.size()), values.data(), elements.data() );
 }
+
+// Add values into vector
+void EpetraVector::add( lid const numIndices,
+                        gid const * const elements,
+                        real64 const * const values )
+{
+  m_vector->SumIntoGlobalValues( static_cast<int>(numIndices), values, elements );
+}
+
 
 // Set value
 void EpetraVector::set( trilinosTypes::gid const element,
@@ -226,15 +237,27 @@ void EpetraVector::normInf( real64 &dst ) const
 // Print
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print vector to the terminal in Trilinos format.
-void EpetraVector::print() const
+void EpetraVector::print( std::ostream & outputStream ) const
 {
   if( m_vector.get() != nullptr )
-    std::cout << *m_vector.get() << std::endl;
+    outputStream << *m_vector.get() << std::endl;
 }
 
 // ----------------------------
 // Acessors
 // ----------------------------
+
+
+real64 const * EpetraVector::getValues() const
+{
+  return m_vector->Values();
+}
+
+real64 * EpetraVector::getValues()
+{
+  return m_vector->Values();
+}
+
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get element

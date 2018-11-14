@@ -32,7 +32,7 @@
 #include "systemSolverInterface/SystemSolverParameters.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 
-
+#include "linearAlgebraInterface/src/TrilinosInterface.hpp"
 
 namespace geosx
 {
@@ -43,7 +43,7 @@ namespace systemSolverInterface
 {
 class LinearSystemRepository;
 class LinearSolverWrapper;
-enum class BlockIDs;
+//enum class BlockIDs;
 }
 class SystemSolverParameters;
 
@@ -60,6 +60,8 @@ string const maxDt   = "maxDt";
 class SolverBase : public ExecutableGroup
 {
 public:
+
+  using LAI = TrilinosInterface;
 
   explicit SolverBase( std::string const & name,
                        ManagedGroup * const parent );
@@ -306,7 +308,7 @@ public:
 
   void SolveSystem( systemSolverInterface::LinearSystemRepository * const blockSystem,
                     SystemSolverParameters const * const params,
-                    systemSolverInterface::BlockIDs const blockID );
+                    string const & blockID );
 
 
 

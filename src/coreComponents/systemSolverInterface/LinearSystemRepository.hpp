@@ -41,19 +41,28 @@
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
 namespace systemSolverInterface
 {
 
-enum class BlockIDs
+//enum class BlockIDs
+//{
+//  dummyScalarBlock,
+//  displacementBlock,
+////  fluidPressureBlock,
+//  temperatureBlock,
+//  invalidBlock
+//};
+
+struct BlockIDs
 {
-  dummyScalarBlock,
-  displacementBlock,
-  fluidPressureBlock,
-  temperatureBlock,
-  invalidBlock
+  constexpr static auto dummyScalarBlock = "dummy";
+  constexpr static auto fluidPressureBlock = "fluidPressure";
+  constexpr static auto displacementBlock = "displacement";
+  constexpr static auto invalidBlock = "invalid";
 };
 
 static double ClearRow ( Epetra_FECrsMatrix * matrix,
@@ -96,35 +105,35 @@ static double ClearRow ( Epetra_FECrsMatrix * matrix,
  * @author settgast
  * @note class to hold the epetra system matrices and vectors.
  */
-class LinearSystemRepository
+class LinearSystemRepository : public dataRepository::ManagedGroup
 {
 public:
   constexpr static int MAX_NUM_BLOCKS = 3;
   constexpr static int invalidIndex=-1;
 
-  string BlockIDString( BlockIDs const id ) const
-  {
-    string rval;
-    switch( id )
-    {
-      case BlockIDs::dummyScalarBlock:
-        rval = "dummyScalarBlock";
-        break;
-      case BlockIDs::displacementBlock:
-        rval = "displacementBlock";
-        break;
-    case BlockIDs::fluidPressureBlock:
-      rval = "fluidPressureBlock";
-      break;
-    case BlockIDs::temperatureBlock:
-      rval = "temperatureBlock";
-      break;
-    default:
-      rval = "invalidBlock";
-      break;
-    }
-    return rval;
-  }
+//  string BlockIDString( BlockIDs const id ) const
+//  {
+//    string rval;
+//    switch( id )
+//    {
+//      case BlockIDs::dummyScalarBlock:
+//        rval = "dummyScalarBlock";
+//        break;
+//      case BlockIDs::displacementBlock:
+//        rval = "displacementBlock";
+//        break;
+//    case BlockIDs::fluidPressureBlock:
+//      rval = "fluidPressureBlock";
+//      break;
+//    case BlockIDs::temperatureBlock:
+//      rval = "temperatureBlock";
+//      break;
+//    default:
+//      rval = "invalidBlock";
+//      break;
+//    }
+//    return rval;
+//  }
 
 
   LinearSystemRepository();
@@ -139,236 +148,162 @@ public:
 
 
 
-  void SetBlockID( const BlockIDs id, std::string const& name )
+//  void SetBlockID( const BlockIDs id, std::string const& name )
+//  {
+//
+//    if( m_blockIndex.find(id) == m_blockIndex.end() )
+//    {
+//      m_blockIndex[id] = m_numBlocks;
+//    }
+//    else
+//    {
+//      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+
+//                 std::to_string(m_blockIndex[id]) );
+//    }
+//
+//    if( m_blockID[m_numBlocks] == BlockIDs::invalidBlock )
+//    {
+//      m_blockID[m_numBlocks] = id;
+//    }
+//    else
+//    {
+//      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+
+//                 std::to_string(m_numBlocks) );
+//    }
+//
+//
+//    if( m_solverNames[m_numBlocks].empty() )
+//    {
+//      m_solverNames[m_numBlocks] = name;
+//    }
+//    else
+//    {
+//      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Block ("+std::to_string(
+//                   m_numBlocks)+") has already been used to register a solver named "+ m_solverNames[m_numBlocks] );
+//    }
+//
+//
+//    if( m_solverNameMap.find(name)==m_solverNameMap.end() )
+//    {
+//      m_solverNameMap[name] = m_numBlocks;
+//    }
+//    else
+//    {
+//      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ std::to_string(m_numBlocks) );
+//    }
+//
+//
+//    ++m_numBlocks;
+//
+//  }
+
+
+  template< typename T >
+  T const * GetRowMap( string const & name ) const
   {
-
-    if( m_blockIndex.find(id) == m_blockIndex.end() )
-    {
-      m_blockIndex[id] = m_numBlocks;
-    }
-    else
-    {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+
-                 std::to_string(m_blockIndex[id]) );
-    }
-
-    if( m_blockID[m_numBlocks] == BlockIDs::invalidBlock )
-    {
-      m_blockID[m_numBlocks] = id;
-    }
-    else
-    {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+
-                 std::to_string(m_numBlocks) );
-    }
-
-
-    if( m_solverNames[m_numBlocks].empty() )
-    {
-      m_solverNames[m_numBlocks] = name;
-    }
-    else
-    {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Block ("+std::to_string(
-                   m_numBlocks)+") has already been used to register a solver named "+ m_solverNames[m_numBlocks] );
-    }
-
-
-    if( m_solverNameMap.find(name)==m_solverNameMap.end() )
-    {
-      m_solverNameMap[name] = m_numBlocks;
-    }
-    else
-    {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ std::to_string(m_numBlocks) );
-    }
-
-
-    ++m_numBlocks;
-
+    string fullName = name +"_rowMap";
+    return &(this->getReference<T>( fullName ));
   }
 
-  BlockIDs GetBlockID( int index ) const
+  template< typename T >
+  T * GetRowMap( string const & name )
   {
-    return m_blockID[index];
+    string fullName = name +"_rowMap";
+    return &(this->getReference<T>( fullName ));
   }
 
-  int GetIndex( BlockIDs id ) const
+  template< typename T >
+  T * SetRowMap( string const & name, std::unique_ptr<T> rowMap )
   {
-    return this->m_blockIndex.at(id);
-  }
-
-  std::string GetSolverName( int index ) const
-  {
-    return m_solverNames[index];
-  }
-
-
-  Epetra_Map const * GetRowMap( const int index ) const
-  {
-    if( m_blockID[index]==BlockIDs::invalidBlock )
-    {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetRowMap():m_blockID isn't set \n");
-    }
-    return m_rowMap[ index ].get();
-  }
-
-  Epetra_Map * GetRowMap( const int index )
-  {
-    return const_cast<Epetra_Map *>( const_cast<LinearSystemRepository const *>(this)->GetRowMap(index) );
-  }
-
-
-  Epetra_Map const * GetRowMap( const BlockIDs dofID ) const
-  {
-    int const index = m_blockIndex.find(dofID)->second;
-    return GetRowMap(index);
-  }
-
-  Epetra_Map * GetRowMap( const BlockIDs dofID )
-  {
-    return const_cast<Epetra_Map *>( const_cast<LinearSystemRepository const *>(this)->GetRowMap(dofID) );
+    string fullName = name +"_rowMap";
+    return RegisterViewWrapper( fullName, std::move(rowMap) )->
+           setRestartFlag(dataRepository::RestartFlags::NO_WRITE)->getPointer();
   }
 
 
 
-  Epetra_Map * SetRowMap( const BlockIDs dofID, std::unique_ptr<Epetra_Map> rowMap )
+  template< typename T >
+  T const * GetSolutionVector( string const & name ) const
   {
-    int index = m_blockIndex[dofID];
-    m_rowMap[index] = std::move( rowMap );
-    return m_rowMap[index].get();
+    string fullName = name +"_solution";
+    return &(this->getReference<T>( fullName ));
+  }
+
+  template< typename T >
+  T * GetSolutionVector( string const & name )
+  {
+    string fullName = name +"_solution";
+    return &(this->getReference<T>( fullName ));
+  }
+
+  template< typename T >
+  T * SetSolutionVector( string const & name, std::unique_ptr<T> solution )
+  {
+    string fullName = name +"_solution";
+    return RegisterViewWrapper( fullName, std::move(solution) )->
+           setRestartFlag(dataRepository::RestartFlags::NO_WRITE)->getPointer();
+  }
+
+  template< typename T >
+  T * GetResidualVector( string const & name )
+  {
+    string fullName = name +"_residual";
+    return &(this->getReference<T>( fullName ));
+  }
+  template< typename T >
+  T const * GetResidualVector( string const & name ) const
+  {
+    string fullName = name +"_residual";
+    return &(this->getReference<T>( fullName ));
+  }
+
+  template< typename T >
+  T * SetResidualVector( string const & name, std::unique_ptr<T> rhs )
+  {
+    string fullName = name +"_residual";
+    return RegisterViewWrapper( fullName, std::move(rhs) )->
+           setRestartFlag(dataRepository::RestartFlags::NO_WRITE)->getPointer();
   }
 
 
-  Epetra_FEVector const * GetSolutionVector( int const index ) const
+  template< typename T >
+  T * GetSparsity( string const & rowDofID,
+                   string const & colDofID )
   {
-    if( m_blockID[index]==BlockIDs::invalidBlock )
-    {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSolutionVector():m_blockID isn't set \n");
-    }
-    return m_solution[ index ].get();
+    string fullName = rowDofID + "-" + colDofID +"_sparsity";
+    return &(this->getReference<T>( fullName ));
   }
 
-  Epetra_FEVector * GetSolutionVector( int const index )
-  {
-    return const_cast<Epetra_FEVector *>( const_cast<LinearSystemRepository const *>(this)->GetSolutionVector(index) );
-  }
-
-
-  Epetra_FEVector const * GetSolutionVector( const BlockIDs dofID ) const
-  {
-    int const index = m_blockIndex.find(dofID)->second;
-    return GetSolutionVector(index);
-  }
-
-  Epetra_FEVector * GetSolutionVector( BlockIDs const dofID )
-  {
-    return const_cast<Epetra_FEVector *>( const_cast<LinearSystemRepository const *>(this)->GetSolutionVector(dofID) );
-  }
-
-
-  Epetra_FEVector * SetSolutionVector( const BlockIDs dofID, std::unique_ptr<Epetra_FEVector> solution )
-  {
-    int index = m_blockIndex[dofID];
-    m_solution[index] = std::move( solution );
-    return m_solution[index].get();
-  }
-
-
-
-  Epetra_FEVector * GetResidualVector( int const index )
-  {
-    if( m_blockID[index]==BlockIDs::invalidBlock )
-    {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
-    }
-    return m_rhs[ index ].get();
-  }
-  Epetra_FEVector const * GetResidualVector( int const index ) const
-  {
-    if( m_blockID[index]==BlockIDs::invalidBlock )
-    {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
-    }
-    return m_rhs[ index ].get();
-  }
-  Epetra_FEVector * GetResidualVector( const BlockIDs dofID )
-  {
-    int index = m_blockIndex[dofID];
-    return GetResidualVector(index);
-  }
-  Epetra_FEVector const * GetResidualVector( const BlockIDs dofID ) const
-  {
-    int index = m_blockIndex.at(dofID);
-    return GetResidualVector(index);
-  }
-
-  Epetra_FEVector * SetResidualVector( const BlockIDs dofID, std::unique_ptr<Epetra_FEVector> rhs )
-  {
-    int index = m_blockIndex[dofID];
-    m_rhs[index] = std::move( rhs );
-    return m_rhs[index].get();
-  }
-
-
-
-  Epetra_FECrsGraph * GetSparsity( int const rowIndex,
-                                   int const colIndex )
-  {
-    if( m_blockID[rowIndex]==BlockIDs::invalidBlock && m_blockID[colIndex]==BlockIDs::invalidBlock )
-    {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSparsity():m_blockID isn't set \n");
-    }
-    return m_sparsity[ rowIndex ][ colIndex ].get();
-  }
-  Epetra_FECrsGraph * GetSparsity( const BlockIDs rowDofID,
-                                   const BlockIDs colDofID )
-  {
-    int rowIndex = m_blockIndex[rowDofID];
-    int colIndex = m_blockIndex[colDofID];
-    return GetSparsity( rowIndex, colIndex );
-  }
-
-  Epetra_FECrsGraph * SetSparsity( const BlockIDs rowDofID,
-                                   const BlockIDs colDofID,
+  template< typename T >
+  T * SetSparsity( string const & rowDofID,
+                                   string const & colDofID,
                                    std::unique_ptr<Epetra_FECrsGraph> sparsity )
   {
-    int rowIndex = m_blockIndex[rowDofID];
-    int colIndex = m_blockIndex[colDofID];
-
-    m_sparsity[rowIndex][colIndex] = std::move( sparsity );
-    return m_sparsity[rowIndex][colIndex].get();
+    string fullName = rowDofID + "-" + colDofID +"_sparsity";
+    return RegisterViewWrapper( fullName, std::move(sparsity) )->
+           setRestartFlag(dataRepository::RestartFlags::NO_WRITE)->getPointer();
   }
 
 
 
-  Epetra_FECrsMatrix * GetMatrix( int const rowIndex,
-                                  int const colIndex )
+
+  template< typename T >
+  T * GetMatrix( string const & rowDofID,
+                 string const & colDofID )
   {
-    if( m_blockID[rowIndex]==BlockIDs::invalidBlock && m_blockID[colIndex]==BlockIDs::invalidBlock )
-    {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetMatrix():m_blockID isn't set \n");
-    }
-    return m_matrix[ rowIndex ][ colIndex ].get();
+    string fullName = rowDofID + "-" + colDofID +"_matrix";
+    return &(this->getReference<T>( fullName ));
   }
 
-  Epetra_FECrsMatrix * GetMatrix( const BlockIDs rowDofID,
-                                  const BlockIDs colDofID )
+  template< typename T >
+  T * SetMatrix( string const & rowDofID,
+                 string const & colDofID,
+                 std::unique_ptr<T> matrix )
   {
-    int rowIndex = m_blockIndex[rowDofID];
-    int colIndex = m_blockIndex[colDofID];
-    return GetMatrix( rowIndex, colIndex );
-  }
+    string fullName = rowDofID + "-" + colDofID +"_matrix";
+    return RegisterViewWrapper( fullName, std::move(matrix) )->
+           setRestartFlag(dataRepository::RestartFlags::NO_WRITE)->getPointer();
 
-  Epetra_FECrsMatrix * SetMatrix( const BlockIDs rowDofID,
-                                  const BlockIDs colDofID,
-                                  std::unique_ptr<Epetra_FECrsMatrix> matrix )
-  {
-    int rowIndex = m_blockIndex[rowDofID];
-    int colIndex = m_blockIndex[colDofID];
-
-    m_matrix[rowIndex][colIndex] = std::move( matrix );
-    return m_matrix[rowIndex][colIndex].get();
   }
 
   double ClearSystemRow ( int const blockRow,
@@ -397,8 +332,8 @@ public:
                           globalIndex const rowIndex,
                           const double factor )
   {
-    int rowBlockIndex = m_blockIndex[rowDofID];
-    return ClearSystemRow( rowBlockIndex, rowIndex, factor );
+//    int rowBlockIndex = m_blockIndex[rowDofID];
+    return 0;//ClearSystemRow( rowBlockIndex, rowIndex, factor );
   }
 
 

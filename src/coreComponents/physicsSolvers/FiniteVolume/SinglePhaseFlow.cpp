@@ -58,8 +58,8 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
   m_poroElasticFlag(0)
 {
   // set the blockID for the block system interface
-  getLinearSystemRepository()->
-  SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
+//  getLinearSystemRepository()->
+//  SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 
   this->RegisterViewWrapper(viewKeyStruct::gravityFlagString, &m_gravityFlag, false);
   this->RegisterViewWrapper(viewKeyStruct::discretizationString, &m_discretizationName, false);

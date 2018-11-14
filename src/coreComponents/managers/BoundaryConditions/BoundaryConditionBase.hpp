@@ -29,6 +29,8 @@
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
+#include "linearAlgebraInterface/src/TrilinosInterface.hpp"
+
 
 namespace geosx
 {
@@ -446,7 +448,7 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename BC_OP, typename LAMBDA >
+  template< typename BC_OP, typename LAI=TrilinosInterface, typename LAMBDA = void >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   real64 const time,
@@ -454,7 +456,7 @@ public:
                                   arrayView1d<globalIndex> const & dofMap,
                                   integer const & dofDim,
                                   systemSolverInterface::LinearSystemRepository * const blockSystem,
-                                  systemSolverInterface::BlockIDs const blockID,
+                                  string const & blockID,
                                   LAMBDA && lambda ) const;
 
   struct viewKeyStruct
@@ -665,7 +667,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
   );
 }
 
-template< typename BC_OP, typename LAMBDA >
+template< typename BC_OP, typename LAI, typename LAMBDA >
 void
 BoundaryConditionBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
@@ -674,7 +676,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 arrayView1d<globalIndex> const & dofMap,
                                 integer const & dofDim,
                                 systemSolverInterface::LinearSystemRepository * const blockSystem,
-                                systemSolverInterface::BlockIDs const blockID,
+                                string const & blockID,
                                 LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
@@ -682,7 +684,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   integer const numBlocks = blockSystem->numBlocks();
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
+  typename LAI::ParallelVector * const rhs = blockSystem->GetResidualVector<LAI::ParallelVector>( blockID );
 
   globalIndex_array  dof( targetSet.size() );
   real64_array     rhsContribution( targetSet.size() );

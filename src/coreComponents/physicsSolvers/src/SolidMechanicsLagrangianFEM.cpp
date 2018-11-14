@@ -176,8 +176,8 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
                                                             ManagedGroup * const parent ):
   SolverBase( name, parent )
 {
-  getLinearSystemRepository()->
-    SetBlockID( BlockIDs::displacementBlock, this->getName() );
+//  getLinearSystemRepository()->
+//    SetBlockID( BlockIDs::displacementBlock, this->getName() );
 }
 
 
@@ -867,7 +867,7 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                           ManagedGroup * const targetGroup,
                                           string const fieldName )->void
     {
-    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
+    bc->ApplyBoundaryConditionToSystem<BcEqual,LAI>( targetSet,
                                                  time,
                                                  targetGroup,
                                                  fieldName,
@@ -895,7 +895,8 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
   arrayView1d<globalIndex> const & blockLocalDofNumber =
     nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
 
-  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
+  typename LAI::ParallelVector * const
+  rhs = blockSystem.GetResidualVector<typename LAI::ParallelVector>( BlockIDs::displacementBlock );
 
   bcManager->ApplyBoundaryCondition( time,
                                      domain,
