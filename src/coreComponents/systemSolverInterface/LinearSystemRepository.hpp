@@ -276,8 +276,8 @@ public:
 
   template< typename T >
   T * SetSparsity( string const & rowDofID,
-                                   string const & colDofID,
-                                   std::unique_ptr<Epetra_FECrsGraph> sparsity )
+                   string const & colDofID,
+                   std::unique_ptr<T> sparsity )
   {
     string fullName = rowDofID + "-" + colDofID +"_sparsity";
     return RegisterViewWrapper( fullName, std::move(sparsity) )->

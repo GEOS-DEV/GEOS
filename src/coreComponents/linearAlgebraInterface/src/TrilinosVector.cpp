@@ -72,7 +72,7 @@ EpetraVector::EpetraVector( EpetraVector const &in_vec )
 // Create from array
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from array
-void EpetraVector::create( trilinosTypes::gid const size,
+void EpetraVector::create( gid const size,
                            double *V )
 {
   // Create an Epetra_Map of size size.
@@ -101,22 +101,22 @@ void EpetraVector::create( Epetra_Map const &Map,
 void EpetraVector::create( std::vector<double> &vec )
 {
   // Get the size of the vector
-  trilinosTypes::gid m_size = vec.size();
+  gid m_size = vec.size();
   // Create an Epetra_Map from that size.
   Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
   // Create a unique pointer to an Epetra_Vector defined from the Epetra_Map.
   m_vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
 }
 
-// Add into value (TODO This needs to use integers for some reason! No longlong).
-void EpetraVector::add( integer const element,
+// Add into value
+void EpetraVector::add( gid const element,
                         real64 const value )
 {
   m_vector->SumIntoGlobalValues( 1, &value, &element );
 }
 
-// Add into values (TODO This needs to use integers for some reason! No longlong).
-void EpetraVector::add( array1d<integer> const elements,
+// Add into values
+void EpetraVector::add( array1d<gid> const elements,
                         array1d<real64> const values )
 {
   m_vector->SumIntoGlobalValues( static_cast<integer>(elements.size()), values.data(), elements.data() );
@@ -132,14 +132,14 @@ void EpetraVector::add( lid const numIndices,
 
 
 // Set value
-void EpetraVector::set( trilinosTypes::gid const element,
+void EpetraVector::set( gid const element,
                         real64 const value )
 {
   m_vector->ReplaceGlobalValues( 1, &value, &element );
 }
 
 // Set values
-void EpetraVector::set( array1d<trilinosTypes::gid> const elements,
+void EpetraVector::set( array1d<gid> const elements,
                         array1d<real64> const values )
 {
   m_vector->ReplaceGlobalValues( static_cast<integer>(elements.size()), values.data(), elements.data() );
@@ -263,7 +263,7 @@ real64 * EpetraVector::getValues()
 // Get element
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get element i
-real64 EpetraVector::getElement(trilinosTypes::gid i) const
+real64 EpetraVector::getElement(gid i) const
 {
   real64 * temp = m_vector->Values();
   return temp[i];

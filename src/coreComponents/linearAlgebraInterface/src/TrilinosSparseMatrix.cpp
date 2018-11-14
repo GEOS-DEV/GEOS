@@ -166,7 +166,7 @@ void EpetraSparseMatrix::open()
 void EpetraSparseMatrix::close()
 {
 
-  m_matrix->FillComplete();
+  m_matrix->GlobalAssemble();
   assembled = true;
 }
 

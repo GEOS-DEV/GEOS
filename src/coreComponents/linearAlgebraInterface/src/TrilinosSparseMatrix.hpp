@@ -96,7 +96,7 @@ public:
   void create( MPI_Comm const comm,
                trilinosTypes::gid const m_nRowGlobal,
                trilinosTypes::gid const m_nColGlobal,
-               trilinosTypes::lid const nMaxEntriesPerRow = 0 );
+               trilinosTypes::lid const nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from Epetra_Map.

@@ -31,7 +31,7 @@ namespace geosx
 
 namespace trilinosTypes
 {
-using gid = long long;
+using gid = int;
 using lid = int;
 }
 

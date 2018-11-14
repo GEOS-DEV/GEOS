@@ -684,7 +684,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   integer const numBlocks = blockSystem->numBlocks();
-  typename LAI::ParallelVector * const rhs = blockSystem->GetResidualVector<LAI::ParallelVector>( blockID );
+  typename LAI::ParallelVector * const rhs = blockSystem->GetResidualVector<typename LAI::ParallelVector>( blockID );
 
   globalIndex_array  dof( targetSet.size() );
   real64_array     rhsContribution( targetSet.size() );

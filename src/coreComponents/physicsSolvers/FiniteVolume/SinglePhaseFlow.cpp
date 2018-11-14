@@ -648,15 +648,15 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
   // construct system matrix
   blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
                           BlockIDs::fluidPressureBlock,
-                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
+                          std::make_unique<LAI::ParallelMatrix>(Copy,*sparsity) );
 
   // construct solution vector
   blockSystem->SetSolutionVector( BlockIDs::fluidPressureBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
+                                  std::make_unique<typename LAI::ParallelVector>(*rowMap) );
 
   // construct residual vector
   blockSystem->SetResidualVector( BlockIDs::fluidPressureBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
+                                  std::make_unique<typename LAI::ParallelVector>(*rowMap) );
 
 }
 
@@ -782,14 +782,14 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
   FluxApproximationBase::CellStencil const & stencilCollection =fluxApprox->getStencil();
 
-  Epetra_FECrsMatrix * const jacobian =
-    blockSystem->GetMatrix(BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock);
+  typename LAI::ParallelMatrix * const
+  jacobian = blockSystem->GetMatrix<typename LAI::ParallelMatrix>(BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock);
   
-  Epetra_FEVector * const residual =
-    blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
+  typename LAI::ParallelVector * const
+  residual = blockSystem->GetResidualVector<typename LAI::ParallelVector>(BlockIDs::fluidPressureBlock);
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
+  jacobian->scale(0.0);
+  residual->scale(0.0);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const elemGhostRank =
     elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -872,7 +872,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       {
         if (elemGhostRank[er][esr][ei]<0)
         {
-          globalIndex const elemDOF = blockLocalDofNumber[er][esr][ei];
+          typename LAI::laiGID const elemDOF = blockLocalDofNumber[er][esr][ei];
 
           real64 const densNew = dens[er][esr][m_fluidIndex][ei][0];
           real64 const volNew = volume[er][esr][ei] + dVol[er][esr][ei];
@@ -905,8 +905,8 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
           }
 
           // add contribution to global residual and dRdP
-          residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
-          jacobian->SumIntoGlobalValues(1, &elemDOF, 1, &elemDOF, &localAccumJacobian);
+          residual->add( elemDOF, localAccum);
+          jacobian->add( elemDOF, elemDOF, localAccumJacobian);
         }
       }
     }
@@ -914,10 +914,10 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
   constexpr localIndex numElems = 2;
 
-  globalIndex_array eqnRowIndices(numElems);
+  array1d<typename LAI::laiGID> eqnRowIndices(numElems);
   eqnRowIndices = -1;
 
-  globalIndex_array dofColIndices;
+  array1d<typename LAI::laiGID> dofColIndices;
 
   real64_array localFlux(numElems);
   localFlux = 0;
@@ -1023,14 +1023,19 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     }
 
     // Add to global residual/jacobian
-    jacobian->SumIntoGlobalValues(2, eqnRowIndices.data(), integer_conversion<int>(stencilSize), dofColIndices.data(),
-                                  localFluxJacobian.data());
+    jacobian->add( 2,
+                   eqnRowIndices.data(),
+                   integer_conversion<int>(stencilSize),
+                   dofColIndices.data(),
+                   localFluxJacobian.data() );
 
-    residual->SumIntoGlobalValues(2, eqnRowIndices.data(), localFlux.data());
+    residual->add( 2,
+                   eqnRowIndices.data(),
+                   localFlux.data() );
   });
 
-  jacobian->GlobalAssemble(true);
-  residual->GlobalAssemble();
+  jacobian->close();
+  residual->close();
 
   if( verboseLevel() >= 2 )
   {
@@ -1056,9 +1061,9 @@ void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
 
   if (verboseLevel() >= 2)
   {
-    Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+    LAI::ParallelMatrix * const dRdP = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                               BlockIDs::fluidPressureBlock );
-    Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+    typename LAI::ParallelVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
     GEOS_LOG_RANK("After SinglePhaseFlow::ApplyBoundaryCondition");
     GEOS_LOG_RANK("\ndRdP\n" << *dRdP );
@@ -1142,8 +1147,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock);
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
+  LAI::ParallelMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock);
+  typename LAI::ParallelVector * const residual = blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const elemGhostRank =
     elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -1424,7 +1429,7 @@ CalculateResidualNorm(systemSolverInterface::LinearSystemRepository const * cons
                       DomainPartition * const domain)
 {
 
-  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+  typename LAI::ParallelVector const * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
   Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -1476,7 +1481,7 @@ void SinglePhaseFlow::ApplySystemSolution( LinearSystemRepository const * const 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
+  typename LAI::ParallelVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
 
   ConstitutiveManager * const
   constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
@@ -1568,10 +1573,10 @@ void SinglePhaseFlow::PrecomputeData(DomainPartition * const domain)
 void SinglePhaseFlow::SolveSystem( LinearSystemRepository * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
-  Epetra_FEVector * const
+  typename LAI::ParallelVector * const
   solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
 
-  Epetra_FEVector * const
+  typename LAI::ParallelVector * const
   residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
   residual->Scale(-1.0);
 

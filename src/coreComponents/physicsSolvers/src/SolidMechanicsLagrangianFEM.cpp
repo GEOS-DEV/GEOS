@@ -927,7 +927,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
           nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
           nodeRHS[a] = bc->GetScale() * faceArea[kf] / numNodes;
         }
-        rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes), nodeDOF.data(), nodeRHS.data() );
+        rhs->add( integer_conversion<int>(numNodes), nodeRHS.data(), nodeDOF.data() );
       }
     }
     else
@@ -948,7 +948,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
               nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
               nodeRHS[a] = value * faceArea[kf] / numNodes;
             }
-            rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
+            rhs->add( integer_conversion<int>(nodeDOF.size()), nodeRHS.data(), nodeDOF.data() );
           }
         }
         else

@@ -96,7 +96,7 @@ public:
    * \param values Array of values to populate vector.
    *
    */
-  void create( trilinosTypes::gid const size,
+  void create( gid const size,
                real64 *values );
 
   /**
@@ -108,7 +108,7 @@ public:
    * \param value Values to add in given element.
    *
    */
-  void set( trilinosTypes::gid element,
+  void set( gid element,
             real64 value );
 
   /**
@@ -120,7 +120,7 @@ public:
    * \param values Values to add in given rows.
    *
    */
-  void set( array1d<trilinosTypes::gid> elements,
+  void set( array1d<gid> elements,
             array1d<real64> values );
 
   /**
@@ -128,13 +128,12 @@ public:
    *
    * Add into vector value at given element.
    *
-   * (TODO This needs to use integers for some reason! No longlong).
    *
    * \param element elements index.
    * \param value Values to add in given element.
    *
    */
-  void add( integer element,
+  void add( gid element,
             real64 value );
 
   /**
@@ -142,13 +141,12 @@ public:
    *
    * Add into vector values at given elements.
    *
-   * (TODO This needs to use integers for some reason! No longlong).
    *
    * \param elements elements indices.
    * \param values Values to add in given rows.
    *
    */
-  void add( array1d<integer> const elements,
+  void add( array1d<gid> const elements,
             array1d<real64> const values );
 
 
@@ -256,7 +254,7 @@ public:
   /**
    * @brief Returns the global of the vector.
    */
-  trilinosTypes::gid globalSize() const;
+  gid globalSize() const;
 
   /**
    * @brief Returns the local size of the vector.
@@ -279,7 +277,7 @@ public:
   /**
    * @brief Returns element i of the vector.
    */
-  real64 getElement(trilinosTypes::gid i) const;
+  real64 getElement(gid i) const;
 
   /**
    * @brief Returns a const pointer to the underlying Epetra_Vector.
