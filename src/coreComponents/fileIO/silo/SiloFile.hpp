@@ -331,7 +331,45 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array1d<TYPE>& field,
+                       const arrayView1d<TYPE>& field,
+                       int const centering,
+                       int const cycleNumber,
+                       real64 const problemTime,
+                       string const & multiRoot );
+
+  /**
+   *
+   * @param meshname the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param field field data
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNum the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   */
+  template<typename OUTTYPE, typename TYPE>
+  void WriteDataField( string const & meshName,
+                       string const & fieldName,
+                       const arrayView2d<TYPE>& field,
+                       int const centering,
+                       int const cycleNumber,
+                       real64 const problemTime,
+                       string const & multiRoot );
+
+  /**
+   *
+   * @param meshname the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param field field data
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNum the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   */
+  template<typename OUTTYPE, typename TYPE>
+  void WriteDataField( string const & meshName,
+                       string const & fieldName,
+                       const arrayView3d<TYPE>& field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -589,9 +627,21 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
       std::type_info const & typeID = wrapper->get_typeid();
 
       // TODO This is wrong. problem with uniqueness
-      if( typeID==typeid(real64_array) )
+      if( typeID==typeid(array1d<real64>) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array1d<real64>> const & >( *wrapper );
+        this->WriteDataField<real64>(meshname.c_str(), fieldName,
+                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+      }
+      if( typeID==typeid(array2d<real64>) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array2d<real64>> const & >( *wrapper );
+        this->WriteDataField<real64>(meshname.c_str(), fieldName,
+                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+      }
+      if( typeID==typeid(array3d<real64>) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array3d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>(meshname.c_str(), fieldName,
                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
@@ -636,14 +686,14 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array1d<TYPE>& field,
+                               const arrayView1d<TYPE>& field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-  int nels = field.size();
+  int nels = integer_conversion<int>(field.size());
 
   int const meshType = GetMeshType( meshName );
 
@@ -771,6 +821,59 @@ void SiloFile::WriteDataField( string const & meshName,
 
   DBFreeOptlist(optlist);
 
+}
+
+template<typename OUTTYPE, typename TYPE>
+void SiloFile::WriteDataField( string const & meshName,
+                               string const & fieldName,
+                               const arrayView2d<TYPE>& field,
+                               int const centering,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot )
+{
+  localIndex const npts = field.size(0);
+
+  array1d<TYPE> data( npts );
+
+  for (localIndex iv = 0; iv < field.size(1); ++iv)
+  {
+    // make a copy of the iv'th slice of data
+    for (localIndex ip = 0; ip < npts; ++ip)
+    {
+      data[ip] = field[ip][iv];
+    }
+    WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(iv), data,
+                             centering, cycleNumber, problemTime, multiRoot );
+  }
+}
+
+template<typename OUTTYPE, typename TYPE>
+void SiloFile::WriteDataField( string const & meshName,
+                               string const & fieldName,
+                               const arrayView3d<TYPE>& field,
+                               int const centering,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot )
+{
+  localIndex const npts = field.size(0);
+
+  array1d<TYPE> data( npts );
+
+  for (localIndex iv = 0; iv < field.size(1); ++iv)
+  {
+    for (localIndex jv = 0; jv < field.size(1); ++jv)
+    {
+      // make a copy of the iv'th slice of data
+      for (localIndex ip = 0; ip < npts; ++ip)
+      {
+        data[ip] = field[ip][iv][jv];
+      }
+      WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(iv) + "_" + std::to_string(jv), data,
+                               centering, cycleNumber, problemTime, multiRoot );
+    }
+  }
 }
 
 template<typename OUTTYPE, typename TYPE>
