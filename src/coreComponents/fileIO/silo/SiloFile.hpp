@@ -387,6 +387,35 @@ public:
                                string const & multiRoot,
                                string_array const & materialNames );
 
+  template<typename OUTTYPE, typename TYPE>
+  void WriteMaterialDataField( string const & meshName,
+                               string const & fieldName,
+                               ElementRegionManager::MaterialViewAccessor< arrayView3d<TYPE> > const & field,
+                               ElementRegionManager const * const elementManager,
+                               constitutive::ConstitutiveManager const * const constitutiveManager,
+                               int const centering,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot,
+                               string_array const & materialNames );
+
+  template<typename OUTTYPE, typename TYPE>
+  void WriteMaterialDataField( string const & meshName,
+                               string const & fieldName,
+                               ElementRegionManager::MaterialViewAccessor< arrayView4d<TYPE> > const & field,
+                               ElementRegionManager const * const elementManager,
+                               constitutive::ConstitutiveManager const * const constitutiveManager,
+                               int const centering,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot,
+                               string_array const & materialNames );
+
+  void WriteMaterialVarDefinition( string const & subDir,
+                                   string const & matDir,
+                                   localIndex const matIndex,
+                                   string const & fieldName );
+
   /**
    * find the silo mesh type that we are attempting to reference
    * @param meshName the name of the mesh object we are attaching data to
@@ -836,14 +865,14 @@ void SiloFile::WriteDataField( string const & meshName,
 
   array1d<TYPE> data( npts );
 
-  for (localIndex iv = 0; iv < field.size(1); ++iv)
+  for (localIndex ivar = 0; ivar < field.size(1); ++ivar)
   {
-    // make a copy of the iv'th slice of data
+    // make a copy of the ivar'th slice of data
     for (localIndex ip = 0; ip < npts; ++ip)
     {
-      data[ip] = field[ip][iv];
+      data[ip] = field[ip][ivar];
     }
-    WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(iv), data,
+    WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar), data,
                              centering, cycleNumber, problemTime, multiRoot );
   }
 }
@@ -861,16 +890,16 @@ void SiloFile::WriteDataField( string const & meshName,
 
   array1d<TYPE> data( npts );
 
-  for (localIndex iv = 0; iv < field.size(1); ++iv)
+  for (localIndex ivar = 0; ivar < field.size(1); ++ivar)
   {
-    for (localIndex jv = 0; jv < field.size(1); ++jv)
+    for (localIndex jvar = 0; jvar < field.size(2); ++jvar)
     {
-      // make a copy of the iv'th slice of data
+      // make a copy of the ivar/jvar'th slice of data
       for (localIndex ip = 0; ip < npts; ++ip)
       {
-        data[ip] = field[ip][iv][jv];
+        data[ip] = field[ip][ivar][jvar];
       }
-      WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(iv) + "_" + std::to_string(jv), data,
+      WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar) + "_" + std::to_string(jvar), data,
                                centering, cycleNumber, problemTime, multiRoot );
     }
   }
@@ -1103,6 +1132,147 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   DBFreeOptlist(optlist);
 }
 
+template<typename OUTTYPE, typename TYPE>
+void SiloFile::WriteMaterialDataField( string const & meshName,
+                                       string const & fieldName,
+                                       ElementRegionManager::MaterialViewAccessor< arrayView3d<TYPE> > const & field,
+                                       ElementRegionManager const * const elementManager,
+                                       constitutive::ConstitutiveManager const * const constitutiveManager,
+                                       int const centering,
+                                       int const cycleNumber,
+                                       real64 const problemTime,
+                                       string const & multiRoot,
+                                       string_array const & materialNames )
+{
+  ElementRegionManager::MaterialViewAccessor< array2d<TYPE> >     fieldCopy( field.size() );
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<TYPE> > fieldView( field.size() );
+
+  // resize the container and find the maximum size along 3rd dimension across sub-region data
+  localIndex nvar = 0;
+  for (localIndex er = 0; er < field.size(); ++er)
+  {
+    fieldCopy[er].resize( field[er].size() );
+    fieldView[er].resize( field[er].size() );
+    for (localIndex esr = 0; esr < field[er].size(); ++esr )
+    {
+      fieldCopy[er][esr].resize( field[er][esr].size() );
+      fieldView[er][esr].resize( field[er][esr].size() );
+      for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
+      {
+        arrayView3d<TYPE> const & fieldData = field[er][esr][matIndex];
+        if (fieldData.size() > 0)
+        {
+          fieldCopy[er][esr][matIndex].resize( fieldData.size(0), fieldData.size(1) );
+          nvar = std::max( nvar, fieldData.size(2) );
+        }
+        fieldView[er][esr][matIndex] = fieldCopy[er][esr][matIndex];
+      }
+    }
+  }
+
+  // loop over variables and copy into the container
+  for (localIndex ivar = 0; ivar < nvar; ++ivar)
+  {
+    for (localIndex er = 0; er < field.size(); ++er)
+    {
+      for (localIndex esr = 0; esr < field[er].size(); ++esr )
+      {
+        for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
+        {
+          arrayView3d<TYPE> const & fieldData = field[er][esr][matIndex];
+          if (fieldData.size() > 0 && ivar < fieldData.size(2))
+          {
+            arrayView2d<TYPE> & fieldCopyData = fieldCopy[er][esr][matIndex];
+            for (localIndex ei = 0; ei < fieldData.size(0); ++ei)
+            {
+              for (localIndex q = 0; q < fieldData.size(1); ++q)
+              {
+                fieldCopyData[ei][q] = fieldData[ei][q][ivar];
+              }
+            }
+          }
+        }
+      }
+    }
+    WriteMaterialDataField<real64>( meshName, fieldName + "_" + std::to_string(ivar),
+                                    fieldView, elementManager, constitutiveManager, centering, cycleNumber,
+                                    problemTime, multiRoot, materialNames );
+  }
+}
+
+
+template<typename OUTTYPE, typename TYPE>
+void SiloFile::WriteMaterialDataField( string const & meshName,
+                                       string const & fieldName,
+                                       ElementRegionManager::MaterialViewAccessor< arrayView4d<TYPE> > const & field,
+                                       ElementRegionManager const * const elementManager,
+                                       constitutive::ConstitutiveManager const * const constitutiveManager,
+                                       int const centering,
+                                       int const cycleNumber,
+                                       real64 const problemTime,
+                                       string const & multiRoot,
+                                       string_array const & materialNames )
+{
+  ElementRegionManager::MaterialViewAccessor< array2d<TYPE> > fieldCopy( field.size() );
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<TYPE> > fieldView( field.size() );
+
+  // resize the container and find the maximum size along 3rd/4th dimension across sub-region data
+  localIndex nvar1 = 0;
+  localIndex nvar2 = 0;
+  for (localIndex er = 0; er < field.size(); ++er)
+  {
+    fieldCopy[er].resize( field[er].size() );
+    fieldView[er].resize( field[er].size() );
+    for (localIndex esr = 0; esr < field[er].size(); ++esr )
+    {
+      fieldCopy[er][esr].resize( field[er][esr].size() );
+      fieldView[er][esr].resize( field[er][esr].size() );
+      for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
+      {
+        arrayView4d<TYPE> const & fieldData = field[er][esr][matIndex];
+        if (fieldData.size() > 0)
+        {
+          fieldCopy[er][esr][matIndex].resize( fieldData.size(0), fieldData.size(1) );
+          nvar1 = std::max( nvar1, fieldData.size(2) );
+          nvar2 = std::max( nvar2, fieldData.size(3) );
+        }
+        fieldView[er][esr][matIndex] = fieldCopy[er][esr][matIndex];
+      }
+    }
+  }
+
+  // loop over variables and copy into the container
+  for (localIndex ivar = 0; ivar < nvar1; ++ivar)
+  {
+    for (localIndex jvar = 0; jvar < nvar2; ++jvar)
+    {
+      for (localIndex er = 0; er < field.size(); ++er)
+      {
+        for (localIndex esr = 0; esr < field[er].size(); ++esr)
+        {
+          for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex)
+          {
+            arrayView4d<TYPE> const & fieldData = field[er][esr][matIndex];
+            if (fieldData.size() > 0 && ivar < fieldData.size(2) && jvar < fieldData.size(3))
+            {
+              arrayView2d<TYPE> & fieldCopyData = fieldCopy[er][esr][matIndex];
+              for (localIndex ei = 0; ei < fieldData.size(0); ++ei)
+              {
+                for (localIndex q = 0; q < fieldData.size(1); ++q)
+                {
+                  fieldCopyData[ei][q] = fieldData[ei][q][ivar][jvar];
+                }
+              }
+            }
+          }
+        }
+      }
+      WriteMaterialDataField<real64>( meshName, fieldName + "_" + std::to_string(ivar) + "_" + std::to_string(jvar),
+                                      fieldView, elementManager, constitutiveManager, centering, cycleNumber,
+                                      problemTime, multiRoot, materialNames );
+    }
+  }
+}
 
 template< typename CBF >
 void SiloFile::WriteMultiXXXX( const DBObjectType type,

@@ -156,6 +156,15 @@ template< typename T >
 using arraySlice3d = LvArray::ArraySlice<T, 3, localIndex>;
 
 template< typename T >
+using array4d = LvArray::Array<T,4,localIndex>;
+
+template< typename T >
+using arrayView4d = array_view<T,4>;
+
+template< typename T >
+using arraySlice4d = LvArray::ArraySlice<T, 4, localIndex>;
+
+template< typename T >
 using set = SortedArray<T>;
 
 template< typename TKEY, typename TVAL >
