@@ -396,6 +396,7 @@ void SiloFile::Finish()
  */
 void SiloFile::WaitForBatonWrite( int const domainNumber,
                                   int const cycleNum,
+                                  integer const eventCounter,
                                   bool const isRestart )
 {
 
@@ -408,23 +409,27 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   char baseFileName[200] = { 0 };
   char dirName[200] = { 0 };
 
+  
+
   if( isRestart )
   {
-
-    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum);
+    // The integrated test repo does not use the eventProgress indicator, so skip it for now
+    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum );
     sprintf( fileName, "%s%s%s_%06d.%03d",
              m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
   }
   else
   {
-    sprintf(baseFileName, "%s_%06d",
-            m_plotFileRoot.c_str(),
-            cycleNum);
-
-    sprintf(fileName,
-            "%s_%06d.%03d",
+    sprintf(baseFileName, "%s_%06d%02d",
             m_plotFileRoot.c_str(),
             cycleNum,
+            eventCounter);
+
+    sprintf(fileName,
+            "%s_%06d%02d.%03d",
+            m_plotFileRoot.c_str(),
+            cycleNum,
+            eventCounter,
             groupRank);
   }
   sprintf(dirName, "domain_%05d", domainNumber);
@@ -781,11 +786,10 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
                                           real64 const problemTime)
 {
 
-  auto const
-  constitutiveMap = elementManager->
-                    ConstructViewAccessor<
-    std::pair< array2d<localIndex>,array2d<localIndex> >
-    >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
+  ElementRegionManager::ElementViewAccessor< std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> > > const
+  constitutiveMap = elementManager->ConstructViewAccessor< std::pair< array2d<localIndex>, array2d<localIndex> >, 
+                                                           std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> >
+      >( std::string(CellBlockSubRegion::viewKeyStruct::constitutiveMapString) );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
@@ -818,9 +822,9 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
-        localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+        localIndex const matIndex1 = constitutiveMap[er][esr].first[k][0];
         // matIndex2 is the index of the point within material specified in matIndex1
-        localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+        localIndex const matIndex2 = constitutiveMap[er][esr].second[k][0];
 
         matlist[elemCount++] = matIndex1;
       }
@@ -920,8 +924,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                                              int const cycleNumber,
                                              real64 const problemTime)
 {
-
-
   string name = "materials";
   int const nmat = constitutiveManager->GetSubGroups().size();
   array1d<int> matnos(nmat);
@@ -936,7 +938,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
     materialNames[matIndex] = materialNameStrings[matIndex].c_str();
   }
-
 
   int ndims = 1;
   int dims = 0;
@@ -1098,7 +1099,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
 
 
-  string subDirectory = "Materials";
+  string subDirectory = "MaterialFields";
   string rootDirectory = "/" + subDirectory;
 
   {
@@ -1113,6 +1114,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
     MakeSubDirectory( shortsubdir, rootDirectory );
     DBSetDir(m_dbFilePtr, shortsubdir.c_str());
+
   }
 
 
@@ -1141,9 +1143,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   for( auto fieldName : fieldNames )
   {
-    ElementRegionManager::MaterialViewAccessor< array2d<real64> const >
-    field = elementManager->ConstructMaterialViewAccessor< array2d<real64>  >( fieldName,
-                                                                               constitutiveManager);
+    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const field =
+      elementManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( fieldName, constitutiveManager);
 
     WriteMaterialDataField< real64 >( meshName,
                                       fieldName,
@@ -1155,6 +1156,32 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                                       problemTime,
                                       rootDirectory,
                                       string_array() );
+
+  }
+
+
+
+  for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+  {
+    string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
+    MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
+    DBSetDir( m_dbBaseFilePtr, MultiDir.c_str());
+
+    string const expressionName = MultiDir + "/" + "density";
+    const char * expObjName = expressionName.c_str();
+    const char * const names[1] = { expObjName } ;
+    int const types[1] = {DB_VARTYPE_SCALAR};
+    string const definition = "value_for_material(<" + subDirectory + "/density>, " + std::to_string(matIndex) + ")";
+    const char * const defns[1] = {definition.c_str()};
+    DBPutDefvars( m_dbBaseFilePtr,
+                  expObjName,
+                  1,
+                  names,
+                  types,
+                  defns,
+                  nullptr );
+
+    DBSetDir(this->m_dbBaseFilePtr, "..");
 
   }
 
@@ -1350,10 +1377,49 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
 
 
-integer_array SiloFile::SiloNodeOrdering()
+integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
 {
 
   integer_array nodeOrdering;
+  if (!elementType.compare(0, 4, "C3D4"))
+  {
+    nodeOrdering.resize(4);
+    nodeOrdering[0] = 1;
+    nodeOrdering[1] = 0;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 3;
+  }
+  else if (!elementType.compare(0, 4, "C3D8"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 1;
+    nodeOrdering[2] = 3;
+    nodeOrdering[3] = 2;
+    nodeOrdering[4] = 4;
+    nodeOrdering[5] = 5;
+    nodeOrdering[6] = 7;
+    nodeOrdering[7] = 6;
+  }
+  else if (!elementType.compare(0, 4, "C3D6"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 4;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 2;
+    nodeOrdering[5] = 5;
+  }
+  else if (!elementType.compare(0, 4, "C3D5"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 4;
+  }
 
 //  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
 //  {
@@ -1378,27 +1444,8 @@ integer_array SiloFile::SiloNodeOrdering()
 //    nodeOrdering[2] = 3;
 //    nodeOrdering[3] = 2;
 //  }
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D4"))
-//  {
-//    nodeOrdering.resize(4);
-//    nodeOrdering[0] = 1;
-//    nodeOrdering[1] = 0;
-//    nodeOrdering[2] = 2;
-//    nodeOrdering[3] = 3;
-//  }
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D8") ||
-// !m_elementGeometryID.compare(0, 4, "C3D6"))
-//  {
-  nodeOrdering.resize(8);
-  nodeOrdering[0] = 0;
-  nodeOrdering[1] = 1;
-  nodeOrdering[2] = 3;
-  nodeOrdering[3] = 2;
-  nodeOrdering[4] = 4;
-  nodeOrdering[5] = 5;
-  nodeOrdering[6] = 7;
-  nodeOrdering[7] = 6;
-//  }
+/*//  else */
+
 //  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
 //  {
 //    nodeOrdering.resize(3);
@@ -1590,16 +1637,14 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         integer_array const & elemGhostRank = cellBlock->GhostRank();
 
 
-
+        string elementType = cellBlock -> GetElementType();
+        integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
-          localIndex const * const elemToNodeMap = elemsToNodes[k];
-
-          const integer_array nodeOrdering = SiloNodeOrdering();
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
-            elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+            elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
           }
 
           if( elemGhostRank[k] >= 0 )
@@ -1619,19 +1664,25 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
         shapecnt[count] = static_cast<int>(cellBlock->size());
 
-//      if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D8") )
-//      {
+
+      if (! elementType.compare(0, 4, "C3D8") )
+      {
         shapetype[count] = DB_ZONETYPE_HEX;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D6") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_HEX;
-//        writeArbitraryPolygon = true;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D4") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_TET;
-//      }
+      }
+      else if ( !elementType.compare(0, 4, "C3D4") )
+      {
+        shapetype[count] = DB_ZONETYPE_TET;
+      }
+      else if ( !elementType.compare(0, 4, "C3D6") )
+      {
+        shapetype[count] = DB_ZONETYPE_PRISM;
+        writeArbitraryPolygon = true;
+      }
+      else if ( !elementType.compare(0, 4, "C3D5") )
+      {
+        shapetype[count] = DB_ZONETYPE_PYRAMID;
+        writeArbitraryPolygon = true; 
+      }
 //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
 // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
 //      {

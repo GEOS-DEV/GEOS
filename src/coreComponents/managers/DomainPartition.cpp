@@ -164,11 +164,10 @@ void DomainPartition::GenerateSets(  )
         set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          localIndex const * const nodelist = elemsToNodes[k];
           integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {
-            if( nodeInSet[setName][nodelist[a]] == 1 )
+            if( nodeInSet[setName][elemsToNodes[k][a]] == 1 )
             {
               ++count;
             }
@@ -186,6 +185,7 @@ void DomainPartition::GenerateSets(  )
 
 void DomainPartition::SetupCommunications()
 {
+  GEOSX_MARK_FUNCTION;
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );

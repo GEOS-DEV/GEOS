@@ -73,6 +73,7 @@ public:
   typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
                                          R2Tensor const & Rot,
                                          localIndex const i,
+                                         localIndex const q,
                                          void * dataPtrs,
                                          integer const systemAssembleFlag );
 
@@ -135,7 +136,6 @@ public:
 
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
-
 
   } m_ConstitutiveBaseViewKeys;
 

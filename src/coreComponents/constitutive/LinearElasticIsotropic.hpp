@@ -26,6 +26,7 @@
 #ifndef LINEARELASTICISOTROPIC_HPP_
 #define LINEARELASTICISOTROPIC_HPP_
 #include "ConstitutiveBase.hpp"
+#include "constitutive/ExponentialRelation.hpp"
 
 namespace geosx
 {
@@ -97,6 +98,9 @@ public:
     dataRepository::ViewKey shearModulus = { shearModulusString };
     dataRepository::ViewKey poissonRatio = { "PoissonRatio" };
     dataRepository::ViewKey density = { "density" };
+    dataRepository::ViewKey compressibility = { "compressibility" };
+    dataRepository::ViewKey referencePressure = { "referencePressure" };
+    dataRepository::ViewKey biotCoefficient = { "BiotCoefficient" };
 
     dataRepository::ViewKey deviatorStress = { deviatorStressString };
     dataRepository::ViewKey meanStress = { meanStressString };
@@ -130,11 +134,24 @@ public:
 
   struct dataPointers
   {
-    real64 * m_bulkModulus = nullptr;
-    real64 * m_shearModulus = nullptr;
-    R2SymTensor * m_deviatorStress = nullptr;
-    real64 * m_meanStress = nullptr;
+    real64 * restrict m_bulkModulus0;
+    real64 * restrict m_shearModulus0;
+    array2d<real64> * restrict m_bulkModulus = nullptr;
+    array2d<real64> * restrict m_shearModulus = nullptr;
+    array2d<R2SymTensor> * restrict m_deviatorStress = nullptr;
+    array2d<real64> * restrict m_meanStress = nullptr;
   } m_dataPointers;
+
+  virtual void PoreVolumeMultiplierCompute(real64 const & pres,
+                                           localIndex const i,
+                                           real64 & poro,
+                                           real64 & dPVMult_dPres) override final;
+
+  virtual void PressureUpdatePoint(real64 const & pres,
+                                   localIndex const k,
+                                   localIndex const q) override final;
+
+  virtual void FinalInitialization( ManagedGroup * const parent ) override final;
 
 private:
   real64 m_bulkModulus0;
@@ -146,9 +163,27 @@ private:
   array2d<real64> m_meanStress;
   array2d<R2SymTensor> m_deviatorStress;
 
+  /// scalar compressibility parameter
+  real64 m_compressibility;
+
+  /// reference pressure parameter
+  real64 m_referencePressure;
+
+  /// scalar Biot's coefficient
+  real64 m_biotCoefficient;
+
+  array2d<real64> m_poreVolumeMultiplier;
+  array2d<real64> m_dPVMult_dPressure;
+
+  ExponentialRelation<localIndex, real64> m_poreVolumeRelation;
 };
 
-
+inline void LinearElasticIsotropic::PressureUpdatePoint(real64 const & pres,
+                                                             localIndex const k,
+                                                             localIndex const q)
+{
+  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+}
 
 }
 

@@ -96,17 +96,6 @@ public:
   }
 
   /**
-   * @brief assigment operator sets the value that m_ref refers to to the value of the rhs
-   * @param rhs the rhs value to be copied
-   * @return
-   */
-  inline ReferenceWrapper & operator=( T const & rhs )
-  {
-    *m_ref = rhs;
-    return *this;
-  }
-
-  /**
    * @tparam T_RHS type of the rhs
    * @brief assignment operator calls m_ref->operator=() to allow for any type on the rhs
    *        if m_ref->operator=() has a valid overload for T_RHS
@@ -184,6 +173,11 @@ public:
   inline T const & get() const
   {
     return *m_ref;
+  }
+
+  inline bool isValid() const
+  {
+    return m_ref;
   }
 
   /**

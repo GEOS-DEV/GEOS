@@ -32,6 +32,9 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" ON )
 
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
+option( ENABLE_METIS "Enables METIS" ON )
+option( ENABLE_PARMETIS "Enables PARMETIS" ON )
+option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
 
 option( ENABLE_MPI "" ON )
@@ -43,7 +46,6 @@ if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
-
 
 #set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
 #set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )

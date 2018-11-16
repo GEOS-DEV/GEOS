@@ -39,6 +39,9 @@ class HypreInterface
 {
 public:
 
+  using laiLID = hypreTypes::lid;
+  using laiGID = hypreTypes::gid;
+
   // Epetra matrix and vector wrappers
   using ParallelMatrix = HypreSparseMatrix;
   using ParallelVector = HypreVector;

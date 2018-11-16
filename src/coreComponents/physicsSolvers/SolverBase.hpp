@@ -74,7 +74,7 @@ public:
   SolverBase& operator=( SolverBase const & ) = default;
   SolverBase& operator=( SolverBase&& ) = default;
 
-
+  void ReadXML_PostProcess() override;
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
@@ -84,7 +84,9 @@ public:
    */
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**

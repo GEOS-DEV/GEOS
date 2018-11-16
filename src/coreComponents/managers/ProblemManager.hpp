@@ -152,7 +152,7 @@ public:
   DomainPartition const * getDomainPartition() const;
 
   const std::string& getProblemName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getData<std::string>(viewKeys.problemName); }
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<std::string>(viewKeys.problemName); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
@@ -188,7 +188,15 @@ public:
     dataRepository::GroupKey outputManager = { "Outputs" };
   } groupKeys;
 
+  PhysicsSolverManager & GetPhysicsSolverManager()
+  {
+    return *m_physicsSolverManager;
+  }
 
+  PhysicsSolverManager const & GetPhysicsSolverManager() const
+  {
+    return *m_physicsSolverManager;
+  }
 
 private:
   PhysicsSolverManager * m_physicsSolverManager;

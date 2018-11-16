@@ -2,14 +2,17 @@ message( "Entering /src/externalComponents/CMakeLists.txt")
 
 
 
-set(externalComponentsList "" )
+set(externalComponentsList "" CACHE STRING "" FORCE)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
-    if( NOT ( ${child} STREQUAL "cxx-utilities" ) )
+    if( EXISTS "${CMAKE_CURRENT_LIST_DIR}/${child}/CMakeLists.txt" AND ENABLE_${child} )
       add_subdirectory(${child})
-      set(externalComponentsList ${externalComponentsList} ${child} )  
+      set( ENABLE_${child} ON CACHE BOOL "" FORCE )
+      list( APPEND externalComponentsList ${child} )
+    else()
+      set( ENABLE_${child} OFF CACHE BOOL "" FORCE )
     endif()
   endif()
 endforeach()

@@ -188,27 +188,30 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // dof numbering
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
+    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
 
     // primary solution field
-    constexpr static auto pressureString = "pressure";
-    constexpr static auto deltaPressureString = "deltaPressure";
-    constexpr static auto facePressureString = "facePressure";
+    static constexpr auto pressureString = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto facePressureString = "facePressure";
 
     // these are used to store last converged time step values
     constexpr static auto densityString = "density";
     constexpr static auto viscosityString = "viscosity";
     constexpr static auto porosityString = "porosity";
+    constexpr static auto oldPorosityString = "oldPorosity";
 
     // input data
-    constexpr static auto referencePorosityString = "referencePorosity";
-    constexpr static auto permeabilityString = "permeability";
+    static constexpr auto referencePorosityString = "referencePorosity";
+    static constexpr auto permeabilityString = "permeability";
 
     // gravity term precomputed values
-    constexpr static auto gravityFlagString = "gravityFlag";
-    constexpr static auto gravityDepthString = "gravityDepth";
+    static constexpr auto gravityFlagString = "gravityFlag";
+    static constexpr auto gravityDepthString = "gravityDepth";
 
-    // misc inputs
+    constexpr static auto volumeString = "volume";
+    constexpr static auto deltaVolumeString = "deltaVolume";
+
     constexpr static auto discretizationString = "discretization";
     constexpr static auto fluidNameString = "fluidName";
     constexpr static auto solidNameString = "solidName";
@@ -216,12 +219,42 @@ public:
     constexpr static auto fluidIndexString = "fluidIndex";
     constexpr static auto solidIndexString = "solidIndex";
 
-  } singlePhaseFlowViewKeys;
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
+    dataRepository::ViewKey pressure = { pressureString };
+    dataRepository::ViewKey deltaPressure = { deltaPressureString };
+    dataRepository::ViewKey facePressure = { facePressureString };
+    dataRepository::ViewKey density = { densityString };
+    dataRepository::ViewKey viscosity = { viscosityString };
+    dataRepository::ViewKey porosity = { porosityString };
+    dataRepository::ViewKey referencePorosity = { referencePorosityString };
+    dataRepository::ViewKey permeability = { permeabilityString };
+    dataRepository::ViewKey gravityFlag = { gravityFlagString };
+    dataRepository::ViewKey gravityDepth = { gravityDepthString };
+    dataRepository::ViewKey discretization = { discretizationString };
+    dataRepository::ViewKey fluidName = { fluidNameString };
+    dataRepository::ViewKey solidName = { solidNameString };
+    dataRepository::ViewKey fluidIndex = { fluidIndexString };
+    dataRepository::ViewKey solidIndex = { solidIndexString };
+  } m_singlePhaseFlowViewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } singlePhaseFlowGroupKeys;
+  } m_singlePhaseFlowGroupKeys;
 
+  virtual viewKeyStruct & viewKeys() { return m_singlePhaseFlowViewKeys; }
+  virtual viewKeyStruct const & viewKeys() const { return m_singlePhaseFlowViewKeys; }
+
+  localIndex fluidIndex() const
+  { return m_fluidIndex; }
+
+  localIndex solidIndex() const
+  { return m_solidIndex; }
+
+  void setPoroElasticCoupling()
+  { m_poroElasticFlag = 1; }
+
+  virtual groupKeyStruct & groupKeys() { return m_singlePhaseFlowGroupKeys; }
+  virtual groupKeyStruct const & groupKeys() const { return m_singlePhaseFlowGroupKeys; }
 
 private:
 
@@ -249,6 +282,8 @@ private:
   /// index of the solid constitutive model
   localIndex m_solidIndex;
 
+  /// flag to determine whether or not coupled with solid solver
+  integer m_poroElasticFlag;
 };
 
 

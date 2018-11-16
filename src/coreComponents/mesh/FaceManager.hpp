@@ -70,9 +70,10 @@ public:
   void SortAllFaceNodes( NodeManager const * const nodeManager,
                          ElementRegionManager const * const elemManager);
 
-  void SortFaceNodes( array1d<R1Tensor> const & X,
+  void SortFaceNodes( arrayView1d<R1Tensor> const & X,
                       R1Tensor const & elemCenter,
-                      arrayView1d<localIndex> faceNodes );
+                      arrayView1d<localIndex> & faceNodes,
+                      localIndex const numFaceNodes );
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
 
@@ -80,12 +81,12 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const override;
+                                     arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList ) override;
+                                       arrayView1d<localIndex const> const & packList ) override;
 
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
@@ -100,7 +101,9 @@ public:
     static constexpr auto elementRegionListString     = "elemRegionList";
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
-    static constexpr auto faceCenterString            = "faceCenter";
+    constexpr static auto faceAreaString = "faceArea";
+    constexpr static auto faceCenterString = "faceCenter";
+    constexpr static auto faceNormalString = "faceNormal";
 
     dataRepository::ViewKey nodeList              = { nodeListString };
     dataRepository::ViewKey edgeList              = { edgeListString };
@@ -132,7 +135,7 @@ private:
 
   template<bool DOPACK>
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                             localIndex_array const & packList ) const;
+                                    arrayView1d<localIndex const> const & packList ) const;
 
 
   OrderedVariableOneToManyRelation m_nodeList;

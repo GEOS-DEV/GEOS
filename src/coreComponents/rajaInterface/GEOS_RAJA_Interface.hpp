@@ -35,7 +35,7 @@ typedef RAJA::atomic::cuda_atomic atomicPolicy;
 
 typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
 
-#elif defined(RAJA_ENABLE_OPENMP)
+#elif defined(GEOSX_USE_OPENMP)
 typedef RAJA::omp_parallel_for_exec elemPolicy;
 typedef RAJA::omp_parallel_for_exec onePointPolicy;
 
@@ -70,7 +70,7 @@ typedef RAJA::loop_exec parallelHostPolicy;
 #if defined(RAJA_ENABLE_CUDA)
 #define GEOSX_LAMBDA [=] RAJA_DEVICE
 #else
-#define GEOSX_LAMBDA [=]
+#define GEOSX_LAMBDA [&]
 #endif
 
 namespace geosx

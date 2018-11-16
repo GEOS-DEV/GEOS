@@ -25,11 +25,11 @@
 
 
 #include <mpi.h>
+#include "Logger.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "common/DataTypes.hpp"
-
 
 namespace geosx {
 namespace dataRepository {
@@ -51,13 +51,13 @@ ViewWrapper<array1d<T>> * createArrayView(ManagedGroup * parent, const string & 
   EXPECT_EQ(view->byteSize(), expected_size);
 
   /* Set the data */
-  view_rtype<T> view_data = view->data();
+  array1d<T>& view_data = view->reference();
   for (int i = 0; i < view->size(); i++) {
     view_data[i] = data[i];
   }
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view->dataPtr(), &(view->data()[0]));
+  EXPECT_EQ(view->dataPtr(), view_data.data());
 
   return view;
 }
@@ -68,7 +68,7 @@ void checkArrayView(const ViewWrapper<array1d<T>> * view, int sfp, const array1d
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());
-  view_rtype_const<T> view_data = view->data();
+  array1d<T> const& view_data = view->reference();
   for (int i = 0; i < view->size(); i++) {
     EXPECT_EQ(view_data[i], data[i]);
   }
@@ -152,7 +152,7 @@ ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
   EXPECT_TRUE(view->reference().isSorted());
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view->dataPtr(), &(view->data()[0]));
+  EXPECT_EQ(view->dataPtr(), view->reference().data());
 
   return view;
 }
@@ -182,14 +182,14 @@ ViewWrapper<string> * createStringView(ManagedGroup * parent, const string & nam
   localIndex expected_size = static_cast<localIndex>(str.size()) * sizeof(char);
 
   /* Set the data */
-  view->data() = str;
+  view->reference() = str;
 
   /* Check that the ViewWrapper size and byteSize return the proper values */
   EXPECT_EQ(static_cast<uint>(view->size()), str.size());
   EXPECT_EQ(view->byteSize(), expected_size);
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view->dataPtr(), view->data().c_str());
+  EXPECT_EQ(view->dataPtr(), view->reference().c_str());
 
   return view;
 }
@@ -213,13 +213,13 @@ ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const s
   EXPECT_EQ(static_cast<uint>(view->size()), arr.size());
   EXPECT_EQ(view->byteSize(), expected_size);
 
-  view_rtype<string_array> view_data = view->data();
-  for (string_array::size_type i = 0; i < arr.size(); ++i)
+  string_array& view_data = view->reference();
+  for (localIndex i = 0; i < arr.size(); ++i)
   {
     view_data[i] = arr[i];
   }
   
-  EXPECT_EQ(view->dataPtr(), &(view->data()[0]));
+  EXPECT_EQ(view->dataPtr(), view_data.data());
   return view;
 }
 
@@ -228,7 +228,7 @@ void checkStringArrayView(const ViewWrapper<string_array> * view, const int sfp,
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), arr.size());
-  view_rtype_const<string_array> view_data = view->data();
+  string_array const & view_data = view->reference();
   for (int i = 0; i < view->size(); i++) {
     EXPECT_EQ(view_data[i], arr[i]);
   }
@@ -237,19 +237,19 @@ void checkStringArrayView(const ViewWrapper<string_array> * view, const int sfp,
 
 template<typename T>
 ViewWrapper<T> * createScalarView(ManagedGroup * parent, const string & name, 
-                                  int sfp, const T value) {
+                                  int sfp, const T & value) {
   ViewWrapper<T> * view = parent->RegisterViewWrapper<T>(name);
   view->setSizedFromParent(sfp);
 
   /* Set the data */
-  *(view->data()) = value;
+  view->reference() = value;
 
   /* Check that the ViewWrapper size and byteSize return the proper values */
   EXPECT_EQ(view->size(), 1);
   EXPECT_EQ(view->byteSize(), sizeof(T));
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view->dataPtr(), view->data());
+  EXPECT_EQ(*(view->dataPtr()), value);
 
   return view;
 }
@@ -258,14 +258,12 @@ ViewWrapper<T> * createScalarView(ManagedGroup * parent, const string & name,
 template<typename T>
 void checkScalarView(const ViewWrapper<T> * view, int sfp, const T value) {
   EXPECT_EQ(view->sizedFromParent(), sfp);
-  EXPECT_EQ(*(view->data()), value);
+  EXPECT_EQ(view->reference(), value);
 }
 
 
 TEST(testSidreExtended, testSidreExtended)
 {
-  MPI_Init( nullptr, nullptr);
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_extended";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
@@ -448,7 +446,7 @@ TEST(testSidreExtended, testSidreExtended)
 
   /* Save the sidre tree */
   root->prepareToWrite();
-  SidreWrapper::writeTree(1, path, protocol, MPI_COMM_GEOSX);
+  SidreWrapper::writeTree(1, path, protocol, MPI_COMM_WORLD);
   root->finishWriting();
 
   /* Delete geos tree and reset sidre tree. */
@@ -458,7 +456,7 @@ TEST(testSidreExtended, testSidreExtended)
   ds.getRoot()->destroyGroups();
 
   /* Restore the sidre tree */
-  SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_GEOSX);
+  SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_WORLD);
   root = new ManagedGroup(std::string("data"), nullptr);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
@@ -487,7 +485,7 @@ TEST(testSidreExtended, testSidreExtended)
 
   /* Load the data */
   root->prepareToRead();
-  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_GEOSX);
+  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_WORLD);
   root->finishReading();
 
   /* Group sizes should have carried over. */
@@ -515,21 +513,27 @@ TEST(testSidreExtended, testSidreExtended)
 
 
   delete root;
-  MPI_Finalize();
 }
 
 #endif /* GEOSX_USE_ATK */
 
-int main(int argc, char* argv[]) {
+} /* end namespace dataRepository */
+} /* end namespace geosx */
+
+
+int main(int argc, char* argv[]) 
+{
+  MPI_Init(&argc, &argv);
+  logger::InitializeLogger(MPI_COMM_WORLD);
+
   int result = 0;
   testing::InitGoogleTest(&argc, argv);
   result = RUN_ALL_TESTS();
+
+  logger::FinalizeLogger();
+  MPI_Finalize();
   return result;
 }
-
-
-} /* end namespace dataRepository */
-} /* end namespace goesx */
 
 #if __clang_major__ >= 5
 #pragma clang diagnostic pop

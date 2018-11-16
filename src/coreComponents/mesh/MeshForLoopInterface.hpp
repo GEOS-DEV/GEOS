@@ -142,7 +142,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
   for( auto const & regionPair : elementRegions->GetSubGroups() )
   {
     dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
-    auto const & numMethodName = elementRegion->getData<string>(dataRepository::keys::numericalMethod);
+    auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
     FiniteElementSpace const * const feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     dataRepository::ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
@@ -151,18 +151,18 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
       CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
 
       //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
-      multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(dataRepository::keys::dNdX);
+      arrayView3d<R1Tensor> const & dNdX = cellBlock->getReference< array3d<R1Tensor> >(dataRepository::keys::dNdX);
       
-      array_view<real64,2> const & detJ            = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ).View();
+      arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ);
 
       auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
 //      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
 //                                                                           constitutiveMap.second.size(0),
 //                                                                           constitutiveMap.second.size(1) );
-      array_view<localIndex,2> constitutiveMapView = constitutiveMap.second.View();
+      arrayView2d<localIndex> const & constitutiveMapView = constitutiveMap.second;
 
       auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
-      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -170,7 +170,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
       {
         string const constitutiveName = constitutiveGroup.first;
 //      localIndex_array const & elementList = constitutiveGroup.second;
-        array_view<localIndex,1> const elementList = constitutiveGroup.second.View();
+        arrayView1d<localIndex> const & elementList = constitutiveGroup.second;
 
         constitutive::ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<constitutive::ConstitutiveBase>( constitutiveName );
 
@@ -181,8 +181,8 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         constitutiveUpdate = constitutiveModel->GetStateUpdateFunctionPointer();
 
         ///Local copies --------
-        array_view<real64,1> meanStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress")).View();
-        array_view<R2SymTensor,1> devStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress")).View();
+        arrayView1d<real64> const & meanStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress"));
+        arrayView1d<R2SymTensor> const & devStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress"));
         //------------------------
 
         //Element loop is packed with parameters...
@@ -214,13 +214,13 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     feSpaceManager,\
     GEOSX_LAMBDA( localIndex const k,\
     localIndex const numNodesPerElement,\
-    array_view<localIndex,2> const elemsToNodes,\
+    arrayView2d<localIndex> const elemsToNodes,\
     localIndex const numQuadraturePoints,\
-    multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX,\
-    array_view<localIndex,2> const constitutiveMapView,\
-    array_view<real64,2> const detJ,\
-    array_view<R2SymTensor,1> devStress,\
-    array_view<real64,1> meanStress,\
+    arrayView3d<R1Tensor> const & dNdX,\
+    arrayView2d<localIndex> const constitutiveMapView,\
+    arrayView2d<real64> const detJ,\
+    arrayView1d<R2SymTensor> devStress,\
+    arrayView1d<real64> meanStress,\
     constitutive::ConstitutiveBase::UpdateFunctionPointer constitutiveUpdate,\
     void * constitutiveModelData\
     ) mutable -> void

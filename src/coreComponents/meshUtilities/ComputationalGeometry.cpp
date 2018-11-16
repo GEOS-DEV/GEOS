@@ -28,14 +28,14 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          R1Tensor& normal )
 {
   R1Tensor v1,v2,vc;
-  const localIndex_array::size_type n = pointsIndices.size();
+  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
 
   if( n>2 )
   {
     const R1Tensor& x0 = points[pointsIndices[0]];
-    for( localIndex_array::size_type a=0 ; a<(n-2) ; ++a )
+    for( localIndex a=0 ; a<(n-2) ; ++a )
     {
       v1  = points[pointsIndices[a+1]];
       v2  = points[pointsIndices[a+2]];
@@ -60,7 +60,7 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
     }
     else
     {
-      for( localIndex_array::size_type a=0 ; a<n ; ++a )
+      for( localIndex a=0 ; a<n ; ++a )
         GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
                       << points[pointsIndices[a]](1) << " "
                       << points[pointsIndices[a]](2) << " "
@@ -110,15 +110,15 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          R1Tensor& normal )
 {
   R1Tensor v1,v2,vc;
-  const localIndex_array::size_type n = pointsIndices.size();
+  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
 
   if( n==3 )
   {
-    const localIndex_array::size_type a0 = pointsIndices[0];
-    const localIndex_array::size_type a1 = pointsIndices[1];
-    const localIndex_array::size_type a2 = pointsIndices[2];
+    const localIndex a0 = pointsIndices[0];
+    const localIndex a1 = pointsIndices[1];
+    const localIndex a2 = pointsIndices[2];
 
     v1  = pointReferences[a1];
     v1 += pointDisplacements[a1];
@@ -171,11 +171,11 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
   }
   else if( n>4 )
   {
-    const localIndex_array::size_type a0 = pointsIndices[0];
-    for( localIndex_array::size_type a=0 ; a<(n-2) ; ++a )
+    const localIndex a0 = pointsIndices[0];
+    for( localIndex a=0 ; a<(n-2) ; ++a )
     {
-      const localIndex_array::size_type a1 = pointsIndices[a+1];
-      const localIndex_array::size_type a2 = pointsIndices[a+2];
+      const localIndex a1 = pointsIndices[a+1];
+      const localIndex a2 = pointsIndices[a+2];
 
       v1  = pointReferences[a1];
       v1 += pointDisplacements[a1];
@@ -277,6 +277,49 @@ real64 HexVolume( R1Tensor const * const X )
                       Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
 }
 
+real64 TetVolume( R1Tensor const * const X ) {
+    R1Tensor X1_X0( X[1] );
+    X1_X0 -= X[0];
+    R1Tensor X2_X0( X[2] );
+    X2_X0 -= X[0];
+    R1Tensor X3_X0( X[3] );
+    X3_X0 -= X[0];
+    return std::fabs(Dot(X1_X0, Cross(X2_X0, X3_X0)) / 6.0);
+}
+
+real64 WedgeVolume( R1Tensor const * const X ) {
+    R1Tensor tet1[4];
+    tet1[0] = X[0];
+    tet1[1] = X[1];
+    tet1[2] = X[2];
+    tet1[3] = X[4];
+    R1Tensor tet2[4];
+    tet2[0] = X[0];
+    tet2[1] = X[2];
+    tet2[2] = X[4];
+    tet2[3] = X[5];
+    R1Tensor tet3[4];
+    tet3[0] = X[0];
+    tet3[1] = X[3];
+    tet3[2] = X[4];
+    tet3[3] = X[5];
+    return TetVolume(tet1) + TetVolume(tet2) + TetVolume(tet3);
+}
+
+
+real64 PyramidVolume( R1Tensor const * const X ) {
+    R1Tensor tet1[4];
+    tet1[0] = X[0];
+    tet1[1] = X[1];
+    tet1[2] = X[2];
+    tet1[3] = X[4];
+    R1Tensor tet2[4];
+    tet2[0] = X[0];
+    tet2[1] = X[2];
+    tet2[2] = X[3];
+    tet2[3] = X[4];
+    return TetVolume(tet1) + TetVolume(tet2);
+}
 
 }
 } /* namespace geosx */

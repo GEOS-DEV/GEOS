@@ -3,7 +3,6 @@
 # Specify all headers
 #
 set(dataRepository_headers
-    BufferOps.hpp
     BufferOps_inline.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
@@ -20,7 +19,6 @@ set(dataRepository_headers
 # Specify all sources
 #
 set(dataRepository_sources
-    BufferOps.cpp
     ManagedGroup.cpp
     SidreWrapper.cpp
     ViewWrapper.cpp
