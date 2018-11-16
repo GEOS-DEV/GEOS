@@ -1,4 +1,4 @@
-# include <petscvec.h>
+#include <petscvec.h>
 
 class PETScVector
 {
@@ -11,14 +11,14 @@ class PETScVector
   /* Copy constructor */
   PETScVector(PETScVector& vec);
 
+  /* Construct from PETSc vector */
+  PETScVector(Vec vec);
+
   /* Destructor */
   // virtual ~PETScVector();
 
   /* Create from array */
   void create(const int size, double *values);
-
-  /* Create from Epetra_Map and array of values */
-  // void create(const Epetra_Map &map, real64 *values);
 
   /* Create from std::vector */
   //void create(std::vector<real64> &vec);
@@ -42,7 +42,7 @@ class PETScVector
   void normInf(double &result) const;
 
   /* Returns the global size of the vector */
-  double globalSize() const;
+  int globalSize() const;
 
   /* Returns the local size of the vector */
   int localSize() const;
@@ -53,13 +53,16 @@ class PETScVector
   /* Returns a non-const pointer to the underlying Petsc Vec */
   // Vec* getPointer();
 
+  /* Returns vector */
+  Vec getVec();
+
   /* Print the vector in Petsc format to the terminal */
   void print() const;
 
  protected:
   
   // Underlying Petsc Vec type
-  Vec m_vector;
+  Vec _vec;
 };
 
 

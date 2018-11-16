@@ -12,7 +12,7 @@ CFLAGS =
 CPPFLAGS = 
 LIBFILES =
 TARGET = test
-OBJFILES = test.o PETScVector.o
+OBJFILES = test.o PETScSolver.o PETScSparseMatrix.o PETScVector.o
 CLEANFILES = $(TARGET)
 
 all: $(TARGET)
