@@ -17,31 +17,40 @@
  */
 
 /**
- * @file EpetraVector.hpp
+ * @file TrilinosVector.hpp
  *  Created on: Jul 24, 2018
  *  Author: Matthias Cremon
  *
  */
 
-#ifndef EPETRAVECTOR_HPP_
-#define EPETRAVECTOR_HPP_
+#ifndef TRILINOSVECTOR_HPP_
+#define TRILINOSVECTOR_HPP_
 
 #include "InterfaceTypes.hpp"
 
-#include <Epetra_Vector.h>
+#include <Epetra_Vector.h>        // TODO: come back and remove nonessential includes
+#include <Epetra_FEVector.h>
 #include <Epetra_Map.h>
 #include <Epetra_MpiComm.h>
+
 #include "common/DataTypes.hpp"
 
 namespace geosx
 {
 
+//namespace Tpetra  // placeholder for future Tpetra implementation
+//{}
+
+namespace Epetra  // for now use Epetra (specifically Epetra_FEVector)
+{
+
 /**
- * \class EpetraVector
- * \brief This class creates and provides basic support for the Epetra_Vector
- *        vector object type used in Trilinos.
+ * \class Vector
+ * \brief This class creates and provides basic support for the Epetra_FEVector
+ *        vector object type used in Trilinos.  We use the FE version because
+ *        Epetra_Vector support for long globalIDs is haphazard.
  */
-class EpetraVector
+class Vector
 {
 public:
   //! @name Constructor/Destructor Methods
@@ -52,7 +61,7 @@ public:
    *
    * Create an empty (distributed) vector.
    */
-  EpetraVector();
+  Vector();
 
   /**
    * @brief Copy constructor.
@@ -60,105 +69,116 @@ public:
    * \param vector Vector to be copied.
    *
    */
-  EpetraVector( EpetraVector const & vector );
+  Vector( Vector const & vector );
 
   /**
    * @brief Virtual destructor.
    */
-  virtual ~EpetraVector() = default;
+  virtual ~Vector() = default;
   //@}
 
+
   //! @name Create Methods
-  //@{we
+  //@{
 
   /**
-   * @brief Construct vector from array.
+   * @brief Create a vector from an Epetra_Map.
    *
-   * Create a vector from an Epetra_Map and an array of values.
+   * Create a vector from an Epetra_Map.  Allows for maximum flexibility
+   * for advanced Trilinos users.
    *
    * \param map Input Epetra Map.
-   * \param values Array of values to populate vector.
-   *
    */
-  void create( Epetra_Map const &map,
-               real64  *values );
+  void create( Epetra_Map const &map);
 
   /**
-   * @brief Construct vector from array.
+   * @brief Create a vector based on local number of elements.  
    *
-   * Create a vector from a size and an array of values.
-   *
-   * \param size Global number of elements.
-   * \param values Array of values to populate vector.
+   * Create a vector based on local number of elements.  Global size is
+   * the sum across processors.  For specifying a global size and having
+   * automatic partitioning, see createGlobal().
+   * 
+   * \param localSize local number of elements.
    *
    */
-  void create( trilinosTypes::gid const size,
-               real64 *values );
+  void createWithLocalSize( trilinosTypes::lid const localSize );
+
+  /**
+   * @brief Create a vector based on global number of elements.  
+   *
+   * Create a vector based on global number of elements. Every processors
+   * gets the same number of local elements except proc 0, which gets any
+   * remainder elements as well if the split can't be done evenly.
+   * 
+   * \param globalSize Global number of elements.
+   *
+   */
+  void createWithGlobalSize( trilinosTypes::gid const globalSize );
+
+  /**
+   * @brief Construct parallel vector from a local array.
+   *
+   * Create a vector from local data
+   *
+   * \param localValues local data to put into vector
+   *
+   */
+  void create( array1d<real64> const localValues );
+
+
+  //! @name Modify Methods
+  //@{
 
   /**
    * @brief Set vector value.
    *
    * Set vector value at given element.
    *
-   * \param element elements index.
-   * \param value Values to add in given element.
+   * \param globalIndex global row index
+   * \param value Value to add at given row.
    *
    */
-  void set( trilinosTypes::gid element,
-            real64 value );
+  void set( trilinosTypes::gid const globalIndex,
+            real64 const value );
 
   /**
    * @brief Set vector values.
    *
    * Set vector values at given elements.
    *
-   * \param elements elements indices.
+   * \param globalIndices global row indices.
    * \param values Values to add in given rows.
    *
    */
-  void set( array1d<trilinosTypes::gid> elements,
-            array1d<real64> values );
+  void set( array1d<trilinosTypes::gid> const globalIndices,
+            array1d<real64> const values );
 
   /**
    * @brief Add into vector value.
    *
-   * Add into vector value at given element.
+   * Add into vector value at given row.
    *
-   * (TODO This needs to use integers for some reason! No longlong).
-   *
-   * \param element elements index.
-   * \param value Values to add in given element.
+   * \param globalIndex global row.
+   * \param value Values to add in given row.
    *
    */
-  void add( integer element,
-            real64 value );
+  void add( trilinosTypes::gid const globalIndex,
+            real64 const value );
 
   /**
    * @brief Add into vector values.
    *
-   * Add into vector values at given elements.
+   * Add into vector values at given rows.
    *
-   * (TODO This needs to use integers for some reason! No longlong).
-   *
-   * \param elements elements indices.
+   * \param globalIndices global rows indices
    * \param values Values to add in given rows.
    *
    */
-  void add( array1d<integer> const elements,
+  void add( array1d<trilinosTypes::gid> const globalIndices,
             array1d<real64> const values );
-
-  /**
-   * @brief Construct vector from std::vector.
-   *
-   * Create a vector from an std vector.
-   *
-   * \param vec Std vector to cast as EpetraVector
-   *
-   */
-  void create( std::vector<real64> &vec );
   //@}
 
-  //! @name Linear Algebra Methods
+  //! @name Algebraic Operations
   //@{
 
   /**
@@ -176,7 +196,7 @@ public:
    * \param dst Result.
    *
    */
-  void dot( EpetraVector const &vec,
+  void dot( Vector const &vec,
             real64 &dst );
 
   /**
@@ -184,10 +204,10 @@ public:
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param x Vector to add.
+   * \param x Vector to copy.
    *
    */
-  void copy( EpetraVector const &x );
+  void copy( Vector const &x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
@@ -199,7 +219,7 @@ public:
    *
    */
   void axpy( real64 const alpha,
-             EpetraVector const &x );
+             Vector const &x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -212,7 +232,7 @@ public:
    *
    */
   void axpby( real64 const alpha,
-              EpetraVector const &x,
+              Vector const &x,
               real64 const beta );
 
   /**
@@ -262,12 +282,12 @@ public:
   /**
    * @brief Returns a const pointer to the underlying Epetra_Vector.
    */
-  const Epetra_Vector* getPointer() const;
+  const Epetra_FEVector* getPointer() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying Epetra_Vector.
    */
-  Epetra_Vector* getPointer();
+  Epetra_FEVector* getPointer();
 
   //@}
 
@@ -282,10 +302,11 @@ public:
   //@}
 
 protected:
-  // Unique pointer to underlying Epetra_Vector type.
-  std::unique_ptr<Epetra_Vector> m_vector = nullptr;
+  // Unique pointer to underlying Epetra_FEVector type.
+  std::unique_ptr<Epetra_FEVector> m_vector = nullptr;
 };
 
-}
+} // end Epetra
+} // end geosx
 
-#endif /* EPETRAVECTOR_HPP_ */
+#endif /* TRILINOSVECTOR_HPP_ */
