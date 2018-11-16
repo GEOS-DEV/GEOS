@@ -496,8 +496,8 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
 //template int ObjectManagerBase::PackGlobalMapsPrivate<false>( buffer_unit_type * &, localIndex_array const &, integer const ) const;
 
 localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
-                                         localIndex_array & packList,
-                                         integer const recursive )
+                                                localIndex_array & packList,
+                                                integer const recursive )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -560,6 +560,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     }
   }
   newGlobalIndices.resize(numNewIndices);
+//  newLocalIndices.resize(numNewIndices);
 
   // figure out new size of object container, and resize it
   const localIndex newSize = oldSize + numNewIndices;
@@ -570,6 +571,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     localIndex const b = oldSize + a;
     m_localToGlobalMap[b] = newGlobalIndices(a);
+//    newLocalIndices[a] = b;
     m_ghostRank[b] = sendingRank;
   }
 
@@ -612,7 +614,8 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     {
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup<ObjectManagerBase>(subGroupName)->UnpackGlobalMaps(buffer,packList,recursive);
+      unpackedSize += this->GetGroup<ObjectManagerBase>(subGroupName)->
+                      UnpackGlobalMaps(buffer,packList, recursive);
     }
   }
 

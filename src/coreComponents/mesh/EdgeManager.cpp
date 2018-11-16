@@ -772,7 +772,8 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toFacesRelation,
                                      packList,
                                      this->m_globalToLocalMap,
-                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                     false );
 
   return unPackedSize;
 }

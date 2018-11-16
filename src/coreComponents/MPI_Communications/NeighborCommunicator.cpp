@@ -388,22 +388,31 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
   int unpackedSize = 0;
 
   localIndex_array nodeUnpackList;
-  unpackedSize += nodeManager.UnpackGlobalMaps( receiveBufferPtr, nodeUnpackList, 0 );
+  unpackedSize += nodeManager.UnpackGlobalMaps( receiveBufferPtr,
+                                                nodeUnpackList,
+                                                0 );
 
   localIndex_array edgeUnpackList;
-  unpackedSize += edgeManager.UnpackGlobalMaps( receiveBufferPtr, edgeUnpackList, 0 );
+  unpackedSize += edgeManager.UnpackGlobalMaps( receiveBufferPtr,
+                                                edgeUnpackList,
+                                                0 );
 
   localIndex_array faceUnpackList;
-  unpackedSize += faceManager.UnpackGlobalMaps( receiveBufferPtr, faceUnpackList, 0 );
+  unpackedSize += faceManager.UnpackGlobalMaps( receiveBufferPtr,
+                                                faceUnpackList,
+                                                0 );
 
-    ElementRegionManager::ElementReferenceAccessor<localIndex_array> elementAdjacencyReceiveListArray =
+    ElementRegionManager::ElementReferenceAccessor<localIndex_array>
+    elementAdjacencyReceiveListArray =
       elemManager.ConstructReferenceAccessor<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
-                                                           std::to_string( this->m_neighborRank ) );
-    unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, elementAdjacencyReceiveListArray );
+                                                                std::to_string( this->m_neighborRank ) );
+    unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr,
+                                                  elementAdjacencyReceiveListArray );
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>> elementAdjacencyReceiveList =
+  ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>>
+  elementAdjacencyReceiveList =
     elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
-                                                         std::to_string( this->m_neighborRank ) );
+                                                                                     std::to_string( this->m_neighborRank ) );
 
   unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUnpackList );
   unpackedSize += edgeManager.UnpackUpDownMaps( receiveBufferPtr, edgeUnpackList );
