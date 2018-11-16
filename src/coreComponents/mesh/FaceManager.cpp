@@ -649,7 +649,8 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toElements,
                                      packList,
-                                     m_toElements.getElementRegionManager() );
+                                     m_toElements.getElementRegionManager(),
+                                     false );
 
 
 

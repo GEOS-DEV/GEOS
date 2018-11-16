@@ -275,6 +275,9 @@ public:
   int Unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor<arrayView1d<localIndex>> & packList );
 
+  int Unpack( buffer_unit_type const * & buffer,
+              ElementReferenceAccessor<array1d<localIndex>> & packList );
+
 
 
   int PackGlobalMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
@@ -287,9 +290,12 @@ public:
                                 ElementViewAccessor<ReferenceWrapper<localIndex_array>> & packList );
 
   int PackUpDownMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+  int PackUpDownMapsSize( ElementReferenceAccessor<array1d<localIndex>> const & packList ) const;
 
   int PackUpDownMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+  int PackUpDownMaps( buffer_unit_type * & buffer,
+                      ElementReferenceAccessor<array1d<localIndex>> const & packList ) const;
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
@@ -308,10 +314,14 @@ private:
   int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                              ElementViewAccessor<arrayView1d<localIndex>> const & viewAccessor ) const;
 
-  template< bool DOPACK >
+  template< bool DOPACK, typename T >
   int
   PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                         ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+                         T const & packList ) const;
+
+  template< typename T >
+  int UnpackPrivate( buffer_unit_type const * & buffer,
+                     T & packList );
 
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);

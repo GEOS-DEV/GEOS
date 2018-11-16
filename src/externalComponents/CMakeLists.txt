@@ -7,7 +7,9 @@ set(externalComponents "")
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
+    message("Found directory at src/externalComponents/${child}")
     if( EXISTS "${CMAKE_CURRENT_LIST_DIR}/${child}/CMakeLists.txt" AND ENABLE_${child} )
+      message("Found cmake at src/externalComponents/${child}")
       add_subdirectory(${child})
       set( ENABLE_${child} ON CACHE BOOL "" FORCE )
       list( APPEND externalComponents ${child} )
@@ -18,6 +20,7 @@ foreach(child ${children})
 endforeach()
 set(externalComponentsList "${externalComponents}" CACHE STRING "" FORCE)
 
+message( "externalComponentsList = ${externalComponentsList}" )
 
 set( externalComponentsLinkList "" )
 

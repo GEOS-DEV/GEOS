@@ -286,7 +286,8 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    m_toEdgesRelation,
                                    packList,
                                    this->m_globalToLocalMap,
-                                   m_toEdgesRelation.RelatedObjectGlobalToLocal() );
+                                   m_toEdgesRelation.RelatedObjectGlobalToLocal(),
+                                   false );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
@@ -294,14 +295,16 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    m_toFacesRelation,
                                    packList,
                                    this->m_globalToLocalMap,
-                                   m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                   m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                   false );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                    this->m_toElements,
                                    packList,
-                                   m_toElements.getElementRegionManager() );
+                                   m_toElements.getElementRegionManager(),
+                                   false );
 
   return unPackedSize;
 }
