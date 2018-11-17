@@ -280,6 +280,33 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     3 );
 
 
+        // TODO TEST! DELETE THIS
+        docNode->AllocateChildNode( "TestField2D",
+                                    "TestField2D",
+                                    -1,
+                                    "real64_array2d",
+                                    "real64_array2d",
+                                    "Test 2D field",
+                                    "Test 2D field",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
+        docNode->AllocateChildNode( "TestField3D",
+                                    "TestField3D",
+                                    -1,
+                                    "real64_array3d",
+                                    "real64_array3d",
+                                    "Test 3D field",
+                                    "Test 3D field",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
       });
 
     {
@@ -407,6 +434,29 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
     densOld[er][esr][ei] = dens[er][esr][m_fluidIndex][ei][0];
     poro[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
     poroOld[er][esr][ei] = poro[er][esr][ei];
+  });
+
+
+  // TODO TEST! DELETE THIS
+  elemManager->forCellBlocks( [&] (CellBlockSubRegion * const subRegion) -> void
+  {
+    auto & test2D = subRegion->getReference<array2d<real64>>("TestField2D");
+    auto & test3D = subRegion->getReference<array3d<real64>>("TestField3D");
+
+    test2D.resize( subRegion->size(), 5 );
+    test3D.resize( subRegion->size(), 5, 2 );
+
+    FORALL( a, 0, subRegion->size() )
+    {
+      for (localIndex i = 0; i < 5; ++i)
+      {
+        test2D[a][i] = a + 0.2*i;
+        for (localIndex j = 0; j < 2; ++j)
+        {
+          test3D[a][i][j] = a + 0.2*i + 0.1*j;
+        }
+      }
+    });
   });
 }
 

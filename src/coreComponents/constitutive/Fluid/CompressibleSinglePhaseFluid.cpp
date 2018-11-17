@@ -48,6 +48,9 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
 
   RegisterViewWrapper( viewKeyStruct::viscosityString, &m_viscosity, 0 );
   RegisterViewWrapper( viewKeyStruct::dVisc_dPresString, &m_dViscosity_dPressure, 0 );
+
+  RegisterViewWrapper( "constitutiveTestData2D", &m_testData2D, 0 )->setPlotLevel(PlotLevel::LEVEL_0);
+  RegisterViewWrapper( "constitutiveTestData3D", &m_testData3D, 0 )->setPlotLevel(PlotLevel::LEVEL_0);
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
@@ -87,6 +90,9 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Man
   m_viscosity.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_dViscosity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_viscosity = this->m_referenceViscosity;
+
+  m_testData2D.resize( parent->size(), numConstitutivePointsPerParentIndex, 4 );
+  m_testData3D.resize( parent->size(), numConstitutivePointsPerParentIndex, 4, 3 );
 }
 
 void CompressibleSinglePhaseFluid::FillDocumentationNode()
@@ -190,6 +196,9 @@ void CompressibleSinglePhaseFluid::ReadXML_PostProcess()
     string const message = "An invalid value of reference viscosity ("+std::to_string( m_referenceViscosity )+") is specified";
     GEOS_ERROR( message );
   }
+
+  m_testData2D.resize( m_testData2D.size(0), m_testData2D.size(1), 4 );
+  m_testData3D.resize( m_testData3D.size(0), m_testData3D.size(1), 4, 3 );
 }
 
 void CompressibleSinglePhaseFluid::FluidDensityCompute( real64 const & pres,

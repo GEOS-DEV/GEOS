@@ -129,6 +129,9 @@ private:
   array2d<real64> m_viscosity;
   array2d<real64> m_dViscosity_dPressure;
 
+  array3d<real64> m_testData2D;
+  array4d<real64> m_testData3D;
+
   ExponentialRelation<localIndex, real64> m_densityRelation;
   ExponentialRelation<localIndex, real64> m_viscosityRelation;
 };
@@ -140,6 +143,18 @@ inline void CompressibleSinglePhaseFluid::PressureUpdatePoint(real64 const & pre
 {
   m_densityRelation.Compute( pres, m_density[k][q], m_dDensity_dPressure[k][q] );
   m_viscosityRelation.Compute( pres, m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
+
+  for (localIndex q2 = 0; q2 < m_testData2D.size(1); ++q2)
+  {
+    for (localIndex i = 0; i < 4; ++i)
+    {
+      m_testData2D[k][q2][i] = k + 0.25 * i;
+      for (localIndex j = 0; j < 3; ++j)
+      {
+        m_testData3D[k][q2][i][j] = k + 0.25 * i + 0.08333 * j;
+      }
+    }
+  }
 }
 
 } /* namespace constitutive */
