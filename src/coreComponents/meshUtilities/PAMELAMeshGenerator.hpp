@@ -30,6 +30,7 @@
 
 //This is an include of PAMELA
 #include "Mesh/Mesh.hpp"
+#include "MeshDataWriters/MeshParts.hpp"
 
 #include "MeshGeneratorBase.hpp"
 
@@ -76,6 +77,9 @@ public:
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
   void ReadXML_PostProcess() override final;
+
+private:
+  std::tuple< R1Tensor, R1Tensor> getMinMax(const PAMELA::PartMap<PAMELA::Polyhedron*>& partMap);
 
 private:
   /// Mesh in the data structure of PAMELA.

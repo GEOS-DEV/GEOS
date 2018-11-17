@@ -23,8 +23,8 @@
  *      Author: Antoine Mazuyer
  */
 
-#include "PAMELAMeshGenerator.hpp"
 
+#include "PAMELAMeshGenerator.hpp"
 #include "managers/DomainPartition.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
@@ -36,7 +36,6 @@
 
 #include "Mesh/MeshFactory.hpp"
 
-#include "MeshDataWriters/MeshParts.hpp"
 #include "MeshDataWriters/VTKWriter.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
@@ -130,12 +129,21 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   //TODO for the moment we only write the polyhedron and the associated vertices
   auto polyhedronCollection = m_pamelaMesh->get_PolyhedronCollection();
 
+  std::cout << "nb fantomes " << polyhedronCollection->size_ghost() << std::endl;
+
   // Use the PartMap of PAMELA to get the mesh
   auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get()));
+
+  PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
+  R1Tensor mini;
+  R1Tensor maxi;
+  std::tie(mini,maxi) = getMinMax( polyhedronPartMap);
+  partition.setSizes( mini, maxi );
 
   // First loop which iterate on the regions
   for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
   {
+    std::cout << "Une nouvelle region" << std::endl;
     auto regionPtr = regionItr->second;
 
     // Iterate on vertices
@@ -144,10 +152,13 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     for( auto verticesIterator = regionPtr->Points.begin() ;
          verticesIterator != regionPtr->Points.end() ; verticesIterator++ )
     {
-      real64 * const pointData = X[(*verticesIterator)->get_globalIndex()].Data();
+      int localIndex = (*verticesIterator)->get_localIndex();
+      int globalIndex = (*verticesIterator)->get_globalIndex();
+      real64 * const pointData = X[localIndex].Data();
       pointData[0] = (*verticesIterator)->get_coordinates().x;
       pointData[1] = (*verticesIterator)->get_coordinates().y;
       pointData[2] = (*verticesIterator)->get_coordinates().z;
+      nodeManager->m_localToGlobalMap[localIndex] = globalIndex;
     }
 
     // Iterate on cell types
@@ -180,30 +191,34 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
                cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
                cellItr++ )
           {
-            auto cellIndex = (*cellItr)->get_globalIndex();
+            auto cellLocalIndex = (*cellItr)->get_localIndex();
+            auto cellGlobalIndex = (*cellItr)->get_localIndex();
             auto cornerList = (*cellItr)->get_vertexList();
 
-            cellToVertex[cellIndex][0] =
-              cornerList[0]->get_globalIndex();
-            cellToVertex[cellIndex][1] =
-              cornerList[1]->get_globalIndex();
-            cellToVertex[cellIndex][2] =
-              cornerList[3]->get_globalIndex();
-            cellToVertex[cellIndex][3] =
-              cornerList[2]->get_globalIndex();
-            cellToVertex[cellIndex][4] =
-              cornerList[4]->get_globalIndex();
-            cellToVertex[cellIndex][5] =
-              cornerList[5]->get_globalIndex();
-            cellToVertex[cellIndex][6] =
-              cornerList[7]->get_globalIndex();
-            cellToVertex[cellIndex][7] =
-              cornerList[6]->get_globalIndex();
+            cellToVertex[cellLocalIndex][0] =
+              cornerList[0]->get_localIndex();
+            cellToVertex[cellLocalIndex][1] =
+              cornerList[1]->get_localIndex();
+            cellToVertex[cellLocalIndex][2] =
+              cornerList[3]->get_localIndex();
+            cellToVertex[cellLocalIndex][3] =
+              cornerList[2]->get_localIndex();
+            cellToVertex[cellLocalIndex][4] =
+              cornerList[4]->get_localIndex();
+            cellToVertex[cellLocalIndex][5] =
+              cornerList[5]->get_localIndex();
+            cellToVertex[cellLocalIndex][6] =
+              cornerList[7]->get_localIndex();
+            cellToVertex[cellLocalIndex][7] =
+              cornerList[6]->get_localIndex();
+            
+            cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
           }
         }
       }
     }
   }
+  std::cout << "END MESH GENERATOR" << std::endl;
 }
 
 void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
@@ -212,6 +227,36 @@ void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elemen
                                                        int nodeIDInBox[],
                                                        const int node_size )
 {}
+std::tuple< R1Tensor, R1Tensor> PAMELAMeshGenerator::getMinMax(const PAMELA::PartMap<PAMELA::Polyhedron*>& partMap) {
+  R1Tensor maxi(std::numeric_limits<double>::lowest(),
+               std::numeric_limits<double>::lowest(),
+               std::numeric_limits<double>::lowest());
+  R1Tensor mini(std::numeric_limits<double>::max(),
+               std::numeric_limits<double>::max(),
+               std::numeric_limits<double>::max());
+  for( auto regionItr = partMap.begin() ; regionItr != partMap.end() ; ++regionItr )
+  {
+    auto regionPtr = regionItr->second;
+    for( auto verticesIterator = regionPtr->Points.begin() ;
+         verticesIterator != regionPtr->Points.end() ; verticesIterator++ )
+    {
+      maxi[0] = ( (*verticesIterator)->get_coordinates().x > maxi[0]) ?
+        (*verticesIterator)->get_coordinates().x : maxi[0];
+      maxi[1] = ( (*verticesIterator)->get_coordinates().y > maxi[1]) ?
+        (*verticesIterator)->get_coordinates().y : maxi[1];
+      maxi[2] = ( (*verticesIterator)->get_coordinates().z > maxi[2]) ?
+        (*verticesIterator)->get_coordinates().z : maxi[2];
+      mini[0] = ( (*verticesIterator)->get_coordinates().x < mini[0]) ?
+        (*verticesIterator)->get_coordinates().x : mini[0];
+      mini[1] = ( (*verticesIterator)->get_coordinates().y < mini[1]) ?
+        (*verticesIterator)->get_coordinates().y : mini[1];
+      mini[2] = ( (*verticesIterator)->get_coordinates().z < mini[2]) ?
+        (*verticesIterator)->get_coordinates().z : mini[2];
+    }
+
+  }
+  return std::make_pair(mini,maxi);
+}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )
 }
