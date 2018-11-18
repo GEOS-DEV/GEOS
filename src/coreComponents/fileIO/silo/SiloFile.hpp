@@ -331,7 +331,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const arrayView1d<TYPE>& field,
+                       const array1d<TYPE>& field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -350,7 +350,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const arrayView2d<TYPE>& field,
+                       const array2d<TYPE>& field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -369,7 +369,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const arrayView3d<TYPE>& field,
+                       const array3d<TYPE>& field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -659,44 +659,44 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
       if( typeID==typeid(array1d<real64>) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array1d<real64>> const & >( *wrapper );
-        this->WriteDataField<real64>(meshname.c_str(), fieldName,
-                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+        this->WriteDataField<real64>( meshname.c_str(), fieldName,
+                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array2d<real64>) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array2d<real64>> const & >( *wrapper );
-        this->WriteDataField<real64>(meshname.c_str(), fieldName,
-                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+        this->WriteDataField<real64>( meshname.c_str(), fieldName,
+                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array3d<real64>) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array3d<real64>> const & >( *wrapper );
-        this->WriteDataField<real64>(meshname.c_str(), fieldName,
-                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+        this->WriteDataField<real64>( meshname.c_str(), fieldName,
+                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(r1_array) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
-        this->WriteDataField<real64>(meshname.c_str(), fieldName,
-                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+        this->WriteDataField<real64>( meshname.c_str(), fieldName,
+                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(integer_array) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
-        this->WriteDataField<integer>(meshname.c_str(), fieldName,
-                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+        this->WriteDataField<integer>( meshname.c_str(), fieldName,
+                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(localIndex_array) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
-        this->WriteDataField<localIndex>(meshname.c_str(), fieldName,
-                                         viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+        this->WriteDataField<localIndex>( meshname.c_str(), fieldName,
+                                          viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(globalIndex_array) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<globalIndex_array> const & >( *wrapper );
-        this->WriteDataField<globalIndex>(meshname.c_str(), fieldName,
-                                         viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+        this->WriteDataField<globalIndex>( meshname.c_str(), fieldName,
+                                           viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
     }
   }
@@ -715,7 +715,7 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const arrayView1d<TYPE>& field,
+                               const array1d<TYPE>& field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
@@ -855,22 +855,29 @@ void SiloFile::WriteDataField( string const & meshName,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const arrayView2d<TYPE>& field,
+                               const array2d<TYPE>& field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot )
 {
-  localIndex const npts = field.size(0);
+  int const primaryDimIndex = field.getSingleParameterResizeIndex();
+  int const secondaryDimIndex = 1 - primaryDimIndex;
+
+  localIndex const npts = field.size( primaryDimIndex );
+  localIndex const nvar = field.size( secondaryDimIndex );
 
   array1d<TYPE> data( npts );
+  localIndex indices[2];
 
-  for (localIndex ivar = 0; ivar < field.size(1); ++ivar)
+  for (localIndex ivar = 0; ivar < nvar; ++ivar)
   {
+    indices[secondaryDimIndex] = ivar;
     // make a copy of the ivar'th slice of data
     for (localIndex ip = 0; ip < npts; ++ip)
     {
-      data[ip] = field[ip][ivar];
+      indices[primaryDimIndex] = ip;
+      data[ip] = field( indices[0], indices[1] );
     }
     WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar), data,
                              centering, cycleNumber, problemTime, multiRoot );
@@ -880,24 +887,34 @@ void SiloFile::WriteDataField( string const & meshName,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const arrayView3d<TYPE>& field,
+                               const array3d<TYPE>& field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot )
 {
-  localIndex const npts = field.size(0);
+  int const primaryDimIndex = field.getSingleParameterResizeIndex();
+  int const secondaryDimIndex1 = (primaryDimIndex < 1) ? 1 : 0;
+  int const secondaryDimIndex2 = (primaryDimIndex < 2) ? 2 : 1;
+
+  localIndex const npts  = field.size( primaryDimIndex );
+  localIndex const nvar1 = field.size( secondaryDimIndex1 );
+  localIndex const nvar2 = field.size( secondaryDimIndex2 );
 
   array1d<TYPE> data( npts );
+  localIndex indices[3];
 
-  for (localIndex ivar = 0; ivar < field.size(1); ++ivar)
+  for (localIndex ivar = 0; ivar < nvar1; ++ivar)
   {
-    for (localIndex jvar = 0; jvar < field.size(2); ++jvar)
+    indices[secondaryDimIndex1] = ivar;
+    for (localIndex jvar = 0; jvar < nvar2; ++jvar)
     {
+      indices[secondaryDimIndex2] = jvar;
       // make a copy of the ivar/jvar'th slice of data
       for (localIndex ip = 0; ip < npts; ++ip)
       {
-        data[ip] = field[ip][ivar][jvar];
+        indices[primaryDimIndex] = ip;
+        data[ip] = field( indices[0], indices[1], indices[2] );
       }
       WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar) + "_" + std::to_string(jvar), data,
                                centering, cycleNumber, problemTime, multiRoot );

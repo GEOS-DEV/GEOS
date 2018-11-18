@@ -294,6 +294,19 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     0,
                                     0 );
 
+        docNode->AllocateChildNode( "TestField2DFlippedLayout",
+                                    "TestField2DFlippedLayout",
+                                    -1,
+                                    "real64_array2d",
+                                    "real64_array2d",
+                                    "Test 2D field with flipped memory layout (element index second)",
+                                    "Test 2D field with flipped memory layout (element index second)",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
         docNode->AllocateChildNode( "TestField3D",
                                     "TestField3D",
                                     -1,
@@ -440,11 +453,15 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
   // TODO TEST! DELETE THIS
   elemManager->forCellBlocks( [&] (CellBlockSubRegion * const subRegion) -> void
   {
-    auto & test2D = subRegion->getReference<array2d<real64>>("TestField2D");
-    auto & test3D = subRegion->getReference<array3d<real64>>("TestField3D");
+    auto & test2D        = subRegion->getReference<array2d<real64>>("TestField2D");
+    auto & test3D        = subRegion->getReference<array3d<real64>>("TestField3D");
+    auto & test2DFlipped = subRegion->getReference<array2d<real64>>("TestField2DFlippedLayout");
 
     test2D.resize( subRegion->size(), 5 );
     test3D.resize( subRegion->size(), 5, 2 );
+
+    test2DFlipped.setSingleParameterResizeIndex( 1 );
+    test2DFlipped.resize( 5, subRegion->size() );
 
     FORALL( a, 0, subRegion->size() )
     {
@@ -455,6 +472,7 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
         {
           test3D[a][i][j] = a + 0.2*i + 0.1*j;
         }
+        test2DFlipped[i][a] = a + 0.2*i;
       }
     });
   });
