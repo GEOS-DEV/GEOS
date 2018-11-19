@@ -33,10 +33,10 @@ add_subdirectory(thirdparty)
 ################################
 #add_subdirectory(components)
 
-add_subdirectory(coreComponents)
-
 set( externalComponentsLinkList "" ) 
 add_subdirectory(externalComponents)
+
+add_subdirectory(coreComponents)
 
 ################################
 # Add docs
