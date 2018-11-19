@@ -78,7 +78,7 @@ public:
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 
-  void CalculateShapeFunctionGradients( r1_array const & X,
+  void CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const & X,
                                         dataRepository::ManagedGroup * const cellBlock ) const;
 
 public:
