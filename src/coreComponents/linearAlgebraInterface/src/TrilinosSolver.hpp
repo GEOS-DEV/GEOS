@@ -30,8 +30,9 @@
 #include <Amesos.h>
 #include "ml_MultiLevelPreconditioner.h"
 #include "ml_epetra_utils.h"
-#include "TrilinosSparseMatrix.hpp"
-#include "TrilinosVector.hpp"
+
+#include "EpetraMatrix.hpp"
+#include "EpetraVector.hpp"
 
 namespace geosx
 {
@@ -71,9 +72,9 @@ public:
   /**
    * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
    *
-   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-  void solve( EpetraSparseMatrix &Mat,
+  void solve( EpetraMatrix &Mat,
               EpetraVector &sol,
               EpetraVector &rhs,
               integer const max_iter,
@@ -83,9 +84,9 @@ public:
   /**
    * @brief Solve system using the ml preconditioner.
    *
-   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-  void ml_solve( EpetraSparseMatrix &Mat,
+  void ml_solve( EpetraMatrix &Mat,
                  EpetraVector &sol,
                  EpetraVector &rhs,
                  integer const max_iter,
@@ -95,9 +96,9 @@ public:
   /**
    * @brief Solve system using a direct solver (KLU).
    *
-   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-  void dsolve( EpetraSparseMatrix &Mat,
+  void dsolve( EpetraMatrix &Mat,
                EpetraVector &sol,
                EpetraVector &rhs );
   //@}

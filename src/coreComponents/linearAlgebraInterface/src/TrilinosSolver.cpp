@@ -56,7 +56,7 @@ TrilinosSolver::TrilinosSolver()
 /**
  * @brief Solve system.
  *
- * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector. Prec is an optional
+ * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector. Prec is an optional
  * pointer to a preconditioner.
  */
 
@@ -64,7 +64,7 @@ TrilinosSolver::TrilinosSolver()
 // Iterative solver
 // ----------------------------
 
-void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
+void TrilinosSolver::solve( EpetraMatrix &Mat,
                             EpetraVector &sol,
                             EpetraVector &rhs,
                             integer const max_iter,
@@ -72,7 +72,7 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
                             std::unique_ptr<Epetra_Operator> Prec )
 {
   // Create Epetra linear problem.
-  Epetra_LinearProblem problem( Mat.getPointer(), sol.getPointer(), rhs.getPointer());
+  Epetra_LinearProblem problem( Mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
 
   // Instantiate the AztecOO solver.
   AztecOO solver( problem );
@@ -115,7 +115,7 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
 /**
  * @brief Solve system using an ML preconditioner. (Testing purposes mostly)
  *
- * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+ * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
  * This function is a very early design and should be further improved
  * before real usage.
  *
@@ -126,7 +126,7 @@ void TrilinosSolver::solve( EpetraSparseMatrix &Mat,
 // ----------------------------
 // Initial test of an ML-based preconditioner.
 
-void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
+void TrilinosSolver::ml_solve( EpetraMatrix &Mat,
                                EpetraVector &sol,
                                EpetraVector &rhs,
                                integer const max_iter,
@@ -134,7 +134,7 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
                                std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec )
 {
   // Create Epetra linear problem.
-  Epetra_LinearProblem problem( Mat.getPointer(), sol.getPointer(), rhs.getPointer());
+  Epetra_LinearProblem problem( Mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
 
   // Instantiate AztecOO solver.
   AztecOO solver( problem );
@@ -146,7 +146,7 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
   // Compute the preconditioner
   if( MLPrec == nullptr )
   {
-    MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( *Mat.getPointer(), MLList );
+    MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( *Mat.unwrappedPointer(), MLList );
   }
   // Set output (TODO verbosity manager?)
   solver.SetAztecOption( AZ_output, AZ_last );
@@ -161,7 +161,7 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
 /**
  * @brief Solve system using a direct solver (sequential!).
  *
- * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVectors.
+ * Solve Ax=b with A an EpetraMatrix, x and b EpetraVectors.
  *
  */
 
@@ -169,12 +169,12 @@ void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
 // Direct solver
 // ----------------------------
 
-void TrilinosSolver::dsolve( EpetraSparseMatrix &Mat,
+void TrilinosSolver::dsolve( EpetraMatrix &Mat,
                              EpetraVector &sol,
                              EpetraVector &rhs )
 {
   // Create Epetra linear problem and instantiate solver.
-  Epetra_LinearProblem problem( Mat.getPointer(), sol.getPointer(), rhs.getPointer());
+  Epetra_LinearProblem problem( Mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
 
   // Instantiate the Amesos solver.
   Amesos_BaseSolver* solver;

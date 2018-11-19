@@ -17,35 +17,37 @@
  */
 
 /**
- * @file EpetraSparseMatrix.hpp
+ * @file EpetraMatrix.hpp
  *
  *  Created on: Jul 24, 2018
  *  Author: Matthias Cremon
  *
  */
 
-#ifndef EPETRASPARSEMATRIX_HPP_
-#define EPETRASPARSEMATRIX_HPP_
+#ifndef LAI_EPETRAMATRIX_HPP_
+#define LAI_EPETRAMATRIX_HPP_
 
 #include "InterfaceTypes.hpp"
+
 #include <Epetra_Comm.h>
 #include <Epetra_MpiComm.h>
 #include <Epetra_Map.h>
 #include <Epetra_CrsGraph.h>
 #include <Epetra_CrsMatrix.h>
 #include <EpetraExt_MatrixMatrix.h>
+
 #include "common/DataTypes.hpp"
-#include "TrilinosVector.hpp"
+#include "EpetraVector.hpp"
 
 namespace geosx
 {
 
 /**
- * \class EpetraSparseMatrix
+ * \class EpetraMatrix
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-class EpetraSparseMatrix
+class EpetraMatrix
 {
 public:
 
@@ -56,19 +58,19 @@ public:
    *
    * Create an empty (distributed) matrix.
    */
-  EpetraSparseMatrix();
+  EpetraMatrix();
 
   /**
    * @brief Copy constructor.
    *
-   * Create new matrix from matrix <tt>in_mat</tt>.
+   * Create new matrix from matrix <tt>src</tt>.
    */
-  EpetraSparseMatrix( EpetraSparseMatrix const &in_mat );
+  EpetraMatrix( EpetraMatrix const &src );
 
   /**
    * @brief Virtual destructor.
    */
-  virtual ~EpetraSparseMatrix() = default;
+  virtual ~EpetraMatrix() = default;
   //@}
 
   //! @name Create/Finalize/Reinitialize Methods
@@ -395,7 +397,7 @@ public:
   /**
    * @brief Returns a pointer to the underlying matrix.
    */
-  Epetra_CrsMatrix* getPointer() const;
+  Epetra_CrsMatrix* unwrappedPointer() const;
 
   /**
    * @brief Returns the number of global rows.
@@ -498,4 +500,4 @@ private:
 
 } // namespace geosx
 
-#endif /* EpetraSPARSEMATRIX_HPP_ */
+#endif /* LAI_EPETRAMATRIX_HPP_ */

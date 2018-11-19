@@ -24,8 +24,8 @@
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 
 #include "TrilinosSolver.hpp"
-#include "TrilinosSparseMatrix.hpp"
-#include "TrilinosVector.hpp"
+#include "EpetraMatrix.hpp"
+#include "EpetraVector.hpp"
 
 namespace geosx
 {
@@ -43,10 +43,9 @@ public:
   using laiGID = trilinosTypes::gid;
 
   // Epetra matrix and vector wrappers
-  using ParallelMatrix = EpetraSparseMatrix;
+  using ParallelMatrix = EpetraMatrix;
   using ParallelVector = EpetraVector;
-
-  using LinearSolver = TrilinosSolver;
+  using LinearSolver   = TrilinosSolver;
 
   //! @name Constructor/Destructor Methods
   //@{

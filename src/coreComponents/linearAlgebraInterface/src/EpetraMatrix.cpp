@@ -17,10 +17,10 @@
  */
 
 /**
- * @file EpetraSparseMatrix.cpp
+ * @file EpetraMatrix.cpp
  */
 
-// BEGIN_RST_NARRATIVE EpetraSparseMatrix.rst
+// BEGIN_RST_NARRATIVE EpetraMatrix.rst
 // ==============================
 // Epetra-based Matrix Object
 // ==============================
@@ -29,7 +29,7 @@
 // functions and accessors for Epetra objects.
 
 // Include the corresponding header file.
-#include "TrilinosSparseMatrix.hpp"
+#include "EpetraMatrix.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -41,20 +41,20 @@ namespace geosx
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create an empty matrix (meant to be used for declaration)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-EpetraSparseMatrix::EpetraSparseMatrix()
+EpetraMatrix::EpetraMatrix()
 {}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Copy constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-EpetraSparseMatrix::EpetraSparseMatrix( EpetraSparseMatrix const &in_mat )
+EpetraMatrix::EpetraMatrix( EpetraMatrix const &in_mat )
 {
   // Check if the vector to be copied is not empty
-  if( in_mat.getPointer() != nullptr )
+  if( in_mat.unwrappedPointer() != nullptr )
   {
     // Create a unique pointer to an Epetra_CrsMatrix. The data from the input matrix is
     // copied to a new memory location.
-    m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( *in_mat.getPointer() ) );
+    m_matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( *in_mat.unwrappedPointer() ) );
   }
 }
 
@@ -66,7 +66,7 @@ EpetraSparseMatrix::EpetraSparseMatrix( EpetraSparseMatrix const &in_mat )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from number of elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void EpetraSparseMatrix::create( MPI_Comm const comm,
+void EpetraMatrix::create( MPI_Comm const comm,
                                  trilinosTypes::gid const size,
                                  trilinosTypes::lid const nMaxEntriesPerRow )
 {
@@ -83,7 +83,7 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
 // (TODO this has not been tested
 // and from previous experience it may not be the correct way of getting a rectangular
 // matrix).
-void EpetraSparseMatrix::create( MPI_Comm const comm,
+void EpetraMatrix::create( MPI_Comm const comm,
                                  trilinosTypes::gid const in_m_nRowGlobal,
                                  trilinosTypes::gid const in_m_nColGlobal,
                                  trilinosTypes::lid const nMaxEntriesPerRow )
@@ -100,7 +100,7 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from Epetra_Map
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void EpetraSparseMatrix::create( Epetra_Map const &input_map,
+void EpetraMatrix::create( Epetra_Map const &input_map,
                                  trilinosTypes::lid const nMaxEntriesPerRow )
 {
   // Create a unique pointer to an Epetra_CrsMatrix defined from the input Epetra_Map.
@@ -114,7 +114,7 @@ void EpetraSparseMatrix::create( Epetra_Map const &input_map,
 // (TODO this has not been tested
 // and from previous experience it may not be the correct way of getting a rectangular
 // matrix).
-void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
+void EpetraMatrix::create( Epetra_Map const &input_row_map,
                                  Epetra_Map const &input_col_map,
                                  trilinosTypes::lid const nMaxEntriesPerRow )
 {
@@ -126,7 +126,7 @@ void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from an Epetra_CrsGraph.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void EpetraSparseMatrix::create( Epetra_CrsGraph const &graph )
+void EpetraMatrix::create( Epetra_CrsGraph const &graph )
 {
   // Create a unique pointer to an Epetra_CrsMatrix defined from the input Epetra_CrsGraph.
   // An Epetra_CrsGraph can be used as a sparsity pattern.
@@ -136,7 +136,7 @@ void EpetraSparseMatrix::create( Epetra_CrsGraph const &graph )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from an Epetra_CrsMatrix.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void EpetraSparseMatrix::create( Epetra_CrsMatrix &in_matrix )
+void EpetraMatrix::create( Epetra_CrsMatrix &in_matrix )
 {
   // Create a unique pointer to an Epetra_CrsMatrix defined from the input Epetra_CrsMatrix.
   // Similar to the copy constructor but does no copy the data, just points to the input matrix.
@@ -147,7 +147,7 @@ void EpetraSparseMatrix::create( Epetra_CrsMatrix &in_matrix )
 // Reinitialize.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Keeps the map and graph but sets all values to 0.
-void EpetraSparseMatrix::zero()
+void EpetraMatrix::zero()
 {
   m_matrix->PutScalar( 0 );
 }
@@ -156,14 +156,14 @@ void EpetraSparseMatrix::zero()
 // Open
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Empty open function (implemented for HYPRE compatibility).
-void EpetraSparseMatrix::open()
+void EpetraMatrix::open()
 {}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Close
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Fix the sparsity pattern, make the data contiguous in memory and optimize storage.
-void EpetraSparseMatrix::close()
+void EpetraMatrix::close()
 {
 
   m_matrix->FillComplete();
@@ -178,7 +178,7 @@ void EpetraSparseMatrix::close()
 // Add single value.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Add a value at row iRow and column iCol
-void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
+void EpetraMatrix::add( trilinosTypes::gid const iRow,
                               trilinosTypes::gid const iCol,
                               real64 const value )
 {
@@ -189,7 +189,7 @@ void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
 // Add row values.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Add row values at row iRow and columns cols (size nCols)
-void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
+void EpetraMatrix::add( trilinosTypes::gid const iRow,
                               trilinosTypes::lid const nCols,
                               real64 const *values,
                               trilinosTypes::gid const *cols )
@@ -316,7 +316,7 @@ void EpetraSparseMatrix::add( trilinosTypes::gid const iRow,
 // Add dense matrix.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // TODO THIS FUNCTION HAS NOT BEEN PROPERLY TESTED.
-void EpetraSparseMatrix::add( array1d<trilinosTypes::gid> const rowIndices,
+void EpetraMatrix::add( array1d<trilinosTypes::gid> const rowIndices,
                               array1d<trilinosTypes::gid> const colIndices,
                               array2d<real64> const values)
 {
@@ -346,7 +346,7 @@ void EpetraSparseMatrix::add( array1d<trilinosTypes::gid> const rowIndices,
 // Set single value.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Set the value of the element (iRow,iCol) to value.
-void EpetraSparseMatrix::set( trilinosTypes::gid const iRow,
+void EpetraMatrix::set( trilinosTypes::gid const iRow,
                               trilinosTypes::gid const iCol,
                               real64 const value )
 {
@@ -357,7 +357,7 @@ void EpetraSparseMatrix::set( trilinosTypes::gid const iRow,
 // Set row values.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Add the value of elements (iRow,[nCols]) to values.
-void EpetraSparseMatrix::set( trilinosTypes::gid const iRow,
+void EpetraMatrix::set( trilinosTypes::gid const iRow,
                               trilinosTypes::lid const nCols,
                               real64 const *values,
                               trilinosTypes::gid const *cols )
@@ -373,7 +373,7 @@ void EpetraSparseMatrix::set( trilinosTypes::gid const iRow,
 // there is a guarantee that each element will only be accessed once. If that is not the
 // case, it will allocate (way) too much memory and sum all the values allocated to the
 // same element.
-void EpetraSparseMatrix::insert( trilinosTypes::gid const iRow,
+void EpetraMatrix::insert( trilinosTypes::gid const iRow,
                                  trilinosTypes::lid const nCols,
                                  real64 const *values,
                                  trilinosTypes::gid const *cols )
@@ -389,21 +389,21 @@ void EpetraSparseMatrix::insert( trilinosTypes::gid const iRow,
 // Matrix/vector multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-vector product A*src = dst.
-void EpetraSparseMatrix::multiply( EpetraVector const &src,
+void EpetraMatrix::multiply( EpetraVector const &src,
                                    EpetraVector &dst ) const
 {
-  m_matrix->Multiply( false, *src.getPointer(), *dst.getPointer() );
+  m_matrix->Multiply( false, *src.unwrappedPointer(), *dst.unwrappedPointer() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute residual.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute res = b - Ax (residual form).
-void EpetraSparseMatrix::residual( EpetraVector const &x,
+void EpetraMatrix::residual( EpetraVector const &x,
                                    EpetraVector const &b,
                                    EpetraVector &r ) const
 {
-  m_matrix->Multiply( false, *x.getPointer(), *r.getPointer() );
+  m_matrix->Multiply( false, *x.unwrappedPointer(), *r.unwrappedPointer() );
   r.axpby( 1.0, b, -1.0 );
 }
 
@@ -411,14 +411,14 @@ void EpetraSparseMatrix::residual( EpetraVector const &x,
 // Generalized matrix/vector product.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
-void EpetraSparseMatrix::gemv( real64 const alpha,
+void EpetraMatrix::gemv( real64 const alpha,
                                EpetraVector const &x,
                                real64 const beta,
                                EpetraVector &y,
                                bool useTranspose )
 {
   EpetraVector Ax( y );
-  m_matrix->Multiply( useTranspose, *x.getPointer(), *Ax.getPointer() );
+  m_matrix->Multiply( useTranspose, *x.unwrappedPointer(), *Ax.unwrappedPointer() );
   y.axpby( alpha, Ax, beta );
 }
 
@@ -426,7 +426,7 @@ void EpetraSparseMatrix::gemv( real64 const alpha,
 // Scale.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Multiply all elements by scalingFactor.
-void EpetraSparseMatrix::scale( real64 const scalingFactor )
+void EpetraMatrix::scale( real64 const scalingFactor )
 {
   m_matrix->Scale( scalingFactor );
 }
@@ -435,18 +435,18 @@ void EpetraSparseMatrix::scale( real64 const scalingFactor )
 // Left scale (diagonal scaling).
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
-void EpetraSparseMatrix::leftScale( EpetraVector const &vec )
+void EpetraMatrix::leftScale( EpetraVector const &vec )
 {
-  m_matrix->LeftScale( *vec.getPointer() );
+  m_matrix->LeftScale( *(*vec.unwrappedPointer())(0) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Right scale (diagonal scaling)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Post-multiplies (right) with diagonal matrix consisting of the values in vec.
-void EpetraSparseMatrix::rightScale( EpetraVector const &vec )
+void EpetraMatrix::rightScale( EpetraVector const &vec )
 {
-  m_matrix->RightScale( *vec.getPointer() );
+  m_matrix->RightScale( *(*vec.unwrappedPointer())(0) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -454,18 +454,18 @@ void EpetraSparseMatrix::rightScale( EpetraVector const &vec )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Pre-multiplies (left) with diagonal matrix consisting of the values in vecLeft and
 // Post-multiplies (right) with diagonal matrix consisting of the values in vecRight.
-void EpetraSparseMatrix::leftRightScale( EpetraVector const &vecLeft,
-                                         EpetraVector const &vecRight )
+void EpetraMatrix::leftRightScale( EpetraVector const &vecLeft,
+                                   EpetraVector const &vecRight )
 {
-  m_matrix->RightScale( *vecRight.getPointer() );
-  m_matrix->LeftScale( *vecLeft.getPointer() );
+  leftScale(vecLeft);
+  rightScale(vecRight);
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Clear row.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Clear row and multiply diagonal term by factor.
-void EpetraSparseMatrix::clearRow( trilinosTypes::gid const row,
+void EpetraMatrix::clearRow( trilinosTypes::gid const row,
                                    real64 const factor )
 {
   // Get the local index corresponding to the global index input. Returns -1
@@ -506,7 +506,7 @@ void EpetraSparseMatrix::clearRow( trilinosTypes::gid const row,
 // Get global row.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Extract the global row and output the number of elements, values and column indices.
-void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
+void EpetraMatrix::getRow( trilinosTypes::gid GlobalRow,
                                  trilinosTypes::lid &NumEntries,
                                  real64* Values,
                                  trilinosTypes::gid* Indices ) const
@@ -518,7 +518,7 @@ void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
 // Get local row.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Extract the local row and output the number of elements, values and column indices.
-void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
+void EpetraMatrix::getLocalRow( trilinosTypes::lid localRow,
                                       trilinosTypes::lid & NumEntries,
                                       real64 * & Values,
                                       trilinosTypes::lid * & Indices ) const
@@ -526,7 +526,7 @@ void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
   m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
 }
 
-void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
+void EpetraMatrix::getRow( trilinosTypes::gid GlobalRow,
                                  trilinosTypes::lid &NumEntries,
                                  std::vector<real64> &vecValues,
                                  std::vector<trilinosTypes::gid> &vecIndices ) const
@@ -543,7 +543,7 @@ void EpetraSparseMatrix::getRow( trilinosTypes::gid GlobalRow,
   }
 }
 
-void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
+void EpetraMatrix::getLocalRow( trilinosTypes::lid localRow,
                                       trilinosTypes::lid &NumEntries,
                                       std::vector<real64> &vecValues,
                                       std::vector<trilinosTypes::lid> &vecIndices ) const
@@ -565,7 +565,7 @@ void EpetraSparseMatrix::getLocalRow( trilinosTypes::lid localRow,
 // Get pointer.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the pointer to the matrix
-Epetra_CrsMatrix * EpetraSparseMatrix::getPointer() const
+Epetra_CrsMatrix * EpetraMatrix::unwrappedPointer() const
 {
   return m_matrix.get();
 }
@@ -574,7 +574,7 @@ Epetra_CrsMatrix * EpetraSparseMatrix::getPointer() const
 // Get number of global rows.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global rows
-trilinosTypes::gid EpetraSparseMatrix::globalRows() const
+trilinosTypes::gid EpetraMatrix::globalRows() const
 {
   return m_matrix->RowMap().NumGlobalElements64();
 }
@@ -583,7 +583,7 @@ trilinosTypes::gid EpetraSparseMatrix::globalRows() const
 // Get number of global columns.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global columns
-trilinosTypes::gid EpetraSparseMatrix::globalCols() const
+trilinosTypes::gid EpetraMatrix::globalCols() const
 {
   return m_matrix->ColMap().NumGlobalElements64();
 }
@@ -592,7 +592,7 @@ trilinosTypes::gid EpetraSparseMatrix::globalCols() const
 // Get number of unique columns.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global columns
-trilinosTypes::gid EpetraSparseMatrix::uniqueCols() const
+trilinosTypes::gid EpetraMatrix::uniqueCols() const
 {
   return m_matrix->DomainMap().NumGlobalElements64();
 }
@@ -601,7 +601,7 @@ trilinosTypes::gid EpetraSparseMatrix::uniqueCols() const
 // Get the lower index owned by processor.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the index of the first global row
-trilinosTypes::gid EpetraSparseMatrix::ilower() const
+trilinosTypes::gid EpetraMatrix::ilower() const
 {
   return m_matrix->RowMap().MyGlobalElements64()[0];
 }
@@ -610,7 +610,7 @@ trilinosTypes::gid EpetraSparseMatrix::ilower() const
 // Get the upper index owned by processor.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the index of the last global row
-trilinosTypes::gid EpetraSparseMatrix::iupper() const
+trilinosTypes::gid EpetraMatrix::iupper() const
 {
   return m_matrix->RowMap().MyGlobalElements64()[0] + m_matrix->RowMap().NumMyElements();
 }
@@ -619,7 +619,7 @@ trilinosTypes::gid EpetraSparseMatrix::iupper() const
 // Get the Epetra row map.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the row map
-Epetra_Map const & EpetraSparseMatrix::RowMap() const
+Epetra_Map const & EpetraMatrix::RowMap() const
 {
   return m_matrix->RowMap();
 }
@@ -628,7 +628,7 @@ Epetra_Map const & EpetraSparseMatrix::RowMap() const
 // Get the Epetra column map.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the column map.
-Epetra_Map const & EpetraSparseMatrix::ColMap() const
+Epetra_Map const & EpetraMatrix::ColMap() const
 {
   return m_matrix->ColMap();
 }
@@ -637,7 +637,7 @@ Epetra_Map const & EpetraSparseMatrix::ColMap() const
 // Get the Epetra domain map.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the domain map
-Epetra_Map const & EpetraSparseMatrix::DomainMap() const
+Epetra_Map const & EpetraMatrix::DomainMap() const
 {
   return m_matrix->DomainMap();
 }
@@ -646,7 +646,7 @@ Epetra_Map const & EpetraSparseMatrix::DomainMap() const
 // Get the number of local rows.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of local rows
-int EpetraSparseMatrix::myRows() const
+int EpetraMatrix::myRows() const
 {
   return m_matrix->NumMyRows();
 }
@@ -655,7 +655,7 @@ int EpetraSparseMatrix::myRows() const
 // Get the number of local columns.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of local columns
-int EpetraSparseMatrix::myCols() const
+int EpetraMatrix::myCols() const
 {
   return m_matrix->NumMyCols();
 }
@@ -665,7 +665,7 @@ int EpetraSparseMatrix::myCols() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the local index if owned by this processor. Returns -1 if
 // not owned.
-trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid const GID ) const
+trilinosTypes::lid EpetraMatrix::rowMapLID( trilinosTypes::gid const GID ) const
 {
   return m_matrix->RowMap().LID( GID );
 }
@@ -674,7 +674,7 @@ trilinosTypes::lid EpetraSparseMatrix::rowMapLID( trilinosTypes::gid const GID )
 // Print to terminal.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Wrapper to print the trilinos output of the matrix
-void EpetraSparseMatrix::print() const
+void EpetraMatrix::print() const
 {
   if( m_matrix.get() != nullptr )
   {
@@ -686,7 +686,7 @@ void EpetraSparseMatrix::print() const
 // Inf-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the infinity norm of the matrix.
-real64 EpetraSparseMatrix::normInf() const
+real64 EpetraMatrix::normInf() const
 {
   return m_matrix->NormInf();
 }
@@ -695,7 +695,7 @@ real64 EpetraSparseMatrix::normInf() const
 // 1-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the one norm of the matrix.
-real64 EpetraSparseMatrix::norm1() const
+real64 EpetraMatrix::norm1() const
 {
   return m_matrix->NormOne();
 }
@@ -704,7 +704,7 @@ real64 EpetraSparseMatrix::norm1() const
 // Frobenius-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the Frobenius norm of the matrix.
-real64 EpetraSparseMatrix::normFrobenius() const
+real64 EpetraMatrix::normFrobenius() const
 {
   return m_matrix->NormFrobenius();
 }
@@ -713,7 +713,7 @@ real64 EpetraSparseMatrix::normFrobenius() const
 // Is-assembled.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Boolean indicator. True = matrix assembled and ready to be used.
-bool EpetraSparseMatrix::isAssembled() const
+bool EpetraMatrix::isAssembled() const
 {
   return assembled;
 }
