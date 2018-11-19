@@ -510,8 +510,8 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
             allElementsConnectivities,
             [](string str)-> localIndex {return std::stoi(str);});
     for( globalIndex elementIndex = 0 ; elementIndex < numElements; ++elementIndex) {
-        localIndex numVerticesInCell = allElementsOffsets[elementIndex+1] -
-            allElementsOffsets[elementIndex];
+        localIndex numVerticesInCell = integer_conversion<localIndex>(allElementsOffsets[elementIndex+1] -
+            allElementsOffsets[elementIndex]);
         std::vector< globalIndex > connectivity(numVerticesInCell);
         for(localIndex co = 0 ; co < numVerticesInCell ; co++) {
             connectivity[co] =
@@ -641,12 +641,12 @@ globalIndex DumbMesh::QuadIndexToPolygonIndex(globalIndex const quadIndex) {
 
 localIndex DumbMesh::NumVerticesInCell(globalIndex const cellIndex ) const {
     assert(cellIndex < m_numCells);
-    return m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex];
+    return integer_conversion<localIndex>(m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex]);
 }
 
 localIndex DumbMesh::NumVerticesInPolygon(globalIndex const polygonIndex ) const {
     assert(polygonIndex < m_numPolygons);
-    return m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex];
+    return integer_conversion<localIndex>(m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex]);
 }
 
 globalIndex DumbMesh::CellVertexIndex(globalIndex const cellIndex,
@@ -663,7 +663,7 @@ globalIndex DumbMesh::PolygonVertexIndex(globalIndex const polygonIndex,
 
 real64 const * DumbMesh::Vertex(globalIndex const vertexIndex) const {
     assert(vertexIndex < m_numVertices);
-    return &(m_vertices[3*vertexIndex]);
+    return &(m_vertices[3*integer_conversion<localIndex>(vertexIndex)]);
 }
 
 globalIndex DumbMesh::GlobalPolygonIndex(globalIndex const polygonIndex) const {
@@ -681,13 +681,13 @@ void DumbMesh::SetVertex(globalIndex const vertexIndex,
     assert(vertex.size() == 3); 
     assert(vertexIndex < m_numVertices);
     for( localIndex coor = 0 ; coor < 3 ; coor ++ ) {
-        m_vertices[3*vertexIndex+coor] = vertex[coor];
+        m_vertices[3*integer_conversion<localIndex>(vertexIndex)+coor] = vertex[coor];
     }
 }
 
 void DumbMesh::SetNumVertices(globalIndex const numVertices) {
     m_numVertices = numVertices;
-    m_vertices.resize( static_cast<size_t>(numVertices*3));
+    m_vertices.resize( static_cast<localIndex>(numVertices*3));
 }
 
 void DumbMesh::SetNumCellAndPolygons(globalIndex numTetra,
@@ -791,14 +791,14 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
           ElementRegionManager * const elemRegMananger = meshLevel->getElemManager();
 
 
-          nodeManager->resize(mesh.NumVertices());
+          nodeManager->resize(integer_conversion<localIndex>(mesh.NumVertices()));
           arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
           std::cout << "node Manager pointer : " << nodeManager << std::endl;
           std::cout << "X pointer : " << X[0].Data() << std::endl;
 
           for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
           {
-              real64 * const tensorData = X[a].Data();
+              real64 * const tensorData = X[integer_conversion<localIndex>(a)].Data();
               tensorData[0] = mesh.Vertex(a)[0];
               tensorData[1] = mesh.Vertex(a)[1];
               tensorData[2] = mesh.Vertex(a)[2];
@@ -821,7 +821,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
           std::cout << "cellBlock pointer : " << cellBlock << std::endl;
 
-          subRegion->resize( mesh.NumCells() );
+          subRegion->resize( integer_conversion<localIndex>(mesh.NumCells()) );
           auto & cellToVertex = subRegion->nodeList();
           cellToVertex.resize(static_cast<int>(mesh.NumCells()),
                   static_cast<int>(mesh.NumVerticesInCell(0)) );
@@ -830,7 +830,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
           {
               for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
               {
-                  cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
+                  cellToVertex[k][a] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,a));
               }
           }
       }

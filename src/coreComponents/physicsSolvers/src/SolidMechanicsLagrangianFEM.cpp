@@ -793,7 +793,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
   constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
   raja::forall_in_set<elemPolicy>( elementList.data(),
                                    elementList.size(),
-                                   GEOSX_LAMBDA ( globalIndex k) mutable
+                                   GEOSX_LAMBDA ( localIndex k) mutable
   {
     r1_array uhat_local( NUM_NODES_PER_ELEM );
     r1_array u_local( NUM_NODES_PER_ELEM );
