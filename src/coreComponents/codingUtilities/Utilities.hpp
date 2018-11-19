@@ -327,7 +327,7 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    geosx::raja::atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
+    atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
   }
 }
 
@@ -341,9 +341,9 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
     real64 const * __restrict__ const lData = localField[a].Data();
-    geosx::raja::atomicAdd<atomicPol>( &gData[0], lData[0] );
-    geosx::raja::atomicAdd<atomicPol>( &gData[1], lData[1] );
-    geosx::raja::atomicAdd<atomicPol>( &gData[2], lData[2] );
+    atomicAdd<atomicPol>( &gData[0], lData[0] );
+    atomicAdd<atomicPol>( &gData[1], lData[1] );
+    atomicAdd<atomicPol>( &gData[2], lData[2] );
   }
 }
 
@@ -357,8 +357,8 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    geosx::raja::atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
-    geosx::raja::atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
+    atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
+    atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
   }
 }
 
