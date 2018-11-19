@@ -132,7 +132,7 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
     array1d< RankBlock > rankBlocks;
     SetRanksAndBlocks(vtmDoc,rankBlocks);
     // Retrieve the number of partitions
-    int const numFiles = rankBlocks.size();
+    int const numFiles = integer_conversion<int>(rankBlocks.size());
 
     // Next part of this method is dedicated to the optimization of file loading
     //
@@ -414,10 +414,10 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     pugi::xml_node pieceNode =
         vtmDoc.child("VTKFile").child("UnstructuredGrid").child("Piece");
 
-    localIndex numVertices = pieceNode.attribute("NumberOfPoints").as_llong();
+    localIndex numVertices = pieceNode.attribute("NumberOfPoints").as_int();
     mesh.SetNumVertices( numVertices );
 
-    localIndex numElements = pieceNode.attribute("NumberOfCells").as_llong();
+    localIndex numElements = pieceNode.attribute("NumberOfCells").as_int();
 
     /// Parse vertices
     pugi::xml_node m_verticesarray =
@@ -496,7 +496,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     allElementsOffsets[0]=1; // convenient to have 0 as first offset
     allElementsOffsets.reserve(numElements);
     SplitNodeTextString( elementsOffsets_array.text().as_string(), allElementsOffsets,
-            [](string str)-> localIndex {return std::stoll(str);});
+            [](string str)-> localIndex {return std::stoi(str);});
     assert(allElementsOffsets.size() == numElements+1);
 
     /// Parse cells connectivities

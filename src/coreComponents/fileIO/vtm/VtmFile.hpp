@@ -417,7 +417,7 @@ class MeshBlock {
     public:
         MeshBlock( string fileName,
                 string blockName);
-        MeshBlock() {};
+        MeshBlock() {}
         void Load(bool loadMesh, bool loadProperties);
         DumbMesh const & mesh() const;
         bool IsARegionBlock() const;
