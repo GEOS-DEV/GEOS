@@ -116,12 +116,12 @@ public:
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
   virtual localIndex Pack( char *& buffer ) const = 0;
-  virtual localIndex Pack( char *& buffer, localIndex_array const & packList ) const = 0;
+  virtual localIndex Pack( char *& buffer, arrayView1d<localIndex const> const & packList ) const = 0;
   virtual localIndex PackSize( ) const = 0;
-  virtual localIndex PackSize( localIndex_array const & packList ) const = 0;
+  virtual localIndex PackSize( arrayView1d<localIndex const> const & packList ) const = 0;
 
   virtual localIndex Unpack( char const *& buffer ) = 0;
-  virtual localIndex Unpack( char const *& buffer, localIndex_array const & unpackIndices ) = 0;
+  virtual localIndex Unpack( char const *& buffer, arrayView1d<localIndex const> const & unpackIndices ) = 0;
 
 //  virtual int PackingSize( char *& buffer, localIndex_array const & packList ) = 0;
 

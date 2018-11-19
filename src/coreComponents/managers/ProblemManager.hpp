@@ -152,7 +152,7 @@ public:
   DomainPartition const * getDomainPartition() const;
 
   const std::string& getProblemName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getData<std::string>(viewKeys.problemName); }
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<std::string>(viewKeys.problemName); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
