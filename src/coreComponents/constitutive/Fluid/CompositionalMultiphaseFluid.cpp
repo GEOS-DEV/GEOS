@@ -57,7 +57,7 @@ CompositionalMultiphaseFluid::DeliverClone(string const & name, ManagedGroup * c
   // TODO actually clone
   //clone->m_fluid = new CompositionalMultiphaseSystem(...);
 
-  return clone;
+  return std::move(clone);
 }
 
 void CompositionalMultiphaseFluid::AllocateConstitutiveData(dataRepository::ManagedGroup * const parent,
