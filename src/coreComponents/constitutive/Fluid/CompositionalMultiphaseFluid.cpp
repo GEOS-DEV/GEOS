@@ -52,12 +52,13 @@ CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 std::unique_ptr<ConstitutiveBase>
 CompositionalMultiphaseFluid::DeliverClone(string const & name, ManagedGroup * const parent) const
 {
-  auto clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
+  std::unique_ptr<ConstitutiveBase> clone_ptr( new CompositionalMultiphaseFluid( name, parent ) );
+  CompositionalMultiphaseFluid & clone = static_cast< CompositionalMultiphaseFluid &>( *clone_ptr );
 
   // TODO actually clone
   //clone->m_fluid = new CompositionalMultiphaseSystem(...);
 
-  return std::move(clone);
+  return clone_ptr;
 }
 
 void CompositionalMultiphaseFluid::AllocateConstitutiveData(dataRepository::ManagedGroup * const parent,
