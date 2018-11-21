@@ -1216,7 +1216,7 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
               real64 const dx,
               localIndex const length){
   
-  geosx::forall_in_range(0,length, [=] GEOSX_LAMBDA (globalIndex a) {
+  geosx::forall_in_range(0,length, GEOSX_LAMBDA (globalIndex a) {
 
       y[a][0] += dx*dydx[a][0];
       y[a][1] += dx*dydx[a][1];
