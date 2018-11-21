@@ -74,14 +74,14 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   // loop over all the faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
   {
-    const localIndex_array::size_type numNodesInFace = faceToNodeMap[kf].size();
+    const localIndex numNodesInFace = faceToNodeMap[kf].size();
     const localIndex_array& nodeList = faceToNodeMap[kf];
 
     localIndex node0, node1, temp;
 
     // loop over all the nodes in the face. there will be an edge for each
     // node.
-    for( localIndex_array::size_type a=0 ; a<numNodesInFace ; ++a )
+    for( localIndex a=0 ; a<numNodesInFace ; ++a )
     {
       // sort the nodes in order of index value
       node0 = nodeList[a];
@@ -145,7 +145,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   }
 
   // Then loop over them in parallel.
-  raja::forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
+  forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();

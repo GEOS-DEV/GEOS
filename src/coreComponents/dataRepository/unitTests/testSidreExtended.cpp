@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#if __clang_major__ >= 5
+#if __clang_major__ >= 5  && !defined(__APPLE__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
@@ -214,7 +214,7 @@ ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const s
   EXPECT_EQ(view->byteSize(), expected_size);
 
   string_array& view_data = view->reference();
-  for (string_array::size_type i = 0; i < arr.size(); ++i)
+  for (localIndex i = 0; i < arr.size(); ++i)
   {
     view_data[i] = arr[i];
   }
