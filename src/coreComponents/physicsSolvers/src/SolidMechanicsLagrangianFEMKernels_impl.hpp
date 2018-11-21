@@ -1208,14 +1208,15 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex 
 // Time-stepping routines
 
 //3. v^{n+1/2} = v^{n} + a^{n} dt/2
-
+#if 0
 //One array present
 void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
               geosx::arraySlice1d<R1Tensor> & y,
               real64 const dx,
               localIndex const length){
   
-  geosx::forall_in_range(0,length, GEOSX_LAMBDA (globalIndex a){
+  geosx::forall_in_range(0,length, [=] RAJA_HOST_DEVICE (globalIndex a) mutable{
+
       y[a][0] += dx*dydx[a][0];
       y[a][1] += dx*dydx[a][1];
       y[a][2] += dx*dydx[a][2];
@@ -1285,6 +1286,7 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
       y_3[a] += dy_3[a];
     });
 }
+#endif
 
 }//namespace
 

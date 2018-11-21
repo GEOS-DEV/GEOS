@@ -25,36 +25,36 @@ int main(int argc, char* const argv[])
       std::cout<<"usage ./main NoElem Iter"<<std::endl;
       exit(-1);
     }
-#if 0  
+#if 1
   size_t dataAllocated   = 0.0; 
-  Index_type Kx      = atoi(argv[1]); 
-  Index_type Niter   =  atoi(argv[2]);
+  localIndex Kx      = atoi(argv[1]); 
+  localIndex Niter   =  atoi(argv[2]);
 
   std::cout<<"GEOSX mini-app: Array of Objects data structures"<<std::endl;
   printParameters();
 
   real64 dt = 0.125; //step size
-  const Index_type nx = Kx+1; //Number of nodes in a cartesian dimension
-  const Index_type NoElem = Kx*Kx*Kx; //Total number of elements
-  const Index_type numNodes = nx*nx*nx; //Total number of nodes
+  const localIndex nx = Kx+1; //Number of nodes in a cartesian dimension
+  const localIndex NoElem = Kx*Kx*Kx; //Total number of elements
+  const localIndex numNodes = nx*nx*nx; //Total number of nodes
   
   //
   //Generate an element list
   //  
-  Index_type * const elementList = memoryManager::allocate<Index_type>(NoElem, dataAllocated);
-  for(Index_type i=0; i<NoElem; ++i) elementList[i] = i;  
+  localIndex * const elementList = memoryManager::allocate<localIndex>(NoElem, dataAllocated);
+  for(localIndex i=0; i<NoElem; ++i) elementList[i] = i;  
 
   
   //
   //Allocate space for constitutive map
   //
-  Index_type *  constitutiveMap = memoryManager::allocate<Index_type>(inumQuadraturePoints*NoElem, dataAllocated);
+  localIndex *  constitutiveMap = memoryManager::allocate<localIndex>(inumQuadraturePoints*NoElem, dataAllocated);
 
 
   //
   //Generate space for an element to node list
   //
-  Index_type  *  elemsToNodes = memoryManager::allocate<Index_type>(inumNodesPerElement*NoElem, dataAllocated);
+  localIndex  *  elemsToNodes = memoryManager::allocate<localIndex>(inumNodesPerElement*NoElem, dataAllocated);
  
   //
   //Allocate space for a list of vertices, generate a mesh, and populate the constitutive map
@@ -104,7 +104,7 @@ int main(int argc, char* const argv[])
   //
   //Allocate and set physical parameters
   //
-  Index_type noSymEnt = 6;
+  localIndex noSymEnt = 6;
   real64 bulkModulus = 10, shearModulus=20;
   geosxData detJ            = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
   geosxData meanStress      = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
@@ -132,7 +132,7 @@ int main(int argc, char* const argv[])
   std::cout<<"Allocated "<<dataAllocated*1e-9<<" GBs of data"<<std::endl;  
   std::cout<<"Launching kernel. . . "<<std::endl;  
   //-----------------[Kernel Launch]---------------------------------    
-  for(Index_type it=0; it<Niter; ++it)
+  for(localIndex it=0; it<Niter; ++it)
     {
       start = omp_get_wtime();
 

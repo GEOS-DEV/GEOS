@@ -32,11 +32,17 @@
 #define localMatSz 9
 
 //define constants
+//CPU friendly
 using localIndex = geosx::localIndex;
 using globalIndex = geosx::globalIndex;
 using real64 = geosx::real64;
-using geosxData   = double* const RAJA_RESTRICT;
-using geosxData_const   = double const * const RAJA_RESTRICT;
+
+//using localIndex = RAJA::Index_type;
+//using globalIndex = RAJA::Index_type;
+//using real64 = double;
+
+using geosxData   = real64 * const RAJA_RESTRICT;
+using geosxData_const   = real64 const * const RAJA_RESTRICT;
 using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 //#define STRUCTURED_GRID
@@ -52,7 +58,7 @@ using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 //#define THREE_KERNEL_UPDATE
 
-//#define USE_CUDA
+#define USE_CUDA
 
 //#define SHAPE_FUN_FAST_INDEX_ELEM
 //#define STRESS_FUN_FAST_INDEX_ELEM
