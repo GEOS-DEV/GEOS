@@ -35,8 +35,7 @@
 #include <type_traits>
 
 #include "Macros.hpp"
-#include "Buffer.hpp"
-#include "BufferOps_inline.hpp"
+#include "BufferOps.hpp"
 #include "RestartFlags.hpp"
 
 #include "codingUtilities/GeosxTraits.hpp"
@@ -950,9 +949,11 @@ public:
       axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
       if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
       {
-        localIndex byte_size = -1;
-        void * ptr = Buffer::pack(reference(), byte_size);
-        view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
+        localIndex byte_size = bufferOps::PackSize(reference());
+        char * const buffer = new char[byte_size];
+        char * buffer_cpy = buffer;
+        bufferOps::Pack<true>(buffer_cpy, reference());
+        view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, buffer);
         return;
       }
 
@@ -1005,7 +1006,7 @@ public:
     axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
     if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
     {
-      std::free(view->getVoidPtr());
+      delete[] static_cast< char * >(view->getVoidPtr());
     }
 
     unregisterDataPtr(view);
@@ -1033,7 +1034,7 @@ public:
     if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
     {
       localIndex byte_size = integer_conversion<localIndex>(view->getTotalBytes());
-      void * ptr = std::malloc(byte_size);
+      char * ptr = new char[byte_size];
       view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
       return;
     }
@@ -1065,10 +1066,12 @@ public:
     axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
     if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
     {
-      localIndex byte_size = integer_conversion<localIndex>(view->getTotalBytes());
-      void * ptr = view->getVoidPtr();
-      Buffer::unpack(reference(), ptr, byte_size);
-      std::free(ptr);
+      localIndex const byte_size = integer_conversion<localIndex>(view->getTotalBytes());
+      const char * const buffer = static_cast< char * >(view->getVoidPtr());
+      const char * buffer_cpy = buffer;
+      localIndex const bytes_read = bufferOps::Unpack(buffer_cpy, reference());
+      GEOS_ERROR_IF(bytes_read != byte_size, bytes_read << " != " << byte_size );
+      delete[] buffer;
     }
 
     unregisterDataPtr(view);

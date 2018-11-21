@@ -36,6 +36,7 @@
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
