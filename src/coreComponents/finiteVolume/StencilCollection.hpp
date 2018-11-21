@@ -116,6 +116,12 @@ public:
   /// return the stencil size
   localIndex size() const { return m_conn.stencilPointIndices.size(); }
 
+  /// return the point index of connected point i
+  IndexType connectedIndex( localIndex i ) { return m_conn.connectedPointIndices[i]; }
+
+  /// return the point index of stencil point i
+  IndexType stencilIndex ( localIndex i ) { return m_conn.stencilPointIndices[i]; }
+
   /// apply a user-defined function on the two connected cells only
   template <typename LAMBDA>
   void forConnected(LAMBDA && lambda) const
