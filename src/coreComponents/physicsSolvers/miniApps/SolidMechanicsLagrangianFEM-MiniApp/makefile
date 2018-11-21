@@ -10,16 +10,17 @@ HOSTNAME := $(shell hostname)
 #RAJA_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/RAJA/build
 RAJA_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/RAJA/build-gpu
 CHAI_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/CHAI/build
-CXX_UTIL_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/GEOSX/src/coreComponents/cxx-utilities/build-blueos_3_ppc64le_ib-clang@coral-release
+#CXX_UTIL_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/miniGEOSX/src/coreComponents/cxx-utilities/build-blueos_3_ppc64le_ib-clang@coral-release
+CXX_UTIL_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/miniGEOSX/src/coreComponents/cxx-utilities
 CUDA_DIR ?= /usr/tce/packages/cuda/cuda-9.2.64
 
 rajaInc = -I$(RAJA_DIR)/include
 rajaLib = $(RAJA_DIR)/lib/libRAJA.a
 chaiInc = -I$(CHAI_DIR)/include
 chaiLib = $(CHAI_DIR)/lib/libchai.a
-cxxInc = -I$(CXX_UTIL_DIR)/include
-cxxInc2 = -I/g/g17/vargas45/Git-Repo/MINI_GEOSX/GEOSX/src/coreComponents/cxx-utilities/src/src
-cxxLib = $(CXX_UTIL_DIR)/lib/libcxx-utilities.a
+cxxInc = -I$(CXX_UTIL_DIR)/build-blueos_3_ppc64le_ib-clang@coral-release/include
+cxxInc2 = -I$(CXX_UTIL_DIR)/src/src
+cxxLib = $(CXX_UTIL_DIR)/build-blueos_3_ppc64le_ib-clang@coral-release/lib/libcxx-utilities.a
 cudaLib = -Wl,-rpath -Wl,$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64 -lcuda -lcudart -lcudadevrt -lnvToolsExt
 #===================================
 

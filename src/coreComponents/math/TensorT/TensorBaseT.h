@@ -33,7 +33,7 @@
 #include "TensorOps.h"
 #include "Logger.hpp"
 
-#define GEOSX_USE_CUDA
+#define GEOSX_USE_CUDA //This needs to be enabled by CMAKE
 #ifdef GEOSX_USE_CUDA
 #define GEOSX_HOST_DEVICE __host__ __device__
 #else
