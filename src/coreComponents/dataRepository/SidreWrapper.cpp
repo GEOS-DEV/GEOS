@@ -23,7 +23,6 @@
  *      Author: rrsettgast
  */
 #include "SidreWrapper.hpp"
-#include "dataRepository/Buffer.hpp"
 
 #include <string>
 #include <cstdio>
