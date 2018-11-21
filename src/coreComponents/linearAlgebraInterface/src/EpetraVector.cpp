@@ -17,7 +17,7 @@
  */
 
 /**
- * @file TrilinosVector.cpp
+ * @file EpetraVector.cpp
  *
  *  Created on: Jul 24, 2018
  *  Author: Matthias Cremon
@@ -60,6 +60,7 @@ EpetraVector::EpetraVector( EpetraVector const &src )
 {
   GEOS_ERROR_IF(src.unwrappedPointer() == nullptr,"source vector appears to be empty");
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer()));
+  //TODO: maybe add check if vector is also "closed"
 }
 
 // ----------------------------
@@ -69,8 +70,7 @@ EpetraVector::EpetraVector( EpetraVector const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create from Epetra_Map
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create a vector from an Epetra_Map.  We expose this to give advanced users
-// more flexibility in the construction.
+// Create a vector from an Epetra_Map. 
 
 void EpetraVector::create( Epetra_Map const &map)
 {
@@ -88,15 +88,15 @@ void EpetraVector::create( Epetra_Map const &map)
 // elements necessary when the number of processors does not divide evenly
 // into the vector length.  
 
-void EpetraVector::createWithLocalSize( trilinosTypes::lid const localSize)
+void EpetraVector::createWithLocalSize( trilinosTypes::lid const localSize, MPI_Comm const & comm)
 {
-  Epetra_Map map = Epetra_Map(-1, localSize, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  Epetra_Map map = Epetra_Map(-1, localSize, 0, Epetra_MpiComm(comm) );
   create(map);
 }
 
-void EpetraVector::createWithGlobalSize( trilinosTypes::gid const globalSize)
+void EpetraVector::createWithGlobalSize( trilinosTypes::gid const globalSize, MPI_Comm const & comm)
 {
-  Epetra_Map map = Epetra_Map(globalSize, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  Epetra_Map map = Epetra_Map(globalSize, 0, Epetra_MpiComm(comm) );
   create(map);
 }
 
@@ -106,10 +106,10 @@ void EpetraVector::createWithGlobalSize( trilinosTypes::gid const globalSize)
 // Create a vector from local array data.  The global vector contains
 // local arrays stitched together.
 
-void EpetraVector::create( array1d<real64> const & localValues )
+void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const & comm)
 {
   trilinosTypes::lid localSize = localValues.size();
-  Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm(comm) );
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( View, map, const_cast<double*>(localValues.data()), localSize, 1 ));
 }
 

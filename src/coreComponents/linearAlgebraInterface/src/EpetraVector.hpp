@@ -75,16 +75,6 @@ public:
   //@{
 
   /**
-   * @brief Create a vector from an Epetra_Map.
-   *
-   * Create a vector from an Epetra_Map.  Allows for maximum flexibility
-   * for advanced users.
-   *
-   * \param map Input Epetra Map.
-   */
-  void create( Epetra_Map const &map);
-
-  /**
    * @brief Create a vector based on local number of elements.  
    *
    * Create a vector based on local number of elements.  Global size is
@@ -94,7 +84,7 @@ public:
    * \param localSize local number of elements.
    *
    */
-  void createWithLocalSize( trilinosTypes::lid const localSize );
+  void createWithLocalSize( trilinosTypes::lid const localSize , MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
    * @brief Create a vector based on global number of elements.  
@@ -106,7 +96,7 @@ public:
    * \param globalSize Global number of elements.
    *
    */
-  void createWithGlobalSize( trilinosTypes::gid const globalSize );
+  void createWithGlobalSize( trilinosTypes::gid const globalSize , MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
    * @brief Construct parallel vector from a local array.
@@ -116,7 +106,7 @@ public:
    * \param localValues local data to put into vector
    *
    */
-  void create( array1d<real64> const & localValues );
+  void create( array1d<real64> const & localValues , MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
    * @brief Construct parallel vector to match existing matrix.
@@ -343,9 +333,22 @@ public:
 
   //@}
 
-protected:
-  // Unique pointer to underlying Epetra_FEVector type.
+private:
+
+  /**
+   * Unique pointer to underlying Epetra_FEVector type.
+   */
   std::unique_ptr<Epetra_FEVector> m_vector = nullptr;
+
+  /**
+   * @brief Create a vector from an Epetra_Map.
+   *
+   * Create a vector from an Epetra_Map.  Allows for maximum flexibility
+   * for advanced users.
+   *
+   * \param map Input Epetra Map.
+   */
+  void create( Epetra_Map const &map);
 };
 
 } // end geosx namespace
