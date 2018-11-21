@@ -20,8 +20,6 @@
 #define __GEOS_RAJA_POLICY__HPP
 
 #include "RAJA/RAJA.hpp"
-#include "RAJA/util/defines.hpp"
-#include "RAJA/index/RangeSegment.hpp"
 
 #if defined(RAJA_ENABLE_CUDA)
 typedef RAJA::cuda_exec<256> elemPolicy;

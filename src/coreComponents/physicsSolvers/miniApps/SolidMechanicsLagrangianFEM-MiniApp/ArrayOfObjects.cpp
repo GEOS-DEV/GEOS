@@ -25,7 +25,7 @@ int main(int argc, char* const argv[])
       std::cout<<"usage ./main NoElem Iter"<<std::endl;
       exit(-1);
     }
-  
+#if 0  
   size_t dataAllocated   = 0.0; 
   Index_type Kx      = atoi(argv[1]); 
   Index_type Niter   =  atoi(argv[2]);
@@ -206,6 +206,7 @@ int main(int argc, char* const argv[])
   memoryManager::deallocate(detF);
   memoryManager::deallocate(inverseF);
 #endif  
-  
+
+#endif //DELETE
   return 0;
 }

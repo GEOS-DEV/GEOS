@@ -30,7 +30,6 @@
 
 int myrandom (int i) { return std::rand()%i;}
 
-using RAJA::localIndex;
 
 //Creates a domain on the bi-unit cube, i.e.  [-1, 1]^3
 
@@ -40,8 +39,9 @@ using RAJA::localIndex;
 //Populates:
 // VX with physical vertices
 // elemToNodes with the element to nodes list
-void meshGen(real64 * VX, localIndex * elemToNodes,
-             localIndex * RAJA_RESTRICT constitutiveMap, localIndex Kx){             
+template<typename T>
+void meshGen(real64 * VX, T * elemToNodes,
+             localIndex * RAJA_RESTRICT constitutiveMap, T Kx){
 
   std::srand ( unsigned ( std::time(0) ) );
   size_t nx = Kx+1;
