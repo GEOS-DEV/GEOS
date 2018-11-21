@@ -135,7 +135,7 @@ void CompositionalMultiphaseFlow::FillOtherDocumentationNodes( ManagedGroup * co
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
+    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock)
     {
       cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
 
@@ -449,7 +449,7 @@ void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-    elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion ) -> void
+    elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion )
     {
       subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
       subRegion->getReference<array2d<real64>>(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
@@ -561,7 +561,7 @@ void applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion ) -> void
+  elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion )
   {
     lambda( subRegion );
   });
@@ -573,7 +573,7 @@ void applyToSubRegions( DomainPartition const * const domain, LAMBDA && lambda )
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocks( [&] ( CellBlockSubRegion const * const subRegion ) -> void
+  elemManager->forCellBlocks( [&] ( CellBlockSubRegion const * const subRegion )
   {
     lambda( subRegion );
   });
@@ -595,7 +595,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
   arrayView3d<real64> & dCompFrac_dCompDens =
     dataGroup->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
-  FORALL( a, 0, dataGroup->size() )
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
   {
     real64 totalDensity = 0.0;
 
@@ -620,7 +620,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
 
 void CompositionalMultiphaseFlow::UpdateComponentFractionAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
   {
     UpdateComponentFraction( subRegion );
   });
@@ -671,7 +671,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
 
   array1d<real64> work( NC );
 
-  FORALL( a, 0, dataGroup->size() )
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
   {
     // compute total density from component partial densities
     real64 totalDensity = 0.0;
@@ -716,7 +716,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
 
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFractionAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
   {
     UpdatePhaseVolumeFraction( subRegion );
   });
@@ -736,7 +736,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
 
   // currently not thread-safe, so avoid RAJA loops
-  // FORALL( a, 0, dataGroup->size() )
+  // forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
   for( localIndex a = 0; a < dataGroup->size(); ++a )
   {
     fluid->StateUpdatePointMultiFluid(pres[a] + dPres[a], m_temperature, compFrac[a], a, 0);
@@ -745,7 +745,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
 
 void CompositionalMultiphaseFlow::UpdateFluidModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
   {
     UpdateFluidModel( subRegion );
   });
@@ -758,7 +758,7 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
   arrayView1d<real64> const & pres  = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
   arrayView1d<real64> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-  FORALL( a, 0, dataGroup->size() )
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
   {
     solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
   });
@@ -766,7 +766,7 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
 
 void CompositionalMultiphaseFlow::UpdateSolidModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
   {
     UpdateSolidModel( subRegion );
   });
@@ -778,7 +778,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
 
   arrayView2d<real64> const & phaseVolFrac  = dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
 
-  FORALL( a, 0, dataGroup->size() )
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
   {
     relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
   });
@@ -786,7 +786,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
 
 void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
   {
     UpdateRelPermModel( subRegion );
   });
@@ -834,7 +834,7 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   // in order to initialize the primary solution variables
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
-                                localIndex const ei ) -> void
+                                localIndex const ei )
   {
     for (localIndex ic = 0; ic < m_numComponents; ++ic)
     {
@@ -876,7 +876,7 @@ void CompositionalMultiphaseFlow::FinalInitializationPreSubGroups( ManagedGroup 
   }
 
   // set mass fraction flag on subregion models
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
   {
     MultiFluidBase * fluid = GetFluidModel( subRegion );
     fluid->setMassFlag( static_cast<bool>(m_useMass) );
@@ -911,7 +911,7 @@ real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
 void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
 {
   // backup some fields used in time derivative approximation
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion )
   {
     arrayView1d<integer> const & elemGhostRank =
       subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -948,7 +948,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
       solid->getReference<array2d<real64>>( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
 
 
-    FORALL( ei, 0, subRegion->size() )
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1034,7 +1034,7 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
   }
 
   // loop over all elements and set the dof number if the element is not a ghost
-  raja::ReduceSum< reducePolicy, localIndex  > localCount(0);
+  ReduceSum< reducePolicy, localIndex  > localCount(0);
   forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [=]( localIndex const er,
                                                      localIndex const esr,
                                                      localIndex const ei ) mutable ->void
@@ -1075,9 +1075,9 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   array1d<globalIndex> elementLocalDofIndexCol(numElems * m_numDofPerCell);
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  stencilCollection.forAll<RAJA::seq_exec>([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil) -> void
+  stencilCollection.forAll<RAJA::seq_exec>([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil)
   {
-    stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
+    stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i)
     {
       globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
       for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
@@ -1088,7 +1088,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
 
     localIndex const stencilSize = stencil.size();
     elementLocalDofIndexCol.resize(stencilSize * m_numDofPerCell);
-    stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
+    stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i)
     {
       globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
       for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
@@ -1108,7 +1108,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   // loop over all elements and add all locals just in case the above connector loop missed some
   forAllElemsInMesh<RAJA::seq_exec>(meshLevel, [&] (localIndex const er,
                                                     localIndex const esr,
-                                                    localIndex const ei) -> void
+                                                    localIndex const ei)
   {
     if (elemGhostRank[er][esr][ei] < 0)
     {
@@ -1126,11 +1126,11 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   });
 
   // add additional connectivity resulting from boundary stencils
-  fluxApprox->forBoundaryStencils([&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection) -> void
+  fluxApprox->forBoundaryStencils([&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection)
   {
-    boundaryStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
+    boundaryStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable
     {
-      stencil.forConnected([&] (PointDescriptor const & point, localIndex const i) -> void
+      stencil.forConnected([&] (PointDescriptor const & point, localIndex const i)
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
@@ -1146,7 +1146,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
       localIndex const stencilSize = stencil.size();
       elementLocalDofIndexCol.resize(stencilSize * m_numDofPerCell);
       integer counter = 0;
-      stencil.forAll([&] (PointDescriptor const & point, real64 w, localIndex i) -> void
+      stencil.forAll([&] (PointDescriptor const & point, real64 w, localIndex i)
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
@@ -1281,7 +1281,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
   array1d<real64> dPhaseAmount_dC( NC );
   array1d<real64> dPhaseCompFrac_dC( NC );
 
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion const * const subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion const * const subRegion )
   {
     // extract subregion data
     arrayView1d<integer> const & elemGhostRank =
@@ -1350,7 +1350,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
     arrayView5d<real64> const & dPhaseCompFrac_dComp =
       fluid->getReference<array5d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString );
 
-    FORALL( ei, 0, subRegion->size() )
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1571,7 +1571,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   array3d<real64> dCompFlux_dC( numElems, NC, NC );
 
 
-  stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
+  stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable
   {
     localIndex const stencilSize = stencil.size();
 
@@ -1596,7 +1596,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
     // set equation indices for both connected cells
     stencil.forConnected( [&] ( auto const & cell,
-                                localIndex i ) -> void
+                                localIndex i )
     {
       localIndex const er  = cell.region;
       localIndex const esr = cell.subRegion;
@@ -1630,7 +1630,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
       // calculate quantities on primary connected cells
       stencil.forConnected( [&] ( auto const & cell,
-                                 localIndex i ) -> void
+                                 localIndex i )
       {
         localIndex const er  = cell.region;
         localIndex const esr = cell.subRegion;
@@ -1685,7 +1685,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       // compute potential difference MPFA-style
       stencil.forAll( [&] ( CellDescriptor cell,
                             real64 w,
-                            localIndex i ) -> void
+                            localIndex i )
       {
         localIndex const er  = cell.region;
         localIndex const esr = cell.subRegion;
@@ -1707,7 +1707,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
           // need to add contributions from both cells the mean density depends on
           stencil.forConnected( [&] ( CellDescriptor,
-                                      localIndex j ) -> void
+                                      localIndex j )
           {
             dGravHead_dP[j] += dDensMean_dP[j] * gravD;
             for (localIndex jc = 0; jc < NC; ++jc)
@@ -1856,7 +1856,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
   array1d<long long> localVolBalanceDOF( NDOF );
   array1d<double>    localVolBalanceJacobian( NDOF );
 
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion const * const subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion const * const subRegion )
   {
     // extract subregion data
     arrayView1d<integer> const & elemGhostRank =
@@ -1889,7 +1889,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
     arrayView2d<real64> const & dPvMult_dPres =
       solid->getReference<array2d<real64>>( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString );
 
-    FORALL( ei, 0, subRegion->size() )
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1992,7 +1992,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                           string const & setName,
                                           set<localIndex> const & targetSet,
                                           ManagedGroup * subRegion,
-                                          string const & ) -> void
+                                          string const & )
   {
     // 1.0. Check whether pressure has already been applied to this set
     GEOS_ERROR_IF( bcStatusMap.count( setName ) > 0, "Conflicting pressure boundary conditions on set " << setName );
@@ -2015,7 +2015,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                            string const & setName,
                                            set<localIndex> const & targetSet,
                                            ManagedGroup * subRegion,
-                                           string const & ) -> void
+                                           string const & )
   {
     // 2.0. Check pressure and record composition bc application
     localIndex const comp = bc->GetComponent();
@@ -2052,7 +2052,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                            string const & setName,
                                            set<localIndex> const & targetSet,
                                            ManagedGroup * subRegion,
-                                           string const & ) -> void
+                                           string const & )
   {
     MultiFluidBase * const fluid = GetFluidModel(subRegion );
 
@@ -2215,7 +2215,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
 
   RAJA::ReduceMin<reducePolicy, integer> result(1);
 
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion )
   {
     arrayView1d<integer> const & elemGhostRank =
       subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -2235,7 +2235,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
     arrayView2d<real64> const & dCompDens =
       subRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
 
-    FORALL( ei, 0, subRegion->size() )
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -2280,7 +2280,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
   double * local_solution = nullptr;
   solution->ExtractView( &local_solution, &dummy );
 
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion )
   {
     arrayView1d<integer> const & elemGhostRank =
       subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -2294,7 +2294,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
     arrayView2d<real64> & dCompDens =
       subRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
 
-    FORALL( ei, 0, subRegion->size() )
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -2326,7 +2326,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
 
 void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion )
   {
     arrayView1d<real64> & dPres =
       subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
@@ -2334,7 +2334,7 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
     arrayView2d<real64> & dCompDens =
       subRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
 
-    FORALL( ei, 0, subRegion->size() )
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
     {
       dPres[ei] = 0.0;
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
@@ -2349,7 +2349,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
                                                         real64 const & dt,
                                                         DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion ) -> void
+  applyToSubRegions( domain, [&] ( CellBlockSubRegion * const subRegion )
   {
     arrayView1d<real64> & pres =
       subRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
@@ -2363,7 +2363,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
     arrayView2d<real64> const & dCompDens =
       subRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
 
-    FORALL( ei, 0, subRegion->size() )
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
     {
       pres[ei] += dPres[ei];
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
