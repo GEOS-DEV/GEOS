@@ -34,13 +34,6 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 {
 }
 
-SystemSolverParameters::~SystemSolverParameters()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
-
 void SystemSolverParameters::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();

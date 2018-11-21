@@ -142,15 +142,6 @@ void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
 }
 
 
-//void SolverBase::CreateChild( string const & childKey, string const & childName )
-//{
-//  if( CatalogInterface::hasKeyName(childKey) )
-//  {
-//    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
-//    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
-//  }
-
-
 void SolverBase::ReadXML_PostProcess()
 {
   if( this->globalGravityVector() != nullptr )
@@ -161,9 +152,9 @@ void SolverBase::ReadXML_PostProcess()
 
 
 real64 SolverBase::SolverStep( real64 const& time_n,
-                           real64 const& dt,
-                           const integer cycleNumber,
-                           DomainPartition * domain )
+                               real64 const& dt,
+                               const integer cycleNumber,
+                               DomainPartition * domain )
 {
   return 0;
 }
@@ -181,6 +172,7 @@ void SolverBase::Execute( real64 const& time_n,
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
   }
 }
+
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
@@ -211,6 +203,70 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   return dt;
 }
 
+bool SolverBase::LineSearch( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * const domain,
+                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                             real64 & lastResidual )
+{
+  integer const maxNumberLineSearchCuts = 5;
+
+  // flag to determine if we should solve the system and apply the solution. If the line
+  // search fails we just bail.
+  bool lineSearchSuccess = false;
+
+  real64 residualNorm = lastResidual;
+
+  // scale factor is value applied to the previous solution. In this case we want to
+  // subtract a portion of the previous solution.
+  real64 scaleFactor = -1.0;
+
+  // main loop for the line search.
+  for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
+  {
+    // cut the scale factor by half. This means that the scale factors will
+    // have values of -0.5, -0.25, -0.125, ...
+    scaleFactor *= 0.5;
+
+    if( !CheckSystemSolution( blockSystem, scaleFactor, domain ) )
+    {
+      if( m_verboseLevel >= 1 )
+      {
+        std::cout << "\tLine search: " << lineSearchIteration << ", solution check failed" << std::endl;
+      }
+      continue;
+    }
+
+    ApplySystemSolution( blockSystem, scaleFactor, domain );
+
+    // re-assemble system
+    AssembleSystem( domain, blockSystem, time_n, dt );
+
+    // apply boundary conditions to system
+    ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+
+    // get residual norm
+    residualNorm = CalculateResidualNorm( blockSystem, domain );
+
+    if( m_verboseLevel >= 1 )
+    {
+      std::cout << "\tLine search: " << lineSearchIteration << ", R = " << residualNorm << std::endl;
+    }
+
+    // if the residual norm is less than the last residual, we can proceed to the
+    // solution step
+    if( residualNorm < lastResidual )
+    {
+      lineSearchSuccess = true;
+      break;
+    }
+  }
+
+  lastResidual = residualNorm;
+  return lineSearchSuccess;
+}
+
 
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           real64 const & dt,
@@ -226,7 +282,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   real64 const newtonTol = solverParams->newtonTol();
   integer const maxNewtonIter = solverParams->maxIterNewton();
   integer const maxNumberDtCuts = 2;
-  integer const maxNumberLineSearchCuts = 5;
 
   // a flag to denote whether we have converged
   integer isConverged = 0;
@@ -270,46 +325,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       if( residualNorm > lastResidual )
       {
 
-        // flag to determine if we should solve the system and apply the solution. If the line
-        // search fails we just bail.
-        int lineSearchSuccess = 0;
-
-        // scale factor is value applied to the previous solution. In this case we want to
-        // subtract a portion of the previous solution.
-        real64 scaleFactor = -1.0;
-
-        // main loop for the line search.
-        for( int lineSearchIteration=0 ; lineSearchIteration<maxNumberLineSearchCuts ; ++lineSearchIteration )
-        {
-          // cut the scale factor by half. This means that the scale factors will
-          // have values of -0.5, -0.25, -0.125, ...
-          scaleFactor *= 0.5;
-          ApplySystemSolution( blockSystem, scaleFactor, domain );
-
-          // re-assemble system
-          AssembleSystem( domain, blockSystem, time_n, stepDt );
-
-          // apply boundary conditions to system
-          ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
-
-          // get residual norm
-          residualNorm = CalculateResidualNorm( blockSystem, domain );
-
-          if( m_verboseLevel >= 1 )
-          {
-            std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
-                      << ", Line search: " << lineSearchIteration + 1
-                      << ", R = " << residualNorm << std::endl;
-          }
-
-          // if the residual norm is less than the last residual, we can proceed to the
-          // solution step
-          if( residualNorm < lastResidual )
-          {
-            lineSearchSuccess = 1;
-            break;
-          }
-        }
+        residualNorm = lastResidual;
+        bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, blockSystem, residualNorm );
 
         // if line search failed, then break out of the main Newton loop. Timestep will be cut.
         if( !lineSearchSuccess )
@@ -321,6 +338,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // call the default linear solver on the system
       SolveSystem( blockSystem,
                    getSystemSolverParameters() );
+
+      if ( !CheckSystemSolution( blockSystem, 1.0, domain ) )
+      {
+        // TODO try chopping (similar to line search)
+        std::cout << "\tSolution check failed" << std::endl;
+        break;
+      }
 
       // apply the system solution to the fields/variables
       ApplySystemSolution( blockSystem, 1.0, domain );
@@ -366,7 +390,6 @@ void SolverBase::ImplicitStepSetup( real64 const& time_n,
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
 
-
 void SolverBase::AssembleSystem( DomainPartition * const domain,
                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                  real64 const time,
@@ -410,7 +433,6 @@ void SolverBase::ResetStateToBeginningOfStep( DomainPartition * const )
   GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }
 
-
 void SolverBase::ImplicitStepComplete( real64 const & time,
                                        real64 const & dt,
                                        DomainPartition * const domain )
@@ -442,10 +464,6 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 }
 
-
-//}
-
-
 R1Tensor const * SolverBase::globalGravityVector() const
 {
   R1Tensor const * rval = nullptr;
@@ -472,5 +490,12 @@ systemSolverInterface::EpetraBlockSystem * SolverBase::getLinearSystemRepository
                                                                     viewKeyStruct::
                                                                     blockSystemRepositoryString ) );
 }
+
+bool SolverBase::CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                                      real64 const scalingFactor, DomainPartition * const domain )
+{
+  return true;
+}
+
 
 } /* namespace ANST */
