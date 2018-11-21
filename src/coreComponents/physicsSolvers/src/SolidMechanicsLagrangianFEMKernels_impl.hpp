@@ -1210,7 +1210,6 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex 
 //3. v^{n+1/2} = v^{n} + a^{n} dt/2
 
 //One array present
-#if 0
 void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
               geosx::arraySlice1d<R1Tensor> & y,
               real64 const dx,
@@ -1224,7 +1223,6 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
 
     });  
 }
-
 
 //One array present
 void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
@@ -1288,7 +1286,7 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
       y_3[a] += dy_3[a];
     });
 }
-#endif
+
 
 }//namespace
 

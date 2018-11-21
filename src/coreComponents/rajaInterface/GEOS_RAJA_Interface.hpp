@@ -67,8 +67,10 @@ typedef RAJA::loop_exec parallelHostPolicy;
 
 #if defined(RAJA_ENABLE_CUDA)
 #define GEOSX_LAMBDA [=] RAJA_DEVICE
+//#define GEOSX_HOST_DEVICE __device__ __host__ //TODO FIX
 #else
 #define GEOSX_LAMBDA [&]
+//#define GEOSX_HOST_DEVICE
 #endif
 
 namespace geosx
