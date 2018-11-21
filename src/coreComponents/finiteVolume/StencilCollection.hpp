@@ -46,6 +46,11 @@ class StencilCollection
 {
 public:
 
+  /**
+   * @brief Maximum number of points in a stencil (required to use static arrays in kernels)
+   */
+  static constexpr localIndex MAX_STENCIL_SIZE = 16;
+
   // provide aliases for template type parameters
   using index_type = IndexType;
   using weight_type = WeightType;
@@ -90,11 +95,12 @@ private:
    */
   struct Connection
   {
-    IndexType         connectedPointIndices[2]; ///< identifiers of connected points
+    IndexType           connectedPointIndices[2]; ///< identifiers of connected points
     array1d<IndexType>  stencilPointIndices;      ///< identifiers of points in stencil
     array1d<WeightType> stencilWeights;           ///< stencil weights (e.g. transmissibilities)
 
-    void resize(localIndex const size) { stencilPointIndices.resize(size);
+    void resize(localIndex const size)
+    { stencilPointIndices.resize(size);
       stencilWeights.resize(size);    }
   };
 
@@ -186,6 +192,7 @@ void StencilCollection<IndexType, WeightType>::add(IndexType const cells[2],
                                                    const array1d<IndexType> & stencilCells,
                                                    const array1d<WeightType> & stencilWeights)
 {
+  GEOS_ERROR_IF( stencilCells.size() >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
   Connection conn = { { cells[0], cells[1] }, stencilCells, stencilWeights };
   m_connectionList.push_back(conn);
 }

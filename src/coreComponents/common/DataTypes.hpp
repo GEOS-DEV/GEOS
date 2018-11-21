@@ -41,6 +41,7 @@
 #include "Macros.hpp"
 #include "Logger.hpp"
 #include "Array.hpp"
+#include "StackArrayWrapper.hpp"
 #include "SortedArray.hpp"
 #include "math/TensorT/TensorT.h"
 
@@ -125,11 +126,31 @@ using buffer_type = std::vector<buffer_unit_type>;
 
 //***** BEGIN ARRAY TYPEDEFS *****
 
+namespace internal
+{
+
+template< typename INDEX >
+constexpr INDEX static_size_helper()
+{
+  return 1;
+}
+
+template< typename INDEX, INDEX size, INDEX ... sizes >
+constexpr INDEX static_size_helper()
+{
+  return size * static_size_helper<INDEX, sizes...>();
+}
+
+}
+
 template< typename T, int NDIM=1 >
 using array_view = LvArray::ArrayView<T,NDIM,localIndex>;
 
 template< typename T, int NDIM=1 >
 using array_slice = LvArray::ArraySlice<T,NDIM,localIndex>;
+
+template< typename T, int NDIM, int ... MAXSIZE >
+using stack_array = LvArray::Array<T,NDIM,localIndex, LvArray::StackArrayWrapper<T,internal::static_size_helper<int,MAXSIZE...>()>>;
 
 template< typename T >
 using array1d = LvArray::Array<T,1,localIndex>;
@@ -140,6 +161,9 @@ using arrayView1d = array_view<T,1>;
 template< typename T >
 using arraySlice1d = LvArray::ArraySlice1d<T, localIndex>;
 
+template< typename T, int N1>
+using stackArray1d = stack_array<T, 1, N1>;
+
 template< typename T >
 using array2d = LvArray::Array<T,2,localIndex>;
 
@@ -149,6 +173,9 @@ using arrayView2d = array_view<T,2>;
 template< typename T >
 using arraySlice2d = LvArray::ArraySlice<T, 2, localIndex>;
 
+template< typename T, int N1, int N2 >
+using stackArray2d = stack_array<T, 2, N1, N2>;
+
 template< typename T >
 using array3d = LvArray::Array<T,3,localIndex>;
 
@@ -157,6 +184,9 @@ using arrayView3d = array_view<T,3>;
 
 template< typename T >
 using arraySlice3d = LvArray::ArraySlice<T, 3, localIndex>;
+
+template< typename T, int N1, int N2, int N3 >
+using stackArray3d = stack_array<T, 3, N1, N2, N3>;
 
 template< typename T >
 using array4d = LvArray::Array<T,4,localIndex>;

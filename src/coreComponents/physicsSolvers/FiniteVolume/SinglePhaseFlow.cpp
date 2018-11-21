@@ -785,43 +785,31 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
   }//);
 
   constexpr localIndex numElems = 2;
-
-  globalIndex_array eqnRowIndices(numElems);
-  eqnRowIndices = -1;
-
-  globalIndex_array dofColIndices;
-
-  real64_array localFlux(numElems);
-  localFlux = 0;
-
-  array2d<real64> localFluxJacobian;
-
-  // temporary working arrays
-  real64_array densWeight(numElems);
-  densWeight = 0.5;
-
-  real64_array mobility(numElems);
-  mobility = 0.0;
-
-  real64_array dMobility_dP(numElems);
-  dMobility_dP = 0.0;
-
-  real64_array dDensMean_dP, dFlux_dP;
+  constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
 
   stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
   {
     localIndex const stencilSize = stencil.size();
 
-    // resize and clear local working arrays
-    dDensMean_dP.resize(stencilSize); // doesn't need to be that large, but it's convenient
-    dFlux_dP.resize(stencilSize);
+    // working arrays
+    stackArray1d<globalIndex, numElems> eqnRowIndices(numElems);
+    stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
+
+    stackArray1d<real64, numElems> localFlux(numElems);
+    stackArray2d<real64, numElems, maxStencilSize> localFluxJacobian(numElems, stencilSize);
+
+    stackArray1d<real64, numElems> densWeight(numElems);
+    stackArray1d<real64, numElems> mobility(numElems);
+    stackArray1d<real64, numElems> dMobility_dP(numElems);
+    stackArray1d<real64, maxStencilSize> dDensMean_dP(stencilSize);
+    stackArray1d<real64, maxStencilSize> dFlux_dP(stencilSize);
 
     // clear working arrays
+    eqnRowIndices = -1;
     dDensMean_dP = 0.0;
 
-    // resize local matrices and vectors
-    dofColIndices.resize(stencilSize);
-    localFluxJacobian.resize(numElems, stencilSize);
+    // density averaging weights
+    densWeight = 0.5;
 
     // calculate quantities on primary connected cells
     real64 densMean = 0.0;
