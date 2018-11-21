@@ -241,8 +241,6 @@ template<typename LAMBDA>
 void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
                             DomainPartition * domain,
                             EpetraBlockSystem * blockSystem,
-                            //real64 const time_n,
-                            //real64 const dt,
                             double perturbParameter,
                             double relTol,
                             LAMBDA && assembleFunction )
@@ -265,7 +263,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
   residual->Scale( 0.0 );
-  assembleFunction( solver, domain, blockSystem );
+  assembleFunction( solver, domain, jacobian, residual );
 
   // copy the analytical residual
   auto residualOrig = std::make_unique<Epetra_FEVector>( *residual );
@@ -322,7 +320,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
           solver->UpdateStateAll(domain);
 
           residual->Scale( 0.0 );
-          assembleFunction( solver, domain, blockSystem );
+          assembleFunction( solver, domain, jacobian, residual );
 
           long long const dofIndex = integer_conversion<long long>(offset);
 
@@ -346,7 +344,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
           solver->UpdateStateAll(domain);
 
           residual->Scale( 0.0 );
-          assembleFunction( solver, domain, blockSystem );
+          assembleFunction( solver, domain, jacobian, residual );
 
           long long const dofIndex = integer_conversion<long long>(offset + jc + 1);
 
@@ -369,7 +367,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   // assemble the analytical jacobian
   solver->ResetStateToBeginningOfStep( domain );
   jacobian->Scale( 0.0 );
-  assembleFunction( solver, domain, blockSystem );
+  assembleFunction( solver, domain, jacobian, residual );
 
   compareMatrices( jacobian, jacobianFD.get(), relTol );
 
@@ -668,9 +666,10 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation)
 //  testNumericalJacobian( solver, domain, system, eps, tol,
 //                         [&] ( CompositionalMultiphaseFlow * targetSolver,
 //                               DomainPartition * targetDomain,
-//                               EpetraBlockSystem * targetSystem ) -> void
+//                               Epetra_FECrsMatrix * const targetJacobian,
+//                               Epetra_FEVector * const targetResidual ) -> void
 //                         {
-//                           targetSolver->AssembleAccumulationTerms( targetDomain, targetSystem, time, dt );
+//                           targetSolver->AssembleAccumulationTerms( targetDomain, targetJacobian, targetResidual, time, dt );
 //                         });
 }
 
@@ -688,11 +687,12 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
   solver->ImplicitStepSetup( time, dt, domain, system );
 
   testNumericalJacobian( solver, domain, system, eps, tol,
-                         [&] ( CompositionalMultiphaseFlow * targetSolver,
-                               DomainPartition * targetDomain,
-                               EpetraBlockSystem * targetSystem ) -> void
+                         [&] ( CompositionalMultiphaseFlow * const targetSolver,
+                               DomainPartition * const targetDomain,
+                               Epetra_FECrsMatrix * const targetJacobian,
+                               Epetra_FEVector * const targetResidual ) -> void
                          {
-                           targetSolver->AssembleFluxTerms( targetDomain, targetSystem, time, dt );
+                           targetSolver->AssembleFluxTerms( targetDomain, targetJacobian, targetResidual, time, dt );
                          });
 }
 
@@ -712,9 +712,10 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance)
   testNumericalJacobian( solver, domain, system, eps, tol,
                          [&] ( CompositionalMultiphaseFlow * targetSolver,
                                DomainPartition * targetDomain,
-                               EpetraBlockSystem * targetSystem ) -> void
+                               Epetra_FECrsMatrix * const targetJacobian,
+                               Epetra_FEVector * const targetResidual ) -> void
                          {
-                           targetSolver->AssembleVolumeBalanceTerms( targetDomain, targetSystem, time, dt );
+                           targetSolver->AssembleVolumeBalanceTerms( targetDomain, targetJacobian, targetResidual, time, dt );
                          });
 }
 

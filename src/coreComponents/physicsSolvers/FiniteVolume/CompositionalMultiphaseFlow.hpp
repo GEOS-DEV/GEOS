@@ -244,7 +244,8 @@ public:
    * @param dt time step
    */
   void AssembleAccumulationTerms( DomainPartition const * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                  Epetra_FECrsMatrix * const jacobian,
+                                  Epetra_FEVector * const residual,
                                   real64 const time_n,
                                   real64 const dt );
 
@@ -256,7 +257,8 @@ public:
    * @param dt time step
    */
   void AssembleFluxTerms( DomainPartition const * const domain,
-                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                          Epetra_FECrsMatrix * const jacobian,
+                          Epetra_FEVector * const residual,
                           real64 const time_n,
                           real64 const dt );
 
@@ -268,7 +270,8 @@ public:
    * @param dt time step
    */
   void AssembleVolumeBalanceTerms( DomainPartition const * const domain,
-                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                   Epetra_FECrsMatrix * const jacobian,
+                                   Epetra_FEVector * const residual,
                                    real64 const time_n,
                                    real64 const dt );
 

@@ -1247,11 +1247,11 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
-  AssembleAccumulationTerms( domain, blockSystem, time_n, dt );
-  AssembleFluxTerms( domain, blockSystem, time_n, dt );
-  AssembleVolumeBalanceTerms( domain, blockSystem, time_n, dt );
+  AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
+  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
+  AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
 
-  jacobian->GlobalAssemble(false);
+  jacobian->GlobalAssemble();
   residual->GlobalAssemble();
 
   if( verboseLevel() >= 3 )
@@ -1263,14 +1263,11 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
 }
 
 void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
-                                                             EpetraBlockSystem * const blockSystem,
+                                                             Epetra_FECrsMatrix * const jacobian,
+                                                             Epetra_FEVector * const residual,
                                                              real64 const time_n,
                                                              real64 const dt )
 {
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
-                                                                BlockIDs::compositionalBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
@@ -1447,7 +1444,8 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
 }
 
 void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
-                                                     EpetraBlockSystem * const blockSystem,
+                                                     Epetra_FECrsMatrix * const jacobian,
+                                                     Epetra_FEVector * const residual,
                                                      real64 const time_n,
                                                      real64 const dt )
 {
@@ -1467,10 +1465,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
   FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
-
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
-                                                                BlockIDs::compositionalBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
   auto const elemGhostRank =
     elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -1776,9 +1770,9 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       localIndex ei_up  = cell_up.index;
 
       // slice some constitutive arrays to avoid too much indexing in component loop
-      auto phaseCompFracSub = phaseCompFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
-      auto dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
-      auto dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+      arraySlice1d<real64> phaseCompFracSub = phaseCompFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+      arraySlice1d<real64> dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+      arraySlice2d<real64> dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
 
       // compute component fluxes and derivatives using upstream cell composition
       for (localIndex ic = 0; ic < NC; ++ic)
@@ -1849,14 +1843,11 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 }
 
 void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition const * const domain,
-                                                              EpetraBlockSystem * const blockSystem,
+                                                              Epetra_FECrsMatrix * const jacobian,
+                                                              Epetra_FEVector * const residual,
                                                               real64 const time_n,
                                                               real64 const dt )
 {
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
-                                                                BlockIDs::compositionalBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
@@ -1990,17 +1981,24 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
 
+  unordered_map<string, array1d<bool>> bcStatusMap; // map to check consistent application of BC
+
   // 1. apply pressure Dirichlet BCs
   bcManager->ApplyBoundaryCondition( time_n + dt,
                                      domain,
                                      "ElementRegions",
                                      viewKeysCompMultiphaseFlow.pressure.Key(),
                                      [&]( BoundaryConditionBase const * const bc,
-                                          string const &,
+                                          string const & setName,
                                           set<localIndex> const & targetSet,
                                           ManagedGroup * subRegion,
                                           string const & ) -> void
   {
+    // 1.0. Check whether pressure has already been applied to this set
+    GEOS_ERROR_IF( bcStatusMap.count( setName ) > 0, "Conflicting pressure boundary conditions on set " << setName );
+    bcStatusMap[setName].resize( m_numComponents );
+    bcStatusMap[setName] = false;
+
     // 1.1. Apply BC to set the field values
     bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
                                                 time_n + dt,
@@ -2008,25 +2006,42 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                                 viewKeysCompMultiphaseFlow.bcPressure.Key() );
   });
 
-  // TODO how to check consistency between pressure and composition BC?
-
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
   bcManager->ApplyBoundaryCondition( time_n + dt,
                                      domain,
                                      "ElementRegions",
                                      viewKeysCompMultiphaseFlow.globalCompFraction.Key(),
                                      [&] ( BoundaryConditionBase const * const bc,
-                                           string const &,
+                                           string const & setName,
                                            set<localIndex> const & targetSet,
                                            ManagedGroup * subRegion,
                                            string const & ) -> void
   {
+    // 2.0. Check pressure and record composition bc application
+    localIndex const comp = bc->GetComponent();
+    GEOS_ERROR_IF( bcStatusMap.count( setName ) == 0, "Pressure boundary condition not prescribed on set '" << setName << "'" );
+    GEOS_ERROR_IF( bcStatusMap[setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+    bcStatusMap[setName][comp] = true;
+
     // 2.1. Apply BC to set the field values
     bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
                                                 time_n + dt,
                                                 subRegion,
                                                 viewKeyStruct::globalCompFractionString );
   });
+
+  // 2.3 Check consistency between composition BC applied to sets
+  bool bcConsistent = true;
+  for (auto const & bcEntry : bcStatusMap)
+  {
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+    {
+      bcConsistent &= bcEntry.second[ic];
+      GEOS_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component "
+                                      << ic << " on set '" << bcEntry.first << "'" );
+    }
+  }
+  GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
   bcManager->ApplyBoundaryCondition( time_n + dt,
