@@ -796,7 +796,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
 
     stackArray1d<real64, numElems> localFlux(numElems);
-    stackArray2d<real64, numElems, maxStencilSize> localFluxJacobian(numElems, stencilSize);
+    stackArray2d<real64, numElems*maxStencilSize> localFluxJacobian(numElems, stencilSize);
 
     stackArray1d<real64, numElems> densWeight(numElems);
     stackArray1d<real64, numElems> mobility(numElems);
