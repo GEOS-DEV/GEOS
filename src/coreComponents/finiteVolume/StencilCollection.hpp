@@ -47,9 +47,14 @@ class StencilCollection
 public:
 
   /**
+   * @brief Number of points the flux is between (normally 2)
+   */
+  static localIndex constexpr NUM_POINT_IN_FLUX = 2;
+
+  /**
    * @brief Maximum number of points in a stencil (required to use static arrays in kernels)
    */
-  static constexpr localIndex MAX_STENCIL_SIZE = 16;
+  static localIndex constexpr MAX_STENCIL_SIZE = 16;
 
   // provide aliases for template type parameters
   using index_type = IndexType;
