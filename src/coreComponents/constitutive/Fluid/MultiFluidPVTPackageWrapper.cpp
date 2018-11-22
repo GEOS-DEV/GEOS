@@ -123,13 +123,15 @@ void MultiFluidPVTPackageWrapper::StateUpdatePointMultiFluid( real64 const & pre
     m_dTotalDensity_dGlobalCompFraction[k][q]
   };
 
+  localIndex constexpr maxNumComp = MAX_NUM_COMPONENTS;
+
   localIndex const NP = numFluidPhases();
   localIndex const NC = numFluidComponents();
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
   std::vector<double> compMoleFrac( NC );
-  array2d<real64> dCompMoleFrac_dCompMassFrac;
+  stackArray2d<real64, maxNumComp * maxNumComp> dCompMoleFrac_dCompMassFrac( NC, NC );
 
   if (m_useMass)
   {

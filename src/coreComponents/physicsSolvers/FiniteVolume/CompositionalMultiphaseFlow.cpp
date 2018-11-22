@@ -666,13 +666,14 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
   arrayView4d<real64> const & dPhaseDens_dComp =
     fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
 
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex const NC = m_numComponents;
   localIndex const NP = m_numPhases;
 
-  array1d<real64> work( NC );
-
   forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
   {
+    stackArray1d<real64, maxNumComp> work( NC );
+
     // compute total density from component partial densities
     real64 totalDensity = 0.0;
     real64 const dTotalDens_dCompDens = 1.0;
@@ -1070,30 +1071,35 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
   FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
 
-  constexpr localIndex numElems = 2;
-  array1d<globalIndex> elementLocalDofIndexRow(numElems * m_numDofPerCell);
-  array1d<globalIndex> elementLocalDofIndexCol(numElems * m_numDofPerCell);
+  localIndex constexpr numElems   = StencilCollection<CellDescriptor, real64>::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex constexpr maxNumDof  = maxNumComp + 1;
+
+  localIndex const NDOF = m_numDofPerCell;
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   stencilCollection.forAll<RAJA::seq_exec>([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil)
   {
+    localIndex const stencilSize = stencil.size();
+    stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
+    stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
+
     stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i)
     {
-      globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
-      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+      for (localIndex idof = 0; idof < NDOF; ++idof)
       {
-        elementLocalDofIndexRow[i * m_numDofPerCell + idof] = offset + idof;
+        elementLocalDofIndexRow[i * NDOF + idof] = offset + idof;
       }
     });
 
-    localIndex const stencilSize = stencil.size();
-    elementLocalDofIndexCol.resize(stencilSize * m_numDofPerCell);
     stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i)
     {
-      globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
-      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+      for (localIndex idof = 0; idof < NDOF; ++idof)
       {
-        elementLocalDofIndexCol[i * m_numDofPerCell + idof] = offset + idof;
+        elementLocalDofIndexCol[i * NDOF + idof] = offset + idof;
       }
     });
 
@@ -1103,8 +1109,6 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
                                    elementLocalDofIndexCol.data() );
   });
 
-  elementLocalDofIndexRow.resize(m_numDofPerCell);
-
   // loop over all elements and add all locals just in case the above connector loop missed some
   forAllElemsInMesh<RAJA::seq_exec>(meshLevel, [&] (localIndex const er,
                                                     localIndex const esr,
@@ -1112,15 +1116,17 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   {
     if (elemGhostRank[er][esr][ei] < 0)
     {
-      globalIndex const offset = m_numDofPerCell * dofNumber[er][esr][ei];
-      for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+      stackArray1d<globalIndex, maxNumDof> elementLocalDofIndexRow( NDOF );
+
+      globalIndex const offset = NDOF * dofNumber[er][esr][ei];
+      for (localIndex idof = 0; idof < NDOF; ++idof)
       {
         elementLocalDofIndexRow[idof] = offset + idof;
       }
 
-      sparsity->InsertGlobalIndices( integer_conversion<int>(m_numDofPerCell),
+      sparsity->InsertGlobalIndices( integer_conversion<int>( NDOF ),
                                      elementLocalDofIndexRow.data(),
-                                     integer_conversion<int>(m_numDofPerCell),
+                                     integer_conversion<int>( NDOF ),
                                      elementLocalDofIndexRow.data());
     }
   });
@@ -1130,39 +1136,41 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   {
     boundaryStencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable
     {
+      localIndex const stencilSize = stencil.size();
+      stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
+      stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
+
       stencil.forConnected([&] (PointDescriptor const & point, localIndex const i)
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
           CellDescriptor const & cell = point.cellIndex;
-          globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
-          for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+          globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+          for (localIndex idof = 0; idof < NDOF; ++idof)
           {
             elementLocalDofIndexRow[idof] = offset + idof;
           }
         }
       });
 
-      localIndex const stencilSize = stencil.size();
-      elementLocalDofIndexCol.resize(stencilSize * m_numDofPerCell);
       integer counter = 0;
       stencil.forAll([&] (PointDescriptor const & point, real64 w, localIndex i)
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
           CellDescriptor const & cell = point.cellIndex;
-          globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
-          for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+          globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+          for (localIndex idof = 0; idof < NDOF; ++idof)
           {
-            elementLocalDofIndexCol[counter * m_numDofPerCell + idof] = offset + idof;
+            elementLocalDofIndexCol[counter * NDOF + idof] = offset + idof;
           }
           ++counter;
         }
       });
 
-      sparsity->InsertGlobalIndices( integer_conversion<int>(m_numDofPerCell),
+      sparsity->InsertGlobalIndices( integer_conversion<int>( NDOF ),
                                      elementLocalDofIndexRow.data(),
-                                     integer_conversion<int>(counter * m_numDofPerCell),
+                                     integer_conversion<int>( counter * NDOF ),
                                      elementLocalDofIndexCol.data() );
     });
   });
@@ -1268,18 +1276,12 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
                                                              real64 const time_n,
                                                              real64 const dt )
 {
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex constexpr maxNumDof  = maxNumComp + 1;
+
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
-
-  // using Epetra types
-  array1d<long long> localAccumDOF( NDOF );
-  array1d<double>    localAccum( NC );
-  array2d<double>    localAccumJacobian( NC, NDOF );
-
-  // temporary work arrays
-  array1d<real64> dPhaseAmount_dC( NC );
-  array1d<real64> dPhaseCompFrac_dC( NC );
 
   applyToSubRegions( domain, [&] ( CellBlockSubRegion const * const subRegion )
   {
@@ -1354,6 +1356,14 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
     {
       if (elemGhostRank[ei] >= 0)
         return;
+
+      stackArray1d<long long, maxNumDof>           localAccumDOF( NDOF );
+      stackArray1d<double, maxNumComp>             localAccum( NC );
+      stackArray2d<double, maxNumComp * maxNumDof> localAccumJacobian( NC, NDOF );
+
+      // temporary work arrays
+      stackArray1d<double, maxNumComp> dPhaseAmount_dC( NC );
+      stackArray1d<double, maxNumComp> dPhaseCompFrac_dC( NC );
 
       // reset the local values
       localAccum = 0.0;
@@ -1527,53 +1537,58 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
     elemManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString,
                                                                                       constitutiveManager );
 
+  localIndex constexpr numElems   = StencilCollection<CellDescriptor, real64>::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex constexpr maxNumDof  = maxNumComp + 1;
+
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
 
-  constexpr localIndex numElems = 2; // number of connected elements
-  array1d<long long> eqnRowIndices( numElems * NC );
-  array1d<long long> dofColIndices( numElems * NDOF ); // to be resized for stencil size
-  array1d<double> localFlux( numElems * NC );
-  array2d<double> localFluxJacobian( numElems * NC, numElems * NDOF ); // to be resized for stencil size
-
   // temporary working arrays
 
-  real64 densWeight[numElems] = { 0.5, 0.5 };
-
-  // these arrays have constant size
-  array1d<real64> dPhaseCompFrac_dCompDens( NC );
-
-  array1d<real64> compFlux( NC );
-  array1d<real64> dRelPerm_dC( NC );
-
-  array1d<real64> dDens_dC( NC );
-  array1d<real64> dVisc_dC( NC );
-
-  array1d<real64> mobility( numElems );
-  array1d<real64> dMobility_dP( numElems );
-  array2d<real64> dMobility_dC( numElems, NC );
-
-  array1d<real64> dDensMean_dP( numElems );
-  array2d<real64> dDensMean_dC( numElems, NC );
-
-  array1d<real64> dGravHead_dP( numElems );
-  array2d<real64> dGravHead_dC( numElems, NC );
+  real64 constexpr densWeight[numElems] = { 0.5, 0.5 };
 
   // the arrays below are resized for each cell's stencil size
 
-  array1d<real64> dPresGrad_dP( numElems );
 
-  array1d<real64> dPhaseFlux_dP( numElems );
-  array2d<real64> dPhaseFlux_dC( numElems, NC );
-
-  array2d<real64> dCompFlux_dP( numElems, NC );
-  array3d<real64> dCompFlux_dC( numElems, NC, NC );
-
-
-  stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable
+  stencilCollection.forAll<RAJA::seq_exec>(GEOSX_LAMBDA (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable
   {
     localIndex const stencilSize = stencil.size();
+
+    // create local work arrays
+
+    stackArray1d<long long, numElems * maxNumComp>  eqnRowIndices( numElems * NC );
+    stackArray1d<long long, maxStencil * maxNumDof> dofColIndices( stencilSize * NDOF );
+
+    stackArray1d<double, numElems * maxNumComp>                          localFlux( numElems * NC );
+    stackArray2d<double, numElems * maxNumComp * maxStencil * maxNumDof> localFluxJacobian( numElems * NC, stencilSize * NDOF );
+
+    stackArray1d<real64, maxNumComp> dPhaseCompFrac_dCompDens( NC );
+
+    stackArray1d<real64, maxStencil>              dPhaseFlux_dP( stencilSize );
+    stackArray2d<real64, maxStencil * maxNumComp> dPhaseFlux_dC( stencilSize, NC );
+
+    stackArray1d<real64, maxNumComp>                           compFlux( NC );
+    stackArray2d<real64, maxStencil * maxNumComp>              dCompFlux_dP( stencilSize, NC );
+    stackArray3d<real64, maxStencil * maxNumComp * maxNumComp> dCompFlux_dC( stencilSize, NC, NC );
+
+    stackArray1d<real64, maxNumComp> dRelPerm_dC( NC );
+    stackArray1d<real64, maxNumComp> dDens_dC( NC );
+    stackArray1d<real64, maxNumComp> dVisc_dC( NC );
+
+    stackArray1d<real64, numElems>              mobility( numElems );
+    stackArray1d<real64, numElems>              dMobility_dP( numElems );
+    stackArray2d<real64, numElems * maxNumComp> dMobility_dC( numElems, NC );
+
+    stackArray1d<real64, numElems>              dDensMean_dP( numElems );
+    stackArray2d<real64, numElems * maxNumComp> dDensMean_dC( numElems, NC );
+
+    stackArray1d<real64, maxStencil>            dPresGrad_dP( stencilSize );
+
+    stackArray1d<real64, numElems>              dGravHead_dP( numElems );
+    stackArray2d<real64, numElems * maxNumComp> dGravHead_dC( numElems, NC );
 
     // reset the local values
     compFlux = 0.0;
@@ -1582,17 +1597,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
     localFlux = 0.0;
     localFluxJacobian = 0.0;
-
-    // resize local working arrays that are stencil-dependent
-    dPresGrad_dP.resizeDimension<0>( stencilSize );
-    dPhaseFlux_dP.resizeDimension<0>( stencilSize );
-    dPhaseFlux_dC.resizeDimension<0>( stencilSize );
-    dCompFlux_dP.resizeDimension<0>( stencilSize );
-    dCompFlux_dC.resizeDimension<0>( stencilSize );
-
-    // resize local matrices and vectors
-    dofColIndices.resize( stencilSize * NDOF );
-    localFluxJacobian.resizeDimension<1>( stencilSize * NDOF );
 
     // set equation indices for both connected cells
     stencil.forConnected( [&] ( auto const & cell,
@@ -1848,13 +1852,12 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
                                                               real64 const time_n,
                                                               real64 const dt )
 {
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex constexpr maxNumDof  = maxNumComp + 1;
+
   localIndex const NC   = m_numComponents;
   localIndex const NP   = m_numPhases;
   localIndex const NDOF = m_numDofPerCell;
-
-  // using Epetra types
-  array1d<long long> localVolBalanceDOF( NDOF );
-  array1d<double>    localVolBalanceJacobian( NDOF );
 
   applyToSubRegions( domain, [&] ( CellBlockSubRegion const * const subRegion )
   {
@@ -1893,6 +1896,9 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
     {
       if (elemGhostRank[ei] >= 0)
         return;
+
+      stackArray1d<long long, maxNumDof> localVolBalanceDOF( NDOF );
+      stackArray1d<double, maxNumDof>    localVolBalanceJacobian( NDOF );
 
       // compute pore volume
       real64 const vol      = volume[ei];
