@@ -3,7 +3,6 @@
 # Specify all headers
 #
 set(common_headers
-    integer_conversion.hpp
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     DataTypes.hpp
     TimingMacros.hpp )
