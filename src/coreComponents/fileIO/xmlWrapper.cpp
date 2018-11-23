@@ -23,9 +23,11 @@
  *      Author: rrsettgast
  */
 
+#include "ArrayUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "xmlWrapper.hpp"
 #include "DocumentationNode.hpp"
+#include "IntegerConversion.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/StringUtilities.hpp"
@@ -74,7 +76,7 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
         GEOS_ERROR_IF(defVal == "REQUIRED", "variable " + subDocNode.getName() + " is required in " + targetNode.path() );
         stringutilities::StringToType( xmlVal, defVal );
       }
-      localIndex const size = LvArray::integer_conversion<localIndex>(xmlVal.size());
+      localIndex const size = integer_conversion<localIndex>(xmlVal.size());
       dataView.resize( size );
       decltype(a) & data = dataView.reference();
       cxx_utilities::equateStlVector(data, xmlVal);

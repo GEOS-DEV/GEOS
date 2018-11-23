@@ -21,6 +21,9 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
+option( ENABLE_GEOSX_PTP "" ON )
+option( ENABLE_PAMELA "" OFF )
+option( ENABLE_PVTPackage "" OFF )
 
 option( ENABLE_FPARSER "Enables FPARSER" OFF )
 
