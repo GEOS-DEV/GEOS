@@ -154,6 +154,9 @@ private:
   FixedOneToManyRelation m_toNodesRelation;
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+
 
   template<bool DOPACK>
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,

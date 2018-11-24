@@ -284,9 +284,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
 
-  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
+//  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
+  localIndex const numPackedIndices = packList.size();
   packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
-
+  if( numPackedIndices > 0 )
+  {
   packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
@@ -316,18 +318,18 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   {
     dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
     packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
-    if( packList.empty() )
-    {
-      if(DOPACK)
-      {
-        packedSize += wrapper->Pack( buffer );
-      }
-      else
-      {
-        packedSize += wrapper->PackSize();
-      }
-    }
-    else
+//    if( packList.empty() )
+//    {
+//      if(DOPACK)
+//      {
+//        packedSize += wrapper->Pack( buffer );
+//      }
+//      else
+//      {
+//        packedSize += wrapper->PackSize();
+//      }
+//    }
+//    else
     {
       if(DOPACK)
       {
@@ -338,6 +340,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
         packedSize += wrapper->PackSize( packList );
       }
     }
+  }
   }
 
 
@@ -351,6 +354,8 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
       packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
     }
   }
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
 
   return packedSize;
 }
@@ -375,6 +380,8 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 
   localIndex numUnpackedIndices;
   unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
+  if( numUnpackedIndices > 0 )
+  {
 
 //  integer readIncludeGlobalIndices;
 //  unpackedSize += CommBufferOps::Unpack( buffer, readIncludeGlobalIndices);
@@ -400,7 +407,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
     unpackedSize += wrapper->Unpack(buffer,packList);
   }
-
+  }
 
   if( recursive > 0 )
   {
@@ -419,6 +426,9 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
       unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
     }
   }
+
+  unpackedSize += bufferOps::Unpack( buffer, groupName );
+  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   return unpackedSize;
 }
@@ -452,19 +462,22 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
-  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
+//  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
+  localIndex const numPackedIndices = packList.size();
   packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
 
+  if( numPackedIndices > 0 )
+  {
   globalIndex_array globalIndices;
   globalIndices.resize(numPackedIndices);
-  if( packList.size()==0 )
-  {
-    for( localIndex a=0 ; a<numPackedIndices ; ++a )
-    {
-      globalIndices[a] = this->m_localToGlobalMap[a];
-    }
-  }
-  else
+//  if( packList.size()==0 )
+//  {
+//    for( localIndex a=0 ; a<numPackedIndices ; ++a )
+//    {
+//      globalIndices[a] = this->m_localToGlobalMap[a];
+//    }
+//  }
+//  else
   {
     for( localIndex a=0 ; a<numPackedIndices ; ++a )
     {
@@ -472,7 +485,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
     }
   }
   packedSize += bufferOps::Pack<DOPACK>( buffer, globalIndices );
-
+  }
 
 //  packedSize += CommBufferOps::Pack<DOPACK>( buffer, recursive );
   if( recursive > 0 )
@@ -516,6 +529,8 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   localIndex numUnpackedIndices;
   unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
 
+  if( numUnpackedIndices > 0 )
+  {
   localIndex_array unpackedLocalIndices;
   unpackedLocalIndices.resize(numUnpackedIndices);
 
@@ -598,7 +613,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 //    }
 
     packList = unpackedLocalIndices;
-
+  }
 
   if( recursive > 0 )
   {

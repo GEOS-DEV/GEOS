@@ -40,6 +40,9 @@ using namespace dataRepository;
 FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
+  m_toElements.m_toElementRegion.setDefaultValue(-1);
+  m_toElements.m_toElementSubRegion.setDefaultValue(-1);
+  m_toElements.m_toElementIndex.setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
@@ -628,6 +631,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_nodeList,
                                      packList,
+                                     m_unmappedGlobalIndicesInToNodes,
                                      this->m_globalToLocalMap,
                                      m_nodeList.RelatedObjectGlobalToLocal() );
 
@@ -638,6 +642,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_edgeList,
                                      packList,
+                                     m_unmappedGlobalIndicesInToEdges,
                                      this->m_globalToLocalMap,
                                      m_edgeList.RelatedObjectGlobalToLocal() );
 

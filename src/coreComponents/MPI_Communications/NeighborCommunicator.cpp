@@ -524,11 +524,29 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
   int unpackedSize = 0;
-  unpackedSize += bufferOps::Unpack( receiveBufferPtr, nodeGhostsToSend, nodeManager.m_globalToLocalMap );
+  array1d<globalIndex> unmappedNodeIndices;
+  array1d<globalIndex> unmappedEdgeIndices;
+  array1d<globalIndex> unmappedFaceIndices;
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr,
+                                     nodeGhostsToSend,
+                                     unmappedNodeIndices,
+                                     nodeManager.m_globalToLocalMap );
+  GEOS_ERROR_IF( unmappedNodeIndices.size()!=0,
+                 "Some node global indices were not mappable to a localIndex" );
 
-  unpackedSize += bufferOps::Unpack( receiveBufferPtr, edgeGhostsToSend, edgeManager.m_globalToLocalMap );
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr,
+                                     edgeGhostsToSend,
+                                     unmappedEdgeIndices,
+                                     edgeManager.m_globalToLocalMap );
+  GEOS_ERROR_IF( unmappedEdgeIndices.size()!=0,
+                 "Some edge global indices were not mappable to a localIndex" );
 
-  unpackedSize += bufferOps::Unpack( receiveBufferPtr, faceGhostsToSend, faceManager.m_globalToLocalMap );
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr,
+                                     faceGhostsToSend,
+                                     unmappedFaceIndices,
+                                     faceManager.m_globalToLocalMap );
+  GEOS_ERROR_IF( unmappedFaceIndices.size()!=0,
+                 "Some face global indices were not mappable to a localIndex" );
 
 
   nodeManager.SetGhostRankForSenders( nodeGhostsToSend );
@@ -546,8 +564,13 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     {
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion( esr );
 
-      unpackedSize+= bufferOps::Unpack( receiveBufferPtr, elementGhostToSend[er][esr].get(),
+      array1d<globalIndex> unmappedIndices;
+      unpackedSize+= bufferOps::Unpack( receiveBufferPtr,
+                                        elementGhostToSend[er][esr].get(),
+                                        unmappedIndices,
                                         subRegion->m_globalToLocalMap );
+      GEOS_ERROR_IF( unmappedIndices.size()!=0,
+                     "Some element global indices were not mappable to a localIndex" );
 
       subRegion->SetGhostRankForSenders( elementGhostToSend[er][esr].get() );
     }

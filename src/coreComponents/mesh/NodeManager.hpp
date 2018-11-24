@@ -219,6 +219,10 @@ private:
   /// nodeToElement relation
   OrderedVariableToManyElementRelation m_toElements;
 
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+
+
   /// deleted constructor
   NodeManager() = delete;
 
