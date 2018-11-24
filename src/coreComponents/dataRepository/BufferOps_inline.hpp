@@ -25,7 +25,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
-#include "common/integer_conversion.hpp"
+#include "IntegerConversion.hpp"
 
 #include <type_traits>
 

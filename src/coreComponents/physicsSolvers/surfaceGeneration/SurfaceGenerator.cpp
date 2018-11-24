@@ -249,7 +249,7 @@ void SurfaceGenerator::FillOtherDocumentationNodes( dataRepository::ManagedGroup
   }
 }
 
-void SurfaceGenerator::FinalInitialization( ManagedGroup * const problemManager )
+void SurfaceGenerator::FinalInitializationPreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )

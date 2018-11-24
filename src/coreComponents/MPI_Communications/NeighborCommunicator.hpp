@@ -30,8 +30,8 @@
 #include <mpi.h>
 #include <vector>
 #include "common/DataTypes.hpp"
-#include "common/integer_conversion.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
+#include "IntegerConversion.hpp"
 
 namespace geosx
 {
