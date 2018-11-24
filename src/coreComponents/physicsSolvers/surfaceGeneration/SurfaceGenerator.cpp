@@ -21,6 +21,7 @@
  */
 
 #include "SurfaceGenerator.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 
 #include "meshUtilities/ComputationalGeometry.hpp"
@@ -332,6 +333,17 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
   arrayView1d<localIndex_array> & nodesToElementSubRegion = nodeManager.elementSubRegionList();
   arrayView1d<localIndex_array> & nodesToElementList = nodeManager.elementList();
 
+
+  std::map<string, string_array > fieldNames;
+  fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
+
+  MPI_iCommData icomm;
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
+  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
+  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
+
+
+
   if( !prefrac )
   {
 
@@ -419,7 +431,7 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
   const arrayView1d<integer>& isFaceGhost = faceManager.GhostRank();
 
 
-  for( int color=0 ; color<NeighborCommunicator::MPISize() ; ++color )
+  for( int color=0 ; color<1/*NeighborCommunicator::MPISize()*/ ; ++color )
   {
     ModifiedObjectLists modifiedObjects;
     if( color==NeighborCommunicator::Rank() )

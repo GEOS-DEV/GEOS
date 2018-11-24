@@ -228,6 +228,11 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementRegionListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
+
+  if( this->hasView( "usedFaces" ) )
+  {
+    exclusionList.insert(this->getWrapperIndex("usedFaces"));
+  }
 }
 
 //**************************************************************************************************
@@ -285,6 +290,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                    m_toEdgesRelation,
                                    packList,
+                                   m_unmappedGlobalIndicesInToEdges,
                                    this->m_globalToLocalMap,
                                    m_toEdgesRelation.RelatedObjectGlobalToLocal(),
                                    false );
@@ -294,6 +300,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                    m_toFacesRelation,
                                    packList,
+                                   m_unmappedGlobalIndicesInToFaces,
                                    this->m_globalToLocalMap,
                                    m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                    false );

@@ -198,7 +198,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 
 //  packedSize += ManagedGroup::Pack( buffer, wrapperNames, {}, 0, 0);
 
-
+  packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
   packedSize += bufferOps::Pack<DOPACK>( buffer, numRegions() );
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
@@ -251,6 +251,11 @@ int ElementRegionManager::UnpackPrivate( buffer_unit_type const * & buffer,
                                          T & packList )
 {
   int unpackedSize = 0;
+
+  string name;
+  unpackedSize += bufferOps::Unpack( buffer, name );
+
+  GEOS_ERROR_IF( name!=this->getName(), "Unpacked name ("<<name<<") does not equal object name ("<<this->getName() );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );

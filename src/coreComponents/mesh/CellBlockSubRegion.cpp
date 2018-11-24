@@ -230,12 +230,14 @@ localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buff
   unPackedSize += bufferOps::Unpack( buffer,
                                      nodeList().Base(),
                                      packList,
+                                     m_unmappedGlobalIndicesInNodelist,
                                      this->m_globalToLocalMap,
                                      nodeList().RelatedObjectGlobalToLocal() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      faceList().Base(),
                                      packList,
+                                     m_unmappedGlobalIndicesInFacelist,
                                      this->m_globalToLocalMap,
                                      faceList().RelatedObjectGlobalToLocal() );
 

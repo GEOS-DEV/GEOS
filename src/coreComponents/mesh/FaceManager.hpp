@@ -142,6 +142,9 @@ private:
   OrderedVariableOneToManyRelation m_edgeList;
   FixedToManyElementRelation m_toElements;
 
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+
   array1d< R1Tensor > m_faceCenter;
 
   constexpr static int MAX_FACE_NODES = 9;

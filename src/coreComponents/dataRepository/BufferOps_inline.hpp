@@ -417,6 +417,7 @@ localIndex Pack( char *& buffer,
 inline
 localIndex Unpack( char const *& buffer,
                    set<localIndex> & var,
+                   set<globalIndex> & unmappedGlobalIndices,
                    map<globalIndex,localIndex> const & globalToLocalMap,
                    bool const clearFlag )
 {
@@ -434,11 +435,11 @@ localIndex Unpack( char const *& buffer,
     map<globalIndex,localIndex>::const_iterator iter = globalToLocalMap.find(temp);
     if( iter==globalToLocalMap.end() )
     {
-      var.insert(-1);
+      unmappedGlobalIndices.insert(temp);
     }
     else
     {
-      var.insert( globalToLocalMap.at(temp) );
+      var.insert( iter->second );
     }
   }
 
@@ -506,7 +507,9 @@ Pack( char*& buffer,
 
 template< typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
 localIndex
-Unpack( char const *& buffer, LvArray::ArrayView<T,NDIM,INDEX_TYPE> & var, const T_indices& indices )
+Unpack( char const *& buffer,
+        LvArray::ArrayView<T,NDIM,INDEX_TYPE> & var,
+        const T_indices& indices )
 {
   INDEX_TYPE strides[NDIM];
   localIndex sizeOfUnpackedChars = Unpack( buffer, strides, NDIM );
@@ -556,17 +559,37 @@ inline
 localIndex
 Unpack( char const *& buffer,
         localIndex_array & var,
+        array1d<globalIndex> & unmappedGlobalIndices,
         map<globalIndex,localIndex> const & globalToLocalMap )
 {
   localIndex length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
   var.resize(length);
+  unmappedGlobalIndices.resize(length);
+  unmappedGlobalIndices = -1;
 
+  bool unpackedGlobalFlag = false;
   for( localIndex a=0 ; a<length ; ++a )
   {
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
-    var[a] = softMapLookup( globalToLocalMap, unpackedGlobalIndex, localIndex(-1) );
+
+    map<globalIndex,localIndex>::const_iterator
+    iter = globalToLocalMap.find(unpackedGlobalIndex);
+    if( iter == globalToLocalMap.end() )
+    {
+      var[a] = -1;
+      unmappedGlobalIndices[a] = unpackedGlobalIndex;
+      unpackedGlobalFlag = true;
+    }
+    else
+    {
+      var[a] = iter->second;
+    }
+  }
+  if( !unpackedGlobalFlag )
+  {
+    unmappedGlobalIndices.clear();
   }
 
   return sizeOfUnpackedChars;
@@ -626,6 +649,7 @@ localIndex
 Unpack( char const *& buffer,
         arrayView1d<localIndex_array> & var,
         arrayView1d<localIndex const> const & indices,
+        map<localIndex, array1d<globalIndex> > & unmappedGlobalIndices,
         map<globalIndex,localIndex> const & globalToLocalMap,
         map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
 {
@@ -642,7 +666,15 @@ Unpack( char const *& buffer,
     GEOS_ASSERT_MSG( li == globalToLocalMap.at(gi), "global index " << gi << " unpacked from buffer does equal the lookup "
                      << li << " for localIndex " << li << " on this rank" );
 
-    sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
+    array1d<globalIndex> unmappedIndices;
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   var[li],
+                                   unmappedIndices,
+                                   relatedObjectGlobalToLocalMap );
+    if( unmappedIndices.size() > 0 )
+    {
+      unmappedGlobalIndices[li] = unmappedIndices;
+    }
   }
   return sizeOfUnpackedChars;
 }
@@ -674,6 +706,7 @@ localIndex
 Unpack( char const *& buffer,
         arrayView1d< set<localIndex> > & var,
         localIndex_array & indices,
+        map<localIndex, set<globalIndex> > & unmappedGlobalIndices,
         map<globalIndex,localIndex> const & globalToLocalMap,
         map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap,
         bool const clearFlag )
@@ -707,7 +740,14 @@ Unpack( char const *& buffer,
       li = globalToLocalMap.at(gi);
     }
 
-    sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap, clearFlag );
+    set<globalIndex> unmappedIndices;
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   var[li],
+                                   unmappedIndices,
+                                   relatedObjectGlobalToLocalMap,
+                                   clearFlag );
+
+    unmappedGlobalIndices[li].insert( unmappedIndices.begin(),unmappedIndices.end() );
   }
   return sizeOfUnpackedChars;
 }
@@ -806,6 +846,7 @@ localIndex
 Unpack( char const *& buffer,
         arrayView2d<localIndex> & var,
         localIndex_array & indices,
+        map< localIndex, array1d<globalIndex> > & unmappedGlobalIndices,
         map<globalIndex,localIndex> const & globalToLocalMap,
         map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
 {
@@ -838,7 +879,18 @@ Unpack( char const *& buffer,
     }
 
     arraySlice1d<localIndex> varSlice = var[li];
-    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1), relatedObjectGlobalToLocalMap );
+    array1d<globalIndex> unmappedIndices;
+
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   varSlice,
+                                   var.size(1),
+                                   relatedObjectGlobalToLocalMap );
+
+    if( unmappedIndices.size()>0 )
+    {
+      unmappedGlobalIndices[li] = unmappedIndices;
+    }
+
   }
 
   return sizeOfUnpackedChars;

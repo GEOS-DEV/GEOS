@@ -761,6 +761,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
+                                     m_unmappedGlobalIndicesInToNodes,
                                      this->m_globalToLocalMap,
                                      m_toNodesRelation.RelatedObjectGlobalToLocal() );
 
@@ -771,6 +772,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
+                                     m_unmappedGlobalIndicesInToFaces,
                                      this->m_globalToLocalMap,
                                      m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                      false );
