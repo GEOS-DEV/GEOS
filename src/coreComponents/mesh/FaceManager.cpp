@@ -282,7 +282,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   }
 
   // Then loop over them in parallel.
-  raja::forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
+  forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
@@ -334,7 +334,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   array2d<localIndex> const & elemSubRegionList = this->elementSubRegionList();
   array2d<localIndex> const & elemList = this->elementList();
 
-  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
+  forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
     if( elemRegionList[kf][1] == -1 )
     {
@@ -347,7 +347,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
   OrderedVariableOneToManyRelation const & faceToNodesMap = this->nodeList();
 
-  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const k ) mutable -> void
+  forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const k ) mutable -> void
   {
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
@@ -429,7 +429,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   const indexType max_face_nodes = getMaxFaceNodes();
   GEOS_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
-  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
+  forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
     ElementRegion const * const elemRegion     = elemManager->GetRegion( elemRegionList[kf][0] );
     CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( elemSubRegionList[kf][0] );

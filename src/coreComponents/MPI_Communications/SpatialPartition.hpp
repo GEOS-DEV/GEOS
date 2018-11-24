@@ -134,7 +134,7 @@ public:
     m_Partitions( 1 ) = yPartitions;
     m_Partitions( 2 ) = zPartitions;
     m_size = 1;
-    for( unsigned int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0 ; i < nsdof ; i++ )
       m_size *= m_Partitions( i );
     SetContactGhostRange( 0.0 );
   }

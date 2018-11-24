@@ -25,6 +25,7 @@
 
 #include "ManagedGroup.hpp"
 
+#include "ArrayUtilities.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
 #include <mpi.h>
@@ -253,7 +254,7 @@ void ManagedGroup::RegisterDocumentationNodes()
           ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
           std::vector<decltype(b)> values;
           stringutilities::StringToType( values, defVal );
-          localIndex const size = LvArray::integer_conversion<localIndex>(values.size());
+          localIndex const size = integer_conversion<localIndex>(values.size());
           dataView.resize( size );
           decltype(a) & data = dataView.reference();
           cxx_utilities::equateStlVector(data, values);
@@ -457,13 +458,34 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
+void ManagedGroup::IntermediateInitializationRecursive( ManagedGroup * const rootGroup)
+{
+  IntermediateInitializationPreSubGroups(rootGroup);
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
+  {
+    this->GetGroup(groupName)->IntermediateInitializationRecursive( rootGroup );
+  }
+
+  IntermediateInitializationPostSubGroups( rootGroup );
+}
+
 void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 {
-  FinalInitialization(rootGroup);
-  for( auto&& subGroup : m_subGroups )
+  FinalInitializationPreSubGroups(rootGroup);
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
   {
-    subGroup.second->FinalInitializationRecursive(rootGroup);
+    this->GetGroup(groupName)->FinalInitializationRecursive( rootGroup );
   }
+
+  FinalInitializationPostSubGroups( rootGroup );
 }
 
 
