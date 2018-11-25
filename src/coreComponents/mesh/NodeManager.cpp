@@ -259,6 +259,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        m_toEdgesRelation,
+                                       m_unmappedGlobalIndicesInToEdges,
                                        packList,
                                        this->m_localToGlobalMap,
                                        m_toEdgesRelation.RelatedObjectLocalToGlobal() );
@@ -266,15 +267,16 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        m_toFacesRelation,
+                                       m_unmappedGlobalIndicesInToFaces,
                                        packList,
                                        this->m_localToGlobalMap,
                                        m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       this->m_toElements,
-                                       packList,
-                                       m_toElements.getElementRegionManager() );
+                                         this->m_toElements,
+                                         packList,
+                                         m_toElements.getElementRegionManager() );
   return packedSize;
 }
 

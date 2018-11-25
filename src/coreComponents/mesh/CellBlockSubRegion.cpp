@@ -206,12 +206,14 @@ localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffe
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          nodeList().Base(),
+                                         m_unmappedGlobalIndicesInNodelist,
                                          packList,
                                          this->m_localToGlobalMap,
                                          nodeList().RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          faceList().Base(),
+                                         m_unmappedGlobalIndicesInFacelist,
                                          packList,
                                          this->m_localToGlobalMap,
                                          faceList().RelatedObjectLocalToGlobal() );

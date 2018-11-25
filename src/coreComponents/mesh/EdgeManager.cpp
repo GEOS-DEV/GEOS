@@ -731,6 +731,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          m_toNodesRelation.Base(),
+                                         m_unmappedGlobalIndicesInToNodes,
                                          packList,
                                          m_localToGlobalMap,
                                          m_toNodesRelation.RelatedObjectLocalToGlobal() );
@@ -739,6 +740,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          m_toFacesRelation.Base(),
+                                         m_unmappedGlobalIndicesInToFaces,
                                          packList,
                                          m_localToGlobalMap,
                                          m_toFacesRelation.RelatedObjectLocalToGlobal() );

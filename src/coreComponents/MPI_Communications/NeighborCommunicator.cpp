@@ -468,13 +468,22 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int bufferSize = 0;
-  bufferSize += bufferOps::Pack<false>( sendBufferPtr, nodeGhostsToReceive, nodeGhostsToReceive.size(), 
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr,
+                                        nodeGhostsToReceive,
+                                        array1d<globalIndex>(),
+                                        nodeGhostsToReceive.size(),
                                         nodeManager.m_localToGlobalMap );
 
-  bufferSize += bufferOps::Pack<false>( sendBufferPtr, edgeGhostsToReceive, edgeGhostsToReceive.size(), 
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr,
+                                        edgeGhostsToReceive,
+                                        array1d<globalIndex>(),
+                                        edgeGhostsToReceive.size(),
                                         edgeManager.m_localToGlobalMap );
 
-  bufferSize += bufferOps::Pack<false>( sendBufferPtr, faceGhostsToReceive, faceGhostsToReceive.size(), 
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr,
+                                        faceGhostsToReceive,
+                                        array1d<globalIndex>(),
+                                        faceGhostsToReceive.size(),
                                         faceManager.m_localToGlobalMap );
 
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
@@ -484,21 +493,33 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     {
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
 
-      bufferSize+= bufferOps::Pack<false>( sendBufferPtr, elementGhostToReceive[er][esr], 
-                                           elementGhostToReceive[er][esr].size(), subRegion->m_localToGlobalMap );
+      bufferSize+= bufferOps::Pack<false>( sendBufferPtr,
+                                           elementGhostToReceive[er][esr],
+                                           array1d<globalIndex>(),
+                                           elementGhostToReceive[er][esr].size(),
+                                           subRegion->m_localToGlobalMap );
     }
   }
 
   this->resizeSendBuffer( commID, bufferSize );
 
   int packedSize = 0;
-  packedSize += bufferOps::Pack<true>( sendBufferPtr, nodeGhostsToReceive, nodeGhostsToReceive.size(),
+  packedSize += bufferOps::Pack<true>( sendBufferPtr,
+                                       nodeGhostsToReceive,
+                                       array1d<globalIndex>(),
+                                       nodeGhostsToReceive.size(),
                                        nodeManager.m_localToGlobalMap );
 
-  packedSize += bufferOps::Pack<true>( sendBufferPtr, edgeGhostsToReceive, edgeGhostsToReceive.size(),
+  packedSize += bufferOps::Pack<true>( sendBufferPtr,
+                                       edgeGhostsToReceive,
+                                       array1d<globalIndex>(),
+                                       edgeGhostsToReceive.size(),
                                        edgeManager.m_localToGlobalMap );
 
-  packedSize += bufferOps::Pack<true>( sendBufferPtr, faceGhostsToReceive, faceGhostsToReceive.size(),
+  packedSize += bufferOps::Pack<true>( sendBufferPtr,
+                                       faceGhostsToReceive,
+                                       array1d<globalIndex>(),
+                                       faceGhostsToReceive.size(),
                                        faceManager.m_localToGlobalMap );
 
 
@@ -510,8 +531,11 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     {
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( esr );
 
-      packedSize+= bufferOps::Pack<true>( sendBufferPtr, elementGhostToReceive[er][esr],
-                                          elementGhostToReceive[er][esr].size(), subRegion->m_localToGlobalMap );
+      packedSize+= bufferOps::Pack<true>( sendBufferPtr,
+                                          elementGhostToReceive[er][esr],
+                                          array1d<globalIndex>(),
+                                          elementGhostToReceive[er][esr].size(),
+                                          subRegion->m_localToGlobalMap );
     }
   }
 
