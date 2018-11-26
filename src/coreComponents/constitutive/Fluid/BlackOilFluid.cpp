@@ -54,22 +54,23 @@ BlackOilFluid::~BlackOilFluid()
 std::unique_ptr<ConstitutiveBase>
 BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
 {
-  auto clone = std::make_unique<BlackOilFluid>( name, parent );
+  std::unique_ptr<ConstitutiveBase> clone_ptr( new BlackOilFluid( name, parent ) );
+  BlackOilFluid & clone = static_cast< BlackOilFluid &>( *clone_ptr );
 
-  clone->m_useMass = this->m_useMass;
+  clone.m_useMass = this->m_useMass;
 
-  clone->m_componentNames       = this->m_componentNames;
-  clone->m_componentMolarWeight = this->m_componentMolarWeight;
+  clone.m_componentNames       = this->m_componentNames;
+  clone.m_componentMolarWeight = this->m_componentMolarWeight;
 
-  clone->m_phaseNames           = this->m_phaseNames;
-  clone->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
+  clone.m_phaseNames           = this->m_phaseNames;
+  clone.m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
 
-  clone->m_surfaceDensities = this->m_surfaceDensities;
-  clone->m_tableFiles       = this->m_tableFiles;
+  clone.m_surfaceDensities = this->m_surfaceDensities;
+  clone.m_tableFiles       = this->m_tableFiles;
 
-  clone->createFluid();
+  clone.createFluid();
 
-  return clone;
+  return clone_ptr;
 }
 
 void BlackOilFluid::FillDocumentationNode()
