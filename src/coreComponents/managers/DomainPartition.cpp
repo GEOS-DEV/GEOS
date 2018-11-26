@@ -225,6 +225,8 @@ void DomainPartition::SetupCommunications()
 
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
+  nodeManager->SetMaxGlobalIndex();
+
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
 
   CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, allNeighbors );

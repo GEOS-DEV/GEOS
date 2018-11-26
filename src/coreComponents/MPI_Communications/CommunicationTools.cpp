@@ -407,13 +407,13 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
 {
   int const thisRank = MPI_Rank( MPI_COMM_GEOSX );
   int const commSize = MPI_Size( MPI_COMM_GEOSX );
-  localIndex numberOfObjectsHere = indexList.size();
-  localIndex_array numberOfObjects( commSize );
+  localIndex numberOfNewObjectsHere = indexList.size();
+  localIndex_array numberOfNewObjects( commSize );
   localIndex_array glocalIndexOffset( commSize );
-  MPI_Allgather( reinterpret_cast<char*>( &numberOfObjectsHere ),
+  MPI_Allgather( reinterpret_cast<char*>( &numberOfNewObjectsHere ),
                  sizeof(localIndex),
                  MPI_CHAR,
-                 reinterpret_cast<char*>( numberOfObjects.data() ),
+                 reinterpret_cast<char*>( numberOfNewObjects.data() ),
                  sizeof(localIndex),
                  MPI_CHAR,
                  MPI_COMM_GEOSX );
@@ -422,17 +422,18 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
   glocalIndexOffset[0] = 0;
   for( int rank = 1 ; rank < commSize ; ++rank )
   {
-    glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfObjects[rank - 1];
+    glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
   }
 
-  // set the global indices as if they were all local to this process
-  for( auto const a : indexList )
+  for( localIndex a=0 ; a<indexList.size() ; ++a )
   {
-    GEOS_ERROR_IF( object.m_localToGlobalMap[a] != -1,
-                   "existing object.m_localToGlobalMap[a]="<<object.m_localToGlobalMap[a]<<
+    localIndex const newLocalIndex = indexList[a];
+    GEOS_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
+                   "existing object.m_localToGlobalMap[a]="<<object.m_localToGlobalMap[newLocalIndex]<<
                    ", but it should equal -1.");
 
-    object.m_localToGlobalMap[a] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + a;
+    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + a + 1;
+    object.m_globalToLocalMap[object.m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
   }
 
 
