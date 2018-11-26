@@ -287,6 +287,15 @@ public:
 
   void SetMaxGlobalIndex();
 
+  virtual void FixUpDownMaps() {}
+  template< typename TYPE_RELATION >
+  static void FixUpDownMaps( TYPE_RELATION & relation,
+                             map< localIndex, array1d<globalIndex> > & unmappedIndices );
+
+  template< typename TYPE_RELATION >
+  static void FixUpDownMaps( TYPE_RELATION & relation,
+                             map< localIndex, set<globalIndex> > & unmappedIndices );
+
 
   //**********************************************************************************************************************
 
@@ -386,8 +395,69 @@ public:
 };
 
 
+//template< typename T >
+//void ObjectManagerBase::FixUpDownMaps()
+//{
+//
+//}
+
+
+template< typename TYPE_RELATION >
+void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+                                       map< localIndex, array1d<globalIndex> > & unmappedIndices )
+{
+  bool allValuesMapped = true;
+  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    array1d<globalIndex> const & globalIndices = iter->second;
+    for( localIndex a=0 ; a<globalIndices.size() ; ++a )
+    {
+      if( globalIndices[a] != unmappedLocalIndexValue )
+      {
+        if( relation[li][a] == unmappedLocalIndexValue  )
+        {
+          relation[li][a] = globalToLocal.at(globalIndices[a]);
+        }
+        else
+        {
+          allValuesMapped = false;
+        }
+      }
+      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
+    }
+  }
+  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
+  unmappedIndices.clear();
+}
+
+
+template< typename TYPE_RELATION >
+void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+                                       map< localIndex, set<globalIndex> > & unmappedIndices )
+{
+  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    set<globalIndex> const & globalIndices = iter->second;
+    for( auto const newGlobalIndex : globalIndices )
+    {
+      relation[li].insert( globalToLocal.at( newGlobalIndex ) );
+    }
+  }
+  unmappedIndices.clear();
+}
+
 
 } /* namespace geosx */
+
+
 
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 

@@ -318,6 +318,18 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
+void NodeManager::FixUpDownMaps()
+{
+  ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
+                                    m_unmappedGlobalIndicesInToEdges);
+
+  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
+                                    m_unmappedGlobalIndicesInToFaces);
+
+//  ObjectManagerBase::FixUpDownMaps( faceList(),
+//                                    m_unmappedGlobalIndicesInFacelist);
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
 

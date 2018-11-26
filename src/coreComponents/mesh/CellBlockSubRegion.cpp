@@ -248,34 +248,11 @@ localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buff
 
 void CellBlockSubRegion::FixUpDownMaps()
 {
-//  map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInNodelist;
-//  map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInFacelist;
+  ObjectManagerBase::FixUpDownMaps( nodeList(),
+                                    m_unmappedGlobalIndicesInNodelist);
 
-  FixedOneToManyRelation & elemsToNodes = nodeList();
-  bool allValuesMapped = true;
-  for( map<localIndex, array1d<globalIndex> >::iterator iter = m_unmappedGlobalIndicesInNodelist.begin() ;
-       iter != m_unmappedGlobalIndicesInNodelist.end() ;
-       ++iter )
-  {
-    localIndex const li = iter->first;
-    array1d<globalIndex const> const & globalIndices = iter->second;
-    for( localIndex a=0 ; a<globalIndices.size() ; ++a )
-    {
-      if( globalIndices[a] != unmappedLocalIndexValue )
-      {
-        if( elemsToNodes[li][a] == unmappedLocalIndexValue  )
-        {
-          elemsToNodes[li][a] = elemsToNodes.RelatedObjectGlobalToLocal().at(globalIndices[a]);
-        }
-        else if( elemsToNodes[li][a] != elemsToNodes.RelatedObjectGlobalToLocal().at(globalIndices[a]) )
-        {
-          allValuesMapped = false;
-        }
-      }
-      GEOS_ERROR_IF( elemsToNodes[li][a]==unmappedLocalIndexValue, "Index not set");
-    }
-  }
-
+  ObjectManagerBase::FixUpDownMaps( faceList(),
+                                    m_unmappedGlobalIndicesInFacelist);
 }
 
 

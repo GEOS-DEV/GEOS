@@ -782,4 +782,16 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
+void EdgeManager::FixUpDownMaps()
+{
+  ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
+                                    m_unmappedGlobalIndicesInToNodes);
+
+  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
+                                    m_unmappedGlobalIndicesInToFaces);
+
+//  ObjectManagerBase::FixUpDownMaps( faceList(),
+//                                    m_unmappedGlobalIndicesInFacelist);
+}
+
 }
