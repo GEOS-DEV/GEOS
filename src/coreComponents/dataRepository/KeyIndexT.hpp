@@ -26,6 +26,7 @@
 #define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_
 
 #include <string>
+#include <ostream>
 
 /**
  * @class KeyIndexT
@@ -75,6 +76,9 @@ public:
   /// default move assignment operator
   KeyIndexT & operator=( KeyIndexT && ) = default;
 
+  bool operator==( KEY_TYPE const & key ) const
+  { return m_key == key; }
+
   /// default destructor
   virtual ~KeyIndexT() {}
 
@@ -117,5 +121,12 @@ private:
   /// index value
   INDEX_TYPE m_index;
 };
+
+template< typename KEY_TYPE, typename INDEX_TYPE, int INVALID_INDEX >
+std::ostream& operator<<( std::ostream& os, const KeyIndexT< KEY_TYPE, INDEX_TYPE, INVALID_INDEX > key )
+{
+  os << key.Key();
+  return os;
+}
 
 #endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_ */

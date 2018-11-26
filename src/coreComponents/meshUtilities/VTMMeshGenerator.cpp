@@ -148,11 +148,11 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
             if( meshBlock.IsARegionBlock() ) {
                 const auto & mesh = meshBlock.mesh();
                 /// Write nodes
-                nodeManager->resize(mesh.NumVertices());
-                arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+                nodeManager->resize( integer_conversion<localIndex>(mesh.NumVertices()));
+                arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
                 for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
                 {
-                    real64 * const tensorData = X[a].Data();
+                    real64 * const tensorData = X[integer_conversion<localIndex>(a)].Data();
                     tensorData[0] = mesh.Vertex(a)[0];
                     tensorData[1] = mesh.Vertex(a)[1];
                     tensorData[2] = mesh.Vertex(a)[2];
@@ -162,67 +162,67 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("HEX");
                     cellBlock -> SetElementType("C3D8");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize( integer_conversion<localIndex>(mesh.NumCells()) );
+                    cellToVertex.resize( integer_conversion<localIndex>(mesh.NumCells()),  integer_conversion<localIndex>(mesh.NumVerticesInCell(0)) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,3);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
-                      cellToVertex[k][5] = mesh.CellVertexIndex(k,5);
-                      cellToVertex[k][6] = mesh.CellVertexIndex(k,7);
-                      cellToVertex[k][7] = mesh.CellVertexIndex(k,6);
+                      cellToVertex[k][0] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,0));
+                      cellToVertex[k][1] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,1));
+                      cellToVertex[k][2] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,3));
+                      cellToVertex[k][3] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,2));
+                      cellToVertex[k][4] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,4));
+                      cellToVertex[k][5] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,5));
+                      cellToVertex[k][6] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,7));
+                      cellToVertex[k][7] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,6));
                     }
                 }
                 if( mesh.NumTetra() > 0) {
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("TETRA");
                     cellBlock -> SetElementType("C3D4");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize( integer_conversion<localIndex>(mesh.NumCells()) );
+                    cellToVertex.resize( integer_conversion<localIndex>(mesh.NumCells()),  integer_conversion<localIndex>(mesh.NumVerticesInCell(0)) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
+                      cellToVertex[k][0] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,0));
+                      cellToVertex[k][1] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,1));
+                      cellToVertex[k][2] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,2));
+                      cellToVertex[k][3] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,3));
                     }
                 }
                 if( mesh.NumPrism() > 0) {
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("WEDGE");
                     cellBlock -> SetElementType("C3D6");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize( integer_conversion<localIndex>(mesh.NumCells()) );
+                    cellToVertex.resize( integer_conversion<localIndex>(mesh.NumCells()),  integer_conversion<localIndex>(mesh.NumVerticesInCell(0)) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
-                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
-                      cellToVertex[k][5] = mesh.CellVertexIndex(k,5);
+                      cellToVertex[k][0] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,0));
+                      cellToVertex[k][1] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,1));
+                      cellToVertex[k][2] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,2));
+                      cellToVertex[k][3] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,3));
+                      cellToVertex[k][4] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,4));
+                      cellToVertex[k][5] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,5));
                     }
                 }
                 if( mesh.NumPyr() > 0) {
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("PYR");
                     cellBlock -> SetElementType("C3D5");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize( integer_conversion<localIndex>(mesh.NumCells() ) );
+                    cellToVertex.resize( integer_conversion<localIndex>(mesh.NumCells()), integer_conversion<localIndex>( mesh.NumVerticesInCell(0) ) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
-                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
+                      cellToVertex[k][0] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,0));
+                      cellToVertex[k][1] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,1));
+                      cellToVertex[k][2] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,2));
+                      cellToVertex[k][3] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,3));
+                      cellToVertex[k][4] = integer_conversion<localIndex>(mesh.CellVertexIndex(k,4));
                     }
                 }
             }

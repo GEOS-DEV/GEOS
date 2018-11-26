@@ -193,55 +193,51 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               const localIndex localFaceIndex,
                               localIndex_array& nodeIndicies) const
 {
-  // get nodelist for this element
-  localIndex const * const elemToNodeMap = m_toNodesRelation[elementIndex];
-
-
   if (!m_elementType.compare(0, 4, "C3D8"))
   {
     nodeIndicies.resize(4);
 
     if (localFaceIndex == 0)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[1];
-      nodeIndicies[2] = elemToNodeMap[5];
-      nodeIndicies[3] = elemToNodeMap[4];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
     }
     else if (localFaceIndex == 1)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[3];
-      nodeIndicies[3] = elemToNodeMap[1];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][1];
     }
     else if (localFaceIndex == 2)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[4];
-      nodeIndicies[2] = elemToNodeMap[6];
-      nodeIndicies[3] = elemToNodeMap[2];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][2];
     }
     else if (localFaceIndex == 3)
     {
-      nodeIndicies[0] = elemToNodeMap[1];
-      nodeIndicies[1] = elemToNodeMap[3];
-      nodeIndicies[2] = elemToNodeMap[7];
-      nodeIndicies[3] = elemToNodeMap[5];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
     }
     else if (localFaceIndex == 4)
     {
-      nodeIndicies[0] = elemToNodeMap[3];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[6];
-      nodeIndicies[3] = elemToNodeMap[7];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][7];
     }
     else if (localFaceIndex == 5)
     {
-      nodeIndicies[0] = elemToNodeMap[4];
-      nodeIndicies[1] = elemToNodeMap[5];
-      nodeIndicies[2] = elemToNodeMap[7];
-      nodeIndicies[3] = elemToNodeMap[6];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][6];
     }
 
   }
@@ -250,40 +246,40 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
     if (localFaceIndex == 0)
     {
       nodeIndicies.resize(3);
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[1];
-      nodeIndicies[2] = elemToNodeMap[2];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
     }
     else if (localFaceIndex == 1)
     {
       nodeIndicies.resize(3);
-      nodeIndicies[0] = elemToNodeMap[3];
-      nodeIndicies[1] = elemToNodeMap[4];
-      nodeIndicies[2] = elemToNodeMap[5];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
     }
     else if (localFaceIndex == 2)
     {
       nodeIndicies.resize(4);
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[1];
-      nodeIndicies[2] = elemToNodeMap[3];
-      nodeIndicies[3] = elemToNodeMap[4];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
     }
     else if (localFaceIndex == 3)
     {
       nodeIndicies.resize(4);
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[3];
-      nodeIndicies[3] = elemToNodeMap[5];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
     }
     else if (localFaceIndex == 4)
     {
       nodeIndicies.resize(4);
-      nodeIndicies[0] = elemToNodeMap[1];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[4];
-      nodeIndicies[3] = elemToNodeMap[5];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
     }
   }
   else if (!m_elementType.compare(0, 4, "C3D4"))
@@ -292,27 +288,27 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 
     if (localFaceIndex == 0)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[1];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][1];
     }
     else if (localFaceIndex == 1)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[1];
-      nodeIndicies[2] = elemToNodeMap[3];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
     }
     else if (localFaceIndex == 2)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[3];
-      nodeIndicies[2] = elemToNodeMap[2];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
     }
     else if (localFaceIndex == 3)
     {
-      nodeIndicies[0] = elemToNodeMap[1];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[3];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
     }
   }
   else if (!m_elementType.compare(0, 4, "C3D5"))
@@ -320,38 +316,38 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
     if (localFaceIndex == 0)
     {
       nodeIndicies.resize(4);
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[1];
-      nodeIndicies[2] = elemToNodeMap[2];
-      nodeIndicies[3] = elemToNodeMap[3];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
     }
     else if (localFaceIndex == 1)
     {
       nodeIndicies.resize(3);
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[1];
-      nodeIndicies[2] = elemToNodeMap[4];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
     }
     else if (localFaceIndex == 2)
     {
       nodeIndicies.resize(3);
-      nodeIndicies[0] = elemToNodeMap[1];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[4];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
     }
     else if (localFaceIndex == 3)
     {
       nodeIndicies.resize(3);
-      nodeIndicies[0] = elemToNodeMap[2];
-      nodeIndicies[1] = elemToNodeMap[3];
-      nodeIndicies[2] = elemToNodeMap[4];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
     }
     else if (localFaceIndex == 4)
     {
       nodeIndicies.resize(3);
-      nodeIndicies[0] = elemToNodeMap[3];
-      nodeIndicies[1] = elemToNodeMap[0];
-      nodeIndicies[2] = elemToNodeMap[4];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
     }
   }
 
@@ -359,8 +355,8 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if( localFaceIndex == 0 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //  }
 //
@@ -368,18 +364,18 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if( localFaceIndex == 0 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //    else if( localFaceIndex == 1 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
 //    }
 //    else if( localFaceIndex == 2 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[2];
-//      nodeIndicies[1] = elemToNodeMap[0];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
 //    }
 //  }
 //
@@ -387,23 +383,23 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //    else if (localFaceIndex == 1)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
 //    }
 //    else if (localFaceIndex == 2)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[3];
-//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
 //    }
 //    else if (localFaceIndex == 3)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[2];
-//      nodeIndicies[1] = elemToNodeMap[0];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
 //    }
 //  }
 //
@@ -411,18 +407,18 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //    else if (localFaceIndex == 1)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
 //    }
 //    else if (localFaceIndex == 2)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[2];
-//      nodeIndicies[1] = elemToNodeMap[0];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
 //    }
 //  }
 //
@@ -430,10 +426,10 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
-//      nodeIndicies[2] = elemToNodeMap[2];
-//      nodeIndicies[3] = elemToNodeMap[3];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
 //    }
 //  }
 //
@@ -441,9 +437,9 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
-//      nodeIndicies[2] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
 //    }
 //  }
 //
@@ -458,11 +454,10 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
 {
 
   r1_array const & X = nodeManager.referencePosition();
-  localIndex const * const nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
   {
-    const localIndex b = nodelist[a];
+    const localIndex b = m_toNodesRelation[k][a];
     elementCenter += X[b];
     if(!useReferencePos)
       elementCenter += X[b];

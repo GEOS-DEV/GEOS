@@ -64,15 +64,16 @@ public:
   explicit SolverBase( std::string const & name,
                        ManagedGroup * const parent );
 
+  SolverBase( SolverBase && ) = default;
+
   virtual ~SolverBase() override;
 
-  static string CatalogName() { return "SolverBase"; }
+  SolverBase() = delete;
+  SolverBase( SolverBase const & ) = delete;
+  SolverBase& operator=( SolverBase const & ) = delete;
+  SolverBase& operator=( SolverBase&& ) = delete;
 
-  SolverBase() = default;
-  SolverBase( SolverBase const & ) = default;
-  SolverBase( SolverBase && ) = default;
-  SolverBase& operator=( SolverBase const & ) = default;
-  SolverBase& operator=( SolverBase&& ) = default;
+  static string CatalogName() { return "SolverBase"; }
 
   void ReadXML_PostProcess() override;
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
@@ -143,6 +144,27 @@ public:
                                         integer const cycleNumber,
                                         DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem );
+
+  /**
+   * @brief Function to perform line search
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
+   * @return return true if line search succeeded, false otherwise
+   *
+   * This function implements a nonlinear newton method for implicit problems. It requires that the
+   * other functions in the solver interface are implemented in the derived physics solver. The
+   * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
+   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   */
+  virtual bool LineSearch( real64 const & time_n,
+                           real64 const & dt,
+                           integer const cycleNumber,
+                           DomainPartition * const domain,
+                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                           real64 & lastResidual );
 
   /**
    * @brief Function for a linear implicit integration step
@@ -245,6 +267,21 @@ public:
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params );
 
+  /**
+ * @brief Function to check system solution for physical consistency and constraint violation
+ * @param blockSystem the entire block system
+ * @param scalingFactor factor to scale the solution prior to application
+ * @param objectManager the object manager that holds the fields we wish to apply the solution to
+ * @return true if solution can be safely applied without violating physical constraints, false otherwise
+ *
+ * @note This function must be overridden in the derived physics solver in order to use an implict
+ * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
+ *
+ */
+  virtual bool
+  CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain );
 
   /**
    * @brief Function to apply the solution vector to the state
@@ -359,9 +396,6 @@ public:
   {
     return &m_systemSolverParameters;
   }
-
-//  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
-//  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
 
 protected:
   /// This is a wrapper for the linear solver package

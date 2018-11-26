@@ -63,7 +63,7 @@ FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::str
   return this->GetGroup<FluxApproximationBase>(name);
 }
 
-void FiniteVolumeManager::FinalInitialization(ManagedGroup *const rootGroup)
+void FiniteVolumeManager::IntermediateInitializationPreSubGroups(ManagedGroup * const rootGroup)
 {
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   precomputeFiniteVolumeData(domain);
@@ -78,17 +78,17 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
 
   r1_array const & X = nodeManager->referencePosition();
 
-  auto elemCenter = elemManager->ConstructViewAccessor<r1_array>(CellBlock::
-                                                                 viewKeyStruct::
-                                                                 elementCenterString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> elemCenter = 
+    elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor>>(
+                                        CellBlock::viewKeyStruct::elementCenterString);
 
-  auto elemVolume = elemManager->ConstructViewAccessor<real64_array>(CellBlock::
-                                                                     viewKeyStruct::
-                                                                     elementVolumeString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> elemVolume = 
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(
+                                        CellBlock::viewKeyStruct::elementVolumeString);
 
-  auto elemsToNodes = elemManager->ConstructViewAccessor<FixedOneToManyRelation>(CellBlockSubRegion::
-                                                                                 viewKeyStruct::
-                                                                                 nodeListString);
+  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex>> const elemsToNodes =
+    elemManager->ConstructViewAccessor<FixedOneToManyRelation, arrayView2d<localIndex>>(
+                                    CellBlockSubRegion::viewKeyStruct::nodeListString);
 
 
   // Loop over all the elements and calculate element centers, and element volumes
@@ -96,8 +96,7 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
                                 localIndex const esr,
                                 localIndex const k )->void
   {
-    localIndex const * const nodeList = elemsToNodes[er][esr][k];
-    localIndex const nodeListSize = elemsToNodes[er][esr].get().size(1);
+    localIndex const nodeListSize = elemsToNodes[er][esr].size(1);
     R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
 
     R1Tensor & center = elemCenter[er][esr][k];
@@ -106,7 +105,7 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
     // TODO different center options
     for (localIndex a = 0; a < nodeListSize; ++a)
     {
-      Xlocal[a] = X[nodeList[a]];
+      Xlocal[a] = X[elemsToNodes[er][esr][k][a]];
       center += Xlocal[a];
     }
     center /= nodeListSize;

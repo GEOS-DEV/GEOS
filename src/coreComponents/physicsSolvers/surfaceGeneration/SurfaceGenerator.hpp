@@ -70,7 +70,7 @@ public:
   virtual void
   FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual void FinalInitialization( ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitializationPreSubGroups( ManagedGroup * const problemManager ) override final;
 
 
   /**
@@ -258,8 +258,8 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    array1d<set<localIndex> >& nodesToRupturedFaces,
-                    array1d<set<localIndex> >& edgesToRupturedFaces,
+                    arrayView1d<set<localIndex> >& nodesToRupturedFaces,
+                    arrayView1d<set<localIndex> >& edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists& modifiedObjects,
                     const bool prefrac );
@@ -284,8 +284,8 @@ private:
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
                            ElementRegionManager & elemManager,
-                           const array1d<set<localIndex> >& nodesToRupturedFaces,
-                           const array1d<set<localIndex> >& edgesToRupturedFaces,
+                           const arrayView1d<set<localIndex> >& nodesToRupturedFaces,
+                           const arrayView1d<set<localIndex> >& edgesToRupturedFaces,
                            set<localIndex>& separationPathFaces,
                            map<localIndex, int>& edgeLocations,
                            map<localIndex, int>& faceLocations,
@@ -313,8 +313,8 @@ private:
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists& modifiedObjects,
-                        array1d<set<localIndex> >& nodesToRupturedFaces,
-                        array1d<set<localIndex> >& edgesToRupturedFaces,
+                        arrayView1d<set<localIndex> >& nodesToRupturedFaces,
+                        arrayView1d<set<localIndex> >& edgesToRupturedFaces,
                         const set<localIndex>& separationPathFaces,
                         const map<localIndex, int>& edgeLocations,
                         const map<localIndex, int>& faceLocations,

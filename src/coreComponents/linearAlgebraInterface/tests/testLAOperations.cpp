@@ -16,17 +16,23 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file testLAOperations.cpp
+ *
+ *  Created on: Sep 19, 2018
+ *      Author: Matthias Cremon
+ */
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wglobal-constructors"
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5
+#if __clang_major__ >= 5 && !defined(__APPLE__)
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 #endif
 
 #include <gtest/gtest.h>
-
 
 #include <iostream>
 #include <vector>
@@ -34,244 +40,759 @@
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
+#include "BlockMatrixView.hpp"
+#include "../src/solver_CG.hpp"
+#include "../src/solver_BiCGSTAB.hpp"
 
 #include "common/DataTypes.hpp"
 
+/**
+ * \file testLAOperations.cpp
+ * \brief This test file is part of the ctest suite and tests the Trilinos based solvers
+ * as well as block GEOSX solvers. It mainly uses dummy 2D Laplace operator matrices
+ * to test the solvers along with a simple (block) identity preconditioner.
+ */
+
 using namespace geosx;
 
+/*! @name Ctest tests.
+ * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
+ */
+
+/*! @name Utility functions.
+ * @brief Functions used to construct useful matrices in the test files.
+ */
+//@{
+/**
+ * @brief Compute the identity matrix of size <tt>N</tt>.
+ *
+ * \param comm MPI communicator.
+ * \param N size of the squared identity matrix.
+ */
+
+// BEGIN_RST_NARRATIVE testLAOperations.rst
+// ==============================
+// Compute Identity
+// ==============================
+// This function computes the identity matrix. It can be used to generate a dummy
+// preconditioner.
+
 template< typename LAI >
-void testLaplaceOperator()
+typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
+                                              typename LAI::laiGID N )
 {
+  // Declare matrix
+  typename LAI::ParallelMatrix I;
+  // Create a matrix of size N with 1 non-zero per row
+  I.create( comm, N, 1 );
 
-  using ParallelMatrix = typename LAI::ParallelMatrix;
-  using ParallelVector = typename LAI::ParallelVector;
-  using LinearSolver = typename LAI::LinearSolver;
-  using laiLID = typename LAI::laiLID;
-  using laiGID = typename LAI::laiGID;
-
-  MPI_Init(nullptr,nullptr);
-
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  // Set the MPI communicator
-  // MPI_Comm comm = MPI_COMM_WORLD;
-
-  MPI_Comm test_comm;
-  MPI_Comm_dup(MPI_COMM_WORLD,&test_comm);
-  MPI_Comm comm = test_comm;
-
-  // Create Dummy Laplace matrix (5 points stencil)
-  laiGID n = 100;
-  laiGID N = n*n;
-
-  ParallelMatrix testMatrix;
-  testMatrix.create(comm,N,5);
-
-  ParallelMatrix preconditioner;
-  preconditioner.create(comm,N,1);
-
-  // Allocate arrays to fill dummy 2D Laplace (cartesian) matrix
-  real64 values[5];
-  laiGID cols[5];
-
-  // Construct a dummy Laplace matrix (5 points stencil)
-  for (laiGID i = testMatrix.ilower(); i < testMatrix.iupper(); i++)
+  // Loop over rows to fill the matrix
+  for ( typename LAI::laiGID i = I.ilower(); i < I.iupper(); i++ )
   {
+    // Placeholder for the 1 value (we need to take the memory address)
+    real64 temp = 1;
+    // Set the value for element (i,i) to 1
+    I.insert( i, 1, &temp, &i );
+  }
+
+  // Close the matrix (make data contiguous in memory)
+  I.close();
+
+  // Return the matrix.
+  return I;
+}
+
+/**
+ * @brief Compute the 2D Laplace operator of size <tt>N</tt>.
+ *
+ * \param comm MPI communicator.
+ * \param N size of the squared 2D Laplace operator matrix.
+ */
+
+// ==============================
+// Compute 2D Laplace Operator
+// ==============================
+
+// This function computes the matrix corresponding to a 2D Laplace operator. These
+// matrices arise from a classical finite volume formulation on a cartesian mesh
+// (5-point stencil).
+
+template< typename LAI >
+typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
+                                                       typename LAI::laiGID N )
+{
+  // Declare matrix
+  typename LAI::ParallelMatrix laplace2D;
+  // Create a matrix of size N with 5 non-zeros per row
+  laplace2D.create( comm, N, 5 );
+
+  // Get the size of the dummy mesh back to be able to put values in the correct
+  // diagonals.
+  integer n = integer( std::sqrt( N ) );
+
+  // Allocate arrays to fill the matrix (values and columns)
+  real64 values[5];
+  typename LAI::laiGID cols[5];
+
+  // Loop over rows to fill the matrix
+  for ( typename LAI::laiGID i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
+  {
+    // Re-set the number of non-zeros for row i to 0.
     integer nnz = 0;
-    /* The left -n: position i-n */
-    if (i-n >= 0)
+
+    // The left -n: position i-n
+    if ( i-n >= 0 )
     {
       cols[nnz] = i-n;
       values[nnz] = -1.0;
       nnz++;
     }
-    /* The left -n: position i-n */
-    if (i-1 >= 0)
+
+    // The left -1: position i-1
+    if ( i-1 >= 0 )
     {
       cols[nnz] = i-1;
       values[nnz] = -1.0;
       nnz++;
     }
-    /* Set the diagonal: position i */
+
+    // Set the diagonal: position i
     cols[nnz] = i;
     values[nnz] = 4.0;
     nnz++;
-    /* The right +1: position i+1 */
-    if (i+1 < N)
+
+    // The right +1: position i+1
+    if ( i+1 < N )
     {
       cols[nnz] = i+1;
       values[nnz] = -1.0;
       nnz++;
     }
-    /* The right +n: position i-n */
-    if (i+n < N)
+
+    // The right +n: position i+n
+    if ( i+n < N )
     {
       cols[nnz] = i+n;
       values[nnz] = -1.0;
       nnz++;
     }
 
-    real64 temp = 0.25;
-
     // Set the values for row i
-    testMatrix.insert(i,nnz,values,cols);
-    preconditioner.insert(i,1,&temp,&i);
+    laplace2D.insert( i, nnz, values, cols );
 
   }
 
-  testMatrix.close();
-  preconditioner.close();
+  // Close the matrix (make data contiguous in memory)
+  laplace2D.close();
 
+  // Return the matrix
+  return laplace2D;
+
+}
+
+//@}
+
+
+/*! @name Test functions.
+ * @brief Templated functions to test the linear solvers.
+ */
+//@{
+/**
+ * @function testNativeSolvers
+ *
+ * @brief Test the native solvers from the LAI as well as basic linear algebra operations,
+ * such as matrix-vector products, dot products, norms and residuals.
+ */
+
+// ==============================
+// Test Linear Algebra Operations
+// ==============================
+// In these 3 functions we test the linear algebra operations, the native solvers from the
+// libraries as well as the re-implemented GEOSX solvers for CG and BiCGSTAB. We run these
+// on both monolithic and block matrices.
+
+// -------------------------------------
+// Test libraries operations and solvers
+// -------------------------------------
+// We start by testing the linear algebra operations. We fill two matrices (one will be a
+// preconditioner) and make sure the sparse storage is behaving properly. We then test the
+// iterative and direct solvers available.
+
+template< typename LAI >
+void testNativeSolvers()
+{
+  // Define aliases templated on the Linear Algebra Interface (LAI).
+  // These objects can use all of the available libraries (trilinos and
+  // soon HYPRE and PETSc).
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+  using ParallelVector = typename LAI::ParallelVector;
+  using LinearSolver = typename LAI::LinearSolver;
+  using laiLID = typename LAI::laiLID;
+  using laiGID = typename LAI::laiGID;
+
+  // Initialize MPI
+  MPI_Init( nullptr, nullptr );
+
+  // Get the MPI rank
+  int rank;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  // Set the MPI communicator
+  // MPI_Comm comm = MPI_COMM_WORLD;
+
+  MPI_Comm test_comm;
+  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
+  MPI_Comm comm = test_comm;
+
+  // Size of the dummy cartesian mesh we use to generate the Laplace 2D operator.
+  laiGID n = 100;
+  // Number of degrees of freedom
+  laiGID N = n*n;
+
+  // Compute a 2D Laplace operator
+  ParallelMatrix testMatrix = compute2DLaplaceOperator<LAI>( comm, N );
+
+  // Compute a dummy preconditioner (identity matrix)
+  ParallelMatrix preconditioner = computeIdentity<LAI>( comm, N );
+
+  // Declare integers to run tests
   integer numValRow0,numValRow1,numValRown;
-  std::vector<real64> vecValuesRow0(5),vecValuesRow1(5),vecValuesRown(5);
-  std::vector<laiLID> vecIndicesRow0(5),vecIndicesRow1(5),vecIndicesRown(5);
-  testMatrix.getLocalRow(0,numValRow0,vecValuesRow0,vecIndicesRow0);
-  testMatrix.getLocalRow(1,numValRow1,vecValuesRow1,vecIndicesRow1);
-  testMatrix.getLocalRow(static_cast<laiLID>(n),numValRown,vecValuesRown,vecIndicesRown);
 
+  // Declare vectors to run tests
+  std::vector<real64> vecValuesRow0( 5 ),vecValuesRow1( 5 ),vecValuesRown( 5 );
+  std::vector<laiLID> vecIndicesRow0( 5 ),vecIndicesRow1( 5 ),vecIndicesRown( 5 );
+
+  // Get values and columns in specific rows
+  testMatrix.getLocalRow( 0, numValRow0, vecValuesRow0, vecIndicesRow0 );
+  testMatrix.getLocalRow( 1, numValRow1, vecValuesRow1, vecIndicesRow1 );
+  testMatrix.getLocalRow( static_cast<laiLID>( n ), numValRown, vecValuesRown, vecIndicesRown );
+
+  // Run checks on rank 0 to see if the matrix was correctly constructed
   if (rank == 0)
   {
     // Check number of values per row
-    EXPECT_TRUE( numValRow0 == 3 );
-    EXPECT_TRUE( numValRow1 == 4 );
-    EXPECT_TRUE( numValRown == 5 );
+    EXPECT_DOUBLE_EQ( numValRow0, 3 );
+    EXPECT_DOUBLE_EQ( numValRow1, 4 );
+    EXPECT_DOUBLE_EQ( numValRown, 5 );
 
-    // Check actual values TODO modify with better double check
-    //  EXPECT_TRUE( vecValuesRow0[0] == 4 );
-    //  EXPECT_TRUE( vecValuesRow0[1] == -1 );
-    //  EXPECT_TRUE( vecValuesRow0[2] == -1 );
-    //
-    //  EXPECT_TRUE( vecValuesRow1[0] == -1 );
-    //  EXPECT_TRUE( vecValuesRow1[1] == 4 );
-    //  EXPECT_TRUE( vecValuesRow1[2] == -1 );
-    //  EXPECT_TRUE( vecValuesRow1[3] == -1 );
-    //
-    //  EXPECT_TRUE( vecValuesRown[0] == -1 );
-    //  EXPECT_TRUE( vecValuesRown[1] == -1 );
-    //  EXPECT_TRUE( vecValuesRown[2] == 4 );
-    //  EXPECT_TRUE( vecValuesRown[3] == -1 );
-    //  EXPECT_TRUE( vecValuesRown[4] == -1 );
+    // Check column indices for row 0
+    EXPECT_DOUBLE_EQ( vecIndicesRow0[0], 0 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow0[1], 1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow0[2], n );
 
-    // Check column indices
-    EXPECT_TRUE( vecIndicesRow0[0] == 0 );
-    EXPECT_TRUE( vecIndicesRow0[1] == 1 );
-    EXPECT_TRUE( vecIndicesRow0[2] == n );
+    // Check column indices for row 1
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[0], 0 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[1], 1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[2], 2 );
+    EXPECT_DOUBLE_EQ( vecIndicesRow1[3], n+1 );
 
-    EXPECT_TRUE( vecIndicesRow1[0] == 0 );
-    EXPECT_TRUE( vecIndicesRow1[1] == 1 );
-    EXPECT_TRUE( vecIndicesRow1[2] == 2 );
-    EXPECT_TRUE( vecIndicesRow1[3] == n+1 );
+    // Check column indices for row n
+    EXPECT_DOUBLE_EQ( vecIndicesRown[0], 0 );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[1], n-1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[2], n );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[3], n+1 );
+    EXPECT_DOUBLE_EQ( vecIndicesRown[4], 2*n );
 
-    EXPECT_TRUE( vecIndicesRown[0] == 0 );
-    EXPECT_TRUE( vecIndicesRown[1] == n-1 );
-    EXPECT_TRUE( vecIndicesRown[2] == n );
-    EXPECT_TRUE( vecIndicesRown[3] == n+1 );
-    EXPECT_TRUE( vecIndicesRown[4] == 2*n );
+    // Check values for row 0
+    EXPECT_DOUBLE_EQ( vecValuesRow0[0], 4. );
+    EXPECT_DOUBLE_EQ( vecValuesRow0[1], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRow0[2], -1. );
+
+    // Check values for row 1
+    EXPECT_DOUBLE_EQ( vecValuesRow1[0], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRow1[1], 4. );
+    EXPECT_DOUBLE_EQ( vecValuesRow1[2], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRow1[3], -1. );
+
+    // Check values for row n
+    EXPECT_DOUBLE_EQ( vecValuesRown[0], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[1], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[2], 4. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[3], -1. );
+    EXPECT_DOUBLE_EQ( vecValuesRown[4], -1. );
   }
-  // Fill standard vectors
-  std::vector<real64> ones, zer;
+
+  // We now test the linear algebra operations, such as matrix-vector product and
+  // compute residuals.
+
+  // For that we first fill some standard vectors
+  std::vector<real64> ones, zer, random, random2;
   for (integer j = 0; j < N; j++)
   {
-    zer.push_back(0);
-    ones.push_back(1);
+    // Vector of zeros
+    zer.push_back( 0 );
+    // Vector of ones
+    ones.push_back( 1 );
+    // Vector of random integers
+    random.push_back( rand() % 20 - 10 );
+    // Vector of random integers (different range to make sure the two random vectors
+    // are not the same, which would defeat the purpose).
+    random2.push_back( rand() % 30 - 15 );
   }
 
-  // Define vectors
-  ParallelVector x, b;
-  // Right hand side for multiplication (b)
-  b.create(zer);
-  // Vector of ones for multiplication (x)
-  x.create(ones);
-  // Vector of zeros for iterative and direct solutions
-  ParallelVector solIterativeML(b);
-  ParallelVector solDirect(b);
-  // Residual vector
-  ParallelVector r(b);
+  // Define x, b and x0 guess vectors
+  ParallelVector x, b, x0;
 
-  // Matrix/vector multiplication
-  testMatrix.multiply(x, b);
+  // Place holder for b (will be recomputed a few lines down). We do use the vector to test
+  // the linear algebra operations
+  b.create( ones );
 
-  ParallelVector solIterative(b);
+  // Random vector for x (the true solution of Ax = b).
+  x.create( random );
+
+  // Get the inf-norm of the true solution (x).
+  real64 norm2x;
+  x.norm2( norm2x );
+
+  // Random vector for the initial guess x0
+  x0.create( random2 );
+
+  // Fill initial guess for the direct solver
+  ParallelVector solDirect( x0 );
+
+  // Fill initial guess for the iterative solver
+  ParallelVector solIterative( x0 );
+
+  // Residual vector (vector of zeros)
+  ParallelVector r( b );
 
   // Test dot product
   real64 dotTest;
-  x.dot(x,&dotTest);
+  b.dot( b, dotTest );
+  EXPECT_DOUBLE_EQ( dotTest, N );
 
-  // test norms
+  // Test 1-norm
   real64 norm1;
-  x.norm1(norm1);
-  EXPECT_TRUE( std::fabs(norm1 - N) <= 1e-6 );
+  b.norm1( norm1 );
+  // The 1-norm should be equal to N
+  EXPECT_DOUBLE_EQ( norm1, N );
 
+  // Test 2-norm
   real64 norm2;
-  x.norm2(norm2);
-  EXPECT_TRUE( std::fabs(norm2 - n) <= 1e-6 );
+  b.norm2( norm2 );
+  // The 2-norm should be equal to n
+  EXPECT_DOUBLE_EQ( norm2, n );
 
+  // Test inf-norm
   real64 norminf;
-  x.normInf(norminf);
-  EXPECT_TRUE( std::fabs(norminf - 1) <= 1e-6 );
+  b.normInf( norminf );
 
-  testMatrix.residual(x,b,r);
+  // The inf-norm should be equal to 1
+  EXPECT_DOUBLE_EQ( norminf, 1. );
+
+  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
+  // back from the solvers.
+  testMatrix.multiply( x, b );
+
+  // First we test the residual function by computing r = b - Ax.
+  testMatrix.residual( x, b, r );
+
+  // Compute the norm of the residual
   real64 normRes;
-  r.normInf(normRes);
-  EXPECT_TRUE( std::fabs(normRes) <= 1e-6 );
+  r.normInf( normRes );
 
-  // Test solvers
+  // The inf-norm should be equal to 0 (all elements are 0 in exact algebra).
+  EXPECT_DOUBLE_EQ( normRes, 0. );
+
+  // We now test the linear solvers from the libraries.
+
+  // Declare solver object.
   LinearSolver solver = LinearSolver();
 
-  // AztecOO iterative solver
-  solver.solve(testMatrix,solIterative,b,1000,1e-8);
+  // Run the iterative solver (TODO remove hard coded options, currently
+  // using ILUT preconditioned GMRES).
+  if (rank == 0)
+    std::cout << std::endl << "AztecOO iterative solver:";
+  solver.solve( testMatrix, solIterative, b, 1000, 1e-8);
+
+  // Get the inf-norm of the iterative solution.
   real64 normIterativeSol;
-  solIterative.normInf(normIterativeSol);
-  EXPECT_TRUE( std::fabs(normIterativeSol - 1) <= 1e-5 );
+  solIterative.norm2( normIterativeSol );
 
-  real64 norm2ItSol, norm2InitGuess = 0;
-  solIterative.norm2(norm2ItSol);
+  // The true solution is the vector x, so we check if the norm are equal.
+  EXPECT_LT( std::fabs( normIterativeSol/norm2x - 1. ), 1e-6 );
 
-  solver.ml_solve(testMatrix,solIterativeML,b,500,1e-8);
+  // We also check a couple random elements to see if they are equal.
+  EXPECT_LT( ( std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-4 );
+  EXPECT_LT( ( std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-4 );
 
-  real64 normIterativeSolML;
-  solIterativeML.normInf(normIterativeSolML);
-  EXPECT_TRUE( std::fabs(normIterativeSolML - 1) <= 1e-5 );
+  // We now do the same using a direct solver from Amesos (Klu)
+  if (rank == 0)
+    std::cout << std::endl << "Amesos direct solver:" << std::endl << std::endl;
+  solver.dsolve( testMatrix, solDirect, b );
 
-  // Amesos (Klu) direct solver
-  solver.dsolve(testMatrix,solDirect,b);
-
+  // Again the norm should be the norm of x. We use a tougher tolerance on the test
+  // compared to the iterative solution. This should be accurate to machine precision
+  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
   real64 normDirectSol;
-  solDirect.normInf(normDirectSol);
-  EXPECT_TRUE( std::fabs(normDirectSol - 1) <= 1e-8 );
+  solDirect.norm2( normDirectSol );
+  EXPECT_LT( std::fabs( normDirectSol/norm2x - 1 ), 1e-12 );
+  // Again we check a couple elements
+  EXPECT_LT( ( std::fabs( solDirect.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-12 );
+  EXPECT_LT( ( std::fabs( solDirect.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-12 );
 
-  // Test clearRow
-  testMatrix.clearRow(2*N/4+n,2.0);
-  testMatrix.getLocalRow(static_cast<laiLID>(n),numValRown,vecValuesRown,vecIndicesRown);
-  if (rank == 2)
+  // Test the clearRow function (this has to be done after the solves so that we can
+  // use the same matrix when we are done with it).
+
+  // We clear the row and multiply the diagonal value by 2.
+  testMatrix.clearRow( 2*N/4+n, 2.0 );
+  testMatrix.getLocalRow(static_cast<laiLID>( n ),numValRown,vecValuesRown,vecIndicesRown);
+  if ( rank == 2 )
   {
-    EXPECT_TRUE( std::fabs(vecValuesRown[2] - 8.0) <= 1e-8 );
+    EXPECT_DOUBLE_EQ( vecValuesRown[2], 8.0 );
   }
 
+}
+
+/**
+ * @function testGEOSXSolvers
+ *
+ * @brief Test the GEOSX solvers for monolithic matrices by solving a system with
+ * a Laplace operator and the identity matrix as a (dummy) preconditioner.
+ */
+
+// -----------------------------------------
+// Test GEOSX solvers on monolithic matrices
+// -----------------------------------------
+// We now test the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
+// on monolithic matrices.
+
+template< typename LAI >
+void testGEOSXSolvers()
+{
+  // Define aliases templated on the Linear Algebra Interface (LAI).
+  // These objects can use all of the available libraries (trilinos and
+  // soon HYPRE and PETSc).
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+  using ParallelVector = typename LAI::ParallelVector;
+  using laiGID = typename LAI::laiGID;
+
+  // Get the MPI rank
+  int rank;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  // Set the MPI communicator
+  // MPI_Comm comm = MPI_COMM_WORLD;
+  MPI_Comm test_comm;
+  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
+  MPI_Comm comm = test_comm;
+
+  // Size of the dummy cartesian mesh we use to generate the Laplace 2D operator.
+  laiGID n = 100;
+  // Number of degrees of freedom
+  laiGID N = n*n;
+
+  // Compute a 2D Laplace operator
+  ParallelMatrix testMatrix = compute2DLaplaceOperator<LAI>( comm, N );
+
+  // Compute a dummy preconditioner (identity matrix)
+  ParallelMatrix preconditioner = computeIdentity<LAI>( comm, N );
+
+  // We first fill some standard vectors
+  std::vector<real64> ones, zer, random, random2;
+  for (integer j = 0; j < N; j++)
+  {
+    // Vector of zeros
+    zer.push_back( 0 );
+    // Vector of ones
+    ones.push_back( 1 );
+    // Vector of random integers
+    random.push_back( rand() % 20 - 10 );
+    // Vector of random integers (different range to make sure the two random vectors
+    // are not the same, which would defeat the purpose).
+    random2.push_back( rand() % 30 - 15 );
+  }
+
+  // Define vectors for x, b and x0
+  ParallelVector x, b, x0;
+
+  // Right hand side for multiplication (b)
+  b.create( zer );
+
+  // Random vector for x (the true solution of Ax = b).
+  x.create( random );
+
+  // Vector of random values for initial guesses
+  x0.create( random2 );
+
+  // Get the norm of the true solution
+  real64 norm2x;
+  x.norm2( norm2x );
+
+  // Perform a matrix/vector multiplication to compute b
+  testMatrix.multiply( x, b );
+
+  // Initial guess for CG
+  ParallelVector solCG( x0 );
+
+  // Initial guess for BiCGSTAB
+  ParallelVector solBiCGSTAB( x0 );
+
+  // Create a CG solver object
+  CGsolver<LAI> testCG;
+
+  // Solve the left-preconditioned system with CG
+  testCG.solve( testMatrix, solCG, b, preconditioner );
+
+  // The true solution is the vector x, so we check if the norm are equal.
+  real64 normCG;
+  solCG.norm2( normCG );
+  EXPECT_LT( std::fabs( normCG/norm2x - 1. ), 5e-6 );
+
+  // Create a BiCGSTAB solver object
+  BiCGSTABsolver<LAI> testBiCGSTAB;
+
+  // Solve the left-preconditioned system with BiCGSTAB.
+  testBiCGSTAB.solve( testMatrix, solBiCGSTAB, b, preconditioner );
+
+  // The true solution is the vector x, so we check if the norm are equal.
+  real64 normBiCGSTAB;
+  solBiCGSTAB.norm2( normBiCGSTAB );
+  EXPECT_LT( std::fabs( normBiCGSTAB/norm2x - 1. ), 5e-6 );
+
+}
+
+/**
+ * @function testGEOSXBlockSolvers
+ *
+ * @brief Test the GEOSX block solvers by solving a system with a block matrix
+ * made of tiled Laplace operators and using the identity as a preconditioner.
+ */
+
+// -----------------------------------------
+// Test GEOSX solvers on block matrices
+// -----------------------------------------
+// We finish by testing the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
+// on block matrices.
+
+template< typename LAI >
+void testGEOSXBlockSolvers()
+{
+  // Define aliases templated on the Linear Algebra Interface (LAI).
+  // These objects can use all of the available libraries (trilinos and
+  // soon HYPRE and PETSc).
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+  using ParallelVector = typename LAI::ParallelVector;
+  using laiGID = typename LAI::laiGID;
+
+  // Get the MPI rank
+  typename LAI::laiLID rank;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  // Set the MPI communicator
+  // MPI_Comm comm = MPI_COMM_WORLD;
+  MPI_Comm test_comm;
+  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
+  MPI_Comm comm = test_comm;
+
+  // Size of the dummy cartesian mesh we use to generate the Laplace 2D operator.
+  laiGID n = 100;
+  // Number of degrees of freedom
+  laiGID N = n*n;
+
+  // Compute a 2D Laplace operator
+  ParallelMatrix matrix00 = compute2DLaplaceOperator<LAI>( comm, N );
+
+  // Compute a dummy preconditioner (identity matrix)
+  ParallelMatrix preconditioner00 = computeIdentity<LAI>( comm, N );
+
+  // We first fill some standard vectors
+  std::vector<real64> ones, zer, random, random2;
+  for (integer j = 0; j < N; j++)
+  {
+    // Vector of zeros
+    zer.push_back( 0 );
+    // Vector of ones
+    ones.push_back( 1 );
+    // Vector of random integers
+    random.push_back( rand() % 20 - 10 );
+    // Vector of random integers (different range to make sure the two random vectors
+    // are not the same, which would defeat the purpose).
+    random2.push_back( rand() % 30 - 15 );
+  }
+
+  // Define vectors for x, b and x0
+  ParallelVector x, b, x0;
+
+  // Right hand side for multiplication (b)
+  b.create( zer );
+
+  // Vector of ones for multiplication (x)
+  x.create( random );
+
+  // Random vector for initial guess (x0)
+  x0.create( random2 );
+
+//  // Matrix-vector product
+//  matrix00.multiply( x, b );
+
+  // Create vector for the true solution
+  ParallelVector trueSolution( x );
+
+  // Set the initial guesses for CG and BiCGSTAB
+  ParallelVector solutionCG0( x0 );
+  ParallelVector solutionBiCGSTAB0( x0 );
+  ParallelVector solutionCG1( x0 );
+  ParallelVector solutionBiCGSTAB1( x0 );
+
+  // Set the right hand side vectors guesses for CG and BiCGSTAB
+  ParallelVector rhs0( b );
+  ParallelVector rhs1( b );
+
+  // Size of the block system
+  integer nRows = 2;
+  integer nCols = 2;
+
+  // Declare and allocate block matrices/vectors
+  // System matrix
+  BlockMatrixView<LAI> blockMatrix( nRows, nCols );
+
+  // Preconditioner
+  BlockMatrixView<LAI> blockPreconditioner( nRows, nCols );
+
+  // True solution
+  BlockVectorView<LAI> blockTrueSolution( nCols );
+
+  // Solution from CG
+  BlockVectorView<LAI> blockSolutionCG( nCols );
+
+  // Solution from BiCGSTAB
+  BlockVectorView<LAI> blockSolutionBiCGSTAB( nCols );
+
+  // Right hand side (we only need one, it is a const input)
+  BlockVectorView<LAI> blockRhs( nRows );
+
+  // In this test we simply tile the laplace operator, so we assign a duplicate
+  // of the monolithic matrix to every block of the matrix.
+  // Block (0,0)
+  blockMatrix.setBlock( 0, 0, matrix00 );
+
+  // Block (0,1)
+  blockMatrix.setBlock( 0, 1, matrix00 );
+
+  // Block (1,0)
+  blockMatrix.setBlock( 1, 0, matrix00 );
+
+  // Block (1,1)
+  blockMatrix.setBlock( 1, 1, matrix00 );
+
+  // We do the same for the preconditioner to get the block identity matrix.
+  // We ignore the off-diagonal blocks and leave them as null-pointers.
+  // Block (0,0)
+  blockPreconditioner.setBlock( 0, 0, preconditioner00 );
+  // Block (1,1)
+  blockPreconditioner.setBlock( 1, 1, preconditioner00 );
+
+  // Construct the true solution
+  blockTrueSolution.setBlock( 0, trueSolution );
+  blockTrueSolution.setBlock( 1, trueSolution );
+
+  // Set initial guess blocks (here we need multiple objects since we cannot
+  // have them point to the same memory location). These objects are initial
+  // guesses as input but solution vectors as output.
+  // CG vector
+  blockSolutionCG.setBlock( 0, solutionCG0 );
+  blockSolutionCG.setBlock( 1, solutionCG1 );
+
+  // BiCGSTAB vector
+  blockSolutionBiCGSTAB.setBlock( 0, solutionBiCGSTAB0 );
+  blockSolutionBiCGSTAB.setBlock( 1, solutionBiCGSTAB1 );
+
+  // Set right hand side blocks (this can be one object, it is passed as const).
+  // We keep 2 of them for potential tests with more flexibility (rhs0 != rhs1).
+  blockRhs.setBlock( 0, rhs0 );
+  blockRhs.setBlock( 1, rhs1 );
+
+  blockMatrix.multiply( blockTrueSolution, blockRhs);
+
+  // Get the norm of the true solution
+  real64 norm2trueSolution;
+  blockTrueSolution.norm2( norm2trueSolution );
+
+  // Create block CG solver object
+  CGsolver<LAI> testCG;
+  // Solve the left-preconditioned block system with CG
+  testCG.solve( blockMatrix, blockSolutionCG, blockRhs, blockPreconditioner );
+
+  // The true solution is the vector x, so we check if the norm are equal.
+  // Note: the tolerance is higher that in the previous cases because the matrix is
+  // twice as big and the condition number is higher. See details on the error
+  // bounds of Krylov methods wrt the condition number.
+  real64 normCG;
+  blockSolutionCG.norm2( normCG );
+  EXPECT_LT( std::fabs( normCG/norm2trueSolution - 1. ), 5e-6 );
+
+  // Create block BiCGSTAB solver object
+  BiCGSTABsolver<LAI> testBiCGSTAB;
+  // Solve the left-preconditioned block system with BiCGSTAB
+  testBiCGSTAB.solve( blockMatrix, blockSolutionBiCGSTAB, blockRhs, blockPreconditioner );
+
+  // The true solution is the vector x, so we check if the norm are equal.
+  real64 normBiCGSTAB;
+  blockSolutionBiCGSTAB.norm2( normBiCGSTAB );
+  EXPECT_LT( std::fabs( normBiCGSTAB/norm2trueSolution - 1. ), 5e-6 );
+
+  // Finalize MPI
   MPI_Finalize();
 
 }
+
+// END_RST_NARRATIVE
+
+//@}
+
 
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wglobal-constructors"
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5
+#if __clang_major__ >= 5 && !defined(__APPLE__)
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 #endif
 
+/*! @name Ctest tests.
+ * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
+ */
+//@{
+
+
+
+/*! @function testEpetraLAOperations.
+ * @brief Runs all tests using the Trilinos interface.
+ */
+
 TEST(testLAOperations,testEpetraLAOperations)
 {
-  testLaplaceOperator<TrilinosInterface>();
+
+  testNativeSolvers<TrilinosInterface>();
+  testGEOSXSolvers<TrilinosInterface>();
+  testGEOSXBlockSolvers<TrilinosInterface>();
+
 }
 
+/*! @function testHypreLAOperations.
+ * @brief Runs all tests using the Hypre interface.
+ */
 TEST(testLAOperations,testHypreLAOperations)
 {
   //testLaplaceOperator<HypreInterface>();
+  //testGEOSXSolvers<HypreInterface>();
+  //testGEOSXBlockSolvers<HypreInterface>();
 }
+
+/*! @function testPETScLAOperations.
+ * @brief Runs all tests using the PETSc interface.
+ */
+TEST(testLAOperations,testPETScLAOperations)
+{
+
+  //testLaplaceOperator<PETScInterface>();
+  //testGEOSXSolvers<PETScInterface>();
+  //testGEOSXBlockSolvers<PETScInterface>();
+}
+
+//@}
 
 #ifdef __clang__
 #pragma clang diagnostic pop

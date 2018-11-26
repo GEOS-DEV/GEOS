@@ -424,8 +424,17 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
+  virtual void IntermediateInitializationRecursive( ManagedGroup * const group );
+
+  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void IntermediateInitializationPostSubGroups( ManagedGroup * const group ) {}
+
   virtual void FinalInitializationRecursive( ManagedGroup * const group );
-  virtual void FinalInitialization( ManagedGroup * const group ){}
+
+  virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void FinalInitializationPostSubGroups( ManagedGroup * const group ) {}
 
 
   template< typename T, typename TBASE=T >
@@ -522,24 +531,24 @@ public:
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
   virtual localIndex PackSize( string_array const & wrapperNames,
-                        integer const recursive ) const;
+                               integer const recursive ) const;
 
   virtual localIndex PackSize( string_array const & wrapperNames,
-                        localIndex_array const & packList,
-                        integer const recursive ) const;
+                               arrayView1d<localIndex const> const & packList,
+                               integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    string_array const & wrapperNames,
-                    integer const recursive ) const;
+                           string_array const & wrapperNames,
+                           integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    string_array const & wrapperNames,
-                    localIndex_array const & packList,
-                    integer const recursive ) const;
+                           string_array const & wrapperNames,
+                           arrayView1d<localIndex const> const & packList,
+                           integer const recursive ) const;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
-                      localIndex_array & packList,
-                      integer const recursive );
+                             arrayView1d<localIndex> & packList,
+                             integer const recursive );
 
 
   //***********************************************************************************************
@@ -610,34 +619,10 @@ public:
   { return getWrapper<T>( string( key ) ); }
 
 
-
-
-
   indexType getWrapperIndex( std::string const & name ) const
   {
     return m_wrappers.getIndex(name);
   }
-
-
-
-
-
-
-  template< typename T, typename LOOKUP_TYPE >
-  view_rtype_const<T> getData( LOOKUP_TYPE const index ) const
-  { return getWrapper<T>(index)->data(); }
-
-  template< typename T, typename LOOKUP_TYPE >
-  view_rtype<T> getData( LOOKUP_TYPE const index )
-  { return getWrapper<T>(index)->data(); }
-
-  template< typename T >
-  view_rtype_const<T> getData( char const * const name ) const
-  { return getWrapper<T>( string(name) )->data(); }
-
-  template< typename T >
-  view_rtype<T> getData( char const * const name )
-  { return getWrapper<T>( string(name) )->data(); }
 
 
   template< typename T, typename LOOKUP_TYPE >
@@ -646,7 +631,12 @@ public:
     ViewWrapper<T> const * wrapper = getWrapper<T>(lookup);
     if( wrapper == nullptr )
     {
-      GEOS_ERROR( "ManagedGroup::getReferenceT(): call to getWrapper results in nullptr" );
+      if ( hasView(lookup) )
+      {
+        wrapper = getWrapper<T>(lookup);
+        GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+      }
+      GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
     return wrapper->reference();
   }
@@ -695,9 +685,10 @@ public:
     return (m_subGroups[name] != nullptr);
   }
 
-  bool hasView( std::string const & name ) const
+  template< typename LOOKUP_TYPE >
+  bool hasView( LOOKUP_TYPE const & lookup ) const
   {
-    return (m_wrappers[name] != nullptr);
+    return (m_wrappers[lookup] != nullptr);
   }
 
   inline const string getName() const

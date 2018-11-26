@@ -139,15 +139,23 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
     {
       SolverType = "Amesos_Superludist";
     }
+    else if ( !(params->solverType().compare("Lapack")) )
+    {
+      SolverType = "Amesos_Lapack";
+    }
+
+    //GEOS_LOG( "Solver selected: " << SolverType );
+    GEOS_ERROR_IF( !Factory.Query(SolverType), "Requested solver not available: " << SolverType );
+
     Solver = Factory.Create(SolverType, problem);
 
     int ierr = Solver->SymbolicFactorization();
-    if (ierr > 0)
-      std::cerr << "ERROR!" << std::endl;
+
+    GEOS_WARNING_IF( ierr > 0, "Error during symbolic factorization: " << ierr );
 
     ierr = Solver->NumericFactorization();
-    if (ierr > 0)
-      std::cerr << "ERROR!" << std::endl;
+
+    GEOS_WARNING_IF( ierr > 0, "Error during numeric factorization: " << ierr );
 
     Solver->Solve();
 
