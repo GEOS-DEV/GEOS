@@ -49,17 +49,18 @@ BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
 std::unique_ptr<ConstitutiveBase>
 BrooksCoreyRelativePermeability::DeliverClone(string const & name, ManagedGroup * const parent) const
 {
-  auto clone = std::make_unique<BrooksCoreyRelativePermeability>( name, parent );
+  std::unique_ptr<ConstitutiveBase> clone_ptr( new BrooksCoreyRelativePermeability( name, parent ) );
+  BrooksCoreyRelativePermeability & clone = static_cast< BrooksCoreyRelativePermeability &>( *clone_ptr );
 
-  clone->m_phaseNames = this->m_phaseNames;
-  clone->m_phaseTypes = this->m_phaseTypes;
-  clone->m_phaseOrder = this->m_phaseOrder;
+  clone.m_phaseNames = this->m_phaseNames;
+  clone.m_phaseTypes = this->m_phaseTypes;
+  clone.m_phaseOrder = this->m_phaseOrder;
 
-  clone->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
-  clone->m_phaseRelPermExponent   = this->m_phaseRelPermExponent;
-  clone->m_phaseRelPermMaxValue   = this->m_phaseRelPermMaxValue;
+  clone.m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
+  clone.m_phaseRelPermExponent   = this->m_phaseRelPermExponent;
+  clone.m_phaseRelPermMaxValue   = this->m_phaseRelPermMaxValue;
 
-  return clone;
+  return clone_ptr;
 }
 
 void BrooksCoreyRelativePermeability::FillDocumentationNode()

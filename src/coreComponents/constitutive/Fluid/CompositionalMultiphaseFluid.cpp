@@ -73,22 +73,22 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
   std::unique_ptr<ConstitutiveBase> clone_ptr( new CompositionalMultiphaseFluid( name, parent ) );
   CompositionalMultiphaseFluid & clone = static_cast< CompositionalMultiphaseFluid &>( *clone_ptr );
 
-  clone->m_useMass = this->m_useMass;
+  clone.m_useMass = this->m_useMass;
 
-  clone->m_componentNames   = this->m_componentNames;
-  clone->m_componentMolarWeight = this->m_componentMolarWeight;
+  clone.m_componentNames   = this->m_componentNames;
+  clone.m_componentMolarWeight = this->m_componentMolarWeight;
 
-  clone->m_phaseNames           = this->m_phaseNames;
-  clone->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
-  clone->m_equationsOfState     = this->m_equationsOfState;
+  clone.m_phaseNames           = this->m_phaseNames;
+  clone.m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
+  clone.m_equationsOfState     = this->m_equationsOfState;
 
-  clone->m_componentCriticalPressure    = this->m_componentCriticalPressure;
-  clone->m_componentCriticalTemperature = this->m_componentCriticalTemperature;
-  clone->m_componentAcentricFactor      = this->m_componentAcentricFactor;
-  clone->m_componentVolumeShift         = this->m_componentVolumeShift;
-  clone->m_componentBinaryCoeff         = this->m_componentBinaryCoeff;
+  clone.m_componentCriticalPressure    = this->m_componentCriticalPressure;
+  clone.m_componentCriticalTemperature = this->m_componentCriticalTemperature;
+  clone.m_componentAcentricFactor      = this->m_componentAcentricFactor;
+  clone.m_componentVolumeShift         = this->m_componentVolumeShift;
+  clone.m_componentBinaryCoeff         = this->m_componentBinaryCoeff;
 
-  clone->createFluid();
+  clone.createFluid();
 
   return clone_ptr;
 }
