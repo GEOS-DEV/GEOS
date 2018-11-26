@@ -35,8 +35,6 @@ namespace geosx
 namespace bufferOps
 {
 
-constexpr static localIndex unmappedLocalIndexValue = -1;
-
 /**
  *
  * @param buffer

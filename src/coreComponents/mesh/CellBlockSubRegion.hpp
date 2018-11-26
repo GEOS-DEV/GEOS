@@ -73,6 +73,7 @@ public:
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList ) override;
 
+  void FixUpDownMaps();
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {

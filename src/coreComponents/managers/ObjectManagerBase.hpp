@@ -285,6 +285,7 @@ public:
 
   void CopyObject( localIndex const source, localIndex const destination );
 
+  void SetMaxGlobalIndex();
 
 
   //**********************************************************************************************************************

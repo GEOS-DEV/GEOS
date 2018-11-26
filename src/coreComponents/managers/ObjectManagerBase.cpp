@@ -765,6 +765,21 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
   }
 }
 
+void ObjectManagerBase::SetMaxGlobalIndex()
+{
+  globalIndex maxGlobalIndexLocally = -1;
+
+  for( localIndex a=0 ; a<m_localToGlobalMap.size() ; ++a )
+  {
+    maxGlobalIndexLocally = std::max( maxGlobalIndexLocally, m_localToGlobalMap[a] );
+  }
+  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndexLocally ),
+                 reinterpret_cast<char*>( &m_maxGlobalIndex ),
+                 sizeof(globalIndex),
+                 MPI_CHAR,
+                 MPI_MAX,
+                 MPI_COMM_GEOSX );
+}
 
 
 } /* namespace geosx */

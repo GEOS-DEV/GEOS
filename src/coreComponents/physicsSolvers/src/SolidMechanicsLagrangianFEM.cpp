@@ -1202,38 +1202,41 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  elemManager->forElementRegions([&](ElementRegion const * const elementRegion)
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elementRegion = elemManager->GetRegion(er);
+    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
+
+    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
-      string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
 
-      elementRegion->forCellBlocks([&](CellBlockSubRegion const * const cellBlock)
+      CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(esr);
+      localIndex const numElems = cellBlock->size();
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);
+
+      for( localIndex k=0 ; k<numElems ; ++k )
       {
-        localIndex const numElems = cellBlock->size();
-        arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
-        localIndex const numNodesPerElement = elemsToNodes.size(1);
-
-        globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);
-
-        for( localIndex k=0 ; k<numElems ; ++k )
+        for( localIndex a=0 ; a<numNodesPerElement ; ++a )
         {
-          for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+          for(localIndex i=0 ; i<numNodesPerElement ; ++i)
           {
-            for(localIndex i=0 ; i<numNodesPerElement ; ++i)
+            for( int d=0 ; d<dim ; ++d )
             {
-              for( int d=0 ; d<dim ; ++d )
-              {
-                elementLocalDofIndex[i * dim + d] = dim * trilinos_index[elemsToNodes[k][i]] + d;
-              }
+              elementLocalDofIndex[i * dim + d] = dim * trilinos_index[elemsToNodes[k][i]] + d;
             }
-
-            sparsity->InsertGlobalIndices(static_cast<int>(elementLocalDofIndex.size()),
-                                          elementLocalDofIndex.data(),
-                                          static_cast<int>(elementLocalDofIndex.size()),
-                                          elementLocalDofIndex.data());
           }
+
+          sparsity->InsertGlobalIndices(static_cast<int>(elementLocalDofIndex.size()),
+                                        elementLocalDofIndex.data(),
+                                        static_cast<int>(elementLocalDofIndex.size()),
+                                        elementLocalDofIndex.data());
         }
-      });
-    });
+      }
+    }
+  }
 }
 
 
