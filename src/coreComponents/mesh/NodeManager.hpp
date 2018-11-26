@@ -105,6 +105,8 @@ public:
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList ) override;
 
+  virtual void FixUpDownMaps() override final;
+
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto referencePositionString     = "ReferencePosition";
@@ -221,6 +223,8 @@ private:
 
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< set<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+
 
 
   /// deleted constructor

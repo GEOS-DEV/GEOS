@@ -78,6 +78,7 @@ public:
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList ) override;
 
+  virtual void FixUpDownMaps() override final;
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
