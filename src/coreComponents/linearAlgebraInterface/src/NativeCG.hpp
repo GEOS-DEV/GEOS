@@ -128,14 +128,13 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 {
 
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  typename LAI::gid N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  typename LAI::gid numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define residual vector
   ParallelVector rk( x );
@@ -155,8 +154,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   real64 alpha, beta;
 
   // Convergence check
-  real64 convCheck;
-  rk.norm2( convCheck );
+  real64 convCheck = rk.norm2();
 
   // Declare temp scalar for alpha computation.
   real64 temp;
@@ -165,16 +163,16 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   ParallelVector rkold( rk );
   ParallelVector zkold( zk );
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( typename LAI::gid k = 0 ; k < N ; k++ )
   {
     // Compute rkT.rk
-    rk.dot( zk, alpha );
+    alpha = rk.dot( zk );
 
     // Compute Apk
     A.multiply( pk, Apk );
 
     // compute alpha
-    pk.dot( Apk, temp );
+    temp = pk.dot( Apk );
     alpha = alpha/temp;
 
     // Update x = x + alpha*ph
@@ -186,7 +184,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     rk.axpby( -alpha, Apk, 1.0 );
 
     // Convergence check on ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
@@ -197,8 +195,8 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     M.multiply( rk, zk );
 
     // Compute beta
-    zk.dot( rk, beta );
-    zkold.dot( rkold, temp );
+    beta = zk.dot( rk );
+    temp = zkold.dot( rkold );
     beta = beta/temp;
 
     // Update pk = pk + beta*zk
@@ -229,14 +227,13 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 {
 
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  typename LAI::gid N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  typename LAI::gid numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define vectors
   BlockVectorView<LAI> rk( x );
@@ -256,8 +253,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   real64 alpha, beta;
 
   // Convergence check
-  real64 convCheck;
-  rk.norm2( convCheck );
+  real64 convCheck = rk.norm2();
 
   // Declare temp scalar for alpha computation
   real64 temp;
@@ -266,16 +262,16 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   BlockVectorView<LAI> rkold( rk );
   BlockVectorView<LAI> zkold( zk );
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( typename LAI::gid k = 0 ; k < N ; k++ )
   {
     // Compute rkT.rk
-    rk.dot( zk, alpha );
+    alpha = rk.dot( zk );
 
     // Compute Apk
     A.multiply( pk, Apk );
 
     // compute alpha
-    pk.dot( Apk, temp );
+    temp = pk.dot( Apk );
 
     alpha = alpha/temp;
 
@@ -288,7 +284,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     rk.axpby( -alpha, Apk, 1.0 );
 
     // Convergence check on ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
@@ -299,8 +295,8 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     M.multiply( rk, zk );
 
     // Compute beta
-    zk.dot( rk, beta );
-    zkold.dot( rkold, temp );
+    beta = zk.dot( rk );
+    temp = zkold.dot( rkold );
     beta = beta/temp;
 
     // Update pk = pk + beta*zk

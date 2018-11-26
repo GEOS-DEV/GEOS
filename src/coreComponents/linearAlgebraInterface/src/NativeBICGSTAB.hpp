@@ -127,14 +127,13 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 {
 
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  typename LAI::gid N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  typename LAI::gid numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define vectors
   ParallelVector rk( x );
@@ -170,13 +169,13 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   real64 temp1;
   real64 temp2;
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( typename LAI::gid k = 0 ; k < N ; k++ )
   {
     // Keep the old value of rho
     rhokminus1 = rhok;
 
     // Compute r0_hat.rk
-    rk.dot( r0_hat, rhok );
+    rhok = rk.dot( r0_hat );
 
     // Compute beta
     beta = rhok/rhokminus1*alpha/omegak;
@@ -190,7 +189,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     A.multiply( y, vk );
 
     // Compute alpha
-    vk.dot( r0_hat, temp1 );
+    temp1 = vk.dot( r0_hat );
     alpha = rhok/temp1;
 
     // compute h = x + alpha*y
@@ -211,8 +210,8 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     M.multiply( t, t );
 
     // Update omega
-    t.dot( z, temp1 );
-    t.dot( t, temp2 );
+    temp1 = t.dot( z );
+    temp2 = t.dot( t );
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
@@ -224,7 +223,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     rk.copy( s );
 
     // Convergence check on ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
@@ -256,14 +255,13 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 {
 
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  typename LAI::gid N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  typename LAI::gid numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define vectors
   BlockVectorView<LAI> rk( x );
@@ -301,13 +299,13 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   real64 temp1;
   real64 temp2;
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( typename LAI::gid k = 0 ; k < N ; k++ )
   {
     // Keep previous value of rho
     rhokminus1 = rhok;
 
     // Compute r0_hat.rk
-    rk.dot( r0_hat, rhok );
+    rhok = rk.dot( r0_hat );
 
     // Compute beta
     beta = rhok/rhokminus1*alpha/omegak;
@@ -321,7 +319,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     A.multiply( y, vk );
 
     // Compute alpha
-    vk.dot( r0_hat, temp1 );
+    temp1 = vk.dot( r0_hat );
     alpha = rhok/temp1;
 
     // compute h = x + alpha*y
@@ -342,8 +340,8 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     M.multiply( t, u );
 
     // Update omega
-    u.dot( z, temp1 );
-    u.dot( u, temp2 );
+    temp1 = u.dot( z );
+    temp2 = u.dot( u );
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
@@ -355,7 +353,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     rk.copy( s );
 
     // Convergence check ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
