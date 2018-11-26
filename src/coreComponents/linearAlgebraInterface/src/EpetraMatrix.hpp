@@ -32,8 +32,8 @@
 #include <Epetra_Comm.h>
 #include <Epetra_MpiComm.h>
 #include <Epetra_Map.h>
-#include <Epetra_CrsGraph.h>
-#include <Epetra_CrsMatrix.h>
+#include <Epetra_FECrsGraph.h>
+#include <Epetra_FECrsMatrix.h>
 #include <EpetraExt_MatrixMatrix.h>
 
 #include "common/DataTypes.hpp"
@@ -47,17 +47,20 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
+
 class EpetraMatrix
 {
 public:
 
   //! @name Constructor/Destructor Methods
   //@{
+
   /**
    * @brief Empty matrix constructor.
    *
    * Create an empty (distributed) matrix.
    */
+
   EpetraMatrix();
 
   /**
@@ -65,81 +68,80 @@ public:
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
+
   EpetraMatrix( EpetraMatrix const &src );
 
   /**
    * @brief Virtual destructor.
    */
-  virtual ~EpetraMatrix() = default;
-  //@}
 
-  //! @name Create/Finalize/Reinitialize Methods
+  virtual ~EpetraMatrix() = default;
+
+  //@}
+  //! @name Create Methods
   //@{
+
   /**
-   * @brief Create a square matrix from number of rows.
+   * @brief Create a matrix from an existing Epetra_CrsGraph.
    *
+   * TODO change this to whatever format the sparsity pattern will be.
+   *
+   * \param Epetra_FECrsGraph existing graph.
+   */
+  void create( Epetra_FECrsGraph const &graph );
+
+  /**
+   * @brief Create a square matrix from local number of rows.
+   *
+   * \param localSize local number of rows for square matrix.
+   * \param maxEntriesPerRow Maximum number of non-zero entries per row.
    * \param comm MPI communicator.
-   * \param m_nRowGlobal Maximum number of entries per row.
-   * \param nMaxEntriesPerRow Maximum number of entries per row.
    *
    */
-  void create( MPI_Comm const comm,
-               trilinosTypes::gid const m_nRowGlobal,
-               trilinosTypes::lid const nMaxEntriesPerRow );
+  void createWithLocalSize( trilinosTypes::lid const localSize,
+                            trilinosTypes::lid const maxEntriesPerRow = 1,
+                            MPI_Comm const & comm = MPI_COMM_WORLD);
+
+  /**
+   * @brief Create a square matrix from global number of rows.
+   *
+   * Create a square matrix with an (approximately) even partitioning of rows.
+   *
+   * \param globalSize Global dimensions for a square matrix.
+   * \param maxEntriesPerRow Maximum number of non-zero entries per row.
+   * \param comm MPI communicator.
+   *
+   */
+  void createWithGlobalSize( trilinosTypes::gid const globalSize,
+                             trilinosTypes::lid const maxEntriesPerRow = 1,
+                             MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
    *
    * \param comm MPI communicator.
-   * \param m_nRowGlobal Global number of rows.
-   * \param m_nColGlobal Global number of columns.
-   * \param nMaxEntriesPerRow Maximum number of entries per row.
+   * \param localRows Local number of rows.
+   * \param localCols Local number of columns.
+   * \param maxEntriesPerRow Maximum number of entries per row (hint).
    */
-  void create( MPI_Comm const comm,
-               trilinosTypes::gid const m_nRowGlobal,
-               trilinosTypes::gid const m_nColGlobal,
-               trilinosTypes::lid const nMaxEntriesPerRow = 0 );
+  void createWithLocalSize( trilinosTypes::lid const localRows,
+                            trilinosTypes::lid const localCols,
+                            trilinosTypes::lid const maxEntriesPerRow = 1,
+                            MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
-   * @brief Create a square matrix from Epetra_Map.
+   * @brief Create a rectangular matrix from number of rows/columns.
    *
-   * Prepare the matrix to be filled. Takes as inputs an existing Epetra_Map and
-   * a hint on the maximum number of entries per row. This method is meant to be called
-   * after the matrix has been declared from the empty constructor.
-   *
-   * \param input_map Epetra_Map.
-   * \param nMaxEntriesPerRow Maximum number of entries per row.
-   *
+   * \param comm MPI communicator.
+   * \param globalRows Global number of rows.
+   * \param globalCols Global number of columns.
+   * \param maxEntriesPerRow Maximum number of entries per row (hint).
    */
-  void create( Epetra_Map const &input_map,
-               trilinosTypes::lid const nMaxEntriesPerRow );
+  void createWithGlobalSize( trilinosTypes::gid const globalRows,
+                             trilinosTypes::gid const globalCols,
+                             trilinosTypes::lid const maxEntriesPerRow = 1,
+                             MPI_Comm const & comm = MPI_COMM_WORLD );
 
-  /**
-   * @brief Create a rectangular matrix from two existing Epetra_Map, row and column maps.
-   *
-   * \param row_map Epetra_Map for rows.
-   * \param col_map Epetra_Map for columns.
-   * \param nMaxEntriesPerRow Maximum number of entries per row.
-   */
-  void create( Epetra_Map const &row_map,
-               Epetra_Map const &col_map,
-               trilinosTypes::lid const nMaxEntriesPerRow = 0 );
-
-  /**
-   * @brief Create a matrix from an existing Epetra_CrsGraph.
-   *
-   * TODO change that to whatever format the sparsity pattern will be.
-   *
-   * \param Epetra_CrsGraph existing graph.
-   */
-  void create( Epetra_CrsGraph const &graph );
-
-  /**
-   * @brief Create a matrix from an existing Epetra_CrsMatrix.
-   *
-   * \param Epetra_CrsMatrix existing matrix.
-   */
-  void create( Epetra_CrsMatrix &matrix );
 
   /**
    * @brief Reinitialize the matrix.
@@ -165,102 +167,117 @@ public:
   void close();
   //@}
 
-  //! @name Insertion/Replace/SumInto Methods
+  /** @name Add/Set/Insert Methods 
+   *
+   * The add and set methods assume entries already exist in the sparsity pattern.
+   * Insert methods allow for dynamic allocation, but will temporarily use 
+   * extra memory if one attempts to insert multiple values to the same location.
+   *
+   * Caution: In Trilinos these methods are not thread-safe.  //TODO: add thread safety
+   */
   //@{
-  /**
-   * @brief Add to row of elements.
-   *
-   * Adds the values <tt>values</tt> to row <tt>iRow</tt>, at locations specified
-   * by <tt>cols</tt>. <tt>nCols</tt> is the number of entries (columns) in the row, and the
-   * size of both <tt>values</tt> and <tt>cols</tt>.
-   *
-   * \param iRow Global row index.
-   * \param nCols Number of columns to modify.
-   * \param values Values to add to prescribed locations.
-   * \param cols Global column indices in which to add the values.
-   */
-  void add( trilinosTypes::gid const iRow,
-            trilinosTypes::lid const nCols,
-            real64 const *values,
-            trilinosTypes::gid const *cols );
-
-  /**
-   * @brief Add dense matrix.
-   *
-   * Adds the matrix <tt>values</tt> to the sparse matrix, at locations specified
-   * by <tt>indices</tt>.
-   *
-   * \param indices Vector of indices.
-   * \param values Values.
-   */
-  void add( array1d<trilinosTypes::gid> const rowIndices,
-            array1d<trilinosTypes::gid> const colIndices,
-            array2d<real64> const values);
 
   /**
    * @brief Add to one element.
    *
-   * Adds the value <tt>value</tt> to location (<tt>iRow</tt>,<tt>iCol</tt>).
-   *
-   * \param iRow Global row index.
-   * \param iCol Global column index.
-   * \param value Value to add to prescribed locations.
+   * \param rowIndex Global row index.
+   * \param colIndex Global column index.
+   * \param value Value to add to prescribed location.
    *
    */
-  void add( trilinosTypes::gid const iRow,
-            trilinosTypes::gid const iCol,
+  void add( trilinosTypes::gid const rowIndex,
+            trilinosTypes::gid const colIndex,
             real64 const value );
-
-  /**
-   * @brief Set row of elements.
-   *
-   * Sets the values <tt>values</tt> of row <tt>iRow</tt>, at locations specified
-   * by <tt>cols</tt>. <tt>nCols</tt> is the number of entries (columns) in the row, and the
-   * size of both <tt>values</tt> and <tt>cols</tt>.
-   *
-   * \param iRow Global row index.
-   * \param nCols Number of columns to modify.
-   * \param values Values to set in prescribed locations.
-   * \param cols Global column indices in which to set the values.
-   *
-   */
-  void set( trilinosTypes::gid const iRow,
-            trilinosTypes::lid const nCols,
-            real64 const *values,
-            trilinosTypes::gid const *cols );
 
   /**
    * @brief Set one element.
    *
-   * Sets the value of the location (<tt>iRow</tt>,<tt>iCol</tt>) to <tt>value</tt>.
-   *
-   * \param iRow Global row index.
-   * \param iCol Global column index.
-   * \param value Value to set at prescribed locations.
+   * \param rowIndex Global row index.
+   * \param colIndex Global column index.
+   * \param value Value to set at prescribed location.
    *
    */
-  void set( trilinosTypes::gid const iRow,
-            trilinosTypes::gid const iCol,
+  void set( trilinosTypes::gid const rowIndex,
+            trilinosTypes::gid const colIndex,
             real64 const value );
 
   /**
-   * @brief Insert to row of elements.
+   * @brief Insert one element.
    *
-   * Inserts the values <tt>values</tt> to row <tt>iRow</tt>, at locations specified
-   * by <tt>cols</tt>. <tt>nCols</tt> is the number of entries (columns) in the row, and the
-   * size of both <tt>values</tt> and <tt>cols</tt>.
+   * \param rowIndex Global row index.
+   * \param colIndex Global column index.
+   * \param value Value to insert at prescribed location.
    *
-   * TODO remove the possibility to dynamically construct the sparsity pattern.
-   *
-   * \param iRow Global row index.
-   * \param nCols Number of columns to modify.
-   * \param values Values to add to prescribed locations.
-   * \param cols Global column indices in which to add the values.
    */
-  void insert( trilinosTypes::gid const iRow,
-               trilinosTypes::lid const nCols,
-               real64 const *values,
-               trilinosTypes::gid const *cols );
+  void insert( trilinosTypes::gid const rowIndex,
+               trilinosTypes::gid const colIndex,
+               real64 const value );
+
+  /**
+   * @brief Add elements to one row.
+   *
+   * \param rowIndex Global row index.
+   * \param colIndices Global column indices
+   * \param values Values to add to prescribed locations.
+   */
+  void add( trilinosTypes::gid const rowIndex,
+            array1d<trilinosTypes::gid> const & colIndices,
+            array1d<real64> const & values);
+
+  /**
+   * @brief Set elements of one row.
+   *
+   * \param rowIndex Global row index.
+   * \param colIndices Global column indices
+   * \param values Values to add to prescribed locations.
+   */
+  void set( trilinosTypes::gid const rowIndex,
+            array1d<trilinosTypes::gid> const & colIndices,
+            array1d<real64> const & values);
+
+  /**
+   * @brief Insert elements of one row.
+   *
+   * \param rowIndex Global row index.
+   * \param colIndices Global column indices
+   * \param values Values to add to prescribed locations.
+   */
+  void insert( trilinosTypes::gid const rowIndex,
+               array1d<trilinosTypes::gid> const & colIndices,
+               array1d<real64> const & values);
+
+  /**
+   * @brief Add dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   */
+  void add( array1d<trilinosTypes::gid> const & rowIndices,
+            array1d<trilinosTypes::gid> const & colIndices,
+            array2d<real64> const & values);
+
+  /**
+   * @brief Set dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   */
+  void set( array1d<trilinosTypes::gid> const & rowIndices,
+            array1d<trilinosTypes::gid> const & colIndices,
+            array2d<real64> const & values);
+
+  /**
+   * @brief Insert dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   */
+  void insert( array1d<trilinosTypes::gid> const & rowIndices,
+               array1d<trilinosTypes::gid> const & colIndices,
+               array2d<real64> const & values);
 
   //@}
 
@@ -358,6 +375,8 @@ public:
   //! @name Accessors Methods
   //@{
 
+  // TODO: replace with array1d versions
+
   /**
    * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
@@ -397,7 +416,7 @@ public:
   /**
    * @brief Returns a pointer to the underlying matrix.
    */
-  Epetra_CrsMatrix* unwrappedPointer() const;
+  Epetra_FECrsMatrix* unwrappedPointer() const;
 
   /**
    * @brief Returns the number of global rows.
@@ -410,9 +429,14 @@ public:
   trilinosTypes::gid globalCols() const;
 
   /**
-   * @brief Returns the number of unique columns (can be used to check if matrix is square).
+   * @brief Returns the number of local rows.
    */
-  trilinosTypes::gid uniqueCols() const;
+  trilinosTypes::lid localRows() const;
+
+  /**
+   * @brief Returns the number of local columns.
+   */
+  trilinosTypes::lid localCols() const;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.
@@ -425,35 +449,18 @@ public:
   trilinosTypes::gid iupper() const;
 
   /**
-   * @brief Returns the number of local rows.
+   * @brief Wrapper for LRID function. Returns the local index of the corresponding global index.
+   * Returns -1 if the row is not owned by the processor.
    */
-  int myRows() const;
+  trilinosTypes::lid rowLID( trilinosTypes::gid const GID ) const;
 
   /**
-   * @brief Returns the number of local columns.
+   * @brief Wrapper for GRID64 function. Returns the global index of the corresponding local index.
+   * Returns -1 if the row is not owned by the processor.
    */
-  int myCols() const;
+  trilinosTypes::gid rowGID( trilinosTypes::lid const LID ) const;
 
-  /**
-   * @brief Returns the row map.
-   */
-  Epetra_Map const & RowMap() const;
-
-  /**
-   * @brief Returns the (usually overlapping) column map.
-   */
-  Epetra_Map const & ColMap() const;
-
-  /**
-   * @brief Returns the (1-to-1) domain column map.
-   */
-  Epetra_Map const & DomainMap() const;
-
-  /**
-   * @brief Wrapper for LID function. Returns the local map of the corresponding global index.
-   * Returns -1 if the global row is not owned by the processor.
-   */
-  trilinosTypes::lid rowMapLID( trilinosTypes::gid const GID ) const;
+  //TODO: Do we ever need LCID and GCID64 functions as well?
 
   /**
    * @brief Returns the infinity norm of the matrix.
@@ -487,15 +494,24 @@ public:
 private:
 
   /**
-   * @brief Boolean value, true if the matrix had been finalized, false if not.
+   * Boolean value, true if the matrix had been finalized, false if not.
    */
   bool assembled = false;
 
   /**
-   * @brief Pointer to the underlying Epetra_CrsMatrix.
+   * Pointer to the underlying Epetra_CrsMatrix.
    */
-  std::unique_ptr<Epetra_CrsMatrix> m_matrix = nullptr;
+  std::unique_ptr<Epetra_FECrsMatrix> m_matrix = nullptr;
 
+  /*
+   * Map representing the parallel partitioning of a source vector (x in y=Ax)
+   */
+  std::unique_ptr<Epetra_Map> m_src_map = nullptr;
+
+  /*
+   * Map representing the parallel partitioning of a destination vector (y in y=Ax)
+   */
+  std::unique_ptr<Epetra_Map> m_dst_map = nullptr;
 };
 
 } // namespace geosx

@@ -106,6 +106,8 @@ void EpetraVector::createWithGlobalSize( trilinosTypes::gid const globalSize, MP
 // Create a vector from local array data.  The global vector contains
 // local arrays stitched together.
 
+//TODO: add integer_conversion
+
 void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const & comm)
 {
   trilinosTypes::lid localSize = localValues.size();
@@ -113,9 +115,13 @@ void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const &
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( View, map, const_cast<double*>(localValues.data()), localSize, 1 ));
 }
 
+
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Set value(s)
+// Add/Set value(s)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Add/set entries in the vector.  Note that Epetra_Vector seems to have 
+// haphazard support for long ints.  This motivated using FEVector to be
+// sure we have proper globalRow support.
 
 void EpetraVector::set( trilinosTypes::gid const globalRow,
                         real64 const value )
@@ -123,10 +129,26 @@ void EpetraVector::set( trilinosTypes::gid const globalRow,
   m_vector->ReplaceGlobalValues( 1, &globalRow, &value );
 }
 
+void EpetraVector::add( trilinosTypes::gid const globalRow,
+                        real64 const value )
+{
+  m_vector->SumIntoGlobalValues( 1, &globalRow, &value );
+}
+
+//TODO: add integer_conversion
+
 void EpetraVector::set( array1d<trilinosTypes::gid> const & globalIndices,
                         array1d<real64> const & values )
 {
   m_vector->ReplaceGlobalValues( values.size(), globalIndices.data(), values.data() );
+}
+
+//TODO: add integer_conversion
+
+void EpetraVector::add( array1d<trilinosTypes::gid> const & globalIndices,
+                        array1d<real64> const & values )
+{
+  m_vector->SumIntoGlobalValues( values.size(), globalIndices.data(), values.data() );
 }
 
 void EpetraVector::set( real64 value)
@@ -143,26 +165,6 @@ void EpetraVector::rand()
 {
   m_vector->SetSeed(1984);
   m_vector->Random();
-}
-
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Add into value(s)
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Add to entries in the vector.  Note that Epetra_Vector seems to have 
-// haphazard support for long ints.  This motivated using FEVector to be
-// sure we have proper globalRow support.
-
-void EpetraVector::add( trilinosTypes::gid const globalRow,
-                        real64 const value )
-{
-  m_vector->SumIntoGlobalValues( 1, &globalRow, &value );
-}
-
-void EpetraVector::add( array1d<trilinosTypes::gid> const & globalIndices,
-                        array1d<real64> const & values )
-{
-  m_vector->SumIntoGlobalValues( values.size(), globalIndices.data(), values.data() );
 }
 
 
@@ -301,7 +303,7 @@ void EpetraVector::print() const
 real64 EpetraVector::get(trilinosTypes::gid globalRow) const
 {
   GEOS_ERROR("not yet implemented");
-  return 1/0.0;
+  return std::numeric_limits<double>::quiet_NaN();
 }
 
 //TODO: implementation not straightforward
