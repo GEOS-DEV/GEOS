@@ -85,6 +85,8 @@ int main( int argc, char *argv[] )
   problemManager.Initialize( &problemManager );
   GEOSX_MARK_END("problemManager.Initialize");
 
+  problemManager.IntermediateInitializationRecursive( &problemManager );
+
   problemManager.ApplyInitialConditions();
 
   GEOSX_MARK_BEGIN("problemManager.FinalInitializationRecursive");

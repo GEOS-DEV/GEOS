@@ -198,7 +198,7 @@ void PoroelasticSolver::ReadXML_PostProcess()
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
 }
 
-void PoroelasticSolver::FinalInitialization( ManagedGroup * const problemManager )
+void PoroelasticSolver::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
 {
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));

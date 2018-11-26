@@ -64,20 +64,15 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override final {}
 
-  virtual void PoreVolumeMultiplierCompute(real64 const & pres,
-                                           localIndex const i,
-                                           real64 & poro,
-                                           real64 & dPVMult_dPres) override final;
-
-  virtual void PressureUpdatePoint(real64 const & pres,
-                                   localIndex const k,
-                                   localIndex const q) override final;
+  virtual void StateUpdatePointPressure(real64 const & pres,
+                                        localIndex const k,
+                                        localIndex const q) override final;
 
   virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void FinalInitialization( ManagedGroup * const parent ) override final;
+  virtual void FinalInitializationPreSubGroups( ManagedGroup * const parent ) override final;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -100,9 +95,9 @@ private:
   ExponentialRelation<localIndex, real64> m_poreVolumeRelation;
 };
 
-inline void PoreVolumeCompressibleSolid::PressureUpdatePoint(real64 const & pres,
-                                                             localIndex const k,
-                                                             localIndex const q)
+inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const & pres,
+                                                                  localIndex const k,
+                                                                  localIndex const q)
 {
   m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
 }

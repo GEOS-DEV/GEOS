@@ -424,8 +424,17 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
+  virtual void IntermediateInitializationRecursive( ManagedGroup * const group );
+
+  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void IntermediateInitializationPostSubGroups( ManagedGroup * const group ) {}
+
   virtual void FinalInitializationRecursive( ManagedGroup * const group );
-  virtual void FinalInitialization( ManagedGroup * const group ){}
+
+  virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void FinalInitializationPostSubGroups( ManagedGroup * const group ) {}
 
 
   template< typename T, typename TBASE=T >

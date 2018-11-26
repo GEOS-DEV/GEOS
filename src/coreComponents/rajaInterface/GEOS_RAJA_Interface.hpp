@@ -76,15 +76,10 @@ typedef RAJA::loop_exec parallelHostPolicy;
 namespace geosx
 {  
 
-namespace raja
-{
-  
+//Alias to RAJA reduction operators
 template< typename POLICY, typename T >
 using ReduceSum = RAJA::ReduceSum<POLICY, T>;
-
-
-
-
+  
 //
 template<typename POLICY=atomicPolicy, typename T>
 RAJA_INLINE void atomicAdd(T *acc, T value)
@@ -113,7 +108,6 @@ RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, 
   RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), body);
 }
 
-}
 }
   
 #endif

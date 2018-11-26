@@ -150,7 +150,7 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                 /// Write nodes
                 nodeManager->resize(mesh.NumVertices());
                 arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
-                for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
+                for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
                 {
                     real64 * const tensorData = X[a].Data();
                     tensorData[0] = mesh.Vertex(a)[0];
@@ -162,8 +162,8 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("HEX");
                     cellBlock -> SetElementType("C3D8");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize( mesh.NumCells());
+                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0));
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
@@ -181,8 +181,8 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("TETRA");
                     cellBlock -> SetElementType("C3D4");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize( mesh.NumCells());
+                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0));
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
@@ -196,8 +196,8 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("WEDGE");
                     cellBlock -> SetElementType("C3D6");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize( mesh.NumCells());
+                    cellToVertex.resize(mesh.NumCells(), mesh.NumVerticesInCell(0));
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
@@ -213,8 +213,8 @@ void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain
                     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("PYR");
                     cellBlock -> SetElementType("C3D5");
                     auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells() );
-                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    cellBlock->resize(mesh.NumCells());
+                    cellToVertex.resize(mesh.NumCells(), mesh.NumVerticesInCell(0));
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
