@@ -38,9 +38,12 @@ public:
 
   SystemSolverParameters( std::string const & name,
                           ManagedGroup * const parent );
-  virtual ~SystemSolverParameters();
 
-  void FillDocumentationNode();
+  SystemSolverParameters(SystemSolverParameters &&) = default;
+
+  virtual ~SystemSolverParameters() override = default;
+
+  void FillDocumentationNode() override;
 
   struct viewKeysStruct
   {

@@ -41,6 +41,7 @@
 #include "Macros.hpp"
 #include "Logger.hpp"
 #include "Array.hpp"
+#include "StackArrayWrapper.hpp"
 #include "SortedArray.hpp"
 #include "math/TensorT/TensorT.h"
 
@@ -128,6 +129,12 @@ using buffer_type = std::vector<buffer_unit_type>;
 template< typename T, int NDIM=1 >
 using array_view = LvArray::ArrayView<T,NDIM,localIndex>;
 
+template< typename T, int NDIM=1 >
+using array_slice = LvArray::ArraySlice<T,NDIM,localIndex>;
+
+template< typename T, int NDIM, int MAXSIZE >
+using stack_array = LvArray::Array<T,NDIM,localIndex, LvArray::StackArrayWrapper<T,MAXSIZE>>;
+
 template< typename T >
 using array1d = LvArray::Array<T,1,localIndex>;
 
@@ -136,6 +143,9 @@ using arrayView1d = array_view<T,1>;
 
 template< typename T >
 using arraySlice1d = LvArray::ArraySlice1d<T, localIndex>;
+
+template< typename T, int MAXSIZE >
+using stackArray1d = stack_array<T, 1, MAXSIZE>;
 
 template< typename T >
 using array2d = LvArray::Array<T,2,localIndex>;
@@ -146,6 +156,9 @@ using arrayView2d = array_view<T,2>;
 template< typename T >
 using arraySlice2d = LvArray::ArraySlice<T, 2, localIndex>;
 
+template< typename T, int MAXSIZE >
+using stackArray2d = stack_array<T, 2, MAXSIZE>;
+
 template< typename T >
 using array3d = LvArray::Array<T,3,localIndex>;
 
@@ -154,6 +167,33 @@ using arrayView3d = array_view<T,3>;
 
 template< typename T >
 using arraySlice3d = LvArray::ArraySlice<T, 3, localIndex>;
+
+template< typename T, int MAXSIZE >
+using stackArray3d = stack_array<T, 3, MAXSIZE>;
+
+template< typename T >
+using array4d = LvArray::Array<T,4,localIndex>;
+
+template< typename T >
+using arrayView4d = LvArray::ArrayView<T,4,localIndex>;
+
+template< typename T >
+using arraySlice4d = LvArray::ArrayView<T,4,localIndex>;
+
+template< typename T, int MAXSIZE >
+using stackArray4d = stack_array<T, 4, MAXSIZE>;
+
+template< typename T >
+using array5d = LvArray::Array<T,5,localIndex>;
+
+template< typename T >
+using arrayView5d = LvArray::ArrayView<T,5,localIndex>;
+
+template< typename T >
+using arraySlice5d = LvArray::ArrayView<T,5,localIndex>;
+
+template< typename T, int MAXSIZE >
+using stackArray5d = stack_array<T, 5, MAXSIZE>;
 
 template< typename T >
 using set = SortedArray<T>;
@@ -224,6 +264,27 @@ using globalIndex_array2d       = array2d<globalIndex>;
 using globalIndex_const_array2d = array2d<globalIndex const>;
 
 
+
+
+using integer_array3d       = array3d<integer>;
+using integer_const_array3d = array3d<integer const>;
+
+using real32_array3d       = array3d<real32>;
+using real32_const_array3d = array3d<real32 const>;
+
+using real64_array3d       = array3d<real64>;
+using real64_const_array3d = array3d<real64 const>;
+
+using string_array3d       = array3d<string>;
+using string_const_array3d = array3d<string const>;
+
+using localIndex_array3d       = array3d<localIndex>;
+using localIndex_const_array3d = array3d<localIndex const>;
+
+using globalIndex_array3d       = array3d<globalIndex>;
+using globalIndex_const_array3d = array3d<globalIndex const>;
+
+
 //***** BEGIN LEGACY TYPEDEFS *****
 
 using r1_array = array1d<R1Tensor>;
@@ -281,10 +342,16 @@ public:
       {std::type_index(typeid(real64_array2d)), "real64_array2d"},
       {std::type_index(typeid(localIndex_array2d)), "localIndex_array2d"},
       {std::type_index(typeid(globalIndex_array2d)), "globalIndex_array2d"},
+      {std::type_index(typeid(integer_array3d)), "integer_array3d"},
+      {std::type_index(typeid(real32_array3d)), "real32_array3d"},
+      {std::type_index(typeid(real64_array3d)), "real64_array3d"},
+      {std::type_index(typeid(localIndex_array3d)), "localIndex_array3d"},
+      {std::type_index(typeid(globalIndex_array3d)), "globalIndex_array3d"},
       {std::type_index(typeid(r1_array2d)), "r1_array2d"},
       {std::type_index(typeid(r2_array2d)), "r2_array2d"},
       {std::type_index(typeid(r2Sym_array2d)), "r2Sym_array2d"},
       {std::type_index(typeid(string)), "string"},
+      {std::type_index(typeid(string_array)), "string_array"},
       {std::type_index(typeid(mapPair_array)), "mapPair_array"}
     };
     return type_names.at(key);
@@ -314,14 +381,20 @@ public:
     r2_array_id,         //!< r2_array_id
     r2Sym_array_id,      //!< r2Sym_array_id
 
-    integer_array2d_id,    //!< integer_array_id
-    localIndex_array2d_id, //!< localIndex_array_id
-    globalIndex_array2d_id,//!< globalIndex_array_id
-    real32_array2d_id,     //!< real32_array_id
-    real64_array2d_id,     //!< real64_array_id
-    r1_array2d_id,         //!< r1_array_id
-    r2_array2d_id,         //!< r2_array_id
-    r2Sym_array2d_id,      //!< r2Sym_array_id
+    integer_array2d_id,    //!< integer_array2d_id
+    localIndex_array2d_id, //!< localIndex_array2d_id
+    globalIndex_array2d_id,//!< globalIndex_array2d_id
+    real32_array2d_id,     //!< real32_array2d_id
+    real64_array2d_id,     //!< real64_array2d_id
+    r1_array2d_id,         //!< r1_array2d_id
+    r2_array2d_id,         //!< r2_array2d_id
+    r2Sym_array2d_id,      //!< r2Sym_array2d_id
+
+    integer_array3d_id,    //!< integer_array3d_id
+    localIndex_array3d_id, //!< localIndex_array3d_id
+    globalIndex_array3d_id,//!< globalIndex_array3d_id
+    real32_array3d_id,     //!< real32_array3d_id
+    real64_array3d_id,     //!< real64_array3d_id
 
     string_id,           //!< string_id
     string_array_id,     //!< string_array_id
@@ -359,15 +432,21 @@ public:
       { "localIndex_array2d",   TypeIDs::localIndex_array2d_id },
       { "globalIndex_array2d",  TypeIDs::globalIndex_array2d_id },
       { "real32_array2d", TypeIDs::real32_array2d_id },
-      { "real64_array2d", TypeIDs::real64_array_id },
+      { "real64_array2d", TypeIDs::real64_array2d_id },
       { "r1_array2d",     TypeIDs::r1_array2d_id },
       { "r2_array2d",     TypeIDs::r2_array2d_id },
       { "r2Sym_array2d",  TypeIDs::r2Sym_array2d_id },
 
-      { "string",       TypeIDs::string_id },
-      { "string_array", TypeIDs::string_array_id },
-      { "mapPair_array",      TypeIDs::mapPair_array_id },
-      { "",             TypeIDs::none_id }
+      { "integer_array3d",  TypeIDs::integer_array3d_id },
+      { "localIndex_array3d",   TypeIDs::localIndex_array3d_id },
+      { "globalIndex_array3d",  TypeIDs::globalIndex_array3d_id },
+      { "real32_array3d", TypeIDs::real32_array3d_id },
+      { "real64_array3d", TypeIDs::real64_array3d_id },
+
+      { "string",        TypeIDs::string_id },
+      { "string_array",  TypeIDs::string_array_id },
+      { "mapPair_array", TypeIDs::mapPair_array_id },
+      { "",              TypeIDs::none_id }
     };
     return type_names.at(name);
   }
@@ -406,6 +485,12 @@ public:
       { std::type_index(typeid(r1_array2d)),     TypeIDs::r1_array2d_id },
       { std::type_index(typeid(r2_array2d)),     TypeIDs::r2_array2d_id },
       { std::type_index(typeid(r2Sym_array2d)),  TypeIDs::r2Sym_array2d_id },
+
+      { std::type_index(typeid(integer_array3d)),  TypeIDs::integer_array3d_id },
+      { std::type_index(typeid(localIndex_array3d)),  TypeIDs::localIndex_array3d_id },
+      { std::type_index(typeid(globalIndex_array3d)),  TypeIDs::globalIndex_array3d_id },
+      { std::type_index(typeid(real32_array3d)), TypeIDs::real32_array3d_id },
+      { std::type_index(typeid(real64_array3d)), TypeIDs::real64_array3d_id },
 
       { std::type_index(typeid(string)),       TypeIDs::string_id },
       { std::type_index(typeid(string_array)), TypeIDs::string_array_id },
@@ -743,6 +828,31 @@ public:
       return lambda( r2Sym_array2d(), R2SymTensor()  );
       break;
     }
+    case ( TypeIDs::integer_array3d_id ):
+    {
+      return lambda( integer_array3d(), integer(1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array3d_id ):
+    {
+      return lambda( localIndex_array3d(), localIndex(1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array3d_id ):
+    {
+      return lambda( globalIndex_array3d(), globalIndex() );
+      break;
+    }
+    case ( TypeIDs::real32_array3d_id ):
+    {
+      return lambda( real32_array3d(), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array3d_id ):
+    {
+      return lambda( real64_array3d(), real64(1) );
+      break;
+    }
 
 
     default:
@@ -834,6 +944,71 @@ public:
     case ( TypeIDs::r2Sym_array_id ):
     {
       return lambda( r2Sym_array(1) );
+      break;
+    }
+    case ( TypeIDs::integer_array2d_id ):
+    {
+      return lambda( integer_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array2d_id ):
+    {
+      return lambda( localIndex_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array2d_id ):
+    {
+      return lambda( globalIndex_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::real32_array2d_id ):
+    {
+      return lambda( real32_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::real64_array2d_id ):
+    {
+      return lambda( real64_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::r1_array2d_id ):
+    {
+      return lambda( r1_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::r2_array2d_id ):
+    {
+      return lambda( r2_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::r2Sym_array2d_id ):
+    {
+      return lambda( r2Sym_array2d(1, 1) );
+      break;
+    }
+    case ( TypeIDs::integer_array3d_id ):
+    {
+      return lambda( integer_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array3d_id ):
+    {
+      return lambda( localIndex_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array3d_id ):
+    {
+      return lambda( globalIndex_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::real32_array3d_id ):
+    {
+      return lambda( real32_array3d(1, 1, 1) );
+      break;
+    }
+    case ( TypeIDs::real64_array3d_id ):
+    {
+      return lambda( real64_array3d(1, 1, 1) );
       break;
     }
     case ( TypeIDs::string_id ):
