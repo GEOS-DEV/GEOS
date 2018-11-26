@@ -140,7 +140,7 @@ public:
   void close();
 
   //@}
-  //! @name Modify Methods
+  //! @name Add/Set Methods
   //@{
 
   /**
@@ -156,7 +156,47 @@ public:
             real64 const value );
 
   /**
+   * @brief Add into vector value.
+   *
+   * Add into vector value at given row.
+   *
+   * \param globalRow global row.
+   * \param value Values to add in given row.
+   *
+   */
+  void add( trilinosTypes::gid const globalRow,
+            real64 const value );
+
+  /**
    * @brief Set vector values.
+   *
+   * Set vector values at given elements.
+   *
+   * \param globalIndices global row indices.
+   * \param values Values to add in given rows.
+   * \param size Number of elements
+   *
+   */
+  void set( trilinosTypes::gid const * globalIndices,
+            real64 const * values,
+            trilinosTypes::lid size );
+
+  /**
+   * @brief Add vector values.
+   *
+   * Add vector values at given elements.
+   *
+   * \param globalIndices global row indices.
+   * \param values Values to add in given rows.
+   * \param size Number of elements
+   *
+   */
+  void add( trilinosTypes::gid const * globalIndices,
+            real64 const * values,
+            trilinosTypes::lid size );
+
+  /**
+   * @brief Set vector values using array1d
    *
    * Set vector values at given elements.
    *
@@ -165,6 +205,19 @@ public:
    *
    */
   void set( array1d<trilinosTypes::gid> const & globalIndices,
+            array1d<real64> const & values );
+
+
+  /**
+   * @brief Add into vector values using array1d
+   *
+   * Add into vector values at given rows.
+   *
+   * \param globalIndices global rows indices
+   * \param values Values to add in given rows.
+   *
+   */
+  void add( array1d<trilinosTypes::gid> const & globalIndices,
             array1d<real64> const & values );
 
   /**
@@ -187,29 +240,6 @@ public:
    */
   void rand();
 
-  /**
-   * @brief Add into vector value.
-   *
-   * Add into vector value at given row.
-   *
-   * \param globalRow global row.
-   * \param value Values to add in given row.
-   *
-   */
-  void add( trilinosTypes::gid const globalRow,
-            real64 const value );
-
-  /**
-   * @brief Add into vector values.
-   *
-   * Add into vector values at given rows.
-   *
-   * \param globalIndices global rows indices
-   * \param values Values to add in given rows.
-   *
-   */
-  void add( array1d<trilinosTypes::gid> const & globalIndices,
-            array1d<real64> const & values );
   //@}
 
   //! @name Algebraic Operations

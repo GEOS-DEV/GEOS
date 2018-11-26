@@ -214,7 +214,46 @@ public:
                real64 const value );
 
   /**
-   * @brief Add elements to one row.
+   * @brief Add elements to one row using c-style arrays
+   *
+   * \param rowIndex Global row index.
+   * \param colIndices Global column indices
+   * \param values Values to add to prescribed locations.
+   * \param size Number of elements 
+   */
+  void add( trilinosTypes::gid const rowIndex,
+            trilinosTypes::gid const * colIndices,
+            real64 const * values,
+            trilinosTypes::lid const size);
+
+  /**
+   * @brief Set elements to one row using c-style arrays
+   *
+   * \param rowIndex Global row index.
+   * \param colIndices Global column indices
+   * \param values Values to add to prescribed locations.
+   * \param size Number of elements 
+   */
+  void set( trilinosTypes::gid const rowIndex,
+            trilinosTypes::gid const * colIndices,
+            real64 const * values,
+            trilinosTypes::lid const size);
+
+  /**
+   * @brief Insert elements to one row using c-style arrays
+   *
+   * \param rowIndex Global row index.
+   * \param colIndices Global column indices
+   * \param values Values to add to prescribed locations.
+   * \param size Number of elements 
+   */
+  void insert( trilinosTypes::gid const rowIndex,
+               trilinosTypes::gid const * colIndices,
+               real64 const * values,
+               trilinosTypes::lid const size);
+
+  /**
+   * @brief Add elements to one row using array1d
    *
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
@@ -225,7 +264,7 @@ public:
             array1d<real64> const & values);
 
   /**
-   * @brief Set elements of one row.
+   * @brief Set elements of one row using array1d
    *
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
@@ -236,7 +275,7 @@ public:
             array1d<real64> const & values);
 
   /**
-   * @brief Insert elements of one row.
+   * @brief Insert elements of one row using array1d
    *
    * \param rowIndex Global row index.
    * \param colIndices Global column indices

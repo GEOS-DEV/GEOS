@@ -39,8 +39,8 @@ class TrilinosInterface
 {
 public:
 
-  using laiLID = trilinosTypes::lid;
-  using laiGID = trilinosTypes::gid;
+  using lid = trilinosTypes::lid;
+  using gid = trilinosTypes::gid;
 
   // Epetra matrix and vector wrappers
   using ParallelMatrix = EpetraMatrix;

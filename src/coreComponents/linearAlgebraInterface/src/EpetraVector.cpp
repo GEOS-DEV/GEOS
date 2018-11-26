@@ -123,6 +123,8 @@ void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const &
 // haphazard support for long ints.  This motivated using FEVector to be
 // sure we have proper globalRow support.
 
+// single element options
+
 void EpetraVector::set( trilinosTypes::gid const globalRow,
                         real64 const value )
 {
@@ -135,21 +137,38 @@ void EpetraVector::add( trilinosTypes::gid const globalRow,
   m_vector->SumIntoGlobalValues( 1, &globalRow, &value );
 }
 
-//TODO: add integer_conversion
+// n-element, c-style options
+
+void EpetraVector::set( trilinosTypes::gid const * globalIndices,
+                        real64 const * values,
+                        trilinosTypes::lid size )
+{
+  m_vector->ReplaceGlobalValues( size, globalIndices, values );
+}
+
+void EpetraVector::add( trilinosTypes::gid const * globalIndices,
+                        real64 const * values,
+                        trilinosTypes::lid size )
+{
+  m_vector->SumIntoGlobalValues( size, globalIndices, values );
+}
+
+// n-element, array1d options
 
 void EpetraVector::set( array1d<trilinosTypes::gid> const & globalIndices,
                         array1d<real64> const & values )
 {
+  //TODO: add integer_conversion
   m_vector->ReplaceGlobalValues( values.size(), globalIndices.data(), values.data() );
 }
-
-//TODO: add integer_conversion
-
 void EpetraVector::add( array1d<trilinosTypes::gid> const & globalIndices,
                         array1d<real64> const & values )
 {
+  //TODO: add integer_conversion
   m_vector->SumIntoGlobalValues( values.size(), globalIndices.data(), values.data() );
 }
+
+//additional options:
 
 void EpetraVector::set( real64 value)
 {

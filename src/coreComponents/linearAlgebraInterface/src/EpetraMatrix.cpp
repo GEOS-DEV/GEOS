@@ -177,13 +177,40 @@ void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
   m_matrix->InsertGlobalValues( rowIndex, 1, &value, &colIndex );
 }
 
-// 1xN
-// TODO: add integer_conversion
+// 1xN c-style
+
+void EpetraMatrix::add( trilinosTypes::gid const rowIndex,
+                        trilinosTypes::gid const * colIndices,
+                        real64 const * values,
+                        trilinosTypes::lid size )
+{
+  m_matrix->SumIntoGlobalValues( rowIndex, size, values, colIndices );
+}
+
+void EpetraMatrix::set( trilinosTypes::gid const rowIndex,
+                        trilinosTypes::gid const * colIndices,
+                        real64 const * values,
+                        trilinosTypes::lid size )
+{
+  m_matrix->ReplaceGlobalValues( rowIndex, size, values, colIndices );
+}
+
+
+void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
+                           trilinosTypes::gid const * colIndices,
+                           real64 const * values,
+                           trilinosTypes::lid size )
+{
+  m_matrix->InsertGlobalValues( rowIndex, size, values, colIndices );
+}
+
+// 1xN array1d style
 
 void EpetraMatrix::add( trilinosTypes::gid const rowIndex,
                         array1d<trilinosTypes::gid> const &colIndices,
                         array1d<real64> const &values )
 {
+  // TODO: add integer_conversion
   m_matrix->SumIntoGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
 }
 
@@ -191,6 +218,7 @@ void EpetraMatrix::set( trilinosTypes::gid const rowIndex,
                         array1d<trilinosTypes::gid> const &colIndices,
                         array1d<real64> const &values )
 {
+  // TODO: add integer_conversion
   m_matrix->ReplaceGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
 }
 
@@ -198,16 +226,17 @@ void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
                            array1d<trilinosTypes::gid> const &colIndices,
                            array1d<real64> const &values )
 {
+  // TODO: add integer_conversion
   m_matrix->InsertGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
 }
 
-// MxN
-// TODO: add integer_conversion
+// MxN array2d style
 
 void EpetraMatrix::add( array1d<trilinosTypes::gid> const & rowIndices,
                         array1d<trilinosTypes::gid> const & colIndices,
                         array2d<real64> const & values )
 {
+  // TODO: add integer_conversion
   m_matrix->SumIntoGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
@@ -215,6 +244,7 @@ void EpetraMatrix::set( array1d<trilinosTypes::gid> const & rowIndices,
                         array1d<trilinosTypes::gid> const & colIndices,
                         array2d<real64> const & values )
 {
+  // TODO: add integer_conversion
   m_matrix->ReplaceGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
@@ -222,6 +252,7 @@ void EpetraMatrix::insert( array1d<trilinosTypes::gid> const & rowIndices,
                            array1d<trilinosTypes::gid> const & colIndices,
                            array2d<real64> const & values )
 {
+  // TODO: add integer_conversion
   m_matrix->InsertGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
