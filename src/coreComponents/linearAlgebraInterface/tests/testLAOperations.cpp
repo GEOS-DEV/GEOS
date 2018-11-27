@@ -568,6 +568,7 @@ void testGEOSXSolvers()
 template< typename LAI >
 void testGEOSXBlockSolvers()
 {
+#if 0
 
   // Define aliases templated on the Linear Algebra Interface (LAI).
   // These objects can use all of the available libraries (trilinos and
@@ -596,7 +597,6 @@ void testGEOSXBlockSolvers()
   // Compute a dummy preconditioner (identity matrix)
   ParallelMatrix preconditioner00 = computeIdentity<LAI>( comm, N );
 
-#if 0
 
   // We first fill some standard vectors
   std::vector<real64> ones, zer, random, random2;
@@ -734,9 +734,9 @@ void testGEOSXBlockSolvers()
   blockSolutionBiCGSTAB.norm2( normBiCGSTAB );
   EXPECT_LT( std::fabs( normBiCGSTAB/norm2trueSolution - 1. ), 5e-6 );
 
-#endif
   // Finalize MPI
   MPI_Finalize();
+#endif
 }
 
 // END_RST_NARRATIVE
@@ -769,8 +769,7 @@ TEST(testLAOperations,testEpetraLAOperations)
 
   testNativeSolvers<TrilinosInterface>();
   testGEOSXSolvers<TrilinosInterface>();
-  testGEOSXBlockSolvers<TrilinosInterface>();
-
+  //testGEOSXBlockSolvers<TrilinosInterface>();
 }
 
 /*! @function testHypreLAOperations.
