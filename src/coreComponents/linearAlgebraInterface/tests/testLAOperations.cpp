@@ -231,8 +231,6 @@ void testNativeSolvers()
   using LinearSolver = typename LAI::LinearSolver;
   using LAIgid = typename LAI::gid;
  
-  // Initialize MPI
-  MPI_Init( nullptr, nullptr );
 
   // Get the MPI rank
   int rank;
@@ -439,6 +437,7 @@ void testNativeSolvers()
     EXPECT_DOUBLE_EQ( vecValuesRown[2], 8.0 );
   }
 #endif
+
 }
 
 /**
@@ -766,10 +765,13 @@ void testGEOSXBlockSolvers()
 
 TEST(testLAOperations,testEpetraLAOperations)
 {
+  MPI_Init( nullptr, nullptr );
 
   testNativeSolvers<TrilinosInterface>();
   testGEOSXSolvers<TrilinosInterface>();
   //testGEOSXBlockSolvers<TrilinosInterface>();
+
+  MPI_Finalize();
 }
 
 /*! @function testHypreLAOperations.
