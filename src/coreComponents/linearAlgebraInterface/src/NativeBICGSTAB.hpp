@@ -28,6 +28,8 @@
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
+#include "BlockMatrixView.hpp"
+#include "BlockVectorView.hpp"
 
 namespace geosx
 {
@@ -253,6 +255,13 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                                  BlockMatrixView<LAI> const &M )
 
 {
+  GEOS_ERROR("Not implemented");
+  
+  // TODO: BlockVectorView is a view that doesn't handle any vector
+  //       storage.  The copy and copy constructor functions below
+  //       won't work.
+
+#if 0
 
   // Get the global size
   typename LAI::gid N = x.globalSize();
@@ -371,6 +380,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     std::cout << std::endl << "Block BiCGSTAB converged in " << numIt << " iterations." << std::endl;
   return;
 
+#endif
 }
 
 } // namespace GEOSX

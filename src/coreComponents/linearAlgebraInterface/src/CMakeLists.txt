@@ -19,7 +19,9 @@ set( linearAlgebraInterface_headers
 set( linearAlgebraInterface_sources
      EpetraMatrix.cpp
      EpetraVector.cpp
-     TrilinosSolver.cpp)
+     TrilinosSolver.cpp
+     BlockVectorView.cpp
+     BlockMatrixView.cpp)
 
 set( dependencyList common trilinos hypre mpi)
 

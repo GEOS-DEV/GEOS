@@ -38,13 +38,14 @@
 #include <vector>
 #include <mpi.h>
 
+#include "common/DataTypes.hpp"
+
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
+#include "NativeCG.hpp"
+#include "NativeBICGSTAB.hpp"
 #include "BlockMatrixView.hpp"
-#include "../src/NativeCG.hpp"
-#include "../src/NativeBICGSTAB.hpp"
 
-#include "common/DataTypes.hpp"
 
 /**
  * \file testLAOperations.cpp
@@ -130,10 +131,9 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 
   // Get the size of the dummy mesh back to be able to put values in the correct
   // diagonals.
-  integer n = integer( std::sqrt( N ) );
+  typename LAI::gid n = std::sqrt( N );
 
   // Allocate arrays to fill the matrix (values and columns)
-
   real64 values[5];
   typename LAI::gid cols[5];
 
@@ -141,7 +141,7 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
   for ( typename LAI::gid i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
   {
     // Re-set the number of non-zeros for row i to 0.
-    integer nnz = 0;
+    typename LAI::lid nnz = 0;
 
     // The left -n: position i-n
     if ( i-n >= 0 )
@@ -182,7 +182,6 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 
     // Set the values for row i
     laplace2D.insert( i, cols, values, nnz );
-
   }
 
   // Close the matrix (make data contiguous in memory)
@@ -200,9 +199,9 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
  */
 //@{
 /**
- * @function testNativeSolvers
+ * @function testInterfaceSolvers
  *
- * @brief Test the native solvers from the LAI as well as basic linear algebra operations,
+ * @brief Test the packaged solvers from the LAI as well as basic linear algebra operations,
  * such as matrix-vector products, dot products, norms and residuals.
  */
 
@@ -221,39 +220,95 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 // iterative and direct solvers available.
 
 template< typename LAI >
-void testNativeSolvers()
+void testInterfaceSolvers()
 {
   // Define aliases templated on the Linear Algebra Interface (LAI).
-  // These objects can use all of the available libraries (trilinos and
-  // soon HYPRE and PETSc).
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
   using LinearSolver = typename LAI::LinearSolver;
   using LAIgid = typename LAI::gid;
- 
 
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // Set the MPI communicator
-  // MPI_Comm comm = MPI_COMM_WORLD;
-
-  MPI_Comm test_comm;
-  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
-  MPI_Comm comm = test_comm;
-
-  // Size of the dummy cartesian mesh we use to generate the Laplace 2D operator.
-  LAIgid n = 100;
-  // Number of degrees of freedom
+  // Use an nxn cartesian mesh to generate the Laplace 2D operator.
+  LAIgid n = 100; 
   LAIgid N = n*n;
 
   // Compute a 2D Laplace operator
-  ParallelMatrix testMatrix = compute2DLaplaceOperator<LAI>( comm, N );
+  ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
 
-  // Compute a dummy preconditioner (identity matrix)
-  ParallelMatrix preconditioner = computeIdentity<LAI>( comm, N );
+  // Define some vectors
+  ParallelVector x_true, 
+                 x_comp, 
+                 b;
 
+  x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
+  b.createWithGlobalSize( N, MPI_COMM_WORLD );
+
+  // We have some simple initialization options for vectors:
+  x_true.rand(); // random
+  x_comp.zero(); // zero 
+  b.set(1.0);    // ones
+
+  // Also define a residual vector, this time using the copy constructor
+  ParallelVector r( b );
+
+  // Test dot product: r.b = b.b = N
+  real64 dotTest = r.dot(b);
+  EXPECT_DOUBLE_EQ( dotTest, N );
+
+  // Test various norms
+  real64 norm1 = b.norm1();
+  real64 norm2 = b.norm2();
+  real64 normInf = b.normInf();
+
+  EXPECT_DOUBLE_EQ( norm1, N );
+  EXPECT_DOUBLE_EQ( norm2, n );
+  EXPECT_DOUBLE_EQ( normInf, 1. );
+
+  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
+  // back from the solvers.
+  matrix.multiply( x_true, b );
+
+  // Test the residual function by computing r = b - Ax = 0
+  matrix.residual( x_true, b, r );
+  real64 normRes = r.normInf();
+  EXPECT_DOUBLE_EQ( normRes, 0. );
+
+  // Now declare a solver object with desired options
+  //LinearSolverParameters parameters;
+  //                       parameters.krylov_tolerance = 1e-8;
+  //                       parameters.max_krylov_iterations = 1000;
+  LinearSolver solver = LinearSolver();
+  //solver.setParameters(parameters);
+
+  // Solve using the iterative solver and compare norms with true solution
+  solver.solve( matrix, x_comp, b, 1000, 1e-8);
+  real64 norm_comp = x_comp.norm2();
+  real64 norm_true = x_true.norm2();
+  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-6 );
+
+  // We also check a couple random elements to see if they are equal.
+  //JAW  EXPECT_LT( ( std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-4 );
+  //JAW  EXPECT_LT( ( std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-4 );
+
+  // We now do the same using a direct solver.
+  // Again the norm should be the norm of x. We use a tougher tolerance on the test
+  // compared to the iterative solution. This should be accurate to machine precision
+  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
+  //parameters.type = "direct";
+  //solver.setParameters(parameters);
+  x_comp.zero();
+  solver.dsolve( matrix, x_comp, b );
+  norm_comp = x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-12 );
+
+  // Again we check a couple elements
+  //JAW  EXPECT_LT( ( std::fabs( solDirect.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-12 );
+  //JAW  EXPECT_LT( ( std::fabs( solDirect.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-12 );
 
 #if 0
   // Declare integers to run tests
@@ -264,9 +319,9 @@ void testNativeSolvers()
   std::vector<LAI::lid> vecIndicesRow0( 5 ),vecIndicesRow1( 5 ),vecIndicesRown( 5 );
 
   // Get values and columns in specific rows
-  testMatrix.getLocalRow( 0, numValRow0, vecValuesRow0, vecIndicesRow0 );
-  testMatrix.getLocalRow( 1, numValRow1, vecValuesRow1, vecIndicesRow1 );
-  testMatrix.getLocalRow( static_cast<LAI::lid>( n ), numValRown, vecValuesRown, vecIndicesRown );
+  matrix.getLocalRow( 0, numValRow0, vecValuesRow0, vecIndicesRow0 );
+  matrix.getLocalRow( 1, numValRow1, vecValuesRow1, vecIndicesRow1 );
+  matrix.getLocalRow( static_cast<LAI::lid>( n ), numValRown, vecValuesRown, vecIndicesRown );
 
   // Run checks on rank 0 to see if the matrix was correctly constructed
   if (rank == 0)
@@ -330,108 +385,12 @@ void testNativeSolvers()
     // are not the same, which would defeat the purpose).
     random2.push_back( rand() % 30 - 15 );
   }
-#endif
-
-  // Define x, b and x0 guess vectors
-  ParallelVector x, b, x0;
-
-  // Place holder for b (will be recomputed a few lines down). We do use the vector to test
-  // the linear algebra operations
-  b.createWithGlobalSize( N, comm);
-  b.set(1.0);
-
-  // Random vector for x (the true solution of Ax = b).
-  x.createWithGlobalSize( N, comm );
-  x.rand();
-
-  // Get the inf-norm of the true solution (x).
-  real64 norm2x = x.norm2();
-
-  // Initial guess x0 = 0
-  x0.createWithGlobalSize( N, comm );
-  x0.zero();
-
-  // Fill initial guess for the direct solver
-  ParallelVector solDirect( x0 );
-
-  // Fill initial guess for the iterative solver
-  ParallelVector solIterative( x0 );
-
-  // Residual vector (vector of zeros)
-  ParallelVector r( b );
-
-  // Test dot product
-  real64 dotTest = b.dot(b);
-  EXPECT_DOUBLE_EQ( dotTest, N );
-
-  // Test 1-norm
-  real64 norm1 = b.norm1();
-  // The 1-norm should be equal to N
-  EXPECT_DOUBLE_EQ( norm1, N );
-
-  // Test 2-norm
-  real64 norm2 = b.norm2();
-  // The 2-norm should be equal to n
-  EXPECT_DOUBLE_EQ( norm2, n );
-
-  // Test inf-norm
-  real64 norminf = b.normInf();
-  // The inf-norm should be equal to 1
-  EXPECT_DOUBLE_EQ( norminf, 1. );
-
-  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
-  // back from the solvers.
-  testMatrix.multiply( x, b );
-
-  // First we test the residual function by computing r = b - Ax.
-  testMatrix.residual( x, b, r );
-
-  // Compute the norm of the residual
-  real64 normRes = r.normInf();
-  // The inf-norm should be equal to 0 (all elements are 0 in exact algebra).
-  EXPECT_DOUBLE_EQ( normRes, 0. );
-
-  // We now test the linear solvers from the libraries.
-
-  // Declare solver object.
-  LinearSolver solver = LinearSolver();
-
-  // Run the iterative solver (TODO remove hard coded options, currently
-  // using ILUT preconditioned GMRES).
-  if (rank == 0)
-    std::cout << std::endl << "AztecOO iterative solver:";
-  solver.solve( testMatrix, solIterative, b, 1000, 1e-8);
-
-  // Get the inf-norm of the iterative solution.
-  real64 normIterativeSol = solIterative.norm2();
-  // The true solution is the vector x, so we check if the norm are equal.
-  EXPECT_LT( std::fabs( normIterativeSol/norm2x - 1. ), 1e-6 );
-
-  // We also check a couple random elements to see if they are equal.
-//JAW  EXPECT_LT( ( std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-4 );
-//JAW  EXPECT_LT( ( std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-4 );
-
-  // We now do the same using a direct solver from Amesos (Klu)
-  if (rank == 0)
-    std::cout << std::endl << "Amesos direct solver:" << std::endl << std::endl;
-  solver.dsolve( testMatrix, solDirect, b );
-
-  // Again the norm should be the norm of x. We use a tougher tolerance on the test
-  // compared to the iterative solution. This should be accurate to machine precision
-  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
-  real64 normDirectSol = solDirect.norm2();
-  EXPECT_LT( std::fabs( normDirectSol/norm2x - 1 ), 1e-12 );
-  // Again we check a couple elements
-//JAW  EXPECT_LT( ( std::fabs( solDirect.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-12 );
-//JAW  EXPECT_LT( ( std::fabs( solDirect.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-12 );
 
   // Test the clearRow function (this has to be done after the solves so that we can
   // use the same matrix when we are done with it).
-
   // We clear the row and multiply the diagonal value by 2.
-#if 0
-  testMatrix.clearRow( 2*N/4+n, 2.0 );
-  testMatrix.getLocalRow(static_cast<LAI::lid>( n ),numValRown,vecValuesRown,vecIndicesRown);
+  matrix.clearRow( 2*N/4+n, 2.0 );
+  matrix.getLocalRow(static_cast<LAI::lid>( n ),numValRown,vecValuesRown,vecIndicesRown);
   if ( rank == 2 )
   {
     EXPECT_DOUBLE_EQ( vecValuesRown[2], 8.0 );
@@ -457,8 +416,6 @@ template< typename LAI >
 void testGEOSXSolvers()
 {
   // Define aliases templated on the Linear Algebra Interface (LAI).
-  // These objects can use all of the available libraries (trilinos and
-  // soon HYPRE and PETSc).
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
   using LAIgid = typename LAI::gid;
@@ -467,89 +424,47 @@ void testGEOSXSolvers()
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // Set the MPI communicator
-  // MPI_Comm comm = MPI_COMM_WORLD;
-  MPI_Comm test_comm;
-  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
-  MPI_Comm comm = test_comm;
-
-  // Size of the dummy cartesian mesh we use to generate the Laplace 2D operator.
+  // Use nxn cartesian mesh to generate the Laplace 2D operator.
   LAIgid n = 100;
-  // Number of degrees of freedom
   LAIgid N = n*n;
 
-  // Compute a 2D Laplace operator
-  ParallelMatrix testMatrix = compute2DLaplaceOperator<LAI>( comm, N );
+  // Compute a 2D Laplace operator and identity matrix
+  ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
+  ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
 
-  // Compute a dummy preconditioner (identity matrix)
-  ParallelMatrix preconditioner = computeIdentity<LAI>( comm, N );
+  // Define vectors 
+  ParallelVector x_true,
+                 x_comp,
+                 b;
 
-  /*
-  // We first fill some standard vectors
-  std::vector<real64> ones, zer, random, random2;
-  for (integer j = 0; j < N; j++)
-  {
-    // Vector of zeros
-    zer.push_back( 0 );
-    // Vector of ones
-    ones.push_back( 1 );
-    // Vector of random integers
-    random.push_back( rand() % 20 - 10 );
-    // Vector of random integers (different range to make sure the two random vectors
-    // are not the same, which would defeat the purpose).
-    random2.push_back( rand() % 30 - 15 );
-  }
-  */
+  x_true.createWithGlobalSize( N, MPI_COMM_WORLD);
+  x_comp.createWithGlobalSize( N, MPI_COMM_WORLD);
+  b.createWithGlobalSize( N, MPI_COMM_WORLD);
 
-  // Define vectors for x, b and x0
-  ParallelVector x, b, x0;
+  x_true.rand();
+  x_comp.zero();
 
-  // Place holder for b (will be recomputed a few lines down). We do use the vector to test
-  // the linear algebra operations
-  b.createWithGlobalSize( N, comm);
-  //b.ones();
+  matrix.multiply( x_true, b );
 
-  // Random vector for x (the true solution of Ax = b).
-  x.createWithGlobalSize( N, comm );
-  x.rand();
-
-  // Initial guess x0 = 0
-  x0.createWithGlobalSize( N, comm );
-  x0.zero();
-
-  // Get the norm of the true solution
-  real64 norm2x = x.norm2();
-
-  // Perform a matrix/vector multiplication to compute b
-  testMatrix.multiply( x, b );
-
-  // Initial guess for CG
-  ParallelVector solCG( x0 );
-
-  // Initial guess for BiCGSTAB
-  ParallelVector solBiCGSTAB( x0 );
-
-  // Create a CG solver object
+  // Test with CG solver
   CGsolver<LAI> testCG;
+                testCG.solve( matrix, x_comp, b, identity );
 
-  // Solve the left-preconditioned system with CG
-  testCG.solve( testMatrix, solCG, b, preconditioner );
+  real64 norm_true = x_true.norm2();
+  real64 norm_comp = x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 5e-6 );
 
-  // The true solution is the vector x, so we check if the norm are equal.
-  real64 normCG = solCG.norm2();
-  EXPECT_LT( std::fabs( normCG/norm2x - 1. ), 5e-6 );
+  // Test with BiCGSTAB solver 
+  x_comp.zero();
 
-  // Create a BiCGSTAB solver object
   BiCGSTABsolver<LAI> testBiCGSTAB;
+  testBiCGSTAB.solve( matrix, x_comp, b, identity );
 
-  // Solve the left-preconditioned system with BiCGSTAB.
-  testBiCGSTAB.solve( testMatrix, solBiCGSTAB, b, preconditioner );
-
-  // The true solution is the vector x, so we check if the norm are equal.
-  real64 normBiCGSTAB = solBiCGSTAB.norm2();
-  EXPECT_LT( std::fabs( normBiCGSTAB/norm2x - 1. ), 5e-6 );
-
+  norm_true = x_true.norm2();
+  norm_comp = x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 5e-6 );
 }
+
 
 /**
  * @function testGEOSXBlockSolvers
@@ -567,78 +482,40 @@ void testGEOSXSolvers()
 template< typename LAI >
 void testGEOSXBlockSolvers()
 {
-#if 0
-
-  // Define aliases templated on the Linear Algebra Interface (LAI).
-  // These objects can use all of the available libraries (trilinos and
-  // soon HYPRE and PETSc).
+  // The usual typenames
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
+  using LAIgid = typename LAI::gid;
 
   // Get the MPI rank
-  typename LAI::LAI::lid rank;
+  int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // Set the MPI communicator
-  // MPI_Comm comm = MPI_COMM_WORLD;
-  MPI_Comm test_comm;
-  MPI_Comm_dup( MPI_COMM_WORLD, &test_comm );
-  MPI_Comm comm = test_comm;
+  // We are going to assembly the following dummy system
+  // [L L] [x_true] = [b_0]
+  // [L L] [x_true] = [b_1]
 
-  // Size of the dummy cartesian mesh we use to generate the Laplace 2D operator.
-  LAI::gid n = 100;
-  // Number of degrees of freedom
-  LAI::gid N = n*n;
+  LAIgid n = 100;
+  LAIgid N = n*n;
 
-  // Compute a 2D Laplace operator
-  ParallelMatrix matrix00 = compute2DLaplaceOperator<LAI>( comm, N );
+  ParallelMatrix matrix   = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
+  ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
 
-  // Compute a dummy preconditioner (identity matrix)
-  ParallelMatrix preconditioner00 = computeIdentity<LAI>( comm, N );
+  ParallelVector x_true,
+                 x_comp_0,
+                 x_comp_1,
+                 b_0,
+                 b_1;
 
+  x_true.createWithGlobalSize( N, MPI_COMM_WORLD);
+  x_comp_0.createWithGlobalSize( N, MPI_COMM_WORLD);
+  x_comp_1.createWithGlobalSize( N, MPI_COMM_WORLD);
+  b_0.createWithGlobalSize( N, MPI_COMM_WORLD);
+  b_1.createWithGlobalSize( N, MPI_COMM_WORLD);
 
-  // We first fill some standard vectors
-  std::vector<real64> ones, zer, random, random2;
-  for (integer j = 0; j < N; j++)
-  {
-    // Vector of zeros
-    zer.push_back( 0 );
-    // Vector of ones
-    ones.push_back( 1 );
-    // Vector of random integers
-    random.push_back( rand() % 20 - 10 );
-    // Vector of random integers (different range to make sure the two random vectors
-    // are not the same, which would defeat the purpose).
-    random2.push_back( rand() % 30 - 15 );
-  }
-
-  // Define vectors for x, b and x0
-  ParallelVector x, b, x0;
-
-  // Right hand side for multiplication (b)
-  b.create( zer );
-
-  // Vector of ones for multiplication (x)
-  x.create( random );
-
-  // Random vector for initial guess (x0)
-  x0.create( random2 );
-
-//  // Matrix-vector product
-//  matrix00.multiply( x, b );
-
-  // Create vector for the true solution
-  ParallelVector trueSolution( x );
-
-  // Set the initial guesses for CG and BiCGSTAB
-  ParallelVector solutionCG0( x0 );
-  ParallelVector solutionBiCGSTAB0( x0 );
-  ParallelVector solutionCG1( x0 );
-  ParallelVector solutionBiCGSTAB1( x0 );
-
-  // Set the right hand side vectors guesses for CG and BiCGSTAB
-  ParallelVector rhs0( b );
-  ParallelVector rhs1( b );
+  x_true.rand();
+  x_comp_0.zero();
+  x_comp_1.zero();
 
   // Size of the block system
   integer nRows = 2;
@@ -646,95 +523,68 @@ void testGEOSXBlockSolvers()
 
   // Declare and allocate block matrices/vectors
   // System matrix
-  BlockMatrixView<LAI> blockMatrix( nRows, nCols );
 
-  // Preconditioner
-  BlockMatrixView<LAI> blockPreconditioner( nRows, nCols );
-
-  // True solution
-  BlockVectorView<LAI> blockTrueSolution( nCols );
-
-  // Solution from CG
-  BlockVectorView<LAI> blockSolutionCG( nCols );
-
-  // Solution from BiCGSTAB
-  BlockVectorView<LAI> blockSolutionBiCGSTAB( nCols );
-
-  // Right hand side (we only need one, it is a const input)
-  BlockVectorView<LAI> blockRhs( nRows );
+  BlockMatrixView<LAI> block_matrix( nRows, nCols );
+  BlockMatrixView<LAI> block_precon( nRows, nCols );
+  BlockVectorView<LAI> block_x_true( nCols );
+  BlockVectorView<LAI> block_x_comp( nCols );
+  BlockVectorView<LAI> block_rhs   ( nRows );
 
   // In this test we simply tile the laplace operator, so we assign a duplicate
   // of the monolithic matrix to every block of the matrix.
-  // Block (0,0)
-  blockMatrix.setBlock( 0, 0, matrix00 );
 
-  // Block (0,1)
-  blockMatrix.setBlock( 0, 1, matrix00 );
-
-  // Block (1,0)
-  blockMatrix.setBlock( 1, 0, matrix00 );
-
-  // Block (1,1)
-  blockMatrix.setBlock( 1, 1, matrix00 );
+  block_matrix.set( 0, 0, matrix );
+  block_matrix.set( 0, 1, matrix );
+  block_matrix.set( 1, 0, matrix );
+  block_matrix.set( 1, 1, matrix );
 
   // We do the same for the preconditioner to get the block identity matrix.
   // We ignore the off-diagonal blocks and leave them as null-pointers.
-  // Block (0,0)
-  blockPreconditioner.setBlock( 0, 0, preconditioner00 );
-  // Block (1,1)
-  blockPreconditioner.setBlock( 1, 1, preconditioner00 );
 
-  // Construct the true solution
-  blockTrueSolution.setBlock( 0, trueSolution );
-  blockTrueSolution.setBlock( 1, trueSolution );
+  block_precon.set( 0, 0, identity );
+  block_precon.set( 1, 1, identity );
+
+  // true solution
+  block_x_true.set( 0, x_true );
+  block_x_true.set( 1, x_true );
 
   // Set initial guess blocks (here we need multiple objects since we cannot
   // have them point to the same memory location). These objects are initial
   // guesses as input but solution vectors as output.
-  // CG vector
-  blockSolutionCG.setBlock( 0, solutionCG0 );
-  blockSolutionCG.setBlock( 1, solutionCG1 );
 
-  // BiCGSTAB vector
-  blockSolutionBiCGSTAB.setBlock( 0, solutionBiCGSTAB0 );
-  blockSolutionBiCGSTAB.setBlock( 1, solutionBiCGSTAB1 );
+  block_x_comp.set( 0, x_comp_0 );
+  block_x_comp.set( 1, x_comp_1 );
 
-  // Set right hand side blocks (this can be one object, it is passed as const).
-  // We keep 2 of them for potential tests with more flexibility (rhs0 != rhs1).
-  blockRhs.setBlock( 0, rhs0 );
-  blockRhs.setBlock( 1, rhs1 );
+  // Set right hand side blocks.
+  block_rhs.set( 0, b_0 );
+  block_rhs.set( 1, b_1 );
+  block_matrix.multiply( block_x_true, block_rhs);
 
-  blockMatrix.multiply( blockTrueSolution, blockRhs);
-
-  // Get the norm of the true solution
-  real64 norm2trueSolution;
-  blockTrueSolution.norm2( norm2trueSolution );
-
-  // Create block CG solver object
+//TODO: Need to refactor Native block solvers.  Disable this for now.
+#if 0
+  // Create block CG solver object and solve
   CGsolver<LAI> testCG;
-  // Solve the left-preconditioned block system with CG
-  testCG.solve( blockMatrix, blockSolutionCG, blockRhs, blockPreconditioner );
+  testCG.solve( block_matrix, block_x_comp, block_rhs, block_precon );
 
   // The true solution is the vector x, so we check if the norm are equal.
   // Note: the tolerance is higher that in the previous cases because the matrix is
   // twice as big and the condition number is higher. See details on the error
   // bounds of Krylov methods wrt the condition number.
-  real64 normCG;
-  blockSolutionCG.norm2( normCG );
-  EXPECT_LT( std::fabs( normCG/norm2trueSolution - 1. ), 5e-6 );
+  real64 norm_x_true = block_x_true.norm2();
+  real64 norm_x_comp = block_x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_x_comp/norm_x_true - 1. ), 5e-6 );
 
-  // Create block BiCGSTAB solver object
+  // now try out the BiCGstab solver
+
+  x_comp_0.zero(); // TODO: fix block zero()
+  x_comp_1.zero();
+
   BiCGSTABsolver<LAI> testBiCGSTAB;
-  // Solve the left-preconditioned block system with BiCGSTAB
-  testBiCGSTAB.solve( blockMatrix, blockSolutionBiCGSTAB, blockRhs, blockPreconditioner );
+  testBiCGSTAB.solve( block_matrix, block_x_comp, block_rhs, block_precon );
 
-  // The true solution is the vector x, so we check if the norm are equal.
-  real64 normBiCGSTAB;
-  blockSolutionBiCGSTAB.norm2( normBiCGSTAB );
-  EXPECT_LT( std::fabs( normBiCGSTAB/norm2trueSolution - 1. ), 5e-6 );
-
-  // Finalize MPI
-  MPI_Finalize();
+  norm_x_true = block_x_true.norm2();
+  norm_x_comp = block_x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_x_comp/norm_x_true - 1. ), 5e-6 );
 #endif
 }
 
@@ -766,11 +616,9 @@ void testGEOSXBlockSolvers()
 TEST(testLAOperations,testEpetraLAOperations)
 {
   MPI_Init( nullptr, nullptr );
-
-  testNativeSolvers<TrilinosInterface>();
+  testInterfaceSolvers<TrilinosInterface>();
   testGEOSXSolvers<TrilinosInterface>();
-  //testGEOSXBlockSolvers<TrilinosInterface>();
-
+  testGEOSXBlockSolvers<TrilinosInterface>();
   MPI_Finalize();
 }
 
@@ -779,9 +627,11 @@ TEST(testLAOperations,testEpetraLAOperations)
  */
 TEST(testLAOperations,testHypreLAOperations)
 {
-  //testLaplaceOperator<HypreInterface>();
+  //MPI_Init( nullptr, nullptr );
+  //testInterfaceSolvers<HypreInterface>();
   //testGEOSXSolvers<HypreInterface>();
   //testGEOSXBlockSolvers<HypreInterface>();
+  //MPI_Finalize();
 }
 
 /*! @function testPETScLAOperations.
@@ -790,9 +640,11 @@ TEST(testLAOperations,testHypreLAOperations)
 TEST(testLAOperations,testPETScLAOperations)
 {
 
-  //testLaplaceOperator<PETScInterface>();
+  //MPI_Init( nullptr, nullptr );
+  //testInterfaceSolvers<PETScInterface>();
   //testGEOSXSolvers<PETScInterface>();
   //testGEOSXBlockSolvers<PETScInterface>();
+  //MPI_Finalize();
 }
 
 //@}
