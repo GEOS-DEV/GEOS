@@ -33,7 +33,7 @@
 
 #include <algorithm>
 #include "tribol/tribol.hpp"
-#include "mint/CellTypes.hpp"
+#include "axom/mint/mesh/CellTypes.hpp"
 
 static void GEOSXSlideWorldErrorHandler(const char* msg, int etype, int)
 {
