@@ -54,7 +54,7 @@ BlackOilFluid::~BlackOilFluid()
 std::unique_ptr<ConstitutiveBase>
 BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
 {
-  auto clone = std::make_unique<BlackOilFluid>( name, parent );
+  std::unique_ptr< BlackOilFluid > clone = std::make_unique<BlackOilFluid>( name, parent );
 
   clone->m_useMass = this->m_useMass;
 
@@ -69,7 +69,7 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
 
   clone->createFluid();
 
-  return clone;
+  return std::move( clone );
 }
 
 void BlackOilFluid::FillDocumentationNode()
