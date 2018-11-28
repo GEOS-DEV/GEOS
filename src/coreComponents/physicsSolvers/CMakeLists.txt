@@ -1,3 +1,4 @@
+message( "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
 
 #
 # Specify all headers
@@ -31,15 +32,24 @@ set( physicsSolvers_sources
      src/DummySolver.cpp
      )
 
+set( externalComponentDeps "" )
+if( ENABLE_GEOSX_PTP )
+  message("adding GEOSX_PTP to physics solver dependencies")
+  list( APPEND externalComponentDeps GEOSX_PTP )  
+endif()
 
 blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
-                 DEPENDS_ON            dataRepository systemSolverInterface
+                 DEPENDS_ON            dataRepository systemSolverInterface ${externalComponentDeps}
                )
                
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+if( externalComponentDeps )
+  target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents)
+endif()
 
 geosx_add_code_checks( PREFIX physicsSolvers )
 
 add_subdirectory( unitTests )
+message( "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

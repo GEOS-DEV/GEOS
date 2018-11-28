@@ -115,6 +115,7 @@ public:
 
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
+  virtual bool isPackable() const = 0;
   virtual localIndex Pack( char *& buffer ) const = 0;
   virtual localIndex Pack( char *& buffer, arrayView1d<localIndex const> const & packList ) const = 0;
   virtual localIndex PackSize( ) const = 0;

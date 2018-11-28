@@ -86,8 +86,9 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) override;
+                                       localIndex_array & packList ) override;
 
+  virtual void FixUpDownMaps() override final;
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
@@ -141,6 +142,9 @@ private:
   OrderedVariableOneToManyRelation m_nodeList;
   OrderedVariableOneToManyRelation m_edgeList;
   FixedToManyElementRelation m_toElements;
+
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
 
   array1d< R1Tensor > m_faceCenter;
 

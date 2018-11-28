@@ -59,6 +59,9 @@ public:
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< VIEWTYPE > > ;
 
+  template< typename VIEWTYPE >
+  using ElementReferenceAccessor = array1d< array1d< ReferenceWrapper<VIEWTYPE> > > ;
+
   /**
    * The MaterialViewAccessor at the ElementRegionManager level is an 3d array that contains a
    * ReferenceWrapper around the VIEWTYPE. The dimensions are denoted as follows:
@@ -272,6 +275,9 @@ public:
   int Unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor<arrayView1d<localIndex>> & packList );
 
+  int Unpack( buffer_unit_type const * & buffer,
+              ElementReferenceAccessor<array1d<localIndex>> & packList );
+
 
 
   int PackGlobalMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
@@ -284,13 +290,16 @@ public:
                                 ElementViewAccessor<ReferenceWrapper<localIndex_array>> & packList );
 
   int PackUpDownMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+  int PackUpDownMapsSize( ElementReferenceAccessor<array1d<localIndex>> const & packList ) const;
 
   int PackUpDownMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+  int PackUpDownMaps( buffer_unit_type * & buffer,
+                      ElementReferenceAccessor<array1d<localIndex>> const & packList ) const;
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                        ElementViewAccessor<arrayView1d<localIndex>> const & packList );
+                        ElementReferenceAccessor<localIndex_array> & packList );
 
 
 
@@ -305,10 +314,14 @@ private:
   int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                              ElementViewAccessor<arrayView1d<localIndex>> const & viewAccessor ) const;
 
-  template< bool DOPACK >
+  template< bool DOPACK, typename T >
   int
   PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                         ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+                         T const & packList ) const;
+
+  template< typename T >
+  int UnpackPrivate( buffer_unit_type const * & buffer,
+                     T & packList );
 
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);

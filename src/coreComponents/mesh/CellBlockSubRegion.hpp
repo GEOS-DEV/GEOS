@@ -71,8 +71,9 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) override;
+                                       localIndex_array & packList ) override;
 
+  virtual void FixUpDownMaps() override final;
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
@@ -122,6 +123,9 @@ public:
 
 private:
   dataRepository::ManagedGroup m_constitutiveModels;
+
+  map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInNodelist;
+  map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInFacelist;
 
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
