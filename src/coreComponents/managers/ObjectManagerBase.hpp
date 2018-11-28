@@ -85,9 +85,6 @@ public:
                            arrayView1d<localIndex const> const & packList,
                            integer const recursive )  const override;
 
-//  virtual int Unpack( buffer_unit_type const *& buffer,
-//                      integer const recursive )  override;
-
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
                              arrayView1d<localIndex> & packList,
                              integer const recursive )  override;
@@ -96,11 +93,11 @@ public:
 
 
   virtual localIndex PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
-                                  integer const recursive ) const;
+                                         integer const recursive ) const;
 
   virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
-                              arrayView1d<localIndex> const & packList,
-                              integer const recursive ) const;
+                                     arrayView1d<localIndex> const & packList,
+                                     integer const recursive ) const;
 
   void SetReceiveLists(  );
 
@@ -115,7 +112,7 @@ public:
 
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList )
+                                       array1d<localIndex> & packList )
   { return 0;}
 
 
@@ -288,6 +285,16 @@ public:
 
   void CopyObject( localIndex const source, localIndex const destination );
 
+  void SetMaxGlobalIndex();
+
+  virtual void FixUpDownMaps() {}
+  template< typename TYPE_RELATION >
+  static void FixUpDownMaps( TYPE_RELATION & relation,
+                             map< localIndex, array1d<globalIndex> > & unmappedIndices );
+
+  template< typename TYPE_RELATION >
+  static void FixUpDownMaps( TYPE_RELATION & relation,
+                             map< localIndex, set<globalIndex> > & unmappedIndices );
 
 
   //**********************************************************************************************************************
@@ -380,11 +387,77 @@ public:
 
   real64 m_overAllocationFactor = 1.1;
 
+  globalIndex m_maxGlobalIndex = -1;
+
+//  localIndex_array m_ghostToSend;
+ // localIndex_array m_ghostToReceive;
+
 };
 
 
+//template< typename T >
+//void ObjectManagerBase::FixUpDownMaps()
+//{
+//
+//}
+
+
+template< typename TYPE_RELATION >
+void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+                                       map< localIndex, array1d<globalIndex> > & unmappedIndices )
+{
+  bool allValuesMapped = true;
+  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    array1d<globalIndex> const & globalIndices = iter->second;
+    for( localIndex a=0 ; a<globalIndices.size() ; ++a )
+    {
+      if( globalIndices[a] != unmappedLocalIndexValue )
+      {
+        if( relation[li][a] == unmappedLocalIndexValue  )
+        {
+          relation[li][a] = globalToLocal.at(globalIndices[a]);
+        }
+        else
+        {
+          allValuesMapped = false;
+        }
+      }
+      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
+    }
+  }
+  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
+  unmappedIndices.clear();
+}
+
+
+template< typename TYPE_RELATION >
+void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+                                       map< localIndex, set<globalIndex> > & unmappedIndices )
+{
+  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    set<globalIndex> const & globalIndices = iter->second;
+    for( auto const newGlobalIndex : globalIndices )
+    {
+      relation[li].insert( globalToLocal.at( newGlobalIndex ) );
+    }
+  }
+  unmappedIndices.clear();
+}
+
 
 } /* namespace geosx */
+
+
 
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 

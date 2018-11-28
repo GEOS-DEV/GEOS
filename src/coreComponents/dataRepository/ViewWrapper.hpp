@@ -328,6 +328,11 @@ public:
 //
 //  };
 
+  virtual bool isPackable() const override final
+  {
+    return bufferOps::is_packable<T>::value;
+  }
+
   virtual localIndex Pack( char *& buffer ) const override final
   {
     localIndex packedSize = 0;

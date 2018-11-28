@@ -302,6 +302,8 @@ using mapPair_array = std::pair<localIndex_array, localIndex_array>;
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits<globalIndex>::max();
 constexpr static auto LOCALINDEX_MAX = std::numeric_limits<localIndex>::max();
 
+constexpr static localIndex unmappedLocalIndexValue = -1;
+
 //***** END LEGACY TYPEDEFS *****
 
 /**
