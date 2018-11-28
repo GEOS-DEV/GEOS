@@ -109,9 +109,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_poreVolumeRelation  = this->m_poreVolumeRelation;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
-
-  return rval;
+  return std::move(newConstitutiveRelation);
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,

@@ -2,9 +2,11 @@
 # Specify list of tests
 #
 
+if(ENABLE_PVTPackage)
 set( gtest_geosx_tests
      testCompMultiphaseFlow.cpp
    )
+endif(ENABLE_PVTPackage)
 
 #
 # Add gtest C++ based tests

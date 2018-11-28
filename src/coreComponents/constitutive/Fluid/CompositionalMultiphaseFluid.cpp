@@ -70,7 +70,7 @@ CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 std::unique_ptr<ConstitutiveBase>
 CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
 {
-  auto clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
+  std::unique_ptr< CompositionalMultiphaseFluid > clone = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
 
   clone->m_useMass = this->m_useMass;
 
@@ -89,7 +89,7 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
 
   clone->createFluid();
 
-  return clone;
+  return std::move(clone);
 }
 
 void CompositionalMultiphaseFluid::FillDocumentationNode()
