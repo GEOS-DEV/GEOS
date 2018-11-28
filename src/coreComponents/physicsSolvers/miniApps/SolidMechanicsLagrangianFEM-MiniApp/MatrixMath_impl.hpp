@@ -159,18 +159,19 @@ RAJA_INLINE void AijBkj (T A[local_dim][local_dim], T B[local_dim][local_dim], T
                              
 
 //Copy Global to Local;
+template <typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void GlobalToLocal(const localIndex nodeList[8], localIndex k, 
                                real64 u_local[24], real64 uhat_local[24],
-                               geosxData iu, geosxData iuhat)
+                               T iu, T iuhat)
 {  
   for(localIndex a=0; a<inumNodesPerElement; ++a)
     {
       localIndex id = nodeList[a];
       for(localIndex i=0; i<local_dim; ++i)
         {
-          u_local[i + local_dim*a] = iu[i+local_dim*id];
-          uhat_local[i + local_dim*a] = iuhat[i + local_dim*id];
+          u_local[i + local_dim*a] = iu(id, i);
+          uhat_local[i + local_dim*a] = iuhat(id, i);
         }
     }    
 }
@@ -199,9 +200,10 @@ RAJA_INLINE void GlobalToLocal(const localIndex nodeList[8], localIndex k,
 
 
 //Integrate Function
+template<typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local[local_dim*inumNodesPerElement],real64 idetJ, real64 detF, real64 Finv[local_dim][local_dim],
-                           real64 TotalStress[local_dim][local_dim], geosxData idNdX, localIndex k, localIndex q, localIndex noElem)
+                           real64 TotalStress[local_dim][local_dim], T idNdX, localIndex k, localIndex q, localIndex noElem)
   
 {
   //---------[Integrate - Function]---------------------
@@ -225,10 +227,11 @@ RAJA_INLINE void Integrate(real64 f_local[local_dim*inumNodesPerElement],real64 
 }
 
 //Integrate Function
+template<typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement], real64 f_local_y[inumNodesPerElement], real64 f_local_z[inumNodesPerElement],
                            real64 idetJ, real64 detF, real64 Finv[local_dim][local_dim],
-                           real64 TotalStress[local_dim][local_dim], geosxData idNdX_x, geosxData idNdX_y, geosxData idNdX_z,
+                           real64 TotalStress[local_dim][local_dim], T idNdX_x, T idNdX_y, T idNdX_z,
                            localIndex k, localIndex q, localIndex noElem)
   
 {
@@ -253,10 +256,11 @@ RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement], real64 f_local
 }
 
 //Integrate Function
+template<typename T, typename U>
 RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement], real64 f_local_y[inumNodesPerElement], real64 f_local_z[inumNodesPerElement],
-                           real64 idetJ, real64 detF, geosxData Finv_ptr,
-                           real64 TotalStress[local_dim][local_dim], geosxData idNdX_x, geosxData idNdX_y, geosxData idNdX_z,
+                           real64 idetJ, real64 detF, T Finv_ptr,
+                           real64 TotalStress[local_dim][local_dim], U idNdX_x, U idNdX_y, U idNdX_z,
                            localIndex k, localIndex q, localIndex noElem)
   
 {
@@ -288,10 +292,11 @@ RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement], real64 f_local
 
 
 //Integrate Function
+template<typename T, typename U>
 RAJA_HOST_DEVICE
 RAJA_INLINE void Integrate(real64 f_local[local_dim * inumNodesPerElement],
-                           real64 idetJ, real64 detF, geosxData Finv_ptr,
-                           real64 TotalStress[local_dim][local_dim], geosxData idNdX,
+                           real64 idetJ, real64 detF, T Finv_ptr,
+                           real64 TotalStress[local_dim][local_dim], U idNdX,
                            localIndex k, localIndex q, localIndex noElem)
   
 {
@@ -378,25 +383,25 @@ RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement],real64 f_local_
 }
 
 
-template<typename atomicPol, typename T>
+template<typename atomicPol, typename T, typename U>
 RAJA_HOST_DEVICE
-RAJA_INLINE void AddLocalToGlobal(T nodeList, real64 f_local[local_dim*inumNodesPerElement], geosxData iacc)
+RAJA_INLINE void AddLocalToGlobal(T nodeList, real64 f_local[local_dim*inumNodesPerElement], U iacc)
 {
   for(localIndex a=0; a<inumNodesPerElement; ++a)
     {          
       localIndex id = nodeList[a];
-      RAJA::atomic::atomicAdd<atomicPol>(&iacc[0 + local_dim*id],f_local[0 + local_dim*a]);
-      RAJA::atomic::atomicAdd<atomicPol>(&iacc[1 + local_dim*id],f_local[1 + local_dim*a]);
-      RAJA::atomic::atomicAdd<atomicPol>(&iacc[2 + local_dim*id],f_local[2 + local_dim*a]);
+      RAJA::atomic::atomicAdd<atomicPol>(&iacc(id, 0),f_local[0 + local_dim*a]);
+      RAJA::atomic::atomicAdd<atomicPol>(&iacc(id, 1),f_local[1 + local_dim*a]);
+      RAJA::atomic::atomicAdd<atomicPol>(&iacc(id, 2),f_local[2 + local_dim*a]);
     }
 }
 
 
-template<typename atomicPol, typename T>
+template<typename atomicPol, typename T, typename U>
 RAJA_HOST_DEVICE
 RAJA_INLINE void AddLocalToGlobal(T nodeList,
                                   real64 f_local_x[inumNodesPerElement],real64 f_local_y[inumNodesPerElement],real64 f_local_z[inumNodesPerElement],
-                                  geosxData iacc_x, geosxData iacc_y, geosxData iacc_z)
+                                  U iacc_x, U iacc_y, U iacc_z)
 {
   for(localIndex a=0; a<inumNodesPerElement; ++a)
     {          
@@ -407,10 +412,10 @@ RAJA_INLINE void AddLocalToGlobal(T nodeList,
     }
 }
 
-
+template<typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void CalculateGradient(real64 dUdX[3][3], real64 u_local[24],
-                                   geosxData idNdX, localIndex k, localIndex q, localIndex noElem){
+                                   T idNdX, localIndex k, localIndex q, localIndex noElem){
   for(localIndex a=0; a<inumNodesPerElement; ++a)
     {              
       dUdX[0][0] += u_local[0 + local_dim*a]*idNdX(k,q,a,0);
@@ -428,11 +433,13 @@ RAJA_INLINE void CalculateGradient(real64 dUdX[3][3], real64 u_local[24],
     
 }
 
+template<typename T> 
 RAJA_HOST_DEVICE
 RAJA_INLINE void CalculateGradient(real64 dUdX[3][3],
                                    real64 u_local_x[8], real64 u_local_y[8], real64 u_local_z[8],
-                                   geosxData idNdX_x,geosxData idNdX_y,geosxData idNdX_z,
-                                   localIndex k, localIndex q, localIndex noElem){
+                                   T idNdX_x, T idNdX_y, T idNdX_z,
+                                   localIndex k, localIndex q, localIndex noElem)
+{
   
   for(localIndex a=0; a<inumNodesPerElement; ++a)
     {              

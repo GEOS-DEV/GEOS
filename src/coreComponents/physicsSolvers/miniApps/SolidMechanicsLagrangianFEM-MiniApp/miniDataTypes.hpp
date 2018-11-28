@@ -43,6 +43,8 @@
 #include "Array.hpp"
 #include "SortedArray.hpp"
 #include "../../../math/TensorT/TensorT.h"
+#include "chai/ManagedArray.hpp"
+#include "chai/ArrayManager.hpp"
 
 #ifdef GEOSX_USE_ATK
 #include "axom/sidre/core/SidreTypes.hpp"

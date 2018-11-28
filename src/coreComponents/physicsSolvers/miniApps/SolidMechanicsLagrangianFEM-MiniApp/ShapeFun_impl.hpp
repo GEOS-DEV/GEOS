@@ -384,8 +384,9 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
   
 }
 
+template<typename T, typename U, typename W>
 RAJA_HOST_DEVICE
-RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const localIndex * elemsToNodes,
+RAJA_INLINE void make_dNdX(T dNdX, U X,  W elemsToNodes,
                            localIndex NoElem, localIndex nQpts, localIndex nDofs)
 {
 
@@ -403,10 +404,17 @@ RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const localIndex *
     //Copy local dofs
     for(localIndex a=0; a<nDofs; ++a)
       {
+#if defined(USE_GEOSX_ARRAY)
+        localIndex id = elemsToNodes.data()[a + inumNodesPerElement*k];
+        x_loc[a] = X.data()[0 + local_dim * id];
+        y_loc[a] = X.data()[1 + local_dim * id];
+        z_loc[a] = X.data()[2 + local_dim * id];
+#else
         localIndex id = elemsToNodes[a + inumNodesPerElement*k];
         x_loc[a] = X[0 + local_dim * id];
         y_loc[a] = X[1 + local_dim * id];
         z_loc[a] = X[2 + local_dim * id]; 
+#endif
       }
 
     //loop over quadrature points
@@ -470,9 +478,16 @@ RAJA_INLINE void make_dNdX(geosxData dNdX, const real64 * X,  const localIndex *
           }
           
           localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+
+#if defined(USE_GEOSX_ARRAY)          
+          dNdX.data()[0 + local_dim*id] = dX[0];
+          dNdX.data()[1 + local_dim*id] = dX[1];
+          dNdX.data()[2 + local_dim*id] = dX[2];
+#else
           dNdX[0 + local_dim*id] = dX[0];
           dNdX[1 + local_dim*id] = dX[1];
           dNdX[2 + local_dim*id] = dX[2];
+#endif
         }
         
       }//loop over quadrature points

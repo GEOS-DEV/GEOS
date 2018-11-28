@@ -20,7 +20,10 @@
 #define __DATA_LAYOUT_HPP_
 
 #include "RAJA/RAJA.hpp"
+#include "Array.hpp"
+#include "ChaiVector.hpp"
 #include <iostream>
+#include "MemoryManager_impl.hpp"
 
 //#include "common/DataTypes.hpp"
 #include "miniDataTypes.hpp"
@@ -64,6 +67,12 @@ using geosxIndex = const localIndex * const RAJA_RESTRICT;
 //#define STRESS_FUN_FAST_INDEX_ELEM
 //#define INVERT_REST_FAST_INDEX_ELEM
 //#define THREE_KERNEL_DATA_FAST_INDEX_ELEM
+
+//Select between raw ptr vs array
+#define USE_GEOSX_ARRAY
+
+
+
 void printParameters()
 {  
 #if defined(STRUCTURED_GRID)
@@ -111,6 +120,13 @@ using atomicPol = RAJA::atomic::loop_atomic;
 #endif
 
 
+#if !defined(USE_GEOSX_ARRAY)
+
+#define iu(k,i) iu[i + local_dim*id]
+#define iuhat(k,i) iuhat[i + local_dim*id]
+
+
+
 //constitutive update
 #if defined(THREE_KERNEL_DATA_FASTEST_INDEX_ELEM)
 #define Dadt_ptr(k, q, r, c) Dadt_ptr[k + noElem*(c + 3*(r + 3*q))]
@@ -156,5 +172,6 @@ using atomicPol = RAJA::atomic::loop_atomic;
 #define idetJ(k,q) idetJ[q + inumQuadraturePoints*k]
 #endif
 
+#endif
 
 #endif

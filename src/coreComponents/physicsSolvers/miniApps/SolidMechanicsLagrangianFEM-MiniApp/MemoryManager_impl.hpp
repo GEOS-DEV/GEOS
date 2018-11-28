@@ -35,6 +35,9 @@
 #define EXAMPLES_MEMORYMANAGER_HPP
 
 #include "RAJA/RAJA.hpp"
+#include "Layout.hpp"
+#include "chai/ManagedArray.hpp"
+#include "chai/util/forall.hpp"
 
 /*
   As RAJA does not manage memory we include a general purpose memory
@@ -49,9 +52,9 @@ namespace memoryManager{
   {
     T *ptr;
     dataAlloc += size * sizeof(T);
+
 #if defined(RAJA_ENABLE_CUDA)
     cudaMallocManaged((void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal);
-#else
     ptr = new T[size];
 #endif
     return ptr;

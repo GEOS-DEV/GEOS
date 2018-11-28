@@ -86,6 +86,7 @@ namespace SolidMechanicsLagrangianFEMKernels{
 ///shape function derivatives stored in object of arrays format. 
 ///Computations are carried out in a monothilic kernel.
 ///
+
 template<typename Pol>
 RAJA_INLINE
 void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
@@ -102,7 +103,7 @@ void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
                           localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
 
-
+  /*
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
       
       real64 uhat_local_x[inumNodesPerElement];
@@ -241,6 +242,7 @@ void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
       AddLocalToGlobal<atomicPol>(nodeList,f_local_x, f_local_y, f_local_z, iacc_x, iacc_y, iacc_z);
 
     });
+  */
 
 }
 
@@ -265,6 +267,7 @@ void ObjectOfArraysKernel_Shape(localIndex noElem, geosxIndex elemList, real64 d
 {
 
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+      /*
 
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -413,7 +416,7 @@ void ObjectOfArraysKernel_Shape(localIndex noElem, geosxIndex elemList, real64 d
 
       //Atomic policy
       AddLocalToGlobal<atomicPol>(nodeList,f_local_x, f_local_y, f_local_z, iacc_x, iacc_y, iacc_z);
-
+      */
     });
 
 } 
@@ -436,7 +439,8 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(localIndex noElem, geosxIndex elemLi
 
 
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
-      
+
+      /*      
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
        real64 f_local[local_dim*inumNodesPerElement] = {0};
@@ -568,7 +572,7 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(localIndex noElem, geosxIndex elemLi
         }//end of quadrature
 
       AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);      
-      
+      */      
      });
 
 }
@@ -578,6 +582,18 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(localIndex noElem, geosxIndex elemLi
 ///shape function derivatives stored as an object of structs format.
 ///All computations are done in a monolithic kernel.
 ///      
+#if defined(USE_GEOSX_ARRAY)
+template<typename Pol, typename T1, typename T2, typename T3, 
+         typename T4, typename T5, typename T6, typename T7,
+         typename T8, typename T9, typename T10>
+RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, T1 elemList, real64 dt,
+                                      T2 elemsToNodes, T3 iu,
+                                      T4 iuhat, T5 idNdX,
+                                      T6 iconstitutiveMap, T7 idevStressData,
+                                      T8 imeanStress, real64 ishearModulus, real64 ibulkModulus,
+                                      T9 idetJ, T10 iacc, constUpdate updateState_ptr,
+                                      localIndex nx=2, localIndex ny=2, localIndex nz=2)
+#else
 template<typename Pol>
 RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, real64 dt,
                                       const localIndex * const elemsToNodes, geosxData iu,
@@ -586,32 +602,38 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
                                       geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                       const real64 * idetJ, geosxData iacc, constUpdate updateState_ptr,
                                       localIndex nx=2, localIndex ny=2, localIndex nz=2)
+#endif
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  //geosx::forall_in_set<Pol>(elemList.data(), noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_range<Pol>(0, noElem, GEOSX_LAMBDA (globalIndex k) {
 
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
        real64 f_local[local_dim*inumNodesPerElement] = {0};
 
+
 #if defined(STRUCTURED_GRID)
        localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
+#if defined(USE_GEOSX_ARRAY)
+       const localIndex *nodeList = (&elemsToNodes.data()[inumNodesPerElement*k]);
+#else       
        const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+#endif
 #endif       
 
        //Copy Global to Local
        GlobalToLocal(nodeList, k, 
                      u_local,  uhat_local, iu, iuhat);              
-                                          
+
       //Compute Quadrature
       for(localIndex q=0; q<inumQuadraturePoints; ++q)
 
         {
 
-          real64 dUdX[local_dim][local_dim] = {{0.0}};
-          
+          real64 dUdX[local_dim][local_dim] = {{0.0}};          
           real64 dUhatdX[local_dim][local_dim] = {{0.0}};
 
           //Calculate Gradient
@@ -687,11 +709,12 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
           //UpdateStatePoint(Dadt,Rot,m, q,k, idevStressData,
           //imeanStress,ishearModulus, ibulkModulus,noElem);
           
-          updateState_ptr(Dadt,Rot,m, q,k, idevStressData,
+          //real64 * meanStressPtr = imeanStress.data();
+          updateState_ptr(Dadt,Rot, m, q, k, idevStressData,
                           imeanStress, ishearModulus, ibulkModulus, noElem);
+
           //-------------------------------------------
 
-          
           real64 TotalStress[local_dim][local_dim];          
           TotalStress[0][0] = idevStressData(k,q,0);
           TotalStress[1][0] = idevStressData(k,q,1);
@@ -706,14 +729,18 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
 
           for(localIndex i=0; i<local_dim; ++i)
             {
+#if defined(USE_GEOSX_ARRAY)
+              TotalStress[i][i] += imeanStress(m);
+#else
               TotalStress[i][i] += imeanStress[m];
+#endif
             }
                     
           Integrate(f_local, idetJ(k,q), detF, Finv, TotalStress, idNdX, k, q, noElem); 
         }//end of quadrature
 
       AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);
-      
+
      });
 
 }
@@ -738,6 +765,7 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(localIndex noElem, geosxIndex el
 
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
        
+      /*
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
 
@@ -845,7 +873,7 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(localIndex noElem, geosxIndex el
           }
                             
         }//end of quadrature
-
+      */
      });
 
    
@@ -864,6 +892,7 @@ RAJA_INLINE void ConstitutiveUpdateKernel(localIndex noElem, geosxIndex elemList
 
 
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+      /*
       
       for(localIndex q=0; q < inumQuadraturePoints; ++q){      
 
@@ -930,7 +959,7 @@ RAJA_INLINE void ConstitutiveUpdateKernel(localIndex noElem, geosxIndex elemList
         idevStressData(k,q,5) = localDevStress[2][2];
         
       }//quadrature loop
-        
+      */        
     }); //element loop
   
 }
@@ -952,7 +981,8 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(localIndex noElem, geosxIndex 
 {
   
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
-       
+
+      /*       
 #if defined(STRUCTURED_GRID)
        localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
@@ -990,6 +1020,7 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(localIndex noElem, geosxIndex 
          }//end of quadrature
 
        AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);       
+      */
      });
       
 }
@@ -1016,7 +1047,7 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(localIndex noElem, geosxIndex el
 
 
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
-       
+      /*
        real64 uhat_local_x[inumNodesPerElement];
        real64 uhat_local_y[inumNodesPerElement];
        real64 uhat_local_z[inumNodesPerElement];
@@ -1132,8 +1163,8 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(localIndex noElem, geosxIndex el
              }
            }           
            
-         }//end of quadrature
-       
+           }//end of quadrature
+      */       
      });
    
    
@@ -1159,7 +1190,7 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex 
 {
 
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
-
+      /*
 #if defined(STRUCTURED_GRID)
        localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
@@ -1198,7 +1229,7 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex 
         }//end of quadrature
 
        AddLocalToGlobal<atomicPol>(nodeList, f_local_x, f_local_y, f_local_z, iacc_x, iacc_y, iacc_z);
-                   
+      */
      });
       
 }
