@@ -142,6 +142,11 @@ private:
 
 protected:
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  virtual void ResetViews( DomainPartition * const domain );
+
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;
 
@@ -165,6 +170,22 @@ protected:
 
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
+
+  /**
+   * @brief Copyable struct to hold shortcut views into constant data fields
+   */
+  struct dataViewStruct
+  {
+    template<typename T, int NDIM>
+    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
+
+    ElementViewAccessor<integer, 1> elemGhostRank;
+    ElementViewAccessor<real64, 1>  volume;
+    ElementViewAccessor<real64, 1>  porosityRef;
+  };
+
+  /// views into constant data fields
+  dataViewStruct     m_dataView;
 
 };
 

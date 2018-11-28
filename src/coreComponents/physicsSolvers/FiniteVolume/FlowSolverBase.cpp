@@ -244,5 +244,21 @@ void FlowSolverBase::PrecomputeData(DomainPartition * const domain)
 
 FlowSolverBase::~FlowSolverBase() = default;
 
+void FlowSolverBase::ResetViews( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  m_dataView.elemGhostRank =
+    elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  m_dataView.porosityRef =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::referencePorosityString );
+
+  m_dataView.volume =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CellBlockSubRegion::viewKeyStruct::elementVolumeString );
+
+}
+
 
 } // namespace geosx

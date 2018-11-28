@@ -25,6 +25,7 @@
 
 #include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "../../mesh/ElementRegionManager.hpp"
 
 class Epetra_FECrsGraph;
 
@@ -463,12 +464,17 @@ private:
                                      localIndex offset );
 
   /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
+
+  /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param object the target ObjectManager for the application of the BC.
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyDirichletBC_implicit( DomainPartition * const object,
+  void ApplyDirichletBC_implicit( DomainPartition * const domain,
                                   real64 const time, real64 const dt,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
@@ -499,6 +505,99 @@ private:
 
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
+
+
+  /**
+   * @brief Copyable struct to hold shortcut views into primary variable fields
+   */
+  struct varViewStruct
+  {
+    template<typename T, int NDIM>
+    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
+
+    ElementViewAccessor<globalIndex, 1> dofNumber; // TODO will move to DofManager
+
+    ElementViewAccessor<real64, 1>      pressure;
+    ElementViewAccessor<real64, 1>      deltaPressure;
+
+    ElementViewAccessor<real64, 2>      globalCompDensity;
+    ElementViewAccessor<real64, 2>      deltaGlobalCompDensity;
+  };
+
+  /**
+   * @brief Copyable struct to hold shortcut views into other variable fields
+   */
+  struct fieldViewStruct
+  {
+    template<typename T, int NDIM>
+    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
+
+    ElementViewAccessor<real64, 2> compFrac;
+    ElementViewAccessor<real64, 3> dCompFrac_dCompDens;
+
+    ElementViewAccessor<real64, 2> phaseVolFrac;
+    ElementViewAccessor<real64, 2> dPhaseVolFrac_dPres;
+    ElementViewAccessor<real64, 3> dPhaseVolFrac_dCompDens;
+  };
+
+  /**
+   * @brief Copyable struct to hold shortcut views into backup fields
+   */
+  struct backupViewStruct
+  {
+    template<typename T, int NDIM>
+    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
+
+    ElementViewAccessor<real64, 1> porosityOld;
+    ElementViewAccessor<real64, 2> phaseVolFracOld;
+    ElementViewAccessor<real64, 2> phaseDensOld;
+    ElementViewAccessor<real64, 3> phaseCompFracOld;
+  };
+
+  /**
+   * @brief Copyable struct to hold shortcut views into constitutive fields
+   */
+  struct materialViewStruct
+  {
+    template<typename T, int NDIM>
+    using MaterialViewAccessor = ElementRegionManager::MaterialViewAccessor<array_view<T, NDIM>>;
+
+    MaterialViewAccessor<real64, 2> pvMult;
+    MaterialViewAccessor<real64, 2> dPvMult_dPres;
+
+    MaterialViewAccessor<real64, 3> phaseFrac;
+    MaterialViewAccessor<real64, 3> dPhaseFrac_dPres;
+    MaterialViewAccessor<real64, 4> dPhaseFrac_dComp;
+
+    MaterialViewAccessor<real64, 3> phaseDens;
+    MaterialViewAccessor<real64, 3> dPhaseDens_dPres;
+    MaterialViewAccessor<real64, 4> dPhaseDens_dComp;
+
+    MaterialViewAccessor<real64, 3> phaseVisc;
+    MaterialViewAccessor<real64, 3> dPhaseVisc_dPres;
+    MaterialViewAccessor<real64, 4> dPhaseVisc_dComp;
+
+    MaterialViewAccessor<real64, 4> phaseCompFrac;
+    MaterialViewAccessor<real64, 4> dPhaseCompFrac_dPres;
+    MaterialViewAccessor<real64, 5> dPhaseCompFrac_dComp;
+
+    MaterialViewAccessor<real64, 2> totalDens;
+
+    MaterialViewAccessor<real64, 3> phaseRelPerm;
+    MaterialViewAccessor<real64, 4> dPhaseRelPerm_dPhaseVolFrac;
+  };
+
+  /// views into primary variable fields
+  varViewStruct      m_varView;
+
+  /// views into other variable fields
+  fieldViewStruct    m_fieldView;
+
+  /// views into backup fields
+  backupViewStruct   m_backupView;
+
+  /// views into constitutive fields
+  materialViewStruct m_matView;
 };
 
 } // namespace geosx
