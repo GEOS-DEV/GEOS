@@ -284,53 +284,39 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
 
-//  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
   localIndex const numPackedIndices = packList.size();
   packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
   if( numPackedIndices > 0 )
   {
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
+    packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
-  string_array wrapperNamesForPacking;
-  if( wrapperNames.size()==0 )
-  {
-    set<localIndex> exclusionList;
-    ViewPackingExclusionList(exclusionList);
-    wrapperNamesForPacking.resize( this->wrappers().size() );
-    localIndex count = 0;
-    for( localIndex k=0 ; k<this->wrappers().size() ; ++k )
+    string_array wrapperNamesForPacking;
+    if( wrapperNames.size()==0 )
     {
-      if( exclusionList.count(k) == 0)
+      set<localIndex> exclusionList;
+      ViewPackingExclusionList(exclusionList);
+      wrapperNamesForPacking.resize( this->wrappers().size() );
+      localIndex count = 0;
+      for( localIndex k=0 ; k<this->wrappers().size() ; ++k )
       {
-        wrapperNamesForPacking[count++] = wrappers().values()[k].first;
+        if( exclusionList.count(k) == 0)
+        {
+          wrapperNamesForPacking[count++] = wrappers().values()[k].first;
+        }
       }
+      wrapperNamesForPacking.resize(count);
     }
-    wrapperNamesForPacking.resize(count);
-  }
-  else
-  {
-    wrapperNamesForPacking = wrapperNames;
-  }
-
-  packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperNamesForPacking.size() );
-  for( auto const & wrapperName : wrapperNamesForPacking )
-  {
-    dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-    packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
-//    if( packList.empty() )
-//    {
-//      if(DOPACK)
-//      {
-//        packedSize += wrapper->Pack( buffer );
-//      }
-//      else
-//      {
-//        packedSize += wrapper->PackSize();
-//      }
-//    }
-//    else
+    else
     {
+      wrapperNamesForPacking = wrapperNames;
+    }
+
+    packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperNamesForPacking.size() );
+    for( auto const & wrapperName : wrapperNamesForPacking )
+    {
+      dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
       if(DOPACK)
       {
         packedSize += wrapper->Pack( buffer, packList );
@@ -340,7 +326,6 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
         packedSize += wrapper->PackSize( packList );
       }
     }
-  }
   }
 
 
@@ -359,8 +344,6 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-//template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,string_array const & , localIndex_array const &, integer const ) const;
-//template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,string_array const & , localIndex_array const &, integer const ) const;
 
 
 
@@ -383,30 +366,19 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   if( numUnpackedIndices > 0 )
   {
 
-//  integer readIncludeGlobalIndices;
-//  unpackedSize += CommBufferOps::Unpack( buffer, readIncludeGlobalIndices);
+    string wrappersLabel;
+    unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
+    GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
 
-  string wrappersLabel;
-  unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
-
-
-//  if( readIncludeGlobalIndices )
-//  {
-//    localIndex_array unpackedLocalIndices;
-//    unpackedLocalIndices.resize(numUnpackedIndices);
-//
-//  }
-
-  localIndex numWrappers;
-  unpackedSize += bufferOps::Unpack( buffer, numWrappers);
-  for( localIndex a=0 ; a<numWrappers ; ++a )
-  {
-    string wrapperName;
-    unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-    ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-    unpackedSize += wrapper->Unpack(buffer,packList);
-  }
+    localIndex numWrappers;
+    unpackedSize += bufferOps::Unpack( buffer, numWrappers);
+    for( localIndex a=0 ; a<numWrappers ; ++a )
+    {
+      string wrapperName;
+      unpackedSize += bufferOps::Unpack( buffer, wrapperName );
+      ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
+      unpackedSize += wrapper->Unpack(buffer,packList);
+    }
   }
 
   if( recursive > 0 )
@@ -462,32 +434,20 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
-//  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
   localIndex const numPackedIndices = packList.size();
   packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
 
   if( numPackedIndices > 0 )
   {
-  globalIndex_array globalIndices;
-  globalIndices.resize(numPackedIndices);
-//  if( packList.size()==0 )
-//  {
-//    for( localIndex a=0 ; a<numPackedIndices ; ++a )
-//    {
-//      globalIndices[a] = this->m_localToGlobalMap[a];
-//    }
-//  }
-//  else
-  {
+    globalIndex_array globalIndices;
+    globalIndices.resize(numPackedIndices);
     for( localIndex a=0 ; a<numPackedIndices ; ++a )
     {
       globalIndices[a] = this->m_localToGlobalMap[packList[a]];
     }
-  }
-  packedSize += bufferOps::Pack<DOPACK>( buffer, globalIndices );
+    packedSize += bufferOps::Pack<DOPACK>( buffer, globalIndices );
   }
 
-//  packedSize += CommBufferOps::Pack<DOPACK>( buffer, recursive );
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
@@ -505,8 +465,6 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
 
   return packedSize;
 }
-//template int ObjectManagerBase::PackGlobalMapsPrivate<true>( buffer_unit_type * &, localIndex_array const &, integer const ) const;
-//template int ObjectManagerBase::PackGlobalMapsPrivate<false>( buffer_unit_type * &, localIndex_array const &, integer const ) const;
 
 localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
                                                 localIndex_array & packList,
@@ -531,86 +489,65 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
   if( numUnpackedIndices > 0 )
   {
-  localIndex_array unpackedLocalIndices;
-  unpackedLocalIndices.resize(numUnpackedIndices);
+    localIndex_array unpackedLocalIndices;
+    unpackedLocalIndices.resize(numUnpackedIndices);
 
-  globalIndex_array globalIndices;
-  unpackedSize += bufferOps::Unpack( buffer, globalIndices );
-  localIndex numNewIndices = 0;
-  globalIndex_array newGlobalIndices;
-  localIndex const oldSize = this->size();
-  for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
-  {
-    // check to see if the object already exists by checking for the global
-    // index in m_globalToLocalMap. If it doesn't, then add the object
-    map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
-    if( iterG2L == m_globalToLocalMap.end() )
+    globalIndex_array globalIndices;
+    unpackedSize += bufferOps::Unpack( buffer, globalIndices );
+    localIndex numNewIndices = 0;
+    globalIndex_array newGlobalIndices;
+    localIndex const oldSize = this->size();
+    for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
     {
-      // object does not exist on this domain
-      const localIndex newLocalIndex = oldSize + numNewIndices;
-
-      // add the global index of the new object to the globalToLocal map
-      m_globalToLocalMap[globalIndices[a]] = newLocalIndex;
-
-      unpackedLocalIndices(a) = newLocalIndex;
-
-      newGlobalIndices.push_back( globalIndices[a] );
-
-      ++numNewIndices;
-
-      GEOS_ERROR_IF( packList.size() != 0,
-                   "ObjectManagerBase::Unpack(): packList specified, "
-                   "but a new globalIndex is unpacked");
-    }
-    else
-    {
-      // object already exists on this domain
-      // get the local index of the node
-      localIndex b = iterG2L->second;
-      unpackedLocalIndices(a) = b;
-      if( ( sendingRank < rank && m_ghostRank[b] <= -1) || ( sendingRank < m_ghostRank[b] ) )
+      // check to see if the object already exists by checking for the global
+      // index in m_globalToLocalMap. If it doesn't, then add the object
+      map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
+      if( iterG2L == m_globalToLocalMap.end() )
       {
-        m_ghostRank[b] = sendingRank;
+        // object does not exist on this domain
+        const localIndex newLocalIndex = oldSize + numNewIndices;
+
+        // add the global index of the new object to the globalToLocal map
+        m_globalToLocalMap[globalIndices[a]] = newLocalIndex;
+
+        unpackedLocalIndices(a) = newLocalIndex;
+
+        newGlobalIndices.push_back( globalIndices[a] );
+
+        ++numNewIndices;
+
+        GEOS_ERROR_IF( packList.size() != 0,
+                       "ObjectManagerBase::Unpack(): packList specified, "
+                       "but a new globalIndex is unpacked");
+      }
+      else
+      {
+        // object already exists on this domain
+        // get the local index of the node
+        localIndex b = iterG2L->second;
+        unpackedLocalIndices(a) = b;
+        if( ( sendingRank < rank && m_ghostRank[b] <= -1) || ( sendingRank < m_ghostRank[b] ) )
+        {
+          m_ghostRank[b] = sendingRank;
+        }
       }
     }
-  }
-  newGlobalIndices.resize(numNewIndices);
-//  newLocalIndices.resize(numNewIndices);
+    newGlobalIndices.resize(numNewIndices);
+    //  newLocalIndices.resize(numNewIndices);
 
-  // figure out new size of object container, and resize it
-  const localIndex newSize = oldSize + numNewIndices;
-  this->resize( newSize );
+    // figure out new size of object container, and resize it
+    const localIndex newSize = oldSize + numNewIndices;
+    this->resize( newSize );
 
-  // add the new indices to the maps.
-  for( int a=0 ; a<numNewIndices ; ++a )
-  {
-    localIndex const b = oldSize + a;
-    m_localToGlobalMap[b] = newGlobalIndices(a);
-//    newLocalIndices[a] = b;
-    m_ghostRank[b] = sendingRank;
-  }
+    // add the new indices to the maps.
+    for( int a=0 ; a<numNewIndices ; ++a )
+    {
+      localIndex const b = oldSize + a;
+      m_localToGlobalMap[b] = newGlobalIndices(a);
+      //    newLocalIndices[a] = b;
+      m_ghostRank[b] = sendingRank;
+    }
 
-
-
-//    for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
-//    {
-//      localIndex const b = m_globalToLocalMap.at(globalIndices[a]);
-//      if( m_ghostRank[b]==-1 )
-//      {
-//        if( sendingRank < rank )
-//        {
-//          m_ghostRank[b] = sendingRank;
-//        }
-//      }
-//      else
-//      {
-//        if( sendingRank < m_ghostRank[b] )
-//        {
-//          m_ghostRank[b] = sendingRank;
-//        }
-//
-//      }
-//    }
 
     packList = unpackedLocalIndices;
   }
