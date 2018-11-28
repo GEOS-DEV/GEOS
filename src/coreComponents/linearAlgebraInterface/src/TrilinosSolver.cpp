@@ -36,80 +36,155 @@
 // Put everything under the geosx namespace.
 namespace geosx
 {
-/**
- * @brief Empty solver constructor.
- *
- * Create an empty (distributed) vector.
- */
 
 // ----------------------------
 // Constructors
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Empty constructor
+// Constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-TrilinosSolver::TrilinosSolver()
+TrilinosSolver::TrilinosSolver(LinearSolverParameters const & parameters)
+  :
+  m_parameters(parameters)
 {}
 
-/**
- * @brief Solve system.
- *
- * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector. Prec is an optional
- * pointer to a preconditioner.
- */
+
+// ----------------------------
+// Top-Level Solver
+// ----------------------------
+// We switch between different solverTypes here
+
+void TrilinosSolver::solve( EpetraMatrix &mat,
+                            EpetraVector &sol,
+                            EpetraVector &rhs)
+{
+  if(m_parameters.solverType == "direct")
+    solve_direct(mat,sol,rhs);
+  else
+    solve_krylov(mat,sol,rhs);
+}
+ 
+// ----------------------------
+// Direct solver
+// ----------------------------
+
+void TrilinosSolver::solve_direct( EpetraMatrix &mat,
+                                   EpetraVector &sol,
+                                   EpetraVector &rhs )
+{
+  // Create Epetra linear problem and instantiate solver.
+  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
+
+  // Instantiate the Amesos solver.
+  Amesos_BaseSolver* solver;
+  Amesos Factory;
+
+  // Select KLU solver (only one available as of 9/20/2018)
+  solver = Factory.Create( "Klu", problem );
+
+  // Factorize the matrix
+  solver->SymbolicFactorization();
+  solver->NumericFactorization();
+
+  // Solve the system
+  solver->Solve();
+
+  // Basic output
+  if(m_parameters.verbosity > 0)
+  {
+   solver->PrintStatus();
+   solver->PrintTiming();
+  }
+}
+
 
 // ----------------------------
 // Iterative solver
 // ----------------------------
 
-void TrilinosSolver::solve( EpetraMatrix &Mat,
-                            EpetraVector &sol,
-                            EpetraVector &rhs,
-                            integer const max_iter,
-                            real64 const newton_tol,
-                            std::unique_ptr<Epetra_Operator> Prec )
+void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
+                                   EpetraVector &sol,
+                                   EpetraVector &rhs)
 {
   // Create Epetra linear problem.
-  Epetra_LinearProblem problem( Mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
+  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
 
   // Instantiate the AztecOO solver.
   AztecOO solver( problem );
 
-  // Set the preconditioner if needed.
-  if( Prec != nullptr )
+  // Choose the solver type
+  if(m_parameters.solverType == "gmres")
   {
-    solver.SetPrecOperator( Prec.get());
-  }
-  else
-  {
-      // Other parameters used to debug
-//    solver.SetAztecOption( AZ_solver, AZ_cg );
-//    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
-//    solver.SetAztecOption( AZ_conv, AZ_noscaled );
-
-    // Choose the solver (GMRES)
     solver.SetAztecOption( AZ_solver, AZ_gmres );
-
-    // Choose the preconditioner type (domain decomposition / additive Schwarz)
-    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-
-    // Choose the subdomain solver (ILUT)
-    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
-
-    // Choose the fill level (3.0) (Note: this is not equivalent to ILU(3)!)
-    solver.SetAztecParam( AZ_ilut_fill, 3.0 );
-
+    solver.SetAztecOption( AZ_kspace, m_parameters.krylov.maxRestart );
   }
+  else if(m_parameters.solverType == "bicgstab")
+  {
+    solver.SetAztecOption( AZ_solver, AZ_bicgstab );
+  }
+  else if(m_parameters.solverType == "cg")
+  {
+    solver.SetAztecOption( AZ_solver, AZ_cg );
+  }
+  else 
+    GEOS_ERROR("The requested linear solverType doesn't seem to exist");
+
+  // Choose the preconditioner type 
+  if(m_parameters.preconditionerType == "none")
+  {
+    solver.SetAztecOption( AZ_precond, AZ_none );
+  }
+  else if(m_parameters.preconditionerType == "jacobi")
+  {
+    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
+  }
+  else if(m_parameters.preconditionerType == "ilu")
+  {
+    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
+    solver.SetAztecOption( AZ_overlap, 0 );
+    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilu );
+    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
+  }
+  else if(m_parameters.preconditionerType == "icc")
+  {
+    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
+    solver.SetAztecOption( AZ_overlap, 0 );
+    solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
+    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
+  }
+  else if(m_parameters.preconditionerType == "ilut")
+  {
+    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
+    solver.SetAztecOption( AZ_overlap, 0 );
+    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
+    solver.SetAztecParam( AZ_ilut_fill, (m_parameters.ilu.fill>0?real64(m_parameters.ilu.fill):1.0)); 
+  }
+  else 
+    GEOS_ERROR("The requested preconditionerType doesn't seem to exist");
+
   // Ask for a convergence normalized by the right hand side
   solver.SetAztecOption( AZ_conv, AZ_rhs );
 
-  // Set output (TODO verbosity manager?)
-  solver.SetAztecOption( AZ_output, AZ_last );
+  // Control output
+  switch(m_parameters.verbosity)
+  {
+    case 1:
+      solver.SetAztecOption( AZ_output, AZ_summary );
+      solver.SetAztecOption( AZ_diagnostics, AZ_all );
+      break;
+    case 2:
+      solver.SetAztecOption( AZ_output, AZ_all );
+      solver.SetAztecOption( AZ_diagnostics, AZ_all );
+      break;
+    default:
+      solver.SetAztecOption( AZ_output, AZ_none );
+  }
 
-  // Solve
-  solver.Iterate( max_iter, newton_tol );
+  // Actually solve
+  solver.Iterate( m_parameters.krylov.maxIterations, 
+                  m_parameters.krylov.tolerance );
 }
 
 /**
@@ -125,7 +200,7 @@ void TrilinosSolver::solve( EpetraMatrix &Mat,
 // Iterative solver with ML
 // ----------------------------
 // Initial test of an ML-based preconditioner.
-
+#if 0
 void TrilinosSolver::ml_solve( EpetraMatrix &Mat,
                                EpetraVector &sol,
                                EpetraVector &rhs,
@@ -157,42 +232,7 @@ void TrilinosSolver::ml_solve( EpetraMatrix &Mat,
   // Solver the system
   solver.Iterate( max_iter, newton_tol );
 }
+#endif
 
-/**
- * @brief Solve system using a direct solver (sequential!).
- *
- * Solve Ax=b with A an EpetraMatrix, x and b EpetraVectors.
- *
- */
+} // end geosx namespace
 
-// ----------------------------
-// Direct solver
-// ----------------------------
-
-void TrilinosSolver::dsolve( EpetraMatrix &Mat,
-                             EpetraVector &sol,
-                             EpetraVector &rhs )
-{
-  // Create Epetra linear problem and instantiate solver.
-  Epetra_LinearProblem problem( Mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
-
-  // Instantiate the Amesos solver.
-  Amesos_BaseSolver* solver;
-  Amesos Factory;
-
-  // Select KLU solver (only one available as of 9/20/2018)
-  solver = Factory.Create( "Klu", problem );
-
-  // Factorize the matrix
-  solver->SymbolicFactorization();
-  solver->NumericFactorization();
-
-  // Solve the system
-  solver->Solve();
-
-  // Set output (TODO verbosity manager?)
-  solver->PrintStatus();
-  solver->PrintTiming();
-}
-
-}

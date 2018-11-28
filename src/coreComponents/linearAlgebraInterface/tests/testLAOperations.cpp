@@ -42,6 +42,8 @@
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
+#include "LinearSolverParameters.hpp"
+
 #include "NativeCG.hpp"
 #include "NativeBICGSTAB.hpp"
 #include "BlockMatrixView.hpp"
@@ -278,15 +280,20 @@ void testInterfaceSolvers()
   real64 normRes = r.normInf();
   EXPECT_DOUBLE_EQ( normRes, 0. );
 
-  // Now declare a solver object with desired options
-  //LinearSolverParameters parameters;
-  //                       parameters.krylov_tolerance = 1e-8;
-  //                       parameters.max_krylov_iterations = 1000;
-  LinearSolver solver = LinearSolver();
-  //solver.setParameters(parameters);
+  // Now create a solver parameter list and solver
+  LinearSolverParameters parameters;
+  LinearSolver solver(parameters);             
+
+  // Overload some default options
+  parameters.solverType = "bicgstab";
+  parameters.preconditionerType = "icc";
+  parameters.krylov.tolerance = 1e-8;
+  parameters.krylov.maxIterations = 250;
+  parameters.ilu.fill = 1;
+  parameters.verbosity = 1;
 
   // Solve using the iterative solver and compare norms with true solution
-  solver.solve( matrix, x_comp, b, 1000, 1e-8);
+  solver.solve( matrix, x_comp, b);
   real64 norm_comp = x_comp.norm2();
   real64 norm_true = x_true.norm2();
   EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-6 );
@@ -299,10 +306,9 @@ void testInterfaceSolvers()
   // Again the norm should be the norm of x. We use a tougher tolerance on the test
   // compared to the iterative solution. This should be accurate to machine precision
   // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
-  //parameters.type = "direct";
-  //solver.setParameters(parameters);
   x_comp.zero();
-  solver.dsolve( matrix, x_comp, b );
+  parameters.solverType = "direct";
+  solver.solve( matrix, x_comp, b );
   norm_comp = x_comp.norm2();
   EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-12 );
 

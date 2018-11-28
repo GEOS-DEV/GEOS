@@ -11,7 +11,8 @@ set( linearAlgebraInterface_headers
      InterfaceTypes.hpp
      TrilinosSolver.hpp
      TrilinosInterface.hpp
-     HypreInterface.hpp )
+     HypreInterface.hpp 
+     LinearSolverParameters.hpp)
 
 #
 # Specify all sources
