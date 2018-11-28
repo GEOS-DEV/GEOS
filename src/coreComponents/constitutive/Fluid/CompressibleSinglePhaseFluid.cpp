@@ -68,9 +68,7 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
   newConstitutiveRelation->m_densityRelation    = this->m_densityRelation;
   newConstitutiveRelation->m_viscosityRelation  = this->m_viscosityRelation;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
-
-  return rval;
+  return newConstitutiveRelation;
 }
 
 void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,

@@ -89,8 +89,7 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
 
   clone->createFluid();
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
-  return rval;
+  return clone;
 }
 
 void CompositionalMultiphaseFluid::FillDocumentationNode()
