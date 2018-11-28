@@ -69,8 +69,7 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
 
   clone->createFluid();
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
-  return rval;
+  return std::move( clone );
 }
 
 void BlackOilFluid::FillDocumentationNode()
