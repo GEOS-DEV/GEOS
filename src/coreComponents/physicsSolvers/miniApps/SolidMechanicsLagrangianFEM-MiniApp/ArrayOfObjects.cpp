@@ -93,8 +93,8 @@ int main(int argc, char* const argv[])
   //Allocate space for shape function derivatives and compute their values
   //
 #if defined(USE_GEOSX_ARRAY)
-  LvArray::Array<localIndex, 4, localIndex> _dNdX(NoElem, inumQuadraturePoints, inumNodesPerElement, local_dim);
-  LvArray::ArrayView<localIndex,4, localIndex> & dNdX = _dNdX;
+  LvArray::Array<real64, 4, localIndex> _dNdX(NoElem, inumQuadraturePoints, inumNodesPerElement, local_dim);
+  LvArray::ArrayView<real64,4, localIndex> & dNdX = _dNdX;
 #else
   geosxData dNdX = memoryManager::allocate<real64>(inumNodesPerElement*inumQuadraturePoints*NoElem*local_dim, dataAllocated);
 #endif

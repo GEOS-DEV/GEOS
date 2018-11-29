@@ -75,8 +75,7 @@
                           
 */
 
-
-
+using namespace LvArray;
 namespace SolidMechanicsLagrangianFEMKernels{
 
 //using namespace SolidMechanicsLagrangianFEMKernels;
@@ -582,16 +581,19 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(localIndex noElem, geosxIndex elemLi
 ///shape function derivatives stored as an object of structs format.
 ///All computations are done in a monolithic kernel.
 ///      
+
 #if defined(USE_GEOSX_ARRAY)
-template<typename Pol, typename T1, typename T2, typename T3, 
-         typename T4, typename T5, typename T6, typename T7,
-         typename T8, typename T9, typename T10>
-RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, T1 elemList, real64 dt,
-                                      T2 elemsToNodes, T3 iu,
-                                      T4 iuhat, T5 idNdX,
-                                      T6 iconstitutiveMap, T7 idevStressData,
-                                      T8 imeanStress, real64 ishearModulus, real64 ibulkModulus,
-                                      T9 idetJ, T10 iacc, constUpdate updateState_ptr,
+template<typename Pol>
+RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem,  ArrayView<localIndex, 1, localIndex> elemList,
+                                      real64 dt, ArrayView<localIndex,2,localIndex> elemsToNodes, 
+                                      ArrayView<real64, 2, localIndex> iu,
+                                      ArrayView<real64, 2, localIndex> iuhat,
+                                      ArrayView<real64, 4, localIndex> idNdX,
+                                      ArrayView<localIndex,2,localIndex> iconstitutiveMap,
+                                      ArrayView<real64,3,localIndex> idevStressData,
+                                      ArrayView<real64,1,localIndex> imeanStress, real64 ishearModulus, real64 ibulkModulus,
+                                      ArrayView<real64,2,localIndex> idetJ,
+                                      ArrayView<real64, 2, localIndex> iacc, constUpdate updateState_ptr,
                                       localIndex nx=2, localIndex ny=2, localIndex nz=2)
 #else
 template<typename Pol>
@@ -608,29 +610,27 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
   //geosx::forall_in_set<Pol>(elemList.data(), noElem, GEOSX_LAMBDA (globalIndex k) {
   geosx::forall_in_range<Pol>(0, noElem, GEOSX_LAMBDA (globalIndex k) {
 
-       real64 uhat_local[local_dim*inumNodesPerElement];
-       real64 u_local[local_dim*inumNodesPerElement];
-       real64 f_local[local_dim*inumNodesPerElement] = {0};
-
-
+      real64 uhat_local[local_dim*inumNodesPerElement];
+      real64 u_local[local_dim*inumNodesPerElement];
+      real64 f_local[local_dim*inumNodesPerElement] = {0};
+      
 #if defined(STRUCTURED_GRID)
-       localIndex nodeList[inumNodesPerElement];       
-       structuredElemToNodes(nodeList,k,nx,ny,nz);
+      localIndex nodeList[inumNodesPerElement];       
+      structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
 #if defined(USE_GEOSX_ARRAY)
-       const localIndex *nodeList = (&elemsToNodes.data()[inumNodesPerElement*k]);
+      const localIndex *nodeList = (&elemsToNodes.data()[inumNodesPerElement*k]);
 #else       
-       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+      const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif
-#endif       
-
+#endif   
+       
        //Copy Global to Local
        GlobalToLocal(nodeList, k, 
-                     u_local,  uhat_local, iu, iuhat);              
+                     u_local,  uhat_local, iu, iuhat);
 
       //Compute Quadrature
       for(localIndex q=0; q<inumQuadraturePoints; ++q)
-
         {
 
           real64 dUdX[local_dim][local_dim] = {{0.0}};          
@@ -709,7 +709,6 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
           //UpdateStatePoint(Dadt,Rot,m, q,k, idevStressData,
           //imeanStress,ishearModulus, ibulkModulus,noElem);
           
-          //real64 * meanStressPtr = imeanStress.data();
           updateState_ptr(Dadt,Rot, m, q, k, idevStressData,
                           imeanStress, ishearModulus, ibulkModulus, noElem);
 
@@ -729,18 +728,15 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
 
           for(localIndex i=0; i<local_dim; ++i)
             {
-#if defined(USE_GEOSX_ARRAY)
+
               TotalStress[i][i] += imeanStress(m);
-#else
-              TotalStress[i][i] += imeanStress[m];
-#endif
             }
                     
           Integrate(f_local, idetJ(k,q), detF, Finv, TotalStress, idNdX, k, q, noElem); 
         }//end of quadrature
 
-      AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);
-
+       AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);
+       
      });
 
 }

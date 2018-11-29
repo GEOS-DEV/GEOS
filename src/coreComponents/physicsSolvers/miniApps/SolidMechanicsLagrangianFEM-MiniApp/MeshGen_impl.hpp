@@ -27,8 +27,8 @@
 
 #if !defined(USE_GEOSX_ARRAY)
 
-//#define VX(id,i) VX[i + 3*id]
-//#define elemToNodes(k, i) elemToNodes[i + 8*k]
+#define VX(id,i) VX[i + 3*id]
+#define elemToNodes(k, i) elemToNodes[i + 8*k]
 #else
 
 #endif

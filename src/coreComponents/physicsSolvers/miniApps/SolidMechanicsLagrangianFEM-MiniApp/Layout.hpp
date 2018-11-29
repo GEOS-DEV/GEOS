@@ -48,6 +48,9 @@ using geosxData   = real64 * const RAJA_RESTRICT;
 using geosxData_const   = real64 const * const RAJA_RESTRICT;
 using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
+//Select between raw ptr vs array
+//#define USE_GEOSX_ARRAY
+
 //#define STRUCTURED_GRID
 
 //
@@ -68,8 +71,6 @@ using geosxIndex = const localIndex * const RAJA_RESTRICT;
 //#define INVERT_REST_FAST_INDEX_ELEM
 //#define THREE_KERNEL_DATA_FAST_INDEX_ELEM
 
-//Select between raw ptr vs array
-#define USE_GEOSX_ARRAY
 
 
 
@@ -122,9 +123,10 @@ using atomicPol = RAJA::atomic::loop_atomic;
 
 #if !defined(USE_GEOSX_ARRAY)
 
-#define iu(k,i) iu[i + local_dim*id]
-#define iuhat(k,i) iuhat[i + local_dim*id]
-
+#define iu(k,i) iu[i + local_dim*k]
+#define iuhat(k,i) iuhat[i + local_dim*k]
+#define iacc(k, i) iacc[i + local_dim*k]
+#define imeanStress(m) imeanStress[m]
 
 
 //constitutive update
@@ -163,11 +165,11 @@ using atomicPol = RAJA::atomic::loop_atomic;
 #endif
 
 #if defined(INVERT_REST_FAST_INDEX_ELEM)
-#define imeanStress(k,q) imeanStress[k + q*noElem]
+//#define imeanStress(k,q) imeanStress[k + q*noElem]
 #define iconstitutiveMap(k,q) iconstitutiveMap[k + q*noElem]
 #define idetJ(k,q) idetJ[k + q*noElem]
 #else
-#define imeanStress(k,q) imeanStress[q + inumQuadraturePoints*k]
+//#define imeanStress(k,q) imeanStress[q + inumQuadraturePoints*k]
 #define iconstitutiveMap(k,q) iconstitutiveMap[q + inumQuadraturePoints*k]
 #define idetJ(k,q) idetJ[q + inumQuadraturePoints*k]
 #endif

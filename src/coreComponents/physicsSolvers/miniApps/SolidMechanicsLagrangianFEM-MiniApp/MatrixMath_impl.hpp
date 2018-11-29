@@ -382,7 +382,6 @@ RAJA_INLINE void Integrate(real64 f_local_x[inumNodesPerElement],real64 f_local_
     }
 }
 
-
 template<typename atomicPol, typename T, typename U>
 RAJA_HOST_DEVICE
 RAJA_INLINE void AddLocalToGlobal(T nodeList, real64 f_local[local_dim*inumNodesPerElement], U iacc)
@@ -390,7 +389,8 @@ RAJA_INLINE void AddLocalToGlobal(T nodeList, real64 f_local[local_dim*inumNodes
   for(localIndex a=0; a<inumNodesPerElement; ++a)
     {          
       localIndex id = nodeList[a];
-      RAJA::atomic::atomicAdd<atomicPol>(&iacc(id, 0),f_local[0 + local_dim*a]);
+      //RAJA::atomic::atomicAdd<atomicPol>(&iacc[0 + local_dim*id], f_local[0 + local_dim*a]);
+      RAJA::atomic::atomicAdd<atomicPol>(&iacc(id,0),f_local[0 + local_dim*a]);
       RAJA::atomic::atomicAdd<atomicPol>(&iacc(id, 1),f_local[1 + local_dim*a]);
       RAJA::atomic::atomicAdd<atomicPol>(&iacc(id, 2),f_local[2 + local_dim*a]);
     }

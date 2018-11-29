@@ -52,9 +52,9 @@ namespace memoryManager{
   {
     T *ptr;
     dataAlloc += size * sizeof(T);
-
 #if defined(RAJA_ENABLE_CUDA)
-    cudaMallocManaged((void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal);
+    cudaErrchk(cudaMallocManaged((void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal));               
+#else
     ptr = new T[size];
 #endif
     return ptr;

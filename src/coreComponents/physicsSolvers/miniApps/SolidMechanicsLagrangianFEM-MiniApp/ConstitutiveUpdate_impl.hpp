@@ -186,8 +186,8 @@ __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #else
 //Created a type 
 typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
-                            localIndex m, localIndex q, globalIndex k, geosxData devStressData,
-                            geosxData meanStress,
+                            localIndex m, localIndex q, globalIndex k,
+                            geosxData devStressData, geosxData meanStress,
                             real64 shearModulus, real64 bulkModulus, localIndex NoElem);
 #if defined (USE_CUDA)
 __device__ constUpdate deviceUpdate = UpdateStatePoint;
