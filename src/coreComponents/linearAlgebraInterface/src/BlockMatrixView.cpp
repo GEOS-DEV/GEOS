@@ -49,8 +49,8 @@ BlockMatrixView<LAI>::BlockMatrixView()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Constructor with a size (number of rows and columns)
 template< typename LAI >
-BlockMatrixView<LAI>::BlockMatrixView( typename LAI::lid const nRows,
-                                       typename LAI::lid const nCols )
+BlockMatrixView<LAI>::BlockMatrixView( localIndex const nRows,
+                                       localIndex const nCols )
 {
   m_matrices.resize( nRows, nCols );
 }
@@ -67,11 +67,11 @@ template< typename LAI >
 void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
                                      BlockVectorView<LAI> &b ) const
 {
-  for( typename LAI::lid row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
     b.block(row).zero();
     ParallelVector temp(b.block(row));
-    for( typename LAI::lid col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
@@ -92,11 +92,11 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
                                      BlockVectorView<LAI> const &b,
                                      BlockVectorView<LAI> &r ) const
 {
-  for( typename LAI::lid row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
     r.block(row).copy(b.block(row));
     ParallelVector temp(b.block(row));
-    for( typename LAI::lid col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
@@ -115,9 +115,9 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
 template< typename LAI >
 void BlockMatrixView<LAI>::scale( real64 const factor )
 {
-  for( typename LAI::lid row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
-    for( typename LAI::lid col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
@@ -136,8 +136,8 @@ void BlockMatrixView<LAI>::scale( real64 const factor )
 // Get block
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
-typename LAI::ParallelMatrix & BlockMatrixView<LAI>::block( typename LAI::lid const blockRowIndex,
-                                                            typename LAI::lid const blockColIndex ) const
+typename LAI::ParallelMatrix & BlockMatrixView<LAI>::block( localIndex const blockRowIndex,
+                                                            localIndex const blockColIndex ) const
 {
   return *m_matrices[blockRowIndex][blockColIndex];
 }
@@ -150,8 +150,8 @@ typename LAI::ParallelMatrix & BlockMatrixView<LAI>::block( typename LAI::lid co
 // Set block
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
-void BlockMatrixView<LAI>::set( typename LAI::lid const blockRowIndex,
-                                typename LAI::lid const blockColIndex,
+void BlockMatrixView<LAI>::set( localIndex const blockRowIndex,
+                                localIndex const blockColIndex,
                                 typename LAI::ParallelMatrix &matrix )
 {
   m_matrices[blockRowIndex][blockColIndex] = &matrix;

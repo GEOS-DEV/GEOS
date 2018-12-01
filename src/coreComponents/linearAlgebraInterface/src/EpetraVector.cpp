@@ -60,7 +60,6 @@ EpetraVector::EpetraVector( EpetraVector const &src )
 {
   GEOS_ERROR_IF(src.unwrappedPointer() == nullptr,"source vector appears to be empty");
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer()));
-  //TODO: maybe add check if vector is also "closed"
 }
 
 // ----------------------------
@@ -88,13 +87,13 @@ void EpetraVector::create( Epetra_Map const &map)
 // elements necessary when the number of processors does not divide evenly
 // into the vector length.  
 
-void EpetraVector::createWithLocalSize( trilinosTypes::lid const localSize, MPI_Comm const & comm)
+void EpetraVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm)
 {
-  Epetra_Map map = Epetra_Map(-1, localSize, 0, Epetra_MpiComm(comm) );
+  Epetra_Map map = Epetra_Map(-1, integer_conversion<int,localIndex>(localSize), 0, Epetra_MpiComm(comm) );
   create(map);
 }
 
-void EpetraVector::createWithGlobalSize( trilinosTypes::gid const globalSize, MPI_Comm const & comm)
+void EpetraVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm)
 {
   Epetra_Map map = Epetra_Map(globalSize, 0, Epetra_MpiComm(comm) );
   create(map);
@@ -110,7 +109,7 @@ void EpetraVector::createWithGlobalSize( trilinosTypes::gid const globalSize, MP
 
 void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const & comm)
 {
-  trilinosTypes::lid localSize = localValues.size();
+  int localSize = integer_conversion<int,localIndex>(localValues.size());
   Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm(comm) );
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( View, map, const_cast<double*>(localValues.data()), localSize, 1 ));
 }
@@ -125,13 +124,13 @@ void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const &
 
 // single element options
 
-void EpetraVector::set( trilinosTypes::gid const globalRow,
+void EpetraVector::set( globalIndex const globalRow,
                         real64 const value )
 {
   m_vector->ReplaceGlobalValues( 1, &globalRow, &value );
 }
 
-void EpetraVector::add( trilinosTypes::gid const globalRow,
+void EpetraVector::add( globalIndex const globalRow,
                         real64 const value )
 {
   m_vector->SumIntoGlobalValues( 1, &globalRow, &value );
@@ -139,29 +138,29 @@ void EpetraVector::add( trilinosTypes::gid const globalRow,
 
 // n-element, c-style options
 
-void EpetraVector::set( trilinosTypes::gid const * globalIndices,
+void EpetraVector::set( globalIndex const * globalIndices,
                         real64 const * values,
-                        trilinosTypes::lid size )
+                        localIndex size )
 {
   m_vector->ReplaceGlobalValues( size, globalIndices, values );
 }
 
-void EpetraVector::add( trilinosTypes::gid const * globalIndices,
+void EpetraVector::add( globalIndex const * globalIndices,
                         real64 const * values,
-                        trilinosTypes::lid size )
+                        localIndex size )
 {
   m_vector->SumIntoGlobalValues( size, globalIndices, values );
 }
 
 // n-element, array1d options
 
-void EpetraVector::set( array1d<trilinosTypes::gid> const & globalIndices,
+void EpetraVector::set( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
   //TODO: add integer_conversion
   m_vector->ReplaceGlobalValues( values.size(), globalIndices.data(), values.data() );
 }
-void EpetraVector::add( array1d<trilinosTypes::gid> const & globalIndices,
+void EpetraVector::add( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
   //TODO: add integer_conversion
@@ -319,14 +318,14 @@ void EpetraVector::print() const
 // Get element globalRow
 
 //TODO: implementation not straightforward
-real64 EpetraVector::get(trilinosTypes::gid globalRow) const
+real64 EpetraVector::get(globalIndex globalRow) const
 {
   GEOS_ERROR("not yet implemented");
   return std::numeric_limits<double>::quiet_NaN();
 }
 
 //TODO: implementation not straightforward
-void EpetraVector::get( array1d<trilinosTypes::gid> const & globalIndices,
+void EpetraVector::get( array1d<globalIndex> const & globalIndices,
                         array1d<real64> & values ) const
 {
   GEOS_ERROR("not yet implemented");
@@ -352,7 +351,7 @@ Epetra_FEVector* EpetraVector::unwrappedPointer()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the global size of the vector (total number of elements).
 
-trilinosTypes::gid EpetraVector::globalSize() const
+globalIndex EpetraVector::globalSize() const
 {
   return m_vector.get()->GlobalLength64();
 }
@@ -361,7 +360,7 @@ trilinosTypes::gid EpetraVector::globalSize() const
 // Get the number of local elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local size of the vector (total number of local elements).
-trilinosTypes::lid EpetraVector::localSize() const
+localIndex EpetraVector::localSize() const
 {
   return m_vector.get()->MyLength();
 }

@@ -83,7 +83,7 @@ using namespace geosx;
 
 template< typename LAI >
 typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
-                                              typename LAI::gid N )
+                                              globalIndex N )
 {
   // Declare matrix
   typename LAI::ParallelMatrix I;
@@ -92,7 +92,7 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
   I.createWithGlobalSize(N,1,comm);
 
   // Loop over rows to fill the matrix
-  for ( typename LAI::gid i = I.ilower(); i < I.iupper(); i++ )
+  for (globalIndex i = I.ilower(); i < I.iupper(); i++ )
   {
     // Set the value for element (i,i) to 1
     I.insert( i, i, 1.0);
@@ -123,7 +123,7 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
 
 template< typename LAI >
 typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
-                                                       typename LAI::gid N )
+                                                       globalIndex N )
 {
   // Declare matrix
   typename LAI::ParallelMatrix laplace2D;
@@ -133,17 +133,17 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 
   // Get the size of the dummy mesh back to be able to put values in the correct
   // diagonals.
-  typename LAI::gid n = std::sqrt( N );
+  globalIndex n = std::sqrt( N );
 
   // Allocate arrays to fill the matrix (values and columns)
   real64 values[5];
-  typename LAI::gid cols[5];
+  globalIndex cols[5];
 
   // Loop over rows to fill the matrix
-  for ( typename LAI::gid i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
+  for ( globalIndex i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
   {
     // Re-set the number of non-zeros for row i to 0.
-    typename LAI::lid nnz = 0;
+    localIndex nnz = 0;
 
     // The left -n: position i-n
     if ( i-n >= 0 )
@@ -227,16 +227,15 @@ void testInterfaceSolvers()
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
-  using LinearSolver = typename LAI::LinearSolver;
-  using LAIgid = typename LAI::gid;
+  using LinearSolver   = typename LAI::LinearSolver;
 
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
-  LAIgid n = 100; 
-  LAIgid N = n*n;
+  globalIndex n = 100; 
+  globalIndex N = n*n;
 
   // Compute a 2D Laplace operator
   ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
@@ -322,12 +321,12 @@ void testInterfaceSolvers()
 
   // Declare vectors to run tests
   std::vector<real64> vecValuesRow0( 5 ),vecValuesRow1( 5 ),vecValuesRown( 5 );
-  std::vector<LAI::lid> vecIndicesRow0( 5 ),vecIndicesRow1( 5 ),vecIndicesRown( 5 );
+  std::vector<localIndex> vecIndicesRow0( 5 ),vecIndicesRow1( 5 ),vecIndicesRown( 5 );
 
   // Get values and columns in specific rows
   matrix.getLocalRow( 0, numValRow0, vecValuesRow0, vecIndicesRow0 );
   matrix.getLocalRow( 1, numValRow1, vecValuesRow1, vecIndicesRow1 );
-  matrix.getLocalRow( static_cast<LAI::lid>( n ), numValRown, vecValuesRown, vecIndicesRown );
+  matrix.getLocalRow( static_cast<localIndex>( n ), numValRown, vecValuesRown, vecIndicesRown );
 
   // Run checks on rank 0 to see if the matrix was correctly constructed
   if (rank == 0)
@@ -396,7 +395,7 @@ void testInterfaceSolvers()
   // use the same matrix when we are done with it).
   // We clear the row and multiply the diagonal value by 2.
   matrix.clearRow( 2*N/4+n, 2.0 );
-  matrix.getLocalRow(static_cast<LAI::lid>( n ),numValRown,vecValuesRown,vecIndicesRown);
+  matrix.getLocalRow(static_cast<localIndex>( n ),numValRown,vecValuesRown,vecIndicesRown);
   if ( rank == 2 )
   {
     EXPECT_DOUBLE_EQ( vecValuesRown[2], 8.0 );
@@ -424,15 +423,14 @@ void testGEOSXSolvers()
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
-  using LAIgid = typename LAI::gid;
 
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Use nxn cartesian mesh to generate the Laplace 2D operator.
-  LAIgid n = 100;
-  LAIgid N = n*n;
+  globalIndex n = 100;
+  globalIndex N = n*n;
 
   // Compute a 2D Laplace operator and identity matrix
   ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
@@ -491,7 +489,6 @@ void testGEOSXBlockSolvers()
   // The usual typenames
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
-  using LAIgid = typename LAI::gid;
 
   // Get the MPI rank
   int rank;
@@ -501,8 +498,8 @@ void testGEOSXBlockSolvers()
   // [L L] [x_true] = [b_0]
   // [L L] [x_true] = [b_1]
 
-  LAIgid n = 100;
-  LAIgid N = n*n;
+  globalIndex n = 100;
+  globalIndex N = n*n;
 
   ParallelMatrix matrix   = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
   ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
@@ -524,8 +521,8 @@ void testGEOSXBlockSolvers()
   x_comp_1.zero();
 
   // Size of the block system
-  integer nRows = 2;
-  integer nCols = 2;
+  localIndex nRows = 2;
+  localIndex nCols = 2;
 
   // Declare and allocate block matrices/vectors
   // System matrix

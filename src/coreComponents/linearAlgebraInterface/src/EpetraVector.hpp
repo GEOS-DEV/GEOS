@@ -84,7 +84,7 @@ public:
    * \param localSize local number of elements.
    *
    */
-  void createWithLocalSize( trilinosTypes::lid const localSize , MPI_Comm const & comm = MPI_COMM_WORLD);
+  void createWithLocalSize( localIndex const localSize , MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
    * @brief Create a vector based on global number of elements.  
@@ -96,7 +96,7 @@ public:
    * \param globalSize Global number of elements.
    *
    */
-  void createWithGlobalSize( trilinosTypes::gid const globalSize , MPI_Comm const & comm = MPI_COMM_WORLD);
+  void createWithGlobalSize( globalIndex const globalSize , MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
    * @brief Construct parallel vector from a local array.
@@ -107,20 +107,6 @@ public:
    *
    */
   void create( array1d<real64> const & localValues , MPI_Comm const & comm = MPI_COMM_WORLD);
-
-  /**
-   * @brief Construct parallel vector to match existing matrix.
-   *
-   * Create a parallel vector that conforms to an existing matrix.  Second argument
-   * indicates whether the vector should lie in the row space or column space
-   * of the matrix
-   *
-   * \param matrix Input matrix to match
-   * \param space Enum indicating row or column space
-   *
-   */
-  //TODO: implement this
-  //void create( EpetraMatrix const &matrix, EpetraMatrix::RowOrColumnSpace space);
 
   //@}
   //! @name Open / close 
@@ -152,7 +138,7 @@ public:
    * \param value Value to add at given row.
    *
    */
-  void set( trilinosTypes::gid const globalRow,
+  void set( globalIndex const globalRow,
             real64 const value );
 
   /**
@@ -164,7 +150,7 @@ public:
    * \param value Values to add in given row.
    *
    */
-  void add( trilinosTypes::gid const globalRow,
+  void add( globalIndex const globalRow,
             real64 const value );
 
   /**
@@ -177,9 +163,9 @@ public:
    * \param size Number of elements
    *
    */
-  void set( trilinosTypes::gid const * globalIndices,
+  void set( globalIndex const * globalIndices,
             real64 const * values,
-            trilinosTypes::lid size );
+            localIndex size );
 
   /**
    * @brief Add vector values.
@@ -191,9 +177,9 @@ public:
    * \param size Number of elements
    *
    */
-  void add( trilinosTypes::gid const * globalIndices,
+  void add( globalIndex const * globalIndices,
             real64 const * values,
-            trilinosTypes::lid size );
+            localIndex size );
 
   /**
    * @brief Set vector values using array1d
@@ -204,7 +190,7 @@ public:
    * \param values Values to add in given rows.
    *
    */
-  void set( array1d<trilinosTypes::gid> const & globalIndices,
+  void set( array1d<globalIndex> const & globalIndices,
             array1d<real64> const & values );
 
 
@@ -217,7 +203,7 @@ public:
    * \param values Values to add in given rows.
    *
    */
-  void add( array1d<trilinosTypes::gid> const & globalIndices,
+  void add( array1d<globalIndex> const & globalIndices,
             array1d<real64> const & values );
 
   /**
@@ -323,22 +309,22 @@ public:
   /**
    * @brief Returns the global of the vector.
    */
-  trilinosTypes::gid globalSize() const;
+  globalIndex globalSize() const;
 
   /**
    * @brief Returns the local size of the vector.
    */
-  trilinosTypes::lid localSize() const;
+  localIndex localSize() const;
 
   /**
    * @brief Returns value globalRow of the vector. TODO: Not yet implemented, since not built-in
    */
-  real64 get(trilinosTypes::gid globalRow) const;
+  real64 get(globalIndex globalRow) const;
 
   /**
    * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
    */
-  void get( array1d<trilinosTypes::gid> const & globalIndices,
+  void get( array1d<globalIndex> const & globalIndices,
             array1d<real64> & values ) const;
 
   /**

@@ -39,8 +39,8 @@ class TrilinosInterface
 {
 public:
 
-  using lid = trilinosTypes::lid;
-  using gid = trilinosTypes::gid;
+  //using lid = trilinosTypes::lid; // no longer necessary
+  //using gid = trilinosTypes::gid; // no longer necessary
 
   // Epetra matrix and vector wrappers
   using ParallelMatrix = EpetraMatrix;

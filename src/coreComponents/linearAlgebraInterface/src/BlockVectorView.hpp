@@ -63,7 +63,7 @@ public:
    * \param nBlocks Number of blocks.
    *
    */
-  BlockVectorView( typename LAI::lid const nBlocks );
+  BlockVectorView( localIndex const nBlocks );
 
 
   /* DISABLED: view usage can lead to non-intuitive behavior
@@ -107,7 +107,7 @@ public:
    * \param vector Input vector to put in the block <tt>blockIndex</tt>.
    *
    */
-  void set( typename LAI::lid const blockIndex,
+  void set( localIndex const blockIndex,
             ParallelVector &x );
 
   //@}
@@ -177,12 +177,12 @@ public:
   /**
    * @brief Get block size.
    */
-  typename LAI::lid blockSize() const;
+  localIndex blockSize() const;
 
   /**
    * @brief Get global size.
    */
-  typename LAI::gid globalSize() const;
+  globalIndex globalSize() const;
 
   /**
    * @brief Get a reference to the vector corresponding to block <tt>blockRowIndex</tt>.
@@ -193,7 +193,7 @@ public:
    * \param blockIndex Index of the block to return.
    *
    */
-  ParallelVector & block( typename LAI::lid const blockIndex ) const;
+  ParallelVector & block( localIndex const blockIndex ) const;
   //@}
 
 private:

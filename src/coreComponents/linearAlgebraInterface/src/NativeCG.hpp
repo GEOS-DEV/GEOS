@@ -130,10 +130,10 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 {
 
   // Get the global size
-  typename LAI::gid N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::gid numIt = 0;
+  localIndex numIt = 0;
 
   // Get the norm of the right hand side
   real64 normb = b.norm2();
@@ -165,7 +165,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   ParallelVector rkold( rk );
   ParallelVector zkold( zk );
 
-  for( typename LAI::gid k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: this needs a max_iter param of type localIndex
   {
     // Compute rkT.rk
     alpha = rk.dot( zk );
@@ -235,10 +235,10 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
 #if 0
   // Get the global size
-  typename LAI::gid N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::gid numIt = 0;
+  localIndex numIt = 0;
 
   // Get the norm of the right hand side
   real64 normb = b.norm2();
@@ -270,7 +270,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   BlockVectorView<LAI> rkold( rk );
   BlockVectorView<LAI> zkold( zk );
 
-  for( typename LAI::gid k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: needs maxIter param of type localIndex
   {
     // Compute rkT.rk
     alpha = rk.dot( zk );

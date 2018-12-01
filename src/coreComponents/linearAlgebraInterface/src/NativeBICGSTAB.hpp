@@ -129,10 +129,10 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 {
 
   // Get the global size
-  typename LAI::gid N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::gid numIt = 0;
+  localIndex numIt = 0;
 
   // Get the norm of the right hand side
   real64 normb = b.norm2();
@@ -171,7 +171,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   real64 temp1;
   real64 temp2;
 
-  for( typename LAI::gid k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: needs a maxIter param of type localIndex
   {
     // Keep the old value of rho
     rhokminus1 = rhok;
@@ -264,10 +264,10 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 #if 0
 
   // Get the global size
-  typename LAI::gid N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::gid numIt = 0;
+  globalIndex numIt = 0;
 
   // Get the norm of the right hand side
   real64 normb = b.norm2();
@@ -308,7 +308,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   real64 temp1;
   real64 temp2;
 
-  for( typename LAI::gid k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) //TODO: needs a maxIter param of size localIndex
   {
     // Keep previous value of rho
     rhokminus1 = rhok;

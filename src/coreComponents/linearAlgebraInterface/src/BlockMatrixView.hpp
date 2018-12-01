@@ -62,8 +62,8 @@ public:
    *
    * Create a block matrix of size (<tt>nRows</tt>,<tt>nCols</tt>).
    */
-  BlockMatrixView( typename LAI::lid const nRows,
-                   typename LAI::lid const nCols );
+  BlockMatrixView( localIndex const nRows,
+                   localIndex const nCols );
 
   /**
    * @brief Virtual destructor.
@@ -110,14 +110,14 @@ public:
   /**
    * @brief Get the matrix corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
    */
-  ParallelMatrix & block( typename LAI::lid const blockRowIndex,
-                          typename LAI::lid const blockColIndex ) const;
+  ParallelMatrix & block( localIndex const blockRowIndex,
+                          localIndex const blockColIndex ) const;
 
   /**
    * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
    */
-  void set( typename LAI::lid const blockRowIndex,
-            typename LAI::lid const blockColIndex,
+  void set( localIndex const blockRowIndex,
+            localIndex const blockColIndex,
             ParallelMatrix &matrix );
 
   //@}

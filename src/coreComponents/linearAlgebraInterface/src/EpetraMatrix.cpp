@@ -80,17 +80,17 @@ void EpetraMatrix::create( Epetra_FECrsGraph const &graph )
 // Create a matrix from number of elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-void EpetraMatrix::createWithGlobalSize( trilinosTypes::gid const globalSize,
-                                         trilinosTypes::lid const maxEntriesPerRow,
+void EpetraMatrix::createWithGlobalSize( globalIndex const globalSize,
+                                         localIndex const maxEntriesPerRow,
                                          MPI_Comm const & comm )
 {
   createWithGlobalSize(globalSize,globalSize,maxEntriesPerRow,comm); // just call general version
 }
 
 
-void EpetraMatrix::createWithGlobalSize( trilinosTypes::gid const globalRows,
-                                         trilinosTypes::gid const globalCols,
-                                         trilinosTypes::lid const maxEntriesPerRow,
+void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
+                                         globalIndex const globalCols,
+                                         localIndex const maxEntriesPerRow,
                                          MPI_Comm const & comm )
 {
   m_dst_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( globalRows, 0, Epetra_MpiComm( comm ) ));
@@ -99,17 +99,17 @@ void EpetraMatrix::createWithGlobalSize( trilinosTypes::gid const globalRows,
 }
 
 
-void EpetraMatrix::createWithLocalSize( trilinosTypes::lid const localSize,
-                                        trilinosTypes::lid const maxEntriesPerRow,
+void EpetraMatrix::createWithLocalSize( localIndex const localSize,
+                                        localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
   createWithLocalSize(localSize,localSize,maxEntriesPerRow,comm); // just call general version
 }
 
 
-void EpetraMatrix::createWithLocalSize( trilinosTypes::lid const localRows,
-                                        trilinosTypes::lid const localCols,
-                                        trilinosTypes::lid const maxEntriesPerRow,
+void EpetraMatrix::createWithLocalSize( localIndex const localRows,
+                                        localIndex const localCols,
+                                        localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
   m_dst_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( -1, localRows, 0, Epetra_MpiComm( comm ) ));
@@ -154,24 +154,24 @@ void EpetraMatrix::close()
 
 // 1x1 
 
-void EpetraMatrix::add( trilinosTypes::gid const rowIndex,
-                        trilinosTypes::gid const colIndex,
+void EpetraMatrix::add( globalIndex const rowIndex,
+                        globalIndex const colIndex,
                         real64 const value )
 {
   m_matrix->SumIntoGlobalValues( rowIndex, 1, &value, &colIndex );
 }
 
 
-void EpetraMatrix::set( trilinosTypes::gid const rowIndex,
-                        trilinosTypes::gid const colIndex,
+void EpetraMatrix::set( globalIndex const rowIndex,
+                        globalIndex const colIndex,
                         real64 const value )
 {
   m_matrix->ReplaceGlobalValues( rowIndex, 1, &value, &colIndex );
 }
 
 
-void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
-                           trilinosTypes::gid const colIndex,
+void EpetraMatrix::insert( globalIndex const rowIndex,
+                           globalIndex const colIndex,
                            real64 const value )
 {
   m_matrix->InsertGlobalValues( rowIndex, 1, &value, &colIndex );
@@ -179,51 +179,51 @@ void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
 
 // 1xN c-style
 
-void EpetraMatrix::add( trilinosTypes::gid const rowIndex,
-                        trilinosTypes::gid const * colIndices,
+void EpetraMatrix::add( globalIndex const rowIndex,
+                        globalIndex const * colIndices,
                         real64 const * values,
-                        trilinosTypes::lid size )
+                        localIndex size )
 {
   m_matrix->SumIntoGlobalValues( rowIndex, size, values, colIndices );
 }
 
-void EpetraMatrix::set( trilinosTypes::gid const rowIndex,
-                        trilinosTypes::gid const * colIndices,
+void EpetraMatrix::set( globalIndex const rowIndex,
+                        globalIndex const * colIndices,
                         real64 const * values,
-                        trilinosTypes::lid size )
+                        localIndex size )
 {
   m_matrix->ReplaceGlobalValues( rowIndex, size, values, colIndices );
 }
 
 
-void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
-                           trilinosTypes::gid const * colIndices,
+void EpetraMatrix::insert( globalIndex const rowIndex,
+                           globalIndex const * colIndices,
                            real64 const * values,
-                           trilinosTypes::lid size )
+                           localIndex size )
 {
   m_matrix->InsertGlobalValues( rowIndex, size, values, colIndices );
 }
 
 // 1xN array1d style
 
-void EpetraMatrix::add( trilinosTypes::gid const rowIndex,
-                        array1d<trilinosTypes::gid> const &colIndices,
+void EpetraMatrix::add( globalIndex const rowIndex,
+                        array1d<globalIndex> const &colIndices,
                         array1d<real64> const &values )
 {
   // TODO: add integer_conversion
   m_matrix->SumIntoGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
 }
 
-void EpetraMatrix::set( trilinosTypes::gid const rowIndex,
-                        array1d<trilinosTypes::gid> const &colIndices,
+void EpetraMatrix::set( globalIndex const rowIndex,
+                        array1d<globalIndex> const &colIndices,
                         array1d<real64> const &values )
 {
   // TODO: add integer_conversion
   m_matrix->ReplaceGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
 }
 
-void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
-                           array1d<trilinosTypes::gid> const &colIndices,
+void EpetraMatrix::insert( globalIndex const rowIndex,
+                           array1d<globalIndex> const &colIndices,
                            array1d<real64> const &values )
 {
   // TODO: add integer_conversion
@@ -232,24 +232,24 @@ void EpetraMatrix::insert( trilinosTypes::gid const rowIndex,
 
 // MxN array2d style
 
-void EpetraMatrix::add( array1d<trilinosTypes::gid> const & rowIndices,
-                        array1d<trilinosTypes::gid> const & colIndices,
+void EpetraMatrix::add( array1d<globalIndex> const & rowIndices,
+                        array1d<globalIndex> const & colIndices,
                         array2d<real64> const & values )
 {
   // TODO: add integer_conversion
   m_matrix->SumIntoGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
-void EpetraMatrix::set( array1d<trilinosTypes::gid> const & rowIndices,
-                        array1d<trilinosTypes::gid> const & colIndices,
+void EpetraMatrix::set( array1d<globalIndex> const & rowIndices,
+                        array1d<globalIndex> const & colIndices,
                         array2d<real64> const & values )
 {
   // TODO: add integer_conversion
   m_matrix->ReplaceGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
-void EpetraMatrix::insert( array1d<trilinosTypes::gid> const & rowIndices,
-                           array1d<trilinosTypes::gid> const & colIndices,
+void EpetraMatrix::insert( array1d<globalIndex> const & rowIndices,
+                           array1d<globalIndex> const & colIndices,
                            array2d<real64> const & values )
 {
   // TODO: add integer_conversion
@@ -332,100 +332,51 @@ void EpetraMatrix::leftRightScale( EpetraVector const &vecLeft,
   rightScale(vecRight);
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Clear row.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-void EpetraMatrix::clearRow( trilinosTypes::gid const row,
-                             real64 const factor )
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get global row view 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get pointers to data in the row.  The globalRow must be stored 
+// on this processors.  Note that this is a view, not a copy
+// operation, so you may modify the resulting data in situ.
+
+void EpetraMatrix::getRowView( globalIndex globalRow,
+                               real64* values,
+                               globalIndex* indices,
+                               localIndex & numEntries ) const
 {
-  // Get the local index corresponding to the global index input. Returns -1
-  // if the global index is not owned by this processor.
-  int local_row = m_matrix->LRID( row );
+  int length;
+  int err = m_matrix->ExtractGlobalRowView( globalRow, length, values, indices );
 
-  // If this processor owns the input row:
-  if( local_row >= 0 )
+  GEOS_ERROR_IF(err != 0, "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
+
+  numEntries = integer_conversion<localIndex,int>(length);
+}
+
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Clear row
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Clear the row.  By default the diagonal value will be set
+// to zero, but the user can pass a desired diagValue.
+
+void EpetraMatrix::clearRow( globalIndex const globalRow,
+                             real64 const diagValue )
+{
+  double *values = nullptr;
+  globalIndex *globalCols = nullptr;
+  int length;
+
+  int err = m_matrix->ExtractGlobalRowView( globalRow, length, values, globalCols );
+
+  GEOS_ERROR_IF(err != 0, "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
+
+  for(int j=0; j<length; ++j)
   {
-    double *values = nullptr;
-    int *col_indices = nullptr;
-    int num_entries;
-
-    // Extract the row and get the number of entries, the values and the column indices.
-    m_matrix->ExtractMyRowView( local_row, num_entries, values, col_indices );
-
-    // TODO this if may be unnecessary?
-    if( values != nullptr && col_indices != nullptr && num_entries > 0 )
-    {
-      int* diag_find = std::find( col_indices, col_indices+num_entries-1, local_row );
-      long int diag_index = (diag_find - col_indices);
-
-      // Set all non-diagonal entries to 0
-      for( int j=0 ; j<num_entries ; ++j )
-      {
-        if( diag_index != j )
-        {
-          values[j] = 0.;
-        }
-      }
-      // Scale the diagonal (existing) value with factor.
-      values[diag_index] *= factor;
-    }
+    values[j] = (globalCols[j]==globalRow ? diagValue : 0.0);
   }
 }
 
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get global row.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Extract the global row and output the number of elements, values and column indices.
-
-void EpetraMatrix::getRow( trilinosTypes::gid GlobalRow,
-                           trilinosTypes::lid &NumEntries,
-                           real64* Values,
-                           trilinosTypes::gid* Indices ) const
-{
-  m_matrix->ExtractGlobalRowView( GlobalRow, NumEntries, Values, Indices );
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get local row.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Extract the local row and output the number of elements, values and column indices.
-
-void EpetraMatrix::getLocalRow( trilinosTypes::lid localRow,
-                                trilinosTypes::lid & NumEntries,
-                                real64 * & Values,
-                                trilinosTypes::lid * & Indices ) const
-{
-  m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
-}
-
-void EpetraMatrix::getRow( trilinosTypes::gid GlobalRow,
-                                 trilinosTypes::lid &NumEntries,
-                                 std::vector<real64> &vecValues,
-                                 std::vector<trilinosTypes::gid> &vecIndices ) const
-{
-  real64* Values;
-  trilinosTypes::gid* Indices;
-  m_matrix->ExtractGlobalRowView( GlobalRow, NumEntries, Values, Indices );
-  if( m_matrix->MyGRID( GlobalRow ))
-  {
-    vecIndices.assign( Indices, Indices+NumEntries );
-    vecValues.assign( Values, Values+NumEntries );
-  }
-}
-
-void EpetraMatrix::getLocalRow( trilinosTypes::lid localRow,
-                                      trilinosTypes::lid &NumEntries,
-                                      std::vector<real64> &vecValues,
-                                      std::vector<trilinosTypes::lid> &vecIndices ) const
-{
-  real64* Values;
-  trilinosTypes::lid* Indices;
-  m_matrix->ExtractMyRowView( localRow, NumEntries, Values, Indices );
-  vecIndices.assign( Indices, Indices+NumEntries );
-  vecValues.assign( Values, Values+NumEntries );
-}
 
 // ---------------------------------------------------------
 //  Accessors
@@ -446,7 +397,7 @@ Epetra_FECrsMatrix * EpetraMatrix::unwrappedPointer() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global rows
 
-trilinosTypes::gid EpetraMatrix::globalRows() const
+globalIndex EpetraMatrix::globalRows() const
 {
   return m_matrix->NumGlobalRows64();
 }
@@ -456,34 +407,17 @@ trilinosTypes::gid EpetraMatrix::globalRows() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global columns
 
-trilinosTypes::gid EpetraMatrix::globalCols() const
+globalIndex EpetraMatrix::globalCols() const
 {
   return m_matrix->NumGlobalCols64();
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the number of local rows.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the number of local rows
-trilinosTypes::lid EpetraMatrix::localRows() const
-{
-  return m_matrix->NumMyRows();
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the number of local columns.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the number of local columns
-trilinosTypes::lid EpetraMatrix::localCols() const
-{
-  return m_matrix->NumMyCols();
-}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get the lower index owned by processor.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the index of the first global row
-trilinosTypes::gid EpetraMatrix::ilower() const
+globalIndex EpetraMatrix::ilower() const
 {
   return m_matrix->RowMap().MyGlobalElements64()[0];
 }
@@ -492,26 +426,9 @@ trilinosTypes::gid EpetraMatrix::ilower() const
 // Get the upper index owned by processor.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the index of the last global row
-trilinosTypes::gid EpetraMatrix::iupper() const
+globalIndex EpetraMatrix::iupper() const
 {
   return m_matrix->RowMap().MyGlobalElements64()[0] + m_matrix->RowMap().NumMyElements();
-}
-
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Global/Local index mapping
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Given a global index return the local index if owned by this processor (or vice versa).
-// Returns -1 if not owned.
-
-trilinosTypes::lid EpetraMatrix::rowLID( trilinosTypes::gid const GID ) const
-{
-  return m_matrix->LRID( GID );
-}
-
-trilinosTypes::gid EpetraMatrix::rowGID( trilinosTypes::lid const LID ) const
-{
-  return m_matrix->GRID64( LID );
 }
 
 
@@ -609,7 +526,7 @@ bool EpetraMatrix::isAssembled() const
     for( j=0 ; j<NumEntries ; j++ )
     {
       int_type Index = Indices[j];
-      if( Graph_.FindtrilinosTypes::gidLoc( locRow, Index, j, Loc ))
+      if( Graph_.FindglobalIndexLoc( locRow, Index, j, Loc ))
 //  #ifdef EPETRA_HAVE_OMP
 //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
 //  #pragma omp atomic

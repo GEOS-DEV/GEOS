@@ -98,8 +98,8 @@ public:
    * \param comm MPI communicator.
    *
    */
-  void createWithLocalSize( trilinosTypes::lid const localSize,
-                            trilinosTypes::lid const maxEntriesPerRow = 1,
+  void createWithLocalSize( localIndex const localSize,
+                            localIndex const maxEntriesPerRow = 1,
                             MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
@@ -112,8 +112,8 @@ public:
    * \param comm MPI communicator.
    *
    */
-  void createWithGlobalSize( trilinosTypes::gid const globalSize,
-                             trilinosTypes::lid const maxEntriesPerRow = 1,
+  void createWithGlobalSize( globalIndex const globalSize,
+                             localIndex const maxEntriesPerRow = 1,
                              MPI_Comm const & comm = MPI_COMM_WORLD);
 
   /**
@@ -124,9 +124,9 @@ public:
    * \param localCols Local number of columns.
    * \param maxEntriesPerRow Maximum number of entries per row (hint).
    */
-  void createWithLocalSize( trilinosTypes::lid const localRows,
-                            trilinosTypes::lid const localCols,
-                            trilinosTypes::lid const maxEntriesPerRow = 1,
+  void createWithLocalSize( localIndex const localRows,
+                            localIndex const localCols,
+                            localIndex const maxEntriesPerRow = 1,
                             MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
@@ -137,9 +137,9 @@ public:
    * \param globalCols Global number of columns.
    * \param maxEntriesPerRow Maximum number of entries per row (hint).
    */
-  void createWithGlobalSize( trilinosTypes::gid const globalRows,
-                             trilinosTypes::gid const globalCols,
-                             trilinosTypes::lid const maxEntriesPerRow = 1,
+  void createWithGlobalSize( globalIndex const globalRows,
+                             globalIndex const globalCols,
+                             localIndex const maxEntriesPerRow = 1,
                              MPI_Comm const & comm = MPI_COMM_WORLD );
 
 
@@ -165,8 +165,8 @@ public:
    *
    */
   void close();
-  //@}
 
+  //@}
   /** @name Add/Set/Insert Methods 
    *
    * The add and set methods assume entries already exist in the sparsity pattern.
@@ -185,8 +185,8 @@ public:
    * \param value Value to add to prescribed location.
    *
    */
-  void add( trilinosTypes::gid const rowIndex,
-            trilinosTypes::gid const colIndex,
+  void add( globalIndex const rowIndex,
+            globalIndex const colIndex,
             real64 const value );
 
   /**
@@ -197,8 +197,8 @@ public:
    * \param value Value to set at prescribed location.
    *
    */
-  void set( trilinosTypes::gid const rowIndex,
-            trilinosTypes::gid const colIndex,
+  void set( globalIndex const rowIndex,
+            globalIndex const colIndex,
             real64 const value );
 
   /**
@@ -209,8 +209,8 @@ public:
    * \param value Value to insert at prescribed location.
    *
    */
-  void insert( trilinosTypes::gid const rowIndex,
-               trilinosTypes::gid const colIndex,
+  void insert( globalIndex const rowIndex,
+               globalIndex const colIndex,
                real64 const value );
 
   /**
@@ -221,10 +221,10 @@ public:
    * \param values Values to add to prescribed locations.
    * \param size Number of elements 
    */
-  void add( trilinosTypes::gid const rowIndex,
-            trilinosTypes::gid const * colIndices,
+  void add( globalIndex const rowIndex,
+            globalIndex const * colIndices,
             real64 const * values,
-            trilinosTypes::lid const size);
+            localIndex const size);
 
   /**
    * @brief Set elements to one row using c-style arrays
@@ -234,10 +234,10 @@ public:
    * \param values Values to add to prescribed locations.
    * \param size Number of elements 
    */
-  void set( trilinosTypes::gid const rowIndex,
-            trilinosTypes::gid const * colIndices,
+  void set( globalIndex const rowIndex,
+            globalIndex const * colIndices,
             real64 const * values,
-            trilinosTypes::lid const size);
+            localIndex const size);
 
   /**
    * @brief Insert elements to one row using c-style arrays
@@ -247,10 +247,10 @@ public:
    * \param values Values to add to prescribed locations.
    * \param size Number of elements 
    */
-  void insert( trilinosTypes::gid const rowIndex,
-               trilinosTypes::gid const * colIndices,
+  void insert( globalIndex const rowIndex,
+               globalIndex const * colIndices,
                real64 const * values,
-               trilinosTypes::lid const size);
+               localIndex const size);
 
   /**
    * @brief Add elements to one row using array1d
@@ -259,8 +259,8 @@ public:
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
    */
-  void add( trilinosTypes::gid const rowIndex,
-            array1d<trilinosTypes::gid> const & colIndices,
+  void add( globalIndex const rowIndex,
+            array1d<globalIndex> const & colIndices,
             array1d<real64> const & values);
 
   /**
@@ -270,8 +270,8 @@ public:
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
    */
-  void set( trilinosTypes::gid const rowIndex,
-            array1d<trilinosTypes::gid> const & colIndices,
+  void set( globalIndex const rowIndex,
+            array1d<globalIndex> const & colIndices,
             array1d<real64> const & values);
 
   /**
@@ -281,8 +281,8 @@ public:
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
    */
-  void insert( trilinosTypes::gid const rowIndex,
-               array1d<trilinosTypes::gid> const & colIndices,
+  void insert( globalIndex const rowIndex,
+               array1d<globalIndex> const & colIndices,
                array1d<real64> const & values);
 
   /**
@@ -292,8 +292,8 @@ public:
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
    */
-  void add( array1d<trilinosTypes::gid> const & rowIndices,
-            array1d<trilinosTypes::gid> const & colIndices,
+  void add( array1d<globalIndex> const & rowIndices,
+            array1d<globalIndex> const & colIndices,
             array2d<real64> const & values);
 
   /**
@@ -303,8 +303,8 @@ public:
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
    */
-  void set( array1d<trilinosTypes::gid> const & rowIndices,
-            array1d<trilinosTypes::gid> const & colIndices,
+  void set( array1d<globalIndex> const & rowIndices,
+            array1d<globalIndex> const & colIndices,
             array2d<real64> const & values);
 
   /**
@@ -314,12 +314,11 @@ public:
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
    */
-  void insert( array1d<trilinosTypes::gid> const & rowIndices,
-               array1d<trilinosTypes::gid> const & colIndices,
+  void insert( array1d<globalIndex> const & rowIndices,
+               array1d<globalIndex> const & colIndices,
                array2d<real64> const & values);
 
   //@}
-
   //! @name Linear Algebra Methods
   //@{
   /**
@@ -400,57 +399,28 @@ public:
                        EpetraVector const &vecRight );
 
   /**
-   * @brief Clear a row and multiplies the diagonal term by <tt>factor</tt>.
+   * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
    *
-   * \param row Index of the row to be cleared.
-   * \param factor Scaling factor for diagonal element.
+   * \param row globalIndex of the row to be cleared.
+   * \param diagValue (Optional) set diagonal element to desired value.
    *
    */
-  void clearRow( trilinosTypes::gid const row,
-                 real64 const factor );
+  void clearRow( globalIndex const row,
+                 real64 const diagValue = 0 );
 
   //@}
 
   //! @name Accessors Methods
   //@{
 
-  // TODO: replace with array1d versions
-
   /**
-   * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
-   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
+   * @brief Returns pointers to data in row <tt>globalRow</tt>. 
+   * The number of non zeros in the row is <tt>numEntries</tt>
    */
-  void getRow( trilinosTypes::gid GlobalRow,
-               trilinosTypes::lid &NumEntries,
-               real64* Values,
-               trilinosTypes::gid* Indices ) const;
-
-  /**
-   * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
-   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
-   */
-  void getRow( trilinosTypes::gid GlobalRow,
-               trilinosTypes::lid &NumEntries,
-               std::vector<real64> &vecValues,
-               std::vector<trilinosTypes::gid> &vecIndices ) const;
-
-  /**
-   * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
-   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
-   */
-  void getLocalRow( trilinosTypes::lid myRow,
-                    trilinosTypes::lid & NumEntries,
-                    real64 * & Values,
-                    trilinosTypes::lid * & Indices ) const;
-
-  /**
-   * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
-   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
-   */
-  void getLocalRow( trilinosTypes::lid myRow,
-                    trilinosTypes::lid &NumEntries,
-                    std::vector<real64> &vecValues,
-                    std::vector<trilinosTypes::lid> &vecIndices ) const;
+  void getRowView( globalIndex globalRow,
+                   real64* values,
+                   globalIndex* indices,
+                   localIndex &numEntries ) const;
 
   /**
    * @brief Returns a pointer to the underlying matrix.
@@ -460,46 +430,22 @@ public:
   /**
    * @brief Returns the number of global rows.
    */
-  trilinosTypes::gid globalRows() const;
+  globalIndex globalRows() const;
 
   /**
    * @brief Returns the number of global columns.
    */
-  trilinosTypes::gid globalCols() const;
-
-  /**
-   * @brief Returns the number of local rows.
-   */
-  trilinosTypes::lid localRows() const;
-
-  /**
-   * @brief Returns the number of local columns.
-   */
-  trilinosTypes::lid localCols() const;
+  globalIndex globalCols() const;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.
    */
-  trilinosTypes::gid ilower() const;
+  globalIndex ilower() const;
 
   /**
    * @brief Returns the index of the last global row owned by that processor.
    */
-  trilinosTypes::gid iupper() const;
-
-  /**
-   * @brief Wrapper for LRID function. Returns the local index of the corresponding global index.
-   * Returns -1 if the row is not owned by the processor.
-   */
-  trilinosTypes::lid rowLID( trilinosTypes::gid const GID ) const;
-
-  /**
-   * @brief Wrapper for GRID64 function. Returns the global index of the corresponding local index.
-   * Returns -1 if the row is not owned by the processor.
-   */
-  trilinosTypes::gid rowGID( trilinosTypes::lid const LID ) const;
-
-  //TODO: Do we ever need LCID and GCID64 functions as well?
+  globalIndex iupper() const;
 
   /**
    * @brief Returns the infinity norm of the matrix.

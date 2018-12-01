@@ -50,7 +50,7 @@ BlockVectorView<LAI>::BlockVectorView()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Constructor with a size (number of vectors)
 template< typename LAI >
-BlockVectorView<LAI>::BlockVectorView( typename LAI::lid const nBlocks )
+BlockVectorView<LAI>::BlockVectorView( localIndex const nBlocks )
 {
   m_vectors.resize( nBlocks );
 }
@@ -83,7 +83,7 @@ template< typename LAI >
 void BlockVectorView<LAI>::shallowCopy( BlockVectorView<LAI> const &src )
 {
   m_vectors.resize( src.blockSize()  );
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ )
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
     m_vectors[i] = &(src.block(i));
 }
 
@@ -93,7 +93,7 @@ void BlockVectorView<LAI>::shallowCopy( BlockVectorView<LAI> const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Setter for block.
 template< typename LAI >
-void BlockVectorView<LAI>::set( typename LAI::lid const blockIndex,
+void BlockVectorView<LAI>::set( localIndex const blockIndex,
                                 ParallelVector &vector )
 {
   m_vectors[blockIndex] = &vector;
@@ -111,7 +111,7 @@ void BlockVectorView<LAI>::set( typename LAI::lid const blockIndex,
 template< typename LAI >
 void BlockVectorView<LAI>::scale( real64 const factor )
 {
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ ) 
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ ) 
     m_vectors[i]->scale( factor );
 }
 
@@ -123,7 +123,7 @@ template< typename LAI >
 real64 BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &src) const
 {
   real64 accum = 0;
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ )
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
   {
     real64 temp = m_vectors[i]->dot(src.block(i));
     accum = accum + temp;
@@ -139,7 +139,7 @@ template< typename LAI >
 real64 BlockVectorView<LAI>::norm2() const
 {
   real64 accum = 0;
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ )
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
   {
     real64 temp = m_vectors[i]->norm2();
     accum = accum + temp*temp;
@@ -156,7 +156,7 @@ real64 BlockVectorView<LAI>::normInf() const
 {
   real64 temp = 0;
   real64 result = 0;
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ )
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
   {
     temp = m_vectors[i]->normInf();
     if( temp > result )
@@ -173,7 +173,7 @@ template< typename LAI >
 void BlockVectorView<LAI>::axpy( real64 const alpha,
                                  BlockVectorView<LAI> const &x )
 {
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ )
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
     m_vectors[i]->axpby( alpha, x.block(i), 1. );
 }
 
@@ -187,7 +187,7 @@ void BlockVectorView<LAI>::axpby( real64 const alpha,
                                   BlockVectorView<LAI> const &x,
                                   real64 const beta )
 {
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ )
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
     m_vectors[i]->axpby( alpha, x.block(i), beta );
 }
 
@@ -201,9 +201,9 @@ void BlockVectorView<LAI>::axpby( real64 const alpha,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for block size (number of blocks)
 template< typename LAI >
-typename LAI::lid BlockVectorView<LAI>::blockSize() const
+localIndex BlockVectorView<LAI>::blockSize() const
 {
-  return static_cast<typename LAI::lid>(m_vectors.size()); //TODO integer_conversion
+  return m_vectors.size(); 
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -211,10 +211,10 @@ typename LAI::lid BlockVectorView<LAI>::blockSize() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for global size across blocks
 template< typename LAI >
-typename LAI::gid BlockVectorView<LAI>::globalSize(  ) const
+globalIndex BlockVectorView<LAI>::globalSize(  ) const
 {
-  typename LAI::gid size = 0;
-  for( typename LAI::lid i = 0 ; i < blockSize() ; i++ )
+  globalIndex size = 0;
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
     size = m_vectors[i]->globalSize() + size;
   return size;
 }
@@ -223,7 +223,7 @@ typename LAI::gid BlockVectorView<LAI>::globalSize(  ) const
 // Get block.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
-typename LAI::ParallelVector & BlockVectorView<LAI>::block(typename LAI::lid blockIndex ) const
+typename LAI::ParallelVector & BlockVectorView<LAI>::block(localIndex blockIndex ) const
 {
   return *m_vectors[blockIndex];
 }
