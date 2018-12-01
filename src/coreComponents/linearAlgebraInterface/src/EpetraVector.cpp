@@ -142,14 +142,14 @@ void EpetraVector::set( globalIndex const * globalIndices,
                         real64 const * values,
                         localIndex size )
 {
-  m_vector->ReplaceGlobalValues( size, globalIndices, values );
+  m_vector->ReplaceGlobalValues( integer_conversion<int,localIndex>(size), globalIndices, values );
 }
 
 void EpetraVector::add( globalIndex const * globalIndices,
                         real64 const * values,
                         localIndex size )
 {
-  m_vector->SumIntoGlobalValues( size, globalIndices, values );
+  m_vector->SumIntoGlobalValues( integer_conversion<int,localIndex>(size), globalIndices, values );
 }
 
 // n-element, array1d options
@@ -157,14 +157,12 @@ void EpetraVector::add( globalIndex const * globalIndices,
 void EpetraVector::set( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
-  //TODO: add integer_conversion
-  m_vector->ReplaceGlobalValues( values.size(), globalIndices.data(), values.data() );
+  m_vector->ReplaceGlobalValues( integer_conversion<int,localIndex>(values.size()), globalIndices.data(), values.data() );
 }
 void EpetraVector::add( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
-  //TODO: add integer_conversion
-  m_vector->SumIntoGlobalValues( values.size(), globalIndices.data(), values.data() );
+  m_vector->SumIntoGlobalValues( integer_conversion<int,localIndex>(values.size()), globalIndices.data(), values.data() );
 }
 
 //additional options:

@@ -95,7 +95,7 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
 {
   m_dst_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( globalRows, 0, Epetra_MpiComm( comm ) ));
   m_src_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( globalCols, 0, Epetra_MpiComm( comm ) ));
-  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, maxEntriesPerRow, false ) );
+  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int,localIndex>(maxEntriesPerRow), false ) );
 }
 
 
@@ -112,9 +112,9 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
-  m_dst_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( -1, localRows, 0, Epetra_MpiComm( comm ) ));
-  m_src_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( -1, localCols, 0, Epetra_MpiComm( comm ) ));
-  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, maxEntriesPerRow, false ) );
+  m_dst_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( -1, integer_conversion<int,localIndex>(localRows), 0, Epetra_MpiComm( comm ) ));
+  m_src_map = std::unique_ptr<Epetra_Map>(new Epetra_Map( -1, integer_conversion<int,localIndex>(localCols), 0, Epetra_MpiComm( comm ) ));
+  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int,localIndex>(maxEntriesPerRow), false ) );
 }
 
 
@@ -184,7 +184,7 @@ void EpetraMatrix::add( globalIndex const rowIndex,
                         real64 const * values,
                         localIndex size )
 {
-  m_matrix->SumIntoGlobalValues( rowIndex, size, values, colIndices );
+  m_matrix->SumIntoGlobalValues( rowIndex, integer_conversion<int,localIndex>(size), values, colIndices );
 }
 
 void EpetraMatrix::set( globalIndex const rowIndex,
@@ -192,7 +192,7 @@ void EpetraMatrix::set( globalIndex const rowIndex,
                         real64 const * values,
                         localIndex size )
 {
-  m_matrix->ReplaceGlobalValues( rowIndex, size, values, colIndices );
+  m_matrix->ReplaceGlobalValues( rowIndex, integer_conversion<int,localIndex>(size), values, colIndices );
 }
 
 
@@ -201,7 +201,7 @@ void EpetraMatrix::insert( globalIndex const rowIndex,
                            real64 const * values,
                            localIndex size )
 {
-  m_matrix->InsertGlobalValues( rowIndex, size, values, colIndices );
+  m_matrix->InsertGlobalValues( rowIndex, integer_conversion<int,localIndex>(size), values, colIndices );
 }
 
 // 1xN array1d style
@@ -210,24 +210,21 @@ void EpetraMatrix::add( globalIndex const rowIndex,
                         array1d<globalIndex> const &colIndices,
                         array1d<real64> const &values )
 {
-  // TODO: add integer_conversion
-  m_matrix->SumIntoGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
+  m_matrix->SumIntoGlobalValues( rowIndex, integer_conversion<int,localIndex>(colIndices.size()), values.data(), colIndices.data() );
 }
 
 void EpetraMatrix::set( globalIndex const rowIndex,
                         array1d<globalIndex> const &colIndices,
                         array1d<real64> const &values )
 {
-  // TODO: add integer_conversion
-  m_matrix->ReplaceGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
+  m_matrix->ReplaceGlobalValues( rowIndex, integer_conversion<int,localIndex>(colIndices.size()), values.data(), colIndices.data() );
 }
 
 void EpetraMatrix::insert( globalIndex const rowIndex,
                            array1d<globalIndex> const &colIndices,
                            array1d<real64> const &values )
 {
-  // TODO: add integer_conversion
-  m_matrix->InsertGlobalValues( rowIndex, colIndices.size(), values.data(), colIndices.data() );
+  m_matrix->InsertGlobalValues( rowIndex, integer_conversion<int,localIndex>(colIndices.size()), values.data(), colIndices.data() );
 }
 
 // MxN array2d style
@@ -236,24 +233,27 @@ void EpetraMatrix::add( array1d<globalIndex> const & rowIndices,
                         array1d<globalIndex> const & colIndices,
                         array2d<real64> const & values )
 {
-  // TODO: add integer_conversion
-  m_matrix->SumIntoGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
+  m_matrix->SumIntoGlobalValues( integer_conversion<int,localIndex>(rowIndices.size()), rowIndices.data(), 
+                                 integer_conversion<int,localIndex>(colIndices.size()), colIndices.data(), 
+                                 values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
 void EpetraMatrix::set( array1d<globalIndex> const & rowIndices,
                         array1d<globalIndex> const & colIndices,
                         array2d<real64> const & values )
 {
-  // TODO: add integer_conversion
-  m_matrix->ReplaceGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
+  m_matrix->ReplaceGlobalValues( integer_conversion<int,localIndex>(rowIndices.size()), rowIndices.data(), 
+                                 integer_conversion<int,localIndex>(colIndices.size()), colIndices.data(), 
+                                 values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
 void EpetraMatrix::insert( array1d<globalIndex> const & rowIndices,
                            array1d<globalIndex> const & colIndices,
                            array2d<real64> const & values )
 {
-  // TODO: add integer_conversion
-  m_matrix->InsertGlobalValues( rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
+  m_matrix->InsertGlobalValues( integer_conversion<int,localIndex>(rowIndices.size()), rowIndices.data(), 
+                                integer_conversion<int,localIndex>(colIndices.size()), colIndices.data(), 
+                                values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
 
@@ -347,9 +347,7 @@ void EpetraMatrix::getRowView( globalIndex globalRow,
 {
   int length;
   int err = m_matrix->ExtractGlobalRowView( globalRow, length, values, indices );
-
   GEOS_ERROR_IF(err != 0, "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
-
   numEntries = integer_conversion<localIndex,int>(length);
 }
 
@@ -368,7 +366,6 @@ void EpetraMatrix::clearRow( globalIndex const globalRow,
   int length;
 
   int err = m_matrix->ExtractGlobalRowView( globalRow, length, values, globalCols );
-
   GEOS_ERROR_IF(err != 0, "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
 
   for(int j=0; j<length; ++j)

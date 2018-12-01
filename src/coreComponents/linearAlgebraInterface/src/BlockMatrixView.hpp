@@ -66,9 +66,9 @@ public:
                    localIndex const nCols );
 
   /**
-   * @brief Virtual destructor.
+   * @brief Destructor.
    */
-  virtual ~BlockMatrixView() = default;
+  ~BlockMatrixView() = default;
   //@}
 
   //! @name Linear Algebra Methods

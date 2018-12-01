@@ -110,7 +110,7 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
  * @brief Compute the 2D Laplace operator
  *
  * \param comm MPI communicator.
- * \param global size N of the square 2D Laplace operator matrix.
+ * \param n size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
  */
 
 // ==============================
@@ -119,21 +119,20 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
 
 // This function computes the matrix corresponding to a 2D Laplace operator. These
 // matrices arise from a classical finite volume formulation on a cartesian mesh
-// (5-point stencil).
+// (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
 
 template< typename LAI >
 typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
-                                                       globalIndex N )
+                                                       globalIndex n )
 {
+  // total dofs = n^2
+  globalIndex N = n*n;
+
   // Declare matrix
   typename LAI::ParallelMatrix laplace2D;
 
   // Create a matrix of global size N with 5 non-zeros per row
   laplace2D.createWithGlobalSize(N,5,comm);
-
-  // Get the size of the dummy mesh back to be able to put values in the correct
-  // diagonals.
-  globalIndex n = std::sqrt( N );
 
   // Allocate arrays to fill the matrix (values and columns)
   real64 values[5];
@@ -238,7 +237,7 @@ void testInterfaceSolvers()
   globalIndex N = n*n;
 
   // Compute a 2D Laplace operator
-  ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
+  ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
 
   // Define some vectors
   ParallelVector x_true, 
@@ -433,7 +432,7 @@ void testGEOSXSolvers()
   globalIndex N = n*n;
 
   // Compute a 2D Laplace operator and identity matrix
-  ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
+  ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
   ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
 
   // Define vectors 
@@ -501,7 +500,7 @@ void testGEOSXBlockSolvers()
   globalIndex n = 100;
   globalIndex N = n*n;
 
-  ParallelMatrix matrix   = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, N );
+  ParallelMatrix matrix   = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
   ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
 
   ParallelVector x_true,

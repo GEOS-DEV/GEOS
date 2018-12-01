@@ -81,9 +81,9 @@ public:
 
 
   /**
-   * @brief Virtual destructor.
+   * @brief Destructor.
    */
-  virtual ~BlockVectorView() = default;
+   ~BlockVectorView() = default;
 
   //@}
   //! @name Setters
