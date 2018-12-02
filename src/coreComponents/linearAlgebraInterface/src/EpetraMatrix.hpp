@@ -35,6 +35,7 @@
 #include <Epetra_FECrsGraph.h>
 #include <Epetra_FECrsMatrix.h>
 #include <EpetraExt_MatrixMatrix.h>
+#include <EpetraExt_RowMatrixOut.h>
 
 #include "common/DataTypes.hpp"
 #include "EpetraVector.hpp"
@@ -414,13 +415,12 @@ public:
   //@{
 
   /**
-   * @brief Returns pointers to data in row <tt>globalRow</tt>. 
-   * The number of non zeros in the row is <tt>numEntries</tt>
+   * @brief Returns a copy of the data in row <tt>globalRow</tt>.
+   * Note that the input arrays will be resized internally to fit the number of entries. 
    */
-  void getRowView( globalIndex globalRow,
-                   real64* values,
-                   globalIndex* indices,
-                   localIndex &numEntries ) const;
+  void getRowCopy( globalIndex globalRow,
+                   array1d<globalIndex> & colIndices,
+                   array1d<real64> & values) const;
 
   /**
    * @brief Returns a pointer to the underlying matrix.
@@ -474,6 +474,16 @@ public:
    * @brief Print the matrix in Trilinos format to the terminal.
    */
   void print() const;
+
+  /**
+   * @brief Write the matrix to filename in a matlab-compatible format.
+   *
+   * Within octave / matlab:
+   * >> load filename
+   * >> M = spconvert(filename_root)
+   */
+  void write(string const & filename) const;
+
   //@}
 
 private:

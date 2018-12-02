@@ -306,6 +306,17 @@ void EpetraVector::print() const
   std::cout << *m_vector.get() << std::endl;
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Write to matlab-compatible file
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Note: EpetraExt also supports a MatrixMarket format as well
+void EpetraVector::write(string const & filename) const
+{
+  EpetraExt::MultiVectorToMatlabFile(filename.c_str(),*m_vector);
+}
+
+
+
 // ----------------------------
 // Acessors
 // ----------------------------

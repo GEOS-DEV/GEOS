@@ -210,9 +210,9 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // veborse output (TODO verbosity manager?)
-  if( rank == 1 )
-    std::cout << std::endl << "CG converged in " << numIt << " iterations." << std::endl;
+  // TODO verbosity management
+  if( rank == 0 )
+    std::cout << "Native CG (no preconditioner) converged in " << numIt << " iterations." << std::endl;
   return;
 
 }

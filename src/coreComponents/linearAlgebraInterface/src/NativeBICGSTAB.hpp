@@ -238,9 +238,9 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // veborse output (TODO verbosity manager?)
-  if( rank == 1 )
-    std::cout << std::endl << "BiCGSTAB converged in " << numIt << " iterations." << std::endl;
+  // TODO verbosity management
+  if( rank == 0 )
+    std::cout << "Native BiCGSTAB (no preconditioner) converged in " << numIt << " iterations." << std::endl;
   return;
 
 }

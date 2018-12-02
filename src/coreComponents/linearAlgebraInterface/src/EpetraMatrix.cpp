@@ -334,21 +334,30 @@ void EpetraMatrix::leftRightScale( EpetraVector const &vecLeft,
 
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get global row view 
+// Get global row copy 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get pointers to data in the row.  The globalRow must be stored 
-// on this processors.  Note that this is a view, not a copy
-// operation, so you may modify the resulting data in situ.
+// The challenge here is that columns are stored with local, not global,
+// indices, so we need to do conversions back and forth
 
-void EpetraMatrix::getRowView( globalIndex globalRow,
-                               real64* values,
-                               globalIndex* indices,
-                               localIndex & numEntries ) const
+void EpetraMatrix::getRowCopy( globalIndex globalRow,
+                               array1d<globalIndex> & colIndices,
+                               array1d<real64> & values) const
 {
-  int length;
-  int err = m_matrix->ExtractGlobalRowView( globalRow, length, values, indices );
-  GEOS_ERROR_IF(err != 0, "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
-  numEntries = integer_conversion<localIndex,int>(length);
+  int n_entries = m_matrix->NumGlobalEntries(globalRow);
+
+  localIndex length = integer_conversion<localIndex,int>(n_entries);
+
+  values.resize(length);
+  colIndices.resize(length);
+
+  array1d<int> local_indices (length);
+
+  int localRow = m_matrix->LRID(globalRow);
+  int err = m_matrix->ExtractMyRowCopy(localRow,n_entries,n_entries,values.data(),local_indices.data() );
+  GEOS_ERROR_IF(err!=0, "getRowCopy failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
+ 
+  for(localIndex i=0; i<length; ++i)
+    colIndices[i] = m_matrix->GCID64(local_indices[i]);
 }
 
 
@@ -362,16 +371,15 @@ void EpetraMatrix::clearRow( globalIndex const globalRow,
                              real64 const diagValue )
 {
   double *values = nullptr;
-  globalIndex *globalCols = nullptr;
   int length;
 
-  int err = m_matrix->ExtractGlobalRowView( globalRow, length, values, globalCols );
+  int err = m_matrix->ExtractGlobalRowView( globalRow, length, values );
   GEOS_ERROR_IF(err != 0, "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
 
   for(int j=0; j<length; ++j)
-  {
-    values[j] = (globalCols[j]==globalRow ? diagValue : 0.0);
-  }
+    values[j] = 0.0;
+
+  set(globalRow,globalRow,diagValue);
 }
 
 
@@ -440,6 +448,16 @@ void EpetraMatrix::print() const
     std::cout << *m_matrix << std::endl;
   }
 }
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Write to matlab-compatible file
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Note: EpetraExt also supports a MatrixMarket format as well
+void EpetraMatrix::write(string const & filename) const
+{
+  EpetraExt::RowMatrixToMatlabFile(filename.c_str(),*m_matrix);
+}
+
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Inf-norm.

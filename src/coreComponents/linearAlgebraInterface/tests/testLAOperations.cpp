@@ -47,6 +47,7 @@
 #include "NativeCG.hpp"
 #include "NativeBICGSTAB.hpp"
 #include "BlockMatrixView.hpp"
+#include "BlockVectorView.hpp"
 
 
 /**
@@ -282,23 +283,20 @@ void testInterfaceSolvers()
   LinearSolverParameters parameters;
   LinearSolver solver(parameters);             
 
-  // Overload some default options
-  parameters.solverType = "bicgstab";
-  parameters.preconditionerType = "icc";
+  // Set basic options
+  parameters.verbosity = 1;
+  parameters.solverType = "cg";
   parameters.krylov.tolerance = 1e-8;
   parameters.krylov.maxIterations = 250;
-  parameters.ilu.fill = 1;
-  parameters.verbosity = 1;
+  parameters.preconditionerType = "amg";
+  parameters.amg.smootherType = "gaussSeidel";
+  parameters.amg.coarseType = "direct";
 
   // Solve using the iterative solver and compare norms with true solution
   solver.solve( matrix, x_comp, b);
   real64 norm_comp = x_comp.norm2();
   real64 norm_true = x_true.norm2();
   EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-6 );
-
-  // We also check a couple random elements to see if they are equal.
-  //JAW  EXPECT_LT( ( std::fabs( solIterative.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-4 );
-  //JAW  EXPECT_LT( ( std::fabs( solIterative.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-4 );
 
   // We now do the same using a direct solver.
   // Again the norm should be the norm of x. We use a tougher tolerance on the test
@@ -310,98 +308,43 @@ void testInterfaceSolvers()
   norm_comp = x_comp.norm2();
   EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-12 );
 
-  // Again we check a couple elements
-  //JAW  EXPECT_LT( ( std::fabs( solDirect.getElement( n ) - x.getElement( n ))/std::fabs( x.getElement( n ) ) ), 1e-12 );
-  //JAW  EXPECT_LT( ( std::fabs( solDirect.getElement( 3*n ) - x.getElement( 3*n ))/std::fabs( x.getElement( 3*n ) ) ), 1e-12 );
+  // Option to write files (for direct comparison)
+  // matrix.write("matrix.dat");
+  // x_true.write("x_true.dat");
+  // x_comp.write("x_comp.dat");
 
-#if 0
-  // Declare integers to run tests
-  integer numValRow0,numValRow1,numValRown;
+  // Try getting access to matrix entries
 
-  // Declare vectors to run tests
-  std::vector<real64> vecValuesRow0( 5 ),vecValuesRow1( 5 ),vecValuesRown( 5 );
-  std::vector<localIndex> vecIndicesRow0( 5 ),vecIndicesRow1( 5 ),vecIndicesRown( 5 );
+  array1d<real64> col_values;
+  array1d<globalIndex> col_indices;
 
-  // Get values and columns in specific rows
-  matrix.getLocalRow( 0, numValRow0, vecValuesRow0, vecIndicesRow0 );
-  matrix.getLocalRow( 1, numValRow1, vecValuesRow1, vecIndicesRow1 );
-  matrix.getLocalRow( static_cast<localIndex>( n ), numValRown, vecValuesRown, vecIndicesRown );
-
-  // Run checks on rank 0 to see if the matrix was correctly constructed
-  if (rank == 0)
+  if(rank == 0)
   {
-    // Check number of values per row
-    EXPECT_DOUBLE_EQ( numValRow0, 3 );
-    EXPECT_DOUBLE_EQ( numValRow1, 4 );
-    EXPECT_DOUBLE_EQ( numValRown, 5 );
-
-    // Check column indices for row 0
-    EXPECT_DOUBLE_EQ( vecIndicesRow0[0], 0 );
-    EXPECT_DOUBLE_EQ( vecIndicesRow0[1], 1 );
-    EXPECT_DOUBLE_EQ( vecIndicesRow0[2], n );
-
-    // Check column indices for row 1
-    EXPECT_DOUBLE_EQ( vecIndicesRow1[0], 0 );
-    EXPECT_DOUBLE_EQ( vecIndicesRow1[1], 1 );
-    EXPECT_DOUBLE_EQ( vecIndicesRow1[2], 2 );
-    EXPECT_DOUBLE_EQ( vecIndicesRow1[3], n+1 );
-
-    // Check column indices for row n
-    EXPECT_DOUBLE_EQ( vecIndicesRown[0], 0 );
-    EXPECT_DOUBLE_EQ( vecIndicesRown[1], n-1 );
-    EXPECT_DOUBLE_EQ( vecIndicesRown[2], n );
-    EXPECT_DOUBLE_EQ( vecIndicesRown[3], n+1 );
-    EXPECT_DOUBLE_EQ( vecIndicesRown[4], 2*n );
-
-    // Check values for row 0
-    EXPECT_DOUBLE_EQ( vecValuesRow0[0], 4. );
-    EXPECT_DOUBLE_EQ( vecValuesRow0[1], -1. );
-    EXPECT_DOUBLE_EQ( vecValuesRow0[2], -1. );
-
-    // Check values for row 1
-    EXPECT_DOUBLE_EQ( vecValuesRow1[0], -1. );
-    EXPECT_DOUBLE_EQ( vecValuesRow1[1], 4. );
-    EXPECT_DOUBLE_EQ( vecValuesRow1[2], -1. );
-    EXPECT_DOUBLE_EQ( vecValuesRow1[3], -1. );
-
-    // Check values for row n
-    EXPECT_DOUBLE_EQ( vecValuesRown[0], -1. );
-    EXPECT_DOUBLE_EQ( vecValuesRown[1], -1. );
-    EXPECT_DOUBLE_EQ( vecValuesRown[2], 4. );
-    EXPECT_DOUBLE_EQ( vecValuesRown[3], -1. );
-    EXPECT_DOUBLE_EQ( vecValuesRown[4], -1. );
+    matrix.getRowCopy(0,col_indices,col_values);
+    EXPECT_EQ(col_indices.size(),3);
+    matrix.getRowCopy(1,col_indices,col_values);
+    EXPECT_EQ(col_indices.size(),4); 
+    matrix.getRowCopy(n+1,col_indices,col_values);
+    EXPECT_EQ(col_indices.size(),5); 
   }
 
-  // We now test the linear algebra operations, such as matrix-vector product and
-  // compute residuals.
+  // Try clearing rows and setting diagonal value
 
-  // For that we first fill some standard vectors
-  std::vector<real64> ones, zer, random, random2;
-  for (integer j = 0; j < N; j++)
+  double diagValue = 100.0;
+  globalIndex firstRow = matrix.ilower();
+
+  matrix.clearRow(firstRow,diagValue);
+
+  matrix.getRowCopy(firstRow,col_indices,col_values);
+  for(localIndex i=0; i<col_indices.size(); ++i)
   {
-    // Vector of zeros
-    zer.push_back( 0 );
-    // Vector of ones
-    ones.push_back( 1 );
-    // Vector of random integers
-    random.push_back( rand() % 20 - 10 );
-    // Vector of random integers (different range to make sure the two random vectors
-    // are not the same, which would defeat the purpose).
-    random2.push_back( rand() % 30 - 15 );
+    if(firstRow == col_indices[i])
+      EXPECT_DOUBLE_EQ(col_values[i],diagValue);
+    else 
+      EXPECT_DOUBLE_EQ(col_values[i],0.0);
   }
-
-  // Test the clearRow function (this has to be done after the solves so that we can
-  // use the same matrix when we are done with it).
-  // We clear the row and multiply the diagonal value by 2.
-  matrix.clearRow( 2*N/4+n, 2.0 );
-  matrix.getLocalRow(static_cast<localIndex>( n ),numValRown,vecValuesRown,vecIndicesRown);
-  if ( rank == 2 )
-  {
-    EXPECT_DOUBLE_EQ( vecValuesRown[2], 8.0 );
-  }
-#endif
-
 }
+
 
 /**
  * @function testGEOSXSolvers
@@ -562,7 +505,7 @@ void testGEOSXBlockSolvers()
   block_rhs.set( 1, b_1 );
   block_matrix.multiply( block_x_true, block_rhs);
 
-//TODO: Need to refactor Native block solvers.  Disable this for now.
+//TODO: Need to refactor Native block solvers.  Disable this testing section for now.
 #if 0
   // Create block CG solver object and solve
   CGsolver<LAI> testCG;
@@ -641,7 +584,6 @@ TEST(testLAOperations,testHypreLAOperations)
  */
 TEST(testLAOperations,testPETScLAOperations)
 {
-
   //MPI_Init( nullptr, nullptr );
   //testInterfaceSolvers<PETScInterface>();
   //testGEOSXSolvers<PETScInterface>();

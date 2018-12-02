@@ -131,6 +131,9 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
   else 
     GEOS_ERROR("The requested linear solverType doesn't seem to exist");
 
+  // Create a null pointer to an ML amg preconditioner
+  std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
+
   // Choose the preconditioner type 
   if(m_parameters.preconditionerType == "none")
   {
@@ -161,6 +164,45 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
     solver.SetAztecParam( AZ_ilut_fill, (m_parameters.ilu.fill>0?real64(m_parameters.ilu.fill):1.0)); 
   }
+  else if(m_parameters.preconditionerType == "amg")
+  {
+    Teuchos::ParameterList list;
+
+    if(m_parameters.amg.isSymmetric)
+      ML_Epetra::SetDefaults( "SA", list );
+    else
+      ML_Epetra::SetDefaults( "NSSA", list );
+
+    std::map<string,string> translate; // maps GEOSX to ML syntax
+
+    translate.insert(std::make_pair( "V",                "MGV" ));
+    translate.insert(std::make_pair( "W",                "MGW" ));
+    translate.insert(std::make_pair( "direct",           "Amesos-KLU" ));
+    translate.insert(std::make_pair( "jacobi",           "Jacobi" ));
+    translate.insert(std::make_pair( "blockJacobi",      "block Jacobi" ));
+    translate.insert(std::make_pair( "gaussSeidel",      "Gauss-Seidel" ));
+    translate.insert(std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ));
+    translate.insert(std::make_pair( "chebyshev",        "Chebyshev" ));
+    translate.insert(std::make_pair( "ilu",              "ILU" ));
+    translate.insert(std::make_pair( "ilut",             "ILUT" ));
+
+    list.set("ML output",m_parameters.verbosity);
+    list.set("max levels",m_parameters.amg.maxLevels);
+    list.set("aggregation: type","Uncoupled");
+    list.set("PDE equations",m_parameters.dofsPerNode);
+    list.set("smoother: sweeps",m_parameters.amg.numSweeps);
+    list.set("prec type",translate[m_parameters.amg.cycleType]);
+    list.set("smoother: type",translate[m_parameters.amg.smootherType]);
+    list.set("coarse: type",translate[m_parameters.amg.coarseType]);
+   
+    //TODO: add user-defined null space / rigid body mode support
+        //list.set("null space: type","pre-computed");
+        //list.set("null space: vectors",&rigid_body_modes[0]);
+        //list.set("null space: dimension", n_rbm);
+
+    ml_preconditioner.reset(new ML_Epetra::MultiLevelPreconditioner(*mat.unwrappedPointer(), list));
+    solver.SetPrecOperator( ml_preconditioner.get());
+  }
   else 
     GEOS_ERROR("The requested preconditionerType doesn't seem to exist");
 
@@ -185,6 +227,9 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
   // Actually solve
   solver.Iterate( m_parameters.krylov.maxIterations, 
                   m_parameters.krylov.tolerance );
+
+  //TODO: should we return performance feedback to have GEOSX pretty print details?:  
+  //      i.e. iterations to convergence, residual reduction, etc.
 }
 
 /**

@@ -31,6 +31,7 @@
 #include <Epetra_FEVector.h>
 #include <Epetra_Map.h>
 #include <Epetra_MpiComm.h>
+#include <EpetraExt_MultiVectorOut.h>
 
 #include "common/DataTypes.hpp"
 
@@ -346,6 +347,11 @@ public:
    * @brief Print the vector in Trilinos format to the terminal.
    */
   void print() const;
+
+  /**
+   * @brief Write the vector to a matlab-compatible file
+   */
+  void write(string const & filename) const;
 
   //@}
 
