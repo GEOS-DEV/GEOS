@@ -121,10 +121,10 @@ public:
 
   int SeparationDriver( MeshLevel * const mesh,
                         array1d<NeighborCommunicator> & neighbors,
+                        int const tileColor,
+                        int const numTileColors,
                         const bool prefrac,
                         const realT time );
-private:
-
 
 private:
 
