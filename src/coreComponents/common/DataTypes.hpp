@@ -92,7 +92,7 @@ extern MPI_Comm MPI_COMM_GEOSX;
 /// alias for std::size_t
 using size_t      = std::size_t;
 using integer     = std::int32_t;
-using localIndex  = std::int_fast32_t;
+using localIndex  = std::ptrdiff_t;
 using globalIndex = long long int;//std::int64_t;
 using string      = std::string;
 
