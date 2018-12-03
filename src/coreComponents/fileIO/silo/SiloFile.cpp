@@ -1160,29 +1160,32 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
 
 
-
-  for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+  // add expressions
+  if( rank==0 )
   {
-    string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
-    MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
-    DBSetDir( m_dbBaseFilePtr, MultiDir.c_str());
+    for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+    {
+      string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
+      MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
+      DBSetDir( m_dbBaseFilePtr, MultiDir.c_str());
 
-    string const expressionName = MultiDir + "/" + "density";
-    const char * expObjName = expressionName.c_str();
-    const char * const names[1] = { expObjName } ;
-    int const types[1] = {DB_VARTYPE_SCALAR};
-    string const definition = "value_for_material(<" + subDirectory + "/density>, " + std::to_string(matIndex) + ")";
-    const char * const defns[1] = {definition.c_str()};
-    DBPutDefvars( m_dbBaseFilePtr,
-                  expObjName,
-                  1,
-                  names,
-                  types,
-                  defns,
-                  nullptr );
+      string const expressionName = MultiDir + "/" + "density";
+      const char * expObjName = expressionName.c_str();
+      const char * const names[1] = { expObjName } ;
+      int const types[1] = {DB_VARTYPE_SCALAR};
+      string const definition = "value_for_material(<" + subDirectory + "/density>, " + std::to_string(matIndex) + ")";
+      const char * const defns[1] = {definition.c_str()};
+      DBPutDefvars( m_dbBaseFilePtr,
+                    expObjName,
+                    1,
+                    names,
+                    types,
+                    defns,
+                    nullptr );
 
-    DBSetDir(this->m_dbBaseFilePtr, "..");
+      DBSetDir(this->m_dbBaseFilePtr, "..");
 
+    }
   }
 
   DBSetDir(m_dbFilePtr, "..");

@@ -30,6 +30,7 @@
 #include <mpi.h>
 #include <vector>
 #include "common/DataTypes.hpp"
+#include "dataRepository/ReferenceWrapper.hpp"
 #include "IntegerConversion.hpp"
 
 namespace geosx
@@ -43,8 +44,7 @@ inline int CommTag( int const senderRank, int const receiverRank, int const comm
 }
 
 class MeshLevel;
-
-
+class ObjectManagerBase;
 class NeighborCommunicator
 {
 public:
@@ -163,7 +163,6 @@ public:
   void UnpackGhosts( MeshLevel * const meshLevel,
                      int const commID );
 
-
   void RebuildSyncLists( MeshLevel * const meshLevel,
                          int const commID );
 
@@ -181,7 +180,8 @@ public:
                             MeshLevel * const meshLevel,
                             int const commID );
 
-  int Rank();
+  static int Rank();
+  static int MPISize();
 
   void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
   int NeighborRank() const { return m_neighborRank; }

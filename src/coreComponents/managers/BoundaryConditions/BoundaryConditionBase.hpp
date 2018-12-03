@@ -101,7 +101,17 @@ struct BcEqual
                 int const component,
                 real64 const & value )
   {
-    field[index][component] = static_cast<T>(value);
+    if( component >= 0 )
+    {
+      field[index][component] = static_cast<T>(value);
+    }
+    else
+    {
+      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+      {
+        field[index][a] = static_cast<T>(value);
+      }
+    }
   }
 
   /**
@@ -122,9 +132,19 @@ struct BcEqual
                 int const component,
                 real64 const & value )
   {
-    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+    if( component >= 0)
     {
-      field[index][a].Data()[component] = value;
+      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+      {
+        field[index][a].Data()[component] = value;
+      }
+    }
+    else
+    {
+      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+      {
+        field[index][a] = value;
+      }
     }
   }
 
