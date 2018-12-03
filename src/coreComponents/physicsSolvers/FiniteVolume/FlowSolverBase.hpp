@@ -171,21 +171,11 @@ protected:
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
-  /**
-   * @brief Copyable struct to hold shortcut views into constant data fields
-   */
-  struct dataViewStruct
-  {
-    template<typename T, int NDIM>
-    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
-
-    ElementViewAccessor<integer, 1> elemGhostRank;
-    ElementViewAccessor<real64, 1>  volume;
-    ElementViewAccessor<real64, 1>  porosityRef;
-  };
-
   /// views into constant data fields
-  dataViewStruct     m_dataView;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravDepth;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
 
 };
 

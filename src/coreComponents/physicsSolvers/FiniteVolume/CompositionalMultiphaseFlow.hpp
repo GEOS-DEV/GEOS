@@ -507,97 +507,57 @@ private:
   localIndex m_relPermIndex;
 
 
-  /**
-   * @brief Copyable struct to hold shortcut views into primary variable fields
-   */
-  struct varViewStruct
-  {
-    template<typename T, int NDIM>
-    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
-
-    ElementViewAccessor<globalIndex, 1> dofNumber; // TODO will move to DofManager
-
-    ElementViewAccessor<real64, 1>      pressure;
-    ElementViewAccessor<real64, 1>      deltaPressure;
-
-    ElementViewAccessor<real64, 2>      globalCompDensity;
-    ElementViewAccessor<real64, 2>      deltaGlobalCompDensity;
-  };
-
-  /**
-   * @brief Copyable struct to hold shortcut views into other variable fields
-   */
-  struct fieldViewStruct
-  {
-    template<typename T, int NDIM>
-    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
-
-    ElementViewAccessor<real64, 2> compFrac;
-    ElementViewAccessor<real64, 3> dCompFrac_dCompDens;
-
-    ElementViewAccessor<real64, 2> phaseVolFrac;
-    ElementViewAccessor<real64, 2> dPhaseVolFrac_dPres;
-    ElementViewAccessor<real64, 3> dPhaseVolFrac_dCompDens;
-  };
-
-  /**
-   * @brief Copyable struct to hold shortcut views into backup fields
-   */
-  struct backupViewStruct
-  {
-    template<typename T, int NDIM>
-    using ElementViewAccessor = ElementRegionManager::ElementViewAccessor<array_view<T, NDIM>>;
-
-    ElementViewAccessor<real64, 1> porosityOld;
-    ElementViewAccessor<real64, 2> phaseVolFracOld;
-    ElementViewAccessor<real64, 2> phaseDensOld;
-    ElementViewAccessor<real64, 3> phaseCompFracOld;
-  };
-
-  /**
-   * @brief Copyable struct to hold shortcut views into constitutive fields
-   */
-  struct materialViewStruct
-  {
-    template<typename T, int NDIM>
-    using MaterialViewAccessor = ElementRegionManager::MaterialViewAccessor<array_view<T, NDIM>>;
-
-    MaterialViewAccessor<real64, 2> pvMult;
-    MaterialViewAccessor<real64, 2> dPvMult_dPres;
-
-    MaterialViewAccessor<real64, 3> phaseFrac;
-    MaterialViewAccessor<real64, 3> dPhaseFrac_dPres;
-    MaterialViewAccessor<real64, 4> dPhaseFrac_dComp;
-
-    MaterialViewAccessor<real64, 3> phaseDens;
-    MaterialViewAccessor<real64, 3> dPhaseDens_dPres;
-    MaterialViewAccessor<real64, 4> dPhaseDens_dComp;
-
-    MaterialViewAccessor<real64, 3> phaseVisc;
-    MaterialViewAccessor<real64, 3> dPhaseVisc_dPres;
-    MaterialViewAccessor<real64, 4> dPhaseVisc_dComp;
-
-    MaterialViewAccessor<real64, 4> phaseCompFrac;
-    MaterialViewAccessor<real64, 4> dPhaseCompFrac_dPres;
-    MaterialViewAccessor<real64, 5> dPhaseCompFrac_dComp;
-
-    MaterialViewAccessor<real64, 2> totalDens;
-
-    MaterialViewAccessor<real64, 3> phaseRelPerm;
-    MaterialViewAccessor<real64, 4> dPhaseRelPerm_dPhaseVolFrac;
-  };
-
   /// views into primary variable fields
-  varViewStruct      m_varView;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_pressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_deltaPressure;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>>      m_globalCompDensity;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>>      m_deltaGlobalCompDensity;
 
   /// views into other variable fields
-  fieldViewStruct    m_fieldView;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_compFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dCompFrac_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseVolFrac_dCompDens;
 
   /// views into backup fields
-  backupViewStruct   m_backupView;
 
-  /// views into constitutive fields
-  materialViewStruct m_matView;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFracOld;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseDensOld;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_phaseCompFracOld;
+
+  /// views into material fields
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseFrac;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseFrac_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseDens;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseDens_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseDens_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseVisc;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseVisc_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_phaseCompFrac;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCompFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> m_dPhaseCompFrac_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_totalDens;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseRelPerm;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseRelPerm_dPhaseVolFrac;
 };
 
 } // namespace geosx
