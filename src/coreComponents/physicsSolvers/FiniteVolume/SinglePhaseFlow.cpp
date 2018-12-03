@@ -242,6 +242,8 @@ void SinglePhaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const root
                               domain->getMeshBody(0)->getMeshLevel(0),
                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
+  ResetViews( domain );
+
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in AyyplySystemSolution and ImplicitStepComplete, respectively
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -320,6 +322,8 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
                                          DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem )
 {
+  ResetViews( domain );
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
@@ -630,164 +634,181 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
 
 
 
-void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
-                                     EpetraBlockSystem * const blockSystem,
-                                     real64 const time_n,
-                                     real64 const dt)
+void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
+                                      EpetraBlockSystem * const blockSystem,
+                                      real64 const time_n,
+                                      real64 const dt )
 {
-  //***** extract data required for assembly of system *****
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
-
-  FluxApproximationBase const * fluxApprox =
-    fvManager->getFluxApproximation(m_discretizationName);
-
-  FluxApproximationBase::CellStencil const & stencilCollection =fluxApprox->getStencil();
-
-  Epetra_FECrsMatrix * const jacobian =
-    blockSystem->GetMatrix(BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock);
-
-  Epetra_FEVector * const residual =
-    blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const elemGhostRank =
-    elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const blockLocalDofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>(viewKeyStruct::blockLocalDofNumberString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::pressureString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dVol =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::deltaVolumeString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("totalMeanStress");
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const oldTotalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("oldTotalMeanStress");
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::deltaPressureString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const densOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::densityString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::porosityString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldPorosityString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroRef =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::referencePorosityString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const gravDepth =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::gravityDepthString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dens =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::densityString,
-                                                                       constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const bulkModulus =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( "BulkModulus", constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-    elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dDens_dPres =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
-                                                                       constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const visc =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::viscosityString,
-                                                                       constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dVisc_dPres =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
-                                                                       constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const pvmult =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
-                                                                       constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const dPVMult_dPres =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
-                                                                       constitutiveManager);
-
-  //***** Loop over all elements and assemble the change in volume/density terms *****
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  if (m_poroElasticFlag)
   {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    AssembleAccumulationTermsCoupled( domain, jacobian, residual, time_n, dt );
+  }
+  else
+  {
+    AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
+  }
+  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
+
+  jacobian->GlobalAssemble(true);
+  residual->GlobalAssemble();
+
+  if( verboseLevel() >= 2 )
+  {
+    GEOS_LOG_RANK("After SinglePhaseFlow::AssembleSystem");
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+  }
+}
+
+void
+SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
+                                            Epetra_FECrsMatrix * const jacobian,
+                                            Epetra_FEVector * const residual,
+                                            real64 const time_n,
+                                            real64 const dt )
+{
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+                                            ElementRegion const * const region,
+                                            CellBlockSubRegion const * const subRegion )
+  {
+    arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
+
+    arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
+    arrayView1d<real64>       const & poro          = m_porosity[er][esr];
+    arrayView1d<real64 const> const & poroOld       = m_porosityOld[er][esr];
+    arrayView1d<real64 const> const & poroRef       = m_porosityRef[er][esr];
+    arrayView1d<real64 const> const & volume        = m_volume[er][esr];
+    arrayView1d<real64 const> const & dVol          = m_deltaVolume[er][esr];
+    arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
+    arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
+    arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
+    arrayView2d<real64 const> const & dPVMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
+
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      if (elemGhostRank[ei] >= 0)
+        return;
 
-      for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
-      {
-        if (elemGhostRank[er][esr][ei]<0)
-        {
-          globalIndex const elemDOF = blockLocalDofNumber[er][esr][ei];
+      globalIndex const elemDOF = dofNumber[ei];
 
-          real64 const densNew = dens[er][esr][m_fluidIndex][ei][0];
-          real64 const volNew = volume[er][esr][ei] + dVol[er][esr][ei];
+      real64 const densNew = dens[ei][0];
+      real64 const volNew = volume[ei] + dVol[ei];
 
-          if (m_poroElasticFlag == 0)
-          {
-            poro[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
-          }
-          else
-          {
-            poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][m_solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][m_solidIndex][ei][0]
-                                                     * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
-          }
+      poro[ei] = poroRef[ei] * pvmult[ei][0];
 
-          // Residual contribution is mass conservation in the cell
-          real64 const localAccum = poro[er][esr][ei]    * densNew              * volNew
-                                  - poroOld[er][esr][ei] * densOld[er][esr][ei] * volume[er][esr][ei];
+      // Residual contribution is mass conservation in the cell
+      real64 const localAccum = poro[ei]    * densNew     * volNew
+                              - poroOld[ei] * densOld[ei] * volume[ei];
 
-          // Derivative of residual wrt to pressure in the cell
-          real64 localAccumJacobian;
-          if (m_poroElasticFlag == 0)
-          {
-            localAccumJacobian = dPVMult_dPres[er][esr][m_solidIndex][ei][0] * poroRef[er][esr][ei] * densNew           * volNew
-                               + dDens_dPres[er][esr][m_fluidIndex][ei][0]                          * poro[er][esr][ei] * volNew;
-          }
-          else
-          {
-            localAccumJacobian = (biotCoefficient[er][esr][m_solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][m_solidIndex][ei][0] * densNew           * volNew
-                               + dDens_dPres[er][esr][m_fluidIndex][ei][0]                                                                * poro[er][esr][ei] * volNew;
-          }
+      // Derivative of residual wrt to pressure in the cell
+      real64 const localAccumJacobian = dPVMult_dPres[ei][0] * poroRef[ei] * densNew * volNew
+                                      + dDens_dPres[ei][0] * poro[ei] * volNew;
 
-          // add contribution to global residual and dRdP
-          residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
-          jacobian->SumIntoGlobalValues(1, &elemDOF, 1, &elemDOF, &localAccumJacobian);
-        }
-      }
-    }
-  }//);
+      // add contribution to global residual and jacobian
+      residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
+      jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+    } );
+  } );
+}
+
+void
+SinglePhaseFlow::AssembleAccumulationTermsCoupled( DomainPartition const * const domain,
+                                                   Epetra_FECrsMatrix * const jacobian,
+                                                   Epetra_FEVector * const residual,
+                                                   real64 const time_n,
+                                                   real64 const dt )
+{
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+                                            ElementRegion const * const region,
+                                            CellBlockSubRegion const * const subRegion )
+  {
+    arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
+
+    arrayView1d<real64 const> const & dPres         = m_deltaPressure[er][esr];
+    arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
+    arrayView1d<real64>       const & poro          = m_porosity[er][esr];
+    arrayView1d<real64 const> const & poroOld       = m_porosityOld[er][esr];
+    arrayView1d<real64 const> const & volume        = m_volume[er][esr];
+    arrayView1d<real64 const> const & dVol          = m_deltaVolume[er][esr];
+    arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
+    arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
+
+    arrayView1d<real64 const> const & oldTotalMeanStress = m_totalMeanStressOld[er][esr];
+    arrayView1d<real64 const> const & totalMeanStress    = m_totalMeanStress[er][esr];
+    arrayView2d<real64 const> const & bulkModulus        = m_bulkModulus[er][esr][m_solidIndex];
+    real64 const & biotCoefficient                       = m_biotCoefficient[er][esr][m_solidIndex];
+
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    {
+      if (elemGhostRank[ei] >= 0)
+        return;
+
+      globalIndex const elemDOF = dofNumber[ei];
+
+      real64 const densNew = dens[ei][0];
+      real64 const volNew = volume[ei] + dVol[ei];
+
+      poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei][0]
+                             * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
+
+      // Residual contribution is mass conservation in the cell
+      real64 const localAccum = poro[ei]    * densNew     * volNew
+                              - poroOld[ei] * densOld[ei] * volume[ei];
+
+      // Derivative of residual wrt to pressure in the cell
+      real64 const localAccumJacobian = (biotCoefficient - poroOld[ei]) / bulkModulus[ei][0] * densNew * volNew
+                                      + dDens_dPres[ei][0] * poro[ei] * volNew;
+
+      // add contribution to global residual and jacobian
+      residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
+      jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+    } );
+  } );
+}
+
+void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
+                                         Epetra_FECrsMatrix * const jacobian,
+                                         Epetra_FEVector * const residual,
+                                         real64 const time_n,
+                                         real64 const dt )
+{
+  NumericalMethodsManager const * numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase::CellStencil const & stencilCollection =fluxApprox->getStencil();
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber = m_dofNumber;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres        = m_pressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dPres       = m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & gravDepth   = m_gravDepth;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens        = m_density;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dDens_dPres = m_dDens_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & visc        = m_viscosity;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres = m_dVisc_dPres;
 
   constexpr localIndex numElems = 2;
   constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
 
-  stencilCollection.forAll<RAJA::seq_exec>([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
+  stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
   {
     localIndex const stencilSize = stencil.size();
 
@@ -813,13 +834,13 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
     // calculate quantities on primary connected cells
     real64 densMean = 0.0;
-    stencil.forConnected([&] (auto const & cell, localIndex i) -> void
+    stencil.forConnected( [&] ( CellDescriptor const & cell, localIndex i )
     {
       localIndex const er  = cell.region;
       localIndex const esr = cell.subRegion;
       localIndex const ei  = cell.index;
 
-      eqnRowIndices[i] = blockLocalDofNumber[er][esr][ei];
+      eqnRowIndices[i] = dofNumber[er][esr][ei];
 
       // density
       real64 const density   = dens[er][esr][m_fluidIndex][ei][0];
@@ -842,13 +863,13 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0;
-    stencil.forAll([&] (CellDescriptor cell, real64 w, localIndex i) -> void
+    stencil.forAll( [&] ( CellDescriptor const & cell, real64 w, localIndex i )
     {
       localIndex const er  = cell.region;
       localIndex const esr = cell.subRegion;
       localIndex const ei  = cell.index;
 
-      dofColIndices[i] = blockLocalDofNumber[er][esr][ei];
+      dofColIndices[i] = dofNumber[er][esr][ei];
 
       real64 const gravD    = gravDepth[er][esr][ei];
       real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
@@ -883,21 +904,14 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     }
 
     // Add to global residual/jacobian
-    jacobian->SumIntoGlobalValues(2, eqnRowIndices.data(), integer_conversion<int>(stencilSize), dofColIndices.data(),
-                                  localFluxJacobian.data());
+    jacobian->SumIntoGlobalValues( integer_conversion<int>(numElems),
+                                   eqnRowIndices.data(),
+                                   integer_conversion<int>(stencilSize),
+                                   dofColIndices.data(),
+                                   localFluxJacobian.data() );
 
-    residual->SumIntoGlobalValues(2, eqnRowIndices.data(), localFlux.data());
+    residual->SumIntoGlobalValues( integer_conversion<int>(numElems), eqnRowIndices.data(), localFlux.data() );
   });
-
-  jacobian->GlobalAssemble(true);
-  residual->GlobalAssemble();
-
-  if( verboseLevel() >= 2 )
-  {
-    GEOS_LOG_RANK("After SinglePhaseFlow::AssembleSystem");
-    GEOS_LOG_RANK("\nJacobain\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual\n" << *residual);
-  }
 }
 
 void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
@@ -916,12 +930,13 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                                   BlockIDs::fluidPressureBlock );
     Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-    GEOS_LOG_RANK("After SinglePhaseFlow::ApplyBoundaryCondition");
-    GEOS_LOG_RANK("\ndRdP\n" << *jacobian );
-    GEOS_LOG_RANK("\nresidual\n" << *residual );
+    GEOS_LOG_RANK( "After SinglePhaseFlow::ApplyBoundaryCondition" );
+    GEOS_LOG_RANK( "\nJacobian\n" << *jacobian );
+    GEOS_LOG_RANK( "\nResidual\n" << *residual );
   }
 
 }
+
 
 /**
  * This function currently applies Dirichlet boundary conditions on the elements/zones as they
@@ -1274,7 +1289,6 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   });
 }
 
-
 real64
 SinglePhaseFlow::
 CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
@@ -1438,6 +1452,63 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
     constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( pres[er][esr][ei], ei, 0 );
   });
 
+}
+
+void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
+{
+  FlowSolverBase::ResetViews(domain);
+
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+
+  m_dofNumber =
+    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
+  m_pressure =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::pressureString );
+  m_deltaPressure =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::deltaPressureString );
+  m_deltaVolume =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::deltaVolumeString );
+
+  m_porosityOld =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::oldPorosityString );
+  m_densityOld =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::densityString );
+
+  m_pvMult =
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
+                                                                                      constitutiveManager );
+  m_dPvMult_dPres =
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
+                                                                                      constitutiveManager );
+  m_porosity =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::porosityString );
+
+  m_density =
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::densityString,
+                                                                                      constitutiveManager );
+  m_dDens_dPres =
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
+                                                                                      constitutiveManager );
+  m_viscosity =
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::viscosityString,
+                                                                                      constitutiveManager );
+  m_dVisc_dPres =
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
+                                                                                      constitutiveManager );
+
+  if (m_poroElasticFlag)
+  {
+    // TODO where are these strings defined?
+    m_totalMeanStressOld = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "oldTotalMeanStress" );
+    m_totalMeanStress    = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "totalMeanStress" );
+
+    m_bulkModulus = elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( "BulkModulus",
+                                                                                                       constitutiveManager );
+    m_biotCoefficient = elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient",
+                                                                            constitutiveManager );
+  }
 }
 
 

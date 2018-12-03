@@ -1280,13 +1280,14 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
   AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
 
-  jacobian->GlobalAssemble();
+  jacobian->GlobalAssemble( true );
   residual->GlobalAssemble();
 
-  if( verboseLevel() >= 3 )
+  if( verboseLevel() >= 2 )
   {
-    jacobian->Print(std::cout);
-    residual->Print(std::cout);
+    GEOS_LOG_RANK("After CompositionalMultiphaseFlow::AssembleSystem");
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
 
 }
@@ -1880,13 +1881,14 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * con
   ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
-  jacobian->GlobalAssemble(true);
+  jacobian->GlobalAssemble();
   residual->GlobalAssemble();
 
   if (verboseLevel() >= 2)
   {
-    jacobian->Print( std::cout );
-    residual->Print( std::cout );
+    GEOS_LOG_RANK( "After CompositionalMultiphaseFlow::ApplyBoundaryCondition" );
+    GEOS_LOG_RANK( "\nJacobian\n" << *jacobian );
+    GEOS_LOG_RANK( "\nResidual\n" << *residual );
   }
 }
 
