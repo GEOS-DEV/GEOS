@@ -206,6 +206,8 @@ void FlowSolverBase::FinalInitializationPreSubGroups(ManagedGroup * const rootGr
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
+  ResetViews( domain );
+
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
 }
@@ -243,6 +245,21 @@ void FlowSolverBase::PrecomputeData(DomainPartition * const domain)
 }
 
 FlowSolverBase::~FlowSolverBase() = default;
+
+void FlowSolverBase::ResetViews( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  m_elemGhostRank =
+    elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  m_volume =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CellBlockSubRegion::viewKeyStruct::elementVolumeString );
+  m_gravDepth =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::gravityDepthString );
+  m_porosityRef =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::referencePorosityString );
+}
 
 
 } // namespace geosx

@@ -25,6 +25,7 @@
 
 #include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "../../mesh/ElementRegionManager.hpp"
 
 class Epetra_FECrsGraph;
 
@@ -463,12 +464,17 @@ private:
                                      localIndex offset );
 
   /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
+
+  /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param object the target ObjectManager for the application of the BC.
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyDirichletBC_implicit( DomainPartition * const object,
+  void ApplyDirichletBC_implicit( DomainPartition * const domain,
                                   real64 const time, real64 const dt,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
@@ -499,6 +505,59 @@ private:
 
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
+
+
+  /// views into primary variable fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_pressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_deltaPressure;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>>      m_globalCompDensity;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>>      m_deltaGlobalCompDensity;
+
+  /// views into other variable fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_compFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dCompFrac_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseVolFrac_dCompDens;
+
+  /// views into backup fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFracOld;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseDensOld;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_phaseCompFracOld;
+
+  /// views into material fields
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseFrac;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseFrac_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseDens;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseDens_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseDens_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseVisc;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseVisc_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_phaseCompFrac;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCompFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> m_dPhaseCompFrac_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_totalDens;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseRelPerm;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseRelPerm_dPhaseVolFrac;
 };
 
 } // namespace geosx
