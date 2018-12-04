@@ -567,23 +567,6 @@ applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
   elemManager->forCellBlocksComplete( lambda );
 }
 
-//template<typename LAMBDA>
-//typename std::enable_if<std::is_convertible<LAMBDA,
-//                                            std::function<void(localIndex,localIndex)>
-//                                           >::value, void>::type
-//applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
-//{
-//  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-//  ElementRegionManager * const elemManager = mesh->getElemManager();
-//
-//  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
-//                                            ElementRegion * const elementRegion,
-//                                            CellBlockSubRegion * const subRegion )
-//  {
-//    lambda( er, esr );
-//  });
-//}
-
 template<typename LAMBDA>
 typename std::enable_if<std::is_convertible<LAMBDA,std::function<void(CellBlockSubRegion *)>>::value, void>::type
 applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
@@ -605,31 +588,6 @@ applyToSubRegions( DomainPartition const * const domain, LAMBDA && lambda )
 
   elemManager->forCellBlocksComplete( lambda );
 }
-
-//template<typename LAMBDA>
-//typename std::enable_if<std::is_convertible<LAMBDA,std::function<void(localIndex,localIndex)>>::value, void>::type
-//applyToSubRegions( DomainPartition const * const domain, LAMBDA && lambda )
-//{
-//  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-//  ElementRegionManager const * const elemManager = mesh->getElemManager();
-//
-//  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
-//                                            ElementRegion const * const elementRegion,
-//                                            CellBlockSubRegion const * const subRegion )
-//  {
-//    lambda( er, esr );
-//  });
-//}
-
-//template<typename LAMBDA>
-//typename std::enable_if<std::is_convertible<LAMBDA,std::function<void(CellBlockSubRegion const *)>>::value, void>::type
-//applyToSubRegions( DomainPartition const * const domain, LAMBDA && lambda )
-//{
-//  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-//  ElementRegionManager const * const elemManager = mesh->getElemManager();
-//
-//  elemManager->forCellBlocks( lambda );
-//}
 
 }
 
