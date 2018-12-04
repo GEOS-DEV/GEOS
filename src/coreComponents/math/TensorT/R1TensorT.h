@@ -125,7 +125,7 @@ public:
   R1TensorT< T_dim >& operator=( const R1TensorT< T_dim >& rhs );
 
   //***** ACCESS OPERATORS ****************************************************
-  /// const access to data  
+  /// const access to data
   inline const realT& operator()( const int i ) const { return this->t_data[i];  }
 
   /// non-const access to data
@@ -133,9 +133,9 @@ public:
 
   /// const access to data
   inline const realT& operator[]( const int i ) const { return this->t_data[i];  }
-  
+
   /// non-const access to data
-  GEOSX_HOST_DEVICE inline realT& operator[]( const int i )             { return this->t_data[i];  }
+  inline realT& operator[]( const int i )             { return this->t_data[i];  }
 
   //***** MULTIPLICATION OPERATIONS *******************************************
   /// multiply (inner product) Rank2 tensor with Rank 1 tensor
@@ -233,7 +233,7 @@ inline R1TensorT<2>::R1TensorT(realT x,realT y):
 /// Template specialisation - if templated on another dimension constructor will
 // throw a compile time error.
 template<>
-GEOSX_HOST_DEVICE inline R1TensorT<3>::R1TensorT(realT x,realT y,realT z):
+inline R1TensorT<3>::R1TensorT(realT x,realT y,realT z):
   TensorBaseT< 3 >()
 {
   this->t_data[0] = x;
@@ -342,7 +342,7 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
  * this->t_data.
  */
 template<int T_dim>
-GEOSX_HOST_DEVICE inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
+inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
 {
   if (T_dim == 1)
   {
