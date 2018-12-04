@@ -76,28 +76,28 @@ public:
   //@{
 
   /**
-   * @brief Create a vector based on local number of elements.  
+   * @brief Create a vector based on local number of elements.
    *
    * Create a vector based on local number of elements.  Global size is
    * the sum across processors.  For specifying a global size and having
    * automatic partitioning, see createGlobal().
-   * 
+   *
    * \param localSize local number of elements.
    *
    */
-  void createWithLocalSize( localIndex const localSize , MPI_Comm const & comm = MPI_COMM_WORLD);
+  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
-   * @brief Create a vector based on global number of elements.  
+   * @brief Create a vector based on global number of elements.
    *
    * Create a vector based on global number of elements. Every processors
    * gets the same number of local elements except proc 0, which gets any
    * remainder elements as well if the split can't be done evenly.
-   * 
+   *
    * \param globalSize Global number of elements.
    *
    */
-  void createWithGlobalSize( globalIndex const globalSize , MPI_Comm const & comm = MPI_COMM_WORLD);
+  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
    * @brief Construct parallel vector from a local array.
@@ -107,10 +107,10 @@ public:
    * \param localValues local data to put into vector
    *
    */
-  void create( array1d<real64> const & localValues , MPI_Comm const & comm = MPI_COMM_WORLD);
+  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   //@}
-  //! @name Open / close 
+  //! @name Open / close
   //@{
 
   /**
@@ -320,7 +320,7 @@ public:
   /**
    * @brief Returns value globalRow of the vector. TODO: Not yet implemented, since not built-in
    */
-  real64 get(globalIndex globalRow) const;
+  real64 get( globalIndex globalRow ) const;
 
   /**
    * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
@@ -351,7 +351,7 @@ public:
   /**
    * @brief Write the vector to a matlab-compatible file
    */
-  void write(string const & filename) const;
+  void write( string const & filename ) const;
 
   //@}
 
@@ -370,7 +370,7 @@ private:
    *
    * \param map Input Epetra Map.
    */
-  void create( Epetra_Map const &map);
+  void create( Epetra_Map const &map );
 };
 
 } // end geosx namespace

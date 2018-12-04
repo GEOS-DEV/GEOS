@@ -255,8 +255,8 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                                  BlockMatrixView<LAI> const &M )
 
 {
-  GEOS_ERROR("Not implemented");
-  
+  GEOS_ERROR( "Not implemented" );
+
   // TODO: BlockVectorView is a view that doesn't handle any vector
   //       storage.  The copy and copy constructor functions below
   //       won't work.

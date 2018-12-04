@@ -48,7 +48,6 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-
 class EpetraMatrix
 {
 public:
@@ -61,7 +60,6 @@ public:
    *
    * Create an empty (distributed) matrix.
    */
-
   EpetraMatrix();
 
   /**
@@ -69,13 +67,11 @@ public:
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
-
   EpetraMatrix( EpetraMatrix const &src );
 
   /**
    * @brief Virtual destructor.
    */
-
   virtual ~EpetraMatrix() = default;
 
   //@}
@@ -101,7 +97,7 @@ public:
    */
   void createWithLocalSize( localIndex const localSize,
                             localIndex const maxEntriesPerRow = 1,
-                            MPI_Comm const & comm = MPI_COMM_WORLD);
+                            MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
    * @brief Create a square matrix from global number of rows.
@@ -115,7 +111,7 @@ public:
    */
   void createWithGlobalSize( globalIndex const globalSize,
                              localIndex const maxEntriesPerRow = 1,
-                             MPI_Comm const & comm = MPI_COMM_WORLD);
+                             MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -168,10 +164,10 @@ public:
   void close();
 
   //@}
-  /** @name Add/Set/Insert Methods 
+  /** @name Add/Set/Insert Methods
    *
    * The add and set methods assume entries already exist in the sparsity pattern.
-   * Insert methods allow for dynamic allocation, but will temporarily use 
+   * Insert methods allow for dynamic allocation, but will temporarily use
    * extra memory if one attempts to insert multiple values to the same location.
    *
    * Caution: In Trilinos these methods are not thread-safe.  //TODO: add thread safety
@@ -220,12 +216,12 @@ public:
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
-   * \param size Number of elements 
+   * \param size Number of elements
    */
   void add( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size);
+            localIndex const size );
 
   /**
    * @brief Set elements to one row using c-style arrays
@@ -233,12 +229,12 @@ public:
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
-   * \param size Number of elements 
+   * \param size Number of elements
    */
   void set( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size);
+            localIndex const size );
 
   /**
    * @brief Insert elements to one row using c-style arrays
@@ -246,12 +242,12 @@ public:
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
-   * \param size Number of elements 
+   * \param size Number of elements
    */
   void insert( globalIndex const rowIndex,
                globalIndex const * colIndices,
                real64 const * values,
-               localIndex const size);
+               localIndex const size );
 
   /**
    * @brief Add elements to one row using array1d
@@ -262,7 +258,7 @@ public:
    */
   void add( globalIndex const rowIndex,
             array1d<globalIndex> const & colIndices,
-            array1d<real64> const & values);
+            array1d<real64> const & values );
 
   /**
    * @brief Set elements of one row using array1d
@@ -273,7 +269,7 @@ public:
    */
   void set( globalIndex const rowIndex,
             array1d<globalIndex> const & colIndices,
-            array1d<real64> const & values);
+            array1d<real64> const & values );
 
   /**
    * @brief Insert elements of one row using array1d
@@ -284,7 +280,7 @@ public:
    */
   void insert( globalIndex const rowIndex,
                array1d<globalIndex> const & colIndices,
-               array1d<real64> const & values);
+               array1d<real64> const & values );
 
   /**
    * @brief Add dense matrix.
@@ -295,7 +291,7 @@ public:
    */
   void add( array1d<globalIndex> const & rowIndices,
             array1d<globalIndex> const & colIndices,
-            array2d<real64> const & values);
+            array2d<real64> const & values );
 
   /**
    * @brief Set dense matrix.
@@ -306,7 +302,7 @@ public:
    */
   void set( array1d<globalIndex> const & rowIndices,
             array1d<globalIndex> const & colIndices,
-            array2d<real64> const & values);
+            array2d<real64> const & values );
 
   /**
    * @brief Insert dense matrix.
@@ -317,7 +313,7 @@ public:
    */
   void insert( array1d<globalIndex> const & rowIndices,
                array1d<globalIndex> const & colIndices,
-               array2d<real64> const & values);
+               array2d<real64> const & values );
 
   //@}
   //! @name Linear Algebra Methods
@@ -416,11 +412,11 @@ public:
 
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.
-   * Note that the input arrays will be resized internally to fit the number of entries. 
+   * Note that the input arrays will be resized internally to fit the number of entries.
    */
   void getRowCopy( globalIndex globalRow,
                    array1d<globalIndex> & colIndices,
-                   array1d<real64> & values) const;
+                   array1d<real64> & values ) const;
 
   /**
    * @brief Returns a pointer to the underlying matrix.
@@ -482,7 +478,7 @@ public:
    * >> load filename
    * >> M = spconvert(filename_root)
    */
-  void write(string const & filename) const;
+  void write( string const & filename ) const;
 
   //@}
 

@@ -51,7 +51,7 @@ public:
    * @brief Solver constructor, with parameter list reference
    *
    */
-  TrilinosSolver(LinearSolverParameters const & parameters);
+  TrilinosSolver( LinearSolverParameters const & parameters );
 
   /**
    * @brief Virtual destructor.
@@ -67,19 +67,19 @@ public:
 
   void solve( EpetraMatrix &mat,
               EpetraVector &sol,
-              EpetraVector &rhs);
+              EpetraVector &rhs );
 
 private:
-  
+
   LinearSolverParameters const & m_parameters;
 
   void solve_direct( EpetraMatrix &mat,
                      EpetraVector &sol,
-                     EpetraVector &rhs);
+                     EpetraVector &rhs );
 
   void solve_krylov( EpetraMatrix &mat,
                      EpetraVector &sol,
-                     EpetraVector &rhs);
+                     EpetraVector &rhs );
 
 };
 

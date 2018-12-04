@@ -34,11 +34,11 @@ namespace geosx
  * default values, but can be overwritten as needed.
  */
 
-class LinearSolverParameters 
+class LinearSolverParameters
 {
 public:
 
-  integer verbosity = 0;               //!< Output level [0=none, 1=basic, 2=everything]  
+  integer verbosity = 0;               //!< Output level [0=none, 1=basic, 2=everything]
   string  solverType = "cg";           //!< Solver type [direct, cg, gmres, bicgstab]
   string  preconditionerType = "ilut"; //!< Preconditioner type [none, ilu, ilut, icc, amg]
   integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
@@ -57,7 +57,6 @@ public:
     bool useRowColScaling = false;
   }
   scaling; //TODO: not implemented
-
 
   struct
   {

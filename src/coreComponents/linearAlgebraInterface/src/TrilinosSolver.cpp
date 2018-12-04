@@ -45,9 +45,9 @@ namespace geosx
 // Constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-TrilinosSolver::TrilinosSolver(LinearSolverParameters const & parameters)
+TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters )
   :
-  m_parameters(parameters)
+  m_parameters( parameters )
 {}
 
 
@@ -58,14 +58,14 @@ TrilinosSolver::TrilinosSolver(LinearSolverParameters const & parameters)
 
 void TrilinosSolver::solve( EpetraMatrix &mat,
                             EpetraVector &sol,
-                            EpetraVector &rhs)
+                            EpetraVector &rhs )
 {
-  if(m_parameters.solverType == "direct")
-    solve_direct(mat,sol,rhs);
+  if( m_parameters.solverType == "direct" )
+    solve_direct( mat, sol, rhs );
   else
-    solve_krylov(mat,sol,rhs);
+    solve_krylov( mat, sol, rhs );
 }
- 
+
 // ----------------------------
 // Direct solver
 // ----------------------------
@@ -92,10 +92,10 @@ void TrilinosSolver::solve_direct( EpetraMatrix &mat,
   solver->Solve();
 
   // Basic output
-  if(m_parameters.verbosity > 0)
+  if( m_parameters.verbosity > 0 )
   {
-   solver->PrintStatus();
-   solver->PrintTiming();
+    solver->PrintStatus();
+    solver->PrintTiming();
   }
 }
 
@@ -106,7 +106,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix &mat,
 
 void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
                                    EpetraVector &sol,
-                                   EpetraVector &rhs)
+                                   EpetraVector &rhs )
 {
   // Create Epetra linear problem.
   Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
@@ -115,169 +115,121 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
   AztecOO solver( problem );
 
   // Choose the solver type
-  if(m_parameters.solverType == "gmres")
+  if( m_parameters.solverType == "gmres" )
   {
     solver.SetAztecOption( AZ_solver, AZ_gmres );
     solver.SetAztecOption( AZ_kspace, m_parameters.krylov.maxRestart );
   }
-  else if(m_parameters.solverType == "bicgstab")
+  else if( m_parameters.solverType == "bicgstab" )
   {
     solver.SetAztecOption( AZ_solver, AZ_bicgstab );
   }
-  else if(m_parameters.solverType == "cg")
+  else if( m_parameters.solverType == "cg" )
   {
     solver.SetAztecOption( AZ_solver, AZ_cg );
   }
-  else 
-    GEOS_ERROR("The requested linear solverType doesn't seem to exist");
+  else
+    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
 
   // Create a null pointer to an ML amg preconditioner
   std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
 
-  // Choose the preconditioner type 
-  if(m_parameters.preconditionerType == "none")
+  // Choose the preconditioner type
+  if( m_parameters.preconditionerType == "none" )
   {
     solver.SetAztecOption( AZ_precond, AZ_none );
   }
-  else if(m_parameters.preconditionerType == "jacobi")
+  else if( m_parameters.preconditionerType == "jacobi" )
   {
     solver.SetAztecOption( AZ_precond, AZ_Jacobi );
   }
-  else if(m_parameters.preconditionerType == "ilu")
+  else if( m_parameters.preconditionerType == "ilu" )
   {
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
     solver.SetAztecOption( AZ_overlap, 0 );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilu );
     solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
   }
-  else if(m_parameters.preconditionerType == "icc")
+  else if( m_parameters.preconditionerType == "icc" )
   {
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
     solver.SetAztecOption( AZ_overlap, 0 );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
     solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
   }
-  else if(m_parameters.preconditionerType == "ilut")
+  else if( m_parameters.preconditionerType == "ilut" )
   {
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
     solver.SetAztecOption( AZ_overlap, 0 );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
-    solver.SetAztecParam( AZ_ilut_fill, (m_parameters.ilu.fill>0?real64(m_parameters.ilu.fill):1.0)); 
+    solver.SetAztecParam( AZ_ilut_fill, (m_parameters.ilu.fill>0 ? real64( m_parameters.ilu.fill ) : 1.0));
   }
-  else if(m_parameters.preconditionerType == "amg")
+  else if( m_parameters.preconditionerType == "amg" )
   {
     Teuchos::ParameterList list;
 
-    if(m_parameters.amg.isSymmetric)
+    if( m_parameters.amg.isSymmetric )
       ML_Epetra::SetDefaults( "SA", list );
     else
       ML_Epetra::SetDefaults( "NSSA", list );
 
-    std::map<string,string> translate; // maps GEOSX to ML syntax
+    std::map<string, string> translate; // maps GEOSX to ML syntax
 
-    translate.insert(std::make_pair( "V",                "MGV" ));
-    translate.insert(std::make_pair( "W",                "MGW" ));
-    translate.insert(std::make_pair( "direct",           "Amesos-KLU" ));
-    translate.insert(std::make_pair( "jacobi",           "Jacobi" ));
-    translate.insert(std::make_pair( "blockJacobi",      "block Jacobi" ));
-    translate.insert(std::make_pair( "gaussSeidel",      "Gauss-Seidel" ));
-    translate.insert(std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ));
-    translate.insert(std::make_pair( "chebyshev",        "Chebyshev" ));
-    translate.insert(std::make_pair( "ilu",              "ILU" ));
-    translate.insert(std::make_pair( "ilut",             "ILUT" ));
+    translate.insert( std::make_pair( "V", "MGV" ));
+    translate.insert( std::make_pair( "W", "MGW" ));
+    translate.insert( std::make_pair( "direct", "Amesos-KLU" ));
+    translate.insert( std::make_pair( "jacobi", "Jacobi" ));
+    translate.insert( std::make_pair( "blockJacobi", "block Jacobi" ));
+    translate.insert( std::make_pair( "gaussSeidel", "Gauss-Seidel" ));
+    translate.insert( std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ));
+    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
+    translate.insert( std::make_pair( "ilu", "ILU" ));
+    translate.insert( std::make_pair( "ilut", "ILUT" ));
 
-    list.set("ML output",m_parameters.verbosity);
-    list.set("max levels",m_parameters.amg.maxLevels);
-    list.set("aggregation: type","Uncoupled");
-    list.set("PDE equations",m_parameters.dofsPerNode);
-    list.set("smoother: sweeps",m_parameters.amg.numSweeps);
-    list.set("prec type",translate[m_parameters.amg.cycleType]);
-    list.set("smoother: type",translate[m_parameters.amg.smootherType]);
-    list.set("coarse: type",translate[m_parameters.amg.coarseType]);
-   
+    list.set( "ML output", m_parameters.verbosity );
+    list.set( "max levels", m_parameters.amg.maxLevels );
+    list.set( "aggregation: type", "Uncoupled" );
+    list.set( "PDE equations", m_parameters.dofsPerNode );
+    list.set( "smoother: sweeps", m_parameters.amg.numSweeps );
+    list.set( "prec type", translate[m_parameters.amg.cycleType] );
+    list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
+    list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
+
     //TODO: add user-defined null space / rigid body mode support
-        //list.set("null space: type","pre-computed");
-        //list.set("null space: vectors",&rigid_body_modes[0]);
-        //list.set("null space: dimension", n_rbm);
+    //list.set("null space: type","pre-computed");
+    //list.set("null space: vectors",&rigid_body_modes[0]);
+    //list.set("null space: dimension", n_rbm);
 
-    ml_preconditioner.reset(new ML_Epetra::MultiLevelPreconditioner(*mat.unwrappedPointer(), list));
-    solver.SetPrecOperator( ml_preconditioner.get());
+    ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+    solver.SetPrecOperator( ml_preconditioner.get() );
   }
-  else 
-    GEOS_ERROR("The requested preconditionerType doesn't seem to exist");
+  else
+    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
 
   // Ask for a convergence normalized by the right hand side
   solver.SetAztecOption( AZ_conv, AZ_rhs );
 
   // Control output
-  switch(m_parameters.verbosity)
+  switch( m_parameters.verbosity )
   {
-    case 1:
-      solver.SetAztecOption( AZ_output, AZ_summary );
-      solver.SetAztecOption( AZ_diagnostics, AZ_all );
-      break;
-    case 2:
-      solver.SetAztecOption( AZ_output, AZ_all );
-      solver.SetAztecOption( AZ_diagnostics, AZ_all );
-      break;
-    default:
-      solver.SetAztecOption( AZ_output, AZ_none );
+  case 1:
+    solver.SetAztecOption( AZ_output, AZ_summary );
+    solver.SetAztecOption( AZ_diagnostics, AZ_all );
+    break;
+  case 2:
+    solver.SetAztecOption( AZ_output, AZ_all );
+    solver.SetAztecOption( AZ_diagnostics, AZ_all );
+    break;
+  default:
+    solver.SetAztecOption( AZ_output, AZ_none );
   }
 
   // Actually solve
-  solver.Iterate( m_parameters.krylov.maxIterations, 
+  solver.Iterate( m_parameters.krylov.maxIterations,
                   m_parameters.krylov.tolerance );
 
-  //TODO: should we return performance feedback to have GEOSX pretty print details?:  
+  //TODO: should we return performance feedback to have GEOSX pretty print details?:
   //      i.e. iterations to convergence, residual reduction, etc.
 }
 
-/**
- * @brief Solve system using an ML preconditioner. (Testing purposes mostly)
- *
- * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
- * This function is a very early design and should be further improved
- * before real usage.
- *
- */
-
-// ----------------------------
-// Iterative solver with ML
-// ----------------------------
-// Initial test of an ML-based preconditioner.
-#if 0
-void TrilinosSolver::ml_solve( EpetraMatrix &Mat,
-                               EpetraVector &sol,
-                               EpetraVector &rhs,
-                               integer const max_iter,
-                               real64 const newton_tol,
-                               std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec )
-{
-  // Create Epetra linear problem.
-  Epetra_LinearProblem problem( Mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
-
-  // Instantiate AztecOO solver.
-  AztecOO solver( problem );
-
-  // Use a default parameter list from Teuchos
-  Teuchos::ParameterList MLList;
-  ML_Epetra::SetDefaults( "SA", MLList );
-
-  // Compute the preconditioner
-  if( MLPrec == nullptr )
-  {
-    MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( *Mat.unwrappedPointer(), MLList );
-  }
-  // Set output (TODO verbosity manager?)
-  solver.SetAztecOption( AZ_output, AZ_last );
-
-  // Set the precondtioner
-  solver.SetPrecOperator( MLPrec.get());
-
-  // Solver the system
-  solver.Iterate( max_iter, newton_tol );
-}
-#endif
-
 } // end geosx namespace
-

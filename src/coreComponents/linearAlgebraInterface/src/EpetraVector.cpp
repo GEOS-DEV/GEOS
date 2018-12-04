@@ -46,7 +46,6 @@ namespace geosx
 // Empty constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Construct as an empty vector
-
 EpetraVector::EpetraVector()
 {}
 
@@ -55,10 +54,9 @@ EpetraVector::EpetraVector()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a unique pointer to the raw vector.  The data from the input vector is
 // copied to a new memory location. Checks if the vector to be copied is empty.
-
 EpetraVector::EpetraVector( EpetraVector const &src )
 {
-  GEOS_ERROR_IF(src.unwrappedPointer() == nullptr,"source vector appears to be empty");
+  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer()));
 }
 
@@ -69,9 +67,8 @@ EpetraVector::EpetraVector( EpetraVector const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create from Epetra_Map
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create a vector from an Epetra_Map. 
-
-void EpetraVector::create( Epetra_Map const &map)
+// Create a vector from an Epetra_Map.
+void EpetraVector::create( Epetra_Map const &map )
 {
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( map ));
 }
@@ -85,18 +82,17 @@ void EpetraVector::create( Epetra_Map const &map)
 // near-even distribution of elements across processors. All processors
 // get the same number of elements, except proc 0 which gets any remainder
 // elements necessary when the number of processors does not divide evenly
-// into the vector length.  
-
-void EpetraVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm)
+// into the vector length.
+void EpetraVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm )
 {
-  Epetra_Map map = Epetra_Map(-1, integer_conversion<int,localIndex>(localSize), 0, Epetra_MpiComm(comm) );
-  create(map);
+  Epetra_Map map = Epetra_Map( -1, integer_conversion<int, localIndex>( localSize ), 0, Epetra_MpiComm( comm ) );
+  create( map );
 }
 
-void EpetraVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm)
+void EpetraVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm )
 {
-  Epetra_Map map = Epetra_Map(globalSize, 0, Epetra_MpiComm(comm) );
-  create(map);
+  Epetra_Map map = Epetra_Map( globalSize, 0, Epetra_MpiComm( comm ) );
+  create( map );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -104,13 +100,10 @@ void EpetraVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from local array data.  The global vector contains
 // local arrays stitched together.
-
-//TODO: add integer_conversion
-
-void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const & comm)
+void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const & comm )
 {
-  int localSize = integer_conversion<int,localIndex>(localValues.size());
-  Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm(comm) );
+  int localSize = integer_conversion<int, localIndex>( localValues.size());
+  Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm( comm ) );
   m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( View, map, const_cast<double*>(localValues.data()), localSize, 1 ));
 }
 
@@ -118,12 +111,11 @@ void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const &
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Add/Set value(s)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Add/set entries in the vector.  Note that Epetra_Vector seems to have 
+// Add/set entries in the vector.  Note that Epetra_Vector seems to have
 // haphazard support for long ints.  This motivated using FEVector to be
 // sure we have proper globalRow support.
 
 // single element options
-
 void EpetraVector::set( globalIndex const globalRow,
                         real64 const value )
 {
@@ -137,49 +129,46 @@ void EpetraVector::add( globalIndex const globalRow,
 }
 
 // n-element, c-style options
-
 void EpetraVector::set( globalIndex const * globalIndices,
                         real64 const * values,
                         localIndex size )
 {
-  m_vector->ReplaceGlobalValues( integer_conversion<int,localIndex>(size), globalIndices, values );
+  m_vector->ReplaceGlobalValues( integer_conversion<int, localIndex>( size ), globalIndices, values );
 }
 
 void EpetraVector::add( globalIndex const * globalIndices,
                         real64 const * values,
                         localIndex size )
 {
-  m_vector->SumIntoGlobalValues( integer_conversion<int,localIndex>(size), globalIndices, values );
+  m_vector->SumIntoGlobalValues( integer_conversion<int, localIndex>( size ), globalIndices, values );
 }
 
 // n-element, array1d options
-
 void EpetraVector::set( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
-  m_vector->ReplaceGlobalValues( integer_conversion<int,localIndex>(values.size()), globalIndices.data(), values.data() );
+  m_vector->ReplaceGlobalValues( integer_conversion<int, localIndex>( values.size()), globalIndices.data(), values.data() );
 }
 void EpetraVector::add( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
-  m_vector->SumIntoGlobalValues( integer_conversion<int,localIndex>(values.size()), globalIndices.data(), values.data() );
+  m_vector->SumIntoGlobalValues( integer_conversion<int, localIndex>( values.size()), globalIndices.data(), values.data() );
 }
 
-//additional options:
-
-void EpetraVector::set( real64 value)
+//additional convenience options:
+void EpetraVector::set( real64 value )
 {
-  m_vector->PutScalar(value);
+  m_vector->PutScalar( value );
 }
 
 void EpetraVector::zero()
 {
-  set(0.0);
+  set( 0.0 );
 }
 
 void EpetraVector::rand()
 {
-  m_vector->SetSeed(1984);
+  m_vector->SetSeed( 1984 );
   m_vector->Random();
 }
 
@@ -187,7 +176,6 @@ void EpetraVector::rand()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Open / close
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 void EpetraVector::open()
 {
 // ... nothing to do here ...
@@ -198,7 +186,6 @@ void EpetraVector::close()
   m_vector->GlobalAssemble();
 }
 
-
 // ---------------------------------------------------------
 // Linear Algebra
 // ---------------------------------------------------------
@@ -208,7 +195,6 @@ void EpetraVector::close()
 // Scale
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Multiply all elements by scalingFactor.
-
 void EpetraVector::scale( real64 const scalingFactor )
 {
   m_vector.get()->Scale( scalingFactor );
@@ -218,7 +204,6 @@ void EpetraVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-
 real64 EpetraVector::dot( EpetraVector const &vec )
 {
   real64 tmp;
@@ -230,7 +215,6 @@ real64 EpetraVector::dot( EpetraVector const &vec )
 // Copy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = x.
-
 void EpetraVector::copy( EpetraVector const &x )
 {
   m_vector.get()->Update( 1., *x.unwrappedPointer(), 0. );
@@ -240,7 +224,6 @@ void EpetraVector::copy( EpetraVector const &x )
 // Axpy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + this.
-
 void EpetraVector::axpy( real64 const alpha,
                          EpetraVector const &x )
 {
@@ -251,7 +234,6 @@ void EpetraVector::axpy( real64 const alpha,
 // Axpby
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + beta*this.
-
 void EpetraVector::axpby( real64 const alpha,
                           EpetraVector const &x,
                           real64 const beta )
@@ -263,7 +245,6 @@ void EpetraVector::axpby( real64 const alpha,
 // 1-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // 1-norm of the vector.
-
 real64 EpetraVector::norm1() const
 {
   real64 tmp;
@@ -275,7 +256,6 @@ real64 EpetraVector::norm1() const
 // 2-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // 2-norm of the vector.
-
 real64 EpetraVector::norm2() const
 {
   real64 tmp;
@@ -287,7 +267,6 @@ real64 EpetraVector::norm2() const
 // Inf-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Inf-norm of the vector.
-
 real64 EpetraVector::normInf() const
 {
   real64 tmp;
@@ -299,10 +278,9 @@ real64 EpetraVector::normInf() const
 // Print
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print vector to the std::cout in Trilinos format.
-
 void EpetraVector::print() const
 {
-  GEOS_ERROR_IF(m_vector.get() == nullptr , "Vector appears to be empty");
+  GEOS_ERROR_IF( m_vector.get() == nullptr, "Vector appears to be empty" );
   std::cout << *m_vector.get() << std::endl;
 }
 
@@ -310,12 +288,11 @@ void EpetraVector::print() const
 // Write to matlab-compatible file
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
-void EpetraVector::write(string const & filename) const
+//       if we prefer that.
+void EpetraVector::write( string const & filename ) const
 {
-  EpetraExt::MultiVectorToMatlabFile(filename.c_str(),*m_vector);
+  EpetraExt::MultiVectorToMatlabFile( filename.c_str(), *m_vector );
 }
-
-
 
 // ----------------------------
 // Acessors
@@ -325,26 +302,23 @@ void EpetraVector::write(string const & filename) const
 // Get value
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get element globalRow
-
-//TODO: implementation not straightforward
-real64 EpetraVector::get(globalIndex globalRow) const
+// TODO: implementation not straightforward
+real64 EpetraVector::get( globalIndex globalRow ) const
 {
-  GEOS_ERROR("not yet implemented");
+  GEOS_ERROR( "not yet implemented" );
   return std::numeric_limits<double>::quiet_NaN();
 }
 
-//TODO: implementation not straightforward
 void EpetraVector::get( array1d<globalIndex> const & globalIndices,
                         array1d<real64> & values ) const
 {
-  GEOS_ERROR("not yet implemented");
+  GEOS_ERROR( "not yet implemented" );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get unwrapped pointer 
+// Get unwrapped pointer
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get pointer to raw Epetra object, with const and non-const versions.
-
 Epetra_FEVector const * EpetraVector::unwrappedPointer() const
 {
   return m_vector.get();
@@ -359,7 +333,6 @@ Epetra_FEVector* EpetraVector::unwrappedPointer()
 // Get the number of global elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the global size of the vector (total number of elements).
-
 globalIndex EpetraVector::globalSize() const
 {
   return m_vector.get()->GlobalLength64();

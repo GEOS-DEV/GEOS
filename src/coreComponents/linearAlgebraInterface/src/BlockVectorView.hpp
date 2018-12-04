@@ -37,7 +37,6 @@ namespace geosx
  * \brief This class creates and provides basic support for block
  *        vectors objects (templated on the LA interface).
  */
-
 template< typename LAI >
 class BlockVectorView
 {
@@ -65,7 +64,6 @@ public:
    */
   BlockVectorView( localIndex const nBlocks );
 
-
   /* DISABLED: view usage can lead to non-intuitive behavior
    *
    * @brief Shallow copy constructor.
@@ -77,13 +75,12 @@ public:
    * \param x Block vector to copy.
    *
    */
-   //BlockVectorView( BlockVectorView<LAI> const &x );
-
+  //BlockVectorView( BlockVectorView<LAI> const &x );
 
   /**
    * @brief Destructor.
    */
-   ~BlockVectorView() = default;
+  ~BlockVectorView() = default;
 
   //@}
   //! @name Setters
@@ -186,8 +183,8 @@ public:
 
   /**
    * @brief Get a reference to the vector corresponding to block <tt>blockRowIndex</tt>.
-   * 
-   * This enables convenient calls to individual block operations, e.g. 
+   *
+   * This enables convenient calls to individual block operations, e.g.
    * <tt>block_vector.block(1).norm2()</tt>
    *
    * \param blockIndex Index of the block to return.
@@ -200,7 +197,6 @@ private:
 
   // Resizable array of pointers to GEOSX vectors.
   array1d<ParallelVector *> m_vectors;
-
 };
 
 } // end geosx namespace

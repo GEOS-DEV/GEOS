@@ -69,14 +69,14 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
 {
   for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
-    b.block(row).zero();
-    ParallelVector temp(b.block(row));
+    b.block( row ).zero();
+    ParallelVector temp( b.block( row ));
     for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
-        m_matrices[row][col]->multiply( x.block(col), temp );
-        b.block(row).axpy(1.0,temp);
+        m_matrices[row][col]->multiply( x.block( col ), temp );
+        b.block( row ).axpy( 1.0, temp );
       }
     }
   }
@@ -94,14 +94,14 @@ void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
 {
   for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
-    r.block(row).copy(b.block(row));
-    ParallelVector temp(b.block(row));
+    r.block( row ).copy( b.block( row ));
+    ParallelVector temp( b.block( row ));
     for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
         m_matrices[row][col]->multiply( x.block( col ), temp );
-        r.block(row).axpy(-1.0,temp);
+        r.block( row ).axpy( -1.0, temp );
       }
     }
   }
@@ -164,4 +164,3 @@ template class BlockMatrixView<TrilinosInterface>;
 
 
 } // end geosx namespace
-
