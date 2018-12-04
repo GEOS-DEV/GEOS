@@ -16,16 +16,13 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#if __clang_major__ >= 5
+#if __clang_major__ >= 5 && !defined(__APPLE__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 
 #include <gtest/gtest.h>
 
-#if __clang_major__ >= 5
-#pragma clang diagnostic push
-#endif
 
 #include <mpi.h>
 #include "dataRepository/ManagedGroup.hpp"
@@ -67,7 +64,7 @@ TEST(testSidreBasic, testSidreBasic)
   EXPECT_EQ(data_view->byteSize(), expected_size);
 
   /* Set the data */
-  view_rtype<globalIndex_array> data = data_view->data();
+  globalIndex_array& data = data_view->reference();
   for (int i = 0; i < num_items; i++) {
       data[i] = i;
   }
@@ -105,7 +102,7 @@ TEST(testSidreBasic, testSidreBasic)
   /* Should be the same as stored. */
   EXPECT_EQ(data_view_new->size(), num_items);
 
-  view_rtype<globalIndex_array> data_new = data_view_new->data();
+  globalIndex_array& data_new = data_view_new->reference();
   for (int i = 0; i < data_view_new->size(); i++) {
     EXPECT_EQ(data_new[i], i);
   }
@@ -130,3 +127,7 @@ int main(int argc, char* argv[]) {
 
 } /* end namespace dataRepository */
 } /* end namespace goesx */
+
+#if __clang_major__ >= 5
+#pragma clang diagnostic pop
+#endif

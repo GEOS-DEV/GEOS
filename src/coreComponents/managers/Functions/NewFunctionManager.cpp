@@ -57,7 +57,7 @@ void NewFunctionManager::FillDocumentationNode()
 void NewFunctionManager::CreateChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
-  std::cout << "   " << functionCatalogKey << ": " << functionName << std::endl;
+  GEOS_LOG_RANK_0("   " << functionCatalogKey << ": " << functionName);
   std::unique_ptr<FunctionBase> function = FunctionBase::CatalogInterface::Factory( functionCatalogKey, functionName, this );
   this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
 }

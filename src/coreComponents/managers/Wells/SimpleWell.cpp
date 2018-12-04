@@ -92,9 +92,9 @@ void SimpleWell::InitializationOrder(string_array & order)
   // Skip initializing PerforationManager, call it manually from FinalInitialization()
 }
 
-void SimpleWell::FinalInitialization(ManagedGroup * const problemManager)
+void SimpleWell::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
 {
-  WellBase::FinalInitialization(problemManager);
+  WellBase::FinalInitializationPreSubGroups(problemManager);
 
   // fields owned by the well itself are scalar, but must be arrays for BC, so resize to 1
   resize(1);

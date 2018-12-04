@@ -29,15 +29,14 @@
 #include "ViewWrapperBase.hpp"
 
 #include "KeyNames.hpp"
-#include "common/integer_conversion.hpp"
+#include "IntegerConversion.hpp"
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
 
 #include "Macros.hpp"
 #include "Buffer.hpp"
-#include "BufferOps.hpp"
+#include "BufferOps_inline.hpp"
 #include "RestartFlags.hpp"
 
 #include "codingUtilities/GeosxTraits.hpp"
@@ -45,8 +44,7 @@
 
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/sidre.hpp"
-#include "sidre/SidreTypes.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #include "SidreWrapper.hpp"
 #endif
 
@@ -183,8 +181,6 @@ public:
 
     return clonedWrapper;
   }
-
-
 
   /**
    * Virtual function to return the typeid of T. Not so sure this does what we
@@ -332,6 +328,11 @@ public:
 //
 //  };
 
+  virtual bool isPackable() const override final
+  {
+    return bufferOps::is_packable<T>::value;
+  }
+
   virtual localIndex Pack( char *& buffer ) const override final
   {
     localIndex packedSize = 0;
@@ -342,7 +343,7 @@ public:
     return packedSize;
   }
 
-  virtual localIndex Pack( char *& buffer, localIndex_array const & packList ) const override final
+  virtual localIndex Pack( char *& buffer, arrayView1d<localIndex const> const & packList ) const override final
   {
     localIndex packedSize = 0;
 
@@ -366,7 +367,7 @@ public:
     return packedSize;
   }
 
-  virtual localIndex PackSize( localIndex_array const & packList ) const override final
+  virtual localIndex PackSize( arrayView1d<localIndex const> const & packList ) const override final
   {
 
     char * buffer = nullptr;
@@ -391,7 +392,7 @@ public:
     unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
-  virtual localIndex Unpack( char const *& buffer, localIndex_array const & unpackIndices ) override final
+  virtual localIndex Unpack( char const *& buffer, arrayView1d<localIndex const> const & unpackIndices ) override final
   {
     localIndex unpackedSize = 0;
     static_if( bufferOps::is_packable_by_index<T>::value )
@@ -644,6 +645,33 @@ public:
     return should_resize_wrapper::shouldResize();
   }
 
+  struct copy_wrapper
+  {
+    HAS_ALIAS(isArray)
+
+    template< class U=T >
+    static typename std::enable_if<has_alias_isArray<U>::value, void>::type
+    copy( T * const data , localIndex const sourceIndex, localIndex const destIndex )
+    {
+      data->copy( destIndex, sourceIndex );
+//      (*data)[destIndex] = (*data)[sourceIndex];
+    }
+
+    template< class U=T >
+    static typename std::enable_if<!has_alias_isArray<U>::value, void>::type
+    copy( T * const data , localIndex const sourceIndex, localIndex const destIndex )
+    {}
+
+  };
+  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override final
+  {
+    if( this->sizedFromParent() )
+    {
+      copy_wrapper::copy( this->m_data, sourceIndex, destIndex );
+    }
+  }
+
+
   /**
    * @name Structure to determine return types for data access functions
    */
@@ -660,13 +688,9 @@ public:
    * The default template returns a pointer for all calls to data().
    */
   template< class U=T,
-            bool HASPOINTERTYPE = has_alias_pointer<U>::value,
-            bool ISSTRING = std::is_same<U,std::string>::value >
+            bool HASPOINTERTYPE = has_alias_pointer<U>::value >
   struct Get_Type
   {
-    typedef U*       type;
-    typedef U const * const_type;
-
     typedef U *       pointer;
     typedef U const * const_pointer;
   };
@@ -683,34 +707,11 @@ public:
    *  unless array member functions have been called.
    */
   template<class U>
-  struct Get_Type<U, true, false>
+  struct Get_Type<U, true>
   {
-
-#ifdef USE_CONTAINERARRAY_RETURN_PTR
-    typedef typename U::pointer       type;
-    typedef typename U::const_pointer const_type;
-#else
-    typedef U &       type;
-    typedef U const & const_type;
-#endif
     typedef typename U::pointer       pointer;
     typedef typename U::const_pointer const_pointer;
   };
-
-
-  /// Specialization for string. Always return a reference.
-  template<class U>
-  struct Get_Type<U, true, true>
-  {
-    typedef U &       type;
-    typedef U const & const_type;
-
-    typedef U *       pointer;
-    typedef U const * const_pointer;
-  };
-
-  using rtype       = typename Get_Type<T>::type;
-  using rtype_const = typename Get_Type<T>::const_type;
 
   using pointer       = typename Get_Type<T>::pointer;
   using const_pointer = typename Get_Type<T>::const_pointer;
@@ -720,68 +721,6 @@ public:
   HAS_MEMBER_FUNCTION(data,pointer,,,)
   HAS_MEMBER_FUNCTION_VARIANT(data,_const, pointer,const,,)
 
-  /// Case for if m_data has a member function called "data()", and is not a
-  // string
-  template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
-  data()
-  {
-#ifdef USE_CONTAINERARRAY_RETURN_PTR
-    return m_data->data();
-#else
-    return *m_data;
-#endif
-  }
-
-
-  template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type
-  data() const
-  {
-#ifdef USE_CONTAINERARRAY_RETURN_PTR
-    return m_data->data();
-#else
-    return *m_data;
-#endif
-  }
-
-
-  /// Case for if m_data is a string
-  template<class U = T>
-  typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
-  data()
-  {
-    /// return the object...or a reference to the object
-    return *m_data;
-  }
-
-
-  template<class U = T>
-  typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
-  data() const
-  {
-    return *m_data;
-  }
-
-
-  /// case for if m_data does NOT have a member function "data()", and is not a
-  // string
-  template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
-  data()
-  {
-    /// return a c-pointer to the object
-    return m_data;
-  }
-
-
-  template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
-  data() const
-  {
-    return m_data;
-  }
-
 
   T& reference()
   { return *m_data; }
@@ -789,7 +728,11 @@ public:
   T const & reference() const
   { return *m_data; }
 
+  T * getPointer()
+  { return m_data; }
 
+  T const * getPointer() const
+  { return m_data; }
 
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
@@ -811,10 +754,10 @@ public:
 
   /// Case for if m_data is a string"
   template<class U = T>
-  typename std::enable_if< std::is_same<U,string>::value, char const * >::type
+  typename std::enable_if< std::is_same<U,string>::value, char* >::type
   dataPtr()
   {
-    return m_data->data();
+    return const_cast< char* >(m_data->data());
   }
 
   template<class U = T>
@@ -965,8 +908,7 @@ public:
       localIndex element_size = elementSize();
 
       int ndims = numDimensions();
-//      axom::sidre::SidreLength dims[ndims + 1];
-      axom::sidre::SidreLength dims[10];
+      axom::sidre::IndexType dims[10];
       for (int dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
@@ -1008,7 +950,7 @@ public:
       axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
       if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
       {
-        localIndex byte_size;
+        localIndex byte_size = -1;
         void * ptr = Buffer::pack(reference(), byte_size);
         view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
         return;
@@ -1019,8 +961,7 @@ public:
       localIndex element_size = elementSize();
 
       int ndims = numDimensions();
-//      axom::sidre::SidreLength dims[ndims + 1];
-      axom::sidre::SidreLength dims[10];
+      axom::sidre::IndexType dims[10];
       for (int dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
@@ -1138,7 +1079,7 @@ public:
   {
 #ifdef GEOSX_USE_ATK
     view = (view != nullptr) ? view : getSidreView();
-    view->setExternalDataPtr(AXOM_NULLPTR);
+    view->setExternalDataPtr(nullptr);
 #endif
   }
 
@@ -1178,7 +1119,7 @@ public:
       localIndex num_elements = numElementsFromByteSize(byte_size);
 
       int ndims = view->getNumDimensions();
-      axom::sidre::SidreLength dims[10];
+      axom::sidre::IndexType dims[10];
       view->getShape(ndims, dims);
 
       if ( byte_size > num_elements * sidre_size )
@@ -1216,12 +1157,6 @@ public:
 
   ViewWrapper() = delete;
 };
-
-template< typename T >
-using view_rtype = typename ViewWrapper<T>::rtype;
-
-template< typename T >
-using view_rtype_const = typename ViewWrapper<T>::rtype_const;
 
 }
 } /* namespace geosx */

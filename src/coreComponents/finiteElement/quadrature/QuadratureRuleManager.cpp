@@ -48,7 +48,6 @@ void QuadratureRuleManager::FillDocumentationNode()
 
 void QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Quadrature Rule: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey );
   this->RegisterViewWrapper( childName, std::move(quadrature) )->setRestartFlags(RestartFlags::NO_WRITE);
 }
@@ -59,7 +58,7 @@ void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     std::string childName = childNode.attribute("name").value();
-    QuadratureBase * quadrature = this->getData<QuadratureBase>(childName);
+    QuadratureBase * quadrature = this->getPointer<QuadratureBase>(childName);
 
     if (quadrature != nullptr)
     {

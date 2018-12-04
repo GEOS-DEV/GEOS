@@ -77,11 +77,12 @@ void TwoPointFluxApproximation::computeCellStencil(DomainPartition const * domai
   array2d<localIndex> const & elemList           = faceManager->elementList();
   r1_array const & X = nodeManager->referencePosition();
 
-  auto elemCenter = elemManager->ConstructViewAccessor< r1_array >(CellBlock::
-                                                                   viewKeyStruct::
-                                                                   elementCenterString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
+    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(
+                                        CellBlock::viewKeyStruct::elementCenterString);
 
-  auto coefficient = elemManager->ConstructViewAccessor<r1_array>(m_coeffName);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const coefficient =
+    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
 
   array1d<integer> const & faceGhostRank = faceManager->getReference<array1d<integer>>(ObjectManagerBase::
                                                                                        viewKeyStruct::
@@ -165,11 +166,12 @@ void TwoPointFluxApproximation::computeFaceStencil(DomainPartition const * domai
   array2d<localIndex> const & elemList           = faceManager->elementList();
   r1_array const & X = nodeManager->referencePosition();
 
-  auto elemCenter = elemManager->ConstructViewAccessor< r1_array >(CellBlock::
-                                                                   viewKeyStruct::
-                                                                   elementCenterString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
+    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(
+                                        CellBlock::viewKeyStruct::elementCenterString);
 
-  auto coefficient = elemManager->ConstructViewAccessor<r1_array>(m_coeffName);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const coefficient =
+    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
 
   array1d<integer> const & faceGhostRank = faceManager->getReference<array1d<integer>>(ObjectManagerBase::
                                                                                        viewKeyStruct::

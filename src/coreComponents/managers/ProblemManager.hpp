@@ -57,7 +57,7 @@ struct Arg : public option::Arg
 {
   static option::ArgStatus Unknown(const option::Option& option, bool /*error*/)
   {
-    std::cout << "Unknown option: " << option.name << std::endl;
+    GEOS_LOG_RANK("Unknown option: " << option.name);
     return option::ARG_ILLEGAL;
   }
 
@@ -69,7 +69,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    std::cout << "Error: " << option.name << " requires a non-empty argument!" << std::endl;
+    GEOS_LOG_RANK("Error: " << option.name << " requires a non-empty argument!");
     return option::ARG_ILLEGAL;
   }
 
@@ -83,7 +83,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    std::cout << "Error: " << option.name << " requires a long-int argument!" << std::endl;
+    GEOS_LOG_RANK("Error: " << option.name << " requires a long-int argument!");
     return option::ARG_ILLEGAL;
   }
 
@@ -152,7 +152,7 @@ public:
   DomainPartition const * getDomainPartition() const;
 
   const std::string& getProblemName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getData<std::string>(viewKeys.problemName); }
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<std::string>(viewKeys.problemName); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
@@ -188,7 +188,15 @@ public:
     dataRepository::GroupKey outputManager = { "Outputs" };
   } groupKeys;
 
+  PhysicsSolverManager & GetPhysicsSolverManager()
+  {
+    return *m_physicsSolverManager;
+  }
 
+  PhysicsSolverManager const & GetPhysicsSolverManager() const
+  {
+    return *m_physicsSolverManager;
+  }
 
 private:
   PhysicsSolverManager * m_physicsSolverManager;

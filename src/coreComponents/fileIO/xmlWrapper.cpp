@@ -23,16 +23,14 @@
  *      Author: rrsettgast
  */
 
+#include "ArrayUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "xmlWrapper.hpp"
 #include "DocumentationNode.hpp"
+#include "IntegerConversion.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-
-#ifdef GEOSX_USE_ATK
-#include <slic/slic.hpp>
-#endif
 
 
 using namespace cxx_utilities;
@@ -75,28 +73,14 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
       }
       else
       {
-        if( defVal == "REQUIRED" )
-        {
-          string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
-#ifdef GEOSX_USE_ATK
-          SLIC_ERROR( message );
-#endif
-        }
-        else
-        {
-          stringutilities::StringToType( xmlVal, defVal );
-        }
-
-
+        GEOS_ERROR_IF(defVal == "REQUIRED", "variable " + subDocNode.getName() + " is required in " + targetNode.path() );
+        stringutilities::StringToType( xmlVal, defVal );
       }
-      localIndex const size = multidimensionalArray::integer_conversion<localIndex>(xmlVal.size());
+      localIndex const size = integer_conversion<localIndex>(xmlVal.size());
       dataView.resize( size );
-      typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-//        decltype(a) * data = dataView.pointer();
-      cxx_utilities::equateStlVector(data,xmlVal);
+      decltype(a) & data = dataView.reference();
+      cxx_utilities::equateStlVector(data, xmlVal);
     });
-
-
 }
 
 

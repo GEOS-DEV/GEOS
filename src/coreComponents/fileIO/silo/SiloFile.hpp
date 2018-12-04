@@ -25,7 +25,6 @@
 
 #include "common/DataTypes.hpp"
 #include "silo.h"
-#include <vector>
 
 #ifdef GEOSX_USE_MPI
 #include <mpi.h>
@@ -33,7 +32,6 @@
 
 #include "mpi.h"
 #include "pmpio.h"
-#include "common/Logger.hpp"
 
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/InterObjectRelation.hpp"
@@ -94,7 +92,10 @@ public:
    * This function requests the write baton from silo PMPIO. The involves determining
    * the file names, and opening the file for write.
    */
-  void WaitForBatonWrite( int const domainNumber, int const cycleNum, bool const isRestart );
+  void WaitForBatonWrite( int const domainNumber,
+                          int const cycleNum,
+                          integer const eventCounter,
+                          bool const isRestart );
 
   /**
    * @brief Wait for the Baton when reading using PMPIO
@@ -165,6 +166,21 @@ public:
                        int const cycleNumber,
                        real64 const problemTime);
 
+
+  void WritePolygonMeshObject(const std::string& meshName,
+                                        const localIndex nnodes,
+                                        realT* coords[3],
+                                        const globalIndex*,
+                                        const int numRegions,
+                                        const int* shapecnt,
+                                        const localIndex* const * const meshConnectivity,
+                                        const globalIndex* const * const globalElementNum,
+                                        const int* const * const,
+                                        const int* const shapetype,
+                                        const int* const shapesize,
+                                        const int cycleNumber,
+                                        const realT problemTime,
+                                        const int lnodelist);
 /**
  * @brief write a domain parititon out to silo file
  * @param domain the domain partition to write
@@ -323,15 +339,15 @@ public:
 
   template<typename OUTTYPE, typename TYPE>
   void WriteMaterialDataField( string const & meshName,
-                                         string const & fieldName,
-                                         ElementRegionManager::MaterialViewAccessor< array2d<TYPE> const > const & field,
-                                         ElementRegionManager const * const elementManager,
-                                         constitutive::ConstitutiveManager const * const constitutiveManager,
-                                         int const centering,
-                                         int const cycleNumber,
-                                         real64 const problemTime,
-                                         string const & multiRoot,
-                                         string_array const & materialNames );
+                               string const & fieldName,
+                               ElementRegionManager::MaterialViewAccessor< arrayView2d<TYPE> > const & field,
+                               ElementRegionManager const * const elementManager,
+                               constitutive::ConstitutiveManager const * const constitutiveManager,
+                               int const centering,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot,
+                               string_array const & materialNames );
 
   /**
    * find the silo mesh type that we are attempting to reference
@@ -392,6 +408,10 @@ public:
     m_numGroups = numGroups;
   }
 
+  void setPlotLevel( int const plotLevel )
+  {
+    m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
+  }
 private:
 
   /// pointer to the DBfile that this class is working on
@@ -425,11 +445,13 @@ private:
   string_array m_emptyMeshes;
   string_array m_emptyVariables;
 
+  dataRepository::PlotLevel m_plotLevel;
+
   /**
    *
    * @return returns the ordering of nodes for a silo zone type.
    */
-  integer_array SiloNodeOrdering();
+  integer_array SiloNodeOrdering(const string & elementType);
 
 
 
@@ -559,7 +581,7 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
   {
     auto const & wrapper = wrapperIter.second;
 
-    if( wrapper->getPlotLevel() < dataRepository::PlotLevel::LEVEL_1 )
+    if( wrapper->getPlotLevel() < m_plotLevel )
     {
       // the field name is the key to the map
       string const fieldName = wrapper->getName();
@@ -589,6 +611,12 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
         this->WriteDataField<localIndex>(meshname.c_str(), fieldName,
+                                         viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+      }
+      if( typeID==typeid(globalIndex_array) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<globalIndex_array> const & >( *wrapper );
+        this->WriteDataField<globalIndex>(meshname.c_str(), fieldName,
                                          viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
     }
@@ -629,7 +657,7 @@ void SiloFile::WriteDataField( string const & meshName,
 
 
   string_array varnamestring(nvars);
-  std::vector<std::vector<OUTTYPE> > castedField(nvars);
+  array1d< array1d< OUTTYPE > > castedField(nvars);
 
 
   for( int i = 0 ; i < nvars ; ++i )
@@ -748,7 +776,7 @@ void SiloFile::WriteDataField( string const & meshName,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteMaterialDataField( string const & meshName,
                                        string const & fieldName,
-                                       ElementRegionManager::MaterialViewAccessor< array2d<TYPE> const > const & field,
+                                       ElementRegionManager::MaterialViewAccessor< arrayView2d<TYPE> > const & field,
                                        ElementRegionManager const * const elementManager,
                                        constitutive::ConstitutiveManager const * const constitutiveManager,
                                        int const centering,
@@ -758,14 +786,14 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                                        string_array const & materialNames )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-
   int const meshType = GetMeshType( meshName );
-
   string_array activeMaterialNames;
 
+//  double missingValue = 0.0;
   DBoptlist *optlist = DBMakeOptlist(5);
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
+//  DBAddOption(optlist, DBOPT_MISSING_VALUE, &missingValue);
 
   char * regionpnames[ 100 ];
 
@@ -782,7 +810,6 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   }
   else
   {
-
     string_array varnamestring(nvars);
     array1d<char const*> varnames(nvars);
 
@@ -811,7 +838,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
         for( localIndex matIndex=0 ; matIndex<numMatInRegion ; ++matIndex )
         {
-          if( field[er][esr][matIndices[matIndex]].getPtr() != nullptr )
+          // if( field[er][esr][matIndices[matIndex]].size() > 0 )
           {
             activeMaterialNames.push_back( constitutiveManager->GetConstitituveRelation( matIndices[matIndex] )->getName() );
             mixlen += subRegion->size();
@@ -820,20 +847,19 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       }
     }
 
-    std::vector<void*> vars(nvars);
-    std::vector<std::vector<OUTTYPE> > varsData(nvars);
+    array1d<void*> vars(nvars);
+    array1d< array1d<OUTTYPE> > varsData(nvars);
 
-    std::vector<void*> mixvars(nvars);
-    std::vector<std::vector<OUTTYPE> > mixvarsData(nvars);
+    array1d<void*> mixvars(nvars);
+    array1d< array1d<OUTTYPE> > mixvarsData(nvars);
 
     for( int a=0 ; a<nvars ; ++a )
     {
       varsData[a].resize(nels);
       mixvarsData[a].resize(mixlen);
 
-      vars[a] = static_cast<void*> (&(varsData[a][0]));
-      mixvars[a] = static_cast<void*> (&(mixvarsData[a][0]));
-
+      vars[a] = static_cast<void*>(varsData[a].data());
+      mixvars[a] = static_cast<void*>(mixvarsData[a].data());
     }
 
     localIndex mixlen2 = 0;
@@ -848,9 +874,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
-        matIndices[a] = constitutiveManager->
-                        GetConstitituveRelation( elemRegion->getMaterialList()[a] )->
-                        getIndexInParent();
+        matIndices[a] = constitutiveManager->GetConstitituveRelation( elemRegion->getMaterialList()[a] )->getIndexInParent();
       }
 
       for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
@@ -877,9 +901,13 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
               varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
               for( localIndex a=0 ; a<numMatInRegion ; ++a )
               {
-                if( field[er][esr][matIndices[a]].getPtr() != nullptr )
+                if( field[er][esr][matIndices[a]].size() > 0 )
                 {
                   mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[a]][k][0], i);
+                }
+                else
+                {
+                  mixvarsData[i][mixlen2++] = 0.0;
                 }
               }
             }
@@ -888,13 +916,12 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       }
     }
     
-    for( string_array::size_type a=0 ; a<activeMaterialNames.size() ; ++a )
+    for( localIndex a=0 ; a<activeMaterialNames.size() ; ++a )
     {
       regionpnames[a] = const_cast<char*> (activeMaterialNames[a].c_str());
     }
     regionpnames[activeMaterialNames.size()] = nullptr;
     DBAddOption(optlist, DBOPT_REGION_PNAMES, &regionpnames );
-
 
     int err = -2;
     if( meshType == DB_UCDMESH )
@@ -904,9 +931,9 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                          meshName.c_str(),
                          nvars,
                          varnames.data(),
-                         reinterpret_cast<void**>(vars.data()),
+                         vars.data(),
                          nels,
-                         reinterpret_cast<void**>(mixvars.data()),
+                         mixvars.data(),
                          mixlen,
                          SiloFileUtilities::DB_TYPE<OUTTYPE>(),
                          centering,
@@ -918,7 +945,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                            fieldName.c_str(),
                            meshName.c_str(),
                            nvars,
-                           reinterpret_cast<float**>(vars.data()),
+                           vars.data(),
                            nels,
                            SiloFileUtilities::DB_TYPE<OUTTYPE>(),
                            optlist);
@@ -935,9 +962,6 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       }
     }
   }
-
-
-
 
   // write multimesh object
   int rank = 0;
@@ -969,13 +993,11 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
-
     WriteMultiXXXX(vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
                    optlist);
   }
 
   DBFreeOptlist(optlist);
-
 }
 
 
@@ -996,8 +1018,8 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 #endif
 
   string_array vBlockNames(size);
-  std::vector<char*> BlockNames(size);
-  std::vector<int> blockTypes(size);
+  array1d<char*> BlockNames(size);
+  array1d<int> blockTypes(size);
   char tempBuffer[1024];
   char currentDirectory[256];
 

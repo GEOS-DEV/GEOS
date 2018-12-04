@@ -52,7 +52,7 @@ class LaplaceFEM : public SolverBase
 {
 public:
   LaplaceFEM( const std::string& name,
-                                ManagedGroup * const parent );
+              ManagedGroup * const parent );
 
 
   virtual ~LaplaceFEM() override;
@@ -143,21 +143,6 @@ public:
 
   void SetupMLPreconditioner( DomainPartition const & domain,
                               ML_Epetra::MultiLevelPreconditioner* MLPrec );
-
-
-  realT CalculateElementResidualAndDerivative( real64 const density,
-                                               FiniteElementBase const * const fe,
-                                               const multidimensionalArray::ArrayView<R1Tensor, 2, localIndex> dNdX,
-                                               const realT* const detJ,
-                                               R2SymTensor const * const refStress,
-                                               array1d<R1Tensor> const & u,
-                                               array1d<R1Tensor> const & uhat,
-                                               array1d<R1Tensor> const & uhattilde,
-                                               array1d<R1Tensor> const & vtilde,
-                                               realT const dt,
-                                               Epetra_SerialDenseMatrix& dRdU,
-                                               Epetra_SerialDenseVector& R,
-                                               real64 c[6][6] );
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DomainPartition & domain,

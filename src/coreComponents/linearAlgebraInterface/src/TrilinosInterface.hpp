@@ -20,33 +20,32 @@
  * @file TrilinosInterface.hpp
  */
 
-#ifndef SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
-#define SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
+#ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
+#define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 
-#include "EpetraSparseMatrix.hpp"
-#include "EpetraVector.hpp"
 #include "TrilinosSolver.hpp"
+#include "EpetraMatrix.hpp"
+#include "EpetraVector.hpp"
+
+namespace geosx
+{
 
 /**
  * \class TrilinosInterface
  * \brief This class holds aliases based on the Trilinos library.
  */
 
-namespace geosx
-{
-
 class TrilinosInterface
 {
 public:
 
-  using laiLID = trilinosTypes::lid;
-  using laiGID = trilinosTypes::gid;
+  //using lid = trilinosTypes::lid; // no longer necessary
+  //using gid = trilinosTypes::gid; // no longer necessary
 
   // Epetra matrix and vector wrappers
-  using ParallelMatrix = EpetraSparseMatrix;
+  using ParallelMatrix = EpetraMatrix;
   using ParallelVector = EpetraVector;
-
-  using LinearSolver = TrilinosSolver;
+  using LinearSolver   = TrilinosSolver;
 
   //! @name Constructor/Destructor Methods
   //@{

@@ -58,17 +58,22 @@ int main(int argc, char** argv)
   MPI_Init(&argc,&argv);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-#endif
+  logger::InitializeLogger(MPI_COMM_GEOSX);
+#else
+  logger::InitializeLogger();
+#endif 
 
   global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>(global_argc)];
-  for( int i=0 ; i<argc ; ++i )
+  global_argv = new char*[global_argc];
+  for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];
     std::cout<<argv[i]<<std::endl;
   }
 
   int const result = RUN_ALL_TESTS();
+
+  logger::FinalizeLogger();
 
 #ifdef GEOSX_USE_MPI
   MPI_Finalize();
@@ -93,5 +98,4 @@ TEST(testXML,testXML)
   //   inputFileName = "../../src/components/core/tests/xmlTests/basic_input.xml";
   // }
   problemManager.ParseInputFile();
-
 }

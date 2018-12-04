@@ -33,10 +33,6 @@
 #include "codingUtilities/Utilities.hpp"
 #include "MeshGeneratorBase.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include <slic/slic.hpp>
-#endif
-
 namespace geosx
 {
 
@@ -102,6 +98,8 @@ private:
   array1d<real64> m_vertices[3];
   integer_array m_nElems[3];
   array1d<real64> m_nElemScaling[3];
+
+  bool m_useBias = false;
   array1d<real64> m_nElemBias[3];
 
   string_array m_regionNames;
@@ -206,14 +204,9 @@ private:
 
       X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
 
-      if (( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
+      if ( m_useBias && ( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
       {
-        if (fabs(m_nElemBias[i][block]) >= 1)
-        {
-#ifdef GEOSX_USE_ATK
-          SLIC_ERROR("Mesh bias must between -1 and 1!");
-#endif
-        }
+        GEOS_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
 
         realT len = max -  min;
         realT xmean = len / m_nElems[i][block];

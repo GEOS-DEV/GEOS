@@ -96,7 +96,7 @@ public:
 
   void FillDocumentationNode() override;
 
-  void FinalInitialization(ManagedGroup * const rootGroup) override;
+  void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
   FluxApproximationBase() = delete;
 

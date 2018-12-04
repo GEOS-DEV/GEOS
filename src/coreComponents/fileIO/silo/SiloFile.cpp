@@ -41,7 +41,7 @@
 
 #include "SiloFile.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
@@ -280,6 +280,10 @@ template<> int GetTensorRank<long long unsigned int> ()
 {
   return DB_VARTYPE_SCALAR;
 }
+template<> int GetTensorRank<long long int> ()
+{
+  return DB_VARTYPE_SCALAR;
+}
 template<> int GetTensorRank<string> ()
 {
   return DB_VARTYPE_SCALAR;
@@ -353,7 +357,7 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
   m_numGroups = numGroups;
 
   MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_GEOSX);
-  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
+//  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
   m_baton = PMPIO_Init( m_numGroups,
                         readwrite,
@@ -392,6 +396,7 @@ void SiloFile::Finish()
  */
 void SiloFile::WaitForBatonWrite( int const domainNumber,
                                   int const cycleNum,
+                                  integer const eventCounter,
                                   bool const isRestart )
 {
 
@@ -404,23 +409,27 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
   char baseFileName[200] = { 0 };
   char dirName[200] = { 0 };
 
+  
+
   if( isRestart )
   {
-
-    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum);
+    // The integrated test repo does not use the eventProgress indicator, so skip it for now
+    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum );
     sprintf( fileName, "%s%s%s_%06d.%03d",
              m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
   }
   else
   {
-    sprintf(baseFileName, "%s_%06d",
-            m_plotFileRoot.c_str(),
-            cycleNum);
-
-    sprintf(fileName,
-            "%s_%06d.%03d",
+    sprintf(baseFileName, "%s_%06d%02d",
             m_plotFileRoot.c_str(),
             cycleNum,
+            eventCounter);
+
+    sprintf(fileName,
+            "%s_%06d%02d.%03d",
+            m_plotFileRoot.c_str(),
+            cycleNum,
+            eventCounter,
             groupRank);
   }
   sprintf(dirName, "domain_%05d", domainNumber);
@@ -777,11 +786,10 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
                                           real64 const problemTime)
 {
 
-  auto const
-  constitutiveMap = elementManager->
-                    ConstructViewAccessor<
-    std::pair< array2d<localIndex>,array2d<localIndex> >
-    >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
+  ElementRegionManager::ElementViewAccessor< std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> > > const
+  constitutiveMap = elementManager->ConstructViewAccessor< std::pair< array2d<localIndex>, array2d<localIndex> >, 
+                                                           std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> >
+      >( std::string(CellBlockSubRegion::viewKeyStruct::constitutiveMapString) );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
@@ -814,9 +822,9 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
-        localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+        localIndex const matIndex1 = constitutiveMap[er][esr].first[k][0];
         // matIndex2 is the index of the point within material specified in matIndex1
-        localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+        localIndex const matIndex2 = constitutiveMap[er][esr].second[k][0];
 
         matlist[elemCount++] = matIndex1;
       }
@@ -916,8 +924,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                                              int const cycleNumber,
                                              real64 const problemTime)
 {
-
-
   string name = "materials";
   int const nmat = constitutiveManager->GetSubGroups().size();
   array1d<int> matnos(nmat);
@@ -932,7 +938,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
     materialNames[matIndex] = materialNameStrings[matIndex].c_str();
   }
-
 
   int ndims = 1;
   int dims = 0;
@@ -1094,7 +1099,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
 
 
-  string subDirectory = "Materials";
+  string subDirectory = "MaterialFields";
   string rootDirectory = "/" + subDirectory;
 
   {
@@ -1109,6 +1114,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
     MakeSubDirectory( shortsubdir, rootDirectory );
     DBSetDir(m_dbFilePtr, shortsubdir.c_str());
+
   }
 
 
@@ -1137,9 +1143,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   for( auto fieldName : fieldNames )
   {
-    ElementRegionManager::MaterialViewAccessor< array2d<real64> const >
-    field = elementManager->ConstructMaterialViewAccessor< array2d<real64>  >( fieldName,
-                                                                               constitutiveManager);
+    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const field =
+      elementManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( fieldName, constitutiveManager);
 
     WriteMaterialDataField< real64 >( meshName,
                                       fieldName,
@@ -1152,6 +1157,35 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                                       rootDirectory,
                                       string_array() );
 
+  }
+
+
+  // add expressions
+  if( rank==0 )
+  {
+    for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+    {
+      string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
+      MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
+      DBSetDir( m_dbBaseFilePtr, MultiDir.c_str());
+
+      string const expressionName = MultiDir + "/" + "density";
+      const char * expObjName = expressionName.c_str();
+      const char * const names[1] = { expObjName } ;
+      int const types[1] = {DB_VARTYPE_SCALAR};
+      string const definition = "value_for_material(<" + subDirectory + "/density>, " + std::to_string(matIndex) + ")";
+      const char * const defns[1] = {definition.c_str()};
+      DBPutDefvars( m_dbBaseFilePtr,
+                    expObjName,
+                    1,
+                    names,
+                    types,
+                    defns,
+                    nullptr );
+
+      DBSetDir(this->m_dbBaseFilePtr, "..");
+
+    }
   }
 
   DBSetDir(m_dbFilePtr, "..");
@@ -1346,10 +1380,49 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
 
 
-integer_array SiloFile::SiloNodeOrdering()
+integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
 {
 
   integer_array nodeOrdering;
+  if (!elementType.compare(0, 4, "C3D4"))
+  {
+    nodeOrdering.resize(4);
+    nodeOrdering[0] = 1;
+    nodeOrdering[1] = 0;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 3;
+  }
+  else if (!elementType.compare(0, 4, "C3D8"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 1;
+    nodeOrdering[2] = 3;
+    nodeOrdering[3] = 2;
+    nodeOrdering[4] = 4;
+    nodeOrdering[5] = 5;
+    nodeOrdering[6] = 7;
+    nodeOrdering[7] = 6;
+  }
+  else if (!elementType.compare(0, 4, "C3D6"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 4;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 2;
+    nodeOrdering[5] = 5;
+  }
+  else if (!elementType.compare(0, 4, "C3D5"))
+  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 4;
+  }
 
 //  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
 //  {
@@ -1374,27 +1447,8 @@ integer_array SiloFile::SiloNodeOrdering()
 //    nodeOrdering[2] = 3;
 //    nodeOrdering[3] = 2;
 //  }
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D4"))
-//  {
-//    nodeOrdering.resize(4);
-//    nodeOrdering[0] = 1;
-//    nodeOrdering[1] = 0;
-//    nodeOrdering[2] = 2;
-//    nodeOrdering[3] = 3;
-//  }
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D8") ||
-// !m_elementGeometryID.compare(0, 4, "C3D6"))
-//  {
-  nodeOrdering.resize(8);
-  nodeOrdering[0] = 0;
-  nodeOrdering[1] = 1;
-  nodeOrdering[2] = 3;
-  nodeOrdering[3] = 2;
-  nodeOrdering[4] = 4;
-  nodeOrdering[5] = 5;
-  nodeOrdering[6] = 7;
-  nodeOrdering[7] = 6;
-//  }
+/*//  else */
+
 //  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
 //  {
 //    nodeOrdering.resize(3);
@@ -1496,10 +1550,16 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
   //--------------WRITE FE DATA-----------------
 //  if (m_feElementManager->m_numElems > 0)
-  {
+//  {
 
     NodeManager const * const nodeManager = meshLevel->getNodeManager();
     localIndex const numNodes = nodeManager->size();
+
+    FaceManager const * const faceManager = meshLevel->getFaceManager();
+    localIndex const numFaces = faceManager->size();
+
+    EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
+    localIndex const numEdges = edgeManager->size();
 
 
     string const ghostNodeName = "ghostNodeFlag";
@@ -1515,6 +1575,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
 
+    r1_array const * const totalDisplacement = nodeManager->getPointer<r1_array>(keys::TotalDisplacement);
+
     bool writeArbitraryPolygon(false);
     string const meshName("MeshLevel");
 
@@ -1527,8 +1589,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
+      if( totalDisplacement!=nullptr )
+      {
+        nodePosition += (*totalDisplacement)[a];
+      }
 
-      xcoords[a] = nodePosition(0);
+      xcoords[a] = nodePosition(0) ;
       ycoords[a] = nodePosition(1);
       zcoords[a] = nodePosition(2);
 
@@ -1574,16 +1640,14 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         integer_array const & elemGhostRank = cellBlock->GhostRank();
 
 
-
+        string elementType = cellBlock -> GetElementType();
+        integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
-          localIndex const * const elemToNodeMap = elemsToNodes[k];
-
-          const integer_array nodeOrdering = SiloNodeOrdering();
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
-            elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+            elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
           }
 
           if( elemGhostRank[k] >= 0 )
@@ -1603,19 +1667,25 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
         shapecnt[count] = static_cast<int>(cellBlock->size());
 
-//      if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D8") )
-//      {
+
+      if (! elementType.compare(0, 4, "C3D8") )
+      {
         shapetype[count] = DB_ZONETYPE_HEX;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D6") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_HEX;
-//        writeArbitraryPolygon = true;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D4") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_TET;
-//      }
+      }
+      else if ( !elementType.compare(0, 4, "C3D4") )
+      {
+        shapetype[count] = DB_ZONETYPE_TET;
+      }
+      else if ( !elementType.compare(0, 4, "C3D6") )
+      {
+        shapetype[count] = DB_ZONETYPE_PRISM;
+        writeArbitraryPolygon = true;
+      }
+      else if ( !elementType.compare(0, 4, "C3D5") )
+      {
+        shapetype[count] = DB_ZONETYPE_PYRAMID;
+        writeArbitraryPolygon = true; 
+      }
 //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
 // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
 //      {
@@ -1745,8 +1815,314 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 // isRestart );
 
 
-  }//end FE write
+//  }//end FE write
+
+
+
+
+
+
+
+//  if ( (isRestart || (writeFEMFaces && faceManager.DataLengths() > 0)) )
+  {
+
+    // face mesh
+    const std::string facemeshName("face_mesh");
+
+    if (writeArbitraryPolygon)
+    {
+      const int numFaceTypes = 1;
+      int dbZoneType = DB_ZONETYPE_POLYGON;
+      // See a discussion of silo's arbitrary polygon implementation at
+      // https://visitbugs.ornl.gov/projects/7/wiki/Arbitrary_Polygons_and_Polyhedra_in_Silo
+      // It is not documented in silo manual.
+      array1d<localIndex*> faceConnectivity(numFaceTypes);
+      array1d<globalIndex const*> globalFaceNumbers(numFaceTypes);
+      std::vector<int> fshapecnt(numFaceTypes);
+      std::vector<int> fshapetype(numFaceTypes);
+      std::vector<int> fshapesize(numFaceTypes);
+
+      array1d<array1d<localIndex>> faceToNodeMap(numFaceTypes);
+      {
+        for (localIndex k = 0; k < numFaces; ++k)
+        {
+          faceToNodeMap[0].push_back(faceManager->nodeList()[k].size());
+          for (localIndex a = 0; a < faceManager->nodeList()[k].size(); ++a)
+          {
+            faceToNodeMap[0].push_back(faceManager->nodeList()[k][a]);
+          }
+        }
+
+        faceConnectivity[0] = faceToNodeMap[0].data();
+
+        globalFaceNumbers[0] = faceManager->m_localToGlobalMap.data();
+        fshapecnt[0] = numFaces;
+        fshapetype[0] = dbZoneType;
+        fshapesize[0] = 0;
+      }
+      int lnodelist = faceToNodeMap[0].size();
+
+      WritePolygonMeshObject( facemeshName, numNodes, coords,
+                              nodeManager->m_localToGlobalMap.data(), numFaceTypes,
+                              fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
+                              nullptr, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
+
+
+    }
+    else  //The old way
+    {
+      const int numFaceTypes = 1;
+      int numNodesPerFace = faceManager->nodeList()[0].size(); // TODO assumes all faces have same number of nodes
+      int dbZoneType = DB_ZONETYPE_POLYGON;
+      if(numNodesPerFace == 3) {
+        dbZoneType = DB_ZONETYPE_TRIANGLE;
+      }else if(numNodesPerFace == 4){
+        dbZoneType = DB_ZONETYPE_QUAD;
+      }else if(numNodesPerFace == 2){
+        dbZoneType = DB_ZONETYPE_BEAM;
+      }
+
+      array1d<localIndex*> faceConnectivity(numFaceTypes);
+      array1d<globalIndex const*> globalFaceNumbers(numFaceTypes);
+      std::vector<int> fshapecnt(numFaceTypes);
+      std::vector<int> fshapetype(numFaceTypes);
+      std::vector<int> fshapesize(numFaceTypes);
+
+      array1d<array2d<localIndex>> faceToNodeMap(numFaceTypes);
+
+
+      for(int faceType = 0; faceType < numFaceTypes; ++faceType)
+      {
+        faceToNodeMap[faceType].resize( numFaces, numNodesPerFace);
+
+        for(localIndex k = 0; k < numFaces; ++k )
+        {
+          for (int a = 0; a < numNodesPerFace; ++a)
+          {
+            faceToNodeMap[faceType][k][a] = faceManager->nodeList()[k][a];
+          }
+        }
+
+        faceConnectivity[faceType] = faceToNodeMap[faceType].data();
+
+        globalFaceNumbers[faceType] = faceManager->m_localToGlobalMap.data();
+        fshapecnt[faceType] = numFaces;
+        fshapetype[faceType] = dbZoneType;
+        fshapesize[faceType] = numNodesPerFace;
+      }
+
+      WriteMeshObject( facemeshName,
+                       numNodes,
+                       coords,
+                       nodeManager->m_localToGlobalMap.data(),
+                       nullptr,
+                       nullptr,
+                       numFaceTypes,
+                       fshapecnt.data(),
+                       faceConnectivity.data(),
+                       globalFaceNumbers.data(),
+                       fshapetype.data(),
+                       fshapesize.data(),
+                       cycleNum,
+                       problemTime);
+    }
+
+    WriteManagedGroupSilo( faceManager,
+                           "FaceFields",
+                           facemeshName,
+                           DB_ZONECENT,
+                           cycleNum,
+                           problemTime,
+                           isRestart,
+                           localIndex_array());
+
+  }
+
+
+//  if ( isRestart || (writeFEMEdges && edgeManager.DataLengths() > 0) )
+  {
+    // write edges
+
+    const std::string edgeMeshName("edge_mesh");
+
+    const int numEdgeTypes = 1;
+    const int numNodesPerEdge = 2;
+    int dbZoneType = DB_ZONETYPE_BEAM;
+
+    array1d<localIndex*> edgeConnectivity(numEdgeTypes);
+    array1d<globalIndex const*> globalEdgeNumbers(numEdgeTypes);
+    std::vector<int> eshapecnt(numEdgeTypes);
+    std::vector<int> eshapetype(numEdgeTypes);
+    std::vector<int> eshapesize(numEdgeTypes);
+
+    array1d<array2d<localIndex>> edgeToNodeMap(numEdgeTypes);
+
+
+    for (int edgeType = 0; edgeType < numEdgeTypes; ++edgeType)
+    {
+      edgeToNodeMap[edgeType].resize( numEdges, numNodesPerEdge);
+
+      for (localIndex k = 0; k < numEdges; ++k)
+      {
+        for (int a = 0; a < numNodesPerEdge; ++a)
+        {
+          if ( faceManager->nodeList()[0].size() == 2 && a > 0)
+          {
+            edgeToNodeMap[edgeType][k][a] = edgeManager->nodeList()[k][0];
+          }
+          else
+          {
+            edgeToNodeMap[edgeType][k][a] = edgeManager->nodeList()[k][a];
+          }
+        }
+      }
+
+      edgeConnectivity[edgeType] = edgeToNodeMap[edgeType].data();
+
+      globalEdgeNumbers[edgeType] = edgeManager->m_localToGlobalMap.data();
+      eshapecnt[edgeType] = numEdges;
+      eshapetype[edgeType] = dbZoneType;
+      eshapesize[edgeType] = numNodesPerEdge;
+    }
+
+    WriteMeshObject( edgeMeshName,
+                     numNodes,
+                     coords,
+                     nodeManager->m_localToGlobalMap.data(),
+                     nullptr,
+                     nullptr,
+                     numEdgeTypes,
+                     eshapecnt.data(),
+                     edgeConnectivity.data(),
+                     globalEdgeNumbers.data(),
+                     eshapetype.data(),
+                     eshapesize.data(),
+                     cycleNum,
+                     problemTime);
+
+    WriteManagedGroupSilo( edgeManager,
+                           "EdgeFields",
+                           edgeMeshName,
+                           DB_ZONECENT,
+                           cycleNum,
+                           problemTime,
+                           isRestart,
+                           localIndex_array());
+  }
+
 }
+
+// Arbitrary polygon. Have to deal with this separately
+void SiloFile::WritePolygonMeshObject(const std::string& meshName,
+                                      const localIndex nnodes,
+                                      realT* coords[3],
+                                      const globalIndex*,
+                                      const int numRegions,
+                                      const int* shapecnt,
+                                      const localIndex* const * const meshConnectivity,
+                                      const globalIndex* const * const globalElementNum,
+                                      const int* const * const,
+                                      const int* const shapetype,
+                                      const int* const shapesize,
+                                      const int cycleNumber,
+                                      const realT problemTime,
+                                      const int lnodelist)
+{
+
+  const DBdatatype datatype = DB_DOUBLE;
+
+
+//  DBfacelist* facelist;
+//  std::string facelistName;
+//  facelistName = meshName + "_facelist";
+
+  DBoptlist* optlist = DBMakeOptlist(4);
+//  DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*> (globalNodeNum));
+  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+  DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
+
+  int numTotZones = shapecnt[0];
+  if (numTotZones == 0)
+  {
+    char pwd[256];
+    DBGetDir(m_dbFilePtr, pwd);
+    std::string emptyObject = pwd;
+    emptyObject += "/" + meshName;
+    m_emptyMeshes.push_back(emptyObject);
+  }
+  else
+  {
+    std::string zonelistName;
+    zonelistName = meshName + "_zonelist";
+
+
+    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, nullptr, (float**) coords, nnodes, numTotZones,
+                 zonelistName.c_str(), nullptr, datatype, optlist);
+
+    DBClearOptlist(optlist);
+
+    std::vector<int> nodelist(lnodelist);
+    std::vector<globalIndex> globalZoneNumber(lnodelist);
+
+    int elemCount = 0;
+    for (int j = 0; j < lnodelist; ++j)
+    {
+      nodelist[j] = meshConnectivity[0][j];
+    }
+
+    {
+      if( globalElementNum != nullptr )
+      {
+        for (int j = 0; j < shapecnt[0]; ++j)
+        {
+          globalZoneNumber[elemCount++] = globalElementNum[0][j];
+        }
+        // write zonelist
+  //      DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*> (globalZoneNumber.data()));
+//        if (type_name<globalIndex>::name() == type_name<long long>::name())
+//          DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
+      }
+    }
+
+
+
+    int hi_offset = 0;
+
+    DBPutZonelist2( m_dbFilePtr,
+                    zonelistName.c_str(),
+                    numTotZones,
+                    3,
+                    nodelist.data(),
+                    lnodelist,
+                    0,
+                    0,
+                    hi_offset,
+                    const_cast<int*>(shapetype),
+                    const_cast<int*>(shapesize),
+                    const_cast<int*>(shapecnt),
+                    numRegions,
+                    optlist);
+
+    DBClearOptlist(optlist);
+
+  }
+
+  // write multimesh object
+  int rank = 0;
+#ifdef GEOSX_USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+  if (rank == 0)
+  {
+    DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+    DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
+
+    WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist);
+  }
+
+  DBFreeOptlist(optlist);
+}
+
 
 }
 #pragma GCC diagnostic pop

@@ -30,10 +30,8 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
 #include <algorithm>
-//#include "managers/TableManager.hpp"
-//#include "SimpleGeometricObjects.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
@@ -307,7 +305,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
   m_regionNames = this->getReference<string_array>(keys::cellBlockNames);
   m_elementType = this->getReference<string_array>(keys::elementTypes);
-  m_trianglePattern = *(this->getData<integer>(keys::trianglePattern));
+  m_trianglePattern = this->getReference<integer>(keys::trianglePattern);
 
 
 
@@ -343,16 +341,14 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     if (m_elementType.size() == 1)
     {
       m_elementType.resize(m_numElePerBox.size());
-      for( size_t i=1 ; i< m_elementType.size() ; ++i )
+      for( localIndex i=1 ; i< m_elementType.size() ; ++i )
       {
         m_elementType[i] = m_elementType[0];
       }
     }
     else
     {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
-#endif
+      GEOS_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
     }
   }
 
@@ -389,7 +385,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 //    ExpandMultipleTokens(m_regionNames);
   {
-    string_array::size_type numBlocks = 1;
+    localIndex numBlocks = 1;
     for( int i=0 ; i<m_dim ; ++i )
     {
       numBlocks *= m_nElems[i].size();
@@ -399,7 +395,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
       if (m_regionNames.size() == 1)
       {
         m_regionNames.resize(numBlocks);
-        for( size_t i=1 ; i< m_elementType.size() ; ++i )
+        for( localIndex i=1 ; i< m_elementType.size() ; ++i )
         {
           m_regionNames[i] = m_regionNames[0];
         }
@@ -500,6 +496,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
     cellBlock->SetDocumentationNodes();
     cellBlock->RegisterDocumentationNodes();
     cellBlock->ReadXML_PostProcess();
+    cellBlock->SetElementType("C3D8");
   }
 
 
@@ -684,7 +681,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   nodeManager->resize( numNodes );
-  view_rtype<r1_array> X = nodeManager->getData<r1_array>( keys::referencePositionString );
+  r1_array& X = nodeManager->getReference<r1_array>( keys::referencePositionString );
 
   {
     localIndex localNodeIndex = 0;
@@ -890,9 +887,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-// #ifdef GEOSX_USE_ATK
-//                    SLIC_ERROR("not implemented");
-// #endif
+//                  GEOS_ERROR("not implemented");
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;

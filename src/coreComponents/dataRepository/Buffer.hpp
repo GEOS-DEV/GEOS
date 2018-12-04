@@ -21,10 +21,9 @@
 
 
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
-#include "ManagedArray.hpp"
+#include "Array.hpp"
 #include <vector>
 #include <cstdlib>
 #include <string>
@@ -668,26 +667,26 @@ public:
   }
 
   template <typename T, int NDIM, typename INDEX_TYPE>
-  static localIndex packed_size(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr)
+  static localIndex packed_size(const LvArray::Array<T, NDIM, INDEX_TYPE> & arr)
   {
-    GEOS_ERROR("You shouldn't be packing a ManagedArray!"); 
+    GEOS_ERROR("You shouldn't be packing a Array!"); 
     return 0;
   }
 
 
   template <typename T, int NDIM, typename INDEX_TYPE>
-  static void * pack(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr, localIndex & byte_size, void * buffer=nullptr)
+  static void * pack(const LvArray::Array<T, NDIM, INDEX_TYPE> & arr, localIndex & byte_size, void * buffer=nullptr)
   { 
-    GEOS_ERROR("You shouldn't be packing a ManagedArray!"); 
+    GEOS_ERROR("You shouldn't be packing a Array!"); 
     byte_size = 0;
     return nullptr;
   }
 
 
   template <typename T, int NDIM, typename INDEX_TYPE>
-  static localIndex unpack(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr, const void * buffer, localIndex byte_size=-1)
+  static localIndex unpack(const LvArray::Array<T, NDIM, INDEX_TYPE> & arr, const void * buffer, localIndex byte_size=-1)
   { 
-    GEOS_ERROR("You shouldn't be unpacking a ManagedArray!");
+    GEOS_ERROR("You shouldn't be unpacking a Array!");
     return 0;
   }
 

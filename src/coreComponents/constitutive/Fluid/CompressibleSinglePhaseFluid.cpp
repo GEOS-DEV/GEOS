@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+  * @file CompressibleSinglePhaseFluid.cpp
+  */
+
 #include "CompressibleSinglePhaseFluid.hpp"
 
 namespace geosx
@@ -55,18 +59,16 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
   std::unique_ptr<CompressibleSinglePhaseFluid> newConstitutiveRelation =
     std::make_unique<CompressibleSinglePhaseFluid>( name, parent );
 
-  newConstitutiveRelation->m_compressibility   = this->m_compressibility;
-  newConstitutiveRelation->m_viscosibility = this->m_viscosibility;
+  newConstitutiveRelation->m_compressibility    = this->m_compressibility;
+  newConstitutiveRelation->m_viscosibility      = this->m_viscosibility;
   newConstitutiveRelation->m_referencePressure  = this->m_referencePressure;
   newConstitutiveRelation->m_referenceDensity   = this->m_referenceDensity;
   newConstitutiveRelation->m_referenceViscosity = this->m_referenceViscosity;
 
-  newConstitutiveRelation->m_densityRelation   = this->m_densityRelation;
-  newConstitutiveRelation->m_viscosityRelation = this->m_viscosityRelation;
+  newConstitutiveRelation->m_densityRelation    = this->m_densityRelation;
+  newConstitutiveRelation->m_viscosityRelation  = this->m_viscosityRelation;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
-
-  return rval;
+  return std::move(newConstitutiveRelation);
 }
 
 void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
@@ -205,12 +207,15 @@ void CompressibleSinglePhaseFluid::FluidViscosityCompute( real64 const & pres,
   m_viscosityRelation.Compute( pres, visc, dVisc_dPres );
 }
 
-void CompressibleSinglePhaseFluid::FinalInitialization( ManagedGroup *const parent )
+
+void CompressibleSinglePhaseFluid::InitializePostSubGroups( ManagedGroup * const group )
 {
   m_densityRelation.SetCoefficients( m_referencePressure, m_referenceDensity, m_compressibility );
   m_viscosityRelation.SetCoefficients( m_referencePressure, m_referenceViscosity, m_viscosibility );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, ManagedGroup * const )
-}
+
+} /* namespace constitutive */
+
 } /* namespace geosx */

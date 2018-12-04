@@ -92,7 +92,7 @@ const string PerforationManager::getCatalogName() const
   return keys::perforations;
 }
 
-void PerforationManager::FinalInitialization(ManagedGroup * const problemManager)
+void PerforationManager::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
 {
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
 

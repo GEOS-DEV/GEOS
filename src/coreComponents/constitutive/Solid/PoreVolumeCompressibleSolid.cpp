@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+* @file PoreVolumeCompressibleSolid.cpp
+*/
+
 #include "PoreVolumeCompressibleSolid.hpp"
 
 namespace geosx
@@ -37,7 +41,6 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
 
   RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 );
   RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 );
-
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
@@ -116,15 +119,7 @@ void PoreVolumeCompressibleSolid::ReadXML_PostProcess()
   }
 }
 
-void PoreVolumeCompressibleSolid::PoreVolumeMultiplierCompute(real64 const & pres,
-                                                              localIndex const i,
-                                                              real64 & poro,
-                                                              real64 & dPVMult_dPres) const
-{
-  m_poreVolumeRelation.Compute( pres, poro, dPVMult_dPres );
-}
-
-void PoreVolumeCompressibleSolid::FinalInitialization( ManagedGroup *const parent )
+void PoreVolumeCompressibleSolid::FinalInitializationPreSubGroups( ManagedGroup *const parent )
 {
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 }

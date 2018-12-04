@@ -37,6 +37,9 @@ class ObjectManagerBase;
 class NeighborCommunicator;
 class MeshLevel;
 
+class MPI_iCommData;
+
+
 class CommunicationTools
 {
 public:
@@ -46,6 +49,10 @@ public:
   static void AssignGlobalIndices( ObjectManagerBase & object,
                                    ObjectManagerBase const & compositionObject,
                                    array1d<NeighborCommunicator> & neighbors );
+
+  static void AssignNewGlobalIndices( ObjectManagerBase & object,
+                                      set<localIndex> const & indexList );
+
 
   static void FindGhosts( MeshLevel * const meshLevel,
                           array1d<NeighborCommunicator> & neighbors );
@@ -64,6 +71,82 @@ public:
                                  MeshLevel * const mesh,
                                  array1d<NeighborCommunicator> & allNeighbors );
 
+  static void SynchronizePackSendRecvSizes( const std::map<string, string_array >& fieldNames,
+                                            MeshLevel * const mesh,
+                                            array1d<NeighborCommunicator> & neighbors,
+                                            MPI_iCommData & icomm );
+
+  static void SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
+                                       MeshLevel * const mesh,
+                                       array1d<NeighborCommunicator> & allNeighbors,
+                                       MPI_iCommData & icomm );
+
+  static void SynchronizeUnpack( MeshLevel * const mesh,
+                                 array1d<NeighborCommunicator> & neighbors,
+                                 MPI_iCommData & icomm );
+
+};
+
+
+class MPI_iCommData
+{
+public:
+
+  MPI_iCommData():
+    size(0),
+    commID(-1),
+    sizeCommID(-1),
+    fieldNames(),
+    mpiSendBufferRequest(),
+    mpiRecvBufferRequest(),
+    mpiSendBufferStatus(),
+    mpiRecvBufferStatus()
+  {
+    commID = CommunicationTools::reserveCommID();
+    sizeCommID = CommunicationTools::reserveCommID();
+  }
+
+  ~MPI_iCommData()
+  {
+    if( commID >= 0 )
+    {
+      CommunicationTools::releaseCommID(commID);
+    }
+
+    if( sizeCommID >= 0 )
+    {
+      CommunicationTools::releaseCommID(sizeCommID);
+    }
+
+  }
+
+  void resize( localIndex numMessages )
+  {
+    mpiSendBufferRequest.resize( numMessages );
+    mpiRecvBufferRequest.resize( numMessages );
+    mpiSendBufferStatus.resize( numMessages );
+    mpiRecvBufferStatus.resize( numMessages );
+    mpiSizeSendBufferRequest.resize( numMessages );
+    mpiSizeRecvBufferRequest.resize( numMessages );
+    mpiSizeSendBufferStatus.resize( numMessages );
+    mpiSizeRecvBufferStatus.resize( numMessages );
+    size = static_cast<int>(numMessages);
+  }
+
+  int size;
+  int commID;
+  int sizeCommID;
+  std::map<string, string_array > fieldNames;
+
+  array1d<MPI_Request> mpiSendBufferRequest;
+  array1d<MPI_Request> mpiRecvBufferRequest;
+  array1d<MPI_Status>  mpiSendBufferStatus;
+  array1d<MPI_Status>  mpiRecvBufferStatus;
+
+  array1d<MPI_Request> mpiSizeSendBufferRequest;
+  array1d<MPI_Request> mpiSizeRecvBufferRequest;
+  array1d<MPI_Status>  mpiSizeSendBufferStatus;
+  array1d<MPI_Status>  mpiSizeRecvBufferStatus;
 };
 
 } /* namespace geosx */

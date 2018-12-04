@@ -29,6 +29,9 @@ set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
 
+set(ENABLE_PAMELA OFF CACHE BOOL "" FORCE)
+set(ENABLE_PVTPackage OFF CACHE BOOL "" FORCE)
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################
@@ -43,5 +46,6 @@ set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 
-set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
-set(RAJA_ENABLE_OPENMP "ON"        CACHE PATH "" FORCE)
+set(ENABLE_OPENMP     "ON"        CACHE BOOL "" FORCE)
+set(RAJA_ENABLE_OPENMP "ON"        CACHE BOOL "" FORCE)
+#set(ENABLE_TIMERS "OFF" CACHE BOOL "" FORCE )

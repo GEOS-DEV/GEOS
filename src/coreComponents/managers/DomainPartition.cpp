@@ -28,9 +28,8 @@
 #include "fileIO/silo/SiloFile.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "common/SortedArray.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -40,13 +39,9 @@ using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
-  m_mpiComm()
+  ManagedGroup( name, parent )
 {
-
-
-  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
-  MPI_Comm_dup( MPI_COMM_GEOSX, &m_mpiComm );
+  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
@@ -54,9 +49,9 @@ DomainPartition::DomainPartition( std::string const & name,
   RegisterGroup<CellBlockManager>( keys::cellManager );
 }
 
+
 DomainPartition::~DomainPartition()
 {}
-
 
 
 void DomainPartition::FillDocumentationNode()
@@ -169,11 +164,10 @@ void DomainPartition::GenerateSets(  )
         set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          localIndex const * const nodelist = elemsToNodes[k];
           integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {
-            if( nodeInSet[setName][nodelist[a]] == 1 )
+            if( nodeInSet[setName][elemsToNodes[k][a]] == 1 )
             {
               ++count;
             }
@@ -191,6 +185,7 @@ void DomainPartition::GenerateSets(  )
 
 void DomainPartition::SetupCommunications()
 {
+  GEOSX_MARK_FUNCTION;
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
@@ -230,6 +225,8 @@ void DomainPartition::SetupCommunications()
 
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
+  nodeManager->SetMaxGlobalIndex();
+
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
 
   CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, allNeighbors );
@@ -255,7 +252,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
   if (idim == nsdof)
   {
     bool me = true;
-    for ( unsigned int i = 0 ; i < nsdof ; i++)
+    for ( int i = 0 ; i < nsdof ; i++)
     {
       if (ncoords[i] != partition.m_coords(i))
       {
@@ -273,11 +270,11 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
   }
   else
   {
-    const int dim = partition.m_Partitions(idim);
-    const bool periodic = partition.m_Periodic(idim);
+    const int dim = partition.m_Partitions( integer_conversion<localIndex>(idim));
+    const bool periodic = partition.m_Periodic(integer_conversion<localIndex>(idim));
     for (int i = -1 ; i < 2 ; i++)
     {
-      ncoords[idim] = partition.m_coords(idim) + i;
+      ncoords[idim] = partition.m_coords(integer_conversion<localIndex>(idim)) + i;
       bool ok = true;
       if (periodic)
       {

@@ -25,10 +25,6 @@
 
 #include "LinearElasticIsotropic.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 namespace geosx
 {
 using namespace dataRepository;
@@ -40,29 +36,32 @@ namespace constitutive
 static inline void UpdateStatePoint( R2SymTensor const & D,
                                      R2Tensor const & Rot,
                                      localIndex const i,
+                                     localIndex const q,
                                      void * dataPtrs,
                                      integer const systemAssembleFlag )
 {
 
-  LinearElasticIsotropic::dataPointers * castedDataPtrs = reinterpret_cast<LinearElasticIsotropic::dataPointers *>(dataPtrs);
+  LinearElasticIsotropic::dataPointers * restrict const
+  castedDataPtrs = reinterpret_cast<LinearElasticIsotropic::dataPointers *>(dataPtrs);
   real64 volumeStrain = D.Trace();
-  castedDataPtrs->m_meanStress[i] += volumeStrain * castedDataPtrs->m_bulkModulus[0];
-
-  R2SymTensor temp = D;
-  temp.PlusIdentity( -volumeStrain / 3.0 );
-  temp *= 2.0 * castedDataPtrs->m_shearModulus[0];
-  castedDataPtrs->m_deviatorStress[i] += temp;
-
-
-  temp.QijAjkQlk( castedDataPtrs->m_deviatorStress[i], Rot );
-  castedDataPtrs->m_deviatorStress[i] = temp;
-
-  temp.PlusIdentity( castedDataPtrs->m_meanStress[i] );
+  (*castedDataPtrs->m_meanStress)[i][q] += volumeStrain * castedDataPtrs->m_bulkModulus0[0];
+//
+//  R2SymTensor temp = D;
+//  temp.PlusIdentity( -volumeStrain / 3.0 );
+//  temp *= 2.0 * castedDataPtrs->m_shearModulus0[0];
+//  (*castedDataPtrs->m_deviatorStress)[i][q] += temp;
+//
+//
+//  temp.QijAjkQlk( (*castedDataPtrs->m_deviatorStress)[i][q], Rot );
+//  (*castedDataPtrs->m_deviatorStress)[i][q] = temp;
+//
+//  temp.PlusIdentity( (*castedDataPtrs->m_meanStress)[i][q] );
 }
 
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
-  ConstitutiveBase( name, parent )
+  ConstitutiveBase( name, parent ),
+  m_poreVolumeRelation( ExponentApproximationType::Linear )
 {
   this->RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 );
   this->RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 );
@@ -71,9 +70,15 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   this->RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 );
   this->RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 );
 
-
   this->RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 );
   this->RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 );
+
+  this->RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 );
+
+  this->RegisterViewWrapper( viewKeys().compressibility.Key(), &m_compressibility, 0 );
+  this->RegisterViewWrapper( viewKeys().referencePressure.Key(), &m_referencePressure, 0 );
+  this->RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 );
 
 }
 
@@ -98,9 +103,13 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_meanStress = m_meanStress;
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
+  newConstitutiveRelation->m_compressibility   = this->m_compressibility;
+  newConstitutiveRelation->m_referencePressure  = this->m_referencePressure;
+  newConstitutiveRelation->m_biotCoefficient   = this->m_biotCoefficient;
 
-  return rval;
+  newConstitutiveRelation->m_poreVolumeRelation  = this->m_poreVolumeRelation;
+
+  return std::move(newConstitutiveRelation);
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
@@ -114,6 +123,9 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_shearModulus.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_poreVolumeMultiplier = 1.0;
 
   m_bulkModulus = m_bulkModulus0;
   m_density = m_density0;
@@ -125,6 +137,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
 {
 
   DocumentationNode * const docNode = this->getDocumentationNode();
+
 
   docNode->setName( this->CatalogName());
   docNode->setSchemaType( "Node" );
@@ -195,14 +208,51 @@ void LinearElasticIsotropic::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys().biotCoefficient.Key(),
+                              viewKeys().biotCoefficient.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Biot's coefficient",
+                              "Biot's coefficient",
+                              "0",
+                              "",
+                              1,
+                              1,
+                              0 );
 
+  docNode->AllocateChildNode( viewKeys().compressibility.Key(),
+                              viewKeys().compressibility.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Fluid Bulk Modulus",
+                              "Fluid Bulk Modulus",
+                              "-1",
+                              "",
+                              1,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys().referencePressure.Key(),
+                              viewKeys().referencePressure.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Reference pressure",
+                              "Reference pressure",
+                              "0",
+                              "",
+                              1,
+                              1,
+                              0 );
 
 }
 
 void LinearElasticIsotropic::ReadXML_PostProcess()
 {
-  real64 & nu = *( getData<real64>( viewKeys().poissonRatio ) );
-  real64 & E  = *( getData<real64>( viewKeys().youngsModulus ) );
+  real64 & nu = getReference<real64>( viewKeys().poissonRatio );
+  real64 & E  = getReference<real64>( viewKeys().youngsModulus );
   real64 & K  = m_bulkModulus0;
   real64 & G  = m_shearModulus0;
 
@@ -241,21 +291,29 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
       E = 9 * K * G / ( 3 * K + G );
       nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
     }
+    m_compressibility = 1 / K;
   }
-  else
+  else if (m_compressibility <= 0)
   {
     string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
     GEOS_ERROR( message );
   }
 }
 
+void LinearElasticIsotropic::FinalInitializationPreSubGroups(ManagedGroup * const parent)
+{
+  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
+}
+
 void LinearElasticIsotropic::SetParamStatePointers( void *& data )
 {
 
-  this->m_dataPointers.m_bulkModulus = &m_bulkModulus0;
-  this->m_dataPointers.m_shearModulus = &m_shearModulus0;
-  this->m_dataPointers.m_meanStress = m_meanStress.data();
-  this->m_dataPointers.m_deviatorStress = m_deviatorStress.data();
+  this->m_dataPointers.m_bulkModulus0 = &m_bulkModulus0;
+  this->m_dataPointers.m_shearModulus0 = &m_shearModulus0;
+  this->m_dataPointers.m_bulkModulus = &m_bulkModulus;
+  this->m_dataPointers.m_shearModulus = &m_shearModulus;
+  this->m_dataPointers.m_meanStress = &m_meanStress;
+  this->m_dataPointers.m_deviatorStress = &m_deviatorStress;
 
   data = reinterpret_cast<void*>(&m_dataPointers);
 }
@@ -274,23 +332,23 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 {
 
   localIndex numberOfMaterialPoints = stateVariables->size();
-  ViewWrapper<real64_array>::rtype_const K = parameters->getData<real64_array>( std::string( "BulkModulus" ));
-  ViewWrapper<real64_array>::rtype_const G = parameters->getData<real64_array>( std::string( "ShearModulus" ));
+  array_view<real64> const & K = parameters->getReference<real64_array>( std::string( "BulkModulus" ));
+  array_view<real64> const & G = parameters->getReference<real64_array>( std::string( "ShearModulus" ));
 
-  ViewWrapper<real64_array>::rtype mean_stress = stateVariables->getData<real64_array>( std::string( "MeanStress" ));
-  ViewWrapper<real64_array>::rtype S11 = stateVariables->getData<real64_array>( std::string( "S11" ));
-  ViewWrapper<real64_array>::rtype S22 = stateVariables->getData<real64_array>( std::string( "S22" ));
-  ViewWrapper<real64_array>::rtype S33 = stateVariables->getData<real64_array>( std::string( "S33" ));
-  ViewWrapper<real64_array>::rtype S23 = stateVariables->getData<real64_array>( std::string( "S23" ));
-  ViewWrapper<real64_array>::rtype S13 = stateVariables->getData<real64_array>( std::string( "S13" ));
-  ViewWrapper<real64_array>::rtype S12 = stateVariables->getData<real64_array>( std::string( "S12" ));
+  array_view<real64>& mean_stress = stateVariables->getReference<real64_array>( std::string( "MeanStress" ));
+  array_view<real64>& S11 = stateVariables->getReference<real64_array>( std::string( "S11" ));
+  array_view<real64>& S22 = stateVariables->getReference<real64_array>( std::string( "S22" ));
+  array_view<real64>& S33 = stateVariables->getReference<real64_array>( std::string( "S33" ));
+  array_view<real64>& S23 = stateVariables->getReference<real64_array>( std::string( "S23" ));
+  array_view<real64>& S13 = stateVariables->getReference<real64_array>( std::string( "S13" ));
+  array_view<real64>& S12 = stateVariables->getReference<real64_array>( std::string( "S12" ));
 
-  ViewWrapper<real64_array>::rtype_const D11 = input->getData<real64_array>( std::string( "D11" ));
-  ViewWrapper<real64_array>::rtype_const D22 = input->getData<real64_array>( std::string( "D22" ));
-  ViewWrapper<real64_array>::rtype_const D33 = input->getData<real64_array>( std::string( "D33" ));
-  ViewWrapper<real64_array>::rtype_const D23 = input->getData<real64_array>( std::string( "D23" ));
-  ViewWrapper<real64_array>::rtype_const D13 = input->getData<real64_array>( std::string( "D13" ));
-  ViewWrapper<real64_array>::rtype_const D12 = input->getData<real64_array>( std::string( "D12" ));
+  array_view<real64> const & D11 = input->getReference<real64_array>( std::string( "D11" ));
+  array_view<real64> const & D22 = input->getReference<real64_array>( std::string( "D22" ));
+  array_view<real64> const & D33 = input->getReference<real64_array>( std::string( "D33" ));
+  array_view<real64> const & D23 = input->getReference<real64_array>( std::string( "D23" ));
+  array_view<real64> const & D13 = input->getReference<real64_array>( std::string( "D13" ));
+  array_view<real64> const & D12 = input->getReference<real64_array>( std::string( "D12" ));
 
   for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
   {
@@ -308,15 +366,15 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 
   if( systemAssembleFlag == 1 )
   {
-    ViewWrapper<real64_array>::rtype K11 = stateVariables->getData<real64_array>( std::string( "K11" ));
-    ViewWrapper<real64_array>::rtype K22 = stateVariables->getData<real64_array>( std::string( "K22" ));
-    ViewWrapper<real64_array>::rtype K33 = stateVariables->getData<real64_array>( std::string( "K33" ));
-    ViewWrapper<real64_array>::rtype K23 = stateVariables->getData<real64_array>( std::string( "K23" ));
-    ViewWrapper<real64_array>::rtype K13 = stateVariables->getData<real64_array>( std::string( "K13" ));
-    ViewWrapper<real64_array>::rtype K12 = stateVariables->getData<real64_array>( std::string( "K12" ));
-    ViewWrapper<real64_array>::rtype K44 = stateVariables->getData<real64_array>( std::string( "K44" ));
-    ViewWrapper<real64_array>::rtype K55 = stateVariables->getData<real64_array>( std::string( "K55" ));
-    ViewWrapper<real64_array>::rtype K66 = stateVariables->getData<real64_array>( std::string( "K66" ));
+    array_view<real64>& K11 = stateVariables->getReference<real64_array>( std::string( "K11" ));
+    array_view<real64>& K22 = stateVariables->getReference<real64_array>( std::string( "K22" ));
+    array_view<real64>& K33 = stateVariables->getReference<real64_array>( std::string( "K33" ));
+    array_view<real64>& K23 = stateVariables->getReference<real64_array>( std::string( "K23" ));
+    array_view<real64>& K13 = stateVariables->getReference<real64_array>( std::string( "K13" ));
+    array_view<real64>& K12 = stateVariables->getReference<real64_array>( std::string( "K12" ));
+    array_view<real64>& K44 = stateVariables->getReference<real64_array>( std::string( "K44" ));
+    array_view<real64>& K55 = stateVariables->getReference<real64_array>( std::string( "K55" ));
+    array_view<real64>& K66 = stateVariables->getReference<real64_array>( std::string( "K66" ));
 
     for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
     {

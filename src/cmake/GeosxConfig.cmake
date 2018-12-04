@@ -11,17 +11,23 @@ message(STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}")
 
 
 set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
-                          ATK 
+                          ATK
                           CALIPER
-                          CHAI 
+                          CHAI
                           CONTAINERARRAY_RETURN_PTR
                           FPARSER
                           HYPRE
                           MATHPRESSO
+                          METIS
                           MPI
+                          OPENMP
+                          PARMETIS
                           PYTHON
                           RAJA 
-                          TRILINOS )
+                          SUPERLU_DIST
+                          TIMERS
+                          TRILINOS
+                          ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
     if( ${DEP}_FOUND OR ENABLE_${DEP} )
@@ -33,7 +39,7 @@ endforeach()
 
 configure_file(
     ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
-    ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp
+    ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
 )
 
 
@@ -44,15 +50,15 @@ configure_file(
 #    ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp
 #)
 
-# This approach does not. I guess the symbolic link points to the file in the build directory, and 
+# This approach does not. I guess the symbolic link points to the file in the build directory, and
 # uses that date. So it only rebuilds files that have changed since the last build in the specific
 # configuration.
-ADD_CUSTOM_TARGET(geosx_config_hpp ALL
-                  COMMAND ${CMAKE_COMMAND} -E create_symlink 
-                  ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp 
-                  ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp )
+#ADD_CUSTOM_TARGET(geosx_config_hpp ALL
+#                  COMMAND ${CMAKE_COMMAND} -E create_symlink
+#                  ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
+#                  ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp )
 
 
-install( FILES ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp
+install( FILES ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
          DESTINATION ${CMAKE_INSTALL_PREFIX}/include/common )
 

@@ -89,12 +89,12 @@ R1Tensor const & WellBase::getGravityVector() const
   return getParent()->group_cast<WellManager const *>()->getGravityVector();
 }
 
-void WellBase::FinalInitialization(dataRepository::ManagedGroup * const problemManager)
+void WellBase::FinalInitializationPreSubGroups(dataRepository::ManagedGroup * const problemManager)
 {
-  ObjectManagerBase::FinalInitialization( problemManager );
+  ObjectManagerBase::FinalInitializationPreSubGroups( problemManager );
 
   // We want to make sure Perforations are connected to cells before all other stuff
-  m_perfManager.FinalInitialization( problemManager );
+  m_perfManager.FinalInitializationPreSubGroups(problemManager);
 }
 
 void WellBase::ReadXML_PostProcess()

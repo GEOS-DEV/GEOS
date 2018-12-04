@@ -105,7 +105,6 @@ void CompositeFunction::FillDocumentationNode()
                               0 );
 
   docNode->getChildNode(keys::inputVarNames)->setDefault("");
-  docNode->getChildNode(keys::inputVarTypes)->setDefault("");
 
 }
 
@@ -114,7 +113,7 @@ void CompositeFunction::InitializeFunction()
 {
   // Register variables
   string_array const & variables = getReference<string_array>(keys::variableNames);
-  for (string_array::size_type ii=0 ; ii<variables.size() ; ++ii)
+  for (localIndex ii=0 ; ii<variables.size() ; ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), static_cast<int>(ii * sizeof(double)));
   }
@@ -122,12 +121,9 @@ void CompositeFunction::InitializeFunction()
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
   parserContext.addBuiltIns();
-  std::string expression = getData<std::string>(keys::expression);
+  std::string const& expression = getReference<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
-  if (err != mathpresso::kErrorOk)
-  {
-    throw std::invalid_argument("JIT Compiler Error");
-  }
+  GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
 
   // Grab pointers to sub functions
   NewFunctionManager * functionManager = NewFunctionManager::Instance();

@@ -25,9 +25,7 @@
 
 #include "ProblemManager.hpp"
 
-#include <stdexcept>
 #include <vector>
-
 
 #include "DomainPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
@@ -272,23 +270,23 @@ void ProblemManager::FillDocumentationNode()
   // meshDocNode->setShortDescription("Mesh Generators");
 }
 
-void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
+void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->RegisterDocumentationNodes();
 
-  ViewWrapper<std::string>::rtype inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
-  ViewWrapper<std::string>::rtype restartFileName = commandLine->getData<std::string>(viewKeys.restartFileName);
-  integer& beginFromRestart = *(commandLine->getData<integer>(viewKeys.beginFromRestart));
-  integer& xPartitionsOverride = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
-  integer& yPartitionsOverride = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
-  integer& zPartitionsOverride = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
-  integer& overridePartitionNumbers = *(commandLine->getData<integer>(viewKeys.overridePartitionNumbers));
-  ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
-  integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
+  std::string& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
+  std::string& restartFileName = commandLine->getReference<std::string>(viewKeys.restartFileName);
+  integer& beginFromRestart = commandLine->getReference<integer>(viewKeys.beginFromRestart);
+  integer& xPartitionsOverride = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
+  integer& yPartitionsOverride = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
+  integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
+  integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
+  std::string&  schemaName = commandLine->getReference<std::string>(keys::schema);
+  integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
   schemaLevel = 0;
-  ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
-  ViewWrapper<std::string>::rtype outputDirectory = commandLine->getData<std::string>(viewKeys.outputDirectory);
+  std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
+  std::string& outputDirectory = commandLine->getReference<std::string>(viewKeys.outputDirectory);
   outputDirectory = ".";
   problemName = "";
 
@@ -322,7 +320,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
   // Handle special cases
   if (parse.error())
   {
-    throw std::invalid_argument("Bad input arguments");
+    GEOS_ERROR("Bad input arguments");
   }
 
   if (options[HELP] || (argc == 0))
@@ -334,8 +332,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
 
   if (options[INPUT].count() == 0)
   {
-    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
-    exit(1);
+    GEOS_ERROR("An input xml must be specified!");
   }
 
 
@@ -414,7 +411,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
 }
 
 
-bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartFileName )
+bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFileName )
 {
   // Set the options structs and parse
   enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
@@ -428,7 +425,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
+    {SCHEMALEVEL, 0, "l", "schema_level", Arg::NonEmpty, "\t-l, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -445,7 +442,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
   // Handle special cases
   if (parse.error())
   {
-    throw std::invalid_argument("Bad input arguments");
+    GEOS_ERROR("Bad input arguments");
   }
 
   if (options[HELP] || (argc == 0))
@@ -457,8 +454,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
 
   if (options[INPUT].count() == 0)
   {
-    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
-    exit(1);
+    GEOS_ERROR("An input xml must be specified!");
   }
 
   // Iterate over the remaining inputs
@@ -539,20 +535,20 @@ void ProblemManager::InitializePythonInterpreter()
 {  
 #ifdef GEOSX_USE_PYTHON
   // Initialize python and numpy
-  std::cout << "Loading python interpreter" << std::endl;
+  GEOS_LOG_RANK_0("Loading python interpreter");
 
   // Check to make sure the appropriate environment variables are set
   if (getenv("GPAC_SCHEMA") == NULL)
   {
-    throw std::invalid_argument("GPAC_SCHEMA must be defined to use the new preprocessor!");
+    GEOS_ERROR("GPAC_SCHEMA must be defined to use the new preprocessor!");
   }
   if (getenv("GEOS_PYTHONPATH") == NULL)
   {
-    throw std::invalid_argument("GEOS_PYTHONPATH must be defined to use the new preprocessor!");
+    GEOS_ERROR("GEOS_PYTHONPATH must be defined to use the new preprocessor!");
   }
   if (getenv("GEOS_PYTHONHOME") == NULL)
   {
-    throw std::invalid_argument("GEOS_PYTHONHOME must be defined to use the new preprocessor!");
+    GEOS_ERROR("GEOS_PYTHONHOME must be defined to use the new preprocessor!");
   }
 
   setenv("PYTHONPATH", getenv("GEOS_PYTHONPATH"), 1);
@@ -567,7 +563,7 @@ void ProblemManager::ClosePythonInterpreter()
 {
 #ifdef GEOSX_USE_PYTHON
   // Add any other cleanup here
-  std::cout << "Closing python interpreter" << std::endl;
+  GEOS_LOG_RANK_0("Closing python interpreter");
   Py_Finalize();
 #endif
 }
@@ -575,10 +571,11 @@ void ProblemManager::ClosePythonInterpreter()
 
 void ProblemManager::ParseInputFile()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
+  std::string const& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
 
 
 #ifdef GEOSX_USE_PYTHON
@@ -587,7 +584,7 @@ void ProblemManager::ParseInputFile()
   if (pModule == NULL)
   {
     PyErr_Print();
-    throw std::invalid_argument("Could not find the pygeos module in GEOS_PYTHONPATH!");
+    GEOS_ERROR("Could not find the pygeos module in GEOS_PYTHONPATH!");
   }
 
   // Call the xml preprocessor
@@ -605,7 +602,7 @@ void ProblemManager::ParseInputFile()
   Py_DECREF(pModule);
 
 #else
-  std::cout << "Warning: GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files" << std::endl;
+  GEOS_LOG_RANK_0("GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files");
 #endif
 
 
@@ -613,9 +610,9 @@ void ProblemManager::ParseInputFile()
   xmlResult = xmlDocument.load_file(inputFileName.c_str());
   if (!xmlResult)
   {
-    std::cout << "XML parsed with errors!" << std::endl;
-    std::cout << "Error description: " << xmlResult.description() << std::endl;
-    std::cout << "Error offset: " << xmlResult.offset << std::endl;
+    GEOS_LOG_RANK_0("XML parsed with errors!");
+    GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
   xmlProblemNode = xmlDocument.child("Problem");
 
@@ -666,10 +663,10 @@ void ProblemManager::ParseInputFile()
   }
 
   // Documentation output
-  ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
+  std::string const & schemaName = commandLine->getReference<std::string>(keys::schema);
   if (schemaName.empty() == 0)
   {
-    integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
+    integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
     ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
   }
 }
@@ -712,9 +709,9 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   domain->RegisterDocumentationNodes();
 
   ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  integer const & xparCL = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
-  integer const & yparCL = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
-  integer const & zparCL = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
+  integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
+  integer const & yparCL = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
+  integer const & zparCL = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
   bool repartition = false;
@@ -790,6 +787,10 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
   domain->SetupCommunications();
+
+  faceManager->SetIsExternal();
+  edgeManager->SetIsExternal( faceManager );
+
 }
 
 void ProblemManager::RunSimulation()
@@ -815,6 +816,7 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 
 void ProblemManager::ApplyInitialConditions()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
   domain->GenerateSets();
 

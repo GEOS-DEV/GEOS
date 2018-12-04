@@ -61,7 +61,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void FinalInitialization(ManagedGroup * const problemManager) override;
+  virtual void FinalInitializationPreSubGroups(ManagedGroup * const problemManager) override;
 
   localIndex numConnectionsGlobal() const { return m_perfManager.numConnectionsGlobal(); }
   localIndex numConnectionsLocal()  const { return m_perfManager.numConnectionsLocal();  }

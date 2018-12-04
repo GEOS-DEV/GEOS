@@ -73,6 +73,7 @@ public:
   typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
                                          R2Tensor const & Rot,
                                          localIndex const i,
+                                         localIndex const q,
                                          void * dataPtrs,
                                          integer const systemAssembleFlag );
 
@@ -100,15 +101,9 @@ public:
                                       real64 & visc,
                                       real64 & dVisc_dPres ) const {}
 
-
-  virtual void PoreVolumeMultiplierCompute( real64 const & pres,
-                                            localIndex const i,
-                                            real64 & poro,
-                                            real64 & dPVMult_dPres ) const {}
-
-  virtual void PressureUpdatePoint( real64 const & pres,
-                                    localIndex const k,
-                                    localIndex const q ) {}
+  virtual void StateUpdatePointPressure( real64 const & pres,
+                                         localIndex const k,
+                                         localIndex const q ) {}
 
   virtual void FillDocumentationNode() override = 0;
 
@@ -135,7 +130,6 @@ public:
 
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
-
 
   } m_ConstitutiveBaseViewKeys;
 

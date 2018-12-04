@@ -118,7 +118,7 @@ void FluxApproximationBase::compute( DomainPartition * domain )
   });
 }
 
-void FluxApproximationBase::FinalInitialization( ManagedGroup * const rootGroup )
+void FluxApproximationBase::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
 {
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   compute( domain );

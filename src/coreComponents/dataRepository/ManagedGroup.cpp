@@ -25,13 +25,14 @@
 
 #include "ManagedGroup.hpp"
 
+#include "ArrayUtilities.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
 #include <mpi.h>
 
 #ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
-#include "sidre/IOManager.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #endif
 
 namespace geosx
@@ -80,6 +81,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
   m_size(0),
+  m_capacity(0),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_name(name)
 {
@@ -158,6 +160,7 @@ ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_sidreGroup( std::move(source.m_sidreGroup) ),
 #endif
   m_size( source.m_size ),
+  m_capacity( source.m_capacity ),
   m_restart_flags( source.m_restart_flags ),
   m_name( source.m_name )
 {}
@@ -198,8 +201,23 @@ void ManagedGroup::resize( indexType const newsize )
     }
   }
   m_size = newsize;
+  if( m_size > m_capacity )
+  {
+    m_capacity = m_size;
+  }
 }
 
+void ManagedGroup::reserve( indexType const newsize )
+{
+  for( auto&& i : this->wrappers() )
+  {
+    if( i.second->sizedFromParent() == 1 )
+    {
+      i.second->reserve(newsize);
+    }
+  }
+  m_capacity = newsize;
+}
 
 
 void ManagedGroup::RegisterDocumentationNodes()
@@ -222,21 +240,51 @@ void ManagedGroup::RegisterDocumentationNodes()
 
       string defVal = subNode.second.getDefault();
 
+      if (defVal == "ExplicitDynamic")
+      {
+        double TEMP = 10;
+        TEMP *= 2;
+      }
+
       if( subNode.second.getIsInput() && defVal != "NONE" )
       {
         rtTypes::ApplyTypeLambda2 ( typeID,
                                     [&]( auto a, auto b ) -> void
         {
-
           ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
           std::vector<decltype(b)> values;
           stringutilities::StringToType( values, defVal );
-          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
+          localIndex const size = integer_conversion<localIndex>(values.size());
           dataView.resize( size );
-          typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-          cxx_utilities::equateStlVector(data,values);
+          decltype(a) & data = dataView.reference();
+          cxx_utilities::equateStlVector(data, values);
         });
       }
+
+
+
+//      else if( defVal != "NONE" && defVal != "" )
+//      {
+//        rtTypes::ApplyTypeLambda2( typeID,
+//                                   [&]( auto a, auto b ) -> void
+//        {
+//
+//          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
+//          std::vector<decltype(b)> values;
+//          stringutilities::StringToType( values, defVal );
+//          localIndex const size = LvArray::integer_conversion<localIndex>(values.size());
+//          if( size != 1 )
+//          {
+//            GEOS_ERROR("Expect size of default value to be a scalar");
+//          }
+//          decltype(a) & data = dataView.reference();
+//          for( localIndex c=0 ; c<size ; ++c )
+//          {
+//            data[c] = values[0];
+//          }
+//          //data = values[0];
+//        });
+//      }
     }
   }
 
@@ -310,7 +358,7 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
     {
       if( !this->hasView(childName) )
       {
-        //GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
+        // GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
       }
     }
   }
@@ -319,7 +367,7 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 
 void ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Child not recognized: " << childKey << ", " << childName << std::endl;
+  GEOS_LOG_RANK("Child not recognized: " << childKey << ", " << childName);
 }
 
 
@@ -367,12 +415,12 @@ void ManagedGroup::PrintDataHierarchy(integer indent)
 {
   for( auto& view : this->wrappers() )
   {
-    std::cout<<string(indent, '\t')<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
+    GEOS_LOG(string(indent, '\t')<<view.second->getName()<<", "<<view.second->get_typeid().name());
   }
 
   for( auto& group : this->m_subGroups )
   {
-    std::cout<<string(indent, '\t')<<group.first<<':'<<std::endl;
+    GEOS_LOG(string(indent, '\t')<<group.first<<':');
     group.second->PrintDataHierarchy(indent + 1);
   }
 }
@@ -388,7 +436,6 @@ void ManagedGroup::InitializationOrder( string_array & order )
 void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static localIndex indent = 0;
- // std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on"<<this->getName()<<" of type"<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
 
   InitializePreSubGroups(group);
 
@@ -411,27 +458,40 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
+void ManagedGroup::IntermediateInitializationRecursive( ManagedGroup * const rootGroup)
 {
-  FinalInitialization(rootGroup);
-//  for( auto&& subGroup : m_subGroups )
-//  {
-//    subGroup.second->FinalInitializationRecursive(rootGroup);
-//  }
+  IntermediateInitializationPreSubGroups(rootGroup);
 
   string_array initOrder;
   InitializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
   {
-    this->GetGroup(groupName)->FinalInitializationRecursive(rootGroup);
+    this->GetGroup(groupName)->IntermediateInitializationRecursive( rootGroup );
   }
+
+  IntermediateInitializationPostSubGroups( rootGroup );
+}
+
+void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
+{
+  FinalInitializationPreSubGroups(rootGroup);
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
+  {
+    this->GetGroup(groupName)->FinalInitializationRecursive( rootGroup );
+  }
+
+  FinalInitializationPostSubGroups( rootGroup );
 }
 
 
 localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
-                            localIndex_array const & packList,
-                            integer const recursive ) const
+                                   arrayView1d<localIndex const> const & packList,
+                                   integer const recursive ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::PackSize(this->getName());
@@ -486,16 +546,16 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
 
 
 localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
-                            integer const recursive ) const
+                                   integer const recursive ) const
 {
-  localIndex_array nullArray;
+  arrayView1d<localIndex> nullArray;
   return PackSize(wrapperNames,nullArray,recursive);
 }
 
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                                string_array const & wrapperNames,
-                               localIndex_array const & packList,
+                               arrayView1d<localIndex const> const & packList,
                                integer const recursive ) const
 {
   localIndex packedSize = 0;
@@ -555,12 +615,12 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                             string_array const & wrapperNames,
                             integer const recursive ) const
 {
-  localIndex_array nullArray;
+  arrayView1d<localIndex> nullArray;
   return Pack( buffer, wrapperNames, nullArray, recursive );
 }
 
 localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
-                          localIndex_array & packList,
+                          arrayView1d<localIndex> & packList,
                           integer const recursive )
 {
   localIndex unpackedSize = 0;

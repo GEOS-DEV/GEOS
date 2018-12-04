@@ -53,19 +53,20 @@ void SiloOutput::FillDocumentationNode()
   docNode->setShortDescription("Outputs SILO format files");
 
 
-//  docNode->AllocateChildNode( viewKeys.plotFileRoot.Key(),
-//                              viewKeys.plotFileRoot.Key(),
-//                              -1,
-//                              "string",
-//                              "string",
-//                              "root name of the plot file",
-//                              "root name of the plot file",
-//                              "plot",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-//
+
+  docNode->AllocateChildNode( siloOutputViewKeys.plotLevel.Key(),
+                              siloOutputViewKeys.plotLevel.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "output level",
+                              "output level",
+                              "1",
+                              "",
+                              0,
+                              1,
+                              0 );
+
 //  docNode->AllocateChildNode( viewKeys.writeFEMFaces.Key(),
 //                              viewKeys.writeFEMFaces.Key(),
 //                              -1,
@@ -82,7 +83,9 @@ void SiloOutput::FillDocumentationNode()
 
 void SiloOutput::Execute(real64 const& time_n,
                          real64 const& dt,
-                         const int cycleNumber,
+                         integer const cycleNumber,
+                         integer const eventCounter,
+                         real64 const & eventProgress,
                          ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
@@ -94,9 +97,11 @@ void SiloOutput::Execute(real64 const& time_n,
 
   integer numFiles = this->getReference<integer>( siloOutputViewKeys.parallelThreads);
 
+  silo.setPlotLevel( getReference<integer>( siloOutputViewKeys.plotLevel ) );
+
   silo.Initialize(PMPIO_WRITE , numFiles );
-  silo.WaitForBatonWrite(rank, cycleNumber, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n, 0);
+  silo.WaitForBatonWrite(rank, cycleNumber, eventCounter, false );
+  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();

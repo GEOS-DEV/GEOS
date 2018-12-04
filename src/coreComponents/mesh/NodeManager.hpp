@@ -97,13 +97,15 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const override;
+                                     arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList ) override;
+                                       localIndex_array & packList ) override;
+
+  virtual void FixUpDownMaps() override final;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -157,15 +159,25 @@ public:
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
+  OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
-  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  array1d<localIndex_array>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array1d<localIndex_array> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
+  array1d<localIndex_array>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array1d<localIndex_array> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
+  array1d<localIndex_array>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array1d<localIndex_array>  const & elementList() const { return m_toElements.m_toElementIndex; }
+//  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+//  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+//
+//  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+//  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+//
+//  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
+//  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
   /**
@@ -195,7 +207,7 @@ private:
    */
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    localIndex_array const & packList ) const;
+                                    arrayView1d<localIndex const> const & packList ) const;
 
    /// reference position of the nodes
   array1d<R1Tensor> m_referencePosition;
@@ -207,7 +219,13 @@ private:
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
   /// nodeToElement relation
-  UnorderedVariableToManyElementRelation m_toElements;
+  OrderedVariableToManyElementRelation m_toElements;
+
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< set<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+
+
 
   /// deleted constructor
   NodeManager() = delete;

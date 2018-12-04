@@ -31,7 +31,7 @@
 #include <exception>
 #include <limits>
 #include "TensorOps.h"
-
+#include "Logger.hpp"
 
 /**
  * @brief TensorBaseT is the base class for the tensor library.
@@ -55,11 +55,6 @@ class TensorBaseT
       }
 
       in >> tp[ii];
-
-//      char junk[100];
-//      in.getline( junk, 100 );
-//      std::cout<<junk<<std::endl;
-//      std::cout<<tp[ii]<<std::endl;
     }
     return in;
   }
@@ -231,8 +226,7 @@ public:
   {
     std::istringstream iss(str, std::istringstream::in);
     for ( int i = 0 ; i < T_length ; i++ )
-      if (!(iss >> t_data[i]))
-        throw std::exception();
+      GEOS_ERROR_IF(!(iss >> t_data[i]), "Error");
   }
 
 /*

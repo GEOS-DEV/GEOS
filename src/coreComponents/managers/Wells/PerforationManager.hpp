@@ -55,7 +55,7 @@ public:
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
-  virtual void FinalInitialization(ManagedGroup * const problemManager) override;
+  virtual void FinalInitializationPreSubGroups(ManagedGroup * const problemManager) override;
 
   virtual const string getCatalogName() const override;
 

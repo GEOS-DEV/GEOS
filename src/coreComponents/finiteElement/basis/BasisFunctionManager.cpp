@@ -49,7 +49,6 @@ void BasisFunctionManager::FillDocumentationNode()
 
 void BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Basis Function: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
   this->RegisterViewWrapper( childName, std::move(basis) )->setRestartFlags(RestartFlags::NO_WRITE);
 }
@@ -60,7 +59,7 @@ void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     std::string childName = childNode.attribute("name").value();
-    BasisBase * basis = this->getData<BasisBase>(childName);
+    BasisBase * basis = this->getPointer<BasisBase>(childName);
 
     if (basis != nullptr)
     {

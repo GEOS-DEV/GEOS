@@ -8,6 +8,7 @@ set(managers_headers
     Events/EventBase.hpp
     Events/PeriodicEvent.hpp
     Events/HaltEvent.hpp
+    Events/SoloEvent.hpp
     Outputs/OutputManager.hpp
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
@@ -41,6 +42,7 @@ set(managers_sources
     Events/EventBase.cpp
     Events/PeriodicEvent.cpp
     Events/HaltEvent.cpp
+    Events/SoloEvent.cpp
     Outputs/OutputManager.cpp
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp

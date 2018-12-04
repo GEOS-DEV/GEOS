@@ -39,7 +39,7 @@
 #include "ml_MultiLevelPreconditioner.h"
 #include "EpetraExt_MatrixMatrix.h"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
@@ -53,6 +53,7 @@ enum class BlockIDs
   displacementBlock,
   fluidPressureBlock,
   temperatureBlock,
+  compositionalBlock,
   invalidBlock
 };
 
@@ -174,14 +175,16 @@ public:
     }
 
 
-    if( m_solverNameMap.find(name)==m_solverNameMap.end() )
-    {
-      m_solverNameMap[name] = m_numBlocks;
-    }
-    else
-    {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ std::to_string(m_numBlocks) );
-    }
+    m_solverNameMap.emplace(name, m_numBlocks);
+
+//    if( m_solverNameMap.find(name)==m_solverNameMap.end() )
+//    {
+//      m_solverNameMap[name] = m_numBlocks;
+//    }
+//    else
+//    {
+//      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ std::to_string(m_numBlocks) );
+//    }
 
 
     ++m_numBlocks;
@@ -384,7 +387,10 @@ public:
       }
       else
       {
-        ClearRow( m_matrix[blockRow][col].get(), rowIndex, 0.0 );
+        if( m_matrix[blockRow][col].get() != nullptr )
+        {
+          ClearRow( m_matrix[blockRow][col].get(), rowIndex, 0.0 );
+        }
       }
     }
     return (LARGE);
@@ -407,7 +413,7 @@ private:
   BlockIDs m_blockID[MAX_NUM_BLOCKS];
   std::map<BlockIDs, int> m_blockIndex;
   std::string m_solverNames[MAX_NUM_BLOCKS];
-  std::map<std::string, int> m_solverNameMap;
+  std::multimap<std::string, int> m_solverNameMap;
   int m_numBlocks = 0;
 
   std::unique_ptr<Epetra_Map>         m_rowMap[MAX_NUM_BLOCKS];

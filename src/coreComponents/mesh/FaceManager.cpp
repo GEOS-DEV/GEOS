@@ -26,6 +26,7 @@
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -39,6 +40,9 @@ using namespace dataRepository;
 FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
+  m_toElements.m_toElementRegion.setDefaultValue(-1);
+  m_toElements.m_toElementSubRegion.setDefaultValue(-1);
+  m_toElements.m_toElementIndex.setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
@@ -99,12 +103,51 @@ void FaceManager::FillDocumentationNode()
 //                              0,
 //                              0 );
 
+  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
+                              viewKeyStruct::faceAreaString,
+                              -1,
+                              "real64_array",
+                              "real64_array",
+                              "Face surface area",
+                              "Face surface area",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
+
+  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
+                              viewKeyStruct::faceCenterString,
+                              -1,
+                              "r1_array",
+                              "r1_array",
+                              "Face centroid coordinates",
+                              "Face centroid coordinates",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
+
+  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
+                              viewKeyStruct::faceNormalString,
+                              -1,
+                              "r1_array",
+                              "r1_array",
+                              "Face normal ",
+                              "Face normal",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
 
 
 }
 
 void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
 {
+  GEOSX_MARK_FUNCTION;
   localIndex numFaces = 0;
   localIndex_array tempNodeList;
   array1d<localIndex_array> facesByLowestNode(nodeManager->size());
@@ -116,10 +159,10 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
   m_toElements.setElementRegionManager( elementManager );
 
-  elemRegionList.resize( 4*nodeManager->size() );
-  elemSubRegionList.resize( 4*nodeManager->size() );
-  elemList.resize( 4*nodeManager->size() );
-  node_list.resize( 4*nodeManager->size() );
+  elemRegionList.resize( 20*nodeManager->size() );
+  elemSubRegionList.resize( 20*nodeManager->size() );
+  elemList.resize( 20*nodeManager->size() );  // We need to reserve a lot more space for tets.  These get resized later.
+  node_list.resize( 20*nodeManager->size() );
 
   elemRegionList = -1;
   elemSubRegionList = -1;
@@ -133,16 +176,15 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
     {
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
       localIndex const numFacesPerElement = subRegion->numFacesPerElement();
+      array2d<localIndex> & elemsToFaces = subRegion->faceList();
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        
         // kelf = k'th element local face index
         for( localIndex kelf=0 ; kelf< numFacesPerElement ; ++kelf )
         {
           // get the nodes associated with the local face
           subRegion->GetFaceNodes( ke, kelf, tempNodeList );
-          FixedOneToManyRelation & elemsToFaces = subRegion->faceList();
 
           //Special treatment for the triangle faces of prisms.
           if (tempNodeList[tempNodeList.size() - 1] == std::numeric_limits<localIndex>::max())
@@ -209,6 +251,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
             // add the nodes to the faceToNodeMap
             node_list[curFace] = tempNodeList;
 
+//            GEOS_LOG_RANK( "face #"<<curFace<<" ("<<tempNodeList<<")");
+
             // and add the face to facesByLowestNode[]
             matching_faces.push_back(curFace);
 
@@ -238,7 +282,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   }
 
   // Then loop over them in parallel.
-  raja::forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
+  forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
@@ -250,6 +294,33 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   SortAllFaceNodes( nodeManager, elementManager);
 
   SetDomainBoundaryObjects( nodeManager );
+
+
+
+
+
+
+  real64_array & faceArea  = getReference<real64_array>( viewKeyStruct::
+                                                         faceAreaString);
+
+  r1_array & faceNormal = getReference<r1_array>( viewKeyStruct::
+                                                     faceNormalString);
+
+  r1_array & faceCenter = getReference<r1_array>( viewKeyStruct::
+                                                      faceCenterString);
+
+  r1_array const & X = nodeManager->referencePosition();
+
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+  for (localIndex kf = 0; kf < this->size(); ++kf)
+  {
+    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(m_nodeList[kf],
+                                                             X,
+                                                             faceCenter[kf],
+                                                             faceNormal[kf]);
+  }
+
 }
 
 void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
@@ -263,7 +334,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   array2d<localIndex> const & elemSubRegionList = this->elementSubRegionList();
   array2d<localIndex> const & elemList = this->elementList();
 
-  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
+  forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
     if( elemRegionList[kf][1] == -1 )
     {
@@ -276,12 +347,12 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
   OrderedVariableOneToManyRelation const & faceToNodesMap = this->nodeList();
 
-  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const k ) mutable -> void
+  forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const k ) mutable -> void
   {
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
-      arrayView1d<localIndex const> nodelist = faceToNodesMap[k];
-      for( localIndex a=0 ; a<nodelist.size() ; ++a )
+      arrayView1d<localIndex> const& nodelist = faceToNodesMap[k];
+      for( localIndex a=0 ; a< nodelist.size() ; ++a )
       {
         nodeDomainBoundaryIndicator[nodelist[a]] = 1;
       }
@@ -289,20 +360,21 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   } );
 }
 
-//
-//void FaceManager::SetIsExternal()
-//{
-//  integer_array const & isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
-//  m_isExternal = 0;
-//  for( localIndex k=0 ; k<m_numFaces ; ++k )
-//  {
-//    if( isDomainBoundary[k]==1 && ( m_matchedBoundaryFaces.find(k)==m_matchedBoundaryFaces.end() ) )
-//    {
-//      m_isExternal[k] = 1;
-//      m_externalFaces.insert(k);
-//    }
-//  }
-//}
+
+void FaceManager::SetIsExternal()
+{
+  integer_array const &
+  isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+
+  m_isExternal = 0;
+  for( localIndex k=0 ; k<size() ; ++k )
+  {
+    if( isDomainBoundary[k]==1 )
+    {
+      m_isExternal[k] = 1;
+    }
+  }
+}
 
 //void
 //FaceManager::
@@ -355,102 +427,110 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   r1_array const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
-  constexpr int MAX_FACE_NODES = 9;
   GEOS_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
-  raja::forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
+  forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
     ElementRegion const * const elemRegion     = elemManager->GetRegion( elemRegionList[kf][0] );
     CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( elemSubRegionList[kf][0] );
     R1Tensor const elementCenter = subRegion->GetElementCenter( elemList[kf][0], *nodeManager );
     
-    arrayView1d<localIndex> faceNodes = nodeList()[kf];
-    const localIndex firstNodeIndex = faceNodes[0];
-    const localIndex numFaceNodes = faceNodes.size();
-
-    // get face center (average vertex location) and store node coordinates
-    R1Tensor const* face_coords[MAX_FACE_NODES];
-    R1Tensor fc(0);
-    for( localIndex n =0 ; n < numFaceNodes ; ++n)
-    {
-      localIndex nd = faceNodes[n];
-      face_coords[n] = &(X[nd]);
-      fc += *(face_coords[n]);
-    }
-    fc /= realT(numFaceNodes);
-
-    R1Tensor ex, ey, ez;
-    // Approximate face normal direction (unscaled)
-    
-    if (numFaceNodes == 2)  //2D only.
-    {
-      ex = X[faceNodes[1]];
-      ex -= X[faceNodes[0]];
-      ey = elementCenter;
-      ey -= fc;
-
-      ez.Cross(ex, ey);
-      // The element should be on the right hand side of the vector from node 0 to
-      // node 1.
-      // This ensure that the normal vector of an external face points to outside
-      // the element.
-      if (ez[2] > 0)
-      {
-        localIndex itemp = faceNodes[0];
-        faceNodes[0] = faceNodes[1];
-        faceNodes[1] = itemp;
-      }
-    }
-    else
-    {
-      ez = fc;
-      ez -= elementCenter;
-
-      /// Approximate in-plane axis
-      ex = *(face_coords[0]);
-      ex -= fc;
-      ex /= ex.L2_Norm();
-      ey.Cross(ez, ex);
-      ey /= ey.L2_Norm();
-
-      std::pair<realT, localIndex> thetaOrder[MAX_FACE_NODES];
-
-      /// Sort nodes counterclockwise around face center
-      for( localIndex n =0 ; n < numFaceNodes ; ++n)
-      {
-        R1Tensor v = *(face_coords[n]);
-        v -= fc;
-        thetaOrder[n] = std::pair<realT, localIndex>(atan2(Dot(v,ey),Dot(v,ex)),faceNodes[n]);
-      }
-
-      sort(thetaOrder, thetaOrder + numFaceNodes);
-
-      // Reorder nodes on face
-      for( localIndex n =0 ; n < numFaceNodes ; ++n)
-      {
-        faceNodes[n] = thetaOrder[n].second;
-      }
-
-      localIndex tempFaceNodes[MAX_FACE_NODES];
-
-      localIndex firstIndexIndex = 0;
-      for( localIndex n =0 ; n < numFaceNodes ; ++n)
-      {
-        tempFaceNodes[n] = thetaOrder[n].second;
-        if( tempFaceNodes[n] == firstNodeIndex )
-        {
-          firstIndexIndex = n;
-        }
-      }
-
-      for( localIndex n=0 ; n < numFaceNodes ; ++n)
-      {
-        const localIndex index = firstIndexIndex+n < numFaceNodes ? firstIndexIndex+n : firstIndexIndex+n-numFaceNodes;
-        faceNodes[n] = tempFaceNodes[index];
-      }
-    }
+    const localIndex numFaceNodes = nodeList()[kf].size();
+    arrayView1d<localIndex> & faceNodes = nodeList()[kf];
+    SortFaceNodes( X, elementCenter, faceNodes, numFaceNodes );
   } );
 }
+
+void FaceManager::SortFaceNodes( arrayView1d<R1Tensor> const & X,
+                                 R1Tensor const & elementCenter,
+                                 arrayView1d<localIndex> & faceNodes,
+                                 localIndex const numFaceNodes )
+{
+  localIndex const firstNodeIndex = faceNodes[0];
+
+  // get face center (average vertex location) and store node coordinates
+  R1Tensor const * face_coords[MAX_FACE_NODES];
+  R1Tensor fc(0);
+  for( localIndex n =0 ; n < numFaceNodes ; ++n)
+  {
+    localIndex nd = faceNodes[n];
+    face_coords[n] = &(X[nd]);
+    fc += *(face_coords[n]);
+  }
+  fc /= realT(numFaceNodes);
+
+  R1Tensor ex, ey, ez;
+  // Approximate face normal direction (unscaled)
+
+  if (numFaceNodes == 2)  //2D only.
+  {
+    ex = X[faceNodes[1]];
+    ex -= X[faceNodes[0]];
+    ey = elementCenter;
+    ey -= fc;
+
+    ez.Cross(ex, ey);
+    // The element should be on the right hand side of the vector from node 0 to
+    // node 1.
+    // This ensure that the normal vector of an external face points to outside
+    // the element.
+    if (ez[2] > 0)
+    {
+      localIndex itemp = faceNodes[0];
+      faceNodes[0] = faceNodes[1];
+      faceNodes[1] = itemp;
+    }
+  }
+  else
+  {
+    ez = fc;
+    ez -= elementCenter;
+
+    /// Approximate in-plane axis
+    ex = *(face_coords[0]);
+    ex -= fc;
+    ex /= ex.L2_Norm();
+    ey.Cross(ez, ex);
+    ey /= ey.L2_Norm();
+
+    std::pair<realT, localIndex> thetaOrder[MAX_FACE_NODES];
+
+    /// Sort nodes counterclockwise around face center
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
+    {
+      R1Tensor v = *(face_coords[n]);
+      v -= fc;
+      thetaOrder[n] = std::pair<realT, localIndex>(atan2(Dot(v,ey),Dot(v,ex)),faceNodes[n]);
+    }
+
+    sort(thetaOrder, thetaOrder + numFaceNodes);
+
+    // Reorder nodes on face
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
+    {
+      faceNodes[n] = thetaOrder[n].second;
+    }
+
+    localIndex tempFaceNodes[MAX_FACE_NODES];
+
+    localIndex firstIndexIndex = 0;
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
+    {
+      tempFaceNodes[n] = thetaOrder[n].second;
+      if( tempFaceNodes[n] == firstNodeIndex )
+      {
+        firstIndexIndex = n;
+      }
+    }
+
+    for( localIndex n=0 ; n < numFaceNodes ; ++n)
+    {
+      const localIndex index = firstIndexIndex+n < numFaceNodes ? firstIndexIndex+n : firstIndexIndex+n-numFaceNodes;
+      faceNodes[n] = tempFaceNodes[index];
+    }
+  }
+}
+
 
 void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                                    array1d<globalIndex_array>& faceToNodes )
@@ -463,6 +543,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
 
   faceToNodes.clear();
+  faceToNodes.resize(size());
   for( localIndex kf=0 ; kf<size() ; ++kf )
   {
 
@@ -476,8 +557,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
         temp.push_back( gnode );
       }
       std::sort( temp.begin(), temp.end() );
-//      temp.insert( temp.begin(), this->m_localToGlobalMap[kf] );
-      faceToNodes.push_back(temp);
+      faceToNodes[kf] = temp;
     }
   }
 }
@@ -495,37 +575,40 @@ void FaceManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 }
 
 
-localIndex FaceManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex FaceManager::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 localIndex FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                 localIndex_array const & packList ) const
+                                        arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template<bool DOPACK>
 localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                        localIndex_array const & packList ) const
+                                               arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
+
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                             m_nodeList,
-                                             packList,
-                                             this->m_localToGlobalMap,
-                                             m_nodeList.RelatedObjectLocalToGlobal() );
+                                         m_nodeList.Base(),
+                                         m_unmappedGlobalIndicesInToNodes,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_nodeList.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                             m_edgeList,
-                                             packList,
-                                             this->m_localToGlobalMap,
-                                             m_edgeList.RelatedObjectLocalToGlobal() );
+                                         m_edgeList.Base(),
+                                         m_unmappedGlobalIndicesInToEdges,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_edgeList.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
@@ -540,7 +623,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                 localIndex_array const & packList )
+                                          localIndex_array & packList )
 {
   localIndex unPackedSize = 0;
 
@@ -549,20 +632,23 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                         m_nodeList,
-                                         packList,
-                                         this->m_globalToLocalMap,
-                                         m_nodeList.RelatedObjectGlobalToLocal() );
+                                     m_nodeList,
+                                     packList,
+                                     m_unmappedGlobalIndicesInToNodes,
+                                     this->m_globalToLocalMap,
+                                     m_nodeList.RelatedObjectGlobalToLocal() );
+
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
   GEOS_ERROR_IF( edgeListString != viewKeyStruct::edgeListString, "");
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                         m_edgeList,
-                                         packList,
-                                         this->m_globalToLocalMap,
-                                         m_edgeList.RelatedObjectGlobalToLocal() );
+                                     m_edgeList,
+                                     packList,
+                                     m_unmappedGlobalIndicesInToEdges,
+                                     this->m_globalToLocalMap,
+                                     m_edgeList.RelatedObjectGlobalToLocal() );
 
 
   string elementListString;
@@ -572,13 +658,25 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toElements,
                                      packList,
-                                     m_toElements.getElementRegionManager() );
+                                     m_toElements.getElementRegionManager(),
+                                     false );
 
 
 
   return unPackedSize;
 }
 
+void FaceManager::FixUpDownMaps()
+{
+  ObjectManagerBase::FixUpDownMaps( m_nodeList,
+                                    m_unmappedGlobalIndicesInToNodes);
+
+  ObjectManagerBase::FixUpDownMaps( m_edgeList,
+                                    m_unmappedGlobalIndicesInToEdges);
+
+//  ObjectManagerBase::FixUpDownMaps( faceList(),
+//                                    m_unmappedGlobalIndicesInFacelist);
+}
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )

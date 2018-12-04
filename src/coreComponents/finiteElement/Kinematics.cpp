@@ -94,16 +94,11 @@ void IncrementalRotation( const R2TensorT<3>& A,
   realT trA = A.Trace();
   realT trFhatinv_1 = ( 2.0 - trA );
   realT P = 0.25 * pow( trFhatinv_1, 2 );
-//  static realT one_P = trA - 0.25 * pow(trA,2);
-
-//  std::cout<<"P,Q = "<<P<<'\t'<<Q<<'\n';
 
   realT P2 = pow(P,2);
   realT P3 = P2*P;
-//  static realT P4 = P3*P;
 
   realT Q2 = pow(Q,2);
-//  static realT Q3 = Q2*Q;
 
   realT PpQ = P + Q;
   realT PpQ2 = pow(PpQ,2);
@@ -124,12 +119,8 @@ void IncrementalRotation( const R2TensorT<3>& A,
   else
     term2 = 0.125 + Q * ( P2-12.0*(P-1.0) ) / (32 * P2)
             + Q2*( (P-2.0)*(P2-10*P+32) ) / (64*P3);
-//                        + Q3*( 1104 - 992*P + 376*P2 - 72*P3 +5*P4) / (512*P4)
-// ;
 
   realT term3 = 0.5 * sqrt( ( P*Q*(3.0-Q) + P3 + Q2 ) / PpQ3 );
-
-//    cout<<term1<<' '<<term2<<' '<<term3<<endl;
 
   Rot.dyadic_aa(alpha);
   Rot *= term2;
@@ -152,21 +143,6 @@ void IncrementalRotation( const R2TensorT<3>& A,
     Rot.t_data[6] += alpha.t_data[1];
     Rot.t_data[7] -= alpha.t_data[0];
  */
-
-}
-
-
-
-void CalculatePhantomGradient( R2TensorT<3>& Gradient,
-                               const int* bConnectivity,
-                               const array1d<R1TensorT<3> >& disp,
-                               const array2d<R1TensorT<3> >& dNdX )
-
-{
-  Gradient = 0.0;
-  for( int side=1 ; side<=2 ; ++side )
-    for( int a=1 ; a<=4 ; ++a )
-      Gradient.plus_dyadic_ab( disp(bConnectivity[(side-1)*4+a-1]), dNdX(side,a));
 
 }
 

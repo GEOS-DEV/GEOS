@@ -56,7 +56,7 @@ public:
 
   virtual void InitializationOrder(string_array & order) override;
 
-  virtual void FinalInitialization( ManagedGroup * const group ) override;
+  virtual void FinalInitializationPreSubGroups(ManagedGroup * const group) override;
 
   // update each connection pressure from bhp and hydrostatic head
   void StateUpdate( DomainPartition const * domain, localIndex fluidIndex );
