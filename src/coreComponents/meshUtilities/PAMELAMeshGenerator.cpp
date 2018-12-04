@@ -136,7 +136,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
 
     // Iterate on vertices
     nodeManager->resize( regionPtr->Points.size());
-    arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+    r1_array const & X = nodeManager->referencePosition();
     for( auto verticesIterator = regionPtr->Points.begin() ;
          verticesIterator != regionPtr->Points.end() ; verticesIterator++ )
     {
