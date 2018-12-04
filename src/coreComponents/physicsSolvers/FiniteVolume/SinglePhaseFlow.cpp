@@ -1351,7 +1351,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
       dofColIndices = -1;
 
       // calculate quantities on primary connected points
-      localIndex cell_order;
+      localIndex cell_order = 0;
       stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
       {
         real64 density = 0.0, dDens_dP = 0.0;
@@ -1467,7 +1467,7 @@ void SinglePhaseFlow::ApplyWellBC_implicit( DomainPartition * domain,
       }
 
       // save flux from/into the perforation for calculating well totals
-      flowRateWell[iperf] = localFlux;
+      flowRateWell[iperf] = localFlux * sign;
 
       // Add to global residual/jacobian
       jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,

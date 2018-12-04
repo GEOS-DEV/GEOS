@@ -285,6 +285,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
   // a flag to denote whether we have converged
   integer isConverged = 0;
+  real64 residualNorm0 = 0.0;
 
   // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
   // required.
@@ -306,6 +307,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( blockSystem, domain );
 
+      if (k == 0)
+      {
+        residualNorm0 = residualNorm;
+      }
+
       if( m_verboseLevel >= 1 )
       {
         std::cout << "Attempt: " << dtAttempt  << ", Newton: " << k
@@ -314,7 +320,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if( residualNorm < newtonTol )
+      if( residualNorm < newtonTol * residualNorm0 )
       {
         isConverged = 1;
         break;

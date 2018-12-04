@@ -126,8 +126,7 @@ void SimpleWell::FinalInitializationPreSubGroups(ManagedGroup * const problemMan
 
 void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIndex )
 {
-  if ( !getParent()->group_cast<WellManager *>()->getGravityFlag() )
-    return;
+  bool isGravityOn = getParent()->group_cast<WellManager *>()->getGravityFlag();
 
   MeshLevel const * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * elemManager = mesh->getElemManager();
@@ -156,7 +155,7 @@ void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIn
                                                                                                      elemIndex[iconn],
                                                                                                      dens, dummy );
 
-    pres[iconn] = m_bhp[0] + dens * (gravDepth[iconn] - refGravDepth);
+    pres[iconn] = pres[iconn] = m_bhp[0] + (isGravityOn ? dens * (gravDepth[iconn] - refGravDepth) : 0.0);
   }
 }
 
