@@ -55,7 +55,7 @@ RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Ma
   RegisterViewWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false );
   RegisterViewWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseRelPermString, &m_phaseRelPerm, false );
+  RegisterViewWrapper( viewKeyStruct::phaseRelPermString, &m_phaseRelPerm, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString, &m_dPhaseRelPerm_dPhaseVolFrac, false );
 }
 
@@ -111,18 +111,24 @@ void RelativePermeabilityBase::ReadXML_PostProcess()
     m_phaseTypes[ip] = phaseIndex;
     m_phaseOrder[phaseIndex] = integer_conversion<integer>(ip);
   }
+
+  // call to correctly set member array tertiary sizes on the 'main' material object
+  ResizeFields( 0, 0 );
 }
 
-void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                                         localIndex const numPts )
+void RelativePermeabilityBase::ResizeFields( localIndex size, localIndex numPts )
 {
-  ConstitutiveBase::AllocateConstitutiveData(parent, numPts);
-
-  localIndex const size = parent->size();
   localIndex const NP = numFluidPhases();
 
   m_phaseRelPerm.resize( size, numPts, NP );
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, NP, NP );
+}
+
+void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                                         localIndex const numConstitutivePointsPerParentIndex )
+{
+  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 localIndex RelativePermeabilityBase::numFluidPhases() const

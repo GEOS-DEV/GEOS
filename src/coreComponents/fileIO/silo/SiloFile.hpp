@@ -1047,7 +1047,14 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
           {
             for( localIndex k = 0 ; k < subRegion->size() ; ++k )
             {
-              varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
+              if (field[er][esr][matIndices[0]].size() > 0)
+              {
+                varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
+              }
+              else
+              {
+                varsData[i][nels2++] = 0.0;
+              }
               for( localIndex a=0 ; a<numMatInRegion ; ++a )
               {
                 if( field[er][esr][matIndices[a]].size() > 0 )
