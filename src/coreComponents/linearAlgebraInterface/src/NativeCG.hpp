@@ -28,6 +28,8 @@
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
+#include "BlockMatrixView.hpp"
+#include "BlockVectorView.hpp"
 
 namespace geosx
 {
@@ -128,14 +130,13 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 {
 
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  localIndex numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define residual vector
   ParallelVector rk( x );
@@ -155,8 +156,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   real64 alpha, beta;
 
   // Convergence check
-  real64 convCheck;
-  rk.norm2( convCheck );
+  real64 convCheck = rk.norm2();
 
   // Declare temp scalar for alpha computation.
   real64 temp;
@@ -165,16 +165,16 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   ParallelVector rkold( rk );
   ParallelVector zkold( zk );
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: this needs a max_iter param of type localIndex
   {
     // Compute rkT.rk
-    rk.dot( zk, alpha );
+    alpha = rk.dot( zk );
 
     // Compute Apk
     A.multiply( pk, Apk );
 
     // compute alpha
-    pk.dot( Apk, temp );
+    temp = pk.dot( Apk );
     alpha = alpha/temp;
 
     // Update x = x + alpha*ph
@@ -186,7 +186,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     rk.axpby( -alpha, Apk, 1.0 );
 
     // Convergence check on ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
@@ -197,8 +197,8 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     M.multiply( rk, zk );
 
     // Compute beta
-    zk.dot( rk, beta );
-    zkold.dot( rkold, temp );
+    beta = zk.dot( rk );
+    temp = zkold.dot( rkold );
     beta = beta/temp;
 
     // Update pk = pk + beta*zk
@@ -210,9 +210,9 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // veborse output (TODO verbosity manager?)
-  if( rank == 1 )
-    std::cout << std::endl << "CG converged in " << numIt << " iterations." << std::endl;
+  // TODO verbosity management
+  if( rank == 0 )
+    std::cout << "Native CG (no preconditioner) converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
@@ -227,16 +227,21 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                            BlockMatrixView<LAI> const &M )
 
 {
+  GEOS_ERROR( "Not implemented" );
 
+  // TODO: BlockVectorView is a view that doesn't handle any vector
+  //       storage.  The copy and copy constructor functions below
+  //       won't work.
+
+#if 0
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  localIndex numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define vectors
   BlockVectorView<LAI> rk( x );
@@ -256,8 +261,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   real64 alpha, beta;
 
   // Convergence check
-  real64 convCheck;
-  rk.norm2( convCheck );
+  real64 convCheck = rk.norm2();
 
   // Declare temp scalar for alpha computation
   real64 temp;
@@ -266,16 +270,16 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   BlockVectorView<LAI> rkold( rk );
   BlockVectorView<LAI> zkold( zk );
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: needs maxIter param of type localIndex
   {
     // Compute rkT.rk
-    rk.dot( zk, alpha );
+    alpha = rk.dot( zk );
 
     // Compute Apk
     A.multiply( pk, Apk );
 
     // compute alpha
-    pk.dot( Apk, temp );
+    temp = pk.dot( Apk );
 
     alpha = alpha/temp;
 
@@ -288,7 +292,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     rk.axpby( -alpha, Apk, 1.0 );
 
     // Convergence check on ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
@@ -299,8 +303,8 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     M.multiply( rk, zk );
 
     // Compute beta
-    zk.dot( rk, beta );
-    zkold.dot( rkold, temp );
+    beta = zk.dot( rk );
+    temp = zkold.dot( rkold );
     beta = beta/temp;
 
     // Update pk = pk + beta*zk
@@ -317,6 +321,7 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     std::cout << std::endl << "Block CG converged in " << numIt << " iterations." << std::endl;
   return;
 
+#endif
 }
 
 // END_RST_NARRATIVE

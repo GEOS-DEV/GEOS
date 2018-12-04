@@ -225,6 +225,8 @@ void DomainPartition::SetupCommunications()
 
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
+  nodeManager->SetMaxGlobalIndex();
+
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
 
   CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, allNeighbors );
@@ -250,7 +252,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
   if (idim == nsdof)
   {
     bool me = true;
-    for ( unsigned int i = 0 ; i < nsdof ; i++)
+    for ( int i = 0 ; i < nsdof ; i++)
     {
       if (ncoords[i] != partition.m_coords(i))
       {
@@ -268,11 +270,11 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
   }
   else
   {
-    const int dim = partition.m_Partitions(idim);
-    const bool periodic = partition.m_Periodic(idim);
+    const int dim = partition.m_Partitions( integer_conversion<localIndex>(idim));
+    const bool periodic = partition.m_Periodic(integer_conversion<localIndex>(idim));
     for (int i = -1 ; i < 2 ; i++)
     {
-      ncoords[idim] = partition.m_coords(idim) + i;
+      ncoords[idim] = partition.m_coords(integer_conversion<localIndex>(idim)) + i;
       bool ok = true;
       if (periodic)
       {

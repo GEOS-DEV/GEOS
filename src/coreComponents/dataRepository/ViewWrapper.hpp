@@ -29,7 +29,7 @@
 #include "ViewWrapperBase.hpp"
 
 #include "KeyNames.hpp"
-#include "common/integer_conversion.hpp"
+#include "IntegerConversion.hpp"
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
@@ -327,6 +327,11 @@ public:
 //
 //
 //  };
+
+  virtual bool isPackable() const override final
+  {
+    return bufferOps::is_packable<T>::value;
+  }
 
   virtual localIndex Pack( char *& buffer ) const override final
   {

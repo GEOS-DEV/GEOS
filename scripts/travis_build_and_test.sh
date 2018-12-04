@@ -40,6 +40,7 @@ if [[ "$DO_BUILD" == "yes" ]] ; then
            -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_EXEC=mpirun \
            -DGEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release \
            -DENABLE_SPHINX=OFF \
+           -DENABLE_PVTPackage=ON \
            ${CMAKE_EXTRA_FLAGS} ../src
 
 #    if [[ ${CMAKE_EXTRA_FLAGS} == *COVERAGE* ]] ; then

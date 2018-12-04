@@ -1176,54 +1176,57 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
 
 
-  // write a var definition for each material/field combination that exists
-  for (size_t matIndex = 0; matIndex < materialNameStrings.size(); ++matIndex)
+  if (rank == 0)
   {
-    string const & matName = materialNameStrings[matIndex];
-
-    string const matDir = rootDirectory + "/" + matName;
-    MakeSubDirectory( matName, matDir );
-    DBSetDir( m_dbBaseFilePtr, matDir.c_str() );
-
-    ConstitutiveBase const * const constitutiveModel = constitutiveManager->GetConstitituveRelation(matIndex);
-    for (auto fieldName : fieldNames)
+    // write a var definition for each material/field combination that exists
+    for (size_t matIndex = 0; matIndex < materialNameStrings.size(); ++matIndex)
     {
-      if (constitutiveModel->hasView( fieldName.first ))
-      {
-        ViewWrapperBase const * wrapper = fieldName.second;
-        if (wrapper->get_typeid() == typeid( array2d<real64> ))
-        {
-          WriteMaterialVarDefinition( subDirectory, matDir, matIndex, fieldName.first );
-        }
-        if (wrapper->get_typeid() == typeid( array3d<real64> ))
-        {
-          array3d<real64> const & data =
-            dynamic_cast<dataRepository::ViewWrapper<array3d<real64>> const &>(*wrapper).reference();
-          
-          for (localIndex i = 0; i < data.size(2); ++i)
-          {
-            WriteMaterialVarDefinition( subDirectory, matDir, matIndex,
-                                        fieldName.first + "_" + std::to_string(i) );
-          }
-        }
-        if (wrapper->get_typeid() == typeid( array4d<real64> ))
-        {
-          array4d<real64> const & data =
-            dynamic_cast<dataRepository::ViewWrapper<array4d<real64>> const &>(*wrapper).reference();
+      string const & matName = materialNameStrings[matIndex];
 
-          for (localIndex i = 0; i < data.size(2); ++i)
+      string const matDir = rootDirectory + "/" + matName;
+      MakeSubDirectory(matName, matDir);
+      DBSetDir(m_dbBaseFilePtr, matDir.c_str());
+
+      ConstitutiveBase const * const constitutiveModel = constitutiveManager->GetConstitituveRelation(matIndex);
+      for (auto fieldName : fieldNames)
+      {
+        if (constitutiveModel->hasView(fieldName.first))
+        {
+          ViewWrapperBase const * wrapper = fieldName.second;
+          if (wrapper->get_typeid() == typeid(array2d<real64>))
           {
-            for (localIndex j = 0; j < data.size(3); ++j)
+            WriteMaterialVarDefinition( subDirectory, matDir, matIndex, fieldName.first );
+          }
+          if (wrapper->get_typeid() == typeid(array3d<real64>))
+          {
+            array3d<real64> const & data =
+              dynamic_cast<dataRepository::ViewWrapper<array3d<real64>> const &>(*wrapper).reference();
+
+            for (localIndex i = 0; i < data.size(2); ++i)
             {
               WriteMaterialVarDefinition( subDirectory, matDir, matIndex,
-                                          fieldName.first + "_" + std::to_string(i) + "_" + std::to_string(j));
+                                          fieldName.first + "_" + std::to_string(i) );
+            }
+          }
+          if (wrapper->get_typeid() == typeid(array4d<real64>))
+          {
+            array4d<real64> const & data =
+              dynamic_cast<dataRepository::ViewWrapper<array4d<real64>> const &>(*wrapper).reference();
+
+            for (localIndex i = 0; i < data.size(2); ++i)
+            {
+              for (localIndex j = 0; j < data.size(3); ++j)
+              {
+                WriteMaterialVarDefinition( subDirectory, matDir, matIndex,
+                                            fieldName.first + "_" + std::to_string(i) + "_" + std::to_string(j) );
+              }
             }
           }
         }
       }
-    }
 
-    DBSetDir(this->m_dbBaseFilePtr, "..");
+      DBSetDir(this->m_dbBaseFilePtr, "..");
+    }
   }
 
   DBSetDir(m_dbFilePtr, "..");

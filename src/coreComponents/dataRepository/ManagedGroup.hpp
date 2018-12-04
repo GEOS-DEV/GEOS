@@ -424,8 +424,17 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
+  virtual void IntermediateInitializationRecursive( ManagedGroup * const group );
+
+  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void IntermediateInitializationPostSubGroups( ManagedGroup * const group ) {}
+
   virtual void FinalInitializationRecursive( ManagedGroup * const group );
-  virtual void FinalInitialization( ManagedGroup * const group ){}
+
+  virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void FinalInitializationPostSubGroups( ManagedGroup * const group ) {}
 
 
   template< typename T, typename TBASE=T >
@@ -616,33 +625,57 @@ public:
   }
 
 
-  template< typename T, typename LOOKUP_TYPE >
-  T const & getReference( LOOKUP_TYPE const & lookup ) const
+  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE>
+  typename std::enable_if< std::is_same<T,WRAPPEDTYPE>::value, T const & >::type
+  getReference( LOOKUP_TYPE const & lookup ) const
   {
-    ViewWrapper<T> const * wrapper = getWrapper<T>(lookup);
+    ViewWrapper<WRAPPEDTYPE> const * wrapper = getWrapper<WRAPPEDTYPE>(lookup);
     if( wrapper == nullptr )
     {
       if ( hasView(lookup) )
       {
-        wrapper = getWrapper<T>(lookup);
         GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
       }
       GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
+
     return wrapper->reference();
   }
 
-  template< typename T, typename LOOKUP_TYPE >
+  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
+  typename std::enable_if< !std::is_same<T,WRAPPEDTYPE>::value, T const & >::type
+  getReference( LOOKUP_TYPE const & lookup ) const
+  {
+    static_assert( std::is_base_of<WRAPPEDTYPE,T>::value,"incorrect template arguments");
+    ViewWrapper<WRAPPEDTYPE> const * wrapper = getWrapper<WRAPPEDTYPE>(lookup);
+    if( wrapper == nullptr )
+    {
+      if ( hasView(lookup) )
+      {
+        GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+      }
+      GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
+    }
+
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T const &>( wrapper->reference() );
+#else
+    return static_cast<T const &>( wrapper->reference() );
+#endif
+  }
+
+
+  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
   T & getReference( LOOKUP_TYPE const & lookup )
-  { return const_cast<T&>( const_cast<const ManagedGroup*>(this)->getReference<T>( lookup ) ); }
+  { return const_cast<T&>( const_cast<const ManagedGroup*>(this)->template getReference<T,WRAPPEDTYPE,LOOKUP_TYPE>( lookup ) ); }
 
-  template< typename T >
+  template< typename T, typename WRAPPEDTYPE=T >
   T const & getReference( char const * const name ) const
-  { return getReference<T>( string(name) ); }
+  { return getReference<T, WRAPPEDTYPE>( string(name) ); }
 
-  template< typename T >
+  template< typename T, typename WRAPPEDTYPE=T >
   T & getReference( char const * const name )
-  { return const_cast<T&>( const_cast<const ManagedGroup*>(this)->getReference<T>( name ) ); }
+  { return const_cast<T&>( const_cast<const ManagedGroup*>(this)->getReference<T,WRAPPEDTYPE>( name ) ); }
 
 
 

@@ -438,7 +438,7 @@ void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
   }
 }
 
-void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const problemManager )
+void SolidMechanics_LagrangianFEM::FinalInitializationPreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -597,10 +597,10 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  FORALL_NODES( a, 0, numNodes )
+  forall_in_range(0, numNodes, GEOSX_LAMBDA (globalIndex a) mutable
   {
     acc[a] = 0;
-  } END_FOR
+  });
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > meanStress =
     elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
@@ -659,10 +659,10 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   } //Element Manager
 
   //Compute Force : Point-wise computations
-  FORALL_NODES_IN_SET( a, m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size() )
+  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a) mutable
   {
-    acc[a] /= mass[a];
-  } END_FOR
+    acc[a] /=mass[a];
+  });
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size() );
@@ -716,10 +716,10 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   } //Element Manager
 
   //Compute Force : Point-wise computations
-  FORALL_NODES_IN_SET( a, m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size() )
+  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a)
   {
     acc[a] /=mass[a];
-  } END_FOR
+  });
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size());
@@ -791,9 +791,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
   ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
   void * data = nullptr;
   constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
-  raja::forall_in_set<elemPolicy>( elementList.data(),
+  forall_in_set<elemPolicy>( elementList.data(),
                                    elementList.size(),
-                                   GEOSX_LAMBDA ( globalIndex k) mutable
+                                   GEOSX_LAMBDA ( localIndex k) mutable
   {
     r1_array uhat_local( NUM_NODES_PER_ELEM );
     r1_array u_local( NUM_NODES_PER_ELEM );
@@ -1202,38 +1202,41 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  elemManager->forElementRegions([&](ElementRegion const * const elementRegion)
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elementRegion = elemManager->GetRegion(er);
+    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
+
+    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
-      string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
 
-      elementRegion->forCellBlocks([&](CellBlockSubRegion const * const cellBlock)
+      CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(esr);
+      localIndex const numElems = cellBlock->size();
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);
+
+      for( localIndex k=0 ; k<numElems ; ++k )
       {
-        localIndex const numElems = cellBlock->size();
-        arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
-        localIndex const numNodesPerElement = elemsToNodes.size(1);
-
-        globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);
-
-        for( localIndex k=0 ; k<numElems ; ++k )
+        for( localIndex a=0 ; a<numNodesPerElement ; ++a )
         {
-          for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+          for(localIndex i=0 ; i<numNodesPerElement ; ++i)
           {
-            for(localIndex i=0 ; i<numNodesPerElement ; ++i)
+            for( int d=0 ; d<dim ; ++d )
             {
-              for( int d=0 ; d<dim ; ++d )
-              {
-                elementLocalDofIndex[i * dim + d] = dim * trilinos_index[elemsToNodes[k][i]] + d;
-              }
+              elementLocalDofIndex[i * dim + d] = dim * trilinos_index[elemsToNodes[k][i]] + d;
             }
-
-            sparsity->InsertGlobalIndices(static_cast<int>(elementLocalDofIndex.size()),
-                                          elementLocalDofIndex.data(),
-                                          static_cast<int>(elementLocalDofIndex.size()),
-                                          elementLocalDofIndex.data());
           }
+
+          sparsity->InsertGlobalIndices(static_cast<int>(elementLocalDofIndex.size()),
+                                        elementLocalDofIndex.data(),
+                                        static_cast<int>(elementLocalDofIndex.size()),
+                                        elementLocalDofIndex.data());
         }
-      });
-    });
+      }
+    }
+  }
 }
 
 
@@ -1495,6 +1498,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   MPI_Comm_size(MPI_COMM_GEOSX, &size);
   array1d<real64> globalValues( size * 2 );
+  globalValues = 0;
   MPI_Gather( localResidual,
               2,
               MPI_DOUBLE,
@@ -1813,10 +1817,10 @@ void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition 
   r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   // TODO need to finish this rewind
-  FORALL_NODES( a, 0, nodeManager->size() )
+  forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (globalIndex a) mutable
   {
     incdisp[a] = 0.0;
-  } END_FOR
+  });
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, ManagedGroup * const )

@@ -24,6 +24,17 @@ using namespace dataRepository;
 
 BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup * parent ):
   ManagedGroup( name, parent )
+//  m_setNames(),
+//  m_objectPath(),
+//  m_fieldName(),
+//  m_component(-1),
+//  m_direction(-1),
+//  m_initialCondition(0),
+//  m_functionName(),
+//  m_scale(0.0),
+//  m_beginTime(0.0),
+//  m_endTime(1e9),
+//  m_bcApplicationFunctionName()
 {
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 );
   RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, 0 );

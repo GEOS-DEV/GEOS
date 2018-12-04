@@ -29,6 +29,9 @@ set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
 
+set(ENABLE_PAMELA OFF CACHE BOOL "" FORCE)
+set(ENABLE_PVTPackage OFF CACHE BOOL "" FORCE)
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################
