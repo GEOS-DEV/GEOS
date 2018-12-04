@@ -59,8 +59,8 @@ public:
 
   virtual const string getCatalogName() const override;
 
-  localIndex numConnectionsGlobal() const { return m_allPerfList.size(); }
-  localIndex numConnectionsLocal()  const { return size();         }
+  localIndex numConnectionsGlobal() const { return integer_conversion<localIndex>(m_allPerfList.size()); }
+  localIndex numConnectionsLocal()  const { return integer_conversion<localIndex>(size());         }
 
   Perforation const * getPerforation( localIndex iperf ) const;
   Perforation *       getPerforation( localIndex iperf );
