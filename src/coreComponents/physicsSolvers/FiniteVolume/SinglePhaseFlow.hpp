@@ -135,6 +135,46 @@ public:
   virtual  void ImplicitStepComplete( real64 const & time,
                                       real64 const & dt,
                                       DomainPartition * const domain ) override;
+
+  /**
+   * @brief assembles the accumulation terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleAccumulationTerms( DomainPartition const * const domain,
+                                  Epetra_FECrsMatrix * const jacobian,
+                                  Epetra_FEVector * const residual,
+                                  real64 const time_n,
+                                  real64 const dt );
+
+  /**
+   * @brief assembles the accumulation terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleAccumulationTermsCoupled( DomainPartition const * const domain,
+                                         Epetra_FECrsMatrix * const jacobian,
+                                         Epetra_FEVector * const residual,
+                                         real64 const time_n,
+                                         real64 const dt );
+
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleFluxTerms( DomainPartition const * const domain,
+                          Epetra_FECrsMatrix * const jacobian,
+                          Epetra_FEVector * const residual,
+                          real64 const time_n,
+                          real64 const dt );
+
   /**@}*/
 
 
@@ -219,7 +259,10 @@ private:
                                      globalIndex & numGlobalRows,
                                      localIndex offset );
 
-
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -256,6 +299,46 @@ private:
    * @brief Outputs well stats for the time step
    */
   void PrintWellStats( DomainPartition * const domain );
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateConstitutiveModels( DomainPartition * const domain );
+
+  /// views into primary variable fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaVolume;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosity;
+
+  /// views into backup fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_densityOld;
+
+  /// views into material fields
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_density;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDens_dPres;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_viscosity;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dVisc_dPres;
+
+  /// coupling with mechanics
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStressOld;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStress;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_bulkModulus;
+  ElementRegionManager::MaterialViewAccessor<real64>              m_biotCoefficient;
 };
 
 
