@@ -206,6 +206,8 @@ void FlowSolverBase::FinalInitializationPreSubGroups(ManagedGroup * const rootGr
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
+  ResetViews( domain );
+
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
 }
