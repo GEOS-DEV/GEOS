@@ -142,6 +142,11 @@ private:
 
 protected:
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  virtual void ResetViews( DomainPartition * const domain );
+
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;
 
@@ -165,6 +170,12 @@ protected:
 
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
+
+  /// views into constant data fields
+  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravDepth;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
 
 };
 
