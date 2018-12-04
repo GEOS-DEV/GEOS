@@ -5,18 +5,11 @@ Build-type = CUDA
 HOSTNAME := $(shell hostname)
 
 #-----[RAJA and CUDA directories]----
-#RAJA_DIR ?= /global/homes/v/vargas45/Git-Repos/RAJA/develop/build
-#RAJA_DIR ?= /g/g17/vargas45/Git-Repo/RAJA/develop/build
-#RAJA_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/RAJA/build
 RAJA_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/RAJA/build-gpu
 CHAI_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/CHAI/build
 UMPIRE_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/CHAI/src/tpl/umpire/build
-#CHAI_DIR ?= /usr/gapps/GEOS/geosx/thirdPartyLibs/install-blueos-chai
 
-#CXX_UTIL_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/miniGEOSX/src/coreComponents/cxx-utilities/build-blueos_3_ppc64le_ib-clang@coral-release
 CXX_UTIL_DIR ?= /g/g17/vargas45/Git-Repo/MINI_GEOSX/miniGEOSX/src/coreComponents/cxx-utilities
-#CUDA_DIR ?= /usr/tce/packages/cuda/cuda-9.2.64
-#CUDA_DIR ?= /usr/tce/packages/cuda/cuda-9.2.88
 CUDA_DIR ?=/usr/tce/packages/cuda/cuda-9.2.148
 
 rajaInc = -I$(RAJA_DIR)/include
@@ -26,18 +19,7 @@ chaiInc = -I /g/g17/vargas45/Git-Repo/MINI_GEOSX/CHAI/build/include
 umpireInc= -I$(UMPIRE_DIR)/include
 
 chaiLib = $(CHAI_DIR)/lib/*.a
-#chaiLib  = $(CHAI_DIR)/lib/libchai.a
-#chaiLib += $(CHAI_DIR)/lib/libumpire_tpl_judy.a
-#chaiLib += $(CHAI_DIR)/lib/libumpire.a
-#chaiLib += $(CHAI_DIR)/lib/libumpire_op.a
-#chaiLib += $(CHAI_DIR)/lib/libumpire_resource.a
-#chaiLib += $(CHAI_DIR)/lib/libumpire_strategy.a
-#chaiLib += $(CHAI_DIR)/lib/libumpire_util.a
-
 umpireLib = $(UMPIRE_DIR)/lib/*.a
-#chaiLib = -l $(CHAI_DIR)/lib/*.a
-#chaiLib =  /g/g17/vargas45/Git-Repo/MINI_GEOSX/CHAI/build/lib/*.a
-#chaiLibLoc= -L$(CHAI_DIR)/lib
 
 cxxInc = -I$(CXX_UTIL_DIR)/build-blueos_3_ppc64le_ib-clang@coral-release/include
 cxxInc2 = -I$(CXX_UTIL_DIR)/src/src
@@ -49,7 +31,6 @@ cudaLib = -Wl,-rpath -Wl,$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64 -lcuda -lcudart -
 ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
 host-compiler = /usr/tce/packages/gcc/gcc-7.1.0/bin/g++
 host-compilerFlags = '-g -std=c++14 -fopenmp -O0 -ffast-math -unroll-agressive -march=native -finline-functions -mavx  -Wall -Wextra  -fopenmp  -Wall  -Wno-abi  -Wextra  -Wfloat-equal  -Wcast-align  -Wpointer-arith  -Wwrite-strings  -Wcast-qual  -Wswitch-default  -Wno-vla  -Wno-switch-default  -Wno-unused-parameter  -Wno-unused-variable  -Wno-unused-function  -rdynamic '
-compilerFlags = -g -std=c++14 -fopenmp -O0 -ffast-math -unroll-agressive -march=native -finline-functions -mavx  -Wall -Wextra -fopenmp -Wall  -Wno-abi  -Wextra -Wfloat-equal  -Wcast-align  -Wpointer-arith  -Wwrite-strings  -Wcast-qual  -Wswitch-default  -Wno-vla  -Wno-switch-default  -Wno-unused-parameter  -Wno-unused-variable  -Wno-unused-function  -rdynamic 
 
 #host-compiler = /usr/tce/packages/clang/clang-4.0.0/bin/clang++
 #host-compilerFlags = '-std=c++14 -fopenmp -O0 -ffast-math -finline-functions  -Wall -Wextra  -fopenmp  -Wall  -Wno-abi  -Wextra  -Wfloat-equal  -Wcast-align  -Wpointer-arith  -Wwrite-strings  -Wcast-qual  -Wswitch-default  -Wno-vla  -Wno-switch-default  -Wno-unused-parameter  -Wno-unused-variable  -Wno-unused-function '
@@ -62,21 +43,17 @@ else ifeq ($(findstring ray,$(HOSTNAME)),ray)
 #compilerFlags = -std=c++14 -fopenmp -O0 -qinline
 
 #Clang CORAL
-#/usr/tce/packages/clang/clang-coral-2018.08.08
-#host-compiler = /usr/tce/packages/clang/clang-coral-2018.05.23/bin/clang++
 host-compiler = /usr/tce/packages/clang/clang-coral-2018.08.08/bin/clang++
 host-compilerFlags = '-std=c++14 -fopenmp -O0 -ffast-math -finline-functions  -Wall -Wextra  -fopenmp  -Wall  -Wno-abi  -Wextra  -Wfloat-equal  -Wcast-align  -Wpointer-arith  -Wwrite-strings  -Wcast-qual  -Wswitch-default  -Wno-vla  -Wno-switch-default  -Wno-unused-parameter  -Wno-unused-variable  -Wno-unused-function -mpower8-vector -ffast-math'
-compilerFlags = -std=c++14 -fopenmp -O0 -ffast-math -finline-functions  -Wall -Wextra  -fopenmp  -Wall  -Wno-abi  -Wextra  -Wfloat-equal  -Wcast-align  -Wpointer-arith  -Wwrite-strings  -Wcast-qual  -Wswitch-default  -Wno-vla  -Wno-switch-default  -Wno-unused-parameter  -Wno-unused-variable  -Wno-unused-function -mpower8-vector -ffast-math
 
 else ifeq ($(findstring cori,$(HOSTNAME)),cori)
 host-compiler = cc
 host-compilerFlags = '-O0 -std=c++14  -qopenmp  -xMIC-AVX512'
-compilerFlags = -O0 -std=c++14  -qopenmp  -xMIC-AVX512
 
 else
 host-compiler = g++-6
 host-compilerFlags = '-O0 -g -std=c++14 -m64 -fopenmp'
-compilerFlags = -O0 -g -std=c++14 -m64 -fopenmp
+
 endif
 paths = -I ./$(iPath)
 paths += $(rajaInc) $(umpireInc) $(chaiInc) $(cxxInc) $(cxxInc2)
@@ -113,7 +90,7 @@ all: ArrayOfObjects
 
 ArrayOfObjects:
 	@echo Compiling for CPU - start
-	$(host-compiler) $(compilerFlags) $(paths) -g -o ArrayOfObjects ArrayOfObjects.cpp
+	$(host-compiler) $(host-compilerFlags) $(paths) -g -o ArrayOfObjects ArrayOfObjects.cpp
 	@echo Compiling for CPU - end
 	@echo on $(HOSTNAME)
 
