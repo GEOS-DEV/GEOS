@@ -301,10 +301,13 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
       EdgeManager * const edgeManager = meshLevel->getEdgeManager();
       FaceManager * const faceManager = meshLevel->getFaceManager();
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
+      SpatialPartition & partition = domain->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
 
-      SpatialPartition junk;
+
       SeparationDriver( meshLevel,
                         neighbors,
+                        partition.GetColor(),
+                        partition.NumColor(),
                         0,
                         time_n );
     }
@@ -316,6 +319,8 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
 int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
                                         array1d<NeighborCommunicator> & neighbors,
+                                        int const tileColor,
+                                        int const numTileColors,
                                         bool const prefrac,
                                         real64 const time )
 {
@@ -431,10 +436,10 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
   const arrayView1d<integer>& isFaceGhost = faceManager.GhostRank();
 
 
-  for( int color=0 ; color<1/*NeighborCommunicator::MPISize()*/ ; ++color )
+  for( int color=0 ; color<numTileColors ; ++color )
   {
     ModifiedObjectLists modifiedObjects;
-    if( color==NeighborCommunicator::Rank() )
+    if( color==tileColor )
     {
       for( localIndex a=0 ; a<nodeManager.size() ; ++a )
       {
