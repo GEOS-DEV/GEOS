@@ -40,15 +40,24 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+namespace keys
+{
+string const filePath = "file";
+}
+}
+
+
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
   PAMELAMeshGenerator( const std::string& name,
-                         ManagedGroup * const parent );
+                       ManagedGroup * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
 
-  static string CatalogName() { return "PamelaMesh"; }
+  static string CatalogName() { return "PAMELAMeshGenerator"; }
 
   virtual void FillDocumentationNode() override;
 
@@ -62,10 +71,28 @@ public:
                                              const int index[],
                                              const int& iEle,
                                              int nodeIDInBox[],
-                                             const int size) override;
+                                             const int size ) override;
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
   void ReadXML_PostProcess() override final;
+
+private:
+  /// Mesh in the data structure of PAMELA.
+  std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+
+  const std::unordered_map<PAMELA::ELEMENTS::TYPE, string> ElementToLabel
+    =
+    {
+    { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
+    { PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
+    { PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
+    { PAMELA::ELEMENTS::TYPE::VTK_QUAD, "QUAD" },
+    { PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA" },
+    { PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX" },
+    { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
+    { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
+    };
 };
+
 }
