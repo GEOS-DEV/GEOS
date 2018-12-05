@@ -138,7 +138,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   R1Tensor mini;
   R1Tensor maxi;
   std::tie(mini,maxi) = getMinMax( polyhedronPartMap);
-  partition.setSizes( mini, maxi );
+  //partition.setSizes( mini, maxi );
 
   // First loop which iterate on the regions
   for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
