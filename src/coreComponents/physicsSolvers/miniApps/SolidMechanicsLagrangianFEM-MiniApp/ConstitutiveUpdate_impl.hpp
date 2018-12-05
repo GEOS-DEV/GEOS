@@ -77,6 +77,13 @@ RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[loc
                                   LvArray::ArrayView<real64,1,localIndex> imeanStress,
                                   real64 shearModulus, real64 bulkModulus, localIndex noElem)
 //                                  real64 shearModulus, real64 bulkModulus, localIndex noElem)
+#elif defined(USE_RAJA_VIEW)
+RAJA_HOST_DEVICE
+RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
+                                  localIndex m, localIndex q, globalIndex k,
+                                  RAJA::View<real64,RAJA::Layout<3,localIndex,2>> idevStressData,
+                                  RAJA::View<real64,RAJA::Layout<1,localIndex,0>> imeanStress,
+                                  real64 shearModulus, real64 bulkModulus, localIndex noElem)
 #else
 RAJA_HOST_DEVICE
 RAJA_INLINE void UpdateStatePoint(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
@@ -182,6 +189,20 @@ typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim
 #if defined (USE_CUDA)
 __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #endif
+
+#elif defined(USE_RAJA_VIEW)
+
+typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
+                            localIndex m, localIndex q, globalIndex k, 
+                            RAJA::View<real64,RAJA::Layout<3,localIndex,2>> devStressData,
+                            RAJA::View<real64,RAJA::Layout<1,localIndex,0>> meanStress,
+                            //real64 * meanStress,
+                            real64 shearModulus, real64 bulkModulus, localIndex NoElem);
+
+#if defined (USE_CUDA)
+__device__ constUpdate deviceUpdate = UpdateStatePoint;
+#endif
+
 
 #else
 //Created a type 

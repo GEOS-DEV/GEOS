@@ -409,6 +409,11 @@ RAJA_INLINE void make_dNdX(T dNdX, U X,  W elemsToNodes,
         x_loc[a] = X.data()[0 + local_dim * id];
         y_loc[a] = X.data()[1 + local_dim * id];
         z_loc[a] = X.data()[2 + local_dim * id];
+#elif defined(USE_RAJA_VIEW)
+        localIndex id = elemsToNodes[a + inumNodesPerElement*k];
+        x_loc[a] = X(id, 0);
+        y_loc[a] = X(id, 1);
+        z_loc[a] = X(id, 2);
 #else
         localIndex id = elemsToNodes[a + inumNodesPerElement*k];
         x_loc[a] = X[0 + local_dim * id];
@@ -483,6 +488,11 @@ RAJA_INLINE void make_dNdX(T dNdX, U X,  W elemsToNodes,
           dNdX.data()[0 + local_dim*id] = dX[0];
           dNdX.data()[1 + local_dim*id] = dX[1];
           dNdX.data()[2 + local_dim*id] = dX[2];
+
+#elif defined(USE_RAJA_VIEW)
+          dNdX(k, a, q, 0) = dX[0];
+          dNdX(k, a, q, 1) = dX[1];
+          dNdX(k, a, q, 2) = dX[2];
 #else
           dNdX[0 + local_dim*id] = dX[0];
           dNdX[1 + local_dim*id] = dX[1];

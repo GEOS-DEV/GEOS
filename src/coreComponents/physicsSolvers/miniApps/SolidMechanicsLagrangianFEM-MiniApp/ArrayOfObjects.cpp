@@ -10,7 +10,8 @@
 #include "ShapeFun_impl.hpp"
 #include "omp.h"
 
-#include "../../src/SolidMechanicsLagrangianFEMKernels_impl.hpp"
+//Stored the kernels
+#include "../../src/SolidMechanicsLagrangianFEMKernels_brief_impl.hpp"
 
 //
 //Driver for the GEOSX proxy app
@@ -20,12 +21,20 @@
 int main(int argc, char* const argv[])
 {
 
+#if defined(USE_GEOSX_ARRAY)
+  std::cout<<"Using GEOSX ARRAY"<<std::endl;
+#elif defined(USE_RAJA_VIEW)
+  std::cout<<"Using RAJA VIEW"<<std::endl;
+#else
+  std::cout<<"Using RAW PTRS"<<std::endl;
+#endif
+
   if(argc != 3)
     {
       std::cout<<"usage ./main NoElem Iter"<<std::endl;
       exit(-1);
     }
-#if 1
+
   size_t dataAllocated   = 0.0; 
   localIndex Kx      = atoi(argv[1]); 
   localIndex Niter   =  atoi(argv[2]);
@@ -44,6 +53,9 @@ int main(int argc, char* const argv[])
 #if defined(USE_GEOSX_ARRAY)
   LvArray::Array<localIndex, 1, localIndex> _elementList(NoElem);
   LvArray::ArrayView<localIndex, 1, localIndex>  & elementList = _elementList;
+
+#elif defined(USE_RAJA_VIEW)
+  localIndex * const elementList = memoryManager::allocate<localIndex>(NoElem, dataAllocated);
 #else
   localIndex * const elementList = memoryManager::allocate<localIndex>(NoElem, dataAllocated);
 #endif
@@ -55,7 +67,13 @@ int main(int argc, char* const argv[])
 #if defined(USE_GEOSX_ARRAY)
   LvArray::Array<localIndex, 2, localIndex> _constitutiveMap(NoElem, inumQuadraturePoints);
   LvArray::ArrayView<localIndex,2,localIndex> & constitutiveMap = _constitutiveMap;
+
+#elif defined(USE_RAJA_VIEW)
+
+  localIndex *  _constitutiveMap = memoryManager::allocate<localIndex>(inumQuadraturePoints*NoElem, dataAllocated); 
+  RAJA::View<localIndex, RAJA::Layout<2,localIndex,1>> constitutiveMap(_constitutiveMap, NoElem, inumQuadraturePoints);
 #else
+
   localIndex *  constitutiveMap = memoryManager::allocate<localIndex>(inumQuadraturePoints*NoElem, dataAllocated); 
 #endif
 
@@ -65,19 +83,29 @@ int main(int argc, char* const argv[])
 #if defined(USE_GEOSX_ARRAY)
   LvArray::Array<localIndex, 2, localIndex> _elemsToNodes(NoElem, inumNodesPerElement);
   LvArray::ArrayView<localIndex,2,localIndex> & elemsToNodes = _elemsToNodes;
+
+#elif defined(USE_RAJA_VIEW)
+  localIndex  *  elemsToNodes = memoryManager::allocate<localIndex>(inumNodesPerElement*NoElem, dataAllocated);
+  //RAJA::View<localIndex, RAJA::Layout<2, localIndex, 1>> elemsToNodes(_elemsToNodes, NoElem, inumNodesPerElement);
 #else
   localIndex  *  elemsToNodes = memoryManager::allocate<localIndex>(inumNodesPerElement*NoElem, dataAllocated);
 #endif
- 
+
+
   //
   //Allocate space for a list of vertices, generate a mesh, and populate the constitutive map
   //
 #if defined(USE_GEOSX_ARRAY)
   LvArray::Array<real64, 2, localIndex> _VX(numNodes, local_dim);
   LvArray::ArrayView<real64,2, localIndex> & VX = _VX;
+#elif defined(USE_RAJA_VIEW)
+
+  geosxData _VX = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
+  RAJA::View<real64, RAJA::Layout<2, localIndex, 1> > VX(_VX, numNodes, local_dim);
 #else
   geosxData VX = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
 #endif
+
 
   meshGen(VX, elemsToNodes,constitutiveMap,Kx);
 
@@ -95,12 +123,14 @@ int main(int argc, char* const argv[])
 #if defined(USE_GEOSX_ARRAY)
   LvArray::Array<real64, 4, localIndex> _dNdX(NoElem, inumQuadraturePoints, inumNodesPerElement, local_dim);
   LvArray::ArrayView<real64,4, localIndex> & dNdX = _dNdX;
+#elif defined(USE_RAJA_VIEW)
+  geosxData _dNdX = memoryManager::allocate<real64>(inumNodesPerElement*inumQuadraturePoints*NoElem*local_dim, dataAllocated);
+  RAJA::View<real64, RAJA::Layout<4, localIndex, 3> > dNdX(_dNdX, NoElem, inumQuadraturePoints, inumNodesPerElement, local_dim);
 #else
   geosxData dNdX = memoryManager::allocate<real64>(inumNodesPerElement*inumQuadraturePoints*NoElem*local_dim, dataAllocated);
 #endif
   
   make_dNdX(dNdX, VX, elemsToNodes, NoElem, inumQuadraturePoints, inumNodesPerElement);
-
 
   ///
   //Allocate space for nodal degrees of freedom as an Array of Objects
@@ -116,45 +146,29 @@ int main(int argc, char* const argv[])
   std::memset(u.data(),0, numNodes*local_dim*sizeof(real64));
   std::memset(uhat.data(),0, numNodes*local_dim*sizeof(real64));
   std::memset(acc.data(),0, numNodes*local_dim*sizeof(real64));
+
+#elif defined(USE_RAJA_VIEW)
+
+  geosxData _u = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
+  geosxData _uhat = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
+  geosxData _acc = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
+  
+  RAJA::View<real64, RAJA::Layout<2, localIndex, 1>> u(_u, numNodes, local_dim);
+  RAJA::View<real64, RAJA::Layout<2, localIndex, 1>> uhat(_uhat, numNodes, local_dim);
+  RAJA::View<real64, RAJA::Layout<2, localIndex, 1>> acc(_acc, numNodes, local_dim);  
+
+  std::memset(_u,0, numNodes*local_dim*sizeof(real64));
+  std::memset(_uhat,0, numNodes*local_dim*sizeof(real64));
+  std::memset(_acc,0, numNodes*local_dim*sizeof(real64));
+ 
 #else
   geosxData u = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
   geosxData uhat = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
   geosxData acc = memoryManager::allocate<real64>(numNodes*local_dim, dataAllocated);
+
   std::memset(u,0, numNodes*local_dim*sizeof(real64));
   std::memset(uhat,0, numNodes*local_dim*sizeof(real64));
   std::memset(acc,0, numNodes*local_dim*sizeof(real64));
-#endif
-
-  //
-  //In the case of three kernel launches, we need to allocate
-  //extra memory for intermediate results
-  //
-#if defined(USE_GEOSX_ARRAY) && defined(THREE_KERNEL_UPDATE)
-  LvArray::Array<real64, 3, localIndex> _Dadt(NoElem, inumQuadraturePoints, localMatSz);
-  LvArray::Array<real64, 3, localIndex> _Rot(NoElem, inumQuadraturePoints, localMatSz);
-  LvArray::Array<real64, 3, localIndex> _detF(NoElem, inumQuadraturePoints);
-  LvArray::Array<real64, 3, localIndex> _inverseF(NoElem, inumQuadraturePoints, localMatSz);
-  
-  LvArray::ArrayView<real64, 3, localIndex> & Dadt     = _Dadt;
-  LvArray::ArrayView<real64, 3, localIndex> & Rot      = _Rot;
-  LvArray::ArrayView<real64, 3, localIndex> & detF     = _detF;
-  LvArray::ArrayView<real64, 3, localIndex> & inverseF = _inverseF;
-
-  std::memset(Dadt.data(), 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(Rot.data(), 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(detF.data(), 0, inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(inverseF.data(), 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
-
-#elif !defined(USE_GEOSX_ARRAY) && defined(THREE_KERNEL_UPDATE)
-  geosxData Dadt = memoryManager::allocate<real64>(localMatSz*inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData Rot  = memoryManager::allocate<real64>(localMatSz*inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData detF  = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
-  geosxData inverseF  = memoryManager::allocate<real64>(localMatSz*inumQuadraturePoints*NoElem, dataAllocated);
-  
-  std::memset(Dadt, 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(Rot, 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(detF, 0, inumQuadraturePoints*NoElem*sizeof(real64));
-  std::memset(inverseF, 0, localMatSz*inumQuadraturePoints*NoElem*sizeof(real64));
 #endif
 
   //
@@ -176,6 +190,21 @@ int main(int argc, char* const argv[])
   std::memset(detJ.data(), 1 ,inumQuadraturePoints * NoElem * sizeof(real64));
   std::memset(meanStress.data(), 1 ,inumQuadraturePoints * NoElem * sizeof(real64));
   std::memset(devStressData.data(), 1 , noSymEnt * inumQuadraturePoints * NoElem * sizeof(real64));
+
+#elif defined(USE_RAJA_VIEW)
+  
+  geosxData _detJ            = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
+  geosxData _meanStress      = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
+  geosxData _devStressData   = memoryManager::allocate<real64>(noSymEnt*inumQuadraturePoints*NoElem, dataAllocated);
+
+  RAJA::View<real64, RAJA::Layout<2,localIndex,1>> detJ(_detJ, NoElem, inumQuadraturePoints);
+  RAJA::View<real64, RAJA::Layout<3,localIndex,2>> devStressData(_devStressData, NoElem, inumQuadraturePoints, noSymEnt);
+  RAJA::View<real64, RAJA::Layout<1,localIndex,0>> meanStress(_meanStress, NoElem*inumQuadraturePoints);
+
+  std::memset(_detJ, 1 ,inumQuadraturePoints * NoElem * sizeof(real64));
+  std::memset(_meanStress, 1 ,inumQuadraturePoints * NoElem * sizeof(real64));
+  std::memset(_devStressData, 1 , noSymEnt * inumQuadraturePoints * NoElem * sizeof(real64));  
+
 #else
   geosxData detJ            = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
   geosxData meanStress      = memoryManager::allocate<real64>(inumQuadraturePoints*NoElem, dataAllocated);
@@ -185,9 +214,9 @@ int main(int argc, char* const argv[])
   std::memset(meanStress, 1 ,inumQuadraturePoints * NoElem * sizeof(real64));
   std::memset(devStressData, 1 , noSymEnt * inumQuadraturePoints * NoElem * sizeof(real64));
 #endif
-  
 
-#if 1//DELETE
+
+
   //
   //Set up function pointer for constitutive relationship
   //
@@ -211,31 +240,11 @@ int main(int argc, char* const argv[])
       start = omp_get_wtime();
 
 
-#if !defined(COMPUTE_SHAPE_FUN) && !defined(THREE_KERNEL_UPDATE)
       //Standard Monolithic Kernel
       SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
                                                                           u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                           bulkModulus, detJ, acc, myUpdate, nx, nx, nx);
-#elif defined(COMPUTE_SHAPE_FUN) && !defined(THREE_KERNEL_UPDATE)
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<kernelPol>(NoElem,elementList, dt, elemsToNodes,
-                                                                                u, uhat, VX, P, constitutiveMap, devStressData, meanStress,shearModulus,
-                                                                                bulkModulus, detJ, acc, myUpdate, nx, nx, nx);            
-#elif defined(THREE_KERNEL_UPDATE)
 
-      //Kinematic step
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
-                                                                                    u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
-                                                                                    bulkModulus, detJ, acc, Dadt, Rot, detF, inverseF,
-                                                                                    nx, nx, nx);
-      //Constitutive update
-      SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<kernelPol>(NoElem, elementList, Dadt, Rot, constitutiveMap, devStressData,
-                                                                              meanStress, shearModulus, bulkModulus);      
-      //Integration step
-      SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<kernelPol>(NoElem,elementList, dt, elemsToNodes,
-                                                                                      u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
-                                                                                      bulkModulus, detJ, acc, Dadt, Rot, detF, inverseF,
-                                                                                      nx, nx, nx);
-#endif
 
 #if defined (USE_CUDA)
       cudaDeviceSynchronize();
@@ -253,11 +262,12 @@ int main(int argc, char* const argv[])
   
   std::cout<<"Run time = "<<myMin<<" sec"<<std::endl;
   std::cout<<"No of Elements:= "<<NoElem<<std::endl;
-#endif//DELETE
+
 
   //
   //Free data
   //
+  /*
 #if !defined(USE_GEOSX_ARRAY)
   memoryManager::deallocate(elementList);
   memoryManager::deallocate(constitutiveMap);
@@ -282,9 +292,8 @@ int main(int argc, char* const argv[])
   memoryManager::deallocate(detF);
   memoryManager::deallocate(inverseF);
 #endif  
-#endif
+  */
 
 
-#endif //DELETE
   return 0;
 }

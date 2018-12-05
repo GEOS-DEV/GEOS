@@ -171,7 +171,7 @@ RAJA_INLINE void GlobalToLocal(const localIndex nodeList[8], localIndex k,
       for(localIndex i=0; i<local_dim; ++i)
         {
           u_local[i + local_dim*a] = iu(id, i);
-          uhat_local[i + local_dim*a] = iuhat(id, i);
+          //uhat_local[i + local_dim*a] = iuhat(id, i);
         }
     }    
 }

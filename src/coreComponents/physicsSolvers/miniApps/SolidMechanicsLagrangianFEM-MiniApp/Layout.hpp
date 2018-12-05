@@ -50,6 +50,7 @@ using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 //Select between raw ptr vs array
 //#define USE_GEOSX_ARRAY
+#define USE_RAJA_VIEW
 
 //#define STRUCTURED_GRID
 
@@ -121,7 +122,7 @@ using atomicPol = RAJA::atomic::loop_atomic;
 #endif
 
 
-#if !defined(USE_GEOSX_ARRAY)
+#if !defined(USE_GEOSX_ARRAY) && !defined(USE_RAJA_VIEW)
 
 #define iu(k,i) iu[i + local_dim*k]
 #define iuhat(k,i) iuhat[i + local_dim*k]

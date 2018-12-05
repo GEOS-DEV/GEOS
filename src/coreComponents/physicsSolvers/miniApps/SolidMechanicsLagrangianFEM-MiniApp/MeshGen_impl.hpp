@@ -25,12 +25,13 @@
 #include <vector>
 #include <algorithm>
 
-#if !defined(USE_GEOSX_ARRAY)
-
+#if !defined(USE_GEOSX_ARRAY) && !defined(USE_RAJA_VIEW)
 #define VX(id,i) VX[i + 3*id]
-#define elemToNodes(k, i) elemToNodes[i + 8*k]
-#else
+#endif
 
+
+#if !defined(USE_GEOSX_ARRAY) 
+#define elemToNodes(k, i) elemToNodes[i + 8*k]
 #endif
 
 int myrandom (int i) { return std::rand()%i;}
@@ -96,12 +97,10 @@ void meshGen(W VX, T elemToNodes,
 
         for(int q=0; q<8; ++q){
           localIndex id = q + 8*tid; 
-#if defined(USE_GEOSX_ARRAY)
+
           //constitutiveMap.data()[id] = id;
           constitutiveMap(tid,q) = id;
-#else
-          constitutiveMap[id] = id;
-#endif
+          //constitutiveMap[id] = id;
         }
 
         
