@@ -97,13 +97,15 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const override;
+                                     arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList ) override;
+                                       localIndex_array & packList ) override;
+
+  virtual void FixUpDownMaps() override final;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -205,7 +207,7 @@ private:
    */
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    localIndex_array const & packList ) const;
+                                    arrayView1d<localIndex const> const & packList ) const;
 
    /// reference position of the nodes
   array1d<R1Tensor> m_referencePosition;
@@ -218,6 +220,12 @@ private:
 
   /// nodeToElement relation
   OrderedVariableToManyElementRelation m_toElements;
+
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< set<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+
+
 
   /// deleted constructor
   NodeManager() = delete;

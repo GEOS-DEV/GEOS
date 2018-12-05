@@ -80,7 +80,6 @@ public:
 
 private:
   std::tuple< R1Tensor, R1Tensor> getMinMax(const PAMELA::PartMap<PAMELA::Polyhedron*>& partMap);
-
 private:
   /// Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;

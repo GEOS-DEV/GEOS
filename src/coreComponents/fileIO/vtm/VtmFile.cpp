@@ -79,7 +79,7 @@ void MeshBlock::Load(bool loadMesh, bool loadProperties) {
     }
 }
 
-std::map< string, std::vector< double > > const & MeshBlock::PropertyMap() const {
+std::map< string, real64_array > const & MeshBlock::PropertyMap() const {
     return m_properties;
 }
 
@@ -88,7 +88,7 @@ DumbMesh const & MeshBlock::mesh() const {
 }
 
 void RankBlock::AddMeshBlock( const MeshBlock& block) {
-    m_block.emplace_back(block);
+    m_block.push_back(block);
 }
 
 void RankBlock::Load(bool loadMesh, bool loadProperties) {
@@ -97,21 +97,19 @@ void RankBlock::Load(bool loadMesh, bool loadProperties) {
     }
 }
 localIndex RankBlock::NumMeshBlocks() const {
-    return static_cast< localIndex > (m_block.size());
+    return m_block.size();
 }
 MeshBlock const & RankBlock::GetMeshBlock(localIndex const meshBlockIndex) const {
-    assert( meshBlockIndex < static_cast< localIndex > (m_block.size()));
     return m_block[ meshBlockIndex ];
 }
 // PUBLIC METHODS
 
 RankBlock const & VtmFile::GetRankBlock(localIndex const rankBlockIndex) const {
-    assert( rankBlockIndex < static_cast< localIndex > (m_rankBlocks.size()));
     return m_rankBlocks[rankBlockIndex];
 }
 
 localIndex VtmFile::NumRankBlocks() const{
-    return static_cast< localIndex >(m_rankBlocks.size());
+    return m_rankBlocks.size();
 }
 void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) {
     int mpiSize = 0;
@@ -131,10 +129,10 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
     if( mpiRank == 0) {
         CheckXmlFileConsistency(vtmDoc,fileName);
     }
-    std::vector< RankBlock > rankBlocks;
+    array1d< RankBlock > rankBlocks;
     SetRanksAndBlocks(vtmDoc,rankBlocks);
     // Retrieve the number of partitions
-    int const numFiles = static_cast< int >(rankBlocks.size());
+    int const numFiles = integer_conversion<int>(rankBlocks.size());
 
     // Next part of this method is dedicated to the optimization of file loading
     //
@@ -161,16 +159,16 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
     
     if( mpiRank < remainderFiles ) {
         for(int p_index = 0; p_index < numFilesPerRank +1; ++p_index) {
-            m_rankBlocks.emplace_back(rankBlocks[mpiRank*(numFilesPerRank+1) + p_index]);
+            m_rankBlocks.push_back(rankBlocks[mpiRank*(numFilesPerRank+1) + p_index]);
         }
     } else if( mpiRank < numFiles) {
         for(int p_index = 0; p_index < numFilesPerRank; ++p_index) {
-            m_rankBlocks.emplace_back(rankBlocks[remainderFiles+mpiRank*(numFilesPerRank) + p_index]);
+            m_rankBlocks.push_back(rankBlocks[remainderFiles+mpiRank*(numFilesPerRank) + p_index]);
         }
     }
     if( mpiRank < numFiles ) {
-        for(int p_index = 0; p_index < 
-                static_cast< int >(m_rankBlocks.size()); ++p_index) {
+        for(localIndex p_index = 0; p_index < 
+                m_rankBlocks.size(); ++p_index) {
             m_rankBlocks[p_index].Load(loadMesh, loadProperties);
         }
     }
@@ -190,7 +188,7 @@ void VtuFile::Load( string const &filename, DumbMesh &mesh) {
 }
 
 void VtuFile::Load( string const &filename,
-        std::map< string, std::vector< double > > & properties) {
+        std::map< string, real64_array > & properties) {
     pugi::xml_document vtmDoc;
     vtmDoc.load_file(filename.c_str());
     CheckXmlChildFileConsistency(vtmDoc,filename);
@@ -222,7 +220,7 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
         GEOS_ERROR("vtkMultiBlockDataSet node is not present in " + filename);
     }
 
-    globalIndex countNbRank=0;
+    localIndex countNbRank=0;
     for( auto const & rank : vtkMultiBlockDataSetNode.children()) {
         if( rank.name() == static_cast< string >("Block")) {
             countNbRank++;
@@ -262,7 +260,7 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
 
 void VtmFile::SetRanksAndBlocks(
         pugi::xml_document const & vtmDoc,
-                std::vector< RankBlock >& rankBlocks) {
+                array1d< RankBlock >& rankBlocks) {
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     auto const & vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
     string dirPath;
@@ -291,7 +289,7 @@ void VtmFile::SetRanksAndBlocks(
                     curRankBlock.AddMeshBlock(curMeshBlock);
                 }
             }
-            rankBlocks.emplace_back(curRankBlock);
+            rankBlocks.push_back(curRankBlock);
         }
     }
 }
@@ -387,7 +385,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
 
 template<typename T, typename Lambda>
 void VtuFile::SplitNodeTextString( string const & in,
-        std::vector< T >& out,
+        array1d< T >& out,
         Lambda && string_convertor) const {
     std::stringstream stringStream(in);
     string line;
@@ -416,24 +414,24 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     pugi::xml_node pieceNode =
         vtmDoc.child("VTKFile").child("UnstructuredGrid").child("Piece");
 
-    globalIndex numVertices = pieceNode.attribute("NumberOfPoints").as_llong();
+    localIndex numVertices = pieceNode.attribute("NumberOfPoints").as_int();
     mesh.SetNumVertices( numVertices );
 
-    globalIndex numElements = pieceNode.attribute("NumberOfCells").as_llong();
+    localIndex numElements = pieceNode.attribute("NumberOfCells").as_int();
 
     /// Parse vertices
     pugi::xml_node m_verticesarray =
         pieceNode.child("Points").find_child_by_attribute("DataArray","Name","Points");
     assert(!m_verticesarray.empty()) ;
-    std::vector< real64 > allVertices;
+    real64_array allVertices;
     allVertices.reserve( numVertices*3 );
     SplitNodeTextString(m_verticesarray.text().as_string(), allVertices, 
             [](string str)-> double {return std::stod(str);});
-    assert(static_cast< globalIndex> (allVertices.size()) / 3 == numVertices);
+    assert(allVertices.size() / 3 == numVertices);
 
     /// Fill the vertices in the mesh
-    for(globalIndex vertexIndex  = 0 ; vertexIndex < numVertices; ++vertexIndex) {
-        std::vector< real64 > vertex(3);
+    for(localIndex vertexIndex  = 0 ; vertexIndex < numVertices; ++vertexIndex) {
+        real64_array vertex(3);
         for(localIndex coor = 0 ; coor < 3 ; ++coor) {
             vertex[coor] = allVertices[3*vertexIndex+coor];
         }
@@ -444,17 +442,17 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     pugi::xml_node elementsTypesArray =
         pieceNode.child("Cells").find_child_by_attribute("DataArray","Name","types");
     assert(!elementsTypesArray.empty());
-    std::vector< localIndex > allElementsTypes;
+    localIndex_array allElementsTypes;
     allElementsTypes.reserve(numElements);
     SplitNodeTextString( elementsTypesArray.text().as_string(), allElementsTypes,
             [](string str)-> localIndex {return std::stoi(str);});
-    assert(static_cast< globalIndex> (allElementsTypes.size()) == numElements);
-    globalIndex numTetra = 0;
-    globalIndex numHex = 0;
-    globalIndex numPrism = 0;
-    globalIndex numPyr = 0;
-    globalIndex numTri = 0;
-    globalIndex numQuad = 0;
+    assert(allElementsTypes.size() == numElements);
+    localIndex numTetra = 0;
+    localIndex numHex = 0;
+    localIndex numPrism = 0;
+    localIndex numPyr = 0;
+    localIndex numTri = 0;
+    localIndex numQuad = 0;
     for( auto elementType : allElementsTypes ) {
         if( elementType == 10 ) {
             numTetra++;
@@ -481,7 +479,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
         pieceNode.child("CellData").find_child_by_attribute("DataArray","Name",
                 "globalIndex");
     assert(!elements_original_indexes_array.empty());
-    std::vector< globalIndex > allElementsOriginalIndexes;
+    globalIndex_array allElementsOriginalIndexes;
     allElementsOriginalIndexes.reserve(numElements);
     SplitNodeTextString( elements_original_indexes_array.text().as_string(),
             allElementsOriginalIndexes,
@@ -490,29 +488,30 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     */
 
     /// Parse elements offsets
-    std::vector< globalIndex> elementsOffsets(numElements);
+    localIndex_array elementsOffsets(numElements);
     pugi::xml_node elementsOffsets_array =
         pieceNode.child("Cells").find_child_by_attribute("DataArray","Name","offsets");
     assert(!elementsOffsets_array.empty());
-    std::vector< globalIndex > allElementsOffsets(1,0); // convenient to have 0 as first offset
+    localIndex_array allElementsOffsets(1);
+    allElementsOffsets[0]=1; // convenient to have 0 as first offset
     allElementsOffsets.reserve(numElements);
     SplitNodeTextString( elementsOffsets_array.text().as_string(), allElementsOffsets,
-            [](string str)-> globalIndex {return std::stoll(str);});
-    assert(static_cast<globalIndex >(allElementsOffsets.size()) == numElements+1);
+            [](string str)-> localIndex {return std::stoi(str);});
+    assert(allElementsOffsets.size() == numElements+1);
 
     /// Parse cells connectivities
     pugi::xml_node elementsConnectivityArray =
         pieceNode.child("Cells").find_child_by_attribute("DataArray","Name","connectivity");
     assert(!elementsConnectivityArray.empty());
-    std::vector< globalIndex > allElementsConnectivities;
+    localIndex_array allElementsConnectivities;
     allElementsConnectivities.reserve(8 * numElements);
     SplitNodeTextString(elementsConnectivityArray.text().as_string(),
             allElementsConnectivities,
             [](string str)-> localIndex {return std::stoi(str);});
-    for( globalIndex elementIndex = 0 ; elementIndex < numElements; ++elementIndex) {
+    for( localIndex elementIndex = 0 ; elementIndex < numElements; ++elementIndex) {
         localIndex numVerticesInCell = allElementsOffsets[elementIndex+1] -
             allElementsOffsets[elementIndex];
-        std::vector< globalIndex > connectivity(numVerticesInCell);
+        localIndex_array connectivity(numVerticesInCell);
         for(localIndex co = 0 ; co < numVerticesInCell ; co++) {
             connectivity[co] =
                 allElementsConnectivities[allElementsOffsets[elementIndex]+co];
@@ -545,7 +544,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
 
 
 void VtuFile::LoadProperties(pugi::xml_document const & vtmDoc,
-        std::map< string, std::vector< double > >& properties){
+        std::map< string, real64_array >& properties){
     pugi::xml_node cellDataNode =
         vtmDoc.child("VTKFile").child("UnstructuredGrid").child("Piece").child("CellData");
     for( auto& property : cellDataNode.children()) {
@@ -553,15 +552,15 @@ void VtuFile::LoadProperties(pugi::xml_document const & vtmDoc,
         std::string propertyType = property.attribute("type").as_string();
         if(propertyName != "globalIndex") {
             if(propertyType == "Float64" || propertyType == "Float32") {
-                std::vector<double> propertyToBeInserted;
-                properties.insert(std::pair< string,std::vector<double> >(propertyName,propertyToBeInserted));
+                real64_array propertyToBeInserted;
+                properties.insert(std::pair< string, real64_array >(propertyName,propertyToBeInserted));
                 auto& curProperty = properties.find(propertyName)->second;
-                std::vector< double > propertyValues; // convenient to have 0 as first offset
+                real64_array propertyValues; // convenient to have 0 as first offset
                 SplitNodeTextString( property.text().as_string(), propertyValues,
                         [](string str)-> double {return std::stod(str);});
                 curProperty.resize(propertyValues.size());
-                for( globalIndex elementIndex = 0 ;
-                        elementIndex < static_cast< globalIndex > (propertyValues.size()); elementIndex++) {
+                for( localIndex elementIndex = 0 ;
+                        elementIndex < propertyValues.size(); elementIndex++) {
                     curProperty[elementIndex] = propertyValues[elementIndex];
                 }
             }
@@ -573,111 +572,111 @@ void VtuFile::LoadProperties(pugi::xml_document const & vtmDoc,
     /// MESH PART //
     ////////////////
 
-globalIndex DumbMesh::NumVertices() const {
+localIndex DumbMesh::NumVertices() const {
     return m_numVertices;
 }
 
-globalIndex DumbMesh::NumCells() const {
+localIndex DumbMesh::NumCells() const {
     return m_numCells;
 }
 
-globalIndex DumbMesh::NumPolygons() const {
+localIndex DumbMesh::NumPolygons() const {
     return m_numPolygons;
 }
 
-globalIndex DumbMesh::NumTetra() const {
+localIndex DumbMesh::NumTetra() const {
     return m_numTetra;
 }
 
-globalIndex DumbMesh::NumHex() const {
+localIndex DumbMesh::NumHex() const {
     return m_numHex;
 }
 
-globalIndex DumbMesh::NumPrism() const {
+localIndex DumbMesh::NumPrism() const {
     return m_numPrism;
 }
 
-globalIndex DumbMesh::NumPyr() const {
+localIndex DumbMesh::NumPyr() const {
     return m_numPyr;
 }
 
-globalIndex DumbMesh::NumTri() const {
+localIndex DumbMesh::NumTri() const {
     return m_numTri;
 }
 
-globalIndex DumbMesh::NumQuad() const {
+localIndex DumbMesh::NumQuad() const {
     return m_numQuad;
 }
 
-globalIndex DumbMesh::TetIndexToCellIndex(globalIndex const tetIndex) {
+localIndex DumbMesh::TetIndexToCellIndex(localIndex const tetIndex) {
     assert(tetIndex < m_numTetra);
     return m_tetIndexToCellIndex[tetIndex];
 }
 
-globalIndex DumbMesh::HexIndexToCellIndex(globalIndex const hexIndex) {
+localIndex DumbMesh::HexIndexToCellIndex(localIndex const hexIndex) {
     assert(hexIndex < m_numHex);
     return m_hexIndexToCellIndex[hexIndex];
 }
 
-globalIndex DumbMesh::PrismIndexToCellIndex(globalIndex const prismIndex) {
+localIndex DumbMesh::PrismIndexToCellIndex(localIndex const prismIndex) {
     assert(prismIndex < m_numPrism);
     return m_prismIndexToCellIndex[prismIndex];
 }
 
-globalIndex DumbMesh::PyrIndexToCellIndex(globalIndex const pyrIndex) {
+localIndex DumbMesh::PyrIndexToCellIndex(localIndex const pyrIndex) {
     assert(pyrIndex < m_numPyr);
     return m_pyrIndexToCellIndex[pyrIndex];
 }
 
-globalIndex DumbMesh::TriIndexToPolygonIndex(globalIndex const triIndex) {
+localIndex DumbMesh::TriIndexToPolygonIndex(localIndex const triIndex) {
     assert(triIndex < m_numTri);
     return m_triIndexToPolygonIndex[triIndex];
 }
 
-globalIndex DumbMesh::QuadIndexToPolygonIndex(globalIndex const quadIndex) {
+localIndex DumbMesh::QuadIndexToPolygonIndex(localIndex const quadIndex) {
     assert(quadIndex < m_numQuad);
     return m_pyrIndexToCellIndex[quadIndex];
 }
 
-localIndex DumbMesh::NumVerticesInCell(globalIndex const cellIndex ) const {
+localIndex DumbMesh::NumVerticesInCell(localIndex const cellIndex ) const {
     assert(cellIndex < m_numCells);
     return m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex];
 }
 
-localIndex DumbMesh::NumVerticesInPolygon(globalIndex const polygonIndex ) const {
+localIndex DumbMesh::NumVerticesInPolygon(localIndex const polygonIndex ) const {
     assert(polygonIndex < m_numPolygons);
     return m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex];
 }
 
-globalIndex DumbMesh::CellVertexIndex(globalIndex const cellIndex,
+localIndex DumbMesh::CellVertexIndex(localIndex const cellIndex,
         localIndex const local_corner_index) const {
     assert(local_corner_index < NumVerticesInCell(cellIndex));
     return m_cellsConnectivity[m_cellsPtr[cellIndex] + local_corner_index];
 }
 
-globalIndex DumbMesh::PolygonVertexIndex(globalIndex const polygonIndex,
+localIndex DumbMesh::PolygonVertexIndex(localIndex const polygonIndex,
         localIndex const local_corner_index) const {
     assert(local_corner_index < NumVerticesInPolygon(polygonIndex));
     return m_polygonsConnectivity[m_polygonsPtr[polygonIndex] + local_corner_index];
 }
 
-real64 const * DumbMesh::Vertex(globalIndex const vertexIndex) const {
+real64 const * DumbMesh::Vertex(localIndex const vertexIndex) const {
     assert(vertexIndex < m_numVertices);
     return &(m_vertices[3*vertexIndex]);
 }
 
-globalIndex DumbMesh::GlobalPolygonIndex(globalIndex const polygonIndex) const {
+globalIndex DumbMesh::GlobalPolygonIndex(localIndex const polygonIndex) const {
     assert(polygonIndex<m_numPolygons);
     return m_globalPolygonIndexes[polygonIndex];
 }
 
-globalIndex DumbMesh::GlobalCellIndex(globalIndex const cellIndex) const {
+globalIndex DumbMesh::GlobalCellIndex(localIndex const cellIndex) const {
     assert(cellIndex < m_numCells);
     return m_globalCellIndexes[cellIndex];
 }
 
-void DumbMesh::SetVertex(globalIndex const vertexIndex,
-        std::vector< real64 > const& vertex) {
+void DumbMesh::SetVertex(localIndex const vertexIndex,
+        real64_array const & vertex) {
     assert(vertex.size() == 3); 
     assert(vertexIndex < m_numVertices);
     for( localIndex coor = 0 ; coor < 3 ; coor ++ ) {
@@ -685,17 +684,17 @@ void DumbMesh::SetVertex(globalIndex const vertexIndex,
     }
 }
 
-void DumbMesh::SetNumVertices(globalIndex const numVertices) {
+void DumbMesh::SetNumVertices(localIndex const numVertices) {
     m_numVertices = numVertices;
-    m_vertices.resize( static_cast<size_t>(numVertices*3));
+    m_vertices.resize( numVertices*3);
 }
 
-void DumbMesh::SetNumCellAndPolygons(globalIndex numTetra,
-                                       globalIndex numHex,
-                                       globalIndex numPrism,
-                                       globalIndex numPyr,
-                                       globalIndex numTri,
-                                       globalIndex numQuad) {
+void DumbMesh::SetNumCellAndPolygons(localIndex numTetra,
+                                       localIndex numHex,
+                                       localIndex numPrism,
+                                       localIndex numPyr,
+                                       localIndex numTri,
+                                       localIndex numQuad) {
     m_numTetra = numTetra;
     m_numHex = numHex;
     m_numPrism = numPrism;
@@ -718,9 +717,9 @@ void DumbMesh::SetNumCellAndPolygons(globalIndex numTetra,
     m_quadIndexToPolygonIndex.reserve(m_numQuad);
 }
 
-void DumbMesh::AddCell( std::vector<globalIndex> const & connectivity ) {
+void DumbMesh::AddCell( localIndex_array const & connectivity ) {
     m_cellsPtr.push_back( connectivity.size() + m_cellsPtr[m_cellsPtr.size()-1]);
-    globalIndex numVerticesInCell = static_cast<localIndex>(connectivity.size());
+    localIndex numVerticesInCell = connectivity.size();
     for( localIndex co = 0 ; co < numVerticesInCell; ++co ) {
         m_cellsConnectivity.push_back(connectivity[co]);
     }
@@ -728,38 +727,38 @@ void DumbMesh::AddCell( std::vector<globalIndex> const & connectivity ) {
     if( connectivity.size() == 4 ) {
         m_tetIndexToCellIndex.push_back(m_cellsPtr.size()-2);
     } else if (connectivity.size() == 8) {
-        m_hexIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
+        m_hexIndexToCellIndex.push_back(m_cellsPtr.size()-2);
     } else if (connectivity.size() == 6) {
-        m_prismIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
+        m_prismIndexToCellIndex.push_back(m_cellsPtr.size()-2);
     } else if (connectivity.size() == 5 ) {
-        m_pyrIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
+        m_pyrIndexToCellIndex.push_back(m_cellsPtr.size()-2);
     }
 }
 
-void DumbMesh::AddPolygon( std::vector<globalIndex> const & connectivity ) {
+void DumbMesh::AddPolygon( localIndex_array const & connectivity ) {
     m_polygonsPtr.push_back( connectivity.size() + m_polygonsPtr[m_polygonsPtr.size()-1]);
-    for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
+    for( localIndex co = 0 ; co < connectivity.size(); ++co ) {
         m_polygonsConnectivity.push_back(connectivity[co]);
     }
 
     if( connectivity.size() == 3 ) {
         m_triIndexToPolygonIndex.push_back(m_polygonsPtr.size()-2);
     } else if (connectivity.size() == 4) {
-        m_quadIndexToPolygonIndex.emplace_back(m_polygonsPtr.size()-2);
+        m_quadIndexToPolygonIndex.push_back(m_polygonsPtr.size()-2);
     } 
 }
 
-void DumbMesh::SetCellOriginalIndex(globalIndex const cellIndexInPartMesh,
+void DumbMesh::SetCellOriginalIndex(localIndex const cellIndexInPartMesh,
         globalIndex const cellIndexInFullMesh) {
-    assert( cellIndexInPartMesh < static_cast< globalIndex>
-            (m_globalCellIndexes.size() ) );
+    assert( cellIndexInPartMesh < 
+            m_globalCellIndexes.size() );
     m_globalCellIndexes[cellIndexInPartMesh] = cellIndexInFullMesh;
 }
 
-void DumbMesh::SetPolygonOriginalIndex(globalIndex const polygonIndexInPartMesh,
+void DumbMesh::SetPolygonOriginalIndex(localIndex const polygonIndexInPartMesh,
         globalIndex const polygonIndexInFullMesh) {
     assert( polygonIndexInPartMesh <
-            static_cast< globalIndex> (m_globalPolygonIndexes.size() ) );
+            m_globalPolygonIndexes.size() );
     m_globalPolygonIndexes[polygonIndexInPartMesh] = polygonIndexInFullMesh;
 }   
 
@@ -768,14 +767,14 @@ void DumbMesh::SetName(string const & name) {
 }
 
 void DumbMesh::Finish() {
-    assert(static_cast<globalIndex>(m_cellsPtr.size()) == m_numCells +1);
-    assert(static_cast<globalIndex>(m_polygonsPtr.size()) == m_numPolygons +1);
-    assert(static_cast<globalIndex>(m_tetIndexToCellIndex.size()) == m_numTetra);
-    assert(static_cast<globalIndex>(m_hexIndexToCellIndex.size()) == m_numHex);
-    assert(static_cast<globalIndex>(m_prismIndexToCellIndex.size()) == m_numPrism);
-    assert(static_cast<globalIndex>(m_pyrIndexToCellIndex.size()) == m_numPyr);
-    assert(static_cast<globalIndex>(m_triIndexToPolygonIndex.size()) == m_numTri);
-    assert(static_cast<globalIndex>(m_quadIndexToPolygonIndex.size()) == m_numQuad);
+    assert(m_cellsPtr.size() == m_numCells +1);
+    assert(m_polygonsPtr.size() == m_numPolygons +1);
+    assert(m_tetIndexToCellIndex.size() == m_numTetra);
+    assert(m_hexIndexToCellIndex.size() == m_numHex);
+    assert(m_prismIndexToCellIndex.size() == m_numPrism);
+    assert(m_pyrIndexToCellIndex.size() == m_numPyr);
+    assert(m_triIndexToPolygonIndex.size() == m_numTri);
+    assert(m_quadIndexToPolygonIndex.size() == m_numQuad);
 }
 
 string const & DumbMesh::Name() const {
@@ -792,11 +791,11 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
 
           nodeManager->resize(mesh.NumVertices());
-          arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+          arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
           std::cout << "node Manager pointer : " << nodeManager << std::endl;
           std::cout << "X pointer : " << X[0].Data() << std::endl;
 
-          for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
+          for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
           {
               real64 * const tensorData = X[a].Data();
               tensorData[0] = mesh.Vertex(a)[0];
@@ -821,10 +820,9 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
           std::cout << "cellBlock pointer : " << cellBlock << std::endl;
 
-          subRegion->resize( mesh.NumCells() );
+          subRegion->resize( mesh.NumCells());
           auto & cellToVertex = subRegion->nodeList();
-          cellToVertex.resize(static_cast<int>(mesh.NumCells()),
-                  static_cast<int>(mesh.NumVerticesInCell(0)) );
+          cellToVertex.resize(mesh.NumCells(),mesh.NumVerticesInCell(0));
 
           for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
           {

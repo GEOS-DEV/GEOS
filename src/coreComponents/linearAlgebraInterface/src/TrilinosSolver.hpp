@@ -30,8 +30,10 @@
 #include <Amesos.h>
 #include "ml_MultiLevelPreconditioner.h"
 #include "ml_epetra_utils.h"
-#include "TrilinosSparseMatrix.hpp"
-#include "TrilinosVector.hpp"
+
+#include "EpetraMatrix.hpp"
+#include "EpetraVector.hpp"
+#include "LinearSolverParameters.hpp"
 
 namespace geosx
 {
@@ -45,67 +47,42 @@ class TrilinosSolver
 {
 public:
 
-  //! @name Constructor/Destructor Methods
-  //@{
   /**
-   * @brief Empty solver constructor.
+   * @brief Solver constructor, with parameter list reference
    *
    */
-  TrilinosSolver();
-
-  /**
-   * @brief Copy constructor.
-   *
-   */
-  TrilinosSolver( TrilinosSolver const &Solver );
+  TrilinosSolver( LinearSolverParameters const & parameters );
 
   /**
    * @brief Virtual destructor.
    *
    */
   virtual ~TrilinosSolver() = default;
-  //@}
 
-  //! @name Solvers
-  //@{
   /**
    * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
    *
-   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-  void solve( EpetraSparseMatrix &Mat,
+
+  void solve( EpetraMatrix &mat,
               EpetraVector &sol,
-              EpetraVector &rhs,
-              integer const max_iter,
-              real64 const newton_tol,
-              std::unique_ptr<Epetra_Operator> Prec = nullptr );
+              EpetraVector &rhs );
 
-  /**
-   * @brief Solve system using the ml preconditioner.
-   *
-   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
-   */
-  void ml_solve( EpetraSparseMatrix &Mat,
-                 EpetraVector &sol,
-                 EpetraVector &rhs,
-                 integer const max_iter,
-                 real64 const newton_tol,
-                 std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec = nullptr );
+private:
 
-  /**
-   * @brief Solve system using a direct solver (KLU).
-   *
-   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
-   */
-  void dsolve( EpetraSparseMatrix &Mat,
-               EpetraVector &sol,
-               EpetraVector &rhs );
-  //@}
+  LinearSolverParameters const & m_parameters;
 
-protected:
+  void solve_direct( EpetraMatrix &mat,
+                     EpetraVector &sol,
+                     EpetraVector &rhs );
+
+  void solve_krylov( EpetraMatrix &mat,
+                     EpetraVector &sol,
+                     EpetraVector &rhs );
 
 };
 
-}
+} // end geosx namespace
 
 #endif /* TRILINOSSOLVER_HPP_ */

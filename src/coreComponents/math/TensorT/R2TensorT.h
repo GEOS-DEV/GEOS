@@ -1356,7 +1356,7 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse_I( R2TensorT<T_dim>& a )
   }
   else
   {
-    GEOS_WARNING("R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3";);
+    GEOS_WARNING("R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
   }
   return *this;
 }

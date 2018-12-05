@@ -58,7 +58,7 @@ void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     std::string childName = childNode.attribute("name").value();
-    QuadratureBase * quadrature = this->getData<QuadratureBase>(childName);
+    QuadratureBase * quadrature = this->getPointer<QuadratureBase>(childName);
 
     if (quadrature != nullptr)
     {

@@ -57,7 +57,10 @@ public:
   constexpr static int maxNumNodesPerElem = 8;
 
   template< typename VIEWTYPE >
-  using ElementViewAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > > ;
+  using ElementViewAccessor = array1d< array1d< VIEWTYPE > > ;
+
+  template< typename VIEWTYPE >
+  using ElementReferenceAccessor = array1d< array1d< ReferenceWrapper<VIEWTYPE> > > ;
 
   /**
    * The MaterialViewAccessor at the ElementRegionManager level is an 3d array that contains a
@@ -65,7 +68,7 @@ public:
    * var[elementRegionIndex][elementSubRegionIndex][materialIndexInRegion]
    */
   template< typename VIEWTYPE >
-  using MaterialViewAccessor = array1d< array1d< array1d < ReferenceWrapper< VIEWTYPE > > > > ;
+  using MaterialViewAccessor = array1d< array1d< array1d < VIEWTYPE > > > ;
 
   template< typename CONSTITUTIVE_TYPE >
   using ConstitutiveRelationAccessor = array1d< array1d< array1d< CONSTITUTIVE_TYPE * > > >;
@@ -222,27 +225,32 @@ public:
   }
 
 
-  template< typename VIEWTYPE >
-  ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
-                                                       string const & neighborName = string() );
+  // template< typename VIEWTYPE >
+  // ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
+  //                                                      string const & neighborName = string() );
+
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
+                                                    string const & neighborName = string() ) const;
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
+                                                    string const & neighborName = string() );
 
   template< typename VIEWTYPE >
-  ElementViewAccessor<VIEWTYPE const> ConstructViewAccessor( string const & name,
-                                                             string const & neighborName = string() ) const;
-
+  ElementViewAccessor< ReferenceWrapper<VIEWTYPE> >
+  ConstructReferenceAccessor( string const & viewName, string const & neighborName = string() ) const;
 
   template< typename VIEWTYPE >
-  MaterialViewAccessor<VIEWTYPE const>
+  ElementViewAccessor< ReferenceWrapper<VIEWTYPE> >
+  ConstructReferenceAccessor( string const & viewName, string const & neighborName = string() );
+
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  MaterialViewAccessor< LHS >
   ConstructMaterialViewAccessor( string const & name,
                                  constitutive::ConstitutiveManager const * const cm ) const;
 
-  template< typename VIEWTYPE >
-  MaterialViewAccessor<VIEWTYPE>
-  ConstructMaterialViewAccessor( string const & name,
-                                 constitutive::ConstitutiveManager const * const cm  );
-
   template< typename CONSTITUTIVE_TYPE >
-  ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE>
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
 
   using ManagedGroup::PackSize;
@@ -257,35 +265,41 @@ public:
 
 
   int PackSize( string_array const & wrapperNames,
-                ElementViewAccessor<localIndex_array> const & packList ) const;
+                ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
   int Pack( buffer_unit_type * & buffer,
             string_array const & wrapperNames,
-            ElementViewAccessor<localIndex_array> const & packList ) const;
+            ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
   using ObjectManagerBase::Unpack;
   int Unpack( buffer_unit_type const * & buffer,
-              ElementViewAccessor<localIndex_array> & packList );
+              ElementViewAccessor<arrayView1d<localIndex>> & packList );
+
+  int Unpack( buffer_unit_type const * & buffer,
+              ElementReferenceAccessor<array1d<localIndex>> & packList );
 
 
 
-  int PackGlobalMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const;
+  int PackGlobalMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
   int PackGlobalMaps( buffer_unit_type * & buffer,
-                              ElementViewAccessor<localIndex_array> const & packList ) const;
+                              ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
 
   int UnpackGlobalMaps( buffer_unit_type const * & buffer,
-                                ElementViewAccessor<localIndex_array> & packList );
+                                ElementViewAccessor<ReferenceWrapper<localIndex_array>> & packList );
 
-  int PackUpDownMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const;
+  int PackUpDownMapsSize( ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+  int PackUpDownMapsSize( ElementReferenceAccessor<array1d<localIndex>> const & packList ) const;
 
   int PackUpDownMaps( buffer_unit_type * & buffer,
-                      ElementViewAccessor<localIndex_array> const & packList ) const;
+                      ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+  int PackUpDownMaps( buffer_unit_type * & buffer,
+                      ElementReferenceAccessor<array1d<localIndex>> const & packList ) const;
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                        ElementViewAccessor<localIndex_array> const & packList );
+                        ElementReferenceAccessor<localIndex_array> & packList );
 
 
 
@@ -294,30 +308,31 @@ private:
   template< bool DOPACK >
   int PackPrivate( buffer_unit_type * & buffer,
                    string_array const & wrapperNames,
-                   ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+                   ElementViewAccessor<arrayView1d<localIndex>> const & viewAccessor ) const;
 
   template< bool DOPACK >
   int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                             ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+                             ElementViewAccessor<arrayView1d<localIndex>> const & viewAccessor ) const;
 
-  template< bool DOPACK >
+  template< bool DOPACK, typename T >
   int
   PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                         ElementViewAccessor<localIndex_array> const & packList ) const;
+                         T const & packList ) const;
+
+  template< typename T >
+  int UnpackPrivate( buffer_unit_type const * & buffer,
+                     T & packList );
 
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);
 };
 
 
-
-template< typename VIEWTYPE >
-ElementRegionManager::ElementViewAccessor<VIEWTYPE const>
-ElementRegionManager::
-ConstructViewAccessor( string const & viewName,
-                       string const & neighborName ) const
+template< typename VIEWTYPE, typename LHS >
+ElementRegionManager::ElementViewAccessor<LHS>
+ElementRegionManager::ConstructViewAccessor( string const & viewName, string const & neighborName ) const
 {
-  ElementViewAccessor<VIEWTYPE const> viewAccessor;
+  ElementViewAccessor<LHS> viewAccessor;
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
@@ -326,21 +341,16 @@ ConstructViewAccessor( string const & viewName,
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ManagedGroup const * group = elemRegion->GetSubRegion(kSubReg);
 
-      if( neighborName.empty() )
+      if( !neighborName.empty() )
       {
-        //        viewAccessor[kReg].push_back( subRegion->getReference<VIEWTYPE>(viewName)) ;
-        if( subRegion->hasView(viewName) )
-        {
-          viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
-        }
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
-      else
+
+      if ( group->hasView(viewName) )
       {
-//        viewAccessor[kReg].push_back( subRegion->
-        viewAccessor[kReg][kSubReg].set(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+        viewAccessor[kReg][kSubReg] = group->getReference<VIEWTYPE>(viewName);
       }
     }
   }
@@ -348,13 +358,12 @@ ConstructViewAccessor( string const & viewName,
 }
 
 
-template< typename VIEWTYPE >
-ElementRegionManager::ElementViewAccessor<VIEWTYPE>
+template< typename VIEWTYPE, typename LHS >
+ElementRegionManager::ElementViewAccessor<LHS>
 ElementRegionManager::
-ConstructViewAccessor( string const & viewName,
-                       string const & neighborName )
+ConstructViewAccessor( string const & viewName, string const & neighborName )
 {
-  ElementViewAccessor<VIEWTYPE> viewAccessor;
+  ElementViewAccessor<LHS> viewAccessor;
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
@@ -363,35 +372,89 @@ ConstructViewAccessor( string const & viewName,
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ManagedGroup * group = elemRegion->GetSubRegion(kSubReg);
 
-      if( neighborName.empty() )
+      if( !neighborName.empty() )
       {
-        if( subRegion->hasView(viewName) )
-        {
-          viewAccessor[kReg][kSubReg].set(subRegion->getReference<VIEWTYPE>(viewName));
-        }
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
-      else
+
+      if ( group->hasView(viewName) )
       {
-        viewAccessor[kReg][kSubReg].set(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+        viewAccessor[kReg][kSubReg] = group->getReference<VIEWTYPE>(viewName);
       }
     }
   }
   return viewAccessor;
 }
 
+template< typename VIEWTYPE >
+ElementRegionManager::ElementViewAccessor<ReferenceWrapper<VIEWTYPE>>
+ElementRegionManager::
+ConstructReferenceAccessor( string const & viewName, string const & neighborName ) const
+{
+  ElementViewAccessor<ReferenceWrapper<VIEWTYPE>> viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
 
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      ManagedGroup const * group = elemRegion->GetSubRegion(kSubReg);
 
+      if( !neighborName.empty() )
+      {
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
+      }
 
-template< typename VIEWTYPE  >
-ElementRegionManager::MaterialViewAccessor<VIEWTYPE const>
+      if ( group->hasView(viewName) )
+      {
+        viewAccessor[kReg][kSubReg].set(group->getReference<VIEWTYPE>(viewName));
+      }
+    }
+  }
+  return viewAccessor;
+}
+
+template< typename VIEWTYPE >
+ElementRegionManager::ElementViewAccessor<ReferenceWrapper<VIEWTYPE>>
+ElementRegionManager::
+ConstructReferenceAccessor( string const & viewName, string const & neighborName )
+{
+  ElementViewAccessor<ReferenceWrapper<VIEWTYPE>> viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion * const elemRegion = GetRegion(kReg);
+    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      ManagedGroup * group = elemRegion->GetSubRegion(kSubReg);
+
+      if( !neighborName.empty() )
+      {
+        group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
+      }
+
+      if ( group->hasView(viewName) )
+      {
+        viewAccessor[kReg][kSubReg].set(group->getReference<VIEWTYPE>(viewName));
+      }
+    }
+  }
+  return viewAccessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ElementRegionManager::MaterialViewAccessor<LHS>
 ElementRegionManager::
 ConstructMaterialViewAccessor( string const & viewName,
                                constitutive::ConstitutiveManager const * const cm  ) const
 {
-  MaterialViewAccessor<VIEWTYPE const> accessor;
+  MaterialViewAccessor<LHS> accessor;
   accessor.resize( numRegions() );
   for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
@@ -416,59 +479,7 @@ ConstructMaterialViewAccessor( string const & viewName,
 
           if( wrapper != nullptr )
           {
-            accessor[kReg][kSubReg][matIndex].set(wrapper->reference() );
-          }
-        }
-      }
-    }
-  }
-  return accessor;
-}
-
-/**
- * @tparam VIEWTYPE is the type that you would like to return inside the MaterialViewAccessor
- * @tparam REPOTYPE is the type that the data is stored as inside the repository
- * @param viewName The name of the material data field
- * @return a ElementRegionManager::MaterialViewAccessor<VIEWTYPE> that contains the data
- *
- * This function extracts data from the material arrays and provides multi-dimensional array-like
- * access to the data. The resulting return type is dereferenced using square bracket operators with
- * each level being, accessor[elementRegionIndex][elementSubRegionIndex][materialTypeIndex].
- *
- *
- */
-template< typename VIEWTYPE >
-ElementRegionManager::MaterialViewAccessor<VIEWTYPE>
-ElementRegionManager::
-ConstructMaterialViewAccessor( string const & viewName,
-                               constitutive::ConstitutiveManager const * const cm  )
-{
-  MaterialViewAccessor<VIEWTYPE> accessor;
-  accessor.resize( numRegions() );
-  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
-  {
-    ElementRegion * const elemRegion = GetRegion(kReg);
-    accessor[kReg].resize( elemRegion->numSubRegions() );
-
-    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
-    {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
-      dataRepository::ManagedGroup * const
-      constitutiveGroup = subRegion->GetConstitutiveModels();
-      accessor[kReg][kSubReg].resize( cm->numSubGroups() );
-
-      for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
-      {
-        dataRepository::ManagedGroup * const
-        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
-        if( constitutiveRelation != nullptr )
-        {
-          dataRepository::ViewWrapper<VIEWTYPE> * const
-          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
-
-          if( wrapper != nullptr )
-          {
-            accessor[kReg][kSubReg][matIndex].set(constitutiveRelation->getReference<VIEWTYPE>(viewName));
+            accessor[kReg][kSubReg][matIndex] = wrapper->reference();
           }
         }
       }

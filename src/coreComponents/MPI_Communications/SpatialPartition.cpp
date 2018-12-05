@@ -96,7 +96,7 @@ void SpatialPartition::InitializePostSubGroups( ManagedGroup * const )
   //check to make sure our dimensions agree
   {
     int check = 1;
-    for( unsigned int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0 ; i < nsdof ; i++ )
     {
       check *= this->m_Partitions( i );
     }
@@ -1105,7 +1105,7 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   if( idim == nsdof )
   {
     bool me = true;
-    for( unsigned int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0 ; i < nsdof ; i++ )
     {
       if( ncoords[i] != this->m_coords( i ))
       {
@@ -1128,11 +1128,11 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = this->m_Partitions( idim );
-    const bool periodic = this->m_Periodic( idim );
+    const int dim = this->m_Partitions( integer_conversion<localIndex>( idim ) );
+    const bool periodic = this->m_Periodic( integer_conversion<localIndex>(idim) );
     for( int i = -1 ; i < 2 ; i++ )
     {
-      ncoords[idim] = this->m_coords( idim ) + i;
+      ncoords[idim] = this->m_coords( integer_conversion<localIndex>(idim) ) + i;
       bool ok = true;
       if( periodic )
       {
@@ -1332,7 +1332,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     //check to make sure our dimensions agree
     {
       int check = 1;
-      for( unsigned int i = 0 ; i < nsdof ; i++ )
+      for( int i = 0 ; i < nsdof ; i++ )
       {
         check *= this->m_Partitions( i );
       }
@@ -1374,7 +1374,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
   m_blockSize = m_gridSize;
 
   m_min = min;
-  for( unsigned int i=0 ; i<nsdof ; ++i )
+  for( int i=0 ; i<nsdof ; ++i )
   {
     const int nloc = m_Partitions( i ) - 1;
     const localIndex nlocl = static_cast<localIndex>(nloc);
@@ -1461,7 +1461,7 @@ bool SpatialPartition::IsCoordInPartition( const realT& coord, const int dir )
 bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter )
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1491,7 +1491,7 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter, const int
     m_xBoundingBoxMaxTemp( i ) = m_max( i ) + numDistPartition*m_blockSize( i );
   }
 
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1516,7 +1516,7 @@ bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor& elemCenter )
 // A variant with intervals closed at both ends
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1540,7 +1540,7 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor& elemCenter
 
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1574,7 +1574,7 @@ void SpatialPartition::SetContactGhostRange( const realT bufferSize )
 bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor& elemCenter )
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {

@@ -786,11 +786,10 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
                                           real64 const problemTime)
 {
 
-  auto const
-  constitutiveMap = elementManager->
-                    ConstructViewAccessor<
-    std::pair< array2d<localIndex>,array2d<localIndex> >
-    >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
+  ElementRegionManager::ElementViewAccessor< std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> > > const
+  constitutiveMap = elementManager->ConstructViewAccessor< std::pair< array2d<localIndex>, array2d<localIndex> >, 
+                                                           std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> >
+      >( std::string(CellBlockSubRegion::viewKeyStruct::constitutiveMapString) );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
@@ -823,9 +822,9 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
-        localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+        localIndex const matIndex1 = constitutiveMap[er][esr].first[k][0];
         // matIndex2 is the index of the point within material specified in matIndex1
-        localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+        localIndex const matIndex2 = constitutiveMap[er][esr].second[k][0];
 
         matlist[elemCount++] = matIndex1;
       }
@@ -925,8 +924,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                                              int const cycleNumber,
                                              real64 const problemTime)
 {
-
-
   string name = "materials";
   int const nmat = constitutiveManager->GetSubGroups().size();
   array1d<int> matnos(nmat);
@@ -941,7 +938,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
     materialNames[matIndex] = materialNameStrings[matIndex].c_str();
   }
-
 
   int ndims = 1;
   int dims = 0;
@@ -1147,9 +1143,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   for( auto fieldName : fieldNames )
   {
-    ElementRegionManager::MaterialViewAccessor< array2d<real64> const >
-    field = elementManager->ConstructMaterialViewAccessor< array2d<real64>  >( fieldName,
-                                                                               constitutiveManager);
+    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const field =
+      elementManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( fieldName, constitutiveManager);
 
     WriteMaterialDataField< real64 >( meshName,
                                       fieldName,
@@ -1165,29 +1160,32 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
 
 
-
-  for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+  // add expressions
+  if( rank==0 )
   {
-    string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
-    MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
-    DBSetDir( m_dbBaseFilePtr, MultiDir.c_str());
+    for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+    {
+      string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
+      MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
+      DBSetDir( m_dbBaseFilePtr, MultiDir.c_str());
 
-    string const expressionName = MultiDir + "/" + "density";
-    const char * expObjName = expressionName.c_str();
-    const char * const names[1] = { expObjName } ;
-    int const types[1] = {DB_VARTYPE_SCALAR};
-    string const definition = "value_for_material(<" + subDirectory + "/density>, " + std::to_string(matIndex) + ")";
-    const char * const defns[1] = {definition.c_str()};
-    DBPutDefvars( m_dbBaseFilePtr,
-                  expObjName,
-                  1,
-                  names,
-                  types,
-                  defns,
-                  nullptr );
+      string const expressionName = MultiDir + "/" + "density";
+      const char * expObjName = expressionName.c_str();
+      const char * const names[1] = { expObjName } ;
+      int const types[1] = {DB_VARTYPE_SCALAR};
+      string const definition = "value_for_material(<" + subDirectory + "/density>, " + std::to_string(matIndex) + ")";
+      const char * const defns[1] = {definition.c_str()};
+      DBPutDefvars( m_dbBaseFilePtr,
+                    expObjName,
+                    1,
+                    names,
+                    types,
+                    defns,
+                    nullptr );
 
-    DBSetDir(this->m_dbBaseFilePtr, "..");
+      DBSetDir(this->m_dbBaseFilePtr, "..");
 
+    }
   }
 
   DBSetDir(m_dbFilePtr, "..");
@@ -1643,15 +1641,13 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
         string elementType = cellBlock -> GetElementType();
-        const integer_array nodeOrdering = SiloNodeOrdering(elementType);
+        integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
-          localIndex const * const elemToNodeMap = elemsToNodes[k];
-
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
-            elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+            elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
           }
 
           if( elemGhostRank[k] >= 0 )

@@ -74,14 +74,14 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   // loop over all the faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
   {
-    const localIndex_array::size_type numNodesInFace = faceToNodeMap[kf].size();
+    const localIndex numNodesInFace = faceToNodeMap[kf].size();
     const localIndex_array& nodeList = faceToNodeMap[kf];
 
     localIndex node0, node1, temp;
 
     // loop over all the nodes in the face. there will be an edge for each
     // node.
-    for( localIndex_array::size_type a=0 ; a<numNodesInFace ; ++a )
+    for( localIndex a=0 ; a<numNodesInFace ; ++a )
     {
       // sort the nodes in order of index value
       node0 = nodeList[a];
@@ -145,7 +145,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   }
 
   // Then loop over them in parallel.
-  raja::forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
+  forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
@@ -710,27 +710,28 @@ void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
 
 
 
-localIndex EdgeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex EdgeManager::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 localIndex EdgeManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                        localIndex_array const & packList ) const
+                                        arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template<bool DOPACK>
 localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               localIndex_array const & packList ) const
+                                               arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toNodesRelation,
+                                         m_toNodesRelation.Base(),
+                                         m_unmappedGlobalIndicesInToNodes,
                                          packList,
                                          m_localToGlobalMap,
                                          m_toNodesRelation.RelatedObjectLocalToGlobal() );
@@ -738,7 +739,8 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toFacesRelation,
+                                         m_toFacesRelation.Base(),
+                                         m_unmappedGlobalIndicesInToFaces,
                                          packList,
                                          m_localToGlobalMap,
                                          m_toFacesRelation.RelatedObjectLocalToGlobal() );
@@ -750,7 +752,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array const & packList )
+                                          localIndex_array & packList )
 {
   localIndex unPackedSize = 0;
 
@@ -761,6 +763,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
+                                     m_unmappedGlobalIndicesInToNodes,
                                      this->m_globalToLocalMap,
                                      m_toNodesRelation.RelatedObjectGlobalToLocal() );
 
@@ -771,10 +774,24 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
+                                     m_unmappedGlobalIndicesInToFaces,
                                      this->m_globalToLocalMap,
-                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                     false );
 
   return unPackedSize;
+}
+
+void EdgeManager::FixUpDownMaps()
+{
+  ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
+                                    m_unmappedGlobalIndicesInToNodes);
+
+  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
+                                    m_unmappedGlobalIndicesInToFaces);
+
+//  ObjectManagerBase::FixUpDownMaps( faceList(),
+//                                    m_unmappedGlobalIndicesInFacelist);
 }
 
 }

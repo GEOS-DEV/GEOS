@@ -185,7 +185,7 @@ void CellBlockSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionLi
 }
 
 
-localIndex CellBlockSubRegion::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex CellBlockSubRegion::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
@@ -193,51 +193,66 @@ localIndex CellBlockSubRegion::PackUpDownMapsSize( localIndex_array const & pack
 
 
 localIndex CellBlockSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
-                               localIndex_array const & packList ) const
+                                               arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template< bool DOPACK >
 localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               localIndex_array const & packList ) const
+                                                      arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                             nodeList(),
-                                             packList,
-                                             this->m_localToGlobalMap,
-                                             nodeList().RelatedObjectLocalToGlobal() );
+                                         nodeList().Base(),
+                                         m_unmappedGlobalIndicesInNodelist,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         nodeList().RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                             faceList(),
-                                             packList,
-                                             this->m_localToGlobalMap,
-                                             faceList().RelatedObjectLocalToGlobal() );
+                                         faceList().Base(),
+                                         m_unmappedGlobalIndicesInFacelist,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         faceList().RelatedObjectLocalToGlobal() );
 
   return packedSize;
 }
 
 
 localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                 localIndex_array const & packList )
+                                                 localIndex_array & packList )
 {
   localIndex unPackedSize = 0;
 
-  unPackedSize += bufferOps::Unpack( buffer,
-                                         nodeList(),
-                                         packList,
-                                         this->m_globalToLocalMap,
-                                         nodeList().RelatedObjectGlobalToLocal() );
+
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                         faceList(),
-                                         packList,
-                                         this->m_globalToLocalMap,
-                                         faceList().RelatedObjectGlobalToLocal() );
+                                     nodeList().Base(),
+                                     packList,
+                                     m_unmappedGlobalIndicesInNodelist,
+                                     this->m_globalToLocalMap,
+                                     nodeList().RelatedObjectGlobalToLocal() );
+
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     faceList().Base(),
+                                     packList,
+                                     m_unmappedGlobalIndicesInFacelist,
+                                     this->m_globalToLocalMap,
+                                     faceList().RelatedObjectGlobalToLocal() );
 
   return unPackedSize;
+}
+
+void CellBlockSubRegion::FixUpDownMaps()
+{
+  ObjectManagerBase::FixUpDownMaps( nodeList(),
+                                    m_unmappedGlobalIndicesInNodelist);
+
+  ObjectManagerBase::FixUpDownMaps( faceList(),
+                                    m_unmappedGlobalIndicesInFacelist);
 }
 
 

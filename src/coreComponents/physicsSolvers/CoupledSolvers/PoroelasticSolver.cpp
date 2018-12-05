@@ -157,8 +157,11 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const& time_n,
   localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
   ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  auto totalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::totalMeanStressString);
-  auto oldTotalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::oldTotalMeanStressString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -195,7 +198,7 @@ void PoroelasticSolver::ReadXML_PostProcess()
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
 }
 
-void PoroelasticSolver::FinalInitialization( ManagedGroup * const problemManager )
+void PoroelasticSolver::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
 {
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
@@ -225,53 +228,66 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
 
 void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
 {
-  SolverBase &
-  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  SolverBase & solidSolver = 
+    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
-  SinglePhaseFlow &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+  SinglePhaseFlow & fluidSolver = 
+    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  
   ElementRegionManager * const elemManager = mesh->getElemManager();
+  
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
-  NumericalMethodsManager const * const
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager const * const numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteElementSpaceManager const * const
-  feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementSpaceManager const * const feSpaceManager =
+    numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
-  ConstitutiveManager * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager =
+    domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  view_rtype<r1_array> X     = nodeManager->getData<r1_array>(nodeManager->viewKeys.referencePosition);
-  view_rtype<r1_array> u     = nodeManager->getData<r1_array>(keys::TotalDisplacement);
-  view_rtype<r1_array> uhat  = nodeManager->getData<r1_array>(keys::IncrementalDisplacement);
+  arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
+  arrayView1d<R1Tensor> const & u = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
+  arrayView1d<R1Tensor> const & uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
-  auto elemsToNodes = elemManager->
-                       ConstructViewAccessor<FixedOneToManyRelation>( CellBlockSubRegion::viewKeyStruct::nodeListString );
+  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex>> const elemsToNodes = 
+    elemManager->ConstructViewAccessor<FixedOneToManyRelation, arrayView2d<localIndex>>( CellBlockSubRegion::viewKeyStruct::nodeListString );
 
-  auto totalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::totalMeanStressString);
-  auto oldTotalMeanStress = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::oldTotalMeanStressString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const oldTotalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
 
-  auto pres = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::pressureString);
-  auto dPres = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::viewKeyStruct::deltaPressureString);
-  auto poro = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::porosityString);
-  auto poroOld = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::oldPorosityString);
-  auto volume    = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
-  auto dVol      = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::pressureString);
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
-  bulkModulus = elemManager->
-                ConstructMaterialViewAccessor< array2d<real64> >( "BulkModulus",
-                                                                  constitutiveManager);
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::deltaPressureString);
 
-  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
-  pvmult = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
-                                                                          constitutiveManager );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::porosityString);
+  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::oldPorosityString);
+  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
+  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> dVol =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
 
-  ElementRegionManager::MaterialViewAccessor<real64> const
-  biotCoefficient = elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const bulkModulus = 
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( "BulkModulus", constitutiveManager);
+
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const pvmult =
+    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString, 
+                                                                                        constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
+    elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
   localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
 
@@ -279,31 +295,29 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
 
-    auto const & numMethodName = elemRegion->getData<string>(keys::numericalMethod);
+    string const & numMethodName = elemRegion->getReference<string>(keys::numericalMethod);
     FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
-      multidimensionalArray::ManagedArray<R1Tensor, 3> const &
-      dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
+      arrayView3d<R1Tensor> const & dNdX = cellBlockSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
 
-      localIndex const numNodesPerElement = elemsToNodes[er][esr].get().size(1);
+      localIndex const numNodesPerElement = elemsToNodes[er][esr].size(1);
       r1_array u_local( numNodesPerElement );
       r1_array uhat_local( numNodesPerElement );
 
       for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
       {
-        arrayView1d<localIndex const> const nodelist = elemsToNodes[er][esr][ei];
-        CopyGlobalToLocal( nodelist, u, uhat, u_local.data(), uhat_local.data(), numNodesPerElement );
+        CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
 
         real64 volumetricStrain = 0.0;
         localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points() ;
         for( localIndex q=0 ; q<numQuadraturePoints; ++q )
         {
           R2Tensor dUdX;
-          CalculateGradient( dUdX, u_local, dNdX[ei][q] );
+          CalculateGradient( dUdX, u_local, dNdX[ei][q], numNodesPerElement );
           volumetricStrain += dUdX.Trace();
         }
         volumetricStrain /= numQuadraturePoints;
@@ -313,13 +327,13 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
                                                  * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
 
         // update element volume
-        arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][ei];
         R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
-        for (localIndex a = 0; a < elemsToNodes[er][esr].get().size(1); ++a)
+        for (localIndex a = 0; a < elemsToNodes[er][esr].size(1); ++a)
         {
-          Xlocal[a] = X[nodeList[a]];
-          Xlocal[a] += u[nodeList[a]] ;
+          Xlocal[a] = X[elemsToNodes[er][esr][ei][a]];
+          Xlocal[a] += u[elemsToNodes[er][esr][ei][a]] ;
         }
+
         dVol[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
       }
     }
