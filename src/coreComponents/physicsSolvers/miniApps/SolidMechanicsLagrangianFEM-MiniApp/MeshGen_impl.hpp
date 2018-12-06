@@ -99,8 +99,11 @@ void meshGen(W VX, T elemToNodes,
           localIndex id = q + 8*tid; 
 
           //constitutiveMap.data()[id] = id;
+#if !defined(USE_RAJA_VIEW) && !defined(USE_GEOSX_ARRAY)
+          constitutiveMap[id] = id;
+#else
           constitutiveMap(tid,q) = id;
-          //constitutiveMap[id] = id;
+#endif
         }
 
         

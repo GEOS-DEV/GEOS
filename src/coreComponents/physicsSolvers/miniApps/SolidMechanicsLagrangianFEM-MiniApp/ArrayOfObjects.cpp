@@ -245,7 +245,6 @@ int main(int argc, char* const argv[])
                                                                           u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                           bulkModulus, detJ, acc, myUpdate, nx, nx, nx);
 
-
 #if defined (USE_CUDA)
       cudaDeviceSynchronize();
 #endif      

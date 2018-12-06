@@ -50,7 +50,7 @@ using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 //Select between raw ptr vs array
 //#define USE_GEOSX_ARRAY
-#define USE_RAJA_VIEW
+//#define USE_RAJA_VIEW
 
 //#define STRUCTURED_GRID
 

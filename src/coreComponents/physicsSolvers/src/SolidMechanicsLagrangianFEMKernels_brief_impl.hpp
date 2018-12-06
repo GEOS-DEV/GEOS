@@ -315,7 +315,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
        //Copy Global to Local
        GlobalToLocal(nodeList, k, 
                      u_local,  uhat_local, iu, iuhat);
-       /*
+
       //Compute Quadrature
       for(localIndex q=0; q<inumQuadraturePoints; ++q)
         {
@@ -326,7 +326,8 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
           //Calculate Gradient
           CalculateGradient(dUdX, u_local, idNdX, k, q, noElem);
           CalculateGradient(dUhatdX, uhat_local, idNdX, k, q, noElem);
-          
+
+
           real64 F[local_dim][local_dim];
           real64 Finv[local_dim][local_dim];
           real64 L[local_dim][local_dim];
@@ -418,12 +419,12 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
 
               TotalStress[i][i] += imeanStress(m);
             }
-                    
-          Integrate(f_local, idetJ(k,q), detF, Finv, TotalStress, idNdX, k, q, noElem); 
-        }//end of quadrature
-       */
-       //AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);
 
+          Integrate(f_local, idetJ(k,q), detF, Finv, TotalStress, idNdX, k, q, noElem); 
+
+        }//end of quadrature
+
+       AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);
 
      });
 }
