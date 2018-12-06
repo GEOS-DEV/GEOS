@@ -152,13 +152,13 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     for( auto verticesIterator = regionPtr->Points.begin() ;
          verticesIterator != regionPtr->Points.end() ; verticesIterator++ )
     {
-      int localIndex = (*verticesIterator)->get_localIndex();
-      int globalIndex = (*verticesIterator)->get_globalIndex();
-      real64 * const pointData = X[localIndex].Data();
+      localIndex local = (*verticesIterator)->get_localIndex();
+      globalIndex global = (*verticesIterator)->get_globalIndex();
+      real64 * const pointData = X[local].Data();
       pointData[0] = (*verticesIterator)->get_coordinates().x;
       pointData[1] = (*verticesIterator)->get_coordinates().y;
       pointData[2] = (*verticesIterator)->get_coordinates().z;
-      nodeManager->m_localToGlobalMap[localIndex] = globalIndex;
+      nodeManager->m_localToGlobalMap[local] = global;
     }
 
     // Iterate on cell types

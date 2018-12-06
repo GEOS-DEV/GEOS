@@ -194,7 +194,9 @@ void DomainPartition::SetupCommunications()
   MPI_Comm cartcomm;
   {
     int reorder = 0;
+    int mpiReturnCode = 
     MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+    GEOS_ERROR_IF( mpiReturnCode != MPI_SUCCESS, "Fail to run MPI_Cart_create and establish communications");
   }
   int rank = -1;
   int nsdof = 3;
