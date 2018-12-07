@@ -5,7 +5,7 @@ BuildType ?= CPU
 HOSTNAME := $(shell hostname)
 
 #OPTIONS
-OPT ?= -DUSE_GEOSX_ARRAY
+#OPT ?= -DUSE_GEOSX_ARRAY
 #OPT ?= -DUSE_RAJA_VIEW
 
 #-----[RAJA and CUDA directories]----
@@ -15,8 +15,8 @@ RAJA_DIR ?= /g/g17/vargas45/Git-Repo/CLEAN_MINI_GEOSX/RAJA/build-gpu
 CHAI_DIR ?= /g/g17/vargas45/Git-Repo/CLEAN_MINI_GEOSX/gpu-chai/build
 UMPIRE_DIR ?= /g/g17/vargas45/Git-Repo/CLEAN_MINI_GEOSX/gpu-chai/src/tpl/umpire/build
 CUDA_DIR ?=/usr/tce/packages/cuda/cuda-9.2.148
-OPT +=-DUSE_GPU
-CXX_UTIL_DIR ?= /g/g17/vargas45/Git-Repo/CLEAN_MINI_GEOSX/GEOSX/src/coreComponents/cxx-utilities #GPU build
+OPT += -DUSE_GPU
+CXX_UTIL_DIR ?= /g/g17/vargas45/Git-Repo/CLEAN_MINI_GEOSX/GEOSX/src/coreComponents/cxx-utilities
 else
 
 RAJA_DIR ?= /g/g17/vargas45/Git-Repo/CLEAN_MINI_GEOSX/RAJA/build-cpu
@@ -52,6 +52,7 @@ host-compilerFlags = '-std=c++14 -fopenmp -O3 -ffast-math -finline-functions -un
 compilerFlags = -std=c++14 -fopenmp -O3 -ffast-math -finline-functions -unroll-agressive -march=native -mavx
 
 else ifeq ($(findstring ray,$(HOSTNAME)),ray)
+host-compiler = /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-coral-2018.08.08/bin/mpic++
 #host-compiler = /usr/tce/packages/xl/xl-beta-2018.06.01/bin/xlC
 #host-compilerFlags = '-std=c++14 -fopenmp -O3 -qinline'
 #compilerFlags = -std=c++14 -fopenmp -O3 -qinline
@@ -78,31 +79,31 @@ linker = $(host-compiler)
 
 #----[device compiler]----
 device-compiler=nvcc
-device-flags   = -g -std=c++14 -Xptxas=-v -lineinfo --expt-extended-lambda --restrict -O3 --expt-relaxed-constexpr
+device-flags   = -g -std=c++14 -Xptxas=-v -lineinfo --expt-extended-lambda --restrict -O3 --expt-relaxed-constexpr -use_fast_math
 device-flags  += -ccbin=$(linker) -Xcompiler $(host-compilerFlags) -x=cu -arch=sm_60
 #======================
 
 #----[Cuda - Compilation]---------
 ifeq ($(BuildType),CUDA)
 
-all: ArrayOfObjects
+all: ArrayOfObjects ObjectOfArrays
 
 #Note order
 ArrayOfObjects:
 	@echo Compiling for CUDA - start
-	$(device-compiler) $(device-flags) $(OPT) $(paths) -g -c -o ArrayOfObjects.o  ArrayOfObjects.cpp
+	$(device-compiler) $(device-flags) $(OPT) $(paths) -g -c -o ArrayOfObjects.o ArrayOfObjects.cpp
 	$(linker) -o ArrayOfObjects ArrayOfObjects.o $(cudaLib) -fopenmp $(rajaLib) $(chaiLib) $(chaiLibLoc) $(cxxLib) $(umpireLib) 
 	@echo Compiling for CUDA - end
 
-#ObjectOfArrays: ObjectOfArrays
-#	@echo Compiling for CUDA - start
-#	$(device-compiler) $(device-flags) $(paths) -g -c -o ObjectOfArrays.o ObjectOfArrays.cpp
-#	$(linker) -o ObjectOfArrays ObjectOfArrays.o $(cudaLib) -fopenmp $(rajaLib)
-#	@echo Compiling for CUDA - end
+ObjectOfArrays:
+	@echo Compiling for CUDA - start
+	$(device-compiler) $(device-flags) $(OPT) $(paths) -g -c -o ObjectOfArrays.o ObjectOfArrays.cpp
+	$(linker) -o ObjectOfArrays ObjectOfArrays.o $(cudaLib) -fopenmp $(rajaLib) $(chaiLib) $(chaiLibLoc) $(cxxLib) $(umpireLib) 
+	@echo Compiling for CUDA - end
 
 else
 #----[CPU - Compilation]---------
-all: ArrayOfObjects
+all: ArrayOfObjects ObjectOfArrays
 
 ArrayOfObjects:
 	@echo Compiling for CPU - start
@@ -110,11 +111,11 @@ ArrayOfObjects:
 	@echo Compiling for CPU - end
 	@echo on $(HOSTNAME)
 
-#ObjectOfArrays: ObjectOfArrays
-#	@echo Compiling for CPU - start
-#	$(host-compiler) $(compilerFlags) $(paths) -g -o ObjectOfArrays ObjectOfArrays.cpp
-#	@echo Compiling for CPU - end
-#	@echo on $(HOSTNAME)
+ObjectOfArrays: 
+	@echo Compiling for CPU - start
+	$(host-compiler) $(compilerFlags) $(OPT) $(paths) -g -o ObjectOfArrays ObjectOfArrays.cpp $(rajaLib) $(chaiLib) $(chaiLibLoc) $(cxxLib) $(umpireLib)
+	@echo Compiling for CPU - end
+	@echo on $(HOSTNAME)
 endif
 #======================
 

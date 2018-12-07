@@ -86,23 +86,78 @@ namespace SolidMechanicsLagrangianFEMKernels{
 ///Computations are carried out in a monothilic kernel.
 ///
 
+#if defined(USE_GEOSX_ARRAY)
 template<typename Pol>
-RAJA_INLINE
-void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
-                          const localIndex * elemsToNodes, geosxData iu_x,
-                          geosxData iu_y, geosxData iu_z,
-                          geosxData iuhat_x,
-                          geosxData iuhat_y, geosxData iuhat_z,
-                          geosxData idNdX_x,
-                          geosxData idNdX_y,geosxData idNdX_z,
-                          localIndex const * iconstitutiveMap, geosxData idevStressData,
-                          geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
-                          const real64 * idetJ, geosxData iacc_x,
-                          geosxData iacc_y, geosxData iacc_z, constUpdate updateState_ptr, 
-                          localIndex nx=2, localIndex ny=2, localIndex nz=2)
+RAJA_INLINE void ObjectOfArraysKernel(localIndex noElem, localIndex * const  elemList,
+                                      real64 dt, ArrayView<localIndex,2,localIndex> elemsToNodes, 
+                                      ArrayView<real64, 1, localIndex> iu_x,
+                                      ArrayView<real64, 1, localIndex> iu_y,
+                                      ArrayView<real64, 1, localIndex> iu_z,
+                                      ArrayView<real64, 1, localIndex> iuhat_x,
+                                      ArrayView<real64, 1, localIndex> iuhat_y,
+                                      ArrayView<real64, 1, localIndex> iuhat_z,
+                                      ArrayView<real64, 3, localIndex> idNdX_x,
+                                      ArrayView<real64, 3, localIndex> idNdX_y,
+                                      ArrayView<real64, 3, localIndex> idNdX_z,
+                                      ArrayView<localIndex,2,localIndex> iconstitutiveMap,
+                                      ArrayView<real64,3,localIndex> idevStressData,
+                                      ArrayView<real64,1,localIndex> imeanStress, real64 ishearModulus, real64 ibulkModulus,
+                                      ArrayView<real64,2,localIndex> idetJ,
+                                      ArrayView<real64, 1, localIndex> iacc_x,
+                                      ArrayView<real64, 1, localIndex> iacc_y, 
+                                      ArrayView<real64, 1, localIndex> iacc_z,
+                                      constUpdate updateState_ptr,
+                                      localIndex nx=2, localIndex ny=2, localIndex nz=2)
+
+#elif defined(USE_RAJA_VIEW)
+template<typename Pol>
+RAJA_INLINE void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList,
+                                      real64 dt, const localIndex * const elemsToNodes,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0> > iu_x,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0> > iu_y,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0> > iu_z,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0> > iuhat_x,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0> > iuhat_y,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0> > iuhat_z,
+                                      RAJA::View<real64, RAJA::Layout<3, localIndex,2> > idNdX_x,
+                                      RAJA::View<real64, RAJA::Layout<3, localIndex,2> > idNdX_y,
+                                      RAJA::View<real64, RAJA::Layout<3, localIndex,2> > idNdX_z,
+                                      RAJA::View<localIndex,RAJA::Layout<2,localIndex,1> > iconstitutiveMap,
+                                      RAJA::View<real64,RAJA::Layout<3,localIndex,2> > idevStressData,
+                                      RAJA::View<real64,RAJA::Layout<1,localIndex,0> > imeanStress, 
+                                      real64 ishearModulus, real64 ibulkModulus,
+                                      RAJA::View<real64,RAJA::Layout<2,localIndex,1> > idetJ,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0 > > iacc_x,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0 > > iacc_y,
+                                      RAJA::View<real64, RAJA::Layout<1, localIndex,0 > > iacc_z,
+                                      constUpdate updateState_ptr,
+                                      localIndex nx=2, localIndex ny=2, localIndex nz=2)
+
+#else //Using Raw pointers
+template<typename Pol>
+RAJA_INLINE void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+                                      const localIndex * const elemsToNodes,
+                                      geosxData iu_x,
+                                      geosxData iu_y,
+                                      geosxData iu_z,
+                                      geosxData iuhat_x,
+                                      geosxData iuhat_y,
+                                      geosxData iuhat_z,
+                                      geosxData idNdX_x,
+                                      geosxData idNdX_y,
+                                      geosxData idNdX_z,
+                                      localIndex const * iconstitutiveMap, geosxData idevStressData,
+                                      geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
+                                      const real64 * idetJ, 
+                                      geosxData iacc_x, 
+                                      geosxData iacc_y, 
+                                      geosxData iacc_z, 
+                                      constUpdate updateState_ptr,
+                                      localIndex nx=2, localIndex ny=2, localIndex nz=2)
+#endif
 {
 
-  /*
+
   geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
       
       real64 uhat_local_x[NODESPERELEM];
@@ -122,15 +177,21 @@ void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
        localIndex nodeList[NODESPERELEM];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const localIndex *nodeList = (&elemsToNodes[NODESPERELEM*k]);
-#endif       
+
+#if defined(USE_GEOSX_ARRAY)
+      const localIndex *nodeList = (&elemsToNodes.data()[NODESPERELEM*k]);
+#else      
+      const localIndex *nodeList = (&elemsToNodes[NODESPERELEM*k]);
+
+#endif//GEOSX_ARRAY_CHECK
+#endif//STRUCTURED_GRID_CHECK
       
        //Copy Global To Local
        GlobalToLocal(nodeList, k, 
                      u_local_x, u_local_y, u_local_z,
                      uhat_local_x, uhat_local_y, uhat_local_z,
                      iu_x, iu_y, iu_z, iuhat_x, iuhat_y, iuhat_z);
-              
+
       //Compute Quadrature
       for(localIndex q=0; q<NUMQUADPTS; ++q)
         {
@@ -230,18 +291,18 @@ void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
 
           for(localIndex i=0; i<LOCAL_DIM; ++i)
             {
-              TotalStress[i][i] += imeanStress[m];
+              TotalStress[i][i] += imeanStress(m);
             }
 
           Integrate(f_local_x, f_local_y, f_local_z,
                     idetJ(k,q), detF, Finv, TotalStress, idNdX_x, idNdX_y, idNdX_z, k, q, noElem);
+
         }//end of quadrature
 
       //Atomic policy
       AddLocalToGlobal<atomicPol>(nodeList,f_local_x, f_local_y, f_local_z, iacc_x, iacc_y, iacc_z);
 
     });
-  */
 
 }
       
@@ -253,7 +314,7 @@ void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
 
 #if defined(USE_GEOSX_ARRAY)
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem,  ArrayView<localIndex, 1, localIndex> elemList,
+RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, localIndex * const  elemList,
                                       real64 dt, ArrayView<localIndex,2,localIndex> elemsToNodes, 
                                       ArrayView<real64, 2, localIndex> iu,
                                       ArrayView<real64, 2, localIndex> iuhat,
@@ -267,7 +328,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem,  ArrayView<localIndex, 
 
 #elif defined(USE_RAJA_VIEW)
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList,
+RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, localIndex * const  elemList,
                                       real64 dt, const localIndex * const elemsToNodes,
                                       RAJA::View<real64, RAJA::Layout<2, localIndex,1> > iu,
                                       RAJA::View<real64, RAJA::Layout<2, localIndex,1> > iuhat,
@@ -281,7 +342,8 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList,
 
 #else //Using Raw pointers
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, localIndex * const  elemList,
+                                      real64 dt,
                                       const localIndex * const elemsToNodes, geosxData iu,
                                       geosxData iuhat, geosxData idNdX,
                                       localIndex const * iconstitutiveMap, geosxData idevStressData,
@@ -291,8 +353,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
 #endif
 {
 
-  //geosx::forall_in_set<Pol>(elemList.data(), noElem, GEOSX_LAMBDA (globalIndex k) {
-  geosx::forall_in_range<Pol>(0, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
 
       real64 uhat_local[LOCAL_DIM*NODESPERELEM];
       real64 u_local[LOCAL_DIM*NODESPERELEM];
@@ -308,7 +369,6 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
 #else      
       const localIndex *nodeList = (&elemsToNodes[NODESPERELEM*k]);
 #endif//GEOSX_ARRAY_CHECK
-
 #endif//STRUCTURED_GRID_CHECK
 
 

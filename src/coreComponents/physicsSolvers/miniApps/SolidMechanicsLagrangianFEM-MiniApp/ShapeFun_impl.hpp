@@ -507,9 +507,10 @@ RAJA_INLINE void make_dNdX(T dNdX, U X,  W elemsToNodes,
 
 }
 
+template<typename T, typename U, typename W>
 RAJA_HOST_DEVICE
-RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z,
-                           const real64 * X, const localIndex * elemsToNodes,
+RAJA_INLINE void make_dNdX(T dNdX_x, T dNdX_y,  T dNdX_z,
+                           U X, const W elemsToNodes,
                            localIndex NoElem, localIndex nQpts, localIndex nDofs)
 {
 
@@ -527,10 +528,22 @@ RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z
     //Copy local dofs
     for(localIndex a=0; a<nDofs; ++a)
       {
+#if defined(USE_GEOSX_ARRAY)
+        localIndex id = elemsToNodes.data()[a + NODESPERELEM*k];
+        x_loc[a] = X.data()[0 + LOCAL_DIM * id];
+        y_loc[a] = X.data()[1 + LOCAL_DIM * id];
+        z_loc[a] = X.data()[2 + LOCAL_DIM * id];
+#elif defined(USE_RAJA_VIEW)
+        localIndex id = elemsToNodes[a + NODESPERELEM*k];
+        x_loc[a] = X(id, 0);
+        y_loc[a] = X(id, 1);
+        z_loc[a] = X(id, 2);
+#else
         localIndex id = elemsToNodes[a + NODESPERELEM*k];
         x_loc[a] = X[0 + LOCAL_DIM * id];
         y_loc[a] = X[1 + LOCAL_DIM * id];
         z_loc[a] = X[2 + LOCAL_DIM * id]; 
+#endif
       }
 
     //loop over quadrature points
@@ -592,12 +605,24 @@ RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z
           }
           
           localIndex id = q + NUMQUADPTS*(a + NODESPERELEM*k);
+
+#if defined(USE_GEOSX_ARRAY)          
+          dNdX_x.data()[id] = dX[0];
+          dNdX_y.data()[id] = dX[1];
+          dNdX_z.data()[id] = dX[2];
+          
+#elif defined(USE_RAJA_VIEW)
+          dNdX_x(k, a, q) = dX[0];
+          dNdX_y(k, a, q) = dX[1];
+          dNdX_z(k, a, q) = dX[2];
+#else
           dNdX_x[id] = dX[0];
           dNdX_y[id] = dX[1];
           dNdX_z[id] = dX[2];
-        }
+#endif
+      }
         
-      }//loop over quadrature points
+  }//loop over quadrature points
         
   } //loop over element list 
 

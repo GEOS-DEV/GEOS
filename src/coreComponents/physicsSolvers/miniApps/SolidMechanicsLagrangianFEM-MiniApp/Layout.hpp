@@ -118,6 +118,19 @@ using atomicPol = RAJA::atomic::loop_atomic;
 #define iu(k,i) iu[i + LOCAL_DIM*k]
 #define iuhat(k,i) iuhat[i + LOCAL_DIM*k]
 #define iacc(k, i) iacc[i + LOCAL_DIM*k]
+
+#define iu_x(i) iu_x[i]
+#define iu_y(i) iu_y[i]
+#define iu_z(i) iu_z[i]
+
+#define iuhat_x(i) iuhat_x[i]
+#define iuhat_y(i) iuhat_y[i]
+#define iuhat_z(i) iuhat_z[i]
+
+#define iacc_x(i) iacc_x[i]
+#define iacc_y(i) iacc_y[i]
+#define iacc_z(i) iacc_z[i]
+
 #define imeanStress(m) imeanStress[m]
 
 

@@ -40,7 +40,6 @@ int main(int argc, char* const argv[])
   localIndex Niter   =  atoi(argv[2]);
 
   std::cout<<"GEOSX mini-app: Array of Objects data structures"<<std::endl;
-  printParameters();
 
   real64 dt = 0.125; //step size
   const localIndex nx = Kx+1; //Number of nodes in a cartesian dimension
@@ -49,16 +48,7 @@ int main(int argc, char* const argv[])
 
   //
   //Generate an element list
-  //
-#if defined(USE_GEOSX_ARRAY)
-  LvArray::Array<localIndex, 1, localIndex> _elementList(NoElem);
-  LvArray::ArrayView<localIndex, 1, localIndex>  & elementList = _elementList;
-
-#elif defined(USE_RAJA_VIEW)
   localIndex * const elementList = memoryManager::allocate<localIndex>(NoElem, dataAllocated);
-#else
-  localIndex * const elementList = memoryManager::allocate<localIndex>(NoElem, dataAllocated);
-#endif
 
   for(localIndex i=0; i<NoElem; ++i) elementList[i] = i;
 

@@ -177,24 +177,25 @@ RAJA_INLINE void GlobalToLocal(const localIndex nodeList[8], localIndex k,
 }
 
 //Copy Global to Local;
+template<typename T>
 RAJA_HOST_DEVICE
 RAJA_INLINE void GlobalToLocal(const localIndex nodeList[8], localIndex k, 
                                real64 u_local_x[8], real64 u_local_y[8],real64 u_local_z[8],
                                real64 uhat_local_x[8], real64 uhat_local_y[8], real64 uhat_local_z[8],
-                               geosxData iu_x, geosxData iu_y, geosxData iu_z,
-                               geosxData iuhat_x, geosxData iuhat_y, geosxData iuhat_z)
+                               T iu_x, T iu_y, T iu_z,
+                               T iuhat_x, T iuhat_y, T iuhat_z)
 {  
   for(localIndex a=0; a<NODESPERELEM; ++a)
     {
       localIndex id = nodeList[a];
 
-      u_local_x[a] = iu_x[id];
-      u_local_y[a] = iu_y[id];
-      u_local_z[a] = iu_z[id];
+      u_local_x[a] = iu_x(id);
+      u_local_y[a] = iu_y(id);
+      u_local_z[a] = iu_z(id);
       
-      uhat_local_x[a] = iuhat_x[id];
-      uhat_local_y[a] = iuhat_y[id];
-      uhat_local_z[a] = iuhat_z[id];    
+      uhat_local_x[a] = iuhat_x(id);
+      uhat_local_y[a] = iuhat_y(id);
+      uhat_local_z[a] = iuhat_z(id);
     }    
 }
 
@@ -406,9 +407,9 @@ RAJA_INLINE void AddLocalToGlobal(T nodeList,
   for(localIndex a=0; a<NODESPERELEM; ++a)
     {          
       localIndex id = nodeList[a];
-      RAJA::atomic::atomicAdd<atomicPol>(&iacc_x[id],f_local_x[a]);
-      RAJA::atomic::atomicAdd<atomicPol>(&iacc_y[id],f_local_y[a]);
-      RAJA::atomic::atomicAdd<atomicPol>(&iacc_z[id],f_local_z[a]);
+      RAJA::atomic::atomicAdd<atomicPol>(&iacc_x(id),f_local_x[a]);
+      RAJA::atomic::atomicAdd<atomicPol>(&iacc_y(id),f_local_y[a]);
+      RAJA::atomic::atomicAdd<atomicPol>(&iacc_z(id),f_local_z[a]);
     }
 }
 
