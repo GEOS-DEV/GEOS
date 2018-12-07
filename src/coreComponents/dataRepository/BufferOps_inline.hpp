@@ -405,8 +405,7 @@ localIndex Pack( char *& buffer,
                  arraySlice1d<globalIndex const> const & localToGlobal )
 {
   const localIndex length = integer_conversion<localIndex>(var.size());
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
-
+  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length+unmappedGlobalIndices.size() );
   for( typename set<localIndex>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobal[*i]);
@@ -812,8 +811,8 @@ Unpack( char const *& buffer,
     if( sizeOfIndicesPassedIn > 0 )
     {
       GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                     <<li<<" for localIndex "<<li<<" on this rank");
+                     "global index "<<gi<<" unpacked from buffer has lookup "
+                     <<globalToLocalMap.at(gi)<<" for localIndex "<<li<<" on this rank");
     }
     else
     {
@@ -963,8 +962,8 @@ Unpack( char const *& buffer,
     if( sizeOfIndicesPassedIn > 0 )
     {
       GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                     <<li<<" for localIndex "<<li<<" on this rank");
+                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                     <<globalToLocalMap.at(gi)<<" for localIndex "<<li<<" on this rank");
     }
     else
     {
