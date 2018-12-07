@@ -63,16 +63,16 @@ RAJA_INLINE void generateP(P_Wrapper &P, localIndex nQpts, localIndex nDofs)
 template<typename T, typename U>
 RAJA_HOST_DEVICE //x,y,z, format
 RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
-                           U dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim],
+                           U dNdX[NUMQUADPTS][NODESPERELEM][LOCAL_DIM],
                            P_Wrapper P, 
                            localIndex nQpts, localIndex nDofs)
 {
     real64 xyz_loc[24];
   for(localIndex i=0; i<nDofs; ++i)
     {
-      xyz_loc[0 + local_dim*i] = X[0 + local_dim * nodeList[i]];
-      xyz_loc[1 + local_dim*i] = X[1 + local_dim * nodeList[i]];
-      xyz_loc[2 + local_dim*i] = X[2 + local_dim * nodeList[i]];            
+      xyz_loc[0 + LOCAL_DIM*i] = X[0 + LOCAL_DIM * nodeList[i]];
+      xyz_loc[1 + LOCAL_DIM*i] = X[1 + LOCAL_DIM * nodeList[i]];
+      xyz_loc[2 + LOCAL_DIM*i] = X[2 + LOCAL_DIM * nodeList[i]];            
     }
     
   //loop over quadrature points
@@ -85,16 +85,16 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
       //Evaluate point across all basis functions
             
       //--------[Form the Jacobian]---------------------
-      real64 J[local_dim][local_dim];
-      real64 Jinv[local_dim][local_dim];
+      real64 J[LOCAL_DIM][LOCAL_DIM];
+      real64 Jinv[LOCAL_DIM][LOCAL_DIM];
       
       //Form Jacobian Matrix
       for(int row=0; row<3; ++row){
         real64 dot[3] = {0.0,0.0,0.0};
         for(int col=0; col<8; ++col){
-          dot[0] += P(a,row,col)*xyz_loc[0 + local_dim*col];
-          dot[1] += P(a,row,col)*xyz_loc[1 + local_dim*col];
-          dot[2] += P(a,row,col)*xyz_loc[2 + local_dim*col];
+          dot[0] += P(a,row,col)*xyz_loc[0 + LOCAL_DIM*col];
+          dot[1] += P(a,row,col)*xyz_loc[1 + LOCAL_DIM*col];
+          dot[2] += P(a,row,col)*xyz_loc[2 + LOCAL_DIM*col];
         }
         J[row][0] = dot[0];
         J[row][1] = dot[1];
@@ -130,7 +130,7 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
 template<typename T, typename U>
 RAJA_HOST_DEVICE //x,y,z, format
 RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
-                           U dNdX[inumQuadraturePoints][inumNodesPerElement][local_dim], localIndex nQpts, localIndex nDofs)
+                           U dNdX[NUMQUADPTS][NODESPERELEM][LOCAL_DIM], localIndex nQpts, localIndex nDofs)
 {
   
   localIndex sign[2] = {-1,1};
@@ -141,9 +141,9 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
   real64 xyz_loc[24];
   for(localIndex i=0; i<nDofs; ++i)
     {
-      xyz_loc[0 + local_dim*i] = X[0 + local_dim * nodeList[i]];
-      xyz_loc[1 + local_dim*i] = X[1 + local_dim * nodeList[i]];
-      xyz_loc[2 + local_dim*i] = X[2 + local_dim * nodeList[i]];            
+      xyz_loc[0 + LOCAL_DIM*i] = X[0 + LOCAL_DIM * nodeList[i]];
+      xyz_loc[1 + LOCAL_DIM*i] = X[1 + LOCAL_DIM * nodeList[i]];
+      xyz_loc[2 + LOCAL_DIM*i] = X[2 + LOCAL_DIM * nodeList[i]];            
     }
     
   //loop over quadrature points
@@ -176,16 +176,16 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
         }
       
       //--------[Form the Jacobian]---------------------
-      real64 J[local_dim][local_dim];
-      real64 Jinv[local_dim][local_dim];
+      real64 J[LOCAL_DIM][LOCAL_DIM];
+      real64 Jinv[LOCAL_DIM][LOCAL_DIM];
       
       //Form Jacobian Matrix
       for(int row=0; row<3; ++row){
         real64 dot[3] = {0.0,0.0,0.0};
         for(int col=0; col<8; ++col){
-          dot[0] += P[row][col]*xyz_loc[0 + local_dim*col];
-          dot[1] += P[row][col]*xyz_loc[1 + local_dim*col];
-          dot[2] += P[row][col]*xyz_loc[2 + local_dim*col];
+          dot[0] += P[row][col]*xyz_loc[0 + LOCAL_DIM*col];
+          dot[1] += P[row][col]*xyz_loc[1 + LOCAL_DIM*col];
+          dot[2] += P[row][col]*xyz_loc[2 + LOCAL_DIM*col];
         }
         J[row][0] = dot[0];
         J[row][1] = dot[1];
@@ -222,9 +222,9 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
 template<typename T, typename U>
 RAJA_HOST_DEVICE
 RAJA_INLINE void make_dNdX(T nodeList, const real64 * X, 
-                           U dNdX_x[inumQuadraturePoints][inumNodesPerElement],
-                           U dNdX_y[inumQuadraturePoints][inumNodesPerElement],
-                           U dNdX_z[inumQuadraturePoints][inumNodesPerElement],
+                           U dNdX_x[NUMQUADPTS][NODESPERELEM],
+                           U dNdX_y[NUMQUADPTS][NODESPERELEM],
+                           U dNdX_z[NUMQUADPTS][NODESPERELEM],
                            localIndex nQpts, localIndex nDofs)
 {
 
@@ -239,9 +239,9 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
 
   for(localIndex i=0; i<nDofs; ++i)
     {
-      x_loc[i]  = X[0 + local_dim * nodeList[i]];
-      y_loc[i]  = X[1 + local_dim * nodeList[i]];
-      z_loc[i]  = X[2 + local_dim * nodeList[i]];      
+      x_loc[i]  = X[0 + LOCAL_DIM * nodeList[i]];
+      y_loc[i]  = X[1 + LOCAL_DIM * nodeList[i]];
+      z_loc[i]  = X[2 + LOCAL_DIM * nodeList[i]];      
     }
   
   //loop over quadrature points
@@ -274,8 +274,8 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
         }
       
       //--------[Form the inverse of the Jacobian]---------
-      real64 J[local_dim][local_dim];
-      real64 Jinv[local_dim][local_dim];
+      real64 J[LOCAL_DIM][LOCAL_DIM];
+      real64 Jinv[LOCAL_DIM][LOCAL_DIM];
       
       //Form Jacobian Matrix
       for(int row=0; row<3; ++row){
@@ -317,9 +317,9 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
 template<typename T, typename U>
 RAJA_HOST_DEVICE
 RAJA_INLINE void make_dNdX(T nodeList, const real64 * X, 
-                           U dNdX_x[inumQuadraturePoints][inumNodesPerElement],
-                           U dNdX_y[inumQuadraturePoints][inumNodesPerElement],
-                           U dNdX_z[inumQuadraturePoints][inumNodesPerElement],
+                           U dNdX_x[NUMQUADPTS][NODESPERELEM],
+                           U dNdX_y[NUMQUADPTS][NODESPERELEM],
+                           U dNdX_z[NUMQUADPTS][NODESPERELEM],
                            P_Wrapper P,
                            localIndex nQpts, localIndex nDofs)
 {
@@ -330,9 +330,9 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
 
   for(localIndex i=0; i<nDofs; ++i)
     {
-      x_loc[i]  = X[0 + local_dim * nodeList[i]];
-      y_loc[i]  = X[1 + local_dim * nodeList[i]];
-      z_loc[i]  = X[2 + local_dim * nodeList[i]];      
+      x_loc[i]  = X[0 + LOCAL_DIM * nodeList[i]];
+      y_loc[i]  = X[1 + LOCAL_DIM * nodeList[i]];
+      z_loc[i]  = X[2 + LOCAL_DIM * nodeList[i]];      
     }
   
   //loop over quadrature points
@@ -344,8 +344,8 @@ RAJA_INLINE void make_dNdX(T nodeList, const real64 * X,
       //Evaluate point across all basis functions
       
       //--------[Form the inverse of the Jacobian]---------
-      real64 J[local_dim][local_dim];
-      real64 Jinv[local_dim][local_dim];
+      real64 J[LOCAL_DIM][LOCAL_DIM];
+      real64 Jinv[LOCAL_DIM][LOCAL_DIM];
       
       //Form Jacobian Matrix
       for(int row=0; row<3; ++row){
@@ -405,20 +405,20 @@ RAJA_INLINE void make_dNdX(T dNdX, U X,  W elemsToNodes,
     for(localIndex a=0; a<nDofs; ++a)
       {
 #if defined(USE_GEOSX_ARRAY)
-        localIndex id = elemsToNodes.data()[a + inumNodesPerElement*k];
-        x_loc[a] = X.data()[0 + local_dim * id];
-        y_loc[a] = X.data()[1 + local_dim * id];
-        z_loc[a] = X.data()[2 + local_dim * id];
+        localIndex id = elemsToNodes.data()[a + NODESPERELEM*k];
+        x_loc[a] = X.data()[0 + LOCAL_DIM * id];
+        y_loc[a] = X.data()[1 + LOCAL_DIM * id];
+        z_loc[a] = X.data()[2 + LOCAL_DIM * id];
 #elif defined(USE_RAJA_VIEW)
-        localIndex id = elemsToNodes[a + inumNodesPerElement*k];
+        localIndex id = elemsToNodes[a + NODESPERELEM*k];
         x_loc[a] = X(id, 0);
         y_loc[a] = X(id, 1);
         z_loc[a] = X(id, 2);
 #else
-        localIndex id = elemsToNodes[a + inumNodesPerElement*k];
-        x_loc[a] = X[0 + local_dim * id];
-        y_loc[a] = X[1 + local_dim * id];
-        z_loc[a] = X[2 + local_dim * id]; 
+        localIndex id = elemsToNodes[a + NODESPERELEM*k];
+        x_loc[a] = X[0 + LOCAL_DIM * id];
+        y_loc[a] = X[1 + LOCAL_DIM * id];
+        z_loc[a] = X[2 + LOCAL_DIM * id]; 
 #endif
       }
 
@@ -452,8 +452,8 @@ RAJA_INLINE void make_dNdX(T dNdX, U X,  W elemsToNodes,
           }
 
         //--------[Form the inverse of the Jacobian]---------
-        real64 J[local_dim][local_dim];
-        real64 Jinv[local_dim][local_dim];
+        real64 J[LOCAL_DIM][LOCAL_DIM];
+        real64 Jinv[LOCAL_DIM][LOCAL_DIM];
 
         //Form Jacobian Matrix
         for(int row=0; row<3; ++row){
@@ -482,21 +482,21 @@ RAJA_INLINE void make_dNdX(T dNdX, U X,  W elemsToNodes,
             }
           }
           
-          localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+          localIndex id = q + NUMQUADPTS*(a + NODESPERELEM*k);
 
 #if defined(USE_GEOSX_ARRAY)          
-          dNdX.data()[0 + local_dim*id] = dX[0];
-          dNdX.data()[1 + local_dim*id] = dX[1];
-          dNdX.data()[2 + local_dim*id] = dX[2];
+          dNdX.data()[0 + LOCAL_DIM*id] = dX[0];
+          dNdX.data()[1 + LOCAL_DIM*id] = dX[1];
+          dNdX.data()[2 + LOCAL_DIM*id] = dX[2];
 
 #elif defined(USE_RAJA_VIEW)
           dNdX(k, a, q, 0) = dX[0];
           dNdX(k, a, q, 1) = dX[1];
           dNdX(k, a, q, 2) = dX[2];
 #else
-          dNdX[0 + local_dim*id] = dX[0];
-          dNdX[1 + local_dim*id] = dX[1];
-          dNdX[2 + local_dim*id] = dX[2];
+          dNdX[0 + LOCAL_DIM*id] = dX[0];
+          dNdX[1 + LOCAL_DIM*id] = dX[1];
+          dNdX[2 + LOCAL_DIM*id] = dX[2];
 #endif
         }
         
@@ -527,10 +527,10 @@ RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z
     //Copy local dofs
     for(localIndex a=0; a<nDofs; ++a)
       {
-        localIndex id = elemsToNodes[a + inumNodesPerElement*k];
-        x_loc[a] = X[0 + local_dim * id];
-        y_loc[a] = X[1 + local_dim * id];
-        z_loc[a] = X[2 + local_dim * id]; 
+        localIndex id = elemsToNodes[a + NODESPERELEM*k];
+        x_loc[a] = X[0 + LOCAL_DIM * id];
+        y_loc[a] = X[1 + LOCAL_DIM * id];
+        z_loc[a] = X[2 + LOCAL_DIM * id]; 
       }
 
     //loop over quadrature points
@@ -561,8 +561,8 @@ RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z
           }
 
         //--------[Form the inverse of the Jacobian]---------
-        real64 J[local_dim][local_dim];
-        real64 Jinv[local_dim][local_dim];
+        real64 J[LOCAL_DIM][LOCAL_DIM];
+        real64 Jinv[LOCAL_DIM][LOCAL_DIM];
 
         //Form Jacobian Matrix
         for(int row=0; row<3; ++row){
@@ -591,7 +591,7 @@ RAJA_INLINE void make_dNdX(geosxData dNdX_x, geosxData dNdX_y,  geosxData dNdX_z
             }
           }
           
-          localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+          localIndex id = q + NUMQUADPTS*(a + NODESPERELEM*k);
           dNdX_x[id] = dX[0];
           dNdX_y[id] = dX[1];
           dNdX_z[id] = dX[2];

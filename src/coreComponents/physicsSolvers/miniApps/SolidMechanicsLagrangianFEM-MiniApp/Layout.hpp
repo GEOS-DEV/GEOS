@@ -29,10 +29,10 @@
 #include "miniDataTypes.hpp"
 
 //compile time constants
-#define local_dim 3
-#define inumQuadraturePoints 8
-#define inumNodesPerElement 8
-#define localMatSz 9
+#define LOCAL_DIM 3
+#define NUMQUADPTS 8
+#define NODESPERELEM 8
+#define LOCALMATSZ 9
 
 //define constants
 //CPU friendly
@@ -115,9 +115,9 @@ using atomicPol = RAJA::atomic::loop_atomic;
 
 #if !defined(USE_GEOSX_ARRAY) && !defined(USE_RAJA_VIEW)
 
-#define iu(k,i) iu[i + local_dim*k]
-#define iuhat(k,i) iuhat[i + local_dim*k]
-#define iacc(k, i) iacc[i + local_dim*k]
+#define iu(k,i) iu[i + LOCAL_DIM*k]
+#define iuhat(k,i) iuhat[i + LOCAL_DIM*k]
+#define iacc(k, i) iacc[i + LOCAL_DIM*k]
 #define imeanStress(m) imeanStress[m]
 
 
@@ -129,31 +129,31 @@ using atomicPol = RAJA::atomic::loop_atomic;
 #define detF_ptr(k, q) detF_ptr[k + noElem*q]
 #define Finv_ptr(k, q, r, c) Finv_ptr[k + noElem*(c + 3*(r + 3*q))]
 #else
-#define Dadt_ptr(k, q, r, c) Dadt_ptr[c + 3*(r + 3*(q + inumQuadraturePoints*k))]
-#define Rot_ptr(k, q, r, c) Rot_ptr[c + 3*(r + 3*(q + inumQuadraturePoints*k))]
+#define Dadt_ptr(k, q, r, c) Dadt_ptr[c + 3*(r + 3*(q + NUMQUADPTS*k))]
+#define Rot_ptr(k, q, r, c) Rot_ptr[c + 3*(r + 3*(q + NUMQUADPTS*k))]
 
-#define detF_ptr(k, q) detF_ptr[q + inumQuadraturePoints*k]
-#define Finv_ptr(k, q, r, c) Finv_ptr[c + 3*(r + 3*(q + inumQuadraturePoints*k))]
+#define detF_ptr(k, q) detF_ptr[q + NUMQUADPTS*k]
+#define Finv_ptr(k, q, r, c) Finv_ptr[c + 3*(r + 3*(q + NUMQUADPTS*k))]
 #endif
 
 
 #if defined(SHAPE_FUN_FAST_INDEX_ELEM)
-#define idNdX_x(k,q,a) idNdX_x[k + noElem*(a + inumNodesPerElement*q)]
-#define idNdX_y(k,q,a) idNdX_y[k + noElem*(a + inumNodesPerElement*q)]
-#define idNdX_z(k,q,a) idNdX_z[k + noElem*(a + inumNodesPerElement*q)]
-#define idNdX(k,q,a,i) idNdX[k + noElem*(i + local_dim*(a + inumNodesPerElement*q))]
+#define idNdX_x(k,q,a) idNdX_x[k + noElem*(a + NODESPERELEM*q)]
+#define idNdX_y(k,q,a) idNdX_y[k + noElem*(a + NODESPERELEM*q)]
+#define idNdX_z(k,q,a) idNdX_z[k + noElem*(a + NODESPERELEM*q)]
+#define idNdX(k,q,a,i) idNdX[k + noElem*(i + LOCAL_DIM*(a + NODESPERELEM*q))]
 #else
-#define idNdX_x(k,q,a) idNdX_x[a + inumNodesPerElement*(q + inumQuadraturePoints*k)]
-#define idNdX_y(k,q,a) idNdX_y[a + inumNodesPerElement*(q + inumQuadraturePoints*k)]
-#define idNdX_z(k,q,a) idNdX_z[a + inumNodesPerElement*(q + inumQuadraturePoints*k)]
-#define idNdX(k,q,a,i) idNdX[i + local_dim*(a + inumNodesPerElement*(q + inumQuadraturePoints*k))]
+#define idNdX_x(k,q,a) idNdX_x[a + NODESPERELEM*(q + NUMQUADPTS*k)]
+#define idNdX_y(k,q,a) idNdX_y[a + NODESPERELEM*(q + NUMQUADPTS*k)]
+#define idNdX_z(k,q,a) idNdX_z[a + NODESPERELEM*(q + NUMQUADPTS*k)]
+#define idNdX(k,q,a,i) idNdX[i + LOCAL_DIM*(a + NODESPERELEM*(q + NUMQUADPTS*k))]
 #endif
 
 
 #if defined(STRESS_FUN_FAST_INDEX_ELEM)
 #define idevStressData(k,q,i) idevStressData[k + noElem*(i + 6*q)]
 #else
-#define idevStressData(k,q,i) idevStressData[i + 6*(q + inumQuadraturePoints*k)]
+#define idevStressData(k,q,i) idevStressData[i + 6*(q + NUMQUADPTS*k)]
 #endif
 
 #if defined(INVERT_REST_FAST_INDEX_ELEM)
@@ -161,9 +161,9 @@ using atomicPol = RAJA::atomic::loop_atomic;
 #define iconstitutiveMap(k,q) iconstitutiveMap[k + q*noElem]
 #define idetJ(k,q) idetJ[k + q*noElem]
 #else
-//#define imeanStress(k,q) imeanStress[q + inumQuadraturePoints*k]
-#define iconstitutiveMap(k,q) iconstitutiveMap[q + inumQuadraturePoints*k]
-#define idetJ(k,q) idetJ[q + inumQuadraturePoints*k]
+//#define imeanStress(k,q) imeanStress[q + NUMQUADPTS*k]
+#define iconstitutiveMap(k,q) iconstitutiveMap[q + NUMQUADPTS*k]
+#define idetJ(k,q) idetJ[q + NUMQUADPTS*k]
 #endif
 
 #endif
