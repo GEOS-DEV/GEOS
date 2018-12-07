@@ -826,7 +826,10 @@ Unpack( char const *& buffer,
                                    relatedObjectGlobalToLocalMap,
                                    clearFlag );
 
-    unmappedGlobalIndices[li].insert( unmappedIndices.begin(),unmappedIndices.end() );
+    if( !unmappedIndices.empty() )
+    {
+      unmappedGlobalIndices[li].insert( unmappedIndices.begin(),unmappedIndices.end() );
+    }
   }
   return sizeOfUnpackedChars;
 }
