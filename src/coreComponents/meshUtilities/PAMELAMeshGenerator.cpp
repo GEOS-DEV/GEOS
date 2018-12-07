@@ -140,15 +140,18 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     for( auto verticesIterator = regionPtr->Points.begin() ;
          verticesIterator != regionPtr->Points.end() ; verticesIterator++ )
     {
-      real64 * const pointData = X[(*verticesIterator)->get_globalIndex()].Data();
+      real64 * const pointData = X[(*verticesIterator)->get_localIndex()].Data();
+      localIndex vertexLocalIndex = (*verticesIterator)->get_localIndex();
+      globalIndex vertexGlobalIndex = (*verticesIterator)->get_globalIndex();
       pointData[0] = (*verticesIterator)->get_coordinates().x;
       pointData[1] = (*verticesIterator)->get_coordinates().y;
       pointData[2] = (*verticesIterator)->get_coordinates().z;
+      nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
     }
 
     // Iterate on cell types
     for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
-         cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
+        cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
     {
       // Check if there is cell of this type
       if( cellBlockIterator->second->SubCollection.size_owned() > 0 )
@@ -172,28 +175,60 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
 
           // Iterate on cells
           for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
+              cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
+              cellItr++ )
+          {
+            localIndex cellLocalIndex = (*cellItr)->get_localIndex();
+            globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
+            auto cornerList = (*cellItr)->get_vertexList();
+
+            cellToVertex[cellLocalIndex][0] =
+              cornerList[0]->get_localIndex();
+            cellToVertex[cellLocalIndex][1] =
+              cornerList[1]->get_localIndex();
+            cellToVertex[cellLocalIndex][2] =
+              cornerList[3]->get_localIndex();
+            cellToVertex[cellLocalIndex][3] =
+              cornerList[2]->get_localIndex();
+            cellToVertex[cellLocalIndex][4] =
+              cornerList[4]->get_localIndex();
+            cellToVertex[cellLocalIndex][5] =
+              cornerList[5]->get_localIndex();
+            cellToVertex[cellLocalIndex][6] =
+              cornerList[7]->get_localIndex();
+            cellToVertex[cellLocalIndex][7] =
+              cornerList[6]->get_localIndex();
+
+            cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          }
+        }
+        else if( cellBlockName == "TETRA" )
+        {
+          cellBlock -> SetElementType("C3D4");
+          auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+          auto & cellToVertex = cellBlock->nodeList();
+          cellBlock->resize( nbCells );
+          cellToVertex.resize( nbCells, 4 );
+
+          // Iterate on cells
+          for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
                cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
                cellItr++ )
           {
-            auto cellIndex = (*cellItr)->get_globalIndex();
+            localIndex cellLocalIndex = (*cellItr)->get_localIndex();
+            globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
             auto cornerList = (*cellItr)->get_vertexList();
 
-            cellToVertex[cellIndex][0] =
-              cornerList[0]->get_globalIndex();
-            cellToVertex[cellIndex][1] =
-              cornerList[1]->get_globalIndex();
-            cellToVertex[cellIndex][2] =
-              cornerList[3]->get_globalIndex();
-            cellToVertex[cellIndex][3] =
-              cornerList[2]->get_globalIndex();
-            cellToVertex[cellIndex][4] =
-              cornerList[4]->get_globalIndex();
-            cellToVertex[cellIndex][5] =
-              cornerList[5]->get_globalIndex();
-            cellToVertex[cellIndex][6] =
-              cornerList[7]->get_globalIndex();
-            cellToVertex[cellIndex][7] =
-              cornerList[6]->get_globalIndex();
+            cellToVertex[cellLocalIndex][0] =
+              cornerList[0]->get_localIndex();
+            cellToVertex[cellLocalIndex][1] =
+              cornerList[1]->get_localIndex();
+            cellToVertex[cellLocalIndex][2] =
+              cornerList[3]->get_localIndex();
+            cellToVertex[cellLocalIndex][3] =
+              cornerList[2]->get_localIndex();
+
+            cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
           }
         }
       }
