@@ -49,24 +49,15 @@ using geosxData_const   = real64 const * const RAJA_RESTRICT;
 using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 //Select between raw ptr vs array
-//#define USE_GEOSX_ARRAY
-//#define USE_RAJA_VIEW
 
+//[DEPRECATED]
 //#define STRUCTURED_GRID
-
-//
 //#define EXTERNAL_KERNELS
-
 //#define OBJECT_OF_ARRAYS_LAYOUT
-#define ARRAY_OF_OBJECTS_LAYOUT
-
+//#define ARRAY_OF_OBJECTS_LAYOUT
 //#define COMPUTE_SHAPE_FUN
 //#define PRE_COMPUTE_P
-
 //#define THREE_KERNEL_UPDATE
-
-#define USE_CUDA
-
 //#define SHAPE_FUN_FAST_INDEX_ELEM
 //#define STRESS_FUN_FAST_INDEX_ELEM
 //#define INVERT_REST_FAST_INDEX_ELEM
@@ -86,7 +77,7 @@ void printParameters()
 #if defined(THREE_KERNEL_UPDATE)
   std::cout<<"Using a three kernel update"<<std::endl;
 #endif  
-#if defined(USE_CUDA)
+#if defined(USE_GPU)
   std::cout<<"computing on the GPU"<<std::endl;
 #endif
 #if defined(ARRAY_OF_OBJECTS_LAYOUT)
@@ -110,7 +101,7 @@ void printParameters()
 }
 
 
-#if defined(USE_CUDA)
+#if defined(USE_GPU)
 using kernelPol = RAJA::cuda_exec<256>;
 using atomicPol = RAJA::atomic::cuda_atomic;
 #elif defined(RAJA_ENABLE_OPENMP) 

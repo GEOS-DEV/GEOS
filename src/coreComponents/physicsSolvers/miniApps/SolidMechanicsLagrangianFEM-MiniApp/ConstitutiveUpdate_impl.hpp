@@ -186,7 +186,7 @@ typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim
                             //real64 * meanStress,
                             real64 shearModulus, real64 bulkModulus, localIndex NoElem);
 
-#if defined (USE_CUDA)
+#if defined (USE_GPU)
 __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #endif
 
@@ -199,7 +199,7 @@ typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim
                             //real64 * meanStress,
                             real64 shearModulus, real64 bulkModulus, localIndex NoElem);
 
-#if defined (USE_CUDA)
+#if defined (USE_GPU)
 __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #endif
 
@@ -210,7 +210,7 @@ typedef void (*constUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim
                             localIndex m, localIndex q, globalIndex k,
                             geosxData devStressData, geosxData meanStress,
                             real64 shearModulus, real64 bulkModulus, localIndex NoElem);
-#if defined (USE_CUDA)
+#if defined (USE_GPU)
 __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #endif
 

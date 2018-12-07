@@ -138,7 +138,7 @@ int main(int argc, char* const argv[])
   //
   //Set up function pointer to constitutive relationship
   //
-#if defined(USE_CUDA)
+#if defined(USE_GPU)
   constUpdate myUpdate;
   cudaMemcpyFromSymbol(&myUpdate,deviceUpdate,sizeof(deviceUpdate));
 #else
@@ -188,7 +188,7 @@ int main(int argc, char* const argv[])
                                                                                       Dadt, Rot, detF, inverseF);
 #endif
 
-#if defined (USE_CUDA)
+#if defined (USE_GPU)
       cudaDeviceSynchronize();
 #endif      
       end = omp_get_wtime();
@@ -197,7 +197,7 @@ int main(int argc, char* const argv[])
     }
 
   
-#if defined(USE_CUDA)
+#if defined(USE_GPU)
     std::cout<<"Computing on the GPU"<<std::endl;
 #else
     std::cout<<"Computing on the CPU"<<std::endl;

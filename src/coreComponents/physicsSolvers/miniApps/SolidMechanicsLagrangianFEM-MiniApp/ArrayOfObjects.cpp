@@ -220,7 +220,7 @@ int main(int argc, char* const argv[])
   //
   //Set up function pointer for constitutive relationship
   //
-#if defined(USE_CUDA)
+#if defined(USE_GPU)
   std::cout<<"Using CUDA"<<std::endl;
   constUpdate myUpdate;
   cudaMemcpyFromSymbol(&myUpdate,deviceUpdate,sizeof(deviceUpdate));
@@ -245,7 +245,7 @@ int main(int argc, char* const argv[])
                                                                           u, uhat, dNdX, constitutiveMap, devStressData, meanStress,shearModulus,
                                                                           bulkModulus, detJ, acc, myUpdate, nx, nx, nx);
 
-#if defined (USE_CUDA)
+#if defined (USE_GPU)
       cudaDeviceSynchronize();
 #endif      
       end = omp_get_wtime();
@@ -253,7 +253,7 @@ int main(int argc, char* const argv[])
       if( diff < myMin) myMin = diff;
     }
 
-#if defined(USE_CUDA)
+#if defined(USE_GPU)
     std::cout<<"Computing on the GPU"<<std::endl;
 #else
     std::cout<<"Computing on the CPU"<<std::endl;
