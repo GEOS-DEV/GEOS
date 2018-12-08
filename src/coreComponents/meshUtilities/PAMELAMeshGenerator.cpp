@@ -231,6 +231,73 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
             cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
           }
         }
+        else if( cellBlockName == "WEDGE" )
+        {
+          cellBlock -> SetElementType("C3D6");
+          auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+          auto & cellToVertex = cellBlock->nodeList();
+          cellBlock->resize( nbCells );
+          cellToVertex.resize( nbCells, 6 );
+
+          // Iterate on cells
+          for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
+               cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
+               cellItr++ )
+          {
+            localIndex cellLocalIndex = (*cellItr)->get_localIndex();
+            globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
+            auto cornerList = (*cellItr)->get_vertexList();
+
+            cellToVertex[cellLocalIndex][0] =
+              cornerList[0]->get_localIndex();
+            cellToVertex[cellLocalIndex][1] =
+              cornerList[1]->get_localIndex();
+            cellToVertex[cellLocalIndex][2] =
+              cornerList[2]->get_localIndex();
+            cellToVertex[cellLocalIndex][3] =
+              cornerList[3]->get_localIndex();
+            cellToVertex[cellLocalIndex][4] =
+              cornerList[4]->get_localIndex();
+            cellToVertex[cellLocalIndex][5] =
+              cornerList[5]->get_localIndex();
+
+            cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          }
+        }
+        else if( cellBlockName == "PYR" )
+        {
+          cellBlock -> SetElementType("C3D5");
+          auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+          auto & cellToVertex = cellBlock->nodeList();
+          cellBlock->resize( nbCells );
+          cellToVertex.resize( nbCells, 5 );
+
+          // Iterate on cells
+          for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
+               cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
+               cellItr++ )
+          {
+            localIndex cellLocalIndex = (*cellItr)->get_localIndex();
+            globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
+            auto cornerList = (*cellItr)->get_vertexList();
+
+            cellToVertex[cellLocalIndex][0] =
+              cornerList[0]->get_localIndex();
+            cellToVertex[cellLocalIndex][1] =
+              cornerList[1]->get_localIndex();
+            cellToVertex[cellLocalIndex][2] =
+              cornerList[2]->get_localIndex();
+            cellToVertex[cellLocalIndex][3] =
+              cornerList[3]->get_localIndex();
+            cellToVertex[cellLocalIndex][4] =
+              cornerList[4]->get_localIndex();
+
+            cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          }
+        }
+        else {
+          GEOS_ERROR("Element type is not recognized");
+        }
       }
     }
   }
