@@ -586,7 +586,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
   arrayView1d<integer> const & isEdgeExternal = edgeManager.isExternal();
 
-  arrayView1d<localIndex_array> const & vFaceToVEdges = m_originalFaceToEdges;
+  arrayView1d<localIndex_array> const & originalFaceToEdges = m_originalFaceToEdges;
 
 //  const set<localIndex>& usedFaces = nodeManager.GetUnorderedVariableOneToManyMap("usedFaces")[nodeID];
 
@@ -595,14 +595,14 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   // array to hold the faces ready for rupture. It is filled with the intersection of the virtual parent faces
   // associated
   // with all faces attached to the node, and all ruptured virtual faces attached to the virtual parent node.
-  set<localIndex> vNodeToRuptureReadyVFaces;
+  set<localIndex> nodeToRuptureReadyFaces;
   for( auto i : nodeToFaces )
   {
     const localIndex parentFaceIndex = ( parentFaceIndices[i] == -1 ) ? i : parentFaceIndices[i];
 
     if( vNodeToRupturedFaces.count( parentFaceIndex ) > 0 )
     {
-      vNodeToRuptureReadyVFaces.insert( parentFaceIndex );
+      nodeToRuptureReadyFaces.insert( parentFaceIndex );
     }
   }
 
@@ -617,12 +617,12 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
 
   // need a map from faces to edges that are attached to the node
-  std::map< localIndex, std::pair<localIndex, localIndex> > localVFacesToVEdges;
+  std::map< localIndex, std::pair<localIndex, localIndex> > nodeLocalFacesToEdges;
   for( auto kf : originalNodeToFaces )
   {
     localIndex edge[2] = { INT_MAX, INT_MAX };
     int count = 0;
-    for( auto ke : vFaceToVEdges[kf] )
+    for( auto ke : originalFaceToEdges[kf] )
     {
       if( originalNodeToEdges.count( ke ) )
       {
@@ -636,10 +636,8 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
     }
 
 
-    localVFacesToVEdges[kf] = std::make_pair( edge[0], edge[1] );
+    nodeLocalFacesToEdges[kf] = std::make_pair( edge[0], edge[1] );
 
-    if( verboseLevel() > 2 )
-      std::cout<<"localFacesToEdges["<<kf<<"] = ( "<<localVFacesToVEdges[kf].first<<", "<<localVFacesToVEdges[kf].second<<" )"<<std::endl;
   }
 
 
@@ -655,14 +653,14 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
     CheckForAndRemoveDeadEndPath( edgeIndex,
                                   isEdgeExternal,
                                   edgesToRuptureReadyFaces,
-                                  localVFacesToVEdges,
-                                  vNodeToRuptureReadyVFaces );
+                                  nodeLocalFacesToEdges,
+                                  nodeToRuptureReadyFaces );
 
   }
 
   // if there are no ruptured faces attached to the node, then we are done.
   // or if there are no faces that have not been used in a rupture path for this node...we are done.
-  if( vNodeToRuptureReadyVFaces.empty() )//|| nodeToRuptureReadyFaces.size() == usedFaces.size() )
+  if( nodeToRuptureReadyFaces.empty() )//|| nodeToRuptureReadyFaces.size() == usedFaces.size() )
   {
     return false;
   }
@@ -676,7 +674,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   localIndex startingFace = INT_MAX;
   bool startingEdgeExternal = false;
 
-  for( set<localIndex>::const_iterator i=vNodeToRuptureReadyVFaces.begin() ; i!=vNodeToRuptureReadyVFaces.end() ; ++i )
+  for( set<localIndex>::const_iterator i=nodeToRuptureReadyFaces.begin() ; i!=nodeToRuptureReadyFaces.end() ; ++i )
   {
     // check to see if this face has been used to split this node as part of a previously used path
     if( m_usedFacesForNode[nodeID].count( *i )==0 )
@@ -684,21 +682,21 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
       // great! It hasn't. It's on like Donkey Kong.
       startingFace = *i;
 
-      if( isEdgeExternal[localVFacesToVEdges[startingFace].first]==1 )
+      if( isEdgeExternal[nodeLocalFacesToEdges[startingFace].first]==1 )
       {
-        startingEdge = localVFacesToVEdges[startingFace].first;
+        startingEdge = nodeLocalFacesToEdges[startingFace].first;
         startingEdgeExternal = true;
         break;
       }
-      else if( isEdgeExternal[localVFacesToVEdges[startingFace].second]==1 )
+      else if( isEdgeExternal[nodeLocalFacesToEdges[startingFace].second]==1 )
       {
-        startingEdge = localVFacesToVEdges[startingFace].second;
+        startingEdge = nodeLocalFacesToEdges[startingFace].second;
         startingEdgeExternal = true;
         break;
       }
       else
       {
-        startingEdge = localVFacesToVEdges[startingFace].first;
+        startingEdge = nodeLocalFacesToEdges[startingFace].first;
       }
     }
   }
@@ -761,7 +759,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
       // get the next edge in the path...it is on the other side of "thisFace", so assign the other edge on the face as
       // the next edge
 
-      nextEdge = GetOtherFaceEdge( localVFacesToVEdges, thisFace, thisEdge );
+      nextEdge = GetOtherFaceEdge( nodeLocalFacesToEdges, thisFace, thisEdge );
 
 
       // if the nextEdge has already been used in the path, and the nextEdge is not the starting edge, then we have
@@ -819,7 +817,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
         // startingFace....which is hard-coded as the second entry in localFacesToEdges.
         if( isEdgeExternal[nextEdge]==1 )
         {
-          nextEdge = localVFacesToVEdges[startingFace].second;
+          nextEdge = nodeLocalFacesToEdges[startingFace].second;
         }
 
         // I sure hope that this is true!!
@@ -869,7 +867,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                 int candidateFaceQuality = 0;
 
 
-                localIndex candidateEdgeIndex = GetOtherFaceEdge( localVFacesToVEdges, candidateFaceIndex, nextEdge );
+                localIndex candidateEdgeIndex = GetOtherFaceEdge( nodeLocalFacesToEdges, candidateFaceIndex, nextEdge );
                 if( candidateEdgeIndex == startingEdge )
                 {
                   nextFace = candidateFaceIndex;
@@ -3208,34 +3206,33 @@ void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
   edgesToRupturedFaces.resize( edgeManager.size() );
 
   arrayView1d<integer>& faceRuptureState = faceManager.getReference<integer_array>( "ruptureState" );
+  arrayView1d<localIndex const> const &
+  faceParentIndex = faceManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+
   // assign the values of the nodeToRupturedFaces and edgeToRupturedFaces arrays.
   for( localIndex kf=0 ; kf<faceManager.size() ; ++kf )
   {
-    if( faceRuptureState[kf] >0 )
+    if( faceRuptureState[kf] >0  )
     {
-      for( localIndex a=0 ; a<facesToNodes[kf].size() ; ++a )
+      localIndex const faceIndices[2] = { kf, faceParentIndex[kf] };
+      int const n = faceParentIndex[kf]==-1 ? 1 : 2;
+      localIndex const faceIndex = faceParentIndex[kf]==-1 ? kf : faceParentIndex[kf];
+
+      for( int i=0 ; i<n ; ++i )
       {
-        const localIndex nodeIndex = facesToNodes[kf][a];
-        nodesToRupturedFaces[nodeIndex].insert( kf );
+        for( localIndex a=0 ; a<facesToNodes[kf].size() ; ++a )
+        {
+          const localIndex nodeIndex = facesToNodes[kf][a];
+          nodesToRupturedFaces[nodeIndex].insert( faceIndex );
+        }
+
+        for( localIndex a=0 ; a<facesToEdges[kf].size() ; ++a )
+        {
+          const localIndex edgeIndex = facesToEdges[kf][a];
+          edgesToRupturedFaces[edgeIndex].insert( faceIndex );
+        }
       }
-
-      for( localIndex a=0 ; a<facesToEdges[kf].size() ; ++a )
-      {
-        const localIndex edgeIndex = facesToEdges[kf][a];
-        edgesToRupturedFaces[edgeIndex].insert( kf );
-      }
-    }
-  }
-
-  for( integer_array::iterator i=edgeManager.m_isExternal.begin() ; i!=edgeManager.m_isExternal.end() ; ++i )
-  {
-    if( *i == -1 )
-    {
-      *i = 1;
-      GEOS_ERROR( "edgeManager.m_isExternal=-1. Call Pengcheng if you see this error" );
-      // I couldn't figure out why we need this loop. I am putting this exception here so that when it is actually
-      // invoked, we will know why we use it.
-
     }
   }
 }
