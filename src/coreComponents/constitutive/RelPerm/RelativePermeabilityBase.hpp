@@ -96,7 +96,7 @@ protected:
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  void ResizeFields( localIndex size, localIndex numPts );
+  void ResizeFields( localIndex const size, localIndex const numPts );
 
   // phase names read from input
   string_array     m_phaseNames;

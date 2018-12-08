@@ -116,7 +116,7 @@ void RelativePermeabilityBase::ReadXML_PostProcess()
   ResizeFields( 0, 0 );
 }
 
-void RelativePermeabilityBase::ResizeFields( localIndex size, localIndex numPts )
+void RelativePermeabilityBase::ResizeFields( localIndex const size, localIndex const numPts )
 {
   localIndex const NP = numFluidPhases();
 
