@@ -244,7 +244,6 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 
 
-
 using integer_array2d       = array2d<integer>;
 using integer_const_array2d = array2d<integer const>;
 
@@ -262,7 +261,6 @@ using localIndex_const_array2d = array2d<localIndex const>;
 
 using globalIndex_array2d       = array2d<globalIndex>;
 using globalIndex_const_array2d = array2d<globalIndex const>;
-
 
 
 
