@@ -1119,7 +1119,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
 
 
-  set<string> fieldNames;
+  set<std::pair<string, ViewWrapperBase const *>> fieldNames;
   for( localIndex matI=0 ; matI<nmat ; ++matI )
   {
     ConstitutiveBase const * const
@@ -1133,9 +1133,11 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       {
         std::type_info const & typeID = wrapper->get_typeid();
 
-        if( typeID==typeid( array2d<real64> ) )
+        if( typeID == typeid( array2d<real64> )
+         || typeID == typeid( array3d<real64> )
+         || typeID == typeid( array4d<real64> ) )
         {
-          fieldNames.insert( wrapper->getName() );
+          fieldNames.insert( std::make_pair( wrapper->getName(), wrapper ) );
         }
       }
     }
@@ -1143,53 +1145,112 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   for( auto fieldName : fieldNames )
   {
-    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const field =
-      elementManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( fieldName, constitutiveManager);
+    if (fieldName.second->get_typeid() == typeid( array2d<real64>))
+    {
+      ElementRegionManager::MaterialViewAccessor<arrayView2d<real64> > const field =
+        elementManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( fieldName.first,
+                                                                                              constitutiveManager);
 
-    WriteMaterialDataField< real64 >( meshName,
-                                      fieldName,
-                                      field,
-                                      elementManager,
-                                      constitutiveManager,
-                                      DB_ZONECENT,
-                                      cycleNumber,
-                                      problemTime,
-                                      rootDirectory,
-                                      string_array() );
+      WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
+                                     DB_ZONECENT, cycleNumber, problemTime, rootDirectory, string_array());
+    }
+    if (fieldName.second->get_typeid() == typeid( array3d<real64>))
+    {
+      ElementRegionManager::MaterialViewAccessor<arrayView3d<real64> > const field =
+        elementManager->ConstructMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( fieldName.first,
+                                                                                              constitutiveManager);
+
+      WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
+                                      DB_ZONECENT, cycleNumber, problemTime, rootDirectory, string_array());
+    }
+    if (fieldName.second->get_typeid() == typeid( array4d<real64>))
+    {
+      ElementRegionManager::MaterialViewAccessor<arrayView4d<real64> > const field =
+        elementManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64> >( fieldName.first,
+                                                                                              constitutiveManager);
+
+      WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
+                                      DB_ZONECENT, cycleNumber, problemTime, rootDirectory, string_array());
+    }
 
   }
 
 
-  // add expressions
-  if( rank==0 )
+  if (rank == 0)
   {
-    for( size_t matIndex=0 ; matIndex<materialNameStrings.size() ; ++matIndex )
+    // write a var definition for each material/field combination that exists
+    for (size_t matIndex = 0; matIndex < materialNameStrings.size(); ++matIndex)
     {
-      string const MultiDir = rootDirectory + "/" + materialNameStrings[matIndex];
-      MakeSubDirectory( materialNameStrings[matIndex], MultiDir);
-      DBSetDir( m_dbBaseFilePtr, MultiDir.c_str());
+      string const & matName = materialNameStrings[matIndex];
 
-      string const expressionName = MultiDir + "/" + "density";
-      const char * expObjName = expressionName.c_str();
-      const char * const names[1] = { expObjName } ;
-      int const types[1] = {DB_VARTYPE_SCALAR};
-      string const definition = "value_for_material(<" + subDirectory + "/density>, " + std::to_string(matIndex) + ")";
-      const char * const defns[1] = {definition.c_str()};
-      DBPutDefvars( m_dbBaseFilePtr,
-                    expObjName,
-                    1,
-                    names,
-                    types,
-                    defns,
-                    nullptr );
+      string const matDir = rootDirectory + "/" + matName;
+      MakeSubDirectory(matName, matDir);
+      DBSetDir(m_dbBaseFilePtr, matDir.c_str());
+
+      ConstitutiveBase const * const constitutiveModel = constitutiveManager->GetConstitituveRelation(matIndex);
+      for (auto fieldName : fieldNames)
+      {
+        if (constitutiveModel->hasView(fieldName.first))
+        {
+          ViewWrapperBase const * wrapper = fieldName.second;
+          if (wrapper->get_typeid() == typeid(array2d<real64>))
+          {
+            WriteMaterialVarDefinition( subDirectory, matDir, matIndex, fieldName.first );
+          }
+          if (wrapper->get_typeid() == typeid(array3d<real64>))
+          {
+            array3d<real64> const & data =
+              dynamic_cast<dataRepository::ViewWrapper<array3d<real64>> const &>(*wrapper).reference();
+
+            for (localIndex i = 0; i < data.size(2); ++i)
+            {
+              WriteMaterialVarDefinition( subDirectory, matDir, matIndex,
+                                          fieldName.first + "_" + std::to_string(i) );
+            }
+          }
+          if (wrapper->get_typeid() == typeid(array4d<real64>))
+          {
+            array4d<real64> const & data =
+              dynamic_cast<dataRepository::ViewWrapper<array4d<real64>> const &>(*wrapper).reference();
+
+            for (localIndex i = 0; i < data.size(2); ++i)
+            {
+              for (localIndex j = 0; j < data.size(3); ++j)
+              {
+                WriteMaterialVarDefinition( subDirectory, matDir, matIndex,
+                                            fieldName.first + "_" + std::to_string(i) + "_" + std::to_string(j) );
+              }
+            }
+          }
+        }
+      }
 
       DBSetDir(this->m_dbBaseFilePtr, "..");
-
     }
   }
 
   DBSetDir(m_dbFilePtr, "..");
 
+}
+
+void SiloFile::WriteMaterialVarDefinition( string const & subDir,
+                                           string const & matDir,
+                                           localIndex const matIndex,
+                                           string const & fieldName )
+{
+  string const expressionName = matDir + "/" + fieldName;
+  const char * expObjName = expressionName.c_str();
+  const char * const names[1] = { expObjName } ;
+  int const types[1] = { DB_VARTYPE_SCALAR };
+  string const definition = "value_for_material(<" + subDir + "/" + fieldName + ">, " + std::to_string(matIndex) + ")";
+  const char * const defns[1] = { definition.c_str() };
+  DBPutDefvars( m_dbBaseFilePtr,
+                expObjName,
+                1,
+                names,
+                types,
+                defns,
+                nullptr );
 }
 
 void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
