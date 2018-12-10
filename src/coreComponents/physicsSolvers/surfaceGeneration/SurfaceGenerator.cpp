@@ -33,6 +33,19 @@
 namespace geosx
 {
 
+static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
+                                     localIndex const lookup )
+{
+  localIndex rval = lookup;
+
+  while( parentIndices[rval] != -1 )
+  {
+    rval = parentIndices[rval];
+  }
+
+  return rval;
+}
+
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                                     const localIndex thisFace, const localIndex thisEdge )
 {
@@ -542,7 +555,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   arrayView1d<localIndex> const & parentNodeIndices =
     nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
 
-  localIndex const parentNodeIndex = parentNodeIndices( nodeID ) != -1 ? parentNodeIndices( nodeID ) : nodeID;
+  localIndex const parentNodeIndex = GetParentRecusive( parentNodeIndices, nodeID );
 
   arrayView1d<localIndex> const & parentFaceIndices =
     faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.parentIndex );
