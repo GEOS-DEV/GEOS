@@ -72,7 +72,7 @@ RAJA_INLINE void HughesWinget(T Rot[LOCAL_DIM][LOCAL_DIM], T Dadt[LOCAL_DIM][LOC
 #if defined(USE_GEOSX_ARRAY)
 RAJA_HOST_DEVICE
 RAJA_INLINE void UpdateStatePoint(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
-                                  localIndex m, localIndex q, globalIndex k,
+                                  localIndex m, localIndex q, localIndex k,
                                   LvArray::ArrayView<real64,3,localIndex> idevStressData,
                                   LvArray::ArrayView<real64,1,localIndex> imeanStress,
                                   real64 shearModulus, real64 bulkModulus, localIndex noElem)
@@ -80,14 +80,14 @@ RAJA_INLINE void UpdateStatePoint(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOC
 #elif defined(USE_RAJA_VIEW)
 RAJA_HOST_DEVICE
 RAJA_INLINE void UpdateStatePoint(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
-                                  localIndex m, localIndex q, globalIndex k,
+                                  localIndex m, localIndex q, localIndex k,
                                   RAJA::View<real64,RAJA::Layout<3,localIndex,2>> idevStressData,
                                   RAJA::View<real64,RAJA::Layout<1,localIndex,0>> imeanStress,
                                   real64 shearModulus, real64 bulkModulus, localIndex noElem)
 #else
 RAJA_HOST_DEVICE
 RAJA_INLINE void UpdateStatePoint(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
-                                  localIndex m, localIndex q, globalIndex k, geosxData idevStressData,
+                                  localIndex m, localIndex q, localIndex k, geosxData idevStressData,
                                   geosxData imeanStress,
                                   real64 shearModulus, real64 bulkModulus, localIndex noElem)
 #endif
@@ -180,7 +180,7 @@ RAJA_INLINE void structuredElemToNodes(localIndex nodeList[8], localIndex k, loc
 #if defined(USE_GEOSX_ARRAY)
 
 typedef void (*constUpdate)(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
-                            localIndex m, localIndex q, globalIndex k, 
+                            localIndex m, localIndex q, localIndex k, 
                             LvArray::ArrayView<real64,3,localIndex> devStressData,
                             LvArray::ArrayView<real64,1,localIndex> meanStress,
                             //real64 * meanStress,
@@ -193,7 +193,7 @@ __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #elif defined(USE_RAJA_VIEW)
 
 typedef void (*constUpdate)(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
-                            localIndex m, localIndex q, globalIndex k, 
+                            localIndex m, localIndex q, localIndex k, 
                             RAJA::View<real64,RAJA::Layout<3,localIndex,2>> devStressData,
                             RAJA::View<real64,RAJA::Layout<1,localIndex,0>> meanStress,
                             //real64 * meanStress,
@@ -207,7 +207,7 @@ __device__ constUpdate deviceUpdate = UpdateStatePoint;
 #else
 //Created a type 
 typedef void (*constUpdate)(real64 D[LOCAL_DIM][LOCAL_DIM], real64 Rot[LOCAL_DIM][LOCAL_DIM],
-                            localIndex m, localIndex q, globalIndex k,
+                            localIndex m, localIndex q, localIndex k,
                             geosxData devStressData, geosxData meanStress,
                             real64 shearModulus, real64 bulkModulus, localIndex NoElem);
 #if defined (USE_GPU)

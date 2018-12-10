@@ -158,7 +158,7 @@ RAJA_INLINE void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, re
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
       
       real64 uhat_local_x[NODESPERELEM];
       real64 uhat_local_y[NODESPERELEM];
@@ -353,7 +353,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, localIndex * const  ele
 #endif
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
 
       real64 uhat_local[LOCAL_DIM*NODESPERELEM];
       real64 u_local[LOCAL_DIM*NODESPERELEM];
