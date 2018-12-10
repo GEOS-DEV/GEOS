@@ -602,7 +602,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  forall_in_range(0, numNodes, GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_range(0, numNodes, GEOSX_LAMBDA (localIndex a) mutable
   {
     acc[a] = 0;
   });
@@ -665,7 +665,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   } //Element Manager
 
   //Compute Force : Point-wise computations
-  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a) mutable
   {
     acc[a] /=mass[a];
   });
@@ -726,7 +726,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOSX_GET_TIME( t4 );
 
   //Compute Force : Point-wise computations
-  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a)
+  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a)
   {
     acc[a] /=mass[a];
   });
@@ -1850,7 +1850,7 @@ void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition 
   r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   // TODO need to finish this rewind
-  forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (localIndex a) mutable
   {
     incdisp[a] = 0.0;
   });
