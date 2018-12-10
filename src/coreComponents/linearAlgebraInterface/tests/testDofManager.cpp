@@ -74,7 +74,7 @@ ProblemManager DofManagerTest::problemManager("ProblemManager", nullptr);
 
 TEST_F(DofManagerTest, TestOne)
 {
-  DomainPartition * domain = problemManager.getDomainPartition();
+  //DomainPartition * domain = problemManager.getDomainPartition();
 }
 
 

@@ -9,16 +9,15 @@
                   xCoords="0, 1"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="1"
-                  ny="1"
-                  nz="1"
+                  nx="8"
+                  ny="8"
+                  nz="8"
                   cellBlockNames="block"/>
   </Mesh>
 
   <ElementRegions>
     <ElementRegion name="region" cellBlocks="block" numericalMethod="FE1" material="shale" materialList="shale" />
   </ElementRegions>
-
 
   <!-- TODO: revisit input requirements -->
 

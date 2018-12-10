@@ -6,6 +6,8 @@ set( linearAlgebraInterface_tests
      testDofManager.cpp            #TODO: remove PAMELA dependency?
      testLAOperations.cpp )
 
+set( nranks 2 )
+
 #
 # Add gtest C++ based tests
 #
@@ -19,7 +21,7 @@ foreach(test ${linearAlgebraInterface_tests})
 	                    DEPENDS_ON geosx_core gtest optionparser linearAlgebraInterface )
 
   blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} -i ${CMAKE_CURRENT_LIST_DIR}/testDofManager.xml
-                NUM_MPI_TASKS 2 )
+                COMMAND ${test_name} -i ${CMAKE_CURRENT_LIST_DIR}/testDofManager.xml -x ${nranks}
+                NUM_MPI_TASKS ${nranks} )
 
 endforeach()
