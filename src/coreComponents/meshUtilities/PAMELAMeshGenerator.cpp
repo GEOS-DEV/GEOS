@@ -224,9 +224,9 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
             cellToVertex[cellLocalIndex][1] =
               cornerList[1]->get_localIndex();
             cellToVertex[cellLocalIndex][2] =
-              cornerList[3]->get_localIndex();
-            cellToVertex[cellLocalIndex][3] =
               cornerList[2]->get_localIndex();
+            cellToVertex[cellLocalIndex][3] =
+              cornerList[3]->get_localIndex();
 
             cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
           }
