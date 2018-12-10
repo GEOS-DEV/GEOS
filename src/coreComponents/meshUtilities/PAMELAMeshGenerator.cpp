@@ -120,7 +120,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   //TODO for the moment we only consider on mesh level "Level0"
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>( std::string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
-  //CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
 
   //TODO for the moment we only write the polyhedron and the associated vertices
@@ -129,25 +128,27 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   // Use the PartMap of PAMELA to get the mesh
   auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get()));
 
+  // Vertices are written first
+  r1_array const & X = nodeManager->referencePosition();
+  nodeManager->resize(m_pamelaMesh->get_PointCollection()->size_all());
+  for( auto verticesIterator : *m_pamelaMesh->get_PointCollection()) {
+    localIndex vertexLocalIndex = verticesIterator->get_localIndex();
+    globalIndex vertexGlobalIndex = verticesIterator->get_globalIndex();
+    real64 * const pointData = X[verticesIterator->get_localIndex()].Data();
+    pointData[0] = verticesIterator->get_coordinates().x;
+    pointData[1] = verticesIterator->get_coordinates().y;
+    pointData[2] = verticesIterator->get_coordinates().z;
+    nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
+  }
+  
+
+  //CellBlock * elemRegion = cellBlockManager->GetRegio;
   // First loop which iterate on the regions
   for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
   {
     auto regionPtr = regionItr->second;
-
-    // Iterate on vertices
-    nodeManager->resize( regionPtr->Points.size());
-    r1_array const & X = nodeManager->referencePosition();
-    for( auto verticesIterator = regionPtr->Points.begin() ;
-         verticesIterator != regionPtr->Points.end() ; verticesIterator++ )
-    {
-      real64 * const pointData = X[(*verticesIterator)->get_localIndex()].Data();
-      localIndex vertexLocalIndex = (*verticesIterator)->get_localIndex();
-      globalIndex vertexGlobalIndex = (*verticesIterator)->get_globalIndex();
-      pointData[0] = (*verticesIterator)->get_coordinates().x;
-      pointData[1] = (*verticesIterator)->get_coordinates().y;
-      pointData[2] = (*verticesIterator)->get_coordinates().z;
-      nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
-    }
+    auto regionName = regionPtr->Label;
+   // CellBlock * elemRegion = cellBlockManager->GetRegio;
 
     // Iterate on cell types
     for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
@@ -160,7 +161,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         auto cellBlockType = cellBlockPAMELA->ElementType;
         auto cellBlockName = ElementToLabel.at( cellBlockType );
         CellBlock * cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionName + "_" + cellBlockName );
         cellBlock->SetDocumentationNodes();
         cellBlock->RegisterDocumentationNodes();
         cellBlock->ReadXML_PostProcess();
