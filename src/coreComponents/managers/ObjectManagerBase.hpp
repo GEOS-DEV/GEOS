@@ -287,14 +287,17 @@ public:
 
   void SetMaxGlobalIndex();
 
-  virtual void FixUpDownMaps() {}
-  template< typename TYPE_RELATION >
-  static void FixUpDownMaps( TYPE_RELATION & relation,
-                             map< localIndex, array1d<globalIndex> > & unmappedIndices );
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) {}
 
   template< typename TYPE_RELATION >
   static void FixUpDownMaps( TYPE_RELATION & relation,
-                             map< localIndex, set<globalIndex> > & unmappedIndices );
+                             map< localIndex, array1d<globalIndex> > & unmappedIndices,
+                             bool const clearIfUnmapped );
+
+  template< typename TYPE_RELATION >
+  static void FixUpDownMaps( TYPE_RELATION & relation,
+                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             bool const clearIfUnmapped  );
 
 
   //**********************************************************************************************************************
@@ -404,7 +407,8 @@ public:
 
 template< typename TYPE_RELATION >
 void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
-                                       map< localIndex, array1d<globalIndex> > & unmappedIndices )
+                                       map< localIndex, array1d<globalIndex> > & unmappedIndices,
+                                       bool const  )
 {
   bool allValuesMapped = true;
   map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
@@ -437,7 +441,8 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
 
 template< typename TYPE_RELATION >
 void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
-                                       map< localIndex, set<globalIndex> > & unmappedIndices )
+                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       bool const clearIfUnmapped )
 {
   map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
@@ -445,10 +450,24 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
        ++iter )
   {
     localIndex const li = iter->first;
-    set<globalIndex> const & globalIndices = iter->second;
-    for( auto const newGlobalIndex : globalIndices )
+    if( clearIfUnmapped )
     {
-      relation[li].insert( globalToLocal.at( newGlobalIndex ) );
+      relation[li].clear();
+    }
+    else
+    {
+      set<globalIndex> const & globalIndices = iter->second;
+      for( auto const newGlobalIndex : globalIndices )
+      {
+        // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is
+        // used for an upmap and the object shouldn't exist on this rank. There should be a better
+        // way to check this.
+        auto iterG2L = globalToLocal.find(newGlobalIndex);
+        if( iterG2L != globalToLocal.end() )
+        {
+          relation[li].insert( iterG2L->second );
+        }
+      }
     }
   }
   unmappedIndices.clear();
