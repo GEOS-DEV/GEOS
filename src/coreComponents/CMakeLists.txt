@@ -1,5 +1,4 @@
 
-
 set( subdirs
      codingUtilities
      common

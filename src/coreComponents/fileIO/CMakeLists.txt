@@ -1,4 +1,6 @@
 
+add_subdirectory(coupling/hdf5_interface)
+
 #
 # Specify all headers
 #
@@ -8,6 +10,7 @@ set(fileIO_headers
   vtm/VtmFile.hpp
   blueprint/Blueprint.hpp
   schema/SchemaUtilities.hpp
+  coupling/ChomboCoupler.hpp
   utils/utils.hpp )
 
 #
@@ -20,7 +23,7 @@ set(fileIO_sources
   schema/SchemaUtilities.cpp
   blueprint/Blueprint.cpp )
 
-set( dependencyList common silo hdf5 mpi pugixml RAJA )
+set( dependencyList common silo hdf5 mpi pugixml RAJA hdf5_interface )
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
 endif()
