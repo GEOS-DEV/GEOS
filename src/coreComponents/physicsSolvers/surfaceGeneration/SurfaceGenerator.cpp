@@ -23,6 +23,7 @@
 #include "SurfaceGenerator.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 
 #include "meshUtilities/ComputationalGeometry.hpp"
 

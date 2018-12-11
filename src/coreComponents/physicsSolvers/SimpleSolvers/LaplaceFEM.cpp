@@ -46,6 +46,8 @@
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
+
 
 namespace geosx
 {
