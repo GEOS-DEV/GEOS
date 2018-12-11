@@ -759,7 +759,6 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
   GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
-
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
@@ -770,7 +769,6 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
   GEOS_ERROR_IF( faceListString != viewKeyStruct::faceListString, "");
-
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -782,13 +780,15 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void EdgeManager::FixUpDownMaps()
+void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
-                                    m_unmappedGlobalIndicesInToNodes);
+                                    m_unmappedGlobalIndicesInToNodes,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
-                                    m_unmappedGlobalIndicesInToFaces);
+                                    m_unmappedGlobalIndicesInToFaces,
+                                    clearIfUnmapped );
 
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);

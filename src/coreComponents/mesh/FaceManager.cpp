@@ -666,13 +666,15 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void FaceManager::FixUpDownMaps()
+void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_nodeList,
-                                    m_unmappedGlobalIndicesInToNodes);
+                                    m_unmappedGlobalIndicesInToNodes,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_edgeList,
-                                    m_unmappedGlobalIndicesInToEdges);
+                                    m_unmappedGlobalIndicesInToEdges,
+                                    clearIfUnmapped );
 
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);

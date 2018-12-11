@@ -318,13 +318,15 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void NodeManager::FixUpDownMaps()
+void NodeManager::FixUpDownMaps(  bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
-                                    m_unmappedGlobalIndicesInToEdges);
+                                    m_unmappedGlobalIndicesInToEdges,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
-                                    m_unmappedGlobalIndicesInToFaces);
+                                    m_unmappedGlobalIndicesInToFaces,
+                                    clearIfUnmapped );
 
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);
