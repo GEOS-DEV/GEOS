@@ -26,7 +26,7 @@ set( linearAlgebraInterface_sources
      EpetraVector.cpp
      TrilinosSolver.cpp )
 
-set( dependencyList common trilinos hypre mpi)
+set( dependencyList common trilinos hypre mpi managers)
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )

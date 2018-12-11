@@ -25,6 +25,13 @@
 namespace geosx
 {
 
+// Constructor
+DofManager::DofManager(MeshLevel const & meshLevel)
+  :
+  m_meshLevel(meshLevel)
+{}
+
+
 
 }
 
