@@ -36,8 +36,6 @@
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
-#include "fileIO/silo/SiloFile.hpp"
-#include "fileIO/blueprint/Blueprint.hpp"
 #include "fileIO/utils/utils.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
