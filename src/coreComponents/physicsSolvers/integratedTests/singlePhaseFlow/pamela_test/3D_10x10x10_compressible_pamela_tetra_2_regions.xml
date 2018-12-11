@@ -149,7 +149,7 @@
                scale="1.1e3"
                setNames="left"/>
 
-    <Dirichlet name="permx"
+    <Dirichlet name="BotPermx"
                component="0"
                initialCondition="1"  
                setNames="all"
@@ -158,7 +158,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="permy"
+    <Dirichlet name="BotPermy"
                component="1"
                initialCondition="1"
                setNames="all"
@@ -167,7 +167,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="permz"
+    <Dirichlet name="BotPermz"
                component="2"
                initialCondition="1"
                setNames="all"
@@ -176,7 +176,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="referencePorosity"
+    <Dirichlet name="BotReferencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
@@ -184,7 +184,7 @@
                dataType="real64"
                scale="0.05"/>
 
-    <Dirichlet name="initialPressure"
+    <Dirichlet name="BotInitialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
