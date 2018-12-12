@@ -33,7 +33,7 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
   ManagedGroup(name,parent),
-  m_sets(keys::sets,this),
+  m_sets(groupKeyStruct::setsString,this),
   m_localToGlobalMap(),
   m_globalToLocalMap()
 {
@@ -41,7 +41,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   RegisterViewWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false );
   RegisterViewWrapper(viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
 
-  RegisterGroup( keys::sets, &m_sets, false );
+  RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
   RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
   RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
     setPlotLevel(PlotLevel::LEVEL_0);
@@ -145,16 +145,14 @@ void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 
 void ObjectManagerBase::CreateSet( const std::string& newSetName )
 {
-  ManagedGroup * sets = GetGroup(std::string("Sets"));
-  sets->RegisterViewWrapper<set<localIndex>>(newSetName);
+  m_sets.RegisterViewWrapper<set<localIndex>>(newSetName);
 }
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const array2d<localIndex>& map,
                                                    const std::string& setName )
 {
-  ManagedGroup * sets = GetGroup(std::string("Sets"));
-  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
+  set<localIndex>& newset = m_sets.getReference<set<localIndex>>(setName);
   newset.clear();
 
   localIndex mapSize = map.size(1);
@@ -179,7 +177,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
                                                    const array1d<localIndex_array>& map,
                                                    const std::string& setName )
 {
-  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  ManagedGroup * sets = GetGroup( groupKeyStruct::setsString );
   set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
   newset.clear();
 

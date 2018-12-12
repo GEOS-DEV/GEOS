@@ -29,13 +29,6 @@
 namespace geosx
 {
 class SiloFile;
-namespace dataRepository
-{
-namespace keys
-{
-string const sets("Sets");
-}
-}
 
 
 /**

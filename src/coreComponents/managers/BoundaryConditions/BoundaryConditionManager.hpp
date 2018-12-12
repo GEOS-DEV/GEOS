@@ -202,7 +202,7 @@ public:
                          "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
 
-          dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( dataRepository::keys::sets );
+          dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
           string_array setNames = bc->GetSetNames();
           for( auto & setName : setNames )
           {

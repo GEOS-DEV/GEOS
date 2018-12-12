@@ -35,6 +35,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
+class ObjectManagerBase;
 class xmlWrapper;
 
 class MeshUtilities
@@ -46,7 +47,7 @@ public:
 
 
   static void GenerateNodesets( dataRepository::ManagedGroup const * geometry,
-                                dataRepository::ManagedGroup * nodeManager );
+                                ObjectManagerBase * const nodeManager );
 
 //  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,
 //                                                     ManagedGroup&
