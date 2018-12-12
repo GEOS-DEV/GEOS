@@ -1008,7 +1008,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   arrayView1d<real64> & viscFace      = faceManager->getReference<array1d<real64>>( viewKeyStruct::viscosityString );
   arrayView1d<real64> & gravDepthFace = faceManager->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
-  dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
+  dataRepository::ManagedGroup const * sets = faceManager->sets();
 
   // first, evaluate BC to get primary field values (pressure)
 //  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::facePressure, time + dt);

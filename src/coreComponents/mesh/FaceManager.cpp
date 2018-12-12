@@ -273,7 +273,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
   // make sets from nodesets
   // First create the sets
-  auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
+  auto const & nodeSets = nodeManager->sets()->wrappers();
   for ( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -286,7 +286,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const set<localIndex>& targetSet = nodeManager->GetGroup(keys::sets)->getReference<set<localIndex>>( setName );
+    const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
 
