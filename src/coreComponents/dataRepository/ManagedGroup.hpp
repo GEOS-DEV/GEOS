@@ -468,6 +468,8 @@ public:
   ViewWrapperBase * RegisterViewWrapper( string const & name,
                                          ViewWrapperBase * const wrapper );
 
+  void DeregisterViewWrapper( string const & name );
+
 //  template< typename T >
 //  void RegisterViewWrapperRecursive( string const & name );
 //

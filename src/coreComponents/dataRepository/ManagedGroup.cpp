@@ -190,6 +190,11 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
                             true );
 }
 
+void ManagedGroup::DeregisterViewWrapper( string const & name )
+{
+  m_wrappers.erase(name);
+}
+
 
 void ManagedGroup::resize( indexType const newsize )
 {
