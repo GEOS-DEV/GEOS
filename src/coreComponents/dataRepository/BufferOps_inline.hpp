@@ -399,7 +399,7 @@ localIndex Pack( char *& buffer,
                  set<globalIndex> const & unmappedGlobalIndices,
                  arraySlice1d<globalIndex const> const & localToGlobal )
 {
-  const localIndex length = integer_conversion<localIndex>(var.size());
+  const localIndex length = integer_conversion<localIndex>(var.size()+unmappedGlobalIndices.size());
   localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
 
   for( typename set<localIndex>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
@@ -448,6 +448,52 @@ localIndex Unpack( char const *& buffer,
 
   return sizeOfUnpackedChars;
 }
+
+
+
+
+template< bool DO_PACKING >
+localIndex Pack( char *& buffer,
+                 set<localIndex> const & var,
+                 arrayView1d<localIndex const> const & packList,
+                 set<globalIndex> const & unmappedGlobalIndices,
+                 arraySlice1d<globalIndex const> const & localToGlobal )
+{
+
+  localIndex length = 0;
+  array1d<localIndex> temp(var.size());
+
+  for( localIndex a=0 ; a<packList.size() ; ++ a )
+  {
+    if( var.count(a) )
+    {
+      temp[length] = a;
+      ++length;
+    }
+  }
+  temp.resize(length);
+  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+
+
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobal[temp[a]]);
+  }
+
+  for( typename set<globalIndex>::const_iterator i=unmappedGlobalIndices.begin() ;
+      i!=unmappedGlobalIndices.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+
+
+
+
 
 
 template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >

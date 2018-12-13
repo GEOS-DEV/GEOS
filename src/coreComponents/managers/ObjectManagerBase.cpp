@@ -327,6 +327,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   }
 
 
+
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
@@ -403,6 +404,61 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   return unpackedSize;
 }
 
+template< bool DOPACK >
+localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
+                                        arrayView1d<localIndex const> const & packList ) const
+{
+  localIndex packedSize = 0;
+  packedSize += bufferOps::Pack<DOPACK>( buffer, m_sets.getName() );
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, m_sets.wrappers().size() );
+  for( auto const & wrapperIter : m_sets.wrappers() )
+  {
+    string const & setName = wrapperIter.first;
+    set<localIndex> const & currentSet = m_sets.getReference<set<localIndex> >(setName);
+    packedSize += bufferOps::Pack<DOPACK>( buffer, setName );
+    packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                           currentSet,
+                                           packList,
+                                           set<globalIndex>(),
+                                           m_localToGlobalMap );
+  }
+  return packedSize;
+}
+//template<>
+//localIndex ObjectManagerBase::PackSets<true>( buffer_unit_type * &,
+//                                              arrayView1d<localIndex const> const & );
+//template<>
+//localIndex ObjectManagerBase::PackSets<false>( buffer_unit_type * &,
+//                                               arrayView1d<localIndex const> const & );
+
+
+localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
+{
+  localIndex unpackedSize = 0;
+  string name;
+  unpackedSize += bufferOps::Unpack( buffer, name );
+  GEOS_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match");
+
+  localIndex numUnpackedSets;
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets );
+  for( localIndex a=0 ; a<numUnpackedSets ; ++a )
+  {
+    string setName;
+    unpackedSize += bufferOps::Unpack( buffer, setName );
+    set<localIndex> & targetSet = m_sets.getReference<set<localIndex> >(setName);
+
+    set<globalIndex> junk;
+    unpackedSize += bufferOps::Unpack( buffer,
+                                       targetSet,
+                                       junk,
+                                       this->m_globalToLocalMap,
+                                       false );
+  }
+
+  return unpackedSize;
+}
+
 
 localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
                                 integer const recursive ) const
@@ -460,6 +516,8 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
       }
     }
   }
+
+  packedSize += PackSets<DOPACK>(buffer, packList );
 
   return packedSize;
 }
@@ -568,6 +626,10 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
                       UnpackGlobalMaps(buffer,packList, recursive);
     }
   }
+
+
+  unpackedSize += UnpackSets(buffer );
+
 
   return unpackedSize;
 }
