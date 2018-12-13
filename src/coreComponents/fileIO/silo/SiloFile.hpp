@@ -296,6 +296,13 @@ public:
                               const localIndex_array& mask );
 
 
+
+  void WriteElementManagerSilo( ElementRegionManager const * group,
+                                string const & siloDirName,
+                                string const & meshName,
+                                int const cycleNum,
+                                real64 const problemTime,
+                                bool const isRestart );
   /**
    * Writes the contents of a group of ViewWrapper objects
    * @tparam the output varaible type
