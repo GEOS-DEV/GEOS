@@ -1577,6 +1577,93 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
 
 }
 
+void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementManager,
+                                        string const & siloDirName,
+                                        string const & meshName,
+                                        int const cycleNum,
+                                        real64 const problemTime,
+                                        bool const isRestart )
+{
+
+  localIndex numElems = 0;
+  dataRepository::ManagedGroup fakeGroup(elementManager->getName(), nullptr);
+  array1d< array1d< std::map< string, ViewWrapperBase const * > > > viewPointers(elementManager->numRegions());
+
+  for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+    viewPointers[er].resize( elemRegion->numSubRegions() );
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+      numElems += subRegion->size();
+
+      for( auto const & wrapperIter : subRegion->wrappers() )
+      {
+        ViewWrapperBase const * const wrapper = wrapperIter.second;
+
+        if( wrapper->getPlotLevel() < m_plotLevel )
+        {
+          // the field name is the key to the map
+          string const fieldName = wrapper->getName();
+
+          viewPointers[er][esr][fieldName] = wrapper;
+
+          std::type_info const & typeID = wrapper->get_typeid();
+
+          rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeID),
+                                          false,
+                                          [&]( auto arrayType, auto Type )->void
+          {
+            fakeGroup.RegisterViewWrapper<decltype(arrayType)>( fieldName )->setPlotLevel(0);
+          });
+        }
+      }
+    }
+  }
+  fakeGroup.resize(numElems);
+
+
+  for( auto & wrapperIter : fakeGroup.wrappers() )
+  {
+    ViewWrapperBase * const wrapper = wrapperIter.second;
+    string const fieldName = wrapper->getName();
+    std::type_info const & typeID = wrapper->get_typeid();
+
+    rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeID),
+                                    false,
+                                    [&]( auto array, auto scalar )->void
+    {
+      typedef decltype(array) arrayType;
+      ViewWrapper<arrayType> & wrapperT = ViewWrapper<arrayType>::cast( *wrapper );
+      arrayType & targetArray = wrapperT.reference();
+
+      localIndex counter = 0;
+      for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+      {
+        ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+        for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+        {
+          ViewWrapper<arrayType> const &
+          sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
+          arrayType const & sourceArray = sourceWrapper.reference();
+
+          targetArray.copy(counter, sourceArray );
+          counter += sourceArray.size(0);
+        }
+      }
+    });
+  }
+
+  WriteManagedGroupSilo( &fakeGroup,
+                         siloDirName,
+                         meshName,
+                         DB_ZONECENT,
+                         cycleNum,
+                         problemTime,
+                         isRestart,
+                         localIndex_array() );
+}
 
 
 void SiloFile::WriteDomainPartition( DomainPartition const & domain,
@@ -1684,7 +1771,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
 
-    for( localIndex er=0 ; er<elementManager->numCellBlocks() ; ++er )
+    for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
       ElementRegion const * const region = elementManager->GetRegion(er);
 
@@ -1694,8 +1781,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
         array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
-        // The following line seems to be redundant. It's actual function is to
-        // size this temp array.(pfu)
         elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
 
         integer_array const & elemGhostRank = cellBlock->GhostRank();
@@ -1804,32 +1889,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-//    DBSetDir(m_dbFilePtr, "NodalFields" );
-//    WriteDataField<int>( meshName,
-//                         ghostNodeName,
-//                         ghostNodeFlag,
-//                         DB_NODECENT,
-//                         cycleNum,
-//                         problemTime,
-//                         "/NodalFields" );
-//    DBSetDir(m_dbFilePtr, "..");
-
-
 
     {
-//      array1d<array1d<localIndex> > materialOrder;
-//      array1d<localIndex> materialOrderCounter;
-//      materialOrder.resize( constitutiveManager->GetSubGroups().size() );
-//      materialOrderCounter.resize( constitutiveManager->GetSubGroups().size() );
-//      for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
-//      {
-//        ConstitutiveBase const * const
-//        constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
-//
-//        materialOrder[matIndex].resize( constitutiveModel->size() );
-//        materialOrder[matIndex] = -1;
-//        materialOrderCounter[matIndex] = 0;
-//      }
       ElementRegionManager const * const elemManager = meshLevel->getElemManager();
 
 
@@ -1839,43 +1900,37 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                           cycleNum,
                                           problemTime );
 
-      for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-      {
-        ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-        for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-        {
-          CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
 
-          string regionName = elemRegion->getName() + "_" + subRegion->getName();
+      WriteElementManagerSilo( elemManager,
+                               "CellData",
+                               meshName,
+                               cycleNum,
+                               problemTime,
+                               isRestart );
 
-          WriteManagedGroupSilo( subRegion,
-                                 regionName,
-                                 meshName,
-                                 DB_ZONECENT,
-                                 cycleNum,
-                                 problemTime,
-                                 isRestart,
-                                 localIndex_array());
-
-//          DBSetDir(m_dbFilePtr, regionName.c_str() );
-//          string temp = "/" + regionName;
-//          WriteDataField<int>( meshName,
-//                               ghostZoneName,
-//                               ghostZoneFlag,
-//                               DB_ZONECENT,
-//                               cycleNum,
-//                               problemTime,
-//                               temp.c_str() );
-//          DBSetDir(m_dbFilePtr, "..");
-
-
-        }
-      }
+//      for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+//      {
+//        ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+//        for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+//        {
+//          CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+//
+//          string regionName = elemRegion->getName() + "_" + subRegion->getName();
+//
+//          WriteManagedGroupSilo( subRegion,
+//                                 regionName,
+//                                 meshName,
+//                                 DB_ZONECENT,
+//                                 cycleNum,
+//                                 problemTime,
+//                                 isRestart,
+//                                 localIndex_array());
+//
+//
+//
+//        }
+//      }
     }
-//    m_feElementManager->WriteSilo( siloFile, meshName, cycleNum, problemTime,
-// isRestart );
-
-
 //  }//end FE write
 
 

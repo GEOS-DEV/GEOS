@@ -927,37 +927,40 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & blockLocalDofNumber = m_dofNumber;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & pres  = m_pressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dPres = m_deltaPressure;
-
-  // loop through cell block sub-regions
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr)
-    {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
-
-      // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
-      // if the boundary condition should be applied to this subregion
-      bcManager->ApplyBoundaryCondition( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-        [&]( BoundaryConditionBase const * const bc, string const &, set<localIndex> const & lset,
-             ManagedGroup *, string const & ) -> void
+  // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
+  // if the boundary condition should be applied to this subregion
+  bcManager->ApplyBoundaryCondition( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                                     [&]( BoundaryConditionBase const * const bc,
+                                          string const &,
+                                          set<localIndex> const & lset,
+                                          ManagedGroup * subRegion,
+                                          string const & ) -> void
         {
+          arrayView1d<globalIndex const> const &
+          dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+
+          arrayView1d<real64 const> const &
+          pres = subRegion->getReference<array1d<real64> >( viewKeyStruct::pressureString );
+
+          arrayView1d<real64 const> const &
+          dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
+
           // call the application of the boundary condition to alter the matrix and rhs
-          bc->ApplyBoundaryConditionToSystem<BcEqual>( lset, time_n + dt, subRegion, blockLocalDofNumber[er][esr],
-                                                       1, blockSystem, BlockIDs::fluidPressureBlock,
+          bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
+                                                       time_n + dt,
+                                                       subRegion,
+                                                       dofNumber,
+                                                       1,
+                                                       blockSystem,
+                                                       BlockIDs::fluidPressureBlock,
             [&] (localIndex const a) -> real64
             {
-              return pres[er][esr][a] + dPres[er][esr][a];
+              return pres[a] + dPres[a];
             }
           );
         }
       );
-    }
-  }
 }
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
@@ -1008,7 +1011,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   arrayView1d<real64> & viscFace      = faceManager->getReference<array1d<real64>>( viewKeyStruct::viscosityString );
   arrayView1d<real64> & gravDepthFace = faceManager->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
-  dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
+  dataRepository::ManagedGroup const * sets = faceManager->sets();
 
   // first, evaluate BC to get primary field values (pressure)
 //  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::facePressure, time + dt);

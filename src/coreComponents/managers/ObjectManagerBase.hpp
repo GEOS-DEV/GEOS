@@ -29,13 +29,6 @@
 namespace geosx
 {
 class SiloFile;
-namespace dataRepository
-{
-namespace keys
-{
-string const sets("Sets");
-}
-}
 
 
 /**
@@ -88,6 +81,12 @@ public:
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
                              arrayView1d<localIndex> & packList,
                              integer const recursive )  override;
+
+  template< bool DOPACK >
+  localIndex PackSets( buffer_unit_type * & buffer,
+                       arrayView1d<localIndex const> const & packList ) const;
+
+  localIndex UnpackSets( buffer_unit_type const *& buffer );
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
 

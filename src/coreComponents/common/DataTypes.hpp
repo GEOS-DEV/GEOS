@@ -748,6 +748,7 @@ public:
    */
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda2( const TypeIDs type,
+                                     bool const errorIfTypeNotFound,
                                      LAMBDA && lambda )
   {
     switch( type )
@@ -857,11 +858,12 @@ public:
       return lambda( real64_array3d(), real64(1) );
       break;
     }
-
-
     default:
     {
-      GEOS_ERROR( LOCATION );
+      if( errorIfTypeNotFound )
+      {
+        GEOS_ERROR( LOCATION );
+      }
     }
     }
   }
