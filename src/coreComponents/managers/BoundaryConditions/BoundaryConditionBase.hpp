@@ -660,7 +660,9 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( vw->get_typeid());
 
-  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ), [&]( auto type, auto baseType ) -> void
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                  false,
+                                  [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
