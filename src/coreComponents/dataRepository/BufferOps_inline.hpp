@@ -463,7 +463,7 @@ localIndex Pack( char *& buffer,
   localIndex length = 0;
   array1d<localIndex> temp(var.size());
 
-  for( localIndex a=0 ; a<packList.size() ; ++ a )
+  for( auto a : packList )
   {
     if( var.count(a) )
     {
