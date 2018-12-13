@@ -778,6 +778,7 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
   nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+  domain->GenerateSets();
   domain->SetupCommunications();
 
   faceManager->SetIsExternal();
@@ -810,7 +811,6 @@ void ProblemManager::ApplyInitialConditions()
 {
   GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
-  domain->GenerateSets();
 
   BoundaryConditionManager const * boundaryConditionManager = BoundaryConditionManager::get();
 

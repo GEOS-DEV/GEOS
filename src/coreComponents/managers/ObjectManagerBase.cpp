@@ -456,6 +456,7 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
                                        false );
   }
 
+
   return unpackedSize;
 }
 
