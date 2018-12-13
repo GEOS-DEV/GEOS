@@ -40,22 +40,22 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
 
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false );
+  RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dPressureString, &m_dPhaseFraction_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dTemperatureString, &m_dPhaseFraction_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dGlobalCompFractionString, &m_dPhaseFraction_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false );
+  RegisterViewWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dPressureString, &m_dPhaseDensity_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dTemperatureString, &m_dPhaseDensity_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString, &m_dPhaseDensity_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false );
+  RegisterViewWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dPressureString, &m_dPhaseViscosity_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dTemperatureString, &m_dPhaseViscosity_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString, &m_dPhaseViscosity_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false );
+  RegisterViewWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString, &m_dPhaseCompFraction_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString, &m_dPhaseCompFraction_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString, &m_dPhaseCompFraction_dGlobalCompFraction, false );
@@ -66,12 +66,8 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   RegisterViewWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString, &m_dTotalDensity_dGlobalCompFraction, false );
 }
 
-void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                               localIndex const numPts )
+void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPts )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numPts );
-
-  localIndex const size = parent->size();
   localIndex const NP = numFluidPhases();
   localIndex const NC = numFluidComponents();
 
@@ -99,6 +95,13 @@ void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * co
   m_dTotalDensity_dPressure.resize( size, numPts );
   m_dTotalDensity_dTemperature.resize( size, numPts );
   m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, NC );
+}
+
+void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
+{
+  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 MultiFluidBase::~MultiFluidBase()
@@ -182,6 +185,9 @@ void MultiFluidBase::ReadXML_PostProcess()
 
   MULTIFLUID_CHECK_INPUT_LENGTH( m_componentMolarWeight, NC,
                                  viewKeyStruct::componentMolarWeightString )
+
+  // call to correctly set member array tertiary sizes on the 'main' material object
+  ResizeFields( 0, 0 );
 }
 
 localIndex MultiFluidBase::numFluidComponents() const

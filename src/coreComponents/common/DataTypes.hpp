@@ -244,7 +244,6 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 
 
-
 using integer_array2d       = array2d<integer>;
 using integer_const_array2d = array2d<integer const>;
 
@@ -262,7 +261,6 @@ using localIndex_const_array2d = array2d<localIndex const>;
 
 using globalIndex_array2d       = array2d<globalIndex>;
 using globalIndex_const_array2d = array2d<globalIndex const>;
-
 
 
 
@@ -507,7 +505,11 @@ public:
   {
     const axom::sidre::TypeID integer_id = axom::sidre::detail::SidreTT<integer>::id;
     const axom::sidre::TypeID localIndex_id = axom::sidre::detail::SidreTT<localIndex>::id;
-    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT<globalIndex>::id;
+
+    /* We can't use SidreTT<globalIndex>::id here because that returns NO_TYPE_ID.
+     * This is due to a mismatch between globalIndex (long long int) and std::int64_t */
+    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT<axom::common::int64>::id;
+    
     const axom::sidre::TypeID real32_id = axom::sidre::detail::SidreTT<real32>::id;
     const axom::sidre::TypeID real64_id = axom::sidre::detail::SidreTT<real64>::id;
     const axom::sidre::TypeID char_id = axom::sidre::TypeID::UINT8_ID;
@@ -746,6 +748,7 @@ public:
    */
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda2( const TypeIDs type,
+                                     bool const errorIfTypeNotFound,
                                      LAMBDA && lambda )
   {
     switch( type )
@@ -855,11 +858,12 @@ public:
       return lambda( real64_array3d(), real64(1) );
       break;
     }
-
-
     default:
     {
-      GEOS_ERROR( LOCATION );
+      if( errorIfTypeNotFound )
+      {
+        GEOS_ERROR( LOCATION );
+      }
     }
     }
   }

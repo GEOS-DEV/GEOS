@@ -51,7 +51,8 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent, localIndex const numPts ) override;
+  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
@@ -74,7 +75,7 @@ public:
     static constexpr auto phaseTypesString     = "phaseTypes";
     static constexpr auto phaseOrderString     = "phaseTypes";
 
-    static constexpr auto phaseRelPermString                    = "phaseRelPermString";              // Kr
+    static constexpr auto phaseRelPermString                    = "phaseRelPerm";                    // Kr
     static constexpr auto dPhaseRelPerm_dPhaseVolFractionString = "dPhaseRelPerm_dPhaseVolFraction"; // dKr_p/dS_p
 
     using ViewKey = dataRepository::ViewKey;
@@ -89,6 +90,13 @@ public:
   } viewKeysRelativePermeabilityBase;
 
 protected:
+
+  /**
+   * @brief Function called internally to resize member arrays
+   * @param size primary dimension (e.g. number of cells)
+   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   */
+  void ResizeFields( localIndex const size, localIndex const numPts );
 
   // phase names read from input
   string_array     m_phaseNames;

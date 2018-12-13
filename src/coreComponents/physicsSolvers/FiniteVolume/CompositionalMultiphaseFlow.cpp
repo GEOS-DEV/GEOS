@@ -36,6 +36,7 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
@@ -1179,7 +1180,7 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
                                 0 );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back(viewKeysCompMultiphaseFlow.blockLocalDofNumber.Key());
+  fieldNames["elems"].push_back( viewKeyStruct::blockLocalDofNumberString );
   CommunicationTools::
   SynchronizeFields(fieldNames,
                     mesh,
@@ -1863,7 +1864,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   bcManager->ApplyBoundaryCondition( time_n + dt,
                                      domain,
                                      "ElementRegions",
-                                     viewKeysCompMultiphaseFlow.pressure.Key(),
+                                     viewKeyStruct::pressureString,
                                      [&]( BoundaryConditionBase const * const bc,
                                           string const & setName,
                                           set<localIndex> const & targetSet,
@@ -1879,14 +1880,14 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
     bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
                                                 time_n + dt,
                                                 subRegion,
-                                                viewKeysCompMultiphaseFlow.bcPressure.Key() );
+                                                viewKeyStruct::bcPressureString );
   });
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
   bcManager->ApplyBoundaryCondition( time_n + dt,
                                      domain,
                                      "ElementRegions",
-                                     viewKeysCompMultiphaseFlow.globalCompFraction.Key(),
+                                     viewKeyStruct::globalCompFractionString,
                                      [&] ( BoundaryConditionBase const * const bc,
                                            string const & setName,
                                            set<localIndex> const & targetSet,
@@ -1923,7 +1924,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   bcManager->ApplyBoundaryCondition( time_n + dt,
                                      domain,
                                      "ElementRegions",
-                                     viewKeysCompMultiphaseFlow.pressure.Key(),
+                                     viewKeyStruct::pressureString,
                                      [&] ( BoundaryConditionBase const * const bc,
                                            string const & setName,
                                            set<localIndex> const & targetSet,

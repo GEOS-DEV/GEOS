@@ -273,7 +273,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
   // make sets from nodesets
   // First create the sets
-  auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
+  auto const & nodeSets = nodeManager->sets()->wrappers();
   for ( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -286,7 +286,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const set<localIndex>& targetSet = nodeManager->GetGroup(keys::sets)->getReference<set<localIndex>>( setName );
+    const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
 
@@ -666,13 +666,15 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void FaceManager::FixUpDownMaps()
+void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_nodeList,
-                                    m_unmappedGlobalIndicesInToNodes);
+                                    m_unmappedGlobalIndicesInToNodes,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_edgeList,
-                                    m_unmappedGlobalIndicesInToEdges);
+                                    m_unmappedGlobalIndicesInToEdges,
+                                    clearIfUnmapped );
 
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);

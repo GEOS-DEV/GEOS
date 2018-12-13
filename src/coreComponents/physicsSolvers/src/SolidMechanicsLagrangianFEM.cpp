@@ -45,6 +45,8 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
+
 
 //#define verbose 0 //Need to move this somewhere else
 
@@ -547,6 +549,11 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 {
   GEOSX_MARK_FUNCTION;
 
+  static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
+  static real64 maxTimes[10] = {0.0};
+
+  GEOSX_GET_TIME( t0 );
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
@@ -597,7 +604,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  forall_in_range(0, numNodes, GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_range(0, numNodes, GEOSX_LAMBDA (localIndex a) mutable
   {
     acc[a] = 0;
   });
@@ -611,6 +618,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
+  GEOSX_GET_TIME( t1 );
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
@@ -659,7 +667,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   } //Element Manager
 
   //Compute Force : Point-wise computations
-  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a) mutable
   {
     acc[a] /=mass[a];
   });
@@ -669,7 +677,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
 
+  GEOSX_GET_TIME( t2 );
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_icomm );
+  GEOSX_GET_TIME( t3 );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
@@ -715,8 +725,10 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   } //Element Manager
 
+  GEOSX_GET_TIME( t4 );
+
   //Compute Force : Point-wise computations
-  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a)
+  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a)
   {
     acc[a] /=mass[a];
   });
@@ -727,6 +739,29 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_icomm );
+
+
+  GEOSX_GET_TIME( tf );
+
+#ifdef GEOSX_USE_TIMERS
+  GEOSX_MARK_BEGIN("MPI_Barrier");
+  MPI_Barrier(MPI_COMM_GEOSX);
+  GEOSX_MARK_END("MPI_Barrier");
+
+  minTimes[0] = std::min( minTimes[0], t2-t1 );
+  minTimes[1] = std::min( minTimes[1], t4-t3 );
+  minTimes[2] = std::min( minTimes[2], tf-t0 );
+
+
+  maxTimes[0] = std::max( maxTimes[0], t2-t1 );
+  maxTimes[1] = std::max( maxTimes[1], t4-t3 );
+  maxTimes[2] = std::max( maxTimes[2], tf-t0 );
+
+
+  GEOS_LOG_RANK( "     outer loop: "<< (t2-t1)<<", "<<minTimes[0]<<", "<<maxTimes[0] );
+  GEOS_LOG_RANK( "     inner loop: "<< (t4-t3)<<", "<<minTimes[1]<<", "<<maxTimes[1] );
+  GEOS_LOG_RANK( "     total time: "<< (tf-t0)<<", "<<minTimes[2]<<", "<<maxTimes[2] );
+#endif
 
   return dt;
 }
@@ -1817,7 +1852,7 @@ void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition 
   r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   // TODO need to finish this rewind
-  forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (localIndex a) mutable
   {
     incdisp[a] = 0.0;
   });

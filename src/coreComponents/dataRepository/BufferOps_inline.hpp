@@ -18,8 +18,8 @@
 
 
 
-#ifndef DATAREPOSITORY_BUFFEROPS_H_
-#define DATAREPOSITORY_BUFFEROPS_H_
+#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_H_
+#define DATAREPOSITORY_BUFFEROPS_INLINE_H_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -100,6 +100,7 @@ Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedL
                    expectedLength << " != " << length );
 
   memcpy( var, buffer, length * sizeof(T) );
+  sizeOfUnpackedChars += length * sizeof(T);
   buffer += length * sizeof(T);
 
   return sizeOfUnpackedChars;
@@ -109,31 +110,25 @@ Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedL
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer, const std::string& var )
 {
-  string::size_type sizeOfPackedChars = var.size();
-
-  Pack<DO_PACKING>( buffer, sizeOfPackedChars );
+  const string::size_type varSize = var.size();
+  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, varSize );
 
   static_if( DO_PACKING )
   {
-    for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
-    {
-      *buffer = var[i];
-      buffer++;
-    }
+    memcpy( buffer, var.data(), varSize );
+    buffer += varSize;
   }
   end_static_if
-
-  sizeOfPackedChars += sizeof( localIndex );
-  return integer_conversion<localIndex>(sizeOfPackedChars);
+  
+  sizeOfPackedChars += varSize;
+  return sizeOfPackedChars;
 }
 
 
 inline localIndex Unpack( char const *& buffer, string& var )
 {
-  localIndex sizeOfUnpackedChars = 0;
   string::size_type stringsize = 0;
-
-  sizeOfUnpackedChars += Unpack( buffer, stringsize );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize );
 
   var.resize(stringsize);
   var.assign( buffer, stringsize );
@@ -404,7 +399,7 @@ localIndex Pack( char *& buffer,
                  set<globalIndex> const & unmappedGlobalIndices,
                  arraySlice1d<globalIndex const> const & localToGlobal )
 {
-  const localIndex length = integer_conversion<localIndex>(var.size());
+  const localIndex length = integer_conversion<localIndex>(var.size()+unmappedGlobalIndices.size());
   localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
 
   for( typename set<localIndex>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
@@ -453,6 +448,52 @@ localIndex Unpack( char const *& buffer,
 
   return sizeOfUnpackedChars;
 }
+
+
+
+
+template< bool DO_PACKING >
+localIndex Pack( char *& buffer,
+                 set<localIndex> const & var,
+                 arrayView1d<localIndex const> const & packList,
+                 set<globalIndex> const & unmappedGlobalIndices,
+                 arraySlice1d<globalIndex const> const & localToGlobal )
+{
+
+  localIndex length = 0;
+  array1d<localIndex> temp(var.size());
+
+  for( auto a : packList )
+  {
+    if( var.count(a) )
+    {
+      temp[length] = a;
+      ++length;
+    }
+  }
+  temp.resize(length);
+  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+
+
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobal[temp[a]]);
+  }
+
+  for( typename set<globalIndex>::const_iterator i=unmappedGlobalIndices.begin() ;
+      i!=unmappedGlobalIndices.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+
+
+
+
 
 
 template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
@@ -1071,60 +1112,26 @@ Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map, T_INDICES const & unpa
 }
 
 
-template< typename... VARPACK >
+template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
 localIndex
-PackSize( VARPACK const &&...  pack )
+Pack( char*& buffer, std::pair< T_FIRST, T_SECOND > const & var )
 {
-  char* junk = nullptr;
-  return Pack<false>( junk, pack... );
+  localIndex sizeOfPackedChars = Pack<DO_PACKING>(buffer, var.first);
+  sizeOfPackedChars += Pack<DO_PACKING>(buffer, var.second);
+  return sizeOfPackedChars;
 }
 
 
-template< typename... VARPACK >
+template< typename T_FIRST, typename T_SECOND >
 localIndex
-PackSize( VARPACK &&...  pack )
+Unpack( char const *& buffer, std::pair< T_FIRST, T_SECOND >& var )
 {
-  char* junk = nullptr;
-  return Pack<false>( junk, pack... );
-}
-
-
-template< bool DO_PACKING, typename T >
-typename std::enable_if< !bufferOps::is_packable<T>::value, localIndex >::type
-Pack( char*&  buffer, T const & var )
-{
-  GEOS_ERROR("Trying to pack data type ("<<typeid(T).name()<<") but type is not packable.");
-  return 0;
-}
-
-
-template< typename T >
-typename std::enable_if< !bufferOps::is_packable<T>::value, localIndex >::type
-Unpack( char const *& buffer, T & var )
-{
-  GEOS_ERROR("Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable.");
-  return 0;
-}
-
-
-template< bool DO_PACKING, typename T, typename T_INDICES >
-typename std::enable_if< !bufferOps::is_packable_by_index<T>::value, localIndex >::type
-Pack( char*&  buffer, T const & var, T_INDICES const& )
-{
-  GEOS_ERROR("Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index.");
-  return 0;
-}
-
-
-template< typename T, typename T_INDICES >
-typename std::enable_if< !bufferOps::is_packable_by_index<T>::value, localIndex >::type
-Unpack( char const *& buffer, T & var, T_INDICES const& )
-{
-  GEOS_ERROR("Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index.");
-  return 0;
+  localIndex sizeOfUnpackedChars = Unpack(buffer, var.first);
+  sizeOfUnpackedChars += Unpack(buffer, var.second);
+  return sizeOfUnpackedChars;
 }
 
 } /* namespace bufferOps */
 } /* namespace geosx */
 
-#endif /* DATAREPOSITORY_BUFFEROPS_H_ */
+#endif /* DATAREPOSITORY_BUFFEROPS_INLINE_H_ */

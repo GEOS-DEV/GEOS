@@ -246,13 +246,15 @@ localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buff
   return unPackedSize;
 }
 
-void CellBlockSubRegion::FixUpDownMaps()
+void CellBlockSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( nodeList(),
-                                    m_unmappedGlobalIndicesInNodelist);
+                                    m_unmappedGlobalIndicesInNodelist,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( faceList(),
-                                    m_unmappedGlobalIndicesInFacelist);
+                                    m_unmappedGlobalIndicesInFacelist,
+                                    clearIfUnmapped );
 }
 
 
