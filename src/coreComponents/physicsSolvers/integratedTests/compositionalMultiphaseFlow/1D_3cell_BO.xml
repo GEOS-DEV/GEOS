@@ -13,7 +13,7 @@
                                  fluidName="fluid1"
                                  solidName="rock"
                                  relPermName="relperm"
-                                 temperature="297.15"
+                                 temperature="300"
                                  useMass="0">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -87,8 +87,8 @@
   <Constitutive>
     <BlackOilFluid name="fluid1"
                    phaseNames="oil gas water"
-                   surfaceDensities="800.0 1.0 1000.0"
-                   molarWeights="90.0 16.0 18.0"
+                   surfaceDensities="800.0 0.9907 1022.0"
+                   componentMolarWeight="114e-3 16e-3 18e-3"
                    tableFiles="pvto.txt pvtg.txt pvtw.txt"/>
 
     <PoreVolumeCompressibleSolid name="rock"
@@ -154,16 +154,16 @@
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
 
-    <Dirichlet name="initialComposition_N2"
+    <Dirichlet name="initialComposition_oil"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
                dataType="real64"
-               scale="0.099"/>
+               scale="0.6"/>
 
-    <Dirichlet name="initialComposition_C10"
+    <Dirichlet name="initialComposition_gas"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -172,23 +172,14 @@
                dataType="real64"
                scale="0.3"/>
 
-    <Dirichlet name="initialComposition_C20"
+    <Dirichlet name="initialComposition_water"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                dataType="real64"
-               scale="0.6"/>
-
-    <Dirichlet name="initialComposition_H20"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompFraction"
-               component="3"
-               dataType="real64"
-               scale="0.001"/>
+               scale="0.1"/>
 
     <!-- Injection pressure: ~10 bar -->
 
@@ -201,7 +192,7 @@
 
     <!-- Injection stream: mostly water -->
 
-    <Dirichlet name="sourceTermComposition_N2"
+    <Dirichlet name="sourceTermComposition_oil"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
@@ -209,7 +200,7 @@
                dataType="real64"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_C10"
+    <Dirichlet name="sourceTermComposition_gas"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
@@ -217,21 +208,13 @@
                dataType="real64"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_C20"
+    <Dirichlet name="sourceTermComposition_water"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                dataType="real64"
-               scale="0.1"/>
-
-    <Dirichlet name="sourceTermComposition_H20"
-               setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompFraction"
-               component="3"
-               dataType="real64"
-               scale="0.7"/>
+               scale="0.8"/>
 
     <!-- Production pressure: ~1 bar, close to stock tank conditions -->
 
@@ -244,15 +227,15 @@
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
 
-    <Dirichlet name="sinkTermComposition_N2"
+    <Dirichlet name="sinkTermComposition_oil"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
                dataType="real64"
-               scale="0.099"/>
+               scale="0.6"/>
 
-    <Dirichlet name="sinkTermComposition_C10"
+    <Dirichlet name="sinkTermComposition_gas"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
@@ -260,21 +243,13 @@
                dataType="real64"
                scale="0.3"/>
 
-    <Dirichlet name="sinkTermComposition_C20"
+    <Dirichlet name="sinkTermComposition_water"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                dataType="real64"
-               scale="0.6"/>
-
-    <Dirichlet name="sinkTermComposition_H20"
-               setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="globalCompFraction"
-               component="3"
-               dataType="real64"
-               scale="0.001"/>
+               scale="0.1"/>
 
   </BoundaryConditions>
 
