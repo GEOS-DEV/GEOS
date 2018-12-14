@@ -496,7 +496,15 @@ public:
       { std::type_index(typeid(string_array)), TypeIDs::string_array_id },
       { std::type_index(typeid(mapPair_array)),TypeIDs::mapPair_array_id }
     };
-    return type_names.at(typeIndex);
+    auto iterType = type_names.find(typeIndex);
+    if( iterType != type_names.end() )
+    {
+      return type_names.at(typeIndex);
+    }
+    else
+    {
+      return TypeIDs::none_id;
+    }
   }
 
 #ifdef GEOSX_USE_ATK
