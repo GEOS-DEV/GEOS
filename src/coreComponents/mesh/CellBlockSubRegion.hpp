@@ -113,7 +113,7 @@ public:
   // TODO this needs to be stored by the FiniteElementManager!!
   std::pair< array2d< localIndex >, array2d< localIndex > > m_constitutiveMapView;
 
-  LvArray::Array< R1Tensor, 3 > m_dNdX;
+  array3d< R1Tensor > m_dNdX;
 
   dataRepository::ManagedGroup const * GetConstitutiveModels() const
   { return &m_constitutiveModels; }
