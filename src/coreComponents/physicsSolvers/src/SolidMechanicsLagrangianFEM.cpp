@@ -1336,8 +1336,8 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
     {
       CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
 
-      LvArray::Array<R1Tensor, 3> const &
-      dNdX = cellBlock->getReference< LvArray::Array<R1Tensor, 3> >(keys::dNdX);
+      array3d<R1Tensor> const &
+      dNdX = cellBlock->getReference< array3d<R1Tensor> >(keys::dNdX);
 
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
