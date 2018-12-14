@@ -429,15 +429,27 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
   DomainPartition     const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   ConstitutiveManager const * cm     = domain->getConstitutiveManager();
 
+  MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
+  m_numPhases     = fluid->numFluidPhases();
+  m_numComponents = fluid->numFluidComponents();
+  m_numDofPerCell = m_numComponents + 1;
+
   RelativePermeabilityBase const * relPerm = cm->GetConstitituveRelation<RelativePermeabilityBase>( m_relPermName );
   GEOS_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
   m_relPermIndex = relPerm->getIndexInParent();
 
-  MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
+  // Consistency check between the models
+  GEOS_ERROR_IF( fluid->numFluidPhases() != relPerm->numFluidPhases(),
+                 "Number of fluid phases differs between fluid model '" << m_fluidName
+                 << "' and relperm model '" << m_relPermName << "'" );
 
-  m_numPhases     = fluid->numFluidPhases();
-  m_numComponents = fluid->numFluidComponents();
-  m_numDofPerCell = m_numComponents + 1;
+  for (localIndex ip = 0; ip < m_numPhases; ++ip)
+  {
+    string const & phase_fl = fluid->phaseName( ip );
+    string const & phase_rp = relPerm->phaseName( ip );
+    GEOS_ERROR_IF( phase_fl != phase_rp, "Phase '" << phase_fl << "' in fluid model '" << m_fluidName
+                   << "' does not match phase '" << phase_rp << "' in relperm model '" << m_relPermName << "'" );
+  }
 }
 
 void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
