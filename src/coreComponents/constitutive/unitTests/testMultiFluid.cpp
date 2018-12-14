@@ -54,12 +54,12 @@ template<typename T, int NDIM>
 using array = LvArray::Array<T,NDIM,localIndex>;
 
 template<typename T>
-::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *,
-                                                     T v1, T v2, T relTol )
+::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
+                                                     T v1, T v2, T relTol, T absTol )
 {
   T const delta = std::abs( v1 - v2 );
   T const value = std::max( std::abs(v1), std::abs(v2) );
-  if (delta > relTol * value)
+  if (delta > absTol && delta > relTol * value)
   {
     return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
                                          << " relative error: " << delta / value
@@ -70,23 +70,24 @@ template<typename T>
 }
 
 template<typename T>
-void checkRelativeError( T v1, T v2, T relTol )
+void checkRelativeError( T v1, T v2, T relTol, T absTol )
 {
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
+  EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
 }
 
 template<typename T>
-void checkRelativeError( T v1, T v2, T relTol, string const & name )
+void checkRelativeError( T v1, T v2, T relTol, T absTol, string const & name )
 {
   SCOPED_TRACE(name);
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
+  EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
 }
 
 template<typename T>
-void checkDerivative( T valueEps, T value, T deriv, real64 eps, real64 relTol, string const & name, string const & var )
+void checkDerivative( T valueEps, T value, T deriv, real64 eps, real64 relTol, T absTol,
+                      string const & name, string const & var )
 {
   T numDeriv = (valueEps - value) / eps;
-  checkRelativeError( deriv, numDeriv, relTol, "d(" + name + ")/d(" + var + ")" );
+  checkRelativeError( deriv, numDeriv, relTol, absTol, "d(" + name + ")/d(" + var + ")" );
 }
 
 template<typename T, typename ... Args>
@@ -94,7 +95,7 @@ void
 checkDerivative( arraySlice1d<T> const & valueEps,
                  arraySlice1d<T> const & value,
                  arraySlice1d<T> const & deriv,
-                 real64 eps, real64 relTol,
+                 real64 eps, real64 relTol, real64 absTol,
                  string const & name, string const & var,
                  string_array const & labels,
                  Args ... label_lists )
@@ -103,7 +104,7 @@ checkDerivative( arraySlice1d<T> const & valueEps,
 
   for (localIndex i = 0; i < size; ++i)
   {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
+    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
                      name + "[" + labels[i] + "]", var, label_lists... );
   }
 }
@@ -113,7 +114,7 @@ typename std::enable_if<(DIM > 1), void>::type
 checkDerivative( array_slice<T,DIM> const & valueEps,
                  array_slice<T,DIM> const & value,
                  array_slice<T,DIM> const & deriv,
-                 real64 eps, real64 relTol,
+                 real64 eps, real64 relTol, real64 absTol,
                  string const & name, string const & var,
                  string_array const & labels,
                  Args ... label_lists )
@@ -122,7 +123,7 @@ checkDerivative( array_slice<T,DIM> const & valueEps,
 
   for (localIndex i = 0; i < size; ++i)
   {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
+    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
                      name + "[" + labels[i] + "]", var, label_lists... );
   }
 }
@@ -166,7 +167,8 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
                                real64 T,
                                arraySlice1d<real64> const & composition,
                                real64 perturbParameter,
-                               real64 relTol )
+                               real64 relTol,
+                               real64 absTol = std::numeric_limits<real64>::max() )
 {
   localIndex const NC = fluid->numFluidComponents();
   localIndex const NP = fluid->numFluidPhases();
@@ -236,11 +238,11 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     real64 const dP = perturbParameter * (P + perturbParameter);
     fluidCopy->StateUpdatePointMultiFluid( P + dP, T, composition, 0, 0 );
 
-    checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, "phaseFrac", "Pres", phases );
-    checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, "phaseDens", "Pres", phases );
-    checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dPres, dP, relTol, "phaseVisc", "Pres", phases );
-    checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres, dP, relTol, "totalDens", "Pres" );
-    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dPres, dP, relTol,
+    checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
+    checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
+    checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dPres, dP, relTol, absTol, "phaseVisc", "Pres", phases );
+    checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres, dP, relTol, absTol, "totalDens", "Pres" );
+    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dPres, dP, relTol, absTol,
                      "phaseCompFrac", "Pres", phases, components );
   }
 
@@ -249,11 +251,11 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     real64 const dT = perturbParameter * (T + perturbParameter);
     fluidCopy->StateUpdatePointMultiFluid( P, T + dT, composition, 0, 0 );
 
-    checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, "phaseFrac", "Temp", phases );
-    checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, "phaseDens", "Temp", phases );
-    checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dTemp, dT, relTol, "phaseVisc", "Temp", phases );
-    checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp, dT, relTol, "totalDens", "Temp" );
-    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dTemp, dT, relTol,
+    checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
+    checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
+    checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dTemp, dT, relTol, absTol, "phaseVisc", "Temp", phases );
+    checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp, dT, relTol, absTol, "totalDens", "Temp" );
+    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dTemp, dT, relTol, absTol,
                      "phaseCompFrac", "Temp", phases, components );
   }
 
@@ -284,11 +286,11 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     fluidCopy->StateUpdatePointMultiFluid( P, T, compNew, 0, 0 );
     string var = "compFrac[" + components[jc] + "]";
 
-    checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, "phaseFrac", var, phases );
-    checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, "phaseDens", var, phases );
-    checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, "phaseVisc", var, phases );
-    checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc], dC, relTol, "totalDens", var );
-    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, dPhaseCompFrac_dC[jc], dC, relTol,
+    checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
+    checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, absTol, "phaseDens", var, phases );
+    checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, absTol, "phaseVisc", var, phases );
+    checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc], dC, relTol, absTol, "totalDens", var );
+    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, dPhaseCompFrac_dC[jc], dC, relTol, absTol,
                      "phaseCompFrac", var, phases, components );
   }
 }
@@ -331,6 +333,39 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
   return fluid;
 }
 
+MultiFluidBase * makeBlackOilFluid( string const & name, ManagedGroup * parent )
+{
+  auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
+
+  // TODO we should actually create a fake XML node with data, but this seemed easier...
+
+  auto & compNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
+  compNames.resize( 3 );
+  compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
+
+  auto & molarWgt = fluid->getReference<array1d<real64>>( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  molarWgt.resize( 3 );
+  molarWgt[0] = 114e-3; molarWgt[1] = 16e-3; molarWgt[2] = 18e-3;
+
+  auto & phaseNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
+
+  auto & surfaceDens = fluid->getReference<array1d<real64>>( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
+  surfaceDens.resize( 3 );
+  surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
+
+  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  tableNames.resize( 3 );
+  // TODO figure out a way to deal with paths
+  tableNames[0] = "/home/klevtsov/work/geosx/GEOSX/src/coreComponents/constitutive/unitTests/pvto.txt";
+  tableNames[1] = "/home/klevtsov/work/geosx/GEOSX/src/coreComponents/constitutive/unitTests/pvtg.txt";
+  tableNames[2] = "/home/klevtsov/work/geosx/GEOSX/src/coreComponents/constitutive/unitTests/pvtw.txt";
+
+  fluid->ReadXML_PostProcess();
+  return fluid;
+}
+
 TEST(testMultiFluid, numericalDerivatives_compositionalFluid_molar)
 {
   auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
@@ -349,9 +384,9 @@ TEST(testMultiFluid, numericalDerivatives_compositionalFluid_molar)
   comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
 
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-4;
+  real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, tol );
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
 TEST(testMultiFluid, numericalDerivatives_compositionalFluid_mass)
@@ -371,9 +406,55 @@ TEST(testMultiFluid, numericalDerivatives_compositionalFluid_mass)
   comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
 
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-2;
+  real64 const relTol = 1e-2;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, tol );
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+}
+
+TEST(testMultiFluid, numericalDerivatives_blackOilFluid_molar)
+{
+  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  parent->resize( 1 );
+
+  MultiFluidBase * fluid = makeBlackOilFluid( "fluid", parent.get() );
+  fluid->setMassFlag( false );
+
+  parent->Initialize( parent.get() );
+  parent->FinalInitializationRecursive( parent.get() );
+
+  // TODO test over a range of values
+  real64 const P = 5e6;
+  real64 const T = 297.15;
+  array1d<real64> comp(3);
+  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const relTol = 1e-4;
+
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+}
+
+TEST(testMultiFluid, numericalDerivatives_blackOilFluid_mass)
+{
+  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  parent->resize( 1 );
+
+  MultiFluidBase * fluid = makeBlackOilFluid( "fluid", parent.get() );
+  fluid->setMassFlag( true );
+
+  parent->Initialize( parent.get() );
+
+  // TODO test over a range of values
+  real64 const P = 5e6;
+  real64 const T = 297.15;
+  array1d<real64> comp(3);
+  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const relTol = 1e-2;
+  real64 const absTol = 1e-14;
+
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol, absTol );
 }
 
 int main(int argc, char** argv)
