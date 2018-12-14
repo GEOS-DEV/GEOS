@@ -67,7 +67,7 @@ public:
     const localIndex n_faces = face_connectivity.size();
 
     /* Copy the face connectivity into a contiguous array. */
-    localIndex* connectivity_array = new localIndex[4 * n_faces];
+    std::int64_t* connectivity_array = new std::int64_t[4 * n_faces];
     for (localIndex i = 0; i < n_faces; ++i)
     {
       for (localIndex j = 0; j < 4; ++j)
