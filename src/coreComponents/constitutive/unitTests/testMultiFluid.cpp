@@ -53,6 +53,55 @@ using namespace geosx::dataRepository;
 template<typename T, int NDIM>
 using array = LvArray::Array<T,NDIM,localIndex>;
 
+/// Black-oil tables written into temporary files during testing
+
+static const char * pvtg_str = "#\tPg(Pa)\t\tRv(sm3/sm3)\tBg(m3/sm3)\tVisc(Pa.s)\n"
+                               "\n"
+                               "\t3000000\t\t0.000132\t0.04234\t    0.00001344\n"
+                               "\t\t\t\t0\t\t\t0.04231\t    0.00001389\n"
+                               "\t6000000\t\t0.000124\t0.02046\t    0.0000142\n"
+                               "\t\t\t\t0\t\t\t0.02043\t    0.0000145\n"
+                               "\t9000000\t\t0.000126\t0.01328\t    0.00001526\n"
+                               "\t\t\t\t0\t\t\t0.01325\t    0.00001532\n"
+                               "   12000000\t\t0.000135\t0.00977\t    0.0000166\n"
+                               "\t\t\t\t0\t\t\t0.00973\t    0.00001634\n"
+                               "   15000000\t\t0.000149\t0.00773\t    0.00001818\n"
+                               "\t\t\t\t0\t\t\t0.00769\t    0.00001752\n"
+                               "   18000000\t\t0.000163\t0.006426\t0.00001994\n"
+                               "\t\t\t\t0\t\t\t0.006405\t0.00001883\n"
+                               "   21000000\t\t0.000191\t0.005541\t0.00002181\n"
+                               "\t\t\t\t0\t\t\t0.005553\t0.00002021\n"
+                               "   24000000\t\t0.000225\t0.004919\t0.0000237\n"
+                               "\t\t\t\t0\t\t\t0.004952\t0.00002163\n"
+                               "   27000000\t\t0.000272\t0.004471\t0.00002559\n"
+                               "\t\t\t\t0\t\t\t0.004511\t0.00002305\n"
+                               "   29500000\t\t0.000354\t0.004194\t0.00002714\n"
+                               "\t\t\t\t0\t\t\t0.004225\t0.00002423\n"
+                               "   31000000\t\t0.000403\t0.004031\t0.00002806\n"
+                               "\t\t\t\t0.000354\t0.004059\t0.00002768\n"
+                               "   33000000\t\t0.000354\t0.00391\t    0.00002832\n"
+                               "\t\t\t\t0\t\t\t0.003913\t0.00002583\n"
+                               "   53000000\t\t0.000479\t0.003868\t0.00002935\n"
+                               "\t\t\t\t0.000354\t0.0039\t\t0.00002842\n"
+                               "\t\t\t\t0\t\t\t0.003903\t0.00002593";
+
+static const char * pvto_str = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
+                               "\n"
+                               "  2\t            2000000\t    1.02\t    0.000975\n"
+                               "  5\t            5000000\t    1.03\t    0.00091\n"
+                               " 10\t            10000000\t1.04\t    0.00083\n"
+                               " 15\t            20000000\t1.05\t    0.000695\n"
+                               "                90000000\t1.03\t    0.000985  -- some line comment\n"
+                               " 30\t            30000000\t1.07\t    0.000594\n"
+                               " 40\t            40000000\t1.08\t    0.00051\n"
+                               "                50000000\t1.07\t    0.000549  -- another one\n"
+                               "                90000000\t1.06\t    0.00074\n"
+                               " 50\t            50000000.7\t1.09\t    0.000449\n"
+                               "                90000000.7\t1.08\t    0.000605";
+
+static const char * pvtw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
+                               "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
+
 template<typename T>
 ::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
                                                      T v1, T v2, T relTol, T absTol )
@@ -333,6 +382,65 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
   return fluid;
 }
 
+class CompositionalFluidTest : public ::testing::Test
+{
+protected:
+
+  static void SetUpTestCase()
+  {
+    parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+    parent->resize( 1 );
+
+    fluid = makeCompositionalFluid( "fluid", parent.get() );
+
+    parent->Initialize( parent.get() );
+    parent->FinalInitializationRecursive( parent.get() );
+  }
+
+  static void TearDownTestCase()
+  {
+
+  }
+
+  static std::unique_ptr<ManagedGroup> parent;
+  static MultiFluidBase * fluid;
+};
+
+std::unique_ptr<ManagedGroup> CompositionalFluidTest::parent( nullptr );
+MultiFluidBase * CompositionalFluidTest::fluid( nullptr );
+
+TEST_F(CompositionalFluidTest, numericalDerivativesMolar)
+{
+  fluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P = 5e6;
+  real64 const T = 297.15;
+  array1d<real64> comp(4);
+  comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const relTol = 1e-4;
+
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+}
+
+TEST_F(CompositionalFluidTest, numericalDerivativesMass)
+{
+  fluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P = 5e6;
+  real64 const T = 297.15;
+  array1d<real64> comp(4);
+  comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const relTol = 1e-2;
+
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+}
+
 MultiFluidBase * makeBlackOilFluid( string const & name, ManagedGroup * parent )
 {
   auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
@@ -357,70 +465,61 @@ MultiFluidBase * makeBlackOilFluid( string const & name, ManagedGroup * parent )
 
   auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
   tableNames.resize( 3 );
-  // TODO figure out a way to deal with paths
-  tableNames[0] = "/home/klevtsov/work/geosx/GEOSX/src/coreComponents/constitutive/unitTests/pvto.txt";
-  tableNames[1] = "/home/klevtsov/work/geosx/GEOSX/src/coreComponents/constitutive/unitTests/pvtg.txt";
-  tableNames[2] = "/home/klevtsov/work/geosx/GEOSX/src/coreComponents/constitutive/unitTests/pvtw.txt";
+  tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
   fluid->ReadXML_PostProcess();
   return fluid;
 }
 
-TEST(testMultiFluid, numericalDerivatives_compositionalFluid_molar)
+void writeTableToFile( std::string const & filename, char const * str )
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
-  parent->resize( 1 );
-
-  MultiFluidBase * fluid = makeCompositionalFluid( "fluid", parent.get() );
-  fluid->setMassFlag( false );
-
-  parent->Initialize( parent.get() );
-  parent->FinalInitializationRecursive( parent.get() );
-
-  // TODO test over a range of values
-  real64 const P = 5e6;
-  real64 const T = 297.15;
-  array1d<real64> comp(4);
-  comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
-
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const relTol = 1e-4;
-
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+  std::ofstream os( filename );
+  ASSERT_TRUE( os.is_open() );
+  os << str;
+  os.close();
 }
 
-TEST(testMultiFluid, numericalDerivatives_compositionalFluid_mass)
+void removeFile( std::string const & filename )
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
-  parent->resize( 1 );
-
-  MultiFluidBase * fluid = makeCompositionalFluid( "fluid", parent.get() );
-  fluid->setMassFlag( true );
-
-  parent->Initialize( parent.get() );
-
-  // TODO test over a range of values
-  real64 const P = 5e6;
-  real64 const T = 297.15;
-  array1d<real64> comp(4);
-  comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
-
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const relTol = 1e-2;
-
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+  int const ret = std::remove( filename.c_str() );
+  ASSERT_TRUE( ret == 0 );
 }
 
-TEST(testMultiFluid, numericalDerivatives_blackOilFluid_molar)
+class BlackOilFluidTest : public ::testing::Test
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
-  parent->resize( 1 );
+protected:
 
-  MultiFluidBase * fluid = makeBlackOilFluid( "fluid", parent.get() );
+  static void SetUpTestCase()
+  {
+    writeTableToFile( "pvto.txt", pvto_str );
+    writeTableToFile( "pvtg.txt", pvtg_str );
+    writeTableToFile( "pvtw.txt", pvtw_str );
+
+    parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+    parent->resize( 1 );
+    fluid = makeBlackOilFluid( "fluid", parent.get() );
+
+    parent->Initialize( parent.get() );
+    parent->FinalInitializationRecursive( parent.get() );
+  }
+
+  static void TearDownTestCase()
+  {
+    removeFile( "pvto.txt" );
+    removeFile( "pvtg.txt" );
+    removeFile( "pvtw.txt" );
+  }
+
+  static std::unique_ptr<ManagedGroup> parent;
+  static MultiFluidBase * fluid;
+};
+
+std::unique_ptr<ManagedGroup> BlackOilFluidTest::parent( nullptr );
+MultiFluidBase * BlackOilFluidTest::fluid( nullptr );
+
+TEST_F(BlackOilFluidTest, numericalDerivativesMolar)
+{
   fluid->setMassFlag( false );
-
-  parent->Initialize( parent.get() );
-  parent->FinalInitializationRecursive( parent.get() );
 
   // TODO test over a range of values
   real64 const P = 5e6;
@@ -434,15 +533,9 @@ TEST(testMultiFluid, numericalDerivatives_blackOilFluid_molar)
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-TEST(testMultiFluid, numericalDerivatives_blackOilFluid_mass)
+TEST_F(BlackOilFluidTest, numericalDerivativesMass)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
-  parent->resize( 1 );
-
-  MultiFluidBase * fluid = makeBlackOilFluid( "fluid", parent.get() );
   fluid->setMassFlag( true );
-
-  parent->Initialize( parent.get() );
 
   // TODO test over a range of values
   real64 const P = 5e6;
