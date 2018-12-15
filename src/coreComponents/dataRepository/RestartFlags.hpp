@@ -37,12 +37,12 @@ enum class PlotLevel : int
   LEVEL_1,
   LEVEL_2,
   LEVEL_3,
-  INVALID
+  NOPLOT
 };
 
 inline PlotLevel IntToPlotLevel( int const val )
 {
-  PlotLevel rval = PlotLevel::INVALID;
+  PlotLevel rval = PlotLevel::NOPLOT;
   switch( val )
   {
     case 0:

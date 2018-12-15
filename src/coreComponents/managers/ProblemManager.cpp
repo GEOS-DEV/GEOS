@@ -90,6 +90,10 @@ ProblemManager::~ProblemManager()
 void ProblemManager::CreateChild( string const & childKey, string const & childName )
 {}
 
+void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
+{
+  ManagedGroup::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
+}
 
 void ProblemManager::FillDocumentationNode()
 {

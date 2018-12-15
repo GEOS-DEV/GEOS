@@ -370,6 +370,16 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 }
 
 
+void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies )
+{
+  RegisterDataOnMesh(meshBodies);
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->RegisterDataOnMeshRecursive(meshBodies);
+  }
+}
+
+
 void ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK("Child not recognized: " << childKey << ", " << childName);

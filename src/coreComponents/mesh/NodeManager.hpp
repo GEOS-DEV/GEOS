@@ -84,7 +84,7 @@ public:
   { return NodeManager::CatalogName(); }
 
 
-  void FillDocumentationNode() override final;
+//  void FillDocumentationNode() override final;
 
 
   void SetEdgeMaps( EdgeManager const * const edgeManager );

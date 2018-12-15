@@ -178,8 +178,13 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
                                                             ManagedGroup * const parent ):
   SolverBase( name, parent )
 {
-  getLinearSystemRepository()->
-    SetBlockID( BlockIDs::displacementBlock, this->getName() );
+  getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
+
+  RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false );
+  RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false );
+  RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false );
+  RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false );
+  RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false );
 }
 
 
@@ -282,141 +287,157 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode()
 }
 
 
-
-void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString );
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString );
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->setPlotLevel(PlotLevel::LEVEL_2);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1);
+    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::trilinosIndexString )->setPlotLevel(PlotLevel::LEVEL_1);
 
-    docNode->AllocateChildNode( solidMechanicsViewKeys.vTilde.Key(),
-                                solidMechanicsViewKeys.vTilde.Key(),
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "intermediate velocity",
-                                "intermediate velocity",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-    docNode->AllocateChildNode( solidMechanicsViewKeys.uhatTilde.Key(),
-                                solidMechanicsViewKeys.uhatTilde.Key(),
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "intermediate incremental displacement",
-                                "intermediate incremental displacement",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-    docNode->AllocateChildNode( keys::TotalDisplacement,
-                                keys::TotalDisplacement,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Total Displacement",
-                                "Total Displacement",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                0 );
-
-    docNode->AllocateChildNode( keys::IncrementalDisplacement,
-                                keys::IncrementalDisplacement,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Incremental Displacement",
-                                "Incremental Displacement",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                2 );
-
-    docNode->AllocateChildNode( keys::Velocity,
-                                keys::Velocity,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Velocity",
-                                "Velocity",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                0 );
-
-    docNode->AllocateChildNode( keys::Acceleration,
-                                keys::Acceleration,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Acceleration",
-                                "Acceleration",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                2 );
-
-    docNode->AllocateChildNode( keys::Mass,
-                                keys::Mass,
-                                -1,
-                                "real64_array",
-                                "real64_array",
-                                "Acceleration",
-                                "Acceleration",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-    docNode->AllocateChildNode( solidMechanicsViewKeys.trilinosIndex.Key(),
-                                solidMechanicsViewKeys.trilinosIndex.Key(),
-                                -1,
-                                "globalIndex_array",
-                                "globalIndex_array",
-                                "Acceleration",
-                                "Acceleration",
-                                "-1",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-
-
-
-    FaceManager * const faces = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getFaceManager();
-    docNode = faces->getDocumentationNode();
-
-    docNode->AllocateChildNode( "junk",
-                                "junk",
-                                -1,
-                                "integer_array",
-                                "integer_array",
-                                "junk",
-                                "junk",
-                                "-1",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
   }
-
 }
+
+//void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+//{
+//  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
+//
+//  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+//  {
+//    NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
+//    cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
+//
+//    docNode->AllocateChildNode( solidMechanicsViewKeys.vTilde.Key(),
+//                                solidMechanicsViewKeys.vTilde.Key(),
+//                                -1,
+//                                "r1_array",
+//                                "r1_array",
+//                                "intermediate velocity",
+//                                "intermediate velocity",
+//                                "0.0",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                1 );
+//
+//    docNode->AllocateChildNode( solidMechanicsViewKeys.uhatTilde.Key(),
+//                                solidMechanicsViewKeys.uhatTilde.Key(),
+//                                -1,
+//                                "r1_array",
+//                                "r1_array",
+//                                "intermediate incremental displacement",
+//                                "intermediate incremental displacement",
+//                                "0.0",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                1 );
+//
+//    docNode->AllocateChildNode( keys::TotalDisplacement,
+//                                keys::TotalDisplacement,
+//                                -1,
+//                                "r1_array",
+//                                "r1_array",
+//                                "Total Displacement",
+//                                "Total Displacement",
+//                                "0.0",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                0 );
+//
+//    docNode->AllocateChildNode( keys::IncrementalDisplacement,
+//                                keys::IncrementalDisplacement,
+//                                -1,
+//                                "r1_array",
+//                                "r1_array",
+//                                "Incremental Displacement",
+//                                "Incremental Displacement",
+//                                "0.0",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                2 );
+//
+//    docNode->AllocateChildNode( keys::Velocity,
+//                                keys::Velocity,
+//                                -1,
+//                                "r1_array",
+//                                "r1_array",
+//                                "Velocity",
+//                                "Velocity",
+//                                "0.0",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                0 );
+//
+//    docNode->AllocateChildNode( keys::Acceleration,
+//                                keys::Acceleration,
+//                                -1,
+//                                "r1_array",
+//                                "r1_array",
+//                                "Acceleration",
+//                                "Acceleration",
+//                                "0.0",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                2 );
+//
+//    docNode->AllocateChildNode( keys::Mass,
+//                                keys::Mass,
+//                                -1,
+//                                "real64_array",
+//                                "real64_array",
+//                                "Acceleration",
+//                                "Acceleration",
+//                                "0.0",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                1 );
+//
+//    docNode->AllocateChildNode( solidMechanicsViewKeys.trilinosIndex.Key(),
+//                                solidMechanicsViewKeys.trilinosIndex.Key(),
+//                                -1,
+//                                "globalIndex_array",
+//                                "globalIndex_array",
+//                                "Acceleration",
+//                                "Acceleration",
+//                                "-1",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                1 );
+//
+//
+//
+//
+//    FaceManager * const faces = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getFaceManager();
+//    docNode = faces->getDocumentationNode();
+//
+//    docNode->AllocateChildNode( "junk",
+//                                "junk",
+//                                -1,
+//                                "integer_array",
+//                                "integer_array",
+//                                "junk",
+//                                "junk",
+//                                "-1",
+//                                NodeManager::CatalogName(),
+//                                1,
+//                                0,
+//                                1 );
+//  }
+//
+//}
 
 void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
 {
@@ -906,7 +927,7 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                                  time,
                                                  targetGroup,
                                                  fieldName,
-                                                 solidMechanicsViewKeys.trilinosIndex.Key(),
+                                                 viewKeyStruct::trilinosIndexString,
                                                  3,
                                                  &blockSystem,
                                                  BlockIDs::displacementBlock );
@@ -1154,7 +1175,7 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
   // create trilinos dof indexing
 
   globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
-  integer_array& is_ghost       = nodeManager->getReference<integer_array>(solidMechanicsViewKeys.ghostRank);
+  integer_array& is_ghost       = nodeManager->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
   trilinos_index = -1;
 
@@ -1194,7 +1215,7 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
   SetNumRowsAndTrilinosIndices( nodeManager, n_local_rows, n_global_rows, displacementIndices, 0 );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back(solidMechanicsViewKeys.trilinosIndex.Key());
+  fieldNames["node"].push_back(viewKeyStruct::trilinosIndexString);
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
@@ -1475,7 +1496,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                                                time_n+dt,
                                                targetGroup,
                                                keys::TotalDisplacement, // TODO fix use of dummy name for
-                                               solidMechanicsViewKeys.trilinosIndex.Key(),
+                                               viewKeyStruct::trilinosIndexString,
                                                3,
                                                blockSystem,
                                                BlockIDs::displacementBlock );

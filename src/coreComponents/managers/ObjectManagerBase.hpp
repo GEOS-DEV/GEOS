@@ -61,7 +61,7 @@ public:
   virtual const string getCatalogName() const = 0;
   ///@}
 
-  virtual void FillDocumentationNode() override;
+//  virtual void FillDocumentationNode() override;
 
   virtual void InitializePostSubGroups( ManagedGroup * const ) override;
 
