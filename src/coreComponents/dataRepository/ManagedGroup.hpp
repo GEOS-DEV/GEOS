@@ -514,6 +514,10 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 
+  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
+
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) {}
+
   void SetDocumentationNodes();
 
   /**
