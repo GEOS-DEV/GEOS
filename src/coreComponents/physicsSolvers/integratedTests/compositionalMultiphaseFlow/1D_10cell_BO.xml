@@ -30,10 +30,10 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 3"
+                  xCoords="0, 10"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="3"
+                  nx="10"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
@@ -41,7 +41,7 @@
 
   <Geometry>
     <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
   </Geometry>
 
 

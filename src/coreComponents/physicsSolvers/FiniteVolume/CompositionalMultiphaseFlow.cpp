@@ -1254,7 +1254,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   jacobian->GlobalAssemble( true );
   residual->GlobalAssemble();
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() >= 3 )
   {
     GEOS_LOG_RANK("After CompositionalMultiphaseFlow::AssembleSystem");
     GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
@@ -2079,7 +2079,7 @@ void CompositionalMultiphaseFlow::SolveSystem( EpetraBlockSystem * const blockSy
 
   if( verboseLevel() >= 2 )
   {
-    solution->Print(std::cout);
+    GEOS_LOG_RANK("\nSolution:\n" << *solution);
   }
 }
 
