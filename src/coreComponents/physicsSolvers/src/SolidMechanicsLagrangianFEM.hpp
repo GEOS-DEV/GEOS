@@ -67,12 +67,14 @@ public:
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void FillDocumentationNode() override final;
+//  virtual void FillDocumentationNode() override final;
 //  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
   virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
   virtual void ReadXML_PostProcess() override final;
+
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
@@ -221,10 +223,31 @@ public:
     ExplicitDynamic
   };
 
+  void SetTimeIntegrationOption( string const & stringVal )
+  {
+    if( stringVal == "ExplicitDynamic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
+    }
+    else if( stringVal == "ImplicitDynamic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
+    }
+    else if ( stringVal == "QuasiStatic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
+    }
+    else
+    {
+      GEOS_ERROR("Invalid time integration option: " << stringVal);
+    }
+  }
+
   struct viewKeyStruct
   {
     static constexpr auto vTildeString = "velocityTilde";
     static constexpr auto uhatTildeString = "uhatTilde";
+    static constexpr auto courantString = "courant";
     static constexpr auto newmarkGammaString = "newmarkGamma";
     static constexpr auto newmarkBetaString = "newmarkBeta";
     static constexpr auto massDampingString = "massDamping";
@@ -252,6 +275,7 @@ public:
 
 private:
 
+  real64 m_courant;
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;

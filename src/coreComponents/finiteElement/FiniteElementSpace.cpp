@@ -44,7 +44,10 @@ using namespace dataRepository;
 
 FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  RegisterViewWrapper( keys::basis, &m_basisName, false );
+  RegisterViewWrapper( keys::quadrature, &m_quadratureName, false );
+}
 
 FiniteElementSpace::~FiniteElementSpace()
 {
@@ -55,39 +58,46 @@ FiniteElementSpace::~FiniteElementSpace()
 void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
 {}
 
-void FiniteElementSpace::FillDocumentationNode()
+void FiniteElementSpace::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-
-  docNode->AllocateChildNode( keys::basis,
-                              keys::basis,
-                              -1,
-                              "string",
-                              "string",
-                              "name of basis function object.",
-                              "name of the basis function object.",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-  docNode->AllocateChildNode( keys::quadrature,
-                              keys::quadrature,
-                              -1,
-                              "string",
-                              "string",
-                              "name of basis function object.",
-                              "name of the basis function object.",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-
+  xmlWrapper::ReadAttributeAsType( m_basisName, keys::basis, targetNode  );
+  xmlWrapper::ReadAttributeAsType( m_quadratureName, keys::quadrature, targetNode );
 }
+
+
+//void FiniteElementSpace::FillDocumentationNode()
+//{
+//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+//
+//
+//  docNode->AllocateChildNode( keys::basis,
+//                              keys::basis,
+//                              -1,
+//                              "string",
+//                              "string",
+//                              "name of basis function object.",
+//                              "name of the basis function object.",
+//                              "REQUIRED",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
+//  docNode->AllocateChildNode( keys::quadrature,
+//                              keys::quadrature,
+//                              -1,
+//                              "string",
+//                              "string",
+//                              "name of basis function object.",
+//                              "name of the basis function object.",
+//                              "REQUIRED",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
+//
+//
+//
+//}
 
 void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
 {

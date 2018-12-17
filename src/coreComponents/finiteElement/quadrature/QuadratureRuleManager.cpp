@@ -67,5 +67,11 @@ void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
+void QuadratureRuleManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+{
+  ReadXMLsub( targetNode );
+}
+
+
 
 } /* namespace geosx */

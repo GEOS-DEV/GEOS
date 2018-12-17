@@ -65,6 +65,23 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
      }
    */
   m_dim = 3;
+
+  RegisterViewWrapper(keys::xCoords, &(m_vertices[0]), false );
+  RegisterViewWrapper(keys::yCoords, &(m_vertices[1]), false );
+  RegisterViewWrapper(keys::zCoords, &(m_vertices[2]), false );
+
+  RegisterViewWrapper(keys::xElems, &(m_nElems[0]), false );
+  RegisterViewWrapper(keys::yElems, &(m_nElems[1]), false );
+  RegisterViewWrapper(keys::zElems, &(m_nElems[2]), false );
+
+  RegisterViewWrapper(keys::xBias, &(m_nElemBias[0]), false );
+  RegisterViewWrapper(keys::yBias, &(m_nElemBias[1]), false );
+  RegisterViewWrapper(keys::zBias, &(m_nElemBias[2]), false );
+
+  RegisterViewWrapper(keys::cellBlockNames, &m_regionNames, false );
+  RegisterViewWrapper(keys::elementTypes, &m_elementType, false );
+  RegisterViewWrapper(keys::trianglePattern, &m_trianglePattern, false );
+
 }
 
 InternalMeshGenerator::~InternalMeshGenerator()
@@ -260,6 +277,28 @@ void InternalMeshGenerator::FillDocumentationNode()
 
 }
 
+
+void InternalMeshGenerator::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+{
+
+  xmlWrapper::ReadAttributeAsType( m_vertices[0], keys::xCoords, targetNode );
+  xmlWrapper::ReadAttributeAsType( m_vertices[1], keys::yCoords, targetNode );
+  xmlWrapper::ReadAttributeAsType( m_vertices[2], keys::zCoords, targetNode );
+
+  xmlWrapper::ReadAttributeAsType( m_nElems[0], keys::xElems, targetNode );
+  xmlWrapper::ReadAttributeAsType( m_nElems[1], keys::yElems, targetNode );
+  xmlWrapper::ReadAttributeAsType( m_nElems[2], keys::zElems, targetNode );
+
+  xmlWrapper::ReadAttributeAsType( m_nElemBias[0], keys::xBias, targetNode, 1.0 );
+  xmlWrapper::ReadAttributeAsType( m_nElemBias[1], keys::yBias, targetNode, 1.0 );
+  xmlWrapper::ReadAttributeAsType( m_nElemBias[2], keys::zBias, targetNode, 1.0 );
+
+  xmlWrapper::ReadAttributeAsType( m_regionNames, keys::cellBlockNames, targetNode, string("DefaultRegion") );
+  xmlWrapper::ReadAttributeAsType( m_elementType, keys::elementTypes, targetNode, string("C3D8") );
+  xmlWrapper::ReadAttributeAsType( m_trianglePattern, keys::trianglePattern, targetNode, 0 );
+}
+
+
 //}
 /**
  * @author settgast
@@ -281,32 +320,6 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 void InternalMeshGenerator::ReadXML_PostProcess()
 {
-
-  real64_array const &  xCoords = this->getReference<real64_array>(keys::xCoords);
-  real64_array const &  yCoords = this->getReference<real64_array>(keys::yCoords);
-  real64_array const &  zCoords = this->getReference<real64_array>(keys::zCoords);
-  m_vertices[0] = xCoords;
-  m_vertices[1] = yCoords;
-  m_vertices[2] = zCoords;
-
-  integer_array const &  xElems = this->getReference<integer_array>(keys::xElems);
-  integer_array const &  yElems = this->getReference<integer_array>(keys::yElems);
-  integer_array const &  zElems = this->getReference<integer_array>(keys::zElems);
-  m_nElems[0] = xElems;
-  m_nElems[1] = yElems;
-  m_nElems[2] = zElems;
-
-  real64_array const &  xBias = this->getReference<real64_array>(keys::xBias);
-  real64_array const &  yBias = this->getReference<real64_array>(keys::yBias);
-  real64_array const &  zBias = this->getReference<real64_array>(keys::zBias);
-  m_nElemBias[0] = xBias;
-  m_nElemBias[1] = yBias;
-  m_nElemBias[2] = zBias;
-
-  m_regionNames = this->getReference<string_array>(keys::cellBlockNames);
-  m_elementType = this->getReference<string_array>(keys::elementTypes);
-  m_trianglePattern = this->getReference<integer>(keys::trianglePattern);
-
 
 
   if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")

@@ -68,5 +68,10 @@ void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
+void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+{
+  ReadXMLsub( targetNode );
+}
+
 
 } /* namespace geosx */
