@@ -41,7 +41,9 @@ public:
 
   static string CatalogName() { return "Box"; }
 
-  virtual void FillDocumentationNode() override;
+//  virtual void FillDocumentationNode() override;
+
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
 
   virtual void ReadXML_PostProcess() override final;
 
@@ -51,10 +53,18 @@ private:
   R1Tensor m_max;
   realT m_strikeAngle=0.0;
   R1Tensor m_boxCenter={0.0,0.0,0.0};
-  realT m_cosStrike=0.0, m_sinStrike=0.0;
+  realT m_cosStrike=0.0;
+  real64 m_sinStrike=0.0;
 
   struct viewKeyStruct
   {
+    static constexpr auto xMinString = "xMin";
+    static constexpr auto xMaxString = "xMax";
+    static constexpr auto strikeAngleString = "strike";
+    static constexpr auto boxCenterString = "center";
+    static constexpr auto cosStrikeString = "cosStrike";
+    static constexpr auto sinStrikeString = "sinStrike";
+
     dataRepository::ViewKey xmin = { "xMin" };
     dataRepository::ViewKey xmax = { "xMax" };
   } viewKeys;

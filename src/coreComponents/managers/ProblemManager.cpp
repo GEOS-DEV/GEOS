@@ -618,6 +618,8 @@ void ProblemManager::ParseInputFile()
   }
   xmlProblemNode = xmlDocument.child("Problem");
 
+  ProcessInputFileRecursive( xmlProblemNode );
+
 
   // Call manager readXML methods:
   this->AddChildren(xmlProblemNode);

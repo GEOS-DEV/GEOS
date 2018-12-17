@@ -184,6 +184,7 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
   RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false );
   RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false );
   RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false );
+  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false );
   RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false );
 }
 
@@ -195,95 +196,20 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 }
 
 
-void SolidMechanics_LagrangianFEM::FillDocumentationNode()
+
+
+void SolidMechanics_LagrangianFEM::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
+  string tiOption;
+  xmlWrapper::ReadAttributeAsType<string>( tiOption, viewKeyStruct::timeIntegrationOptionString, targetNode, "ExplicitDynamic" );
+  SetTimeIntegrationOption( tiOption );
 
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example solid mechanics solver");
-
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.newmarkGamma.Key(),
-                              solidMechanicsViewKeys.newmarkGamma.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Gamma",
-                              "newmark method Gamma",
-                              "0.5",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  // correct default for this value is pow(newmarkGamma+0.5,2.0)/4.0
-  docNode->AllocateChildNode( solidMechanicsViewKeys.newmarkBeta.Key(),
-                              solidMechanicsViewKeys.newmarkBeta.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Beta",
-                              "newmark method Beta",
-                              "0.25",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.massDamping.Key(),
-                              solidMechanicsViewKeys.massDamping.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Beta",
-                              "newmark method Beta",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.stiffnessDamping.Key(),
-                              solidMechanicsViewKeys.stiffnessDamping.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Beta",
-                              "newmark method Beta",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.timeIntegrationOption.Key(),
-                              solidMechanicsViewKeys.timeIntegrationOption.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "option for default time integration method",
-                              "option for default time integration method",
-                              "ExplicitDynamic",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.useVelocityEstimateForQS.Key(),
-                              solidMechanicsViewKeys.useVelocityEstimateForQS.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "option to use quasi-static deformation rate as a velocity in estimate of next solution",
-                              "option to use quasi-static deformation rate as a velocity in estimate of next solution",
-                              "ExplicitDynamic",
-                              "",
-                              0,
-                              1,
-                              1 );
+  xmlWrapper::ReadAttributeAsType( m_courant, viewKeyStruct::courantString, targetNode, 0.5 );
+  xmlWrapper::ReadAttributeAsType( m_newmarkGamma, viewKeyStruct::newmarkGammaString, targetNode, 0.5 );
+  xmlWrapper::ReadAttributeAsType( m_newmarkBeta, viewKeyStruct::newmarkBetaString, targetNode, 0.25 );
+  xmlWrapper::ReadAttributeAsType( m_massDamping, viewKeyStruct::massDampingString, targetNode, 0.0 );
+  xmlWrapper::ReadAttributeAsType( m_stiffnessDamping, viewKeyStruct::stiffnessDampingString, targetNode, 0.0 );
+  xmlWrapper::ReadAttributeAsType( m_useVelocityEstimateForQS, viewKeyStruct::useVelocityEstimateForQSString, targetNode, 0 );
 }
 
 
@@ -304,161 +230,9 @@ void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const Mesh
   }
 }
 
-//void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-//{
-//  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-//
-//  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
-//  {
-//    NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-//    cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
-//
-//    docNode->AllocateChildNode( solidMechanicsViewKeys.vTilde.Key(),
-//                                solidMechanicsViewKeys.vTilde.Key(),
-//                                -1,
-//                                "r1_array",
-//                                "r1_array",
-//                                "intermediate velocity",
-//                                "intermediate velocity",
-//                                "0.0",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                1 );
-//
-//    docNode->AllocateChildNode( solidMechanicsViewKeys.uhatTilde.Key(),
-//                                solidMechanicsViewKeys.uhatTilde.Key(),
-//                                -1,
-//                                "r1_array",
-//                                "r1_array",
-//                                "intermediate incremental displacement",
-//                                "intermediate incremental displacement",
-//                                "0.0",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                1 );
-//
-//    docNode->AllocateChildNode( keys::TotalDisplacement,
-//                                keys::TotalDisplacement,
-//                                -1,
-//                                "r1_array",
-//                                "r1_array",
-//                                "Total Displacement",
-//                                "Total Displacement",
-//                                "0.0",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                0 );
-//
-//    docNode->AllocateChildNode( keys::IncrementalDisplacement,
-//                                keys::IncrementalDisplacement,
-//                                -1,
-//                                "r1_array",
-//                                "r1_array",
-//                                "Incremental Displacement",
-//                                "Incremental Displacement",
-//                                "0.0",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                2 );
-//
-//    docNode->AllocateChildNode( keys::Velocity,
-//                                keys::Velocity,
-//                                -1,
-//                                "r1_array",
-//                                "r1_array",
-//                                "Velocity",
-//                                "Velocity",
-//                                "0.0",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                0 );
-//
-//    docNode->AllocateChildNode( keys::Acceleration,
-//                                keys::Acceleration,
-//                                -1,
-//                                "r1_array",
-//                                "r1_array",
-//                                "Acceleration",
-//                                "Acceleration",
-//                                "0.0",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                2 );
-//
-//    docNode->AllocateChildNode( keys::Mass,
-//                                keys::Mass,
-//                                -1,
-//                                "real64_array",
-//                                "real64_array",
-//                                "Acceleration",
-//                                "Acceleration",
-//                                "0.0",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                1 );
-//
-//    docNode->AllocateChildNode( solidMechanicsViewKeys.trilinosIndex.Key(),
-//                                solidMechanicsViewKeys.trilinosIndex.Key(),
-//                                -1,
-//                                "globalIndex_array",
-//                                "globalIndex_array",
-//                                "Acceleration",
-//                                "Acceleration",
-//                                "-1",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                1 );
-//
-//
-//
-//
-//    FaceManager * const faces = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getFaceManager();
-//    docNode = faces->getDocumentationNode();
-//
-//    docNode->AllocateChildNode( "junk",
-//                                "junk",
-//                                -1,
-//                                "integer_array",
-//                                "integer_array",
-//                                "junk",
-//                                "junk",
-//                                "-1",
-//                                NodeManager::CatalogName(),
-//                                1,
-//                                0,
-//                                1 );
-//  }
-//
-//}
 
 void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
 {
-  string const& tiOption = this->getReference<string>(solidMechanicsViewKeys.timeIntegrationOption);
-
-  if( tiOption == "ExplicitDynamic" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
-  }
-  else if( tiOption == "ImplicitDynamic" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
-  }
-  else if ( tiOption == "QuasiStatic" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
-  }
-  else
-  {
-    GEOS_ERROR("invalid time integration option: " << tiOption);
-  }
 }
 
 void SolidMechanics_LagrangianFEM::FinalInitializationPreSubGroups( ManagedGroup * const problemManager )

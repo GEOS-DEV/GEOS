@@ -370,6 +370,39 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 }
 
 
+void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode )
+{
+
+  // loop over the child nodes of the targetNode
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    // Get the child tag and name
+    std::string childName = childNode.attribute("name").value();
+    if (childName.empty())
+    {
+      childName = childNode.name();
+    }
+
+    // Create children
+    CreateChild(childNode.name(), childName);
+    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
+    if( newChild != nullptr )
+    {
+      newChild->ProcessInputFileRecursive(childNode);
+    }
+  }
+
+  ProcessInputFile(targetNode);
+
+
+
+//  for( auto&& subGroup : m_subGroups )
+//  {
+//    subGroup.second->ProcessInputFileRecursive(targetNode);
+//  }
+  ReadXML_PostProcess();
+}
+
 void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies )
 {
   RegisterDataOnMesh(meshBodies);
@@ -382,8 +415,11 @@ void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies 
 
 void ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK("Child not recognized: " << childKey << ", " << childName);
+  GEOS_ERROR("Child not recognized: " << childKey << ", " << childName);
 }
+
+
+
 
 
 void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )

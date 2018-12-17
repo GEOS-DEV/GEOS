@@ -514,6 +514,11 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 
+
+  void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
+
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) {}
+
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) {}

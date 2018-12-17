@@ -70,9 +70,12 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const parent ) override;
 
-  void FillDocumentationNode() override;
+  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
+
+//  void FillDocumentationNode() override;
 
   void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
+
 
   void ReadXML_PostProcess() override final;
 
@@ -82,6 +85,9 @@ public:
                                         dataRepository::ManagedGroup * const cellBlock ) const;
 
 public:
+
+  string m_basisName;
+  string m_quadratureName;
 
   BasisBase const *    m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;

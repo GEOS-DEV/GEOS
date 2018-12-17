@@ -50,6 +50,8 @@ public:
   virtual void CreateChild( string const & childKey, string const & childName ) override;
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
+
 };
 
 } /* namespace geosx */

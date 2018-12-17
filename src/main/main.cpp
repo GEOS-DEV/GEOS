@@ -83,6 +83,7 @@ int main( int argc, char *argv[] )
   problemManager.ParseCommandLineInput( argc, argv );
 
 
+
   problemManager.ParseInputFile();
 
   GEOSX_MARK_BEGIN("problemManager.Initialize");
