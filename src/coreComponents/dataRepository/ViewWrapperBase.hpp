@@ -156,9 +156,10 @@ public:
     m_plotLevel = flag;
   }
 
-  void setPlotLevel( int const flag )
+  ViewWrapperBase * setPlotLevel( int const flag )
   {
     m_plotLevel = IntToPlotLevel(flag);
+    return this;
   }
 
   string const & getName() const
@@ -166,9 +167,10 @@ public:
     return m_name;
   }
 
-  void setInputFlag( InputFlags const input )
+  ViewWrapperBase * setInputFlag( InputFlags const input )
   {
     m_inputFlag = input;
+    return this;
   }
 
   InputFlags getInputFlag() const
@@ -176,9 +178,10 @@ public:
     return m_inputFlag;
   }
 
-  void setDescription( string const & description )
+  ViewWrapperBase * setDescription( string const & description )
   {
     m_description = description;
+    return this;
   }
 
   string const & getDescription() const

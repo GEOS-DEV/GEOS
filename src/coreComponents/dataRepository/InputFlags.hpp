@@ -65,7 +65,25 @@ inline bool operator!=( InputFlags const left, InputFlags const right)
   return static_cast<int>(left) != static_cast<int>(right);
 }
 
+inline bool operator<( InputFlags const left, InputFlags const right)
+{
+  return static_cast<int>(left) < static_cast<int>(right);
+}
 
+inline bool operator>( InputFlags const left, InputFlags const right)
+{
+  return static_cast<int>(left) > static_cast<int>(right);
+}
+
+inline bool operator<=( InputFlags const left, InputFlags const right)
+{
+  return static_cast<int>(left) <= static_cast<int>(right);
+}
+
+inline bool operator>=( InputFlags const left, InputFlags const right)
+{
+  return static_cast<int>(left) >= static_cast<int>(right);
+}
 }
 
 
