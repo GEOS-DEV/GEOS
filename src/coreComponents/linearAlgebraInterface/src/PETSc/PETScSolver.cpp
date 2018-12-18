@@ -24,12 +24,12 @@ void PETScSolver::solve( PETScSparseMatrix &M,
                          double newton_tol ){
 
   KSP ksp;
-  
+
   KSPCreate(PETSC_COMM_WORLD, &ksp);
   KSPSetOperators(ksp, M.getMat(), M.getMat());
-  // KSPSetType(ksp, KSPGMRES);
+  KSPSetType(ksp, KSPGMRES);
   // KSPSetTolerances(ksp, newton_tol, newton_tol, NULL, max_iter);
-  // KSPSetUp(solver);
+  // KSPSetUp(ksp);
 
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
@@ -65,33 +65,20 @@ void PETScSolver::solve( PETScSparseMatrix &M,
 // }
 
 /* Solve Ax=b with A an PETScSparseMatrix, x and b PETScVector, direct solve */
-void PETScSolver::dsolve( PETScSparseMatrix &Mat,
+void PETScSolver::dsolve( PETScSparseMatrix &M,
                           PETScVector &rhs,
                           PETScVector &sol )
 {
-
-  KSP solver;
+  KSP ksp;
   PC pc;
-  Vec X, B;
-  X = sol.getVec();
-  B = rhs.getVec();
 
-  VecView(X, PETSC_VIEWER_STDOUT_WORLD);
-
-  KSPCreate(PETSC_COMM_WORLD, &solver);
-  KSPSetOperators(solver, Mat.getMat(), Mat.getMat());
-  PCSetType(pc,PCLU);
-  KSPSetType(solver,KSPPREONLY);
-
-  KSPSetUp(solver);
+  KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPSetOperators(ksp, M.getMat(), M.getMat());
+  PCSetType(pc,PCILU);
+  KSPSetType(ksp,KSPPREONLY);
+  // KSPSetUp(ksp);
   
-  KSPSolve(solver, rhs.getVec(), X);
-
-  VecView(X, PETSC_VIEWER_STDOUT_WORLD);
-
-  PETScVector x_(X);
-  sol = x_;
-
+  KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
 
 
