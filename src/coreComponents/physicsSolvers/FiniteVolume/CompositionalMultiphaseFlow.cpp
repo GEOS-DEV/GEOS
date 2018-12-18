@@ -618,7 +618,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
   arrayView3d<real64> const & dCompFrac_dCompDens =
     dataGroup->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     real64 totalDensity = 0.0;
 
@@ -693,7 +693,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
   localIndex const NC = m_numComponents;
   localIndex const NP = m_numPhases;
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     stackArray1d<real64, maxNumComp> work( NC );
 
@@ -797,7 +797,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
   arrayView2d<real64> const & phaseVolFrac =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
   });
@@ -943,7 +943,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
     arrayView3d<real64> const & phaseCompFracOld = m_phaseCompFracOld[er][esr];
     arrayView1d<real64> const & poroOld          = m_porosityOld[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1028,9 +1028,9 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
 
   // loop over all elements and set the dof number if the element is not a ghost
   ReduceSum< reducePolicy, localIndex  > localCount(0);
-  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [=]( localIndex const er,
-                                                     localIndex const esr,
-                                                     localIndex const ei ) mutable ->void
+  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, GEOSX_LAMBDA ( localIndex const er,
+                                                               localIndex const esr,
+                                                               localIndex const ei )
   {
     if( elemGhostRank[er][esr][ei] < 0 )
     {
@@ -1452,7 +1452,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
   real64 constexpr densWeight[numElems] = { 0.5, 0.5 };
 
-  stencilCollection.forAll<RAJA::seq_exec>(GEOSX_LAMBDA (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable
+  stencilCollection.forAll<RAJA::seq_exec>(GEOSX_LAMBDA (StencilCollection<CellDescriptor, real64>::Accessor stencil)
   {
     localIndex const stencilSize = stencil.size();
 
@@ -1780,7 +1780,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
     arrayView2d<real64 const> const & pvMult        = m_pvMult[er][esr][m_solidIndex];
     arrayView2d<real64 const> const & dPvMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -2115,7 +2115,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
     arrayView2d<real64 const> const & compDens  = m_globalCompDensity[er][esr];
     arrayView2d<real64 const> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
