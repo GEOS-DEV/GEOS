@@ -117,7 +117,7 @@ void EventBase::FillDocumentationNode()
                               "real64",
                               "last event occurance (time)",
                               "last event occurance (time)",
-                              "-1",
+                              "-1e100",
                               "",
                               0,
                               0,
@@ -130,7 +130,7 @@ void EventBase::FillDocumentationNode()
                               "integer",
                               "last event occurance (time)",
                               "last event occurance (time)",
-                              "-1",
+                              "-1e9",
                               "",
                               0,
                               0,
@@ -230,8 +230,8 @@ void EventBase::InitializePreSubGroups( ManagedGroup * const group )
   real64& lastTime = this->getReference<real64>(viewKeys.lastTime);
   integer& lastCycle = this->getReference<integer>(viewKeys.lastCycle);
 
-  lastTime = std::numeric_limits<real64>::min();
-  lastCycle = std::numeric_limits<integer>::min();
+  // lastTime = std::numeric_limits<real64>::min();
+  // lastCycle = std::numeric_limits<integer>::min();
 }
 
 
@@ -387,12 +387,18 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 {
   real64 nextDt = std::numeric_limits<integer>::max();
   real64 requestedDt = std::numeric_limits<integer>::max();
+  real64 const beginTime = this->getReference<real64>(viewKeys.beginTime);
+  real64 const endTime = this->getReference<real64>(viewKeys.endTime);
   real64 const forceDt = this->getReference<real64>(viewKeys.forceDt);
   integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
   integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
   integer const targetExactStartStop = this->getReference<integer>(viewKeys.targetExactStartStop);
 
-  if (forceDt > 0)
+  if (time >= endTime)
+  {
+    // This is the final timestep for this event, don't include it in the calculation
+  }
+  else if (forceDt > 0)
   {
     nextDt = forceDt;
   }
@@ -421,9 +427,6 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
   if (targetExactStartStop == 1)
   {
-    real64 const beginTime = this->getReference<real64>(viewKeys.beginTime);
-    real64 const endTime = this->getReference<real64>(viewKeys.endTime);
-
     if (time < beginTime)
     {
       nextDt = std::min(beginTime - time, nextDt);
