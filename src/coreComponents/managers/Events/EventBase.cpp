@@ -225,14 +225,16 @@ void EventBase::CreateChild( string const & childKey, string const & childName )
 }
 
 
+/*
 void EventBase::InitializePreSubGroups( ManagedGroup * const group )
 {
   real64& lastTime = this->getReference<real64>(viewKeys.lastTime);
   integer& lastCycle = this->getReference<integer>(viewKeys.lastCycle);
 
-  // lastTime = std::numeric_limits<real64>::min();
-  // lastCycle = std::numeric_limits<integer>::min();
+  lastTime = std::numeric_limits<real64>::min();
+  lastCycle = std::numeric_limits<integer>::min();
 }
+*/
 
 
 void EventBase::GetTargetReferences()
