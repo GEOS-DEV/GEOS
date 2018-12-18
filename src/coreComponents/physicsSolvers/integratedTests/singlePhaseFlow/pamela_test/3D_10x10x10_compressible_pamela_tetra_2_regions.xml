@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                          verboseLevel="0"
+                          verboseLevel="1"
                           gravityFlag="1"
                           fluidName="water"
                           solidName="rock"
@@ -30,7 +30,7 @@
   </Geometry>
 
 
-  <Events maxTime="100">
+  <Events maxTime="500">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -141,13 +141,7 @@
                objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
                fieldName="pressure"
                dataType="real64"
-               scale="1e3"/>
-    <Dirichlet name="boundaryPressure"
-               objectPath="faceManager"
-               fieldName="facePressure"
-               dataType="Scalar"
-               scale="1.1e3"
-               setNames="left"/>
+               scale="2e5"/>
 
     <Dirichlet name="BotPermx"
                component="0"
@@ -190,13 +184,7 @@
                objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
                fieldName="pressure"
                dataType="real64"
-               scale="1e3"/>
-    <Dirichlet name="boundaryPressure"
-               objectPath="faceManager"
-               fieldName="facePressure"
-               dataType="Scalar"
-               scale="1.1e3"
-               setNames="left"/>
+               scale="1e5"/>
   </BoundaryConditions>
 
   <Functions>
