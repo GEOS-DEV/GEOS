@@ -5,13 +5,8 @@
 // to compile: make all
 // to run: mpiexec -n 2 ./test
 
-int main()
+void test_PETScVector(int rank)
 {
-  PetscInitializeNoArguments();
-
-  int rank;
-  MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-
   // TESTING PETScVector
 
   // make a PETScVector
@@ -70,7 +65,17 @@ int main()
   if(rank == 0) printf("global size is: %d\n", vec1.globalSize());
   printf("local size of vec1 is: %d\n", vec1.localSize());
 
+  return;
+}
+
+void test_PETScSparseMatrix(int rank)
+{
   // TESTING PETScSparseMatrix
+
+  // make vector
+  PETScVector vec3;
+  double values2[5] = {1, 2, 3, 1, 2};
+  vec3.create(5, values2);
 
   // test create
   if (rank == 0) printf("create a square matrix:\n");
@@ -245,22 +250,119 @@ int main()
   // test getMat
   MatView(mat1.getMat(), PETSC_VIEWER_STDOUT_WORLD);
 
+  return;
+
+}
+
+void PETSc_KSP_example(int rank)
+{
+  // PETSc example
+  Vec x, b, u;
+  Mat A;
+  KSP ksp;
+  double norm;
+  int i, j, Ii, J, Istart, Iend, m=3, n=3, its;
+  double v;
+
+  // create matrix
+  MatCreate(PETSC_COMM_WORLD, &A);
+  MatSetType(A, MATMPIAIJ);
+  MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, m*n, m*n);
+  MatMPIAIJSetPreallocation(A, 5, NULL, 5, NULL);
+  MatSetOption(A, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+  MatSetUp(A);
+
+  // populate matrix
+  MatGetOwnershipRange(A, &Istart, &Iend);
+
+  for (Ii=Istart; Ii<Iend; Ii++) 
+  {
+    v = -1.0; i = Ii/n; j = Ii - i*n;
+    if (i>0)   {J = Ii - n; MatSetValues(A,1,&Ii,1,&J,&v,ADD_VALUES);}
+    if (i<m-1) {J = Ii + n; MatSetValues(A,1,&Ii,1,&J,&v,ADD_VALUES);}
+    if (j>0)   {J = Ii - 1; MatSetValues(A,1,&Ii,1,&J,&v,ADD_VALUES);}
+    if (j<n-1) {J = Ii + 1; MatSetValues(A,1,&Ii,1,&J,&v,ADD_VALUES);}
+    v = 4.0; MatSetValues(A,1,&Ii,1,&Ii,&v,ADD_VALUES);
+  }
+
+  // assemble matrix
+  MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
+  MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
+
+  // create vectors
+  VecCreate(PETSC_COMM_WORLD, &u);
+  VecSetSizes(u, PETSC_DECIDE, m*n);
+  VecSetFromOptions(u);
+  VecDuplicate(u, &b);
+  VecDuplicate(b, &x);
+
+  VecSet(u, 1.0);
+  MatMult(A, u, b);
+
+  // create linear solver
+  KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPSetOperators(ksp, A, A);
+
+  // solve the system
+  KSPSolve(ksp, b, x);
+
+  // check error
+  VecAXPY(x, -1.0, u);
+  VecNorm(x, NORM_2, &norm);
+  KSPGetIterationNumber(ksp, &its);
+
+  // print info
+  MatView(A, PETSC_VIEWER_STDOUT_WORLD);
+  VecView(u, PETSC_VIEWER_STDOUT_WORLD);
+  VecView(x, PETSC_VIEWER_STDOUT_WORLD);
+  VecView(b, PETSC_VIEWER_STDOUT_WORLD);
+
+  printf("rank: %d owns %d - %d rows\n", rank, Istart, Iend);
+  if (rank == 0) printf("Norm of error: %f, number of iterations: %d\n", norm, its);
+
+  return;
+}
+
+void test_PETScSolver(int rank)
+{
+
   // TESTING PETScSolver
 
   PETScSolver solver;
+
+  // make a vector
   PETScVector vec9;
   double values9[3] = {2, 12.5, 9};
   vec9.create(3, values9);
-  PETScVector vec10(vec9);
+  vec9.print();
+
+  // PETScVector vec10(vec9);
   // solver.solve(mat7, vec9, vec10, 100, 10);
-  solver.dsolve(mat7, vec9, vec10);
-  mat7.print();
-  vec10.print();
+  // solver.dsolve(mat7, vec9, vec10);
+  // mat7.print();
+  // vec10.print();
+
+  return;
+}
+
+int main()
+{
+  PetscInitializeNoArguments();
+
+  int rank;
+  MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
+
+  // run tests
+  // test_PETScVector(rank);
+  // test_PETScSparseMatrix(rank);
+  // PETSc_KSP_example(rank);
+
+  // solve a problem with PETScVector and PETScSparseMatrix
+  
+
+  printf("whew\n");
 
   PetscFinalize();
   return 0;
-
-
-
 
 }
