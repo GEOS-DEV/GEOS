@@ -26,17 +26,19 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 
+#include <type_traits>
+
 #include "ViewWrapperBase.hpp"
 
 #include "KeyNames.hpp"
 #include "IntegerConversion.hpp"
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
-#include <type_traits>
 
 #include "Macros.hpp"
 #include "BufferOps.hpp"
 #include "RestartFlags.hpp"
+#include "WrapperDefaultValueHelper.hpp"
 
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/GeosxConfig.hpp"
@@ -733,6 +735,20 @@ public:
   T const * getPointer() const
   { return m_data; }
 
+
+
+  T const & getDefaultValue() const
+  {
+    return m_defaultValue.m_default;
+  }
+
+  void setDefaultValue( T const & defaultVal )
+  {
+    m_defaultValue.m_default = defaultVal;
+  }
+
+
+
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
   typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) &&
@@ -1157,6 +1173,8 @@ public:
 
   bool m_ownsData;
   T * m_data;
+  wrapperDefaultValue::Helper<T> m_defaultValue;
+
 
   ViewWrapper() = delete;
 };

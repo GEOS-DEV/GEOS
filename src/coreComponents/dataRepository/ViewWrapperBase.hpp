@@ -29,6 +29,7 @@
 #include <string>
 #include <memory>
 #include "common/DataTypes.hpp"
+#include "InputFlags.hpp"
 #include "RestartFlags.hpp"
 
 namespace axom
@@ -86,6 +87,7 @@ public:
   virtual void clear() = 0;
   virtual void insert() = 0;
   virtual void resize(localIndex newsize) = 0;
+
 
   /**
    * @brief  function to create a clone of *this ViewWrapperBase
@@ -164,6 +166,26 @@ public:
     return m_name;
   }
 
+  void setInputFlag( InputFlags const input )
+  {
+    m_inputFlag = input;
+  }
+
+  InputFlags getInputFlag() const
+  {
+    return m_inputFlag;
+  }
+
+  void setDescription( string const & description )
+  {
+    m_description = description;
+  }
+
+  string const & getDescription() const
+  {
+    return m_description;
+  }
+
 
 private:
   std::string m_name;
@@ -171,9 +193,12 @@ private:
   int m_sizedFromParent;
   RestartFlags m_restart_flags;
   PlotLevel m_plotLevel;
+  InputFlags m_inputFlag;
+  string m_description;
 #ifdef GEOSX_USE_ATK
   axom::sidre::View* m_sidreView;
 #endif
+
 
   ViewWrapperBase() = delete;
   ViewWrapperBase( ViewWrapperBase const & ) = delete;
