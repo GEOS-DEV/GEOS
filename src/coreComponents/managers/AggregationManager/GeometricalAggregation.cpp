@@ -63,5 +63,11 @@ void Aggregate(SparsityPattern const & fineSparsityPattern,SparsityPattern & coa
 
   /// STEP 3 : Write the new Sparsity Pattern
   
+  /// 3.1 Copy the fineSparsityPattern
+  coarseSparsityPattern = fineSparsityPattern; // it does not compile because of this line of course.
+
+  /// 3.2 "Merging" nodes of the sparsity pattern to do the aggregation
+
+  
 }
 }
