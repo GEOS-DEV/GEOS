@@ -38,10 +38,9 @@
 #include "Macros.hpp"
 #include "BufferOps.hpp"
 #include "RestartFlags.hpp"
-#include "WrapperDefaultValueHelper.hpp"
-
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/GeosxConfig.hpp"
+#include "DefaultValue.hpp"
 
 
 #ifdef GEOSX_USE_ATK
@@ -737,15 +736,27 @@ public:
 
 
 
-  T const & getDefaultValue() const
+  template< typename U=T >
+  typename std::enable_if<DefaultValue<U>::has_default_value,T const &>::type
+  getDefaultValue() const
   {
-    return m_defaultValue.m_default;
+    return m_default.value;
   }
 
-  ViewWrapper<T> * setDefaultValue( T const & defaultVal )
+  template< typename U=T >
+  typename std::enable_if<DefaultValue<U>::has_default_value, ViewWrapper<T> *>::type
+  setDefaultValue( T const & defaultVal )
   {
-    m_defaultValue.m_default = defaultVal;
+    m_default.value = defaultVal;
+    m_data->m_default.value = defaultVal;
     return this;
+  }
+
+  template< typename U=T >
+  typename std::enable_if<!(DefaultValue<U>::has_default_value), ViewWrapper<T> * >::type
+  setDefaultValue( T const & defaultVal )
+  {
+    return nullptr;
   }
 
 
@@ -1174,7 +1185,7 @@ public:
 
   bool m_ownsData;
   T * m_data;
-  wrapperDefaultValue::Helper<T> m_defaultValue;
+  DefaultValue<T> m_default;
 
 
   ViewWrapper() = delete;
