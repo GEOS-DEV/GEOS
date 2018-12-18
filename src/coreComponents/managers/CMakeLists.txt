@@ -25,7 +25,9 @@ set(managers_headers
     NumericalMethodsManager.hpp
     BoundaryConditions/BoundaryConditionBase.hpp
     BoundaryConditions/BoundaryConditionManager.hpp
-    BoundaryConditions/DirichletBoundaryCondition.hpp)
+    BoundaryConditions/DirichletBoundaryCondition.hpp
+    AggregationManager/AggregationManager.hpp
+    AggregationManager/GeometricalAggregation.hpp)
 
 
 #
@@ -54,7 +56,8 @@ set(managers_sources
     NumericalMethodsManager.cpp
     BoundaryConditions/BoundaryConditionBase.cpp
     BoundaryConditions/BoundaryConditionManager.cpp
-    BoundaryConditions/DirichletBoundaryCondition.cpp)
+    BoundaryConditions/DirichletBoundaryCondition.cpp
+    AggregationManager/GeometricalAggregation.cpp)
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )
