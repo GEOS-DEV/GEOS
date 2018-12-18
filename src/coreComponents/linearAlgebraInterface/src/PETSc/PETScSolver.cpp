@@ -23,26 +23,15 @@ void PETScSolver::solve( PETScSparseMatrix &M,
                          int max_iter,
                          double newton_tol ){
 
-  KSP solver;
-  Vec X, B;
-  X = sol.getVec();
-  B = rhs.getVec();
+  KSP ksp;
+  
+  KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPSetOperators(ksp, M.getMat(), M.getMat());
+  // KSPSetType(ksp, KSPGMRES);
+  // KSPSetTolerances(ksp, newton_tol, newton_tol, NULL, max_iter);
+  // KSPSetUp(solver);
 
-  VecView(X, PETSC_VIEWER_STDOUT_WORLD);
-
-  KSPCreate(PETSC_COMM_WORLD, &solver);
-  KSPSetOperators(solver, M.getMat(), M.getMat());
-  KSPSetType(solver, KSPGMRES);
-  KSPSetTolerances(solver, newton_tol, newton_tol, NULL, max_iter);
-
-  KSPSetUp(solver);
-  KSPSolve(solver, rhs.getVec(), X);
-
-  VecView(X, PETSC_VIEWER_STDOUT_WORLD);
-
-  PETScVector x_(X);
-  sol = x_;
-
+  KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
 
 // /* Solve Ax=b with A an PETScSparseMatrix, x and b PETScVector using ml preconditioner */

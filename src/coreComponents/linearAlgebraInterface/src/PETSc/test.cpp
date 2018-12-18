@@ -1,6 +1,6 @@
+// #include "PETScVector.hpp"
 // #include "PETScSparseMatrix.hpp"
 #include "PETScSolver.hpp"
-// #include "../hannah-PETScVector/PETScVector.hpp"
 
 // to compile: make all
 // to run: mpiexec -n 2 ./test
@@ -323,24 +323,127 @@ void PETSc_KSP_example(int rank)
   return;
 }
 
+void test_KSP_solver(int rank)
+{
+
+  // solve a problem with PETScVector and PETScSparseMatrix
+
+  // set up variables
+  PETScVector x, b, u;
+  PETScSparseMatrix A;
+  KSP ksp;
+  double norm;
+  int i, j, Istart, Iend, m=3, n=3, its;
+
+  // set up matrix
+  A.create(PETSC_COMM_WORLD, m*n, 5);
+
+  // populate matrix
+  // need a process to fill its own rows
+  for(i = 0; i < m*n; i++){
+    for(j = 0; j < m*n; j++){
+      if(i == j) {A.set(i, j, 4.0);}
+      if(i == j + 1 && i < m*n) {A.set(i, j, -1.0);}
+      if(i == j - 1 && j < m*n) {A.set(i, j, -1.0);}
+      if(i == j + 3 && i < m*n) {A.set(i, j, -1.0);}
+      if(i == j - 3 && j < m*n) {A.set(i, j, -1.0);}
+    }
+  }
+  
+  // set vectors
+  double ones[m*n];
+  double zeros[m*n];
+  for(i = 0; i < m*n; i++){
+    ones[i] = 1.0;
+    zeros[i] = 0.0;
+  }
+  u.create(m*n, ones);
+
+  // set x and b to something
+  x.create(m*n, zeros);
+  b.create(m*n, zeros);
+
+  A.multiply(u, b);
+  
+  // create linear solver and solve system
+  KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPSetOperators(ksp, A.getMat(), A.getMat());
+  KSPSolve(ksp, b.getVec(), x.getVec());
+
+  // check error
+  x.update(1.0, u, -1.0);
+  x.norm2(norm);
+  KSPGetIterationNumber(ksp, &its);
+
+  // print info
+  A.print();
+  u.print();
+  x.print(); // results worse than PETSc?
+  b.print();
+  
+  Istart = A.ilower(); Iend = A.iupper();
+
+  printf("rank: %d owns %d - %d rows\n", rank, Istart, Iend);
+  if (rank == 0) printf("Norm of error: %f, number of iterations: %d\n", norm, its);
+
+  return;
+}
+
 void test_PETScSolver(int rank)
 {
 
   // TESTING PETScSolver
 
+  // set up variables
   PETScSolver solver;
+  PETScVector x, b, u;
+  PETScSparseMatrix A;
+  double norm;
+  int i, j, m=3, n=3, its;
 
-  // make a vector
-  PETScVector vec9;
-  double values9[3] = {2, 12.5, 9};
-  vec9.create(3, values9);
-  vec9.print();
+  // set up matrix
+  A.create(PETSC_COMM_WORLD, m*n, 5);
 
-  // PETScVector vec10(vec9);
-  // solver.solve(mat7, vec9, vec10, 100, 10);
-  // solver.dsolve(mat7, vec9, vec10);
-  // mat7.print();
-  // vec10.print();
+  // populate matrix
+  // need a process to fill its own rows
+  for(i = 0; i < m*n; i++){
+    for(j = 0; j < m*n; j++){
+      if(i == j) {A.set(i, j, 4.0);}
+      if(i == j + 1 && i < m*n) {A.set(i, j, -1.0);}
+      if(i == j - 1 && j < m*n) {A.set(i, j, -1.0);}
+      if(i == j + 3 && i < m*n) {A.set(i, j, -1.0);}
+      if(i == j - 3 && j < m*n) {A.set(i, j, -1.0);}
+    }
+  }
+  
+  // set vectors
+  double ones[m*n];
+  double zeros[m*n];
+  for(i = 0; i < m*n; i++){
+    ones[i] = 1.0;
+    zeros[i] = 0.0;
+  }
+  u.create(m*n, ones);
+
+  // set x and b to something
+  x.create(m*n, zeros);
+  b.create(m*n, zeros);
+
+  A.multiply(u, b);
+
+  solver.solve(A, b, x, 100, 0.000001);
+  x.print();
+
+  // check error
+  x.update(1.0, u, -1.0);
+  x.norm2(norm);
+
+  // print info
+  A.print();
+  u.print();
+  x.print(); // results worse than PETSc?
+  b.print();
+  if (rank == 0) printf("Norm of error: %f\n", norm);
 
   return;
 }
@@ -356,11 +459,8 @@ int main()
   // test_PETScVector(rank);
   // test_PETScSparseMatrix(rank);
   // PETSc_KSP_example(rank);
-
-  // solve a problem with PETScVector and PETScSparseMatrix
-  
-
-  printf("whew\n");
+  // test_KSP_solver(rank);
+  test_PETScSolver(rank);
 
   PetscFinalize();
   return 0;
