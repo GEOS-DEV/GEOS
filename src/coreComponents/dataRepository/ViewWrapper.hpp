@@ -742,9 +742,10 @@ public:
     return m_defaultValue.m_default;
   }
 
-  void setDefaultValue( T const & defaultVal )
+  ViewWrapper<T> * setDefaultValue( T const & defaultVal )
   {
     m_defaultValue.m_default = defaultVal;
+    return this;
   }
 
 
