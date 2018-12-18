@@ -45,15 +45,11 @@
 
 
   <Events maxTime="1e7">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
+
     <PeriodicEvent name="solverApplications"
                    forceDt="1e5"
                    target="/Solvers/compflow" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    timeFrequency="1e5"
                    targetExactTimestep="1"

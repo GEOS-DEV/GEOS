@@ -17,7 +17,7 @@
                                  useMass="0">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
+                              newtonTol="1.0e-10"
                               maxIterNewton="15"
                               useDirectSolver="1"
                               solverType="Klu"
@@ -45,16 +45,12 @@
   </Geometry>
 
 
-  <Events maxTime="1e7">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
+  <Events maxTime="5e6">
+
     <PeriodicEvent name="solverApplications"
                    forceDt="1e5"
                    target="/Solvers/compflow" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    timeFrequency="1e5"
                    targetExactTimestep="1"

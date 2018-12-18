@@ -1625,8 +1625,17 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       // use PPU currently; advanced stuff like IHU would go here
       // TODO isolate into a kernel?
 
-      // compute phase potential gradient and its derivatives (stored in dPhaseFlux_dX)
+      // compute phase potential gradient
       real64 potGrad = presGrad + gravHead;
+
+      // choose upstream cell
+      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+      // skip the phase flux if phase not present or immobile upstream
+      if (std::fabs(mobility[k_up]) < 1e-20) // TODO better constant
+      {
+        break;
+      }
 
       // pressure gradient depends on all points in the stencil
       for (localIndex ke = 0; ke < stencilSize; ++ke)
@@ -1643,9 +1652,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
           dPhaseFlux_dC[ke][jc] += dGravHead_dC[ke][jc];
         }
       }
-
-      // choose upstream cell
-      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
       // compute the phase flux and derivatives using upstream cell mobility
       phaseFlux = mobility[k_up] * potGrad;

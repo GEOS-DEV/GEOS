@@ -358,8 +358,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      ResetStateToBeginningOfStep(domain);
-      GEOS_LOG_RANK_0( "The solution is rejected and solver state is reset." );
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
 
