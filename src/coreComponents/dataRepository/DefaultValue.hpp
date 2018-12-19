@@ -28,7 +28,7 @@ struct Helper< T, typename std::enable_if<std::is_arithmetic<T>::value >::type >
 {
   static constexpr bool has_default_value = true;
   using value_type = T;
-  value_type value;
+  value_type value = value_type();
 };
 
 HAS_ALIAS( value_type )
@@ -38,7 +38,7 @@ struct Helper< T, typename std::enable_if< has_alias_value_type<T>::value &&
 {
   static constexpr bool has_default_value = true;
   using value_type = typename T::value_type;
-  value_type value;
+  value_type value = value_type();
 };
 
 }
