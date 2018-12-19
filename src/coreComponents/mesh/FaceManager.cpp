@@ -40,25 +40,21 @@ using namespace dataRepository;
 FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
-  m_toElements.m_toElementRegion.setDefaultValue(-1);
-  m_toElements.m_toElementSubRegion.setDefaultValue(-1);
-  m_toElements.m_toElementIndex.setDefaultValue(-1);
-
   this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
-                             &(elementRegionList()),
-                             false );
+                             &(m_toElements.m_toElementRegion),
+                             false )->setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
-                             &(elementSubRegionList()),
-                             false );
+                             &(m_toElements.m_toElementSubRegion),
+                             false )->setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
-                             &(elementList()),
-                             false );
+                             &(m_toElements.m_toElementIndex),
+                             false )->setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
 
