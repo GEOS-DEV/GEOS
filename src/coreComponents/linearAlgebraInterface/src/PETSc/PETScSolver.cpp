@@ -28,8 +28,7 @@ void PETScSolver::solve( PETScSparseMatrix &M,
   KSPCreate(PETSC_COMM_WORLD, &ksp);
   KSPSetOperators(ksp, M.getMat(), M.getMat());
   KSPSetType(ksp, KSPGMRES);
-  // KSPSetTolerances(ksp, newton_tol, newton_tol, NULL, max_iter);
-  // KSPSetUp(ksp);
+  KSPSetTolerances(ksp, PETSC_DEFAULT, newton_tol, PETSC_DEFAULT, max_iter);
 
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
@@ -73,11 +72,9 @@ void PETScSolver::dsolve( PETScSparseMatrix &M,
   PC pc;
 
   KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPSetType(ksp, KSPPREONLY);
   KSPSetOperators(ksp, M.getMat(), M.getMat());
-  PCSetType(pc,PCILU);
-  KSPSetType(ksp,KSPPREONLY);
-  // KSPSetUp(ksp);
-  
+
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
 

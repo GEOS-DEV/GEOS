@@ -34,10 +34,10 @@ public:
                 std::vector<int> const nMaxEntriesPerRow );
   
    /* Create matrix */
-   // void create( MPI_Comm const comm,
-   //              int const m_nRowGlobal,
-   //              int const m_nColGlobal,
-   //              std::vector<int> const nMaxEntriesPerRow );
+   void create( MPI_Comm const comm,
+                int const m_nRowGlobal,
+                int const m_nColGlobal,
+                std::vector<int> const nMaxEntriesPerRow );
 
   /* Create from a PETSc matrix */
   void create( PETScSparseMatrix &matrix );

@@ -277,6 +277,7 @@ void PETSc_KSP_example(int rank)
   Vec x, b, u;
   Mat A;
   KSP ksp;
+  PC pc;
   double norm;
   int i, j, Ii, J, Istart, Iend, m=3, n=3, its;
   double v;
@@ -306,6 +307,15 @@ void PETSc_KSP_example(int rank)
   MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
   MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
 
+  // get matrix row
+  PetscInt row=3, ncols;
+  const PetscInt *cols;
+  const PetscScalar *vals;
+  if (Istart <= row && row < Iend)
+  {
+    MatGetRow(A,row,&ncols,&cols,&vals);
+  }
+
   // create vectors
   VecCreate(PETSC_COMM_WORLD, &u);
   VecSetSizes(u, PETSC_DECIDE, m*n);
@@ -318,6 +328,15 @@ void PETSc_KSP_example(int rank)
 
   // create linear solver
   KSPCreate(PETSC_COMM_WORLD, &ksp);
+
+  // set tolerance and number of iterations
+  // int max_iters = 50;
+  // double abstol = 1e-3;
+  // KSPSetOperators(ksp, A, A);
+  // KSPSetTolerances(ksp, PETSC_DEFAULT, abstol, PETSC_DEFAULT, max_iters);
+
+  // direct solve
+  KSPSetType(ksp, KSPPREONLY);
   KSPSetOperators(ksp, A, A);
 
   // solve the system
@@ -336,6 +355,13 @@ void PETSc_KSP_example(int rank)
 
   printf("rank: %d owns %d - %d rows\n", rank, Istart, Iend);
   if (rank == 0) printf("Norm of error: %f, number of iterations: %d\n", norm, its);
+
+  printf("\n\n\n");
+
+  for (i = 0; i < ncols; i++){
+    printf("column %d\t value %f\n", cols[i], vals[i]);
+  }
+
 
   return;
 }
@@ -450,8 +476,8 @@ void test_PETScSolver(int rank)
 
   A.multiply(u, b);
 
-  solver.solve(A, b, x, 100, 0.000001);
-  // solver.dsolve(A, b, x);
+  // solver.solve(A, b, x, 100, 10e-10);
+  solver.dsolve(A, b, x);
   x.print();
 
   // check error
@@ -477,14 +503,26 @@ int main()
 
   // run tests
   // test_PETScVector(rank);
-  test_PETScSparseMatrix(rank);
-  // PETSc_KSP_example(rank);
+  // test_PETScSparseMatrix(rank);
+  PETSc_KSP_example(rank);
   // test_KSP_solver(rank);
   // test_PETScSolver(rank);
 
+  // still confused about getRow
+  PETScSparseMatrix mat5;
+  mat5.create(PETSC_COMM_WORLD, 3, 3, 3);
+  int cols_[3] = {0, 1, 2};
+  double row1[3] = {2, 1, 0};
+  double row2_[3] = {.5, -1, 2};
+  double row3[3] = {3, 2, 1};
+  mat5.set(0, 3, row1, cols_);
+  mat5.set(1, 3, row2_, cols_);
+  mat5.set(2, 3, row3, cols_);
 
-
-  
+  int row=0, ncols;
+  int *cols;
+  double *vals;
+  mat5.getRow(row, ncols, vals, cols);
 
   PetscFinalize();
   return 0;

@@ -297,13 +297,31 @@ void PETScSparseMatrix::residual( PETScVector &x,
   * - numEntries: number of nonzeros 
   * - Values: array of values
   * - Indices: array of column indices */
- // void PETScSparseMatrix::getRow( int GlobalRow,
- //               					int &NumEntries,
- //               					double* Values,
- //               					int* Indices )
- // {
- // 	MatGetRow(_mat, GlobalRow, &NumEntries, &Indices, &Values);
- // }
+ void PETScSparseMatrix::getRow( int GlobalRow,
+               					int &NumEntries,
+               					double* Values,
+               					int* Indices )
+ {
+
+ 	int firstrow, lastrow;
+ 	MatGetOwnershipRange(_mat, &firstrow, &lastrow);
+
+ 	PetscInt row=GlobalRow;
+
+ 	if (firstrow <= row && row < lastrow)
+ 	{
+	 	PetscInt ncols=NumEntries;
+	 	const PetscInt *cols=Indices;
+	 	const PetscScalar *vals=Values;
+	 	MatGetRow(_mat,row,&ncols,&cols,&vals);
+ 	}
+
+ 	// this is broken, how to recover NumEntries?
+ 	// also, broadcast values to other ranks?
+ 	// MatGetValues??
+
+ 	// printf("number cols %d\n", ncols);
+ }
 
  /*
   * Get global row myRow
@@ -334,9 +352,6 @@ void PETScSparseMatrix::residual( PETScVector &x,
 //  //                   					int &NumEntries,
 //  //                   					std::vector<double> &vecValues,
 //  //                   					std::vector<int> &vecIndices );
-
-//  /* Pointer to the underlying PETSc matrix */
-//  // Mat* PETScSparseMatrix::getPointer() const;
 
  /* Global number of rows */
  int PETScSparseMatrix::globalRows() const
