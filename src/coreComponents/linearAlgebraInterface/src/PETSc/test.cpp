@@ -2,6 +2,7 @@
 // #include "PETScSparseMatrix.hpp"
 #include "PETScSolver.hpp"
 
+
 // to compile: make all
 // to run: mpiexec -n 2 ./test
 
@@ -17,8 +18,16 @@ void test_PETScVector(int rank)
   double values1[5] = {2, 2, 3, 1, 4};
   vec1.create(5, values1);
 
+  // test create from vector
+  std::vector<double> vec (4, 100);
+  printf("size: %lu\n", vec.size());
+
+  PETScVector vec4;
+  vec4.create(vec);
+  
   // test print
   vec1.print();
+  vec4.print();
 
   // test copy
   if (rank == 0) printf("copy a vector:\n");
@@ -48,6 +57,10 @@ void test_PETScVector(int rank)
   // test getVec
   if (rank == 0) printf("get a vector:\n");
   VecView(vec1.getVec(), PETSC_VIEWER_STDOUT_WORLD);
+
+  // test getPointer
+  if (rank == 0) printf("get a pointer:\n");
+  printf("%p\n", vec1.getPointer());
 
   // test norms
   double norm1, norm2, normInf;
@@ -247,6 +260,10 @@ void test_PETScSparseMatrix(int rank)
     printf("Frobenius of mat1 is: %f\n", matnormFrob);
   }
 
+  // test getPointer
+  if (rank == 0) printf("get a pointer:\n");
+  printf("%p\n", mat1.getPointer());
+
   // test getMat
   MatView(mat1.getMat(), PETSC_VIEWER_STDOUT_WORLD);
 
@@ -429,9 +446,12 @@ void test_PETScSolver(int rank)
   x.create(m*n, zeros);
   b.create(m*n, zeros);
 
+  x.print();
+
   A.multiply(u, b);
 
   solver.solve(A, b, x, 100, 0.000001);
+  // solver.dsolve(A, b, x);
   x.print();
 
   // check error
@@ -457,10 +477,14 @@ int main()
 
   // run tests
   // test_PETScVector(rank);
-  // test_PETScSparseMatrix(rank);
+  test_PETScSparseMatrix(rank);
   // PETSc_KSP_example(rank);
   // test_KSP_solver(rank);
-  test_PETScSolver(rank);
+  // test_PETScSolver(rank);
+
+
+
+  
 
   PetscFinalize();
   return 0;

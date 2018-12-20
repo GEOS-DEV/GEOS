@@ -1,4 +1,5 @@
 #include <petscvec.h>
+#include <vector>
 
 class PETScVector
 {
@@ -21,7 +22,7 @@ class PETScVector
   void create(const int size, double *values);
 
   /* Create from std::vector */
-  //void create(std::vector<real64> &vec);
+  void create(std::vector<double> &vec);
 
   /* Multiply all elements by scalingFactor */
   void scale(double const scalingFactor);
@@ -48,10 +49,10 @@ class PETScVector
   int localSize() const;
 
   /* Returns a const pointer to the underlying Petsc Vec */
-  // const Vec* getPointer() const;
+  const Vec* getPointer() const;
 
   /* Returns a non-const pointer to the underlying Petsc Vec */
-  // Vec* getPointer();
+  Vec* getPointer();
 
   /* Returns vector */
   Vec getVec();

@@ -14,6 +14,11 @@ PETScSparseMatrix::PETScSparseMatrix( PETScSparseMatrix const &in_matrix )
 /* Virtual destructor */
 // virtual ~PETScSparseMatrix() = default;
 
+// virtual ~PETScSparseMatrix()
+// {
+// 	if(_mat) MatDestroy(_mat);
+// }
+
 /* Create a square matrix from number of rows */
 void PETScSparseMatrix::create( MPI_Comm const comm,
 								int const m_nRowGlobal,
@@ -55,16 +60,46 @@ void PETScSparseMatrix::create( MPI_Comm const comm,
 	assembled = true;
 }
 
-//   /* Create square matrix */
-//   void PETScSparseMatrix::create( MPI_Comm const comm,
-//                int const m_nRowGlobal,
-//                std::vector<int> const nMaxEntriesPerRow );
+  /* Create square matrix */
+  void PETScSparseMatrix::create( MPI_Comm const comm,
+               					  int const m_nRowGlobal,
+               					  std::vector<int> const nMaxEntriesPerRow )
+  {
+  	// set up matrix
+	MatCreate(comm, &_mat);
+	MatSetType(_mat, MATMPIAIJ);
+	MatSetSizes(_mat, PETSC_DECIDE, PETSC_DECIDE, m_nRowGlobal, m_nRowGlobal);
+	MatMPIAIJSetPreallocation(_mat, 0, nMaxEntriesPerRow.data(), 0, nMaxEntriesPerRow.data());
+	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	MatSetUp(_mat);
 
-//   /* Create matrix */
-//   void PETScSparseMatrix::create( MPI_Comm const comm,
-//                int const m_nRowGlobal,
-//                int const m_nColGlobal,
-//                std::vector<int> const nMaxEntriesPerRow );
+	// assemble
+	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
+	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
+
+	assembled = true;
+  }
+
+  /* Create matrix */
+  void PETScSparseMatrix::create( MPI_Comm const comm,
+               int const m_nRowGlobal,
+               int const m_nColGlobal,
+               std::vector<int> const nMaxEntriesPerRow )
+  {
+  	// set up matrix
+	MatCreate(comm, &_mat);
+	MatSetType(_mat, MATMPIAIJ);
+	MatSetSizes(_mat, PETSC_DECIDE, PETSC_DECIDE, m_nRowGlobal, m_nColGlobal);
+	MatMPIAIJSetPreallocation(_mat, 0, nMaxEntriesPerRow.data(), 0, nMaxEntriesPerRow.data());
+	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	MatSetUp(_mat);
+
+	// assemble
+	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
+	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
+
+	assembled = true;
+  }
 
  /* Create from a PETSc matrix */
  void PETScSparseMatrix::create( PETScSparseMatrix &matrix )
@@ -394,6 +429,11 @@ int PETScSparseMatrix::myRows() const
   void PETScSparseMatrix::print() const 
   {
   	MatView(_mat, PETSC_VIEWER_STDOUT_WORLD);
+  }
+
+  const Mat* PETScSparseMatrix::getPointer() const
+  {
+  	return &(_mat);
   }
 
   Mat PETScSparseMatrix::getMat()

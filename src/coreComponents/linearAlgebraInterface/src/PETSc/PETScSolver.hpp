@@ -36,7 +36,7 @@ public:
   /* Solve Ax=b with A an PETScSparseMatrix, x and b PETScVector, direct solve */
   void dsolve( PETScSparseMatrix &Mat,
                PETScVector &rhs,
-               PETScEVector &sol );
+               PETScVector &sol );
 
 protected:
 

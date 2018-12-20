@@ -29,9 +29,9 @@ public:
                int const nMaxEntriesPerRow);
 
    /* Create square matrix */
-   // void create( MPI_Comm const comm,
-   //              int const m_nRowGlobal,
-   //              std::vector<int> const nMaxEntriesPerRow );
+   void create( MPI_Comm const comm,
+                int const m_nRowGlobal,
+                std::vector<int> const nMaxEntriesPerRow );
   
    /* Create matrix */
    // void create( MPI_Comm const comm,
@@ -166,9 +166,6 @@ public:
   //                   std::vector<double> &vecValues,
   //                   std::vector<int> &vecIndices );
 
-  /* Pointer to the underlying PETSc matrix */
-  // Mat* getPointer() const;
-
   /* Global number of rows */
   int globalRows() const;
 
@@ -213,6 +210,10 @@ public:
   /* Print to terminal */
   void print() const;
 
+  /* Pointer to the underlying PETSc matrix */
+  const Mat* getPointer() const;
+
+  /* Get underlying PETSc object */
   Mat getMat();
 
 protected:

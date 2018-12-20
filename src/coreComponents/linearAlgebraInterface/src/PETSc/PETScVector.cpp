@@ -18,8 +18,7 @@ PETScVector::PETScVector(Vec vec)
 
 // PETScVector::~PETScVector()
 // {
-//   if (_vec)
-//     VecDestroy(&_vec);
+//   if (_vec) VecDestroy(&_vec);
 // }
 
 void PETScVector::create(const int size, double *vals)
@@ -34,7 +33,21 @@ void PETScVector::create(const int size, double *vals)
   VecSetValues(_vec, size, indices, vals, INSERT_VALUES);
   VecAssemblyBegin(_vec);
   VecAssemblyEnd(_vec);
+}
 
+void PETScVector::create(std::vector<double> &vec)
+{
+  int size = vec.size();
+
+  int indices[size];
+  for (int i = 0; i < size; i++){
+    indices[i] = i;
+  }
+
+  VecCreateMPI(PETSC_COMM_WORLD, PETSC_DECIDE, size, &_vec);
+  VecSetValues(_vec, size, indices, vec.data(), INSERT_VALUES);
+  VecAssemblyBegin(_vec);
+  VecAssemblyEnd(_vec);
 }
 
 void PETScVector::scale(double const scalingFactor)
@@ -80,6 +93,16 @@ int PETScVector::localSize() const
 	int size;
 	VecGetLocalSize(_vec, &size);
 	return size;
+}
+
+const Vec* PETScVector::getPointer() const
+{
+	return &(_vec);
+}
+
+Vec* PETScVector::getPointer()
+{
+	return &(_vec);
 }
 
 Vec PETScVector::getVec()
