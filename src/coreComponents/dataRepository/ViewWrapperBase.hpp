@@ -29,6 +29,7 @@
 #include <string>
 #include <memory>
 #include "common/DataTypes.hpp"
+#include "InputFlags.hpp"
 #include "RestartFlags.hpp"
 
 namespace axom
@@ -79,13 +80,14 @@ public:
   virtual localIndex size() const = 0;
   virtual int numDimensions() const = 0;
   virtual localIndex size(int i) const = 0;
-  virtual void resize(int num_dims, long long const * const dims) = 0;
+  virtual void resize(int num_dims, localIndex const * const dims) = 0;
   virtual void reserve(std::size_t new_cap) = 0;
   virtual std::size_t capacity() const = 0;
   virtual std::size_t max_size() const = 0;
   virtual void clear() = 0;
   virtual void insert() = 0;
   virtual void resize(localIndex newsize) = 0;
+
 
   /**
    * @brief  function to create a clone of *this ViewWrapperBase
@@ -154,14 +156,37 @@ public:
     m_plotLevel = flag;
   }
 
-  void setPlotLevel( int const flag )
+  ViewWrapperBase * setPlotLevel( int const flag )
   {
     m_plotLevel = IntToPlotLevel(flag);
+    return this;
   }
 
   string const & getName() const
   {
     return m_name;
+  }
+
+  ViewWrapperBase * setInputFlag( InputFlags const input )
+  {
+    m_inputFlag = input;
+    return this;
+  }
+
+  InputFlags getInputFlag() const
+  {
+    return m_inputFlag;
+  }
+
+  ViewWrapperBase * setDescription( string const & description )
+  {
+    m_description = description;
+    return this;
+  }
+
+  string const & getDescription() const
+  {
+    return m_description;
   }
 
 
@@ -171,9 +196,12 @@ private:
   int m_sizedFromParent;
   RestartFlags m_restart_flags;
   PlotLevel m_plotLevel;
+  InputFlags m_inputFlag;
+  string m_description;
 #ifdef GEOSX_USE_ATK
   axom::sidre::View* m_sidreView;
 #endif
+
 
   ViewWrapperBase() = delete;
   ViewWrapperBase( ViewWrapperBase const & ) = delete;
