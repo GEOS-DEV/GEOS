@@ -101,7 +101,7 @@ void ElementRegion::FillDocumentationNode()
                               "string",
                               "Default Material Name",
                               "Default Material Name",
-                              "REQUIRED",
+                              "0",
                               "",
                               0,
                               1,
@@ -243,10 +243,9 @@ void ElementRegion::HangConstitutiveRelations( ManagedGroup const * problemManag
       {
       for( auto & materialName : m_materialList )
       {
-      constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
+        constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
       }
       });
-  std::cout << "On est passe" << std::endl;
 }
 
 void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager )

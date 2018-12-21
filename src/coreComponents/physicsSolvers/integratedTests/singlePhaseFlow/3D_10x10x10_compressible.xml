@@ -65,7 +65,6 @@
   <ElementRegions>
     <ElementRegion name="Region2"
                    cellBlocks="cb1"
-                   numericalMethod="singlePhaseTPFA`"
                    material="water"
                    materialList="water rock"/>
   </ElementRegions>
