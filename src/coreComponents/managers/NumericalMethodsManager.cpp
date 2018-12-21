@@ -58,6 +58,19 @@ void NumericalMethodsManager::CreateChild( string const & childKey, string const
 {
 }
 
+dataRepository::ManagedGroup const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const
+{
+  for( auto & iterNumericalMethod : this->GetSubGroups() )
+  {
+    if( iterNumericalMethod.second->getName() == name)
+    {
+      return iterNumericalMethod.second;
+    }
+  }
+  GEOS_ERROR("Can't find subgroup named " + name + " in " + this->getName());
+  return nullptr;
+}
+
 
 
 } /* namespace geosx */

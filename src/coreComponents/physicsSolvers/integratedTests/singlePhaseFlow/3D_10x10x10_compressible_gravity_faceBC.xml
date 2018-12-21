@@ -61,18 +61,6 @@
 
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3 name="linearBasis"  degree = "1"  />
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3 name="gaussian"   degree="2"  />
-    </QuadratureRules>
-
-    <FiniteElements>
-      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
-    </FiniteElements>
-
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
@@ -84,7 +72,6 @@
   <ElementRegions>
     <ElementRegion name="Region2"
                    cellBlocks="cb1"
-                   numericalMethod="FE1"
                    material="water"
                    materialList="water rock"/>
   </ElementRegions>

@@ -1613,9 +1613,18 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
           rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeID),
                                           false,
-                                          [&]( auto arrayType, auto Type )->void
+                                          [&]( auto array, auto Type )->void
           {
-            fakeGroup.RegisterViewWrapper<decltype(arrayType)>( fieldName )->setPlotLevel(0);
+            typedef decltype(array) arrayType;
+            ViewWrapper<arrayType> const &
+            sourceWrapper = ViewWrapper<arrayType>::cast( *wrapper );
+            arrayType const & sourceArray = sourceWrapper.reference();
+
+            ViewWrapper<arrayType> * const
+            newWrapper = fakeGroup.RegisterViewWrapper<arrayType>( fieldName );
+            newWrapper->setPlotLevel(0);
+            arrayType & newarray = newWrapper->reference();
+            newarray.resize( arrayType::ndim, sourceArray.dims() );
           });
         }
       }

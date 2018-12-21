@@ -5,6 +5,7 @@
 set(dataRepository_headers
     BufferOps_inline.hpp
     BufferOps.hpp
+    InputFlags.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
     ExecutableGroup.hpp

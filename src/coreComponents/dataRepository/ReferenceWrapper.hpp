@@ -95,6 +95,13 @@ public:
     source.m_ref = nullptr;
   }
 
+  ReferenceWrapper& operator=( ReferenceWrapper const & source )
+  {
+    m_ref = source.m_ref;
+    return *this;
+  }
+
+
   /**
    * @tparam T_RHS type of the rhs
    * @brief assignment operator calls m_ref->operator=() to allow for any type on the rhs
