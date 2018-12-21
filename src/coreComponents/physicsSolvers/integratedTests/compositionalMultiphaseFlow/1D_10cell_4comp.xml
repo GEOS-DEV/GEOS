@@ -67,18 +67,6 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3 name="linearBasis"  degree = "1"  />
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3 name="gaussian"   degree="2"  />
-    </QuadratureRules>
-
-    <FiniteElements>
-      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
-    </FiniteElements>
-
     <FiniteVolume>
       <TwoPointFluxApproximation name="fluidTPFA"
                                  fieldName="pressure"
@@ -87,7 +75,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" materialList="fluid1 rock relperm" />
+    <ElementRegion name="Region2" cellBlocks="cb1" material="fluid1" materialList="fluid1 rock relperm" />
   </ElementRegions>
 
   <Constitutive>

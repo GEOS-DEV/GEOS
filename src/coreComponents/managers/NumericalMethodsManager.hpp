@@ -54,6 +54,8 @@ public:
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
+  dataRepository::ManagedGroup const * FindNumericalMethodByName(string const & name) const;
+
 
 };
 
