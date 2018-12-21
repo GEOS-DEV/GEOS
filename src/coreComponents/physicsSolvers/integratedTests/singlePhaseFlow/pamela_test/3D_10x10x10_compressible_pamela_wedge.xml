@@ -67,7 +67,7 @@
 
 
   <ElementRegions>
-    <ElementRegion name="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1" cellBlocks="WEDGE" material="water" materialList="water rock"/>
+    <ElementRegion name="Domain" cellBlocks="PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_WEDGE" material="water" materialList="water rock"/>
   </ElementRegions>
 
   <Constitutive>
@@ -91,7 +91,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/WEDGE"
+               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_WEDGE"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-14"/>
@@ -100,7 +100,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/WEDGE"
+               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_WEDGE"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-14"/>
@@ -109,7 +109,7 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/WEDGE"
+               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_WEDGE"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-14"/>
@@ -117,7 +117,7 @@
     <Dirichlet name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/WEDGE"
+               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_WEDGE"
                fieldName="referencePorosity"
                dataType="real64"
                scale="0.05"/>
@@ -125,7 +125,7 @@
     <Dirichlet name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/WEDGE"
+               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_WEDGE"
                fieldName="pressure"
                dataType="real64"
                scale="1e3"/>

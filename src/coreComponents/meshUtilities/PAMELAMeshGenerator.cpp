@@ -234,6 +234,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         }
         else if( cellBlockName == "WEDGE" )
         {
+          std::cout << "WRITING WEDGE" << std::endl;
           cellBlock -> SetElementType("C3D6");
           auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
           auto & cellToVertex = cellBlock->nodeList();
@@ -265,7 +266,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
             cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
           }
         }
-        else if( cellBlockName == "PYR" )
+        else if( cellBlockName == "PYRAMID" )
         {
           cellBlock -> SetElementType("C3D5");
           auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
