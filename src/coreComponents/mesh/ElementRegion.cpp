@@ -31,7 +31,6 @@
 #include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
 
 #include "managers/DomainPartition.hpp"
 
