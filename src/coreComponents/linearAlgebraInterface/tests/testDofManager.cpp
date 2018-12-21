@@ -37,6 +37,8 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 
+#include "DofManager.hpp"
+
 using namespace geosx;
 
 namespace
@@ -74,14 +76,15 @@ ProblemManager DofManagerTest::problemManager("ProblemManager", nullptr);
 
 TEST_F(DofManagerTest, TestOne)
 {
-  //DomainPartition * domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager.getDomainPartition();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  DofManager dofManager(*mesh);
 }
 
 
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
-
 #ifdef GEOSX_USE_MPI
   MPI_Init(&argc,&argv);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
@@ -89,7 +92,6 @@ int main(int argc, char** argv)
 #else
   logger::InitializeLogger():
 #endif
-
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
   global_argc = argc;
@@ -102,7 +104,6 @@ int main(int argc, char** argv)
   int const result = RUN_ALL_TESTS();
 
   delete[] global_argv;
-
   logger::FinalizeLogger();
 #ifdef GEOSX_USE_MPI
   MPI_Comm_free( &MPI_COMM_GEOSX );

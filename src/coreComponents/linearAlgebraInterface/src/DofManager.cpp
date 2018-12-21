@@ -32,6 +32,14 @@ DofManager::DofManager(MeshLevel const & meshLevel)
 {}
 
 
+DofManager::close()
+{
+  NodeManager const * nodeManager = meshLevel.getNodeManager();
+  localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
+  localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
+  std::cout << "No local rows" << n_local_rows << std::endl; 
+}
+
 
 }
 
