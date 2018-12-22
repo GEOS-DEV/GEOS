@@ -31,12 +31,6 @@
 #include "mesh/MeshForLoopInterface.hpp"
 //#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
 
-
-struct stabledt
-{
-  double m_maxdt;
-};
-
 namespace ML_Epetra
 { class MultiLevelPreconditioner; }
 
@@ -275,8 +269,6 @@ public:
   } solidMechanicsGroupKeys;
 
 private:
-
-  real64 m_cflFactor;
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;
@@ -285,7 +277,6 @@ private:
   timeIntegrationOption m_timeIntegrationOption;
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
-  stabledt m_stabledt;
 
   array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;

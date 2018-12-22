@@ -449,7 +449,11 @@ void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies 
 
 void ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_ERROR("Child not recognized: " << childKey << ", " << childName);
+  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
+                 "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog");
+  GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ManagedGroup::Catalog.");
+  this->RegisterGroup( childName,
+                       CatalogInterface::Factory( childKey, childName, this ) );
 }
 
 

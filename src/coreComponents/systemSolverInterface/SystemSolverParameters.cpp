@@ -142,5 +142,8 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 }
 
 
+REGISTER_CATALOG_ENTRY( ManagedGroup, SystemSolverParameters, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */
+
+

@@ -346,6 +346,7 @@ public:
                     systemSolverInterface::BlockIDs const blockID );
 
 
+  void CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void FillDocumentationNode() override;
 
@@ -362,13 +363,14 @@ public:
   {
     constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
+    constexpr static auto cflFactorString = "cflFactor";
+    static constexpr auto maxStableDtString = "maxStableDt";
 
   } viewKeys;
 
   struct groupKeyStruct
   {
     constexpr static auto systemSolverParametersString = "SystemSolverParameters";
-    dataRepository::GroupKey systemSolverParameters = { systemSolverParametersString };
   } groupKeys;
 
 
@@ -406,6 +408,10 @@ private:
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
+
+  real64 m_cflFactor;
+  real64 m_maxStableDt;
+
 
 //  localIndex_array m_blockLocalDofNumber;
 

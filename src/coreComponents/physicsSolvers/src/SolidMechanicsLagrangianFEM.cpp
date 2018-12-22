@@ -177,7 +177,6 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
                                                             ManagedGroup * const parent ):
   SolverBase( name, parent ),
-  m_cflFactor(0.5),
   m_newmarkGamma(0.5),
   m_newmarkBeta(0.25),
   m_massDamping(0.0),
@@ -186,7 +185,6 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
   m_timeIntegrationOption(timeIntegrationOption::ExplicitDynamic),
   m_useVelocityEstimateForQS(0),
   m_maxForce(0.0),
-  m_stabledt{1e99},
   m_elemsAttachedToSendOrReceiveNodes(),
   m_elemsNotAttachedToSendOrReceiveNodes(),
   m_sendOrRecieveNodes(),
@@ -195,11 +193,6 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
 {
   getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
 
-  RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
-      setDefaultValue(0.5)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
-          "Values should be in the interval (0,1] ");
 
   RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
       setDefaultValue(0.5)->
