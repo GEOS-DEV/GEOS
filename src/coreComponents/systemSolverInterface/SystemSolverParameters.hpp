@@ -43,6 +43,8 @@ public:
 
   virtual ~SystemSolverParameters() override = default;
 
+  static string CatalogName() { return "SystemSolverParameters"; }
+
   struct viewKeysStruct
   {
     static constexpr auto verbosityString           = "verbosityFlag";

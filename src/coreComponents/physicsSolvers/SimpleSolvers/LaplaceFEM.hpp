@@ -173,7 +173,6 @@ public:
 //  } groupKeys;
 
 
-  SystemSolverParameters * getSystemSolverParameters() {return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters); }
 
 private:
 

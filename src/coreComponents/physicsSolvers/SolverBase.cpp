@@ -33,11 +33,10 @@ SolverBase::SolverBase( std::string const & name,
   m_linearSolverWrapper(),
   m_verboseLevel( 0 ),
   m_gravityVector( R1Tensor( 0.0 ) ),
-  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )//,
-//  m_blockLocalDofNumber()
+  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
+  m_cflFactor(),
+  m_maxStableDt{1e99}
 {
-  // register group with repository. Have Repository own object.
-  this->RegisterGroup( groupKeyStruct::systemSolverParametersString, &m_systemSolverParameters, 0 );
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
@@ -46,7 +45,23 @@ SolverBase::SolverBase( std::string const & name,
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior(1);
 
-//  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
+
+  RegisterViewWrapper(viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
+      setDefaultValue(0)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Verbosity level");
+
+  RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+      setDefaultValue(0.5)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
+          "Values should be in the interval (0,1] ");
+
+  RegisterViewWrapper(viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
+      setDefaultValue(0.5)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
+          "Values should be in the interval (0,1] ");
 
 }
 
@@ -59,6 +74,18 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
 {
   static SolverBase::CatalogInterface::CatalogType catalog;
   return catalog;
+}
+
+void SolverBase::CreateChild( string const & childKey, string const & childName )
+{
+  if( childKey==SystemSolverParameters::CatalogName() )
+  {
+    this->RegisterGroup( childName, &m_systemSolverParameters, 0 );
+  }
+  else
+  {
+    GEOS_ERROR(childKey<<" is an invalid key to SolverBase child group.");
+  }
 }
 
 void SolverBase::FillDocumentationNode()
