@@ -43,54 +43,72 @@ public:
 
   virtual ~SystemSolverParameters() override = default;
 
-  void FillDocumentationNode() override;
-
   struct viewKeysStruct
   {
-    dataRepository::ViewKey verbosity           = { "verbosityFlag" };
-    dataRepository::ViewKey solverType          = { "solverType" };
-    dataRepository::ViewKey krylovTol           = { "krylovTol" };
-    dataRepository::ViewKey numKrylovIter       = { "numKrylovIter" };
-    dataRepository::ViewKey kspace              = { "kspace" };
-    dataRepository::ViewKey ilut_fill           = { "ilut_fill" };
-    dataRepository::ViewKey ilut_drop           = { "ilut_drop" };
-    dataRepository::ViewKey useMLPrecond        = { "useMLPrecond" };
-    dataRepository::ViewKey useInnerSolver      = { "useInnerSolver" };
-    dataRepository::ViewKey scalingOption       = { "scalingOption" };
-    dataRepository::ViewKey useBicgstab         = { "useBicgstab" };
-    dataRepository::ViewKey useDirectSolver     = { "useDirectSolver" };
-    dataRepository::ViewKey KrylovResidualInit  = { "KrylovResidualInit" };
-    dataRepository::ViewKey KrylovResidualFinal = { "KrylovResidualFinal" };
-    dataRepository::ViewKey useNewtonSolve      = { "useNewtonSolve" };
-    dataRepository::ViewKey newtonTol           = { "newtonTol" };
-    dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
-    dataRepository::ViewKey numNewtonIterations = { "numberOfNewtonIterations" };
+    static constexpr auto verbosityString           = "verbosityFlag";
+    static constexpr auto solverTypeString          = "solverType";
+    static constexpr auto krylovTolString           = "krylovTol";
+    static constexpr auto numKrylovIterString       = "numKrylovIter";
+    static constexpr auto kspaceString              = "kspace";
+    static constexpr auto ilut_fillString           = "ilut_fill";
+    static constexpr auto ilut_dropString           = "ilut_drop";
+    static constexpr auto useMLPrecondString        = "useMLPrecond";
+    static constexpr auto useInnerSolverString      = "useInnerSolver";
+    static constexpr auto scalingOptionString       = "scalingOption";
+    static constexpr auto useBicgstabString         = "useBicgstab";
+    static constexpr auto useDirectSolverString     = "useDirectSolver";
+    static constexpr auto KrylovResidualInitString  = "KrylovResidualInit";
+    static constexpr auto KrylovResidualFinalString = "KrylovResidualFinal";
+    static constexpr auto useNewtonSolveString      = "useNewtonSolve";
+    static constexpr auto newtonTolString           = "newtonTol";
+    static constexpr auto maxIterNewtonString       = "maxIterNewton";
+    static constexpr auto numNewtonIterationsString = "numberOfNewtonIterations";
 
   } viewKeys;
 
   struct groupKeysStruct
   {} groupKeys;
 
-  integer  verbose() const                    { return this->getReference<integer>( viewKeys.verbosity ); }
-  string  solverType() const                  { return this->getReference<string>( viewKeys.solverType ); }
-  real64 krylovTol() const                    { return this->getReference<real64>( viewKeys.krylovTol ); }
-  integer  numKrylovIter() const              { return this->getReference<integer>( viewKeys.numKrylovIter ); }
-  integer  kspace() const                     { return this->getReference<integer>( viewKeys.kspace ); }
-  real64 ilut_fill() const                    { return this->getReference<real64>( viewKeys.ilut_fill ); }
-  real64 ilut_drop() const                    { return this->getReference<real64>( viewKeys.ilut_drop ); }
-  integer   useMLPrecond() const              { return this->getReference<integer>( viewKeys.useMLPrecond ); }
-  integer   useInnerSolver() const            { return this->getReference<integer>( viewKeys.useInnerSolver ); }
-  integer  scalingOption() const              { return this->getReference<integer>( viewKeys.scalingOption ); }
-  integer   useBicgstab() const               { return this->getReference<integer>( viewKeys.useBicgstab ); }
-  integer   useDirectSolver() const           { return this->getReference<integer>( viewKeys.useDirectSolver ); }
-  real64 KrylovResidualInit() const           { return this->getReference<real64>( viewKeys.KrylovResidualInit ); }
-  real64 KrylovResidualFinal() const          { return this->getReference<real64>( viewKeys.KrylovResidualFinal ); }
-  integer   useNewtonSolve() const            { return this->getReference<integer>( viewKeys.useNewtonSolve ); }
-  real64 newtonTol() const                    { return this->getReference<real64>( viewKeys.newtonTol ); }
-  integer  maxIterNewton() const              { return this->getReference<integer>( viewKeys.maxIterNewton ); }
-  integer const & numNewtonIterations() const { return this->getReference<integer>( viewKeys.numNewtonIterations); }
-  integer & numNewtonIterations()             { return this->getReference<integer>( viewKeys.numNewtonIterations); }
+  integer  verbose() const                    { return m_verbose; }
+  string  solverType() const                  { return m_solverType; }
+  real64 krylovTol() const                    { return m_krylovTol; }
+  integer  numKrylovIter() const              { return m_numKrylovIter; }
+  integer  kspace() const                     { return m_kspace; }
+  real64 ilut_fill() const                    { return m_ilut_fill; }
+  real64 ilut_drop() const                    { return m_ilut_drop; }
+  integer   useMLPrecond() const              { return m_useMLPrecond; }
+  integer   useInnerSolver() const            { return m_useInnerSolver; }
+  integer  scalingOption() const              { return m_scalingOption; }
+  integer   useBicgstab() const               { return m_useBicgstab; }
+  integer   useDirectSolver() const           { return m_useDirectSolver; }
+  real64 KrylovResidualInit() const           { return m_KrylovResidualInit; }
+  real64 KrylovResidualFinal() const          { return m_KrylovResidualFinal; }
+  integer   useNewtonSolve() const            { return m_useNewtonSolve; }
+  real64 newtonTol() const                    { return m_newtonTol; }
+  integer  maxIterNewton() const              { return m_maxIterNewton; }
+  integer const & numNewtonIterations() const { return m_numNewtonIterations; }
+  integer & numNewtonIterations()             { return m_numNewtonIterations; }
 
+
+
+  integer m_verbose;
+  string  m_solverType;
+  real64  m_krylovTol;
+  integer m_numKrylovIter;
+  integer m_kspace;
+  real64  m_ilut_fill;
+  real64  m_ilut_drop;
+  integer m_useMLPrecond;
+  integer m_useInnerSolver;
+  integer m_scalingOption;
+  integer m_useBicgstab;
+  integer m_useDirectSolver;
+  real64  m_KrylovResidualInit;
+  real64  m_KrylovResidualFinal;
+  integer m_useNewtonSolve;
+  real64  m_newtonTol;
+  integer m_maxIterNewton;
+  integer m_numNewtonIterations;
 };
 
 } /* namespace geosx */

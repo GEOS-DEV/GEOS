@@ -95,10 +95,6 @@ public:
                         real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
-
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
   /**
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
    * e.g.: <Events>
@@ -154,11 +150,26 @@ public:
   void SetProgressIndicator(array1d<integer> & eventCounters);
 
 
-  /// A pointer to the optional event target
-  ExecutableGroup * m_target;
 
   struct viewKeyStruct
   {
+
+    static constexpr auto eventTargetString = "target";
+    static constexpr auto beginTimeString = "beginTime";
+    static constexpr auto endTimeString = "endTime";
+    static constexpr auto forceDtString = "forceDt";
+    static constexpr auto lastTimeString = "lastTime";
+    static constexpr auto lastCycleString = "lastCycle";
+
+    static constexpr auto allowSuperstepString = "allowSuperstep";
+    static constexpr auto allowSubstepString = "allowSubstep";
+    static constexpr auto substepFactorString = "substepFactor";
+    static constexpr auto targetExactStartStopString = "targetExactStartStop";
+
+    static constexpr auto currentSubEventString = "currentSubEvent";
+    static constexpr auto isTargetExecutingString = "isTargetExecuting";
+
+
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
     dataRepository::ViewKey endTime = { "endTime" };
@@ -190,11 +201,28 @@ public:
   real64  GetEventProgress() const { return m_eventProgress; }
 
 private:
+  string m_eventTarget;
+  real64 m_beginTime;
+  real64 m_endTime;
+  real64 m_forceDt;
+  integer m_allowSuperstep;
+  integer m_allowSubstep;
+  integer m_substepFactor;
+  integer m_targetExactStartStop;
+
+  integer m_currentSubEvent;
+  integer m_isTargetExecuting;
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
   integer m_eventCount = 0;
   integer m_timeStepEventCount = 0;
   real64 m_eventProgress = 0;
+  real64 m_lastTime;
+  integer m_lastCycle;
+
+  /// A pointer to the optional event target
+  ExecutableGroup * m_target;
+
 };
 
 } /* namespace geosx */

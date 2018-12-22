@@ -133,14 +133,19 @@ public:
     return m_sizedFromParent;
   }
 
-  void setSizedFromParent( int val )
+  ViewWrapperBase * setSizedFromParent( int val )
   {
     m_sizedFromParent = val;
+    return this;
   }
 
   RestartFlags getRestartFlags() const { return m_restart_flags; }
 
-  void setRestartFlags( RestartFlags flags) { m_restart_flags = flags; } 
+  ViewWrapperBase * setRestartFlags( RestartFlags flags)
+  {
+    m_restart_flags = flags;
+    return this;
+  }
 
 #ifdef GEOSX_USE_ATK
   axom::sidre::View * getSidreView() const
@@ -151,9 +156,10 @@ public:
 
   PlotLevel getPlotLevel() const {return m_plotLevel;}
 
-  void setPlotLevel( PlotLevel const flag )
+  ViewWrapperBase * setPlotLevel( PlotLevel const flag )
   {
     m_plotLevel = flag;
+    return this;
   }
 
   ViewWrapperBase * setPlotLevel( int const flag )

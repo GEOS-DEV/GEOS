@@ -75,7 +75,12 @@ public:
     ViewWrapperBase(name, parent),
     m_ownsData( true ),
     m_data( new T() )
-  {}
+  {
+    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    {
+      this->setSizedFromParent()(0);
+    }
+  }
 
   /**
    * @param name name of the object
@@ -88,7 +93,12 @@ public:
     ViewWrapperBase(name, parent),
   m_ownsData( true ),
   m_data( object.release() )
-  {}
+  {
+    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    {
+      this->setSizedFromParent(0);
+    }
+  }
 
   /**
    * @param name name of the object
@@ -102,7 +112,12 @@ public:
     ViewWrapperBase(name,parent),
     m_ownsData( takeOwnership ),
     m_data( object )
-  {}
+  {
+    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    {
+      this->setSizedFromParent(0);
+    }
+  }
 
   /**
    * default destructor
@@ -773,6 +788,13 @@ public:
   { return m_data; }
 
 
+  template< typename U=T >
+  DefaultValue<T> const &
+  getDefaultValueStruct() const
+  {
+    return m_default;
+  }
+
 
   template< typename U=T >
   typename std::enable_if<DefaultValue<U>::has_default_value,T const &>::type
@@ -796,6 +818,14 @@ public:
     return nullptr;
   }
 
+
+  template< typename U=T >
+  typename std::enable_if<DefaultValue<U>::has_default_value, ViewWrapper<T> *>::type
+  setToDefaultValue()
+  {
+    *m_data = m_default.value;
+    return this;
+  }
 
 
   /// Case for if m_data has a member function called "data()"

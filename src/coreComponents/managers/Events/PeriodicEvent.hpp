@@ -45,9 +45,6 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "PeriodicEvent"; }
-
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
   
   /**
    * Estimate the expected number of cycles until an event is expected to trigger.
@@ -95,6 +92,17 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr auto timeFrequencyString = "timeFrequency";
+    static constexpr auto cycleFrequencyString = "cycleFrequency";
+    static constexpr auto targetExactTimestepString = "targetExactTimestep";
+    static constexpr auto functionNameString = "function";
+    static constexpr auto functionInputObjectString = "object";
+    static constexpr auto functionInputSetnameString = "set";
+    static constexpr auto functionSetNamesString = "setNames";
+    static constexpr auto functionStatOptionString = "stat";
+    static constexpr auto eventThresholdString = "threshold";
+
+
     dataRepository::ViewKey timeFrequency = { "timeFrequency" };
     dataRepository::ViewKey cycleFrequency = { "cycleFrequency" };
     dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
@@ -105,6 +113,17 @@ public:
     dataRepository::ViewKey functionStatOption = { "stat" };
     dataRepository::ViewKey eventThreshold = { "threshold" };
   } periodicEventViewKeys;
+
+  real64 m_timeFrequency;
+  integer m_cycleFrequency;
+  integer m_targetExactTimestep;
+  string m_functionName;
+  string m_functionInputObject;
+  string m_functionInputSetname;
+  integer m_functionStatOption;
+  real64 m_eventThreshold;
+
+
 
 };
 

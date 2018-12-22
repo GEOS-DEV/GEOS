@@ -68,10 +68,10 @@ public:
 
   static string CatalogName() { return "InternalMesh"; }
 
-  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
-
-
-  virtual void FillDocumentationNode() override;
+//  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
+//
+//
+//  virtual void FillDocumentationNode() override;
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 

@@ -41,10 +41,6 @@ public:
 
   static string CatalogName() { return "Box"; }
 
-//  virtual void FillDocumentationNode() override;
-
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
-
   virtual void ReadXML_PostProcess() override final;
 
   bool IsCoordInObject( const R1Tensor& coord ) const override final;

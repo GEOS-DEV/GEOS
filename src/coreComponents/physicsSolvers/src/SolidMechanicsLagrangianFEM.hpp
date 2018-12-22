@@ -74,7 +74,7 @@ public:
 
   virtual void ReadXML_PostProcess() override final;
 
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
+//  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
@@ -216,7 +216,7 @@ public:
                         systemSolverInterface::EpetraBlockSystem & blockSystem );
 
 
-  enum class timeIntegrationOption
+  enum class timeIntegrationOption : int
   {
     QuasiStatic,
     ImplicitDynamic,
@@ -247,13 +247,14 @@ public:
   {
     static constexpr auto vTildeString = "velocityTilde";
     static constexpr auto uhatTildeString = "uhatTilde";
-    static constexpr auto courantString = "courant";
+    static constexpr auto cflFactorString = "cflFactor";
     static constexpr auto newmarkGammaString = "newmarkGamma";
     static constexpr auto newmarkBetaString = "newmarkBeta";
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityEstimateForQuasiStatic";
     static constexpr auto trilinosIndexString = "trilinosIndex";
+    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOptionString";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
 
 
@@ -275,11 +276,12 @@ public:
 
 private:
 
-  real64 m_courant;
+  real64 m_cflFactor;
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;
   real64 m_stiffnessDamping;
+  string m_timeIntegrationOptionString;
   timeIntegrationOption m_timeIntegrationOption;
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;

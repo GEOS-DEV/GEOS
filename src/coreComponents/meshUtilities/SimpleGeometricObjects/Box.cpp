@@ -38,66 +38,36 @@ Box::Box( const std::string& name, ManagedGroup * const parent ):
   m_cosStrike{0.0},
   m_sinStrike{0.0}
 {
-  RegisterViewWrapper( viewKeyStruct::xMinString, &m_min, false );
-  RegisterViewWrapper( viewKeyStruct::xMaxString, &m_max, false );
-  RegisterViewWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false );
+  RegisterViewWrapper( viewKeyStruct::xMinString, &m_min, false )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Minimum (x,y,z) coordinates of the box");
+
+  RegisterViewWrapper( viewKeyStruct::xMaxString, &m_max, false )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Maximum (x,y,z) coordinates of the box");
+
+  RegisterViewWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
+      setDefaultValue(-90.0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("The strike angle of the box");
+
   RegisterViewWrapper( viewKeyStruct::boxCenterString, &m_boxCenter, false );
   RegisterViewWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike, false );
   RegisterViewWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike, false );
 }
 
 Box::~Box()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
-//void Box::FillDocumentationNode()
-//{
-//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-//
-//  docNode->setName(this->CatalogName());
-//  docNode->setSchemaType("Node");
-//  docNode->setShortDescription("A simple box object");
-//
-//  docNode->AllocateChildNode( viewKeys.xmin.Key(),
-//                              viewKeys.xmin.Key(),
-//                              -1,
-//                              "R1Tensor",
-//                              "R1Tensor",
-//                              "Lower corner of box",
-//                              "Lower corner of box",
-//                              "-1e99,-1e99,-1e99",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-//
-//  docNode->AllocateChildNode( viewKeys.xmax.Key(),
-//                              viewKeys.xmax.Key(),
-//                              -1,
-//                              "R1Tensor",
-//                              "R1Tensor",
-//                              "Upper corner of box",
-//                              "Upper corner of box",
-//                              "1e99,1e99,1e99",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-//}
 
-void Box::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-{
-  xmlWrapper::ReadAttributeAsType( m_min, viewKeyStruct::xMinString, targetNode );
-  xmlWrapper::ReadAttributeAsType( m_max, viewKeyStruct::xMaxString, targetNode );
-  xmlWrapper::ReadAttributeAsType( m_strikeAngle, viewKeyStruct::strikeAngleString, targetNode, -90.0 );
-  xmlWrapper::ReadAttributeAsType( m_cosStrike, viewKeyStruct::cosStrikeString, targetNode, 0.0 );
-  xmlWrapper::ReadAttributeAsType( m_sinStrike, viewKeyStruct::sinStrikeString, targetNode, 0.0 );
-}
 
 
 void Box::ReadXML_PostProcess()
 {
+  m_boxCenter = m_min;
+  m_boxCenter += m_max;
+  m_boxCenter *= 0.5;
+
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if (std::fabs(m_strikeAngle) > 1e-20)
   {
@@ -107,9 +77,6 @@ void Box::ReadXML_PostProcess()
 
     m_cosStrike = std::cos(m_strikeAngle / 180 *M_PI);
     m_sinStrike = std::sin(m_strikeAngle / 180 *M_PI);
-    m_boxCenter = m_min;
-    m_boxCenter += m_max;
-    m_boxCenter *= 0.5;
   }
 
 }
