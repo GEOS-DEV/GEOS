@@ -622,9 +622,9 @@ void ProblemManager::ParseInputFile()
 
 
   // Call manager readXML methods:
-  this->AddChildren(xmlProblemNode);
-  this->SetDocumentationNodes();
-  this->ReadXML( xmlProblemNode );
+//  this->AddChildren(xmlProblemNode);
+//  this->SetDocumentationNodes();
+//  this->ReadXML( xmlProblemNode );
 
 
   // The function manager is handled separately

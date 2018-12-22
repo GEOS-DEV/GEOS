@@ -36,50 +36,30 @@ using namespace cxx_utilities;
 
 SiloOutput::SiloOutput( std::string const & name,
                         ManagedGroup * const parent ):
-  OutputBase( name, parent)
+  OutputBase( name, parent),
+  m_plotFileRoot(),
+  m_writeFaceMesh(),
+  m_plotLevel()
 {
+  RegisterViewWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
+      setDefaultValue(1)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("");
+
 }
 
 SiloOutput::~SiloOutput()
 {}
 
-void SiloOutput::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName("Silo");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs SILO format files");
-
-
-
-  docNode->AllocateChildNode( siloOutputViewKeys.plotLevel.Key(),
-                              siloOutputViewKeys.plotLevel.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "output level",
-                              "output level",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-//  docNode->AllocateChildNode( viewKeys.writeFEMFaces.Key(),
-//                              viewKeys.writeFEMFaces.Key(),
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "flag to write FEM faces",
-//                              "flag to write FEM faces",
-//                              "0",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-}
 
 void SiloOutput::Execute(real64 const& time_n,
                          real64 const& dt,
@@ -95,9 +75,9 @@ void SiloOutput::Execute(real64 const& time_n,
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   MPI_Barrier( MPI_COMM_GEOSX );
 
-  integer numFiles = this->getReference<integer>( siloOutputViewKeys.parallelThreads);
+  integer numFiles = this->parallelThreads();
 
-  silo.setPlotLevel( getReference<integer>( siloOutputViewKeys.plotLevel ) );
+  silo.setPlotLevel( getReference<integer>( viewKeysStruct::plotLevel ) );
 
   silo.Initialize(PMPIO_WRITE , numFiles );
   silo.WaitForBatonWrite(rank, cycleNumber, eventCounter, false );

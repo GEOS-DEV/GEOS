@@ -403,6 +403,40 @@ void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & target
   ReadXML_PostProcess();
 }
 
+void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+{
+  for( auto wrapperPair : m_wrappers )
+  {
+    ViewWrapperBase * const wrapper = wrapperPair.second;
+    InputFlags const inputFlag = wrapper->getInputFlag();
+    if( inputFlag >= InputFlags::OPTIONAL )
+    {
+      string const & wrapperName = wrapperPair.first;
+      rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
+
+      rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
+                                          [&]( auto a, auto b ) -> void
+      {
+//        using BASE_TYPE = decltype(b);
+        using COMPOSITE_TYPE = decltype(a);
+
+        ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
+        COMPOSITE_TYPE & objectReference = typedWrapper.reference();
+
+        if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
+        {
+          xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, inputFlag == InputFlags::REQUIRED );
+        }
+        else
+        {
+          xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, typedWrapper.getDefaultValueStruct() );
+        }
+      });
+    }
+  }
+}
+
+
 void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies )
 {
   RegisterDataOnMesh(meshBodies);

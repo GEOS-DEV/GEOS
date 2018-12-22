@@ -17,6 +17,20 @@ namespace dataRepository
 
 namespace wrapperDefaultValue
 {
+
+
+template< typename T >
+struct is_arithmetic
+{
+  static constexpr bool value = std::is_same<T,int>::value ||
+      std::is_same<T,long int>::value ||
+      std::is_same<T,long long int>::value ||
+      std::is_same<T,unsigned int>::value ||
+      std::is_same<T,unsigned long int>::value ||
+      std::is_same<T,unsigned long long int>::value ||
+      std::is_floating_point<T>::value;
+};
+
 template< typename T, typename ENABLE=void >
 struct Helper
 {
@@ -24,7 +38,7 @@ struct Helper
 };
 
 template< typename T >
-struct Helper< T, typename std::enable_if<std::is_arithmetic<T>::value >::type >
+struct Helper< T, typename std::enable_if<is_arithmetic<T>::value >::type >
 {
   static constexpr bool has_default_value = true;
   using value_type = T;
@@ -34,7 +48,7 @@ struct Helper< T, typename std::enable_if<std::is_arithmetic<T>::value >::type >
 HAS_ALIAS( value_type )
 template< typename T >
 struct Helper< T, typename std::enable_if< has_alias_value_type<T>::value &&
-                                          ( std::is_arithmetic<typename T::value_type>::value) >::type >
+                                          ( is_arithmetic<typename T::value_type>::value) >::type >
 {
   static constexpr bool has_default_value = true;
   using value_type = typename T::value_type;

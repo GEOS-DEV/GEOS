@@ -32,8 +32,18 @@ using namespace cxx_utilities;
 
 OutputBase::OutputBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ExecutableGroup( name, parent)
+  ExecutableGroup( name, parent),
+  m_slaveDirectory(),
+  m_parallelThreads()
 {
+  RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("slave directory path");
+
+  RegisterViewWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Number of plot files.");
+
 }
 
 OutputBase::~OutputBase()
@@ -45,40 +55,6 @@ OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
   return catalog;
 }
 
-void OutputBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("OutputBase");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs Base Class");
-
-  docNode->AllocateChildNode( outputBaseViewKeys.slaveDirectory.Key(),
-                              outputBaseViewKeys.slaveDirectory.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "slave directory path",
-                              "slave directory path",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-    docNode->AllocateChildNode( outputBaseViewKeys.parallelThreads.Key(),
-                                outputBaseViewKeys.parallelThreads.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "plot file threads",
-                              "plot file threads",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
 
 void OutputBase::Initialize( ManagedGroup * const group )
 {
@@ -89,7 +65,7 @@ void OutputBase::Initialize( ManagedGroup * const group )
 
 void OutputBase::SetupDirectoryStructure()
 {
-  string slaveDirectory = this->getReference<string>(outputBaseViewKeys.slaveDirectory);
+  string slaveDirectory = m_slaveDirectory;
 
   int rank;
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);

@@ -68,11 +68,6 @@ public:
 
   ///@}
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const parent ) override;
-
-  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
-
-//  void FillDocumentationNode() override;
 
   void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
 

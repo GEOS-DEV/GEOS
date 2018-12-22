@@ -176,19 +176,74 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
                                                             ManagedGroup * const parent ):
-  SolverBase( name, parent )
+  SolverBase( name, parent ),
+  m_cflFactor(0.5),
+  m_newmarkGamma(0.5),
+  m_newmarkBeta(0.25),
+  m_massDamping(0.0),
+  m_stiffnessDamping(0.0),
+  m_timeIntegrationOptionString(),
+  m_timeIntegrationOption(timeIntegrationOption::ExplicitDynamic),
+  m_useVelocityEstimateForQS(0),
+  m_maxForce(0.0),
+  m_stabledt{1e99},
+  m_elemsAttachedToSendOrReceiveNodes(),
+  m_elemsNotAttachedToSendOrReceiveNodes(),
+  m_sendOrRecieveNodes(),
+  m_nonSendOrRecieveNodes(),
+  m_icomm()
 {
   getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
 
-  RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false );
-  RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false );
-  RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false );
-  RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false );
-  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false );
-  RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false );
+  RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+      setDefaultValue(0.5)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
+          "Values should be in the interval (0,1] ");
+
+  RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
+      setDefaultValue(0.5)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Value of \\gamma in the Newmark Method for time integration");
+
+  RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
+      setDefaultValue(0.25)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Value of \\beta in the Newmark Method for time integration. "
+          "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
+
+  RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
+      setDefaultValue(0.0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Value of mass based damping coefficient in equations of motion. ");
+
+  RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
+      setDefaultValue(0.0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Value of stiffness based damping coefficient in equations of motion. ");
+
+  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
+      setInputFlag(InputFlags::FALSE)->
+      setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+
+  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+
+  RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
+      setDefaultValue(0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Flag to indicate the use of the incremental displacement from the previous step as an "
+          "initial estimate for the incremental displacement of the current step.");
 }
 
-
+void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
+{
+  if( !m_timeIntegrationOptionString.empty() )
+  {
+    SetTimeIntegrationOption( m_timeIntegrationOptionString );
+  }
+}
 
 SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 {
@@ -198,19 +253,19 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 
 
 
-void SolidMechanics_LagrangianFEM::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-{
-  string tiOption;
-  xmlWrapper::ReadAttributeAsType<string>( tiOption, viewKeyStruct::timeIntegrationOptionString, targetNode, "ExplicitDynamic" );
-  SetTimeIntegrationOption( tiOption );
-
-  xmlWrapper::ReadAttributeAsType( m_courant, viewKeyStruct::courantString, targetNode, 0.5 );
-  xmlWrapper::ReadAttributeAsType( m_newmarkGamma, viewKeyStruct::newmarkGammaString, targetNode, 0.5 );
-  xmlWrapper::ReadAttributeAsType( m_newmarkBeta, viewKeyStruct::newmarkBetaString, targetNode, 0.25 );
-  xmlWrapper::ReadAttributeAsType( m_massDamping, viewKeyStruct::massDampingString, targetNode, 0.0 );
-  xmlWrapper::ReadAttributeAsType( m_stiffnessDamping, viewKeyStruct::stiffnessDampingString, targetNode, 0.0 );
-  xmlWrapper::ReadAttributeAsType( m_useVelocityEstimateForQS, viewKeyStruct::useVelocityEstimateForQSString, targetNode, 0 );
-}
+//void SolidMechanics_LagrangianFEM::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+//{
+//  string tiOption;
+//  xmlWrapper::ReadAttributeAsType<string>( tiOption, viewKeyStruct::timeIntegrationOptionString, targetNode, "ExplicitDynamic" );
+//  SetTimeIntegrationOption( tiOption );
+//
+//  xmlWrapper::ReadAttributeAsType( m_cflFactor, viewKeyStruct::cflString, targetNode, 0.5 );
+//  xmlWrapper::ReadAttributeAsType( m_newmarkGamma, viewKeyStruct::newmarkGammaString, targetNode, 0.5 );
+//  xmlWrapper::ReadAttributeAsType( m_newmarkBeta, viewKeyStruct::newmarkBetaString, targetNode, 0.25 );
+//  xmlWrapper::ReadAttributeAsType( m_massDamping, viewKeyStruct::massDampingString, targetNode, 0.0 );
+//  xmlWrapper::ReadAttributeAsType( m_stiffnessDamping, viewKeyStruct::stiffnessDampingString, targetNode, 0.0 );
+//  xmlWrapper::ReadAttributeAsType( m_useVelocityEstimateForQS, viewKeyStruct::useVelocityEstimateForQSString, targetNode, 0 );
+//}
 
 
 void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
@@ -231,9 +286,7 @@ void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const Mesh
 }
 
 
-void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
-{
-}
+
 
 void SolidMechanics_LagrangianFEM::FinalInitializationPreSubGroups( ManagedGroup * const problemManager )
 {

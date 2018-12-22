@@ -517,7 +517,7 @@ public:
 
   void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
 
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) {}
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 

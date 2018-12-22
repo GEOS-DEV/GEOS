@@ -47,9 +47,6 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "Silo"; }
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
   /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
@@ -68,13 +65,18 @@ public:
     Execute(time_n, 0, cycleNumber, eventCounter, eventProgress, domain);
   }
 
-  struct viewKeyStruct : OutputBase::viewKeyStruct
+  struct viewKeysStruct : OutputBase::viewKeysStruct
   {
-    dataRepository::ViewKey plotFileRoot = { "plotFileRoot" };
-    dataRepository::ViewKey writeFEMFaces = { "writeFEMFaces" };
-    dataRepository::ViewKey plotLevel = { "plotLevel" };
+    static constexpr auto plotFileRoot = "plotFileRoot";
+    static constexpr auto writeFEMFaces = "writeFEMFaces";
+    static constexpr auto plotLevel = "plotLevel";
 
   } siloOutputViewKeys;
+
+private:
+  string m_plotFileRoot;
+  integer m_writeFaceMesh;
+  integer m_plotLevel;
 
 };
 

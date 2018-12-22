@@ -28,6 +28,7 @@
 
 #include "ArrayUtilities.hpp"
 #include "common/DataTypes.hpp"
+#include "dataRepository/DefaultValue.hpp"
 #include "pugixml.hpp"
 #include <sstream>
 
@@ -72,13 +73,15 @@ public:
 
   template< typename T >
   static void ReadAttributeAsType( T & rval,
-                                string const & name,
-                                xmlNode const & targetNode );
+                                   string const & name,
+                                   xmlNode const & targetNode,
+                                   bool const required );
 
   template< typename T >
   static void ReadAttributeAsType( array1d<T> & rval,
                                    string const & name,
-                                   xmlNode const & targetNode );
+                                   xmlNode const & targetNode,
+                                   bool const required );
 
   template< typename T >
   static void ReadAttributeAsType( T & rval,
@@ -93,6 +96,27 @@ public:
                                    T const & defVal );
 
 
+
+
+  template< typename T >
+  static typename std::enable_if_t<!dataRepository::DefaultValue<T>::has_default_value>
+  ReadAttributeAsType( T & rval,
+                       string const & name,
+                       xmlNode const & targetNode ,
+                       dataRepository::DefaultValue<T> const & defVal )
+  {
+    ReadAttributeAsType(rval, name, targetNode, false );
+  }
+
+  template< typename T >
+  static typename std::enable_if_t<dataRepository::DefaultValue<T>::has_default_value>
+  ReadAttributeAsType( T & rval,
+                       string const & name,
+                       xmlNode const & targetNode ,
+                       dataRepository::DefaultValue<T> const & defVal )
+  {
+    ReadAttributeAsType(rval, name, targetNode, defVal.value );
+  }
 };
 
 
@@ -145,11 +169,12 @@ void xmlWrapper::as_type( array1d<T> & target, std::string inputValue )
 template< typename T >
 void xmlWrapper::ReadAttributeAsType( T & rval,
                                       string const & name,
-                                      xmlNode const & targetNode )
+                                      xmlNode const & targetNode,
+                                      bool const required  )
 {
   pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
 
-  GEOS_ERROR_IF( xmlatt.empty(), "Input variable " + name + " is required in " + targetNode.path() );
+  GEOS_ERROR_IF( xmlatt.empty() && required , "Input variable " + name + " is required in " + targetNode.path() );
 
   std::istringstream ss( xmlatt.value() );
 
@@ -161,11 +186,12 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 template< typename T >
 void xmlWrapper::ReadAttributeAsType( array1d<T> & rval,
                                       string const & name,
-                                      xmlNode const & targetNode )
+                                      xmlNode const & targetNode,
+                                      bool const required )
 {
   pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
 
-  GEOS_ERROR_IF( xmlatt.empty(), "Input variable " + name + " is required in " + targetNode.path() );
+  GEOS_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
 
   std::vector< T > xmlVal;
 
