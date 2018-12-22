@@ -281,7 +281,7 @@ void testInterfaceSolvers()
   LinearSolver solver(parameters);             
 
   // Set basic options
-  parameters.verbosity = 1;
+  parameters.verbosity = 0;
   parameters.solverType = "cg";
   parameters.krylov.tolerance = 1e-8;
   parameters.krylov.maxIterations = 250;
