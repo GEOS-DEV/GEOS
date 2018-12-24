@@ -36,151 +36,72 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
                                 ManagedGroup * const parent )
   : SolverBase( name, parent ),
     m_gravityFlag(1),
+    m_discretizationName(),
+    m_fluidName(),
+    m_solidName(),
+    m_fluidIndex(),
+    m_solidIndex(),
     m_poroElasticFlag(0),
-    m_numDofPerCell(0)
+    m_numDofPerCell(0),
+    m_elemGhostRank(),
+    m_volume(),
+    m_gravDepth(),
+    m_porosityRef()
 {
-  this->RegisterViewWrapper( viewKeyStruct::gravityFlagString,    &m_gravityFlag,        false );
-  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false );
+  RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
+      setDefaultValue(1)->setToDefaultValue()->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Flag that enables/disables gravity");
 
-  this->RegisterViewWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false );
+  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Name of discretization object to use for this solver.");
+
+  this->RegisterViewWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Name of fluid constitutive object to use for this solver.");
+
+  this->RegisterViewWrapper( viewKeyStruct::solidNameString,  &m_solidName,  false )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Name of solid constitutive object to use for this solver");
+
   this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
-
-  this->RegisterViewWrapper( viewKeyStruct::solidNameString,  &m_solidName,  false );
   this->RegisterViewWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
+
+
 }
 
-void FlowSolverBase::FillDocumentationNode()
+void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
-  SolverBase::FillDocumentationNode();
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( viewKeyStruct::gravityFlagString,
-                              viewKeyStruct::gravityFlagString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "Flag that enables/disables gravity",
-                              "Flag that enables/disables gravity",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::discretizationString,
-                              viewKeyStruct::discretizationString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the finite volume discretization to use",
-                              "Name of the finite volume discretization to use",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::fluidNameString,
-                              viewKeyStruct::fluidNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the fluid constitutive model to use",
-                              "Name of the fluid constitutive model to use",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::solidNameString,
-                              viewKeyStruct::solidNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the solid constitutive model to use",
-                              "Name of the solid constitutive model to use",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
-void FlowSolverBase::FillOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup)
-{
-  SolverBase::FillOtherDocumentationNodes(rootGroup);
-
-  SolverBase::FillOtherDocumentationNodes( rootGroup );
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
     elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
     {
-      cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
+          setDefaultValue( 0.0 )->
+          setPlotLevel(PlotLevel::LEVEL_0)->
+          setDescription("Reference porosity");
 
-      docNode->AllocateChildNode( viewKeyStruct::referencePorosityString,
-                                  viewKeyStruct::referencePorosityString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Reference porosity",
-                                  "Reference porosity",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
+      cellBlock->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->
+          setPlotLevel(PlotLevel::LEVEL_0)->
+          setDescription("Permeability (principal values)");
 
-      docNode->AllocateChildNode( viewKeyStruct::permeabilityString,
-                                  viewKeyStruct::permeabilityString,
-                                  -1,
-                                  "r1_array",
-                                  "r1_array",
-                                  "Permeability (principal values)",
-                                  "Permeability (principal values)",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->
+          setDefaultValue( 0.0 )->
+          setPlotLevel(PlotLevel::LEVEL_3)->
+          setDescription("Precomputed (gravity dot depth)");
 
-      docNode->AllocateChildNode( viewKeyStruct::gravityDepthString,
-                                  viewKeyStruct::gravityDepthString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Precomputed (gravity dot depth)",
-                                  "Precomputed (gravity dot depth)",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
     });
 
-    {
-      FaceManager * const faceManager = meshLevel->getFaceManager();
-      cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+    faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->
+        setDefaultValue( 0.0 )->
+        setPlotLevel(PlotLevel::LEVEL_3)->
+        setDescription("Precomputed (gravity dot depth)");
 
-      docNode->AllocateChildNode( viewKeyStruct::gravityDepthString,
-                                  viewKeyStruct::gravityDepthString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Precomputed (gravity dot depth)",
-                                  "Precomputed (gravity dot depth)",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
-    }
   }
 }
 

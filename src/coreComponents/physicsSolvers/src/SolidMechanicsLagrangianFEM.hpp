@@ -248,8 +248,8 @@ public:
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityEstimateForQuasiStatic";
     static constexpr auto trilinosIndexString = "trilinosIndex";
-    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOptionString";
-    static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
+    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
 
 
     dataRepository::ViewKey vTilde = { vTildeString };
