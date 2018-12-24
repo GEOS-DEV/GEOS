@@ -76,9 +76,7 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
 
   virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 

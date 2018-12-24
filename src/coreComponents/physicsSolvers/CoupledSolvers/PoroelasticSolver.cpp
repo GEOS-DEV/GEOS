@@ -41,104 +41,39 @@ using namespace constitutive;
 
 PoroelasticSolver::PoroelasticSolver( const std::string& name,
                                       ManagedGroup * const parent ):
-  SolverBase(name,parent)
+  SolverBase(name,parent),
+  m_solidSolverName(),
+  m_flowSolverName(),
+  m_couplingTypeOptionString("FixedStress"),
+  m_couplingTypeOption()
+
 {
-  this->RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0);
-  this->RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0);
+  RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
+
+  RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
+
+  RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Coupling option: (FixedStress, TightlyCoupled)");
+
 }
 
-
-void PoroelasticSolver::FillDocumentationNode()
+void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example single phase flow solver");
-
-
-  docNode->AllocateChildNode( viewKeyStruct::fluidSolverNameString,
-                              viewKeyStruct::fluidSolverNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "name of fluid solver",
-                              "name of fluid solver",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::solidSolverNameString,
-                              viewKeyStruct::solidSolverNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "name of solid solver",
-                              "name of solid solver",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::couplingTypeOptionString,
-                              viewKeyStruct::couplingTypeOptionString,
-                              -1,
-                              "string",
-                              "string",
-                              "option for default coupling method",
-                              "option for default coupling method",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
-void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-
-  SolverBase::FillOtherDocumentationNodes( rootGroup );
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
-
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
     elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
       {
-        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-
-        docNode->AllocateChildNode( viewKeyStruct::totalMeanStressString,
-                                    viewKeyStruct::totalMeanStressString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Total Mean Stress",
-                                    "Total Mean Stress",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
-        docNode->AllocateChildNode( viewKeyStruct::oldTotalMeanStressString,
-                                    viewKeyStruct::oldTotalMeanStressString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Old total mean Stress",
-                                    "Old total mean Stress",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
+        cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
+            setDescription("Total Mean Stress");
+        cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
+            setDescription("Total Mean Stress");
       });
   }
 }
@@ -180,26 +115,26 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
 
 void PoroelasticSolver::ReadXML_PostProcess()
 {
-  string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionString);
+  string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
 
   if( ctOption == "FixedStress" )
   {
     this->m_couplingTypeOption = couplingTypeOption::FixedStress;
   }
-  else if( ctOption == "FullyImplicit" )
+  else if( ctOption == "TightlyCoupled" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FullyImplicit;
+    this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
   }
   else
   {
     GEOS_ERROR("invalid coupling type option");
   }
 
-  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
 }
 
 void PoroelasticSolver::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
 {
+  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
 }
@@ -219,7 +154,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::FullyImplicit )
+  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
     GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }

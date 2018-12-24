@@ -34,13 +34,14 @@ OutputBase::OutputBase( std::string const & name,
                         ManagedGroup * const parent ):
   ExecutableGroup( name, parent),
   m_slaveDirectory(),
-  m_parallelThreads()
+  m_parallelThreads(1)
 {
   RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("slave directory path");
 
   RegisterViewWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
+      setDefaultValue(1)->setToDefaultValue()->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Number of plot files.");
 
