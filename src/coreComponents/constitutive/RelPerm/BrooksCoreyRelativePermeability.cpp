@@ -36,9 +36,22 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string co
                                                                   ManagedGroup * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false );
-  RegisterViewWrapper( viewKeyStruct::phaseRelPermExponentString,   &m_phaseRelPermExponent,   false );
-  RegisterViewWrapper( viewKeyStruct::phaseRelPermMaxValueString,   &m_phaseRelPermMaxValue,   false );
+  RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+      setDefaultValue(0.0)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Minimum volume fraction value for each phase");
+
+  RegisterViewWrapper( viewKeyStruct::phaseRelPermExponentString,   &m_phaseRelPermExponent,   false )->
+      setDefaultValue(1.0)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("MinimumRel perm power law exponent for each phase");
+
+
+  RegisterViewWrapper( viewKeyStruct::phaseRelPermMaxValueString,   &m_phaseRelPermMaxValue,   false )->
+      setDefaultValue(0.0)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Maximum rel perm value for each phase");
+
 }
 
 BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
@@ -63,55 +76,6 @@ BrooksCoreyRelativePermeability::DeliverClone(string const & name, ManagedGroup 
   return rval;
 }
 
-void BrooksCoreyRelativePermeability::FillDocumentationNode()
-{
-  RelativePermeabilityBase::FillDocumentationNode();
-
-  DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->GetCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Brooks-Corey relative permeability model" );
-
-  docNode->AllocateChildNode( viewKeyStruct::phaseMinVolumeFractionString,
-                              viewKeyStruct::phaseMinVolumeFractionString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Minimum volume fraction value for each phase",
-                              "Minimum volume fraction value for each phase",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::phaseRelPermExponentString,
-                              viewKeyStruct::phaseRelPermExponentString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Rel perm power law exponent for each phase",
-                              "Rel perm power law exponent for each phase",
-                              "1",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::phaseRelPermMaxValueString,
-                              viewKeyStruct::phaseRelPermMaxValueString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Maximum rel perm value for each phase",
-                              "Maximum rel perm value for each phase",
-                              "1",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
 
 void BrooksCoreyRelativePermeability::ReadXML_PostProcess()
 {

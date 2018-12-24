@@ -105,8 +105,6 @@ public:
                                          localIndex const k,
                                          localIndex const q ) {}
 
-  virtual void FillDocumentationNode() override = 0;
-
   virtual void resize( localIndex ) override;
 
   virtual void GetStiffness( realT c[6][6] ) const {}

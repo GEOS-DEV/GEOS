@@ -55,7 +55,12 @@ TableFunction::TableFunction( const std::string& name,
   m_indexIncrement(),
   m_corners(),
   m_numCorners(0)
-{}
+{
+  RegisterViewWrapper<real64_array>(keys::tableCoordinates)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("List of variables in expression.  The order must match the evaluate argument");
+
+}
 
 TableFunction::~TableFunction()
 {}

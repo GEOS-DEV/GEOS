@@ -42,12 +42,6 @@ ConstitutiveManager::ConstitutiveManager( string const & name,
 ConstitutiveManager::~ConstitutiveManager()
 {}
 
-void ConstitutiveManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( "Constitutive" );
-  docNode->setSchemaType( "Node" );
-}
 
 void ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
 {

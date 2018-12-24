@@ -44,15 +44,6 @@ NewFunctionManager::~NewFunctionManager()
   // TODO Auto-generated destructor stub
 }
 
-void NewFunctionManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Functions");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Function manager");
-}
-
 
 void NewFunctionManager::CreateChild( string const & functionCatalogKey,
                                       string const & functionName )

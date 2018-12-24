@@ -46,7 +46,6 @@ public:
   QuadratureRuleManager(string const & name, ManagedGroup * const parent);
   virtual ~QuadratureRuleManager() override;
 
-  virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 

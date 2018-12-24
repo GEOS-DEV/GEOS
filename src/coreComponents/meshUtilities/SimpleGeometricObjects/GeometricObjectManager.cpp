@@ -42,16 +42,6 @@ GeometricObjectManager::GeometricObjectManager( std::string const & name,
 GeometricObjectManager::~GeometricObjectManager()
 {}
 
-
-void GeometricObjectManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Geometry");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Geometric object manager");
-}
-
-
 void GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Geometric Object: " << childKey << ", " << childName);

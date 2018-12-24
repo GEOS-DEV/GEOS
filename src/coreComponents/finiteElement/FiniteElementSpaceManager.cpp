@@ -39,12 +39,6 @@ FiniteElementSpaceManager::~FiniteElementSpaceManager()
   // TODO Auto-generated destructor stub
 }
 
-void FiniteElementSpaceManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("FiniteElementSpace");
-  docNode->setSchemaType("UniqueNode");
-}
 
 void FiniteElementSpaceManager::CreateChild( string const & childKey, string const & childName )
 {

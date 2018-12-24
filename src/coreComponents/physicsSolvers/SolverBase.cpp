@@ -88,57 +88,6 @@ void SolverBase::CreateChild( string const & childKey, string const & childName 
   }
 }
 
-void SolverBase::FillDocumentationNode()
-{
-
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( this->CatalogName());    // If this method lived in Managed
-                                             // groups, this could be done
-                                             // automatically
-  docNode->setSchemaType( "Node" );
-
-  docNode->AllocateChildNode( keys::courant,
-                              keys::courant,
-                              -1,
-                              "real64",
-                              "real64",
-                              "courant Number",
-                              "courant Number",
-                              "0.7",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::maxDt,
-                              keys::maxDt,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Maximum Stable Timestep",
-                              "Maximum Stable Timestep",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::verboseLevelString,
-                              viewKeyStruct::verboseLevelString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-}
-
 void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
 //  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);

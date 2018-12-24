@@ -71,6 +71,14 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
   getLinearSystemRepository()->
     SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
 
+  RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("option for default time integration method");
+
+  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key())->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("name of field variable");
+
 }
 
 
@@ -78,45 +86,6 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
 LaplaceFEM::~LaplaceFEM()
 {
   // TODO Auto-generated destructor stub
-}
-
-
-void LaplaceFEM::FillDocumentationNode(  )
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example solid mechanics solver");
-
-
-  docNode->AllocateChildNode( laplaceFEMViewKeys.timeIntegrationOption.Key(),
-                              laplaceFEMViewKeys.timeIntegrationOption.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "option for default time integration method",
-                              "option for default time integration method",
-                              "ExplicitDynamic",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( laplaceFEMViewKeys.fieldVarName.Key(),
-                              laplaceFEMViewKeys.fieldVarName.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "name of field variable",
-                              "name of field variable",
-                              "Pressure",
-                              "",
-                              0,
-                              1,
-                              0 );
 }
 
 void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )

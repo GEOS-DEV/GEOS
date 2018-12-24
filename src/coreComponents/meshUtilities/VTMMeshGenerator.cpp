@@ -60,6 +60,10 @@ VTMMeshGenerator::VTMMeshGenerator( string const & name, ManagedGroup * const pa
      m_commonRatioMax[i] = 1.5;
      }
    */
+
+  RegisterViewWrapper<string>(keys::filePath)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("path to the vtm file");
 }
 
 VTMMeshGenerator::~VTMMeshGenerator()
@@ -67,37 +71,10 @@ VTMMeshGenerator::~VTMMeshGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void VTMMeshGenerator::FillDocumentationNode()
-{
-  //MeshLevel * const mesh =
-  // domain->group_cast<DomainPartition*>()->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  //NodeManager * const nodes    = mesh->getNodeManager();
-  // CellBlockManager * elems =
-  // domain->GetGroup<CellBlockManager>(keys::cellManager);
 
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( "MeshFile" );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "a mesh generator" );
-
-  docNode->AllocateChildNode( keys::filePath,
-                              keys::filePath,
-                              -1,
-                              "string",
-                              "string",
-                              "path to the vtm file",
-                              "path to the vtm file",
-                              "filePath",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
 
 //}
 /**
- * @author settgast
  * @param domain
  */
 void VTMMeshGenerator::GenerateElementRegions( DomainPartition& domain )

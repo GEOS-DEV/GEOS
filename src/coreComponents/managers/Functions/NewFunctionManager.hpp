@@ -49,7 +49,6 @@ public:
   }
 
   static string CatalogName() { return "NewFunctionManager"; }
-  virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & functionCatalogKey, string const & functionName ) override;
 };
 

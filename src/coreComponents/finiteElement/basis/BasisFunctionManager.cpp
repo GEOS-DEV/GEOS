@@ -40,12 +40,6 @@ BasisFunctionManager::~BasisFunctionManager()
   // TODO Auto-generated destructor stub
 }
 
-void BasisFunctionManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("BasisFunctions");
-  docNode->setSchemaType("UniqueNode");
-}
 
 void BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {

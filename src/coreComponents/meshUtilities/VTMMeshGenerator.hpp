@@ -60,9 +60,6 @@ public:
 
   static string CatalogName() { return "MeshFile"; }
 
-
-  virtual void FillDocumentationNode() override;
-
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;

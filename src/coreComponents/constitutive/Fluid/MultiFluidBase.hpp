@@ -93,8 +93,6 @@ public:
 
   virtual ~MultiFluidBase() override;
 
-  virtual void FillDocumentationNode() override;
-
   virtual void ReadXML_PostProcess() override;
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,

@@ -44,17 +44,6 @@ RestartOutput::RestartOutput( std::string const & name,
 RestartOutput::~RestartOutput()
 {}
 
-void RestartOutput::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Restart");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs Restart format files");
-
-}
-
 void RestartOutput::Execute(real64 const& time_n,
                             real64 const& dt,
                             integer const cycleNumber,

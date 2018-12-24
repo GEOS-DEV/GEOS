@@ -60,14 +60,6 @@ void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
 }
 
 
-void DomainPartition::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Domain");
-  docNode->setSchemaType("UniqueNode");
-}
-
-
 void DomainPartition::InitializationOrder( string_array & order )
 {
   set<string> usedNames;

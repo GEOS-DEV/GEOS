@@ -47,13 +47,6 @@ NumericalMethodsManager::~NumericalMethodsManager()
   // TODO Auto-generated destructor stub
 }
 
-void NumericalMethodsManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("NumericalMethods");
-  docNode->setSchemaType("Node");
-}
-
 void NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
 {
 }

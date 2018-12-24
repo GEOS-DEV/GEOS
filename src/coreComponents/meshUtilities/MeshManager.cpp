@@ -43,17 +43,6 @@ MeshManager::MeshManager( std::string const & name,
 MeshManager::~MeshManager()
 {}
 
-
-void MeshManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Mesh");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Mesh manager");
-
-}
-
-
 void MeshManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Mesh: " << childKey << ", " << childName);
