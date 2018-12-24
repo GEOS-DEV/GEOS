@@ -59,8 +59,6 @@ public:
 
   static string CatalogName() { return "LaplaceFEM"; }
 
-  virtual void FillDocumentationNode() override final;
-
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
   virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;

@@ -58,8 +58,6 @@ public:
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
 
 
-  virtual void FillDocumentationNode() override;
-
   void InitializationOrder( string_array & order ) override final;
 
   void SetMaps();

@@ -39,12 +39,6 @@ QuadratureRuleManager::~QuadratureRuleManager()
   // TODO Auto-generated destructor stub
 }
 
-void QuadratureRuleManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("QuadratureRules");
-  docNode->setSchemaType("UniqueNode");
-}
 
 void QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {

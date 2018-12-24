@@ -73,9 +73,6 @@ public:
                                  localIndex const q,
                                  integer const systemAssembleFlag ) override;
 
-
-  virtual void FillDocumentationNode() override;
-
   virtual void ReadXML_PostProcess() override;
 
   void GetStiffness( realT c[6][6] ) const override;

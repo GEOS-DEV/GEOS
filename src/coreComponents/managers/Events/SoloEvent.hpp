@@ -46,9 +46,6 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "SoloEvent"; }
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-  
   /**
    * Estimate the expected number of cycles until an event is expected to trigger.
    */

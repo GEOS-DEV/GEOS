@@ -41,15 +41,6 @@ BlueprintOutput::BlueprintOutput( std::string const & name,
 BlueprintOutput::~BlueprintOutput()
 {}
 
-void BlueprintOutput::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Blueprint");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs Blueprint format files");
-}
 
 void BlueprintOutput::Execute(real64 const& time_n,
                               real64 const& dt,

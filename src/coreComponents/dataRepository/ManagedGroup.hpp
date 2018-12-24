@@ -529,7 +529,7 @@ public:
    * Function to generate documentation nodes for each variable in this object. The documentation
    * nodes are then used to register variables and read xml input into variables.
    */
-  virtual void FillDocumentationNode();
+//  virtual void FillDocumentationNode();
 
 
   /**

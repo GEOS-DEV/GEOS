@@ -40,34 +40,15 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
   m_gravityVector( R1Tensor(0.0) ),
   m_blockSystemRepository()
 {
-  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
+      setDefaultValue({0,0,0})->
+      setInputFlag(InputFlags::OPTIONAL);
+
   this->RegisterViewWrapper( viewKeyStruct::blockSystemRepositoryString, &m_blockSystemRepository, 0 )->setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()
 {}
-
-
-void PhysicsSolverManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Solvers");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Solver manager");
-
-  docNode->AllocateChildNode( viewKeyStruct::gravityVectorString,
-                              viewKeyStruct::gravityVectorString,
-                              -1,
-                              "R1Tensor",
-                              "R1Tensor",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0);
-}
 
 
 void PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )

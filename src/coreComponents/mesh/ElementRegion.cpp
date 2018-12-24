@@ -49,94 +49,23 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
   this->RegisterGroup(keys::cellBlockSubRegions);
 
-  this->RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 );
+  RegisterViewWrapper( keys::defaultMaterial, &m_defaultMaterial, 0 )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Default Material Name");
+
+  RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("List of materials present in this region");
+
+  RegisterViewWrapper<string>( keys::numericalMethod );
+  RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->setInputFlag(InputFlags::REQUIRED);
+
+
 }
 
 
 ElementRegion::~ElementRegion()
 {}
-
-
-void ElementRegion::FillDocumentationNode()
-{
-  ObjectManagerBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->getCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "an element region" );
-
-
-  docNode->AllocateChildNode( keys::defaultMaterial,
-                              keys::defaultMaterial,
-                              -1,
-                              "string",
-                              "string",
-                              "Default Material Name",
-                              "Default Material Name",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( viewKeyStruct::materialListString,
-                              viewKeyStruct::materialListString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "Default Material Name",
-                              "Default Material Name",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::numericalMethod,
-                              keys::numericalMethod,
-                              -1,
-                              "string",
-                              "string",
-                              "Default Material Name",
-                              "Default Material Name",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-//  docNode->AllocateChildNode( keys::constitutiveMap,
-//                              keys::constitutiveMap,
-//                              -1,
-//                              "mapPair_array",
-//                              "mapPair_array",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "NONE",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-  docNode->AllocateChildNode( keys::cellBlockSubRegionNames,
-                              keys::cellBlockSubRegionNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-
-}
 
 void ElementRegion::ReadXML_PostProcess()
 {

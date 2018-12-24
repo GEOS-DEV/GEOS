@@ -58,18 +58,6 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
   getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }
 
-
-void SinglePhaseFlow::FillDocumentationNode(  )
-{
-  FlowSolverBase::FillDocumentationNode();
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(SinglePhaseFlow::CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("A single phase flow solver");
-}
-
 void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
   FlowSolverBase::FillOtherDocumentationNodes( rootGroup );

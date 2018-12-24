@@ -309,12 +309,12 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
 }
 
 // These fill the documentation and initialize fields on this:
-void ManagedGroup::FillDocumentationNode()
-{}
+//void ManagedGroup::FillDocumentationNode()
+//{}
 
 void ManagedGroup::SetDocumentationNodes()
 {
-  FillDocumentationNode();
+//  FillDocumentationNode();
   for( auto&& subGroup : m_subGroups )
   {
     subGroup.second->SetDocumentationNodes();

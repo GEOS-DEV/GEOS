@@ -45,16 +45,6 @@ ChomboIO::~ChomboIO()
   m_coupler = nullptr;
 }
 
-void ChomboIO::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("ChomboIO");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Couples to CHOMBO");
-}
-
 void ChomboIO::Execute( real64 const & time_n,
                         real64 const & dt,
                         integer const cycleNumber,

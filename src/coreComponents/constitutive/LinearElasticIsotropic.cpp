@@ -61,26 +61,97 @@ static inline void UpdateStatePoint( R2SymTensor const & D,
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase( name, parent ),
+  m_bulkModulus0(),
+  m_shearModulus0(),
+  m_density0(),
+  m_density(),
+  m_bulkModulus(),
+  m_shearModulus(),
+  m_meanStress(),
+  m_deviatorStress(),
+  m_compressibility(),
+  m_referencePressure(),
+  m_biotCoefficient(),
+  m_poreVolumeMultiplier(),
+  m_dPVMult_dPressure(),
   m_poreVolumeRelation( ExponentApproximationType::Linear )
 {
-  this->RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 );
+  RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Reference Material Density");
 
-  this->RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 );
+  RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 )->
+      setDefaultValue(-1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Elastic Bulk Modulus Parameter");
 
-  this->RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 );
+  RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 )->
+      setDefaultValue(-1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Elastic Shear Modulus Parameter");
 
-  this->RegisterViewWrapper( viewKeys().compressibility.Key(), &m_compressibility, 0 );
-  this->RegisterViewWrapper( viewKeys().referencePressure.Key(), &m_referencePressure, 0 );
-  this->RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 );
+
+  RegisterViewWrapper<real64>( viewKeys().poissonRatio.Key() )->
+      setDefaultValue(-1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Poisson's ratio");
+
+  RegisterViewWrapper<real64>( viewKeys().biotCoefficient.Key() )->
+      setDefaultValue(0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Biot's coefficient");
+
+
+  RegisterViewWrapper( viewKeys().compressibility.Key(), &m_compressibility, 0 )->
+      setDefaultValue(-1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Fluid Compressibilty");
+
+  RegisterViewWrapper( viewKeys().referencePressure.Key(), &m_referencePressure, 0 )->
+      setDefaultValue(0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("ReferencePressure");
+
+  RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 )->
+      setDefaultValue(-1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Young's Elastic Modulus");
+
+
+
+
+  RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
+      setDefaultValue(-1)->
+      setDescription("Young's Elastic Modulus");
+
+  RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
+      setDefaultValue(-1)->
+      setDescription("Young's Elastic Modulus");
+
+
+  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->
+      setDefaultValue(-1)->
+      setDescription("");
+
+  RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 )->
+      setDefaultValue(-1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("");
+
+  RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
+      setDefaultValue(-1)->
+      setDescription("Elastic Bulk Modulus Field");
+
+  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->
+      setDefaultValue(-1)->
+      setDescription("Material Density");
+
+  RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
+      setDefaultValue(-1)->
+      setDescription("Elastic Shear Modulus");
 
 }
+
 
 LinearElasticIsotropic::~LinearElasticIsotropic()
 {}
@@ -130,122 +201,6 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
   m_bulkModulus = m_bulkModulus0;
   m_density = m_density0;
   m_shearModulus = m_shearModulus0;
-
-}
-
-void LinearElasticIsotropic::FillDocumentationNode()
-{
-
-  DocumentationNode * const docNode = this->getDocumentationNode();
-
-
-  docNode->setName( this->CatalogName());
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Linear Elastic Isotropic Constitutive Relation" );
-
-  docNode->AllocateChildNode( viewKeys().youngsModulus.Key(),
-                              viewKeys().youngsModulus.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Young's Elastic Modulus",
-                              "Young's Elastic Modulus",
-                              "-1",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::bulkModulus0String,
-                              viewKeyStruct::bulkModulus0String,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Elastic Bulk Modulus",
-                              "Elastic Bulk Modulus",
-                              "-1",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::shearModulus0String,
-                              viewKeyStruct::shearModulus0String,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Elastic Bulk Modulus",
-                              "Elastic Bulk Modulus",
-                              "-1",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys().poissonRatio.Key(),
-                              viewKeys().poissonRatio.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Elastic Poisson's Ratio",
-                              "Elastic Poisson's Ratio",
-                              "-1",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::density0String,
-                              viewKeyStruct::density0String,
-                              -1,
-                              "real64",
-                              "real64",
-                              "density",
-                              "density",
-                              "Required",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys().biotCoefficient.Key(),
-                              viewKeys().biotCoefficient.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Biot's coefficient",
-                              "Biot's coefficient",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys().compressibility.Key(),
-                              viewKeys().compressibility.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Fluid Bulk Modulus",
-                              "Fluid Bulk Modulus",
-                              "-1",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys().referencePressure.Key(),
-                              viewKeys().referencePressure.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Reference pressure",
-                              "Reference pressure",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
 
 }
 

@@ -45,13 +45,6 @@ FiniteVolumeManager::~FiniteVolumeManager()
 
 }
 
-void FiniteVolumeManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("FiniteVolume");
-  docNode->setSchemaType("UniqueNode");
-}
-
 void FiniteVolumeManager::CreateChild(string const &childKey, string const &childName)
 {
   std::unique_ptr<FluxApproximationBase> approx = FluxApproximationBase::CatalogInterface::Factory(childKey, childName, this);
