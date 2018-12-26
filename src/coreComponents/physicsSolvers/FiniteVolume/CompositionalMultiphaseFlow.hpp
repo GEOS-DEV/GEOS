@@ -93,8 +93,6 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
-  virtual void FillDocumentationNode() override;
-
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;

@@ -58,10 +58,19 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   // set the blockID for the block system interface
   getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
-  this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false );
-  this->RegisterViewWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false );
+  this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Temperature");
 
-  this->RegisterViewWrapper( viewKeyStruct::relPermNameString,  &m_relPermName,  false );
+  this->RegisterViewWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
+      setDefaultValue(0)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Use mass formulation instead of molar");
+
+  this->RegisterViewWrapper( viewKeyStruct::relPermNameString,  &m_relPermName,  false )->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Name of the relative permeability constitutive model to use");
+
   this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
 }
 
@@ -73,56 +82,6 @@ localIndex CompositionalMultiphaseFlow::numFluidComponents() const
 localIndex CompositionalMultiphaseFlow::numFluidPhases() const
 {
   return m_numPhases;
-}
-
-void CompositionalMultiphaseFlow::FillDocumentationNode()
-{
-  FlowSolverBase::FillDocumentationNode();
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(CompositionalMultiphaseFlow::CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("A compositional multiphase flow solver");
-
-  docNode->AllocateChildNode( viewKeyStruct::temperatureString,
-                              viewKeyStruct::temperatureString,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Temperature",
-                              "Temperature",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::useMassFlagString,
-                              viewKeyStruct::useMassFlagString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "Use mass formulation instead of molar",
-                              "Use mass formulation instead of molar",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::relPermNameString,
-                              viewKeyStruct::relPermNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the relative permeability constitutive model to use",
-                              "Name of the relative permeability constitutive model to use",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
 }
 
 void CompositionalMultiphaseFlow::FillOtherDocumentationNodes( ManagedGroup * const rootGroup )

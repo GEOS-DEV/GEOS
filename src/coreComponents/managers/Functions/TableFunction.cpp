@@ -58,102 +58,33 @@ TableFunction::TableFunction( const std::string& name,
 {
   RegisterViewWrapper<real64_array>(keys::tableCoordinates)->
       setInputFlag(InputFlags::REQUIRED)->
-      setDescription("List of variables in expression.  The order must match the evaluate argument");
+      setDescription("Table coordinates inputs for 1D tables");
+
+  RegisterViewWrapper<real64_array>(keys::tableValues)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Table Values for 1D tables");
+
+  RegisterViewWrapper<string_array>(keys::coordinateFiles)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("List of coordinate file names");
+
+  RegisterViewWrapper<string>(keys::voxelFile)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Voxel file name");
+
+  RegisterViewWrapper<string>(keys::tableInterpolation)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Interpolation method");
+
+  RegisterViewWrapper<string>(keys::tableInterpolation)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Value Type");
+
 
 }
 
 TableFunction::~TableFunction()
 {}
-
-
-void TableFunction::FillDocumentationNode()
-{
-  FunctionBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Table function");
-
-  docNode->AllocateChildNode( keys::tableCoordinates,
-                              keys::tableCoordinates,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Table coordinates",
-                              "Table coordinates inputs for 1D tables",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::tableValues,
-                              keys::tableValues,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Table Values",
-                              "Table Values for 1D tables",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::coordinateFiles,
-                              keys::coordinateFiles,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of coordinate file names",
-                              "List of coordinate file names",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::voxelFile,
-                              keys::voxelFile,
-                              -1,
-                              "string",
-                              "string",
-                              "Voxel file name",
-                              "Voxel file name",
-                              "none",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::tableInterpolation,
-                              keys::tableInterpolation,
-                              -1,
-                              "string",
-                              "string",
-                              "Interpolation method",
-                              "Interpolation method",
-                              "linear",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::valueType,
-                              keys::valueType,
-                              -1,
-                              "string",
-                              "string",
-                              "Value Type",
-                              "Value Type",
-                              "real64",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
 
 void TableFunction::InitializeFunction()
 {

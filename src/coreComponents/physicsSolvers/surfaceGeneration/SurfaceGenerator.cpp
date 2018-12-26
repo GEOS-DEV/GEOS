@@ -140,27 +140,6 @@ SurfaceGenerator::~SurfaceGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void SurfaceGenerator::FillDocumentationNode()
-{
-  SolverBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const
-  docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( viewKeyStruct::ruptureStateString,
-                              viewKeyStruct::ruptureStateString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "",
-                              "",
-                              "",
-                              this->getName(),
-                              0,
-                              1,
-                              1 );
-
-}
-
 void SurfaceGenerator::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
   SolverBase::FillOtherDocumentationNodes( rootGroup );

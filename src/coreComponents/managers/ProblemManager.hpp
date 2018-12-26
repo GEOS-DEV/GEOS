@@ -115,9 +115,6 @@ public:
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
 
-
-  virtual void FillDocumentationNode() override;
-
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int argc, char* argv[]);
