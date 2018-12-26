@@ -73,6 +73,8 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
 
 void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
+  SolverBase::RegisterDataOnMesh( MeshBodies );
+
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
@@ -80,28 +82,13 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
     {
-      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
-          setDefaultValue( 0.0 )->
-          setPlotLevel(PlotLevel::LEVEL_0)->
-          setDescription("Reference porosity");
-
-      cellBlock->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->
-          setPlotLevel(PlotLevel::LEVEL_0)->
-          setDescription("Permeability (principal values)");
-
-      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->
-          setDefaultValue( 0.0 )->
-          setPlotLevel(PlotLevel::LEVEL_3)->
-          setDescription("Precomputed (gravity dot depth)");
-
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setDefaultValue( 0.0 );
     });
 
     FaceManager * const faceManager = meshLevel->getFaceManager();
-    faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->
-        setDefaultValue( 0.0 )->
-        setPlotLevel(PlotLevel::LEVEL_3)->
-        setDescription("Precomputed (gravity dot depth)");
-
+    faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setDefaultValue( 0.0 );
   }
 }
 

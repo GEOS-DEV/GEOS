@@ -42,8 +42,13 @@ namespace constitutive
 BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false );
-  RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false );
+  RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of surface densities for each phase");
+
+  RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of filenames with input PVT tables");
 }
 
 BlackOilFluid::~BlackOilFluid()
@@ -70,40 +75,6 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
   clone->createFluid();
 
   return std::move( clone );
-}
-
-void BlackOilFluid::FillDocumentationNode()
-{
-  MultiFluidPVTPackageWrapper::FillDocumentationNode();
-
-  DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setShortDescription( "Black-oil fluid model based on PVTPackage" );
-
-  docNode->AllocateChildNode( viewKeyStruct::surfaceDensitiesString,
-                              viewKeyStruct::surfaceDensitiesString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "List of surface densities for each phase",
-                              "List of surface densities for each phase",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::tableFilesString,
-                              viewKeyStruct::tableFilesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of filenames with input PVT tables",
-                              "List of filenames with input PVT tables",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
 }
 
 void BlackOilFluid::ReadXML_PostProcess()
