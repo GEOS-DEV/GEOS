@@ -68,8 +68,6 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-  virtual void FillDocumentationNode() override;
-
   virtual void ReadXML_PostProcess() override;
 
   virtual void FinalInitializationPreSubGroups( ManagedGroup * const parent ) override final;

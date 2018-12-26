@@ -36,11 +36,16 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
   ConstitutiveBase( name, parent ),
   m_poreVolumeRelation( ExponentApproximationType::Linear )
 {
-  RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, 0 );
-  RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
+  RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Solid compressibility");
 
-  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 );
-  RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 );
+  RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, false )->
+    setDefaultValue(0.0)->
+    setDescription("Reference pressure for fluid compressibility");
+
+  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false );
+  RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, false );
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
@@ -72,42 +77,6 @@ void PoreVolumeCompressibleSolid::AllocateConstitutiveData( dataRepository::Mana
   m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_poreVolumeMultiplier = 1.0;
-}
-
-void PoreVolumeCompressibleSolid::FillDocumentationNode()
-{
-
-  DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->CatalogName());
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Slightly compressible single phase fluid equation of state" );
-
-  docNode->AllocateChildNode( viewKeys.compressibility.Key(),
-                              viewKeys.compressibility.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Fluid Bulk Modulus",
-                              "Fluid Bulk Modulus",
-                              "-1",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.referencePressure.Key(),
-                              viewKeys.referencePressure.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Reference pressure",
-                              "Reference pressure",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
 }
 
 void PoreVolumeCompressibleSolid::ReadXML_PostProcess()
