@@ -36,17 +36,55 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
 //  m_endTime(1e9),
 //  m_bcApplicationFunctionName()
 {
-  RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 );
-  RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, 0 );
-  RegisterViewWrapper( viewKeyStruct::fieldNameString, &m_fieldName, 0 );
-  RegisterViewWrapper( viewKeyStruct::componentString, &m_component, 0 );
-  RegisterViewWrapper( viewKeyStruct::directionString, &m_direction, 0 );
-  RegisterViewWrapper( viewKeyStruct::functionNameString, &m_functionName, 0 );
-  RegisterViewWrapper( viewKeyStruct::bcApplicationTableNameString, &m_bcApplicationFunctionName, 0 );
-  RegisterViewWrapper( viewKeyStruct::scaleString, &m_scale, 0 );
-  RegisterViewWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, 0 );
-  RegisterViewWrapper( viewKeyStruct::beginTimeString, &m_beginTime, 0 );
-  RegisterViewWrapper( viewKeyStruct::endTimeString, &m_endTime, 0 );
+  RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of sets that boundary condition is applied to.");
+
+  RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of field that boundary condition is applied to.");
+
+  RegisterViewWrapper( viewKeyStruct::fieldNameString, &m_fieldName, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of field that boundary condition is applied to.");
+
+  RegisterViewWrapper( viewKeyStruct::componentString, &m_component, false )->
+    setDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Component of field (if tensor) to apply boundary condition to");
+
+  RegisterViewWrapper( viewKeyStruct::directionString, &m_direction, false )->
+    setDefaultValue(R1Tensor())->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Direction to apply boundary condition to");
+
+  RegisterViewWrapper( viewKeyStruct::functionNameString, &m_functionName, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of function that specifies variation of BC with time.");
+
+  RegisterViewWrapper( viewKeyStruct::bcApplicationTableNameString, &m_bcApplicationFunctionName, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of table that specifies the on/off application of the bc.");
+
+  RegisterViewWrapper( viewKeyStruct::scaleString, &m_scale, false )->
+    setDefaultValue(1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Scale multiplier of the BC.");
+
+  RegisterViewWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, false )->
+    setDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("BC is applied as an initial condition.");
+
+  RegisterViewWrapper( viewKeyStruct::beginTimeString, &m_beginTime, false )->
+    setDefaultValue(-1.0e99)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Time at which BC will start being applied");
+
+  RegisterViewWrapper( viewKeyStruct::endTimeString, &m_endTime, false )->
+    setDefaultValue(1.0e99)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Time at which bc will stop being applied");
 }
 
 
@@ -58,168 +96,6 @@ BoundaryConditionBase::GetCatalog()
 {
   static BoundaryConditionBase::CatalogInterface::CatalogType catalog;
   return catalog;
-}
-
-void BoundaryConditionBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( viewKeyStruct::initialConditionString,
-                              viewKeyStruct::initialConditionString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "BC is applied as an initial condition.",
-                              "",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::setNamesString,
-                              viewKeyStruct::setNamesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "Name of sets that boundary condition is applied to.",
-                              "",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::objectPathString,
-                              viewKeyStruct::objectPathString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of field that boundary condition is applied to.",
-                              "",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::fieldNameString,
-                              viewKeyStruct::fieldNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of field that boundary condition is applied to.",
-                              "",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-//  docNode->AllocateChildNode( viewKeyStruct::dataTypeString,
-//                              viewKeyStruct::dataTypeString,
-//                              -1,
-//                              "string",
-//                              "string",
-//                              "Name of field that boundary condition is applied to.",
-//                              "",
-//                              "REQUIRED",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentString,
-                              viewKeyStruct::componentString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "Component of field (if tensor) to apply boundary condition to",
-                              "",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::directionString,
-                              viewKeyStruct::directionString,
-                              -1,
-                              "R1Tensor",
-                              "R1Tensor",
-                              "Direction to apply boundary condition to",
-                              "",
-                              "{0,0,0}",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::functionNameString,
-                              viewKeyStruct::functionNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of table that specifies variation of BC with time.",
-                              "",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::bcApplicationTableNameString,
-                              viewKeyStruct::bcApplicationTableNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of table that specifies the on/off application of the bc.",
-                              "",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::scaleString,
-                              viewKeyStruct::scaleString,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Component of field (if tensor) to apply boundary condition to",
-                              "",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( viewKeyStruct::beginTimeString,
-                              viewKeyStruct::beginTimeString,
-                              -1,
-                              "real64",
-                              "real64",
-                              "time at which BC will start being applied",
-                              "",
-                              "-1.0e99",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::endTimeString,
-                              viewKeyStruct::endTimeString,
-                              -1,
-                              "real64",
-                              "real64",
-                              "time at which bc will stop being applied",
-                              "",
-                              "1.0e99",
-                              "",
-                              0,
-                              1,
-                              0 );
 }
 
 void BoundaryConditionBase::ReadXML_PostProcess()
