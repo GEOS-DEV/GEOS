@@ -348,12 +348,6 @@ public:
 
   void CreateChild( string const & childKey, string const & childName ) override;
 
-  virtual void
-  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
-
-
-//  virtual void CreateChild( string const & childKey, string const & childName ) override;
-
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 

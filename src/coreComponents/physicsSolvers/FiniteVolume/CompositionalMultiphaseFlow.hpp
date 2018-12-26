@@ -93,7 +93,7 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
