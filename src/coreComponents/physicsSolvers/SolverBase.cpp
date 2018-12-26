@@ -88,35 +88,6 @@ void SolverBase::CreateChild( string const & childKey, string const & childName 
   }
 }
 
-void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-//  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-//  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
-//  {
-//    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
-//
-//    ElementRegionManager * const elemManager = meshLevel->getElemManager();
-//
-//    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
-//      {
-//        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-//
-//        docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
-//                                    viewKeyStruct::blockLocalDofNumberString,
-//                                    -1,
-//                                    "localIndex_array",
-//                                    "localIndex_array",
-//                                    "verbosity level",
-//                                    "verbosity level",
-//                                    "0",
-//                                    "",
-//                                    0,
-//                                    0,
-//                                    0 );
-//      });
-//  }
-}
-
 
 void SolverBase::ReadXML_PostProcess()
 {

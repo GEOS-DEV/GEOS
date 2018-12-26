@@ -36,21 +36,16 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
   ConstitutiveBase( name, parent ),
   m_poreVolumeRelation( ExponentApproximationType::Linear )
 {
-  RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, 0 )->
-      setDefaultValue(-1.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Fluid Bulk Modulus");
+  RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Solid compressibility");
 
-  RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 )->
-      setDefaultValue(0.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Reference pressure");
+  RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, false )->
+    setDefaultValue(0.0)->
+    setDescription("Reference pressure for fluid compressibility");
 
-  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 );
-  RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 );
-
-
-
+  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false );
+  RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, false );
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;

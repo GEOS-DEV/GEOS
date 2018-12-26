@@ -69,6 +69,11 @@ public:
   virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:
+
+  string_array m_functionNames;
+  string_array m_variableNames;
+  string       m_expression;
+
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
 

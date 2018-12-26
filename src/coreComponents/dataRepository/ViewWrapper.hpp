@@ -78,7 +78,7 @@ public:
   {
     if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
     {
-      this->setSizedFromParent()(0);
+      this->setSizedFromParent(0);
     }
   }
 

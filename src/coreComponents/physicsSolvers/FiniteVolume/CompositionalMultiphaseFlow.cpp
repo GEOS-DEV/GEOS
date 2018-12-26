@@ -72,6 +72,7 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
       setDescription("Name of the relative permeability constitutive model to use");
 
   this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
+
 }
 
 localIndex CompositionalMultiphaseFlow::numFluidComponents() const
@@ -84,300 +85,38 @@ localIndex CompositionalMultiphaseFlow::numFluidPhases() const
   return m_numPhases;
 }
 
-void CompositionalMultiphaseFlow::FillOtherDocumentationNodes( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
 {
-  FlowSolverBase::FillOtherDocumentationNodes(rootGroup);
+  FlowSolverBase::RegisterDataOnMesh(MeshBodies);
 
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for (auto & mesh : domain->getMeshBodies()->GetSubGroups())
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-
-    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock)
+    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
     {
-      cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::bcPressureString );
 
-      docNode->AllocateChildNode( viewKeyStruct::pressureString,
-                                  viewKeyStruct::pressureString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Fluid pressure",
-                                  "Fluid pressure",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  0 );
+      cellBlock->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::globalCompDensityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::deltaGlobalCompDensityString );
 
-      docNode->AllocateChildNode( viewKeyStruct::deltaPressureString,
-                                  viewKeyStruct::deltaPressureString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Change in fluid pressure",
-                                  "Change in fluid pressure",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
+      cellBlock->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::globalCompFractionString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array3d<real64> >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
-      // TODO this needs to be allocated on BC sets only
-      docNode->AllocateChildNode( viewKeyStruct::bcPressureString,
-                                  viewKeyStruct::bcPressureString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Boundary condition pressure",
-                                  "Boundary condition pressure",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
+      cellBlock->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::phaseVolumeFractionString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+      cellBlock->RegisterViewWrapper< array3d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
-      docNode->AllocateChildNode( viewKeyStruct::globalCompDensityString,
-                                  viewKeyStruct::globalCompDensityString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Global component density in mixture",
-                                  "Global component density in mixture",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  0 );
+      cellBlock->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::phaseVolumeFractionOldString );
+      cellBlock->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::phaseDensityOldString );
+      cellBlock->RegisterViewWrapper< array3d<real64> >( viewKeyStruct::phaseComponentFractionOldString );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
 
-      docNode->AllocateChildNode( viewKeyStruct::deltaGlobalCompDensityString,
-                                  viewKeyStruct::deltaGlobalCompDensityString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Change in global component density in mixture",
-                                  "Change in global component density in mixture",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
-
-      docNode->AllocateChildNode( viewKeyStruct::globalCompFractionString,
-                                  viewKeyStruct::globalCompFractionString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Global component mole fraction in mixture",
-                                  "Global component mole fraction in mixture",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  0 );
-
-      docNode->AllocateChildNode( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString,
-                                  viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString,
-                                  -1,
-                                  "real64_array3d",
-                                  "real64_array3d",
-                                  "Derivatives of global component mole fraction",
-                                  "Derivatives of global component mole fraction",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseVolumeFractionString,
-                                  viewKeyStruct::phaseVolumeFractionString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Fluid phase volume fraction",
-                                  "Fluid phase volume fraction",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  0 );
-
-      docNode->AllocateChildNode( viewKeyStruct::dPhaseVolumeFraction_dPressureString,
-                                  viewKeyStruct::dPhaseVolumeFraction_dPressureString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Fluid phase volume fraction derivative w.r.t. pressure",
-                                  "Fluid phase volume fraction derivative w.r.t. pressure",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString,
-                                  viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString,
-                                  -1,
-                                  "real64_array3d",
-                                  "real64_array3d",
-                                  "Fluid phase volume fraction derivative w.r.t. component density",
-                                  "Fluid phase volume fraction derivative w.r.t. component density",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseVolumeFractionOldString,
-                                  viewKeyStruct::phaseVolumeFractionOldString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Fluid phase volume fraction (old)",
-                                  "Fluid phase volume fraction (old)",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseDensityOldString,
-                                  viewKeyStruct::phaseDensityOldString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Fluid phase density (old)",
-                                  "Fluid phase density (old)",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseComponentFractionOldString,
-                                  viewKeyStruct::phaseComponentFractionOldString,
-                                  -1,
-                                  "real64_array3d",
-                                  "real64_array3d",
-                                  "Fluid component-in-phase fraction (old)",
-                                  "Fluid component-in-phase fraction (old)",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::porosityOldString,
-                                  viewKeyStruct::porosityOldString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Porosity (old)",
-                                  "Porosity (old)",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
-                                  viewKeyStruct::blockLocalDofNumberString,
-                                  -1,
-                                  "globalIndex_array",
-                                  "globalIndex_array",
-                                  "Pressure DOF index",
-                                  "Pressure DOF index",
-                                  "0",
-                                  "",
-                                  1,
-                                  0,
-                                  3 );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::blockLocalDofNumberString );
     });
-
-    {
-      FaceManager * const faceManager = meshLevel->getFaceManager();
-      cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
-
-      docNode->AllocateChildNode( viewKeyStruct::facePressureString,
-                                  viewKeyStruct::facePressureString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Fluid pressure",
-                                  "Fluid pressure",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::globalCompFractionString,
-                                  viewKeyStruct::globalCompFractionString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Global component mole fraction in mixture",
-                                  "Global component mole fraction in mixture",
-                                  "",
-                                  elemManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseDensityOldString,
-                                  viewKeyStruct::phaseDensityOldString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Fluid phase density",
-                                  "Fluid phase density",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseComponentFractionOldString,
-                                  viewKeyStruct::phaseComponentFractionOldString,
-                                  -1,
-                                  "real64_array3d",
-                                  "real64_array3d",
-                                  "Fluid component-in-phase fraction",
-                                  "Fluid component-in-phase fraction",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseViscosityString,
-                                  viewKeyStruct::phaseViscosityString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Fluid phase viscosity",
-                                  "Fluid phase viscosity",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeyStruct::phaseRelativePermeabilityString,
-                                  viewKeyStruct::phaseRelativePermeabilityString,
-                                  -1,
-                                  "real64_array2d",
-                                  "real64_array2d",
-                                  "Fluid phase relative permeability",
-                                  "Fluid phase relative permeability",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-    }
   }
 }
 
