@@ -47,9 +47,6 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "CompositeFunction"; }
   
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-  
   /// Function initialization
   virtual void InitializeFunction() override;
 

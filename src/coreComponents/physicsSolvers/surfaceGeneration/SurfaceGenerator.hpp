@@ -66,8 +66,6 @@ public:
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void FillDocumentationNode() override;
-
   virtual void
   FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 

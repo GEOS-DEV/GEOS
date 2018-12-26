@@ -121,8 +121,7 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
 
 
   RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
-      setDefaultValue(-1)->
-      setDescription("Young's Elastic Modulus");
+      setDescription("Stress Deviator stress");
 
   RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
       setDefaultValue(-1)->

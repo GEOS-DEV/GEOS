@@ -8,6 +8,7 @@
 #ifndef CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_
 #define CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_
 
+#include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
 
 namespace geosx
@@ -20,7 +21,7 @@ namespace wrapperDefaultValue
 
 
 template< typename T >
-struct is_arithmetic
+struct is_defaultable
 {
   static constexpr bool value = std::is_same<T,int>::value ||
       std::is_same<T,long int>::value ||
@@ -28,7 +29,11 @@ struct is_arithmetic
       std::is_same<T,unsigned int>::value ||
       std::is_same<T,unsigned long int>::value ||
       std::is_same<T,unsigned long long int>::value ||
-      std::is_floating_point<T>::value;
+      std::is_floating_point<T>::value ||
+      std::is_same<T,string>::value ||
+      std::is_same<T,R1Tensor>::value ||
+      std::is_same<T,R2Tensor>::value ||
+      std::is_same<T,R2SymTensor>::value ;
 };
 
 template< typename T, typename ENABLE=void >
@@ -38,7 +43,7 @@ struct Helper
 };
 
 template< typename T >
-struct Helper< T, typename std::enable_if<is_arithmetic<T>::value >::type >
+struct Helper< T, typename std::enable_if<is_defaultable<T>::value >::type >
 {
   static constexpr bool has_default_value = true;
   using value_type = T;
@@ -48,7 +53,7 @@ struct Helper< T, typename std::enable_if<is_arithmetic<T>::value >::type >
 HAS_ALIAS( value_type )
 template< typename T >
 struct Helper< T, typename std::enable_if< has_alias_value_type<T>::value &&
-                                          ( is_arithmetic<typename T::value_type>::value) >::type >
+                                          ( is_defaultable<typename T::value_type>::value) >::type >
 {
   static constexpr bool has_default_value = true;
   using value_type = typename T::value_type;

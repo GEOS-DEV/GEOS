@@ -432,9 +432,6 @@ public:
    */
   virtual ~BoundaryConditionBase() override;
 
-
-  void FillDocumentationNode() override;
-
   void ReadXML_PostProcess() override final;
 
   /**

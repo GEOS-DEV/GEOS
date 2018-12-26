@@ -49,64 +49,25 @@ CompositeFunction::CompositeFunction( const std::string& name,
   parserExpression(),
   m_numSubFunctions(),
   m_subFunctions()
-{}
+{
+  RegisterViewWrapper<string_array>( keys::functionNames )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("List of source functions.  The order must match the variableNames argument.");
+
+  RegisterViewWrapper<string_array>( keys::variableNames )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("List of variables in expression.");
+
+  RegisterViewWrapper<string>( keys::expression )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Composite math expression.");
+
+}
 
 
 CompositeFunction::~CompositeFunction()
 {}
 
-
-void CompositeFunction::FillDocumentationNode()
-{
-  FunctionBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Composite function");
-
-  docNode->AllocateChildNode( keys::functionNames,
-                              keys::functionNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of source functions",
-                              "List of source functions.  The order must match the variableNames argment.",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::variableNames,
-                              keys::variableNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of variables in expression",
-                              "List of variables in expression",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::expression,
-                              keys::expression,
-                              -1,
-                              "string",
-                              "string",
-                              "Composite math expression",
-                              "Composite math expression",
-                              "default",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->getChildNode(keys::inputVarNames)->setDefault("");
-
-}
 
 
 void CompositeFunction::InitializeFunction()
