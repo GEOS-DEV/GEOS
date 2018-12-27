@@ -66,8 +66,7 @@ public:
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void
-  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   virtual void FinalInitializationPreSubGroups( ManagedGroup * const problemManager ) override final;
 

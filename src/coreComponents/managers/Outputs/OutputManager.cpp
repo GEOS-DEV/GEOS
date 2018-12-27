@@ -41,11 +41,11 @@ OutputManager::~OutputManager()
 
 
 
-void OutputManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * OutputManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Output: " << childKey << ", " << childName);
   std::unique_ptr<OutputBase> output = OutputBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<OutputBase>( childName, std::move(output) );
+  return this->RegisterGroup<OutputBase>( childName, std::move(output) );
 }
 
 

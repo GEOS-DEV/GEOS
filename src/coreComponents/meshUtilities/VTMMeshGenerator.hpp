@@ -62,7 +62,7 @@ public:
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
 

@@ -59,7 +59,7 @@ public:
 
   static string CatalogName() { return "LaplaceFEM"; }
 
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
   virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
@@ -166,14 +166,12 @@ public:
 
   } laplaceFEMViewKeys;
 
-//  struct groupKeyStruct
-//  {
-//  } groupKeys;
+
 
 
 
 private:
-
+  string m_fieldName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   LaplaceFEM();

@@ -91,9 +91,14 @@ void ElementRegionManager::resize( integer_array const & numElements,
 ////  elemRegion->resize(numElements);
 //}
 
-// void ElementRegionManager::CreateChild( string const & childKey, string const & childName )
-// {
-// }
+ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+ {
+   GEOS_ERROR_IF( !(childKey == "ElementRegion"),
+                  "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog");
+   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName);
+   ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
+   return elementRegions->RegisterGroup<ElementRegion>( childName );
+ }
 
 
 void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
@@ -107,7 +112,6 @@ void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
       GEOS_LOG_RANK_0(regionName);
 
       ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
-      elemRegion->SetDocumentationNodes();
       elemRegion->ReadXML(childNode);
     }
   }

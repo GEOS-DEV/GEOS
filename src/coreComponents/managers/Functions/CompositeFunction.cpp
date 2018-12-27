@@ -58,7 +58,7 @@ CompositeFunction::CompositeFunction( const std::string& name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of variables in expression");
 
-  RegisterViewWrapper( keys::functionNames, &m_expression, false )->
+  RegisterViewWrapper( keys::expression, &m_expression, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Composite math expression");
 }

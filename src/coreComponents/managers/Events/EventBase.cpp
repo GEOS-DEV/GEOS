@@ -122,11 +122,11 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
   return catalog;
 }
 
-void EventBase::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * EventBase::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<EventBase>( childName, std::move(event) );
+  return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
 
 

@@ -193,12 +193,8 @@ void xmlWrapper::ReadAttributeAsType( array1d<T> & rval,
 
   GEOS_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
 
-  std::vector< T > xmlVal;
-
-  as_type( xmlVal, xmlatt.value(), "" );
-  cxx_utilities::equateStlVector(rval, xmlVal);
+  as_type( rval, xmlatt.value() );
 }
-
 
 template< typename T >
 void xmlWrapper::ReadAttributeAsType( T & rval,

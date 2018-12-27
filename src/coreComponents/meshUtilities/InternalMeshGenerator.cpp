@@ -68,46 +68,57 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
 
   RegisterViewWrapper(keys::xCoords, &(m_vertices[0]), false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("x-coordinates of each mesh block vertex");
 
   RegisterViewWrapper(keys::yCoords, &(m_vertices[1]), false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("y-coordinates of each mesh block vertex");
 
   RegisterViewWrapper(keys::zCoords, &(m_vertices[2]), false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("z-coordinates of each mesh block vertex");
 
   RegisterViewWrapper(keys::xElems, &(m_nElems[0]), false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("number of elements in the x-direction within each mesh block");
 
   RegisterViewWrapper(keys::yElems, &(m_nElems[1]), false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("number of elements in the y-direction within each mesh block");
 
   RegisterViewWrapper(keys::zElems, &(m_nElems[2]), false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("number of elements in the z-direction within each mesh block");
 
   RegisterViewWrapper(keys::xBias, &(m_nElemBias[0]), false )->
       setDefaultValue(1.0)->
+      setSizedFromParent(0)->
       setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::yBias, &(m_nElemBias[1]), false )->
       setDefaultValue(1.0)->
+      setSizedFromParent(0)->
       setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::zBias, &(m_nElemBias[2]), false )->
       setDefaultValue(1.0)->
+      setSizedFromParent(0)->
       setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::cellBlockNames, &m_regionNames, false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("names of each mesh block");
 
   RegisterViewWrapper(keys::elementTypes, &m_elementType, false )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("element types of each mesh block");
 
   RegisterViewWrapper(keys::trianglePattern, &m_trianglePattern, false )->
@@ -500,8 +511,9 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 
 
-void InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
+  return nullptr;
 }
 
 
@@ -525,7 +537,6 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   NodeManager * nodeManager = meshLevel0->getNodeManager();
 
   // Make sure that the node manager fields are initialized
-  nodeManager->SetDocumentationNodes();
 
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   ManagedGroup * nodeSets = nodeManager->sets();
@@ -539,8 +550,6 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock->SetDocumentationNodes();
-    cellBlock->RegisterDocumentationNodes();
     cellBlock->ReadXML_PostProcess();
     cellBlock->SetElementType("C3D8");
   }

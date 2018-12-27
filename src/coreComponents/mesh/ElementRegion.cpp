@@ -57,8 +57,11 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
       setInputFlag(InputFlags::REQUIRED)->
       setDescription("List of materials present in this region");
 
-  RegisterViewWrapper<string>( keys::numericalMethod );
-  RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->setInputFlag(InputFlags::REQUIRED);
+  RegisterViewWrapper<string>( keys::numericalMethod )->
+      setInputFlag(InputFlags::OPTIONAL);
+
+  RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->
+      setInputFlag(InputFlags::REQUIRED);
 
 
 }

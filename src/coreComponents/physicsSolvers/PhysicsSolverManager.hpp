@@ -39,7 +39,7 @@ public:
 
   virtual ~PhysicsSolverManager() override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   struct viewKeyStruct
   {

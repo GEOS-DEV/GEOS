@@ -57,10 +57,10 @@ BoundaryConditionManager::~BoundaryConditionManager()
   // TODO Auto-generated destructor stub
 }
 
-void BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup( childName, std::move( bc ) );
+  return this->RegisterGroup( childName, std::move( bc ) );
 }
 
 

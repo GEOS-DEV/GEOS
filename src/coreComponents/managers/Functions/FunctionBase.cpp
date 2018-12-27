@@ -36,7 +36,8 @@ FunctionBase::FunctionBase( const std::string& name,
   m_inputVarNames()
 {
   RegisterViewWrapper( keys::inputVarNames, &m_inputVarNames, 0)->
-      setInputFlag(InputFlags::REQUIRED)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setSizedFromParent(0)->
       setDescription("Name of fields are input to function.");
 }
 

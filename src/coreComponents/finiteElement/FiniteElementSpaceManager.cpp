@@ -40,11 +40,11 @@ FiniteElementSpaceManager::~FiniteElementSpaceManager()
 }
 
 
-void FiniteElementSpaceManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * FiniteElementSpaceManager::CreateChild( string const & childKey, string const & childName )
 {
   // These objects should probably not be registered on managed group...
   std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup( childName, std::move(fem) );
+  return this->RegisterGroup( childName, std::move(fem) );
 }
 
 

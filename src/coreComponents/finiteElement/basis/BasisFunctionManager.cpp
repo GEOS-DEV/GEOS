@@ -41,10 +41,11 @@ BasisFunctionManager::~BasisFunctionManager()
 }
 
 
-void BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
   this->RegisterViewWrapper( childName, std::move(basis) )->setRestartFlags(RestartFlags::NO_WRITE);
+  return nullptr;
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:

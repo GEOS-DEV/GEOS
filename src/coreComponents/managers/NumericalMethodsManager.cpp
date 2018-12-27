@@ -47,8 +47,9 @@ NumericalMethodsManager::~NumericalMethodsManager()
   // TODO Auto-generated destructor stub
 }
 
-void NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
 {
+  return nullptr;
 }
 
 dataRepository::ManagedGroup const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const

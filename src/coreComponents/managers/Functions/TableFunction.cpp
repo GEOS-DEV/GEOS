@@ -90,7 +90,7 @@ void TableFunction::InitializeFunction()
 {
   // Read in data
   string_array const & coordinateFiles = getReference<string_array>(keys::coordinateFiles);
-  if (coordinateFiles[0].empty())
+  if (coordinateFiles.empty())
   {
     // 1D Table
     m_dimensions = 1;

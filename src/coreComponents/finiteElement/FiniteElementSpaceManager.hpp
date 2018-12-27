@@ -45,7 +45,7 @@ public:
   FiniteElementSpaceManager(string const & name, ManagedGroup * const parent);
   virtual ~FiniteElementSpaceManager() override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
 
 };

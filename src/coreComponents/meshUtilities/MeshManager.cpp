@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshManager.cpp
- *
- *  Created on: Oct 18, 2017
- *      Author: sherman
- */
 
 #include "MeshManager.hpp"
 
@@ -43,11 +37,11 @@ MeshManager::MeshManager( std::string const & name,
 MeshManager::~MeshManager()
 {}
 
-void MeshManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * MeshManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Mesh: " << childKey << ", " << childName);
   std::unique_ptr<MeshGeneratorBase> solver = MeshGeneratorBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<MeshGeneratorBase>( childName, std::move(solver) );
+  return this->RegisterGroup<MeshGeneratorBase>( childName, std::move(solver) );
 }
 
 
@@ -66,7 +60,7 @@ void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
   this->forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
   {
     string meshName = meshGen->getName();
-    domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0)->SetDocumentationNodes();
+    domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0);
   });
 }
 

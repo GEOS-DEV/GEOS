@@ -46,7 +46,7 @@ public:
   BasisFunctionManager(string const & name, ManagedGroup * const parent);
   virtual ~BasisFunctionManager() override final;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;

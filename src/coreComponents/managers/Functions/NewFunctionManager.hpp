@@ -49,7 +49,7 @@ public:
   }
 
   static string CatalogName() { return "NewFunctionManager"; }
-  virtual void CreateChild( string const & functionCatalogKey, string const & functionName ) override;
+  virtual ManagedGroup * CreateChild( string const & functionCatalogKey, string const & functionName ) override;
 };
 
 

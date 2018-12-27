@@ -53,7 +53,7 @@ public:
   virtual void ReadXML_PostProcess() override;
 
   /// A method to add child events
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   /**
    * The main execution loop for the code.  During each cycle, it will:

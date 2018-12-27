@@ -91,6 +91,11 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
       setDescription("Elastic Shear Modulus Parameter");
 
 
+  RegisterViewWrapper<real64>( viewKeys().youngsModulus.Key() )->
+      setDefaultValue(-1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Elastic Young's Modulus.");
+
   RegisterViewWrapper<real64>( viewKeys().poissonRatio.Key() )->
       setDefaultValue(-1)->
       setInputFlag(InputFlags::OPTIONAL)->
@@ -113,7 +118,7 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
       setDescription("ReferencePressure");
 
   RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 )->
-      setDefaultValue(-1)->
+      setDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Young's Elastic Modulus");
 
@@ -134,7 +139,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
 
   RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 )->
       setDefaultValue(-1)->
-      setInputFlag(InputFlags::OPTIONAL)->
       setDescription("");
 
   RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
