@@ -76,16 +76,18 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
   return catalog;
 }
 
-void SolverBase::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & childName )
 {
+  ManagedGroup * rval = nullptr;
   if( childKey==SystemSolverParameters::CatalogName() )
   {
-    this->RegisterGroup( childName, &m_systemSolverParameters, 0 );
+    rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
   }
   else
   {
     GEOS_ERROR(childKey<<" is an invalid key to SolverBase child group.");
   }
+  return rval;
 }
 
 

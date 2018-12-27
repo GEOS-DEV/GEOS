@@ -346,7 +346,7 @@ public:
                     systemSolverInterface::BlockIDs const blockID );
 
 
-  void CreateChild( string const & childKey, string const & childName ) override;
+  ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();

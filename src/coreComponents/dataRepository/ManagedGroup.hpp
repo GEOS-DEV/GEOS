@@ -35,7 +35,6 @@
 #include "RestartFlags.hpp"
 
 #include "depricated/Common.h"
-#include "DocumentationNode.hpp"
 
 #include "MappedVector.hpp"
 
@@ -478,29 +477,11 @@ public:
 
   ///@}
 
-
-  /**
-   * @name Self Documentation Functions
-   */
-  ///@{
-
-  cxx_utilities::DocumentationNode * getDocumentationNode()
-  {
-    return m_docNode;
-  }
-
-  void RegisterDocumentationNodes();
-
-
-  ///@}
-  ///
-
-
   void PrintDataHierarchy(integer indent = 0);
 
   virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
 
-  virtual void CreateChild( string const & childKey, string const & childName );
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName );
 
   virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
@@ -523,23 +504,11 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) {}
 
-  void SetDocumentationNodes();
-
   /**
    * Function to generate documentation nodes for each variable in this object. The documentation
    * nodes are then used to register variables and read xml input into variables.
    */
 //  virtual void FillDocumentationNode();
-
-
-  /**
-   * @param rootGroup The group for which to register new documentation node to.
-   * Function to generate documentation nodes for each variable in this an object. The documentation
-   * nodes are then used to register variables and read xml input into variables.
-   */
-  void SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup);
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
   virtual localIndex PackSize( string_array const & wrapperNames,
                                integer const recursive ) const;

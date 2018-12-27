@@ -42,7 +42,7 @@ public:
 
   void IntermediateInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
-  virtual void CreateChild(string const & childKey, string const & childName) override;
+  virtual ManagedGroup * CreateChild(string const & childKey, string const & childName) override;
 
   FluxApproximationBase const * getFluxApproximation(string const &name) const;
 

@@ -45,12 +45,12 @@ NewFunctionManager::~NewFunctionManager()
 }
 
 
-void NewFunctionManager::CreateChild( string const & functionCatalogKey,
+ManagedGroup * NewFunctionManager::CreateChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
   GEOS_LOG_RANK_0("   " << functionCatalogKey << ": " << functionName);
   std::unique_ptr<FunctionBase> function = FunctionBase::CatalogInterface::Factory( functionCatalogKey, functionName, this );
-  this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
+  return this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
 }
 
 } /* namespace ANST */

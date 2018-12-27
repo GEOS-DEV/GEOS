@@ -308,36 +308,6 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
   }
 }
 
-// These fill the documentation and initialize fields on this:
-//void ManagedGroup::FillDocumentationNode()
-//{}
-
-void ManagedGroup::SetDocumentationNodes()
-{
-//  FillDocumentationNode();
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->SetDocumentationNodes();
-  }
-  RegisterDocumentationNodes();
-
-}
-
-// These fill the documentation and initialize fields on other objects:
-void ManagedGroup::SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup)
-{
-  FillOtherDocumentationNodes(rootGroup);
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->SetOtherDocumentationNodes(rootGroup);
-  }
-}
-
-void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
-{
-}
-
-
 
 void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 {
@@ -372,7 +342,6 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 
 void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode )
 {
-
   // loop over the child nodes of the targetNode
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
@@ -384,8 +353,11 @@ void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & target
     }
 
     // Create children
-    CreateChild(childNode.name(), childName);
-    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
+    ManagedGroup * newChild = CreateChild(childNode.name(), childName);
+    if( newChild == nullptr )
+    {
+      newChild = GetGroup(childName);
+    }
     if( newChild != nullptr )
     {
       newChild->ProcessInputFileRecursive(childNode);
@@ -447,13 +419,13 @@ void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies 
 }
 
 
-void ManagedGroup::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog");
   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ManagedGroup::Catalog.");
-  this->RegisterGroup( childName,
-                       CatalogInterface::Factory( childKey, childName, this ) );
+  return RegisterGroup( childName,
+                        CatalogInterface::Factory( childKey, childName, this ) );
 }
 
 

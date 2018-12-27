@@ -75,7 +75,7 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
       setInputFlag(InputFlags::REQUIRED)->
       setDescription("option for default time integration method");
 
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key())->
+  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
       setInputFlag(InputFlags::REQUIRED)->
       setDescription("name of field variable");
 
@@ -88,41 +88,22 @@ LaplaceFEM::~LaplaceFEM()
   // TODO Auto-generated destructor stub
 }
 
-void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+
+void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    NodeManager * const nodes = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
+    NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
-    docNode->AllocateChildNode( "Temperature",
-                                "Temperature",
-                                -1,
-                                "real64_array",
-                                "real64_array",
-                                "",
-                                "",
-                                "",
-                                nodes->getName(),
-                                1,
-                                0,
-                                0 );
+    nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
+        setDefaultValue(0.0)->
+        setPlotLevel(PlotLevel::LEVEL_0)->
+        setDescription("Primary field variable");
 
-    docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
-                                viewKeyStruct::blockLocalDofNumberString,
-                                -1,
-                                "globalIndex_array",
-                                "globalIndex_array",
-                                "dof",
-                                "dof",
-                                "-1",
-                                nodes->getName(),
-                                1,
-                                0,
-                                0 );
-
+    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString )->
+        setDefaultValue(-1)->
+        setPlotLevel(PlotLevel::LEVEL_1)->
+        setDescription("Global DOF numbers for the primary field variable");
   }
 }
 

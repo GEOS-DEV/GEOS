@@ -104,7 +104,7 @@ public:
    *         </PeriodicEvent>
    *       </Events>
    */
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   /**
    * The target object for an event may be specified via the keyword "target" in the input xml.

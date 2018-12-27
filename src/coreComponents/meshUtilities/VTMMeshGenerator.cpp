@@ -104,8 +104,9 @@ void VTMMeshGenerator::RemapMesh(dataRepository::ManagedGroup * const domain)
 
 }
 
-void VTMMeshGenerator::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * VTMMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
+  return nullptr;
 }
 
 void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )

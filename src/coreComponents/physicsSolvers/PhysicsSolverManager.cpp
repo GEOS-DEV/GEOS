@@ -51,14 +51,16 @@ PhysicsSolverManager::~PhysicsSolverManager()
 {}
 
 
-void PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
+  ManagedGroup * rval = nullptr;
   if( SolverBase::CatalogInterface::hasKeyName(childKey) )
   {
     GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
-    this->RegisterGroup( childName,
-                         SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
+    rval = RegisterGroup( childName,
+                          SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
   }
+  return rval;
 }
 
 

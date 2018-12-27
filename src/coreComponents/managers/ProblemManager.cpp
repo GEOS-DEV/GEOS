@@ -137,8 +137,8 @@ ProblemManager::~ProblemManager()
 {}
 
 
-void ProblemManager::CreateChild( string const & childKey, string const & childName )
-{}
+ManagedGroup * ProblemManager::CreateChild( string const & childKey, string const & childName )
+{ return nullptr; }
 
 void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
 {
@@ -494,43 +494,32 @@ void ProblemManager::ParseInputFile()
   ProcessInputFileRecursive( xmlProblemNode );
 
 
-  // Call manager readXML methods:
-//  this->AddChildren(xmlProblemNode);
-//  this->SetDocumentationNodes();
-//  this->ReadXML( xmlProblemNode );
-
-
   // The function manager is handled separately
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
-    this->m_functionManager->AddChildren( topLevelNode );
-    this->m_functionManager->SetDocumentationNodes();
-    this->m_functionManager->ReadXML( topLevelNode );
+    m_functionManager->ProcessInputFileRecursive( topLevelNode );
   }
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
     BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
-    bcManager->AddChildren( topLevelNode );
-    bcManager->SetDocumentationNodes();
-    bcManager->ReadXML( topLevelNode );
+    bcManager->ProcessInputFileRecursive( topLevelNode );
   }
 
   // The objects in domain are handled separately for now
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-    constitutiveManager->AddChildren( topLevelNode );
-    constitutiveManager->SetDocumentationNodes();
-    constitutiveManager->ReadXML( topLevelNode );
+    constitutiveManager->ProcessInputFileRecursive( topLevelNode );
 
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+//    meshManager->ProcessInputFileRecursive()
     meshManager->GenerateMeshLevels(domain);
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-    elementManager->ReadXML(topLevelNode);
+    elementManager->ProcessInputFileRecursive( topLevelNode );
   }
 
   // Documentation output
@@ -632,8 +621,6 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
-  this->SetOtherDocumentationNodes(this);
-  this->RegisterDocumentationNodes();
 
   ObjectManagerBase::InitializePostSubGroups(nullptr);
 

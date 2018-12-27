@@ -45,10 +45,10 @@ FiniteVolumeManager::~FiniteVolumeManager()
 
 }
 
-void FiniteVolumeManager::CreateChild(string const &childKey, string const &childName)
+ManagedGroup * FiniteVolumeManager::CreateChild(string const &childKey, string const &childName)
 {
   std::unique_ptr<FluxApproximationBase> approx = FluxApproximationBase::CatalogInterface::Factory(childKey, childName, this);
-  FluxApproximationBase * newApprox = this->RegisterGroup<FluxApproximationBase>(childName, std::move(approx));
+  return this->RegisterGroup<FluxApproximationBase>(childName, std::move(approx));
 }
 
 FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::string const &name) const

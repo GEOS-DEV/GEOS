@@ -38,6 +38,7 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
 {
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 )->
       setInputFlag(InputFlags::REQUIRED)->
+      setSizedFromParent(0)->
       setDescription("Name of sets that boundary condition is applied to.");
 
   RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, 0 )->
@@ -59,12 +60,10 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
         setDescription("Direction to apply boundary condition to");
 
   RegisterViewWrapper( viewKeyStruct::functionNameString, &m_functionName, 0 )->
-      setDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Name of function that specifies variation of the BC");
 
   RegisterViewWrapper( viewKeyStruct::bcApplicationTableNameString, &m_bcApplicationFunctionName, 0 )->
-      setDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Name of table that specifies the on/off application of the bc.");
 
