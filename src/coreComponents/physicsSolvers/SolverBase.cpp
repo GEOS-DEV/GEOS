@@ -463,16 +463,5 @@ bool SolverBase::CheckSystemSolution( systemSolverInterface::EpetraBlockSystem c
   return true;
 }
 
-void SolverBase::CreateChild( string const & childKey, string const & childName )
-{
-  // recognize SystemSolverParameters, the group is already registered
-  if (childKey == groupKeyStruct::systemSolverParametersString)
-  {
-    return;
-  }
-  // otherwise let base class handle it
-  ManagedGroup::CreateChild( childKey, childName );
-}
-
 
 } /* namespace ANST */

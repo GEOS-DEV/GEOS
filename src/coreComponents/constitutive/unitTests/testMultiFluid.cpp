@@ -467,7 +467,7 @@ MultiFluidBase * makeBlackOilFluid( string const & name, ManagedGroup * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
-  fluid->ReadXML_PostProcess();
+  fluid->ProcessInputFile_PostProcess();
   return fluid;
 }
 
