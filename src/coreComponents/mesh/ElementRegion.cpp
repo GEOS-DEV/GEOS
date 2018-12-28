@@ -191,8 +191,6 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
   for( string const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
   {
     CellBlockSubRegion * cellBlock = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
-//    cellBlock->FillDocumentationNode();
-    cellBlock->RegisterDocumentationNodes();
   }
 
   forCellBlocks([&]( CellBlockSubRegion * subRegion )

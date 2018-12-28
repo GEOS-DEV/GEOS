@@ -483,7 +483,7 @@ public:
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName );
 
-  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
+  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ){}
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
