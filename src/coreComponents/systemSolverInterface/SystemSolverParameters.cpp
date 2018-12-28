@@ -174,6 +174,7 @@ void SystemSolverParameters::FillDocumentationNode()
                               0,
                               1,
                               0 );
+
   docNode->AllocateChildNode( viewKeys.scalingOption.Key(),
                               viewKeys.scalingOption.Key(),
                               -1,
@@ -212,6 +213,72 @@ void SystemSolverParameters::FillDocumentationNode()
                               0,
                               1,
                               0 );
+
+  docNode->AllocateChildNode( viewKeys.maxTimeStepCuts.Key(),
+                              viewKeys.maxTimeStepCuts.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "Max number of time step cuts",
+                              "Max number of time step cuts",
+                              "2",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.timeStepCutFactor.Key(),
+                              viewKeys.timeStepCutFactor.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Time step cut factor",
+                              "Time step cut factor",
+                              "0.5",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.maxLineSearchCuts.Key(),
+                              viewKeys.maxLineSearchCuts.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "Max number of line search cuts",
+                              "Max number of line search cuts",
+                              "4",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.lineSearchCutFactor.Key(),
+                              viewKeys.lineSearchCutFactor.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Line search cut factor",
+                              "Line search cut factor",
+                              "0.5",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.allowNonConverged.Key(),
+                              viewKeys.allowNonConverged.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "Allow non-converged solution to be accepted",
+                              "Allow non-converged solution to be accepted",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
 //  real64 m_krylovTol;          // Solver convergence criteria
 //  integer  m_numKrylovIter;
 //  integer  m_kspace;             // Number of krylov vectors before GMRES

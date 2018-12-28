@@ -270,12 +270,18 @@ public:
   template< typename T = ManagedGroup >
   T const * GetGroupByPath( string const & path ) const
   {
-    size_t directoryMarker = path.find("/");
+    // needed for getting root correctly with GetGroupByPath("/");
+    if (path.empty())
+    {
+      return group_cast<T const *>( this );
+    }
+
+    size_t directoryMarker = path.find('/');
 
     if (directoryMarker == std::string::npos)
     {
       // Target should be a child of this group
-      return m_subGroups[path];
+      return this->GetGroup<T>(path);
     }
     else
     {
@@ -287,27 +293,27 @@ public:
       {
         if (this->getParent() == nullptr)  // At root
         {
-          return this->GetGroupByPath(subPath);
+          return this->GetGroupByPath<T>(subPath);
         }
         else                               // Not at root
         {
-          return this->getParent()->GetGroupByPath(path);
+          return this->getParent()->GetGroupByPath<T>(path);
         }
       }
       else if (child[0] == '.')
       {
         if (child[1] == '.')               // '../' = Reverse path
         {
-          return this->getParent()->GetGroupByPath(subPath); 
+          return this->getParent()->GetGroupByPath<T>(subPath);
         }
         else                               // './' = This path
         {
-          return this->GetGroupByPath(subPath);
+          return this->GetGroupByPath<T>(subPath);
         }
       }
       else
       {
-        return m_subGroups[child]->GetGroupByPath(subPath);
+        return m_subGroups[child]->GetGroupByPath<T>(subPath);
       }
     }
   }
@@ -315,7 +321,7 @@ public:
   template< typename T = ManagedGroup >
   T * GetGroupByPath( string const & path )
   {
-    return const_cast<T *>(const_cast< ManagedGroup const * >(this)->GetGroupByPath(path));
+    return const_cast<T *>(const_cast< ManagedGroup const * >(this)->GetGroupByPath<T>(path));
   }
 
   subGroupMap & GetSubGroups()

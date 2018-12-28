@@ -65,6 +65,11 @@ public:
     dataRepository::ViewKey newtonTol           = { "newtonTol" };
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
     dataRepository::ViewKey numNewtonIterations = { "numberOfNewtonIterations" };
+    dataRepository::ViewKey maxTimeStepCuts     = { "maxTimeStepCuts" };
+    dataRepository::ViewKey timeStepCutFactor   = { "timestepCutFactor" };
+    dataRepository::ViewKey maxLineSearchCuts   = { "maxLineSearchCuts" };
+    dataRepository::ViewKey lineSearchCutFactor = { "lineSearchCutFactor" };
+    dataRepository::ViewKey allowNonConverged   = { "allowNonConverged" };
 
   } viewKeys;
 
@@ -90,6 +95,11 @@ public:
   integer  maxIterNewton() const              { return this->getReference<integer>( viewKeys.maxIterNewton ); }
   integer const & numNewtonIterations() const { return this->getReference<integer>( viewKeys.numNewtonIterations); }
   integer & numNewtonIterations()             { return this->getReference<integer>( viewKeys.numNewtonIterations); }
+  integer maxTimeStepCuts() const             { return this->getReference<integer>( viewKeys.maxTimeStepCuts ); }
+  real64  timeStepCutFactor() const           { return this->getReference<real64>( viewKeys.timeStepCutFactor ); }
+  integer maxLineSearchCuts() const           { return this->getReference<integer>( viewKeys.maxLineSearchCuts ); }
+  real64  lineSearchCutFactor() const         { return this->getReference<real64>( viewKeys.lineSearchCutFactor ); }
+  integer allowNonConverged() const           { return this->getReference<integer>( viewKeys.allowNonConverged ); }
 
 };
 

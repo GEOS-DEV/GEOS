@@ -30,10 +30,10 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 3"
+                  xCoords="0, 10"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="3"
+                  nx="10"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
@@ -41,11 +41,11 @@
 
   <Geometry>
     <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="5e6">
+  <Events maxTime="1e6">
 
     <PeriodicEvent name="solverApplications"
                    forceDt="1e5"
@@ -58,6 +58,18 @@
   </Events>
 
   <NumericalMethods>
+    <BasisFunctions>
+      <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+
+    <QuadratureRules>
+      <GaussQuadrature3 name="gaussian"   degree="2"  />
+    </QuadratureRules>
+
+    <FiniteElements>
+      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+
     <FiniteVolume>
       <TwoPointFluxApproximation name="fluidTPFA"
                                  fieldName="pressure"
@@ -66,7 +78,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" material="fluid1" materialList="fluid1 rock relperm" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" materialList="fluid1 rock relperm" />
   </ElementRegions>
 
   <Constitutive>
