@@ -84,71 +84,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_capacity(0),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_name(name)
-{
-
-  // Setup DocumentationNode
-  if( parent != nullptr )
-  {
-    if( parent->m_docNode != nullptr  )
-    {
-      if( this->m_docNode == nullptr )
-      {
-        m_docNode = parent->m_docNode->AllocateChildNode( name,
-                                                          name,
-                                                          0,
-                                                          "",
-                                                          "Node",
-                                                          "",
-                                                          "",
-                                                          "",
-                                                          parent->getName(),
-                                                          0,
-                                                          0,
-                                                          0 );
-      }
-    }
-    else
-    {
-      m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                        name,
-                                                        -1,
-                                                        "Node",
-                                                        "Node",
-                                                        "The Root DocumentationNode for " + name,
-                                                        "",
-                                                        "",
-                                                        "",
-                                                        0,
-                                                        0,
-                                                        0,
-                                                        0,
-                                                        nullptr );
-    }
-  }
-  else
-  {
-    m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                      name,
-                                                      -1,
-                                                      "Node",
-                                                      "Node",
-                                                      "The Root DocumentationNode for " + name,
-                                                      "",
-                                                      "",
-                                                      "",
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      nullptr );
-  }
-
-//  RegisterViewWrapper( "size", &(this->m_size), false );
-//  RegisterViewWrapper( "name", &(this->m_name), false );
-
-
-  RegisterDocumentationNodes();
-}
+{}
 
 ManagedGroup::~ManagedGroup()
 {}
@@ -222,82 +158,6 @@ void ManagedGroup::reserve( indexType const newsize )
     }
   }
   m_capacity = newsize;
-}
-
-
-void ManagedGroup::RegisterDocumentationNodes()
-{
-  for( auto&& subNode : m_docNode->getChildNodes() )
-  {
-    if( ( subNode.second.getSchemaType().find("Node") == std::string::npos ) &&
-        ( subNode.second.m_isRegistered == 0 ) )
-    {
-      std::string childType = subNode.second.getDataType();
-      rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
-
-      ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
-                                                          typeID );
-
-      view->setSizedFromParent( subNode.second.m_managedByParent);
-      view->setRestartFlags( subNode.second.getRestartFlags() );
-      view->setPlotLevel( subNode.second.getVerbosity() );
-      subNode.second.m_isRegistered = 1;
-
-      string defVal = subNode.second.getDefault();
-
-      if (defVal == "ExplicitDynamic")
-      {
-        double TEMP = 10;
-        TEMP *= 2;
-      }
-
-      if( subNode.second.getIsInput() && defVal != "NONE" )
-      {
-        rtTypes::ApplyTypeLambda2 ( typeID,
-                                    [&]( auto a, auto b ) -> void
-        {
-          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
-          std::vector<decltype(b)> values;
-          stringutilities::StringToType( values, defVal );
-          localIndex const size = integer_conversion<localIndex>(values.size());
-          dataView.resize( size );
-          decltype(a) & data = dataView.reference();
-          cxx_utilities::equateStlVector(data, values);
-        });
-      }
-
-
-
-//      else if( defVal != "NONE" && defVal != "" )
-//      {
-//        rtTypes::ApplyTypeLambda2( typeID,
-//                                   [&]( auto a, auto b ) -> void
-//        {
-//
-//          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
-//          std::vector<decltype(b)> values;
-//          stringutilities::StringToType( values, defVal );
-//          localIndex const size = LvArray::integer_conversion<localIndex>(values.size());
-//          if( size != 1 )
-//          {
-//            GEOS_ERROR("Expect size of default value to be a scalar");
-//          }
-//          decltype(a) & data = dataView.reference();
-//          for( localIndex c=0 ; c<size ; ++c )
-//          {
-//            data[c] = values[0];
-//          }
-//          //data = values[0];
-//        });
-//      }
-    }
-  }
-
-  for( auto& subGroupIter : m_subGroups )
-  {
-    subGroupIter.second->RegisterDocumentationNodes();
-  }
-
 }
 
 void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const rootGroup )
@@ -427,30 +287,6 @@ ManagedGroup * ManagedGroup::CreateChild( string const & childKey, string const 
   return RegisterGroup( childName,
                         CatalogInterface::Factory( childKey, childName, this ) );
 }
-
-
-
-
-
-void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  for( auto const & subDocEntry : docNode->m_child )
-  {
-    cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
-
-    if (subDocNode.getIsInput() == 1)
-    {
-      xmlWrapper::ReadAttributeAsType( *this, subDocNode, targetNode );
-    }
-  }
-
-  ReadXMLsub(targetNode);
-  ReadXML_PostProcess();
-}
-
-
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {

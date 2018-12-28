@@ -148,7 +148,6 @@ void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
 void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  commandLine->RegisterDocumentationNodes();
 
   std::string& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
   std::string& restartFileName = commandLine->getReference<std::string>(viewKeys.restartFileName);
@@ -527,7 +526,7 @@ void ProblemManager::ParseInputFile()
   if (schemaName.empty() == 0)
   {
     integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
+//    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
   }
 }
 
@@ -566,7 +565,6 @@ void ProblemManager::InitializationOrder( string_array & order )
 void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 {
   DomainPartition * domain  = getDomainPartition();
-  domain->RegisterDocumentationNodes();
 
   ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
@@ -600,10 +598,6 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
-
-  // Once the mesh is generated, fill and register other fields
-//  this->SetOtherDocumentationNodes(this);
-  this->RegisterDocumentationNodes();
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
