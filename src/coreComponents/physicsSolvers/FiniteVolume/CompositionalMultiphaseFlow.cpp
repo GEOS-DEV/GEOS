@@ -115,8 +115,16 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
       cellBlock->RegisterViewWrapper< array3d<real64> >( viewKeyStruct::phaseComponentFractionOldString );
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
 
-      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::blockLocalDofNumberString );
+      cellBlock->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
     });
+
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+
+    faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseDensityOldString);
+    faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseViscosityString);
+    faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString);
+    faceManager->RegisterViewWrapper<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString);
+
   }
 }
 

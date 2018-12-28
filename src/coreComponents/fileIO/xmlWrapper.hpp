@@ -61,15 +61,18 @@ public:
   template< typename T >
   static void as_type( array1d<T> & target, std::string value );
 
+  template< typename T >
+  static void as_type( array2d<T> & target, std::string value );
+
 //  template< typename T >
 //  static T as_type( xmlNode const & node, std::string const name, T defValue
 // );
 
   static R1Tensor as_type( xmlNode const & node, std::string const name, R1Tensor defValue );
 
-  static void ReadAttributeAsType( dataRepository::ManagedGroup & group,
-                                   cxx_utilities::DocumentationNode const & subDocNode,
-                                   xmlNode const & targetNode );
+//  static void ReadAttributeAsType( dataRepository::ManagedGroup & group,
+//                                   cxx_utilities::DocumentationNode const & subDocNode,
+//                                   xmlNode const & targetNode );
 
   template< typename T >
   static void ReadAttributeAsType( T & rval,
@@ -77,8 +80,8 @@ public:
                                    xmlNode const & targetNode,
                                    bool const required );
 
-  template< typename T >
-  static void ReadAttributeAsType( array1d<T> & rval,
+  template< typename T, int NDIM >
+  static void ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
                                    string const & name,
                                    xmlNode const & targetNode,
                                    bool const required );
@@ -89,8 +92,8 @@ public:
                                    xmlNode const & targetNode ,
                                    T const & defVal );
 
-  template< typename T >
-  static void ReadAttributeAsType( array1d<T> & rval,
+  template< typename T, int NDIM >
+  static void ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
                                    string const & name,
                                    xmlNode const & targetNode,
                                    T const & defVal );
@@ -164,6 +167,18 @@ void xmlWrapper::as_type( array1d<T> & target, std::string inputValue )
   }
 }
 
+template< typename T >
+void xmlWrapper::as_type( array2d<T> & target, std::string inputValue )
+{
+  array1d<T> temp;
+  as_type( temp, inputValue );
+
+  target.resize(1,temp.size());
+  for( localIndex i=0 ; i<temp.size() ; ++i )
+  {
+    target[0][i] = temp[i];
+  }
+}
 
 
 template< typename T >
@@ -183,8 +198,8 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
   GEOS_ERROR_IF( !ss.eof(), "Expecting scalar value for " + name + " in " + targetNode.path() );
 }
 
-template< typename T >
-void xmlWrapper::ReadAttributeAsType( array1d<T> & rval,
+template< typename T, int NDIM >
+void xmlWrapper::ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
                                       string const & name,
                                       xmlNode const & targetNode,
                                       bool const required )
@@ -223,8 +238,8 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
   }
 }
 
-template< typename T >
-void xmlWrapper::ReadAttributeAsType( array1d<T> & rval,
+template< typename T, int NDIM >
+void xmlWrapper::ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
                                       string const & name,
                                       xmlNode const & targetNode,
                                       T const & defVal )

@@ -52,36 +52,36 @@ xmlWrapper::~xmlWrapper()
 
 
 
-void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
-                                      DocumentationNode const & subDocNode,
-                                      xmlNode const & targetNode )
-{
-  std::string childType = subDocNode.getSchemaType();
-  rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
-  rtTypes::ApplyIntrinsicTypeLambda2 ( typeID,
-                                       [&]( auto a, auto b ) -> void
-    {
-      string defVal = subDocNode.getDefault();
-
-      pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
-      ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
-      std::vector<decltype(b)> xmlVal;
-
-      if( !xmlatt.empty() )
-      {
-        as_type( xmlVal, xmlatt.value(), defVal );
-      }
-      else
-      {
-        GEOS_ERROR_IF(defVal == "REQUIRED", "variable " + subDocNode.getName() + " is required in " + targetNode.path() );
-        stringutilities::StringToType( xmlVal, defVal );
-      }
-      localIndex const size = integer_conversion<localIndex>(xmlVal.size());
-      dataView.resize( size );
-      decltype(a) & data = dataView.reference();
-      cxx_utilities::equateStlVector(data, xmlVal);
-    });
-}
+//void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
+//                                      DocumentationNode const & subDocNode,
+//                                      xmlNode const & targetNode )
+//{
+//  std::string childType = subDocNode.getSchemaType();
+//  rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
+//  rtTypes::ApplyIntrinsicTypeLambda2 ( typeID,
+//                                       [&]( auto a, auto b ) -> void
+//    {
+//      string defVal = subDocNode.getDefault();
+//
+//      pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
+//      ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
+//      std::vector<decltype(b)> xmlVal;
+//
+//      if( !xmlatt.empty() )
+//      {
+//        as_type( xmlVal, xmlatt.value(), defVal );
+//      }
+//      else
+//      {
+//        GEOS_ERROR_IF(defVal == "REQUIRED", "variable " + subDocNode.getName() + " is required in " + targetNode.path() );
+//        stringutilities::StringToType( xmlVal, defVal );
+//      }
+//      localIndex const size = integer_conversion<localIndex>(xmlVal.size());
+//      dataView.resize( size );
+//      decltype(a) & data = dataView.reference();
+//      cxx_utilities::equateStlVector(data, xmlVal);
+//    });
+//}
 
 
 
