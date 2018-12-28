@@ -50,31 +50,14 @@ using namespace dataRepository;
 
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
   MeshGeneratorBase( name, parent )
-{}
+{
+  this->RegisterViewWrapper<string>(keys::filePath)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("path to the mesh file");
+}
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {}
-
-void PAMELAMeshGenerator::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( "PAMELAMeshGenerator" );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Generate a mesh using PAMELA library" );
-
-  docNode->AllocateChildNode( keys::filePath,
-                              keys::filePath,
-                              -1,
-                              "string",
-                              "string",
-                              "path to the mesh file",
-                              "path to the mesh file",
-                              "filePath",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
 
 void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {}
@@ -99,9 +82,9 @@ void PAMELAMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain
   return;
 }
 
-void PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
-  return;
+  return nullptr;
 }
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
@@ -158,8 +141,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         auto cellBlockName = ElementToLabel.at( cellBlockType );
         CellBlock * cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( cellBlockName );
-        cellBlock->SetDocumentationNodes();
-        cellBlock->RegisterDocumentationNodes();
         cellBlock->ProcessInputFile_PostProcess();
 
         if( cellBlockName == "HEX" )
