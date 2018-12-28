@@ -66,7 +66,7 @@ public:
 
   virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void ReadXML_PostProcess() override final;
+  virtual void ProcessInputFile_PostProcess() override final;
 
 //  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 

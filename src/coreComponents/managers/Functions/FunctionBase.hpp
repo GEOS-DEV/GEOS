@@ -56,7 +56,7 @@ public:
   static string CatalogName() { return "FunctionBase"; }
 
   /// After reading the xml, call the function initialization
-  virtual void ReadXML_PostProcess() override { InitializeFunction(); }
+  virtual void ProcessInputFile_PostProcess() override { InitializeFunction(); }
 
   /// Function initialization
   virtual void InitializeFunction(){}

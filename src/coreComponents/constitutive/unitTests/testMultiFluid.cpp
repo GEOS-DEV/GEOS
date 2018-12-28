@@ -327,7 +327,7 @@ MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * par
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
-  fluid->ReadXML_PostProcess();
+  fluid->ProcessInputFile_PostProcess();
   return fluid;
 }
 

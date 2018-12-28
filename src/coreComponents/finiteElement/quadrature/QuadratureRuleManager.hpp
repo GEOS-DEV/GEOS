@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * QuadratureRuleManager.hpp
- *
- *  Created on: Apr 18, 2017
- *      Author: rrsettgast
- */
-
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_QUADRATURERULEMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_QUADRATURERULEMANAGER_HPP_
 
@@ -47,7 +40,6 @@ public:
   virtual ~QuadratureRuleManager() override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 

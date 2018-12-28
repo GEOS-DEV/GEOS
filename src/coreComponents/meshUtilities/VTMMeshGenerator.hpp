@@ -77,7 +77,7 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ReadXML_PostProcess() override final;
+  void ProcessInputFile_PostProcess() override final;
 //  int m_delayMeshDeformation;
 
 private:

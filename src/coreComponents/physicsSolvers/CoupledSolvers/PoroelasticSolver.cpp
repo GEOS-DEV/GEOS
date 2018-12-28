@@ -113,7 +113,7 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
 {
 }
 
-void PoroelasticSolver::ReadXML_PostProcess()
+void PoroelasticSolver::ProcessInputFile_PostProcess()
 {
   string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
 

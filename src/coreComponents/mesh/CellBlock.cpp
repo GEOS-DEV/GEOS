@@ -64,7 +64,7 @@ CellBlock::~CellBlock()
 
 
 
-void CellBlock::ReadXML_PostProcess()
+void CellBlock::ProcessInputFile_PostProcess()
 {
 //  integer & numNodesPerElem = this->numNodesPerElement();
 //  numNodesPerElem = 8;

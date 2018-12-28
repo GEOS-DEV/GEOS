@@ -75,7 +75,7 @@ public:
 
   static string CatalogName() { return "SolverBase"; }
 
-  void ReadXML_PostProcess() override;
+  void ProcessInputFile_PostProcess() override;
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 

@@ -63,7 +63,7 @@ public:
 
   virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void ReadXML_PostProcess() override final;
+  virtual void ProcessInputFile_PostProcess() override final;
 
   /**
    * @defgroup Solver Interface Functions

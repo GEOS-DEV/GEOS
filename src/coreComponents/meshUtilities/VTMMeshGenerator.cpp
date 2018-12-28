@@ -91,7 +91,7 @@ void VTMMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 }
 
-void VTMMeshGenerator::ReadXML_PostProcess()
+void VTMMeshGenerator::ProcessInputFile_PostProcess()
 {
   m_fileName = this->getReference<string>(keys::filePath);
   m_vtmFile.Load(m_fileName, true, false);

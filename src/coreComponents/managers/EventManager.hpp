@@ -50,7 +50,7 @@ public:
   virtual ~EventManager() override;
 
   /// XML post processing
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
   /// A method to add child events
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;

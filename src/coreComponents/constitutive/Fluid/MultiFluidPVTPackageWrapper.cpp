@@ -59,9 +59,9 @@ MultiFluidPVTPackageWrapper::~MultiFluidPVTPackageWrapper()
   delete m_fluid;
 }
 
-void MultiFluidPVTPackageWrapper::ReadXML_PostProcess()
+void MultiFluidPVTPackageWrapper::ProcessInputFile_PostProcess()
 {
-  MultiFluidBase::ReadXML_PostProcess();
+  MultiFluidBase::ProcessInputFile_PostProcess();
 
   localIndex const NP = numFluidPhases();
 

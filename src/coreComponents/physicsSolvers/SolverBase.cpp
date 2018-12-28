@@ -91,7 +91,7 @@ ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & 
 }
 
 
-void SolverBase::ReadXML_PostProcess()
+void SolverBase::ProcessInputFile_PostProcess()
 {
   if( this->globalGravityVector() != nullptr )
   {

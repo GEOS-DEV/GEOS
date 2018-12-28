@@ -101,21 +101,21 @@ ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, strin
  }
 
 
-void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
-{
-  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    if( childNode.name() == string("ElementRegion") )
-    {
-      std::string regionName = childNode.attribute("name").value();
-      GEOS_LOG_RANK_0(regionName);
-
-      ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
-      elemRegion->ReadXML(childNode);
-    }
-  }
-}
+//void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+//{
+//  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
+//  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+//  {
+//    if( childNode.name() == string("ElementRegion") )
+//    {
+//      std::string regionName = childNode.attribute("name").value();
+//      GEOS_LOG_RANK_0(regionName);
+//
+//      ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
+//      elemRegion->ReadXML(childNode);
+//    }
+//  }
+//}
 
 
 void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )

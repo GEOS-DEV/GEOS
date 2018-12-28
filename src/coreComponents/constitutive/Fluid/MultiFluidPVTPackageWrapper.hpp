@@ -52,7 +52,7 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override final {}
 
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 

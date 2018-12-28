@@ -230,7 +230,7 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
           "initial estimate for the incremental displacement of the current step.");
 }
 
-void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
+void SolidMechanics_LagrangianFEM::ProcessInputFile_PostProcess()
 {
   if( !m_timeIntegrationOptionString.empty() )
   {

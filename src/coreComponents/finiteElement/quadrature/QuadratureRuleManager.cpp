@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * QuadratureRuleManager.cpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
- */
-
 #include "QuadratureRuleManager.hpp"
 #include "QuadratureBase.hpp"
 
@@ -48,7 +41,7 @@ ManagedGroup * QuadratureRuleManager::CreateChild( string const & childKey, stri
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void QuadratureRuleManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
@@ -60,11 +53,6 @@ void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
       quadrature->ReadXML(childNode);
     }
   }
-}
-
-void QuadratureRuleManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-{
-  ReadXMLsub( targetNode );
 }
 
 

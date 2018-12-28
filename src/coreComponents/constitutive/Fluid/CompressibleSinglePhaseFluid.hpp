@@ -78,7 +78,7 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
   virtual void InitializePostSubGroups(ManagedGroup * const group) override;
 

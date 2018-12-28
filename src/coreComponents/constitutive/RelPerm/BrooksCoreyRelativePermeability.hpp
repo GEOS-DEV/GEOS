@@ -54,7 +54,7 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
   // RelPerm-specific interface
 
