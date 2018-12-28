@@ -22,6 +22,8 @@
 
 #include "BrooksCoreyRelativePermeability.hpp"
 
+#include <cmath>
+
 namespace geosx
 {
 
@@ -58,6 +60,8 @@ BrooksCoreyRelativePermeability::DeliverClone(string const & name, ManagedGroup 
   clone->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
   clone->m_phaseRelPermExponent   = this->m_phaseRelPermExponent;
   clone->m_phaseRelPermMaxValue   = this->m_phaseRelPermMaxValue;
+
+  clone->m_satScale = this->m_satScale;
 
   std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
   return rval;
@@ -134,12 +138,12 @@ void BrooksCoreyRelativePermeability::ReadXML_PostProcess()
 
 #undef COREY_CHECK_INPUT_LENGTH
 
-  real64 minSum = 0.0;
+  m_satScale = 1.0;
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
-    minSum += m_phaseMinVolumeFraction[ip];
+    m_satScale -= m_phaseMinVolumeFraction[ip];
 
     GEOS_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip] );
@@ -148,7 +152,7 @@ void BrooksCoreyRelativePermeability::ReadXML_PostProcess()
                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip] );
   }
 
-  GEOS_ERROR_IF( minSum > 1.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  GEOS_ERROR_IF( m_satScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
 }
 
 void BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
@@ -160,17 +164,14 @@ void BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( arraySlice1d<real
 
   localIndex const NP = numFluidPhases();
 
-  real64 satScale = 1.0;
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    satScale -= m_phaseMinVolumeFraction[ip];
-
     for (localIndex jp = 0; jp < NP; ++jp)
     {
       dRelPerm_dVolFrac[ip][jp] = 0.0;
     }
   }
-  real64 const satScaleInv = 1.0 / satScale;
+  real64 const satScaleInv = 1.0 / m_satScale;
 
   for (localIndex ip = 0; ip < NP; ++ip)
   {
@@ -178,11 +179,18 @@ void BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( arraySlice1d<real
     real64 const exponent  = m_phaseRelPermExponent[ip];
     real64 const scale     = m_phaseRelPermMaxValue[ip];
 
-    // intermediate value
-    real64 const v = scale * pow( satScaled, exponent - 1.0 );
+    if (satScaled > 0.0 && satScaled < 1.0)
+    {
+      // intermediate value
+      real64 const v = scale * std::pow( satScaled, exponent - 1.0 );
 
-    relPerm[ip] = v * satScaled;
-    dRelPerm_dVolFrac[ip][ip] = v * exponent * satScaleInv;
+      relPerm[ip] = v * satScaled;
+      dRelPerm_dVolFrac[ip][ip] = v * exponent * satScaleInv;
+    }
+    else
+    {
+      relPerm[ip] = (satScaled < 0.0) ? 0.0 : scale;
+    }
   }
 }
 
