@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * BasisFunctionManager.cpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
- */
-
 #include "BasisFunctionManager.hpp"
 #include "BasisBase.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -49,7 +42,7 @@ ManagedGroup * BasisFunctionManager::CreateChild( string const & childKey, strin
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
@@ -63,10 +56,6 @@ void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
-void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-{
-  ReadXMLsub( targetNode );
-}
 
 
 } /* namespace geosx */

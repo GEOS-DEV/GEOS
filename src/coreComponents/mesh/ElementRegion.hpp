@@ -83,7 +83,7 @@ public:
   ElementRegion(const ElementRegion& init);
 //  ElementRegion( ElementRegion&& init);
 
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
 //  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
 //                           map<string,localIndex> & counts );

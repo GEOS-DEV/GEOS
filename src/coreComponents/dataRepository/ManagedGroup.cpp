@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DataObjectManager.cpp
- *
- *  Created on: Nov 21, 2014
- *      Author: rrsettgast
- */
-
 #include "ManagedGroup.hpp"
 
 #include "ArrayUtilities.hpp"
@@ -160,46 +153,6 @@ void ManagedGroup::reserve( indexType const newsize )
   m_capacity = newsize;
 }
 
-void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const rootGroup )
-{
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->BuildDataStructure( rootGroup );
-  }
-}
-
-
-void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
-{
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    // Get the child tag and name
-    std::string childName = childNode.attribute("name").value();
-    if (childName.empty())
-    {
-      childName = childNode.name();
-    }
-
-    // Create children
-    CreateChild(childNode.name(), childName);
-
-    // Add grandchildren
-    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
-    if (newChild != nullptr)
-    {
-      newChild->AddChildren(childNode);
-    }
-    else
-    {
-      if( !this->hasView(childName) )
-      {
-        // GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
-      }
-    }
-  }
-}
-
-
 void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode )
 {
   // loop over the child nodes of the targetNode
@@ -225,14 +178,7 @@ void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & target
   }
 
   ProcessInputFile(targetNode);
-
-
-
-//  for( auto&& subGroup : m_subGroups )
-//  {
-//    subGroup.second->ProcessInputFileRecursive(targetNode);
-//  }
-  ReadXML_PostProcess();
+  ProcessInputFile_PostProcess();
 }
 
 void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
@@ -288,25 +234,6 @@ ManagedGroup * ManagedGroup::CreateChild( string const & childKey, string const 
                         CatalogInterface::Factory( childKey, childName, this ) );
 }
 
-void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
-{
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    // Get the child tag and name
-    std::string childName = childNode.attribute("name").value();
-    if (childName.empty())
-    {
-      childName = childNode.name();
-    }
-
-    // Read the xml on children
-    ManagedGroup * child = this->GetGroup<ManagedGroup>(childName);
-    if (child != nullptr)
-    {
-      child->ReadXML(childNode);
-    }
-  }
-}
 
 void ManagedGroup::PrintDataHierarchy(integer indent)
 {

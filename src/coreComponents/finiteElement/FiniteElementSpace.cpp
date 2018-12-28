@@ -101,7 +101,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> 
   }
 }
 
-void FiniteElementSpace::ReadXML_PostProcess()
+void FiniteElementSpace::ProcessInputFile_PostProcess()
 {
   auto const & basisName = this->getReference<string>(keys::basis);
   auto const & quadratureName = this->getReference<string>(keys::quadrature);

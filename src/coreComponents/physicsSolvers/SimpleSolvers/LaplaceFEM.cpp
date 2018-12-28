@@ -108,7 +108,7 @@ void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 }
 
 
-void LaplaceFEM::ReadXML_PostProcess()
+void LaplaceFEM::ProcessInputFile_PostProcess()
 {
   string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 

@@ -72,7 +72,7 @@ public:
   void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
 
 
-  void ReadXML_PostProcess() override final;
+  void ProcessInputFile_PostProcess() override final;
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 

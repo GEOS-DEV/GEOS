@@ -77,9 +77,9 @@ BrooksCoreyRelativePermeability::DeliverClone(string const & name, ManagedGroup 
 }
 
 
-void BrooksCoreyRelativePermeability::ReadXML_PostProcess()
+void BrooksCoreyRelativePermeability::ProcessInputFile_PostProcess()
 {
-  RelativePermeabilityBase::ReadXML_PostProcess();
+  RelativePermeabilityBase::ProcessInputFile_PostProcess();
 
   localIndex const NP = numFluidPhases();
 

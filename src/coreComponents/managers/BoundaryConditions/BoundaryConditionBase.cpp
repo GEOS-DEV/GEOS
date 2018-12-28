@@ -100,7 +100,7 @@ BoundaryConditionBase::GetCatalog()
   return catalog;
 }
 
-void BoundaryConditionBase::ReadXML_PostProcess()
+void BoundaryConditionBase::ProcessInputFile_PostProcess()
 {}
 
 

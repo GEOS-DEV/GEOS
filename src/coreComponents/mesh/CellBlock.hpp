@@ -80,7 +80,7 @@ public:
    */
   CellBlock(const CellBlock& init);
 
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
   virtual ~CellBlock() override;
 

@@ -207,7 +207,7 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
 
 }
 
-void LinearElasticIsotropic::ReadXML_PostProcess()
+void LinearElasticIsotropic::ProcessInputFile_PostProcess()
 {
   real64 & nu = getReference<real64>( viewKeys().poissonRatio );
   real64 & E  = getReference<real64>( viewKeys().youngsModulus );

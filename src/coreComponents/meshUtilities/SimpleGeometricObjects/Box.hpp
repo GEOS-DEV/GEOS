@@ -41,7 +41,7 @@ public:
 
   static string CatalogName() { return "Box"; }
 
-  virtual void ReadXML_PostProcess() override final;
+  virtual void ProcessInputFile_PostProcess() override final;
 
   bool IsCoordInObject( const R1Tensor& coord ) const override final;
 private:

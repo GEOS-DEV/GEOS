@@ -362,7 +362,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 }
 
-void InternalMeshGenerator::ReadXML_PostProcess()
+void InternalMeshGenerator::ProcessInputFile_PostProcess()
 {
 
 
@@ -550,7 +550,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock->ReadXML_PostProcess();
+    cellBlock->ProcessInputFile_PostProcess();
     cellBlock->SetElementType("C3D8");
   }
 

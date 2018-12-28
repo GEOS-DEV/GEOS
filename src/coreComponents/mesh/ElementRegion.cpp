@@ -70,7 +70,7 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 ElementRegion::~ElementRegion()
 {}
 
-void ElementRegion::ReadXML_PostProcess()
+void ElementRegion::ProcessInputFile_PostProcess()
 {
 //  integer & numNodesPerElem = *(getData<integer>(keys::numNodesPerElement));
 //  numNodesPerElem = 8;

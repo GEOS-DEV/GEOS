@@ -64,7 +64,7 @@ CellBlockSubRegion::~CellBlockSubRegion()
 }
 
 
-void CellBlockSubRegion::ReadXML_PostProcess()
+void CellBlockSubRegion::ProcessInputFile_PostProcess()
 {
 //  integer & numNodesPerElem = numNodesPerElement();
 //  numNodesPerElem = 8;

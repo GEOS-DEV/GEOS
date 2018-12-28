@@ -112,7 +112,7 @@ public:
 //                                     real64 const & dt,
 //                                     DomainPartition * const domain );
 
-  virtual void ReadXML_PostProcess() override final;
+  virtual void ProcessInputFile_PostProcess() override final;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 

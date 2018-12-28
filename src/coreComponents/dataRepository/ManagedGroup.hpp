@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/**
- * @file DataObjectManager.h
- * @date created on Nov 21, 2014
- * @author Randolph R. Settgast
- */
-
 
 #ifndef MANAGEDGROUP_H_
 #define MANAGEDGROUP_H_
@@ -39,7 +33,6 @@
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
-//#include "CodingUtilities/ANSTexception.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
 #define USE_DYNAMIC_CASTING 1;
@@ -469,36 +462,21 @@ public:
 
   void DeregisterViewWrapper( string const & name );
 
-//  template< typename T >
-//  void RegisterViewWrapperRecursive( string const & name );
-//
-//  template< typename T >
-//  void RegisterViewWrapperRecursive( string const & name, string const & targetGroupName );
-
   ///@}
 
   void PrintDataHierarchy(integer indent = 0);
 
-  virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
-
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName );
 
-  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ){}
+  void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
 
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
   /**
    * This function provides a mechanism by which to post process any values that were read into the
    * xml file prior to initialization.
    */
-  virtual void ReadXML_PostProcess() {}
-
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
-
-
-  void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
-
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void ProcessInputFile_PostProcess() {}
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 
@@ -893,39 +871,6 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
   }
   return rval;
 }
-
-//template< typename T >
-//void ManagedGroup::RegisterViewWrapperRecursive( string const & name )
-//{
-//  this->RegisterViewWrapper<T>(name);
-//  forSubGroups( [&] ( ManagedGroup & group ) -> void
-//  {
-//    group.RegisterViewWrapperRecursive<T>(name);
-//  });
-//}
-//
-//template< typename T >
-//void ManagedGroup::RegisterViewWrapperRecursive( string const & name, string const & targetGroupName )
-//{
-//  if( this->m_name == targetGroupName )
-//  {
-//    forSubGroups( [&] ( ManagedGroup & group ) -> void
-//    {
-//      this->RegisterViewWrapperRecursive<T>(name);
-//    });
-//  }
-//  else
-//  {
-//    forSubGroups( [&] ( ManagedGroup & group ) -> void
-//    {
-//      group.RegisterViewWrapperRecursive<T>(name, targetGroupName);
-//    });
-//  }
-//}
-
-
-
-
 
 
 } /* end namespace dataRepository */
