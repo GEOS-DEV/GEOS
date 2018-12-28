@@ -65,6 +65,11 @@ public:
     static constexpr auto newtonTolString           = "newtonTol";
     static constexpr auto maxIterNewtonString       = "maxIterNewton";
     static constexpr auto numNewtonIterationsString = "numberOfNewtonIterations";
+    static constexpr auto maxTimeStepCutsString     = "maxTimeStepCuts";
+    static constexpr auto timeStepCutFactorString   = "timestepCutFactor";
+    static constexpr auto maxLineSearchCutsString   = "maxLineSearchCuts";
+    static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
+    static constexpr auto allowNonConvergedString   = "allowNonConverged";
 
   } viewKeys;
 
@@ -91,6 +96,12 @@ public:
   integer const & numNewtonIterations() const { return m_numNewtonIterations; }
   integer & numNewtonIterations()             { return m_numNewtonIterations; }
 
+  integer maxTimeStepCuts() const             { return m_maxTimeStepCuts; }
+  real64  timeStepCutFactor() const           { return m_timeStepCutFactor; }
+  integer maxLineSearchCuts() const           { return m_maxLineSearchCuts; }
+  real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
+  integer allowNonConverged() const           { return m_allowNonConverged; }
+
 
 
   integer m_verbose;
@@ -111,6 +122,15 @@ public:
   real64  m_newtonTol;
   integer m_maxIterNewton;
   integer m_numNewtonIterations;
+
+  integer m_maxTimeStepCuts;
+  real64  m_timeStepCutFactor;
+  integer m_maxLineSearchCuts;
+  real64  m_lineSearchCutFactor;
+  integer m_allowNonConverged;
+
+
+
 };
 
 } /* namespace geosx */

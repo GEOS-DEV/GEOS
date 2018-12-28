@@ -23,6 +23,8 @@
 #include "BlackOilFluid.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "managers/ProblemManager.hpp"
+#include "fileIO/utils/utils.hpp"
 
 // PVTPackage includes
 #include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
@@ -107,6 +109,29 @@ void BlackOilFluid::createFluid()
   std::vector<std::string> tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector<double> densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector<double> molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
+
+  // if table file names are not absolute paths, convert them to such, based on path to main input/restart file
+  ProblemManager const * const problemManager = this->GetGroupByPath<ProblemManager>("/");
+  if (problemManager != nullptr)
+  {
+    // hopefully at least one of input or restart file names is provided, otherwise '.' will be used
+    string inputFileName = problemManager->getInputFileName();
+    if (inputFileName.empty())
+    {
+      inputFileName = problemManager->getRestartFileName();
+    }
+    string inputFileDir;
+    splitPath( inputFileName, inputFileDir, inputFileName );
+
+    // if table file names are not full paths, convert them to such
+    for (std::string & filename : tableFiles)
+    {
+      if (!isAbsolutePath(filename))
+      {
+        getAbsolutePath( inputFileDir + '/' + filename, filename );
+      }
+    }
+  }
 
   m_fluid = new BlackOilMultiphaseSystem( phases, tableFiles, densities, molarWeights );
 }

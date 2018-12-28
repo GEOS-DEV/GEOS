@@ -82,6 +82,7 @@ protected:
   array1d<real64> m_phaseRelPermExponent;
   array1d<real64> m_phaseRelPermMaxValue;
 
+  real64 m_satScale;
 };
 
 } // namespace constitutive
