@@ -126,6 +126,30 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
       setDescription("Maximum number of Newton iterations");
 
 
+  RegisterViewWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
+      setDefaultValue(2)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Max number of time step cuts");
+
+  RegisterViewWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
+      setDefaultValue(0.5)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Time step cut factor");
+
+  RegisterViewWrapper( viewKeysStruct::maxLineSearchCutsString, &m_maxLineSearchCuts, false )->
+      setDefaultValue(4)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Max number of line search cuts");
+
+  RegisterViewWrapper( viewKeysStruct::lineSearchCutFactorString, &m_lineSearchCutFactor, false )->
+      setDefaultValue(0.5)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Line search cut factor");
+
+  RegisterViewWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged, false )->
+      setDefaultValue(0)->setToDefaultValue()->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Allow non-converged solution to be accepted");
 
 
   RegisterViewWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
@@ -139,6 +163,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   RegisterViewWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
       setDefaultValue(0)->
       setDescription("verbosity level");
+
 
 }
 

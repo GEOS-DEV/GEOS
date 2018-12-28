@@ -127,15 +127,27 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
   DomainPartition     const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   ConstitutiveManager const * cm     = domain->getConstitutiveManager();
 
+  MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
+  m_numPhases     = fluid->numFluidPhases();
+  m_numComponents = fluid->numFluidComponents();
+  m_numDofPerCell = m_numComponents + 1;
+
   RelativePermeabilityBase const * relPerm = cm->GetConstitituveRelation<RelativePermeabilityBase>( m_relPermName );
   GEOS_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
   m_relPermIndex = relPerm->getIndexInParent();
 
-  MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
+  // Consistency check between the models
+  GEOS_ERROR_IF( fluid->numFluidPhases() != relPerm->numFluidPhases(),
+                 "Number of fluid phases differs between fluid model '" << m_fluidName
+                 << "' and relperm model '" << m_relPermName << "'" );
 
-  m_numPhases     = fluid->numFluidPhases();
-  m_numComponents = fluid->numFluidComponents();
-  m_numDofPerCell = m_numComponents + 1;
+  for (localIndex ip = 0; ip < m_numPhases; ++ip)
+  {
+    string const & phase_fl = fluid->phaseName( ip );
+    string const & phase_rp = relPerm->phaseName( ip );
+    GEOS_ERROR_IF( phase_fl != phase_rp, "Phase '" << phase_fl << "' in fluid model '" << m_fluidName
+                   << "' does not match phase '" << phase_rp << "' in relperm model '" << m_relPermName << "'" );
+  }
 }
 
 void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
@@ -304,7 +316,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
   arrayView3d<real64> const & dCompFrac_dCompDens =
     dataGroup->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     real64 totalDensity = 0.0;
 
@@ -379,7 +391,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
   localIndex const NC = m_numComponents;
   localIndex const NP = m_numPhases;
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     stackArray1d<real64, maxNumComp> work( NC );
 
@@ -483,7 +495,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
   arrayView2d<real64> const & phaseVolFrac =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a ) mutable
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
   });
@@ -629,7 +641,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
     arrayView3d<real64> const & phaseCompFracOld = m_phaseCompFracOld[er][esr];
     arrayView1d<real64> const & poroOld          = m_porosityOld[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -714,9 +726,9 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
 
   // loop over all elements and set the dof number if the element is not a ghost
   ReduceSum< reducePolicy, localIndex  > localCount(0);
-  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [=]( localIndex const er,
-                                                     localIndex const esr,
-                                                     localIndex const ei ) mutable ->void
+  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, GEOSX_LAMBDA ( localIndex const er,
+                                                               localIndex const esr,
+                                                               localIndex const ei )
   {
     if( elemGhostRank[er][esr][ei] < 0 )
     {
@@ -940,7 +952,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   jacobian->GlobalAssemble( true );
   residual->GlobalAssemble();
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() >= 3 )
   {
     GEOS_LOG_RANK("After CompositionalMultiphaseFlow::AssembleSystem");
     GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
@@ -1138,7 +1150,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
   real64 constexpr densWeight[numElems] = { 0.5, 0.5 };
 
-  stencilCollection.forAll<RAJA::seq_exec>(GEOSX_LAMBDA (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable
+  stencilCollection.forAll<RAJA::seq_exec>(GEOSX_LAMBDA (StencilCollection<CellDescriptor, real64>::Accessor stencil)
   {
     localIndex const stencilSize = stencil.size();
 
@@ -1311,8 +1323,17 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       // use PPU currently; advanced stuff like IHU would go here
       // TODO isolate into a kernel?
 
-      // compute phase potential gradient and its derivatives (stored in dPhaseFlux_dX)
+      // compute phase potential gradient
       real64 potGrad = presGrad + gravHead;
+
+      // choose upstream cell
+      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+      // skip the phase flux if phase not present or immobile upstream
+      if (std::fabs(mobility[k_up]) < 1e-20) // TODO better constant
+      {
+        break;
+      }
 
       // pressure gradient depends on all points in the stencil
       for (localIndex ke = 0; ke < stencilSize; ++ke)
@@ -1329,9 +1350,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
           dPhaseFlux_dC[ke][jc] += dGravHead_dC[ke][jc];
         }
       }
-
-      // choose upstream cell
-      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
       // compute the phase flux and derivatives using upstream cell mobility
       phaseFlux = mobility[k_up] * potGrad;
@@ -1460,7 +1478,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
     arrayView2d<real64 const> const & pvMult        = m_pvMult[er][esr][m_solidIndex];
     arrayView2d<real64 const> const & dPvMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1765,7 +1783,7 @@ void CompositionalMultiphaseFlow::SolveSystem( EpetraBlockSystem * const blockSy
 
   if( verboseLevel() >= 2 )
   {
-    solution->Print(std::cout);
+    GEOS_LOG_RANK("\nSolution:\n" << *solution);
   }
 }
 
@@ -1795,7 +1813,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
     arrayView2d<real64 const> const & compDens  = m_globalCompDensity[er][esr];
     arrayView2d<real64 const> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei ) mutable
+    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
