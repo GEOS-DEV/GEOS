@@ -23,8 +23,8 @@ set(UNCRUSTIFY_EXECUTABLE "/usr/gapps/GEOS/geosx/thirdPartyLibs/install-toss_3_x
 
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
-set(ENABLE_PAMELA OFF CACHE BOOL "" FORCE)
-set(ENABLE_PVTPackage OFF CACHE BOOL "" FORCE)
+set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
+set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
 #######################################
 # RAJA/CHAI SETUP
