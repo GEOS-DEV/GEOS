@@ -56,19 +56,25 @@ public:
   virtual ~xmlWrapper();
 
   template< typename T >
-  static void as_type( std::vector<T> & target, std::string value, std::string defValue );
+  static void StringToInputVariable( T& target, string value );
 
   template< typename T >
-  static void as_type( array1d<T> & target, std::string value );
+  static void StringToInputVariable( array1d<T> & target, string value );
 
   template< typename T >
-  static void as_type( array2d<T> & target, std::string value );
+  static void StringToInputVariable( array2d<T> & target, string value );
+
+  static void StringToInputVariable( R1Tensor & target, string value );
+
+//  static void StringToInputVariable( R2Tensor & target, string value );
+//
+//  static void StringToInputVariable( R2SymTensor & target, string value );
 
 //  template< typename T >
-//  static T as_type( xmlNode const & node, std::string const name, T defValue
+//  static T StringToInputVariable( xmlNode const & node, string const name, T defValue
 // );
 
-  static R1Tensor as_type( xmlNode const & node, std::string const name, R1Tensor defValue );
+//  static R1Tensor StringToInputVariable( xmlNode const & node, string const name, R1Tensor defValue );
 
 //  static void ReadAttributeAsType( dataRepository::ManagedGroup & group,
 //                                   cxx_utilities::DocumentationNode const & subDocNode,
@@ -80,26 +86,11 @@ public:
                                    xmlNode const & targetNode,
                                    bool const required );
 
-  template< typename T, int NDIM >
-  static void ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
-                                   string const & name,
-                                   xmlNode const & targetNode,
-                                   bool const required );
-
-  template< typename T >
+  template< typename T, typename T_DEF = T >
   static void ReadAttributeAsType( T & rval,
                                    string const & name,
                                    xmlNode const & targetNode ,
-                                   T const & defVal );
-
-  template< typename T, int NDIM >
-  static void ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
-                                   string const & name,
-                                   xmlNode const & targetNode,
-                                   T const & defVal );
-
-
-
+                                   T_DEF const & defVal );
 
   template< typename T >
   static typename std::enable_if_t<!dataRepository::DefaultValue<T>::has_default_value>
@@ -124,9 +115,16 @@ public:
 
 
 template< typename T >
-void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::string defValue )
+void xmlWrapper::StringToInputVariable( T & target, string inputValue )
 {
-  std::string csvstr = ( inputValue!="") ? inputValue : defValue;
+  std::istringstream ss( inputValue );
+  ss>>target;
+}
+
+template< typename T >
+void xmlWrapper::StringToInputVariable( array1d<T> & target, string inputValue )
+{
+  string csvstr = inputValue;
   std::istringstream ss( csvstr );
 
   T value;
@@ -146,32 +144,10 @@ void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::
 }
 
 template< typename T >
-void xmlWrapper::as_type( array1d<T> & target, std::string inputValue )
-{
-  std::string csvstr = inputValue;
-  std::istringstream ss( csvstr );
-
-  T value;
-
-  while( ss.peek() == ',' || ss.peek() == ' ' )
-  {
-    ss.ignore();
-  }
-  while( !((ss>>value).fail()) )
-  {
-    target.push_back( value );
-    while( ss.peek() == ',' || ss.peek() == ' ' )
-    {
-      ss.ignore();
-    }
-  }
-}
-
-template< typename T >
-void xmlWrapper::as_type( array2d<T> & target, std::string inputValue )
+void xmlWrapper::StringToInputVariable( array2d<T> & target, string inputValue )
 {
   array1d<T> temp;
-  as_type( temp, inputValue );
+  StringToInputVariable( temp, inputValue );
 
   target.resize(1,temp.size());
   for( localIndex i=0 ; i<temp.size() ; ++i )
@@ -191,68 +167,20 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 
   GEOS_ERROR_IF( xmlatt.empty() && required , "Input variable " + name + " is required in " + targetNode.path() );
 
-  std::istringstream ss( xmlatt.value() );
-
-  ss>>rval;
-
-  GEOS_ERROR_IF( !ss.eof(), "Expecting scalar value for " + name + " in " + targetNode.path() );
+  StringToInputVariable( rval, xmlatt.value() );
 }
 
-template< typename T, int NDIM >
-void xmlWrapper::ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
-                                      string const & name,
-                                      xmlNode const & targetNode,
-                                      bool const required )
-{
-  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
 
-  GEOS_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
-
-  as_type( rval, xmlatt.value() );
-}
-
-template< typename T >
+template< typename T, typename T_DEF >
 void xmlWrapper::ReadAttributeAsType( T & rval,
-                                   string const & name,
-                                   xmlNode const & targetNode,
-                                   T const & defVal )
-{
-  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
-  std::vector< T > xmlVal;
-
-  if( !xmlatt.empty() )
-  {
-    as_type( xmlVal, xmlatt.value(), "" );
-    if( xmlVal.size() == 0 )
-    {
-      rval = defVal;
-    }
-    else
-    {
-      cxx_utilities::equateStlVector(rval, xmlVal);
-    }
-  }
-  else
-  {
-    rval = defVal;
-  }
-}
-
-template< typename T, int NDIM >
-void xmlWrapper::ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
                                       string const & name,
                                       xmlNode const & targetNode,
-                                      T const & defVal )
+                                      T_DEF const & defVal )
 {
   pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
-
   if( !xmlatt.empty() )
   {
-    as_type( rval, xmlatt.value() );
-    if( rval.size() == 0 )
-    {
-      rval = defVal;
-    }
+    StringToInputVariable( rval, xmlatt.value() );
   }
   else
   {
@@ -260,22 +188,6 @@ void xmlWrapper::ReadAttributeAsType( LvArray::Array<T,NDIM,localIndex> & rval,
   }
 }
 
-
-//
-//template< typename T >
-//T xmlWrapper::as_type( xmlNode const & node, std::string const name, T
-// defValue )
-//{
-//  T rval = defValue;
-//  pugi::xml_attribute att = node.attribute( name.c_str() );
-//
-//  if( !att.empty() )
-//  {
-//
-//  }
-//
-//  return rval;
-//}
 
 
 
