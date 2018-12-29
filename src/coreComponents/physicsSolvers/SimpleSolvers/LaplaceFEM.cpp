@@ -96,12 +96,12 @@ void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
     nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
-        setDefaultValue(0.0)->
+        setApplyDefaultValue(0.0)->
         setPlotLevel(PlotLevel::LEVEL_0)->
         setDescription("Primary field variable");
 
     nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString )->
-        setDefaultValue(-1)->
+        setApplyDefaultValue(-1)->
         setPlotLevel(PlotLevel::LEVEL_1)->
         setDescription("Global DOF numbers for the primary field variable");
   }

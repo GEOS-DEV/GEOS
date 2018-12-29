@@ -44,17 +44,17 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
   m_eventThreshold()
 {
   RegisterViewWrapper(viewKeyStruct::timeFrequencyString, &m_timeFrequency, false )->
-      setDefaultValue(-1.0)->
+      setApplyDefaultValue(-1.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("event frequency (time)");
 
   RegisterViewWrapper(viewKeyStruct::cycleFrequencyString, &m_cycleFrequency, false )->
-      setDefaultValue(1)->
+      setApplyDefaultValue(1)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("event frequency (cycle, Default)");
 
   RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
-      setDefaultValue(-1)->
+      setApplyDefaultValue(-1)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("allows timesteps to be truncated to match time frequency perfectly");
 
@@ -75,7 +75,7 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
       setDescription("Selection of the min/avg/max for functions that target vectors");
 
   RegisterViewWrapper(viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
-      setDefaultValue(10000000000.0)->
+      setApplyDefaultValue(10000000000.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("event threshold");
 

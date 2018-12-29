@@ -50,7 +50,7 @@ SiloOutput::SiloOutput( std::string const & name,
       setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
-      setDefaultValue(1)->setToDefaultValue()->
+      setApplyDefaultValue(1)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("");
 

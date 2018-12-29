@@ -46,17 +46,17 @@ EventManager::EventManager( std::string const & name,
   m_currentMaxDt()
 {
   RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
-      setDefaultValue(-1.0)->
+      setApplyDefaultValue(-1.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Maximum simulation time.");
 
   RegisterViewWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
-      setDefaultValue(-1.0)->
+      setApplyDefaultValue(-1.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Maximum simulation cycle.");
 
   RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
-      setDefaultValue(0)->
+      setApplyDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Maximum simulation time.");
 

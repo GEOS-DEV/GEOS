@@ -49,7 +49,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_porosityRef()
 {
   RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
-      setDefaultValue(1)->setToDefaultValue()->
+      setApplyDefaultValue(1)->
       setInputFlag(InputFlags::REQUIRED)->
       setDescription("Flag that enables/disables gravity");
 
@@ -84,11 +84,11 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     {
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
       cellBlock->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setDefaultValue( 0.0 );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
     });
 
     FaceManager * const faceManager = meshLevel->getFaceManager();
-    faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setDefaultValue( 0.0 );
+    faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
   }
 }
 

@@ -151,33 +151,33 @@ void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
     nodeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-        setDefaultValue(-1)->
+        setApplyDefaultValue(-1)->
         setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
         setDescription("Parent index of node.");
 
     nodeManager->RegisterViewWrapper<integer_array>(viewKeyStruct::degreeFromCrackString)->
-        setDefaultValue(-1)->
+        setApplyDefaultValue(-1)->
         setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
         setDescription("connectivity distance from crack.");
 
 
     edgeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-        setDefaultValue(-1)->
+        setApplyDefaultValue(-1)->
         setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
         setDescription("Parent index of the edge.");
 
     faceManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-        setDefaultValue(-1)->
+        setApplyDefaultValue(-1)->
         setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
         setDescription("Parent index of the face.");
 
     faceManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
-        setDefaultValue(-1)->
+        setApplyDefaultValue(-1)->
         setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
         setDescription("child index of the face.");
 
     faceManager->RegisterViewWrapper<integer_array>(viewKeyStruct::ruptureStateString)->
-        setDefaultValue(0)->
+        setApplyDefaultValue(0)->
         setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
         setDescription("Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured");
   }

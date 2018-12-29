@@ -41,7 +41,7 @@ OutputBase::OutputBase( std::string const & name,
       setDescription("slave directory path");
 
   RegisterViewWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
-      setDefaultValue(1)->setToDefaultValue()->
+      setApplyDefaultValue(1)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Number of plot files.");
 

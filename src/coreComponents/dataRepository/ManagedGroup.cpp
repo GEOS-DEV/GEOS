@@ -178,7 +178,7 @@ void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & target
   }
 
   ProcessInputFile(targetNode);
-  ProcessInputFile_PostProcess();
+//  ProcessInputFile_PostProcess();
 }
 
 void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
@@ -213,6 +213,16 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
     }
   }
 }
+
+void ManagedGroup::ProcessInputFileRecursive_PostProcess()
+{
+  for( auto const & subGroupIter : m_subGroups )
+  {
+    subGroupIter.second->ProcessInputFileRecursive_PostProcess();
+  }
+  ProcessInputFile_PostProcess();
+}
+
 
 
 void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies )

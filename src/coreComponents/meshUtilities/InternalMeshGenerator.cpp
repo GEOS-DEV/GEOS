@@ -97,17 +97,17 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
       setDescription("number of elements in the z-direction within each mesh block");
 
   RegisterViewWrapper(keys::xBias, &(m_nElemBias[0]), false )->
-      setDefaultValue(1.0)->
+      setApplyDefaultValue(1.0)->
       setSizedFromParent(0)->
       setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::yBias, &(m_nElemBias[1]), false )->
-      setDefaultValue(1.0)->
+      setApplyDefaultValue(1.0)->
       setSizedFromParent(0)->
       setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::zBias, &(m_nElemBias[2]), false )->
-      setDefaultValue(1.0)->
+      setApplyDefaultValue(1.0)->
       setSizedFromParent(0)->
       setInputFlag(InputFlags::OPTIONAL);
 
@@ -122,7 +122,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
       setDescription("element types of each mesh block");
 
   RegisterViewWrapper(keys::trianglePattern, &m_trianglePattern, false )->
-      setDefaultValue(0)->
+      setApplyDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");;
 

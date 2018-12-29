@@ -46,27 +46,27 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
   m_viscosityRelation( ExponentApproximationType::Linear )
 {
   RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, 0 )->
-      setDefaultValue(0.0)->
+      setApplyDefaultValue(0.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Fluid compressibility");
 
   RegisterViewWrapper( viewKeys.viscosibility.Key(), &m_viscosibility, 0 )->
-      setDefaultValue(0.0)->
+      setApplyDefaultValue(0.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Fluid viscosity exponential coefficient");
 
   RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 )->
-      setDefaultValue(0.0)->
+      setApplyDefaultValue(0.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Reference pressure");
 
   RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 )->
-      setDefaultValue(1000.0)->
+      setApplyDefaultValue(1000.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Reference fluid density");
 
   RegisterViewWrapper( viewKeys.referenceViscosity.Key(), &m_referenceViscosity, 0 )->
-      setDefaultValue(0.001)->
+      setApplyDefaultValue(0.001)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Reference fluid viscosity");
 

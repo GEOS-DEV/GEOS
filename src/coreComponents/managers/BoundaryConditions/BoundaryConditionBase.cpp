@@ -50,12 +50,12 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
       setDescription("Name of field that boundary condition is applied to.");
 
   RegisterViewWrapper( viewKeyStruct::componentString, &m_component, 0 )->
-      setDefaultValue(0)->
+      setApplyDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Component of field (if tensor) to apply boundary condition to");
 
   RegisterViewWrapper( viewKeyStruct::directionString, &m_direction, 0 )->
-//        setDefaultValue(0)->
+//        setApplyDefaultValue(0)->
         setInputFlag(InputFlags::OPTIONAL)->
         setDescription("Direction to apply boundary condition to");
 
@@ -68,23 +68,23 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
       setDescription("Name of table that specifies the on/off application of the bc.");
 
   RegisterViewWrapper( viewKeyStruct::scaleString, &m_scale, 0 )->
-      setDefaultValue(0.0)->
+      setApplyDefaultValue(0.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Scale factor for value of BC.");
 
 
   RegisterViewWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, 0 )->
-      setDefaultValue(0)->
+      setApplyDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("BC is applied as an initial condition.");
 
   RegisterViewWrapper( viewKeyStruct::beginTimeString, &m_beginTime, 0 )->
-      setDefaultValue(-1.0e99)->setToDefaultValue()->
+      setApplyDefaultValue(-1.0e99)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("time at which BC will start being applied.");
 
   RegisterViewWrapper( viewKeyStruct::endTimeString, &m_endTime, 0 )->
-      setDefaultValue(1.0e99)->setToDefaultValue()->
+      setApplyDefaultValue(1.0e99)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("time at which bc will stop being applied");
 }

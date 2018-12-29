@@ -478,6 +478,9 @@ public:
 
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
+
+  void ProcessInputFileRecursive_PostProcess();
+
   /**
    * This function provides a mechanism by which to post process any values that were read into the
    * xml file prior to initialization.

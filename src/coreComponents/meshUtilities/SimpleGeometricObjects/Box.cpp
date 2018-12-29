@@ -47,7 +47,7 @@ Box::Box( const std::string& name, ManagedGroup * const parent ):
       setDescription("Maximum (x,y,z) coordinates of the box");
 
   RegisterViewWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
-      setDefaultValue(-90.0)->
+      setApplyDefaultValue(-90.0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("The strike angle of the box");
 
