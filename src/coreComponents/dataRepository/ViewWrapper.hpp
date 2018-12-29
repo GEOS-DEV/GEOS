@@ -811,22 +811,30 @@ public:
     return this;
   }
 
-  template< typename U=T >
-  typename std::enable_if<!(DefaultValue<U>::has_default_value), ViewWrapper<T> * >::type
-  setDefaultValue( T const & defaultVal )
-  {
-    return nullptr;
-  }
-
+//  template< typename U=T >
+//  typename std::enable_if<!(DefaultValue<U>::has_default_value), ViewWrapper<T> * >::type
+//  setDefaultValue( T const & defaultVal )
+//  {
+//    static_assert(true,"setDefaultValue() is not defined for this type");
+//    return nullptr;
+//  }
 
   template< typename U=T >
   typename std::enable_if<DefaultValue<U>::has_default_value, ViewWrapper<T> *>::type
-  setToDefaultValue()
+  setApplyDefaultValue( typename DefaultValue<U>::value_type const & defaultVal )
   {
+    m_default.value = defaultVal;
     *m_data = m_default.value;
     return this;
   }
 
+//  template< typename U=T >
+//  typename std::enable_if<!(DefaultValue<U>::has_default_value), ViewWrapper<T> * >::type
+//  setApplyDefaultValue( T const & defaultVal )
+//  {
+//    static_assert(true,"setApplyDefaultValue() is not defined for this type");
+//    return nullptr;
+//  }
 
   /// Case for if m_data has a member function called "data()"
   template<class U = T>

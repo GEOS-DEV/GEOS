@@ -41,7 +41,7 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
     setDescription("Solid compressibility");
 
   RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, false )->
-    setDefaultValue(0.0)->
+    setApplyDefaultValue(0.0)->
     setDescription("Reference pressure for fluid compressibility");
 
   RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false );

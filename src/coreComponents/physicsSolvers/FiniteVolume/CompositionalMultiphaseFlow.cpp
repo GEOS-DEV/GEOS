@@ -63,7 +63,7 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
       setDescription("Temperature");
 
   this->RegisterViewWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
-      setDefaultValue(0)->setToDefaultValue()->
+      setApplyDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Use mass formulation instead of molar");
 

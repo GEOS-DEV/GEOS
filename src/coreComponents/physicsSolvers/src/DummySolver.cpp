@@ -35,7 +35,7 @@ DummySolver::DummySolver( const std::string& name,
 {
 
   RegisterViewWrapper<real64>( dummyViewKeys.rand_scale.Key() )->
-      setDefaultValue(1e-9)->setToDefaultValue()->
+      setApplyDefaultValue(1e-9)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Scale for modifying requested dt");
 }

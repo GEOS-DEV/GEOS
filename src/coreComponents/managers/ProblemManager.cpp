@@ -142,22 +142,22 @@ ProblemManager::ProblemManager( const std::string& name,
       setDescription("Directory in which to put the output files, if not specified defaults to the current directory.");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.xPartitionsOverride.Key() )->
-      setDefaultValue(1)->setToDefaultValue()->
+      setApplyDefaultValue(1)->
       setRestartFlags(RestartFlags::WRITE)->
       setDescription("Number of partitions in the x-direction");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.yPartitionsOverride.Key() )->
-      setDefaultValue(1)->setToDefaultValue()->
+      setApplyDefaultValue(1)->
       setRestartFlags(RestartFlags::WRITE)->
       setDescription("Number of partitions in the y-direction");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.zPartitionsOverride.Key() )->
-      setDefaultValue(1)->setToDefaultValue()->
+      setApplyDefaultValue(1)->
       setRestartFlags(RestartFlags::WRITE)->
       setDescription("Number of partitions in the z-direction");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.overridePartitionNumbers.Key() )->
-      setDefaultValue(0)->setToDefaultValue()->
+      setApplyDefaultValue(0)->
       setRestartFlags(RestartFlags::WRITE)->
       setDescription("Flag to indicate partition number override");
 
@@ -166,7 +166,7 @@ ProblemManager::ProblemManager( const std::string& name,
       setDescription("Name of the output schema");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.schemaLevel.Key() )->
-      setDefaultValue(0)->setToDefaultValue()->
+      setApplyDefaultValue(0)->
       setRestartFlags(RestartFlags::WRITE)->
       setDescription("Schema verbosity level (0=default, 1=development, 2=all)");
 }
@@ -530,18 +530,22 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
 
   ProcessInputFileRecursive( xmlProblemNode );
+  ProcessInputFileRecursive_PostProcess();
 
 
   // The function manager is handled separately
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
     m_functionManager->ProcessInputFileRecursive( topLevelNode );
+    m_functionManager->ProcessInputFileRecursive_PostProcess(  );
   }
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
     BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
     bcManager->ProcessInputFileRecursive( topLevelNode );
+    bcManager->ProcessInputFileRecursive_PostProcess();
+
   }
 
   // The objects in domain are handled separately for now
@@ -549,6 +553,7 @@ void ProblemManager::ParseInputFile()
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
+    constitutiveManager->ProcessInputFileRecursive_PostProcess();
 
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
@@ -558,6 +563,7 @@ void ProblemManager::ParseInputFile()
     topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     elementManager->ProcessInputFileRecursive( topLevelNode );
+    elementManager->ProcessInputFileRecursive_PostProcess();
   }
 
   // Documentation output
