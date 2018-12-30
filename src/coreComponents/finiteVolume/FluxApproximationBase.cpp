@@ -40,19 +40,19 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
   m_boundarySetData = this->RegisterGroup(groupKeyStruct::boundarySetDataString);
 
   RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of primary solution field");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of primary solution field");
 
   RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false)->
-//      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of boundary (face) field");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of boundary (face) field");
 
   RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of coefficient field");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of coefficient field");
 
   RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString)->
-      setRestartFlags(RestartFlags::NO_WRITE);
+    setRestartFlags(RestartFlags::NO_WRITE);
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
