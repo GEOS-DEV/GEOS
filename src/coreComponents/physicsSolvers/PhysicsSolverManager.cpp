@@ -41,8 +41,8 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
   m_blockSystemRepository()
 {
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
-      setApplyDefaultValue({0,0,0})->
-      setInputFlag(InputFlags::OPTIONAL);
+    setApplyDefaultValue({0,0,0})->
+    setInputFlag(InputFlags::OPTIONAL);
 
   this->RegisterViewWrapper( viewKeyStruct::blockSystemRepositoryString, &m_blockSystemRepository, 0 )->setRestartFlags( RestartFlags::NO_WRITE );
 }

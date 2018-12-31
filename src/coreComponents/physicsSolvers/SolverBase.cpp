@@ -47,20 +47,20 @@ SolverBase::SolverBase( std::string const & name,
 
 
   RegisterViewWrapper(viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Verbosity level");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Verbosity level");
 
   RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
-      setApplyDefaultValue(0.5)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
           "Values should be in the interval (0,1] ");
 
   RegisterViewWrapper(viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
-      setApplyDefaultValue(0.5)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
           "Values should be in the interval (0,1] ");
 
 }

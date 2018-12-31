@@ -36,7 +36,7 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
   m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this)
 {
   RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
-      setSizedFromParent(0);
+    setSizedFromParent(0);
 
   RegisterViewWrapper( viewKeyStruct::constitutiveMapString,
                        &m_constitutiveMapView, 0);

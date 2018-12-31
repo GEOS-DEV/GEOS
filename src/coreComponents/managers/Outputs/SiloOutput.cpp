@@ -42,17 +42,17 @@ SiloOutput::SiloOutput( std::string const & name,
   m_plotLevel()
 {
   RegisterViewWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
-      setApplyDefaultValue(1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
 }
 

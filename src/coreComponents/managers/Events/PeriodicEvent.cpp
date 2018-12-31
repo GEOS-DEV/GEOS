@@ -44,40 +44,40 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
   m_eventThreshold()
 {
   RegisterViewWrapper(viewKeyStruct::timeFrequencyString, &m_timeFrequency, false )->
-      setApplyDefaultValue(-1.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("event frequency (time)");
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("event frequency (time)");
 
   RegisterViewWrapper(viewKeyStruct::cycleFrequencyString, &m_cycleFrequency, false )->
-      setApplyDefaultValue(1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("event frequency (cycle, Default)");
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("event frequency (cycle, Default)");
 
   RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
-      setApplyDefaultValue(-1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("allows timesteps to be truncated to match time frequency perfectly");
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows timesteps to be truncated to match time frequency perfectly");
 
   RegisterViewWrapper(viewKeyStruct::functionNameString, &m_functionName, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Name of the symbolic math function");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of the symbolic math function");
 
   RegisterViewWrapper(viewKeyStruct::functionInputObjectString, &m_functionInputObject, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Path of the function input object (directory format)");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Path of the function input object (directory format)");
 
   RegisterViewWrapper(viewKeyStruct::functionInputSetnameString, &m_functionInputSetname, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Setname of the input object (if empty, default to everything)");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Setname of the input object (if empty, default to everything)");
 
   RegisterViewWrapper(viewKeyStruct::functionStatOptionString, &m_functionStatOption, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Selection of the min/avg/max for functions that target vectors");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Selection of the min/avg/max for functions that target vectors");
 
   RegisterViewWrapper(viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
-      setApplyDefaultValue(10000000000.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("event threshold");
+    setApplyDefaultValue(10000000000.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("event threshold");
 
 }
 
