@@ -1258,6 +1258,50 @@ public:
   }
 
 
+  /** @name overriden  setters
+   *  Group of setters that override non-virtual functions in ViewWrapperBase
+   */
+  ///@{
+
+  ViewWrapper<T> * setSizedFromParent( int val )
+  {
+    ViewWrapperBase::setSizedFromParent(val);
+    return this;
+  }
+
+  ViewWrapper<T> * setRestartFlags( RestartFlags flags)
+  {
+    ViewWrapperBase::setRestartFlags(flags);
+    return this;
+  }
+
+  ViewWrapper<T> * setPlotLevel( PlotLevel const flag )
+  {
+    ViewWrapperBase::setPlotLevel(flag);
+    return this;
+  }
+
+  ViewWrapper<T> * setPlotLevel( int const flag )
+  {
+    ViewWrapperBase::setPlotLevel(flag);
+    return this;
+  }
+
+  ViewWrapper<T> * setInputFlag( InputFlags const input )
+  {
+    ViewWrapperBase::setInputFlag(input);
+    return this;
+  }
+
+  ViewWrapper<T> * setDescription( string const & description )
+  {
+    ViewWrapperBase::setDescription( description );
+    return this;
+  }
+
+
+  ///@}
+
   bool m_ownsData;
   T * m_data;
   DefaultValue<T> m_default;
