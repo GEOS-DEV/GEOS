@@ -39,20 +39,20 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string co
   : RelativePermeabilityBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
-      setApplyDefaultValue(0.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Minimum volume fraction value for each phase");
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Minimum volume fraction value for each phase");
 
   RegisterViewWrapper( viewKeyStruct::phaseRelPermExponentString,   &m_phaseRelPermExponent,   false )->
-      setApplyDefaultValue(1.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("MinimumRel perm power law exponent for each phase");
+    setApplyDefaultValue(1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("MinimumRel perm power law exponent for each phase");
 
 
   RegisterViewWrapper( viewKeyStruct::phaseRelPermMaxValueString,   &m_phaseRelPermMaxValue,   false )->
-      setApplyDefaultValue(0.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Maximum rel perm value for each phase");
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum rel perm value for each phase");
 
 }
 

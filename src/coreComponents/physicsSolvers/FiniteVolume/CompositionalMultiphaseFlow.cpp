@@ -59,17 +59,17 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
   this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Temperature");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Temperature");
 
   this->RegisterViewWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Use mass formulation instead of molar");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Use mass formulation instead of molar");
 
   this->RegisterViewWrapper( viewKeyStruct::relPermNameString,  &m_relPermName,  false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of the relative permeability constitutive model to use");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of the relative permeability constitutive model to use");
 
   this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
 

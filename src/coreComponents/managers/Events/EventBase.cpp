@@ -55,58 +55,58 @@ EventBase::EventBase( const std::string& name,
   m_target(nullptr)
 {
   RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("event target");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("event target");
 
   RegisterViewWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
-      setApplyDefaultValue(0.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Start time of this event");
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Start time of this event");
 
   RegisterViewWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
-      setApplyDefaultValue(1e100)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("End time of this event");
+    setApplyDefaultValue(1e100)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("End time of this event");
 
   RegisterViewWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
-      setApplyDefaultValue(-1.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Forced timestep for this event");
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Forced timestep for this event");
 
   RegisterViewWrapper(viewKeyStruct::allowSuperstepString, &m_allowSuperstep, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("allows event super-stepping (dt_super=dt+t-t_last)");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows event super-stepping (dt_super=dt+t-t_last)");
 
   RegisterViewWrapper(viewKeyStruct::allowSubstepString, &m_allowSubstep, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("allows event sub-stepping");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows event sub-stepping");
 
   RegisterViewWrapper(viewKeyStruct::substepFactorString, &m_substepFactor, false )->
-      setApplyDefaultValue(1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("integer substep factor (dt_sub=dt/f)");
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("integer substep factor (dt_sub=dt/f)");
 
   RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("allows timesteps to be truncated to match the start/stop times exactly");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows timesteps to be truncated to match the start/stop times exactly");
 
 
   RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
-      setApplyDefaultValue(-1.0e100)->
-      setDescription("last event occurrence (time)");
+    setApplyDefaultValue(-1.0e100)->
+    setDescription("last event occurrence (time)");
 
   RegisterViewWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
-      setApplyDefaultValue(-1.0e9)->
-      setDescription("last event occurrence (cycle)");
+    setApplyDefaultValue(-1.0e9)->
+    setDescription("last event occurrence (cycle)");
 
   RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
-      setDescription("index of the current subevent");
+    setDescription("index of the current subevent");
 
   RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_isTargetExecuting, false )->
-      setDescription("index of the current subevent");
+    setDescription("index of the current subevent");
 
 
 }

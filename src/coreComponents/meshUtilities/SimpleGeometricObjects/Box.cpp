@@ -39,17 +39,17 @@ Box::Box( const std::string& name, ManagedGroup * const parent ):
   m_sinStrike{0.0}
 {
   RegisterViewWrapper( viewKeyStruct::xMinString, &m_min, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Minimum (x,y,z) coordinates of the box");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Minimum (x,y,z) coordinates of the box");
 
   RegisterViewWrapper( viewKeyStruct::xMaxString, &m_max, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Maximum (x,y,z) coordinates of the box");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Maximum (x,y,z) coordinates of the box");
 
   RegisterViewWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
-      setApplyDefaultValue(-90.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("The strike angle of the box");
+    setApplyDefaultValue(-90.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("The strike angle of the box");
 
   RegisterViewWrapper( viewKeyStruct::boxCenterString, &m_boxCenter, false );
   RegisterViewWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike, false );

@@ -52,117 +52,117 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 {
   setRestartFlags(RestartFlags::NO_WRITE);
   RegisterViewWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("verbosity level");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("verbosity level");
 
   RegisterViewWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::krylovTolString, &m_krylovTol, false )->
-      setApplyDefaultValue(1.0e-6)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Allowable tolerance for krylov solve");
+    setApplyDefaultValue(1.0e-6)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Allowable tolerance for krylov solve");
 
   RegisterViewWrapper(viewKeysStruct::numKrylovIterString, &m_numKrylovIter, false )->
-      setApplyDefaultValue(100)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Maximum number of Krylov Iterations");
+    setApplyDefaultValue(100)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum number of Krylov Iterations");
 
   RegisterViewWrapper(viewKeysStruct::kspaceString, &m_kspace, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::ilut_fillString, &m_ilut_fill, false )->
-      setApplyDefaultValue(3.0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(3.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::ilut_dropString, &m_ilut_drop, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::useMLPrecondString, &m_useMLPrecond, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::useInnerSolverString, &m_useInnerSolver, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::scalingOptionString, &m_scalingOption, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::useBicgstabString, &m_useBicgstab, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::useDirectSolverString, &m_useDirectSolver, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::useNewtonSolveString, &m_useNewtonSolve, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::newtonTolString, &m_newtonTol, false )->
-      setApplyDefaultValue(1.0e-6)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("");
+    setApplyDefaultValue(1.0e-6)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::maxIterNewtonString, &m_maxIterNewton, false )->
-      setApplyDefaultValue(5)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Maximum number of Newton iterations");
+    setApplyDefaultValue(5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum number of Newton iterations");
 
 
   RegisterViewWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
-      setApplyDefaultValue(2)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Max number of time step cuts");
+    setApplyDefaultValue(2)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Max number of time step cuts");
 
   RegisterViewWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
-      setApplyDefaultValue(0.5)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Time step cut factor");
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Time step cut factor");
 
   RegisterViewWrapper( viewKeysStruct::maxLineSearchCutsString, &m_maxLineSearchCuts, false )->
-      setApplyDefaultValue(4)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Max number of line search cuts");
+    setApplyDefaultValue(4)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Max number of line search cuts");
 
   RegisterViewWrapper( viewKeysStruct::lineSearchCutFactorString, &m_lineSearchCutFactor, false )->
-      setApplyDefaultValue(0.5)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Line search cut factor");
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Line search cut factor");
 
   RegisterViewWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Allow non-converged solution to be accepted");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Allow non-converged solution to be accepted");
 
 
   RegisterViewWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
-      setApplyDefaultValue(0)->
-      setDescription("verbosity level");
+    setApplyDefaultValue(0)->
+    setDescription("verbosity level");
 
   RegisterViewWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
-      setApplyDefaultValue(0)->
-      setDescription("verbosity level");
+    setApplyDefaultValue(0)->
+    setDescription("verbosity level");
 
   RegisterViewWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
-      setApplyDefaultValue(0)->
-      setDescription("verbosity level");
+    setApplyDefaultValue(0)->
+    setDescription("verbosity level");
 
 
 }

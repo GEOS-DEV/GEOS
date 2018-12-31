@@ -43,8 +43,8 @@ HaltEvent::HaltEvent( const std::string& name,
   m_lastTime = m_startTime;  
 
   RegisterViewWrapper<real64>( haltEventViewKeys.maxRuntime.Key() )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription( "max runtime" );
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription( "max runtime" );
 }
 
 

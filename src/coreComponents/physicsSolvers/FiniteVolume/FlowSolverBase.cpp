@@ -49,21 +49,21 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_porosityRef()
 {
   RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
-      setApplyDefaultValue(1)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Flag that enables/disables gravity");
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Flag that enables/disables gravity");
 
   this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of discretization object to use for this solver.");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of discretization object to use for this solver.");
 
   this->RegisterViewWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of fluid constitutive object to use for this solver.");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of fluid constitutive object to use for this solver.");
 
   this->RegisterViewWrapper( viewKeyStruct::solidNameString,  &m_solidName,  false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of solid constitutive object to use for this solver");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of solid constitutive object to use for this solver");
 
   this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
   this->RegisterViewWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );

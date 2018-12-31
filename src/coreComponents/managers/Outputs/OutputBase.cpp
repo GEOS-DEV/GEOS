@@ -37,13 +37,13 @@ OutputBase::OutputBase( std::string const & name,
   m_parallelThreads(1)
 {
   RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("slave directory path");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("slave directory path");
 
   RegisterViewWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
-      setApplyDefaultValue(1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Number of plot files.");
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Number of plot files.");
 
 }
 

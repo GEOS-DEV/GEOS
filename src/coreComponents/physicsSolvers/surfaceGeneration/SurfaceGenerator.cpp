@@ -151,35 +151,35 @@ void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
     nodeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-        setApplyDefaultValue(-1)->
-        setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-        setDescription("Parent index of node.");
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of node.");
 
     nodeManager->RegisterViewWrapper<integer_array>(viewKeyStruct::degreeFromCrackString)->
-        setApplyDefaultValue(-1)->
-        setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-        setDescription("connectivity distance from crack.");
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("connectivity distance from crack.");
 
 
     edgeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-        setApplyDefaultValue(-1)->
-        setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-        setDescription("Parent index of the edge.");
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of the edge.");
 
     faceManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-        setApplyDefaultValue(-1)->
-        setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-        setDescription("Parent index of the face.");
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of the face.");
 
     faceManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
-        setApplyDefaultValue(-1)->
-        setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-        setDescription("child index of the face.");
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("child index of the face.");
 
     faceManager->RegisterViewWrapper<integer_array>(viewKeyStruct::ruptureStateString)->
-        setApplyDefaultValue(0)->
-        setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
-        setDescription("Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured");
+      setApplyDefaultValue(0)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+      setDescription("Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured");
   }
 }
 

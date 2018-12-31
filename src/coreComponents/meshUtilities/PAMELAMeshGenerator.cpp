@@ -52,8 +52,8 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * co
   MeshGeneratorBase( name, parent )
 {
   this->RegisterViewWrapper<string>(keys::filePath)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("path to the mesh file");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("path to the mesh file");
 }
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()

@@ -67,64 +67,64 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
   m_dim = 3;
 
   RegisterViewWrapper(keys::xCoords, &(m_vertices[0]), false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("x-coordinates of each mesh block vertex");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("x-coordinates of each mesh block vertex");
 
   RegisterViewWrapper(keys::yCoords, &(m_vertices[1]), false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("y-coordinates of each mesh block vertex");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("y-coordinates of each mesh block vertex");
 
   RegisterViewWrapper(keys::zCoords, &(m_vertices[2]), false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("z-coordinates of each mesh block vertex");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("z-coordinates of each mesh block vertex");
 
   RegisterViewWrapper(keys::xElems, &(m_nElems[0]), false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("number of elements in the x-direction within each mesh block");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("number of elements in the x-direction within each mesh block");
 
   RegisterViewWrapper(keys::yElems, &(m_nElems[1]), false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("number of elements in the y-direction within each mesh block");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("number of elements in the y-direction within each mesh block");
 
   RegisterViewWrapper(keys::zElems, &(m_nElems[2]), false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("number of elements in the z-direction within each mesh block");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("number of elements in the z-direction within each mesh block");
 
   RegisterViewWrapper(keys::xBias, &(m_nElemBias[0]), false )->
-      setApplyDefaultValue(1.0)->
-      setSizedFromParent(0)->
-      setInputFlag(InputFlags::OPTIONAL);
+    setApplyDefaultValue(1.0)->
+    setSizedFromParent(0)->
+    setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::yBias, &(m_nElemBias[1]), false )->
-      setApplyDefaultValue(1.0)->
-      setSizedFromParent(0)->
-      setInputFlag(InputFlags::OPTIONAL);
+    setApplyDefaultValue(1.0)->
+    setSizedFromParent(0)->
+    setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::zBias, &(m_nElemBias[2]), false )->
-      setApplyDefaultValue(1.0)->
-      setSizedFromParent(0)->
-      setInputFlag(InputFlags::OPTIONAL);
+    setApplyDefaultValue(1.0)->
+    setSizedFromParent(0)->
+    setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper(keys::cellBlockNames, &m_regionNames, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("names of each mesh block");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("names of each mesh block");
 
   RegisterViewWrapper(keys::elementTypes, &m_elementType, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setSizedFromParent(0)->
-      setDescription("element types of each mesh block");
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("element types of each mesh block");
 
   RegisterViewWrapper(keys::trianglePattern, &m_trianglePattern, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");;
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");;
 
 }
 

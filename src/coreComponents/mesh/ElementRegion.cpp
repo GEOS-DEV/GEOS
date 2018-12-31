@@ -50,18 +50,18 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
   this->RegisterGroup(keys::cellBlockSubRegions);
 
   RegisterViewWrapper( keys::defaultMaterial, &m_defaultMaterial, 0 )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Default Material Name");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Default Material Name");
 
   RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("List of materials present in this region");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of materials present in this region");
 
   RegisterViewWrapper<string>( keys::numericalMethod )->
-      setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->
-      setInputFlag(InputFlags::REQUIRED);
+    setInputFlag(InputFlags::REQUIRED);
 
 
 }

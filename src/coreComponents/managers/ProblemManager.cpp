@@ -122,53 +122,53 @@ ProblemManager::ProblemManager( const std::string& name,
 
 
   commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Name of the input xml file.");
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Name of the input xml file.");
 
   commandLine->RegisterViewWrapper<string>( viewKeys.restartFileName.Key() )->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Name of the restart file.");
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Name of the restart file.");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.beginFromRestart.Key() )->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Flag to indicate restart run.");
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Flag to indicate restart run.");
 
   commandLine->RegisterViewWrapper<string>( viewKeys.problemName.Key() )->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Used in writing the output files, if not specified defaults to the name of the input file..");
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Used in writing the output files, if not specified defaults to the name of the input file..");
 
   commandLine->RegisterViewWrapper<string>( viewKeys.outputDirectory.Key() )->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Directory in which to put the output files, if not specified defaults to the current directory.");
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Directory in which to put the output files, if not specified defaults to the current directory.");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.xPartitionsOverride.Key() )->
-      setApplyDefaultValue(1)->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Number of partitions in the x-direction");
+    setApplyDefaultValue(1)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Number of partitions in the x-direction");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.yPartitionsOverride.Key() )->
-      setApplyDefaultValue(1)->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Number of partitions in the y-direction");
+    setApplyDefaultValue(1)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Number of partitions in the y-direction");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.zPartitionsOverride.Key() )->
-      setApplyDefaultValue(1)->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Number of partitions in the z-direction");
+    setApplyDefaultValue(1)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Number of partitions in the z-direction");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.overridePartitionNumbers.Key() )->
-      setApplyDefaultValue(0)->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Flag to indicate partition number override");
+    setApplyDefaultValue(0)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Flag to indicate partition number override");
 
   commandLine->RegisterViewWrapper<string>( keys::schema )->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Name of the output schema");
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Name of the output schema");
 
   commandLine->RegisterViewWrapper<integer>( viewKeys.schemaLevel.Key() )->
-      setApplyDefaultValue(0)->
-      setRestartFlags(RestartFlags::WRITE)->
-      setDescription("Schema verbosity level (0=default, 1=development, 2=all)");
+    setApplyDefaultValue(0)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Schema verbosity level (0=default, 1=development, 2=all)");
 }
 
 

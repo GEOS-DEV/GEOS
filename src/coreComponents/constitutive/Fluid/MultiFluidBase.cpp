@@ -36,17 +36,17 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
     m_useMass( false )
 {
   RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("List of component names");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of component names");
 
   RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Component molar weights");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Component molar weights");
 
 
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("List of fluid phases");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of fluid phases");
 
   RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dPressureString, &m_dPhaseFraction_dPressure, false );

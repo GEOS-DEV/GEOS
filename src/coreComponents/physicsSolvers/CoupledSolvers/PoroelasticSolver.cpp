@@ -49,16 +49,16 @@ PoroelasticSolver::PoroelasticSolver( const std::string& name,
 
 {
   RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
 
   RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
 
   RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Coupling option: (FixedStress, TightlyCoupled)");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Coupling option: (FixedStress, TightlyCoupled)");
 
 }
 
@@ -71,9 +71,9 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const
     elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
       {
         cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
-            setDescription("Total Mean Stress");
+          setDescription("Total Mean Stress");
         cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
-            setDescription("Total Mean Stress");
+          setDescription("Total Mean Stress");
       });
   }
 }

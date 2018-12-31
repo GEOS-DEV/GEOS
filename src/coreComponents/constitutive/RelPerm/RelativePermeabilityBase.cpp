@@ -52,8 +52,8 @@ RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Ma
   : ConstitutiveBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("List of fluid phases");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of fluid phases");
 
   RegisterViewWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false );
 

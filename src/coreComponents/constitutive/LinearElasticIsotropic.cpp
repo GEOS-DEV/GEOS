@@ -77,81 +77,81 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   m_poreVolumeRelation( ExponentApproximationType::Linear )
 {
   RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 )->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Reference Material Density");
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Reference Material Density");
 
   RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 )->
-      setApplyDefaultValue(-1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Elastic Bulk Modulus Parameter");
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Elastic Bulk Modulus Parameter");
 
   RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 )->
-      setApplyDefaultValue(-1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Elastic Shear Modulus Parameter");
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Elastic Shear Modulus Parameter");
 
 
   RegisterViewWrapper<real64>( viewKeys().youngsModulus.Key() )->
-      setApplyDefaultValue(-1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Elastic Young's Modulus.");
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Elastic Young's Modulus.");
 
   RegisterViewWrapper<real64>( viewKeys().poissonRatio.Key() )->
-      setApplyDefaultValue(-1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Poisson's ratio");
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Poisson's ratio");
 
   RegisterViewWrapper<real64>( viewKeys().biotCoefficient.Key() )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Biot's coefficient");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Biot's coefficient");
 
 
   RegisterViewWrapper( viewKeys().compressibility.Key(), &m_compressibility, 0 )->
-      setApplyDefaultValue(-1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Fluid Compressibilty");
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Fluid Compressibilty");
 
   RegisterViewWrapper( viewKeys().referencePressure.Key(), &m_referencePressure, 0 )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("ReferencePressure");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("ReferencePressure");
 
   RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Young's Elastic Modulus");
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Young's Elastic Modulus");
 
 
 
 
   RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
-      setDescription("Stress Deviator stress");
+    setDescription("Stress Deviator stress");
 
   RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
-      setApplyDefaultValue(-1)->
-      setDescription("Young's Elastic Modulus");
+    setApplyDefaultValue(-1)->
+    setDescription("Young's Elastic Modulus");
 
 
   RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->
-      setApplyDefaultValue(-1)->
-      setDescription("");
+    setApplyDefaultValue(-1)->
+    setDescription("");
 
   RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 )->
-      setApplyDefaultValue(-1)->
-      setDescription("");
+    setApplyDefaultValue(-1)->
+    setDescription("");
 
   RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
-      setApplyDefaultValue(-1)->
-      setDescription("Elastic Bulk Modulus Field");
+    setApplyDefaultValue(-1)->
+    setDescription("Elastic Bulk Modulus Field");
 
   RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->
-      setApplyDefaultValue(-1)->
-      setDescription("Material Density");
+    setApplyDefaultValue(-1)->
+    setDescription("Material Density");
 
   RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
-      setApplyDefaultValue(-1)->
-      setDescription("Elastic Shear Modulus");
+    setApplyDefaultValue(-1)->
+    setDescription("Elastic Shear Modulus");
 
 }
 
