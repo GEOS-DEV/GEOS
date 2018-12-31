@@ -6,6 +6,7 @@ set( dataRepository_tests
      testDefaultValue.cpp
      testSidreBasic.cpp
      testSidreExtended.cpp
+     testViewWrapper.cpp
    )
 
 #
