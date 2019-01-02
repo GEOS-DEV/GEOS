@@ -16,6 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/** @file */
 
 #ifndef MANAGEDGROUP_H_
 #define MANAGEDGROUP_H_
@@ -35,10 +36,12 @@
 #include "fileIO/xmlWrapper.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
+/// macro definition to specify whether or not to use dynamic_cast
 #define USE_DYNAMIC_CASTING 1;
 #endif
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
+/// macro definition to enable/disable char * lookups
 #define NOCHARTOSTRING_KEYLOOKUP 0
 #endif
 
@@ -59,42 +62,41 @@ namespace geosx
 namespace dataRepository
 {
 
+/// the default key type
 using keyType = string;
+
+/// the default index type
 using indexType = localIndex;
-//using DataKey = DataKeyT<keyType,indexType>;
 
 /**
- * @author Randolph R. Settgast
- *
  * class that encapsulates and manages a collection of DataObjects. Can be
  * considered a "node" in a hierarchy of managers that represent physical groupings of data/
- *
  */
 class ManagedGroup
 {
 public:
+  /// the type of MappedVector to use for the subGroup collection
   using subGroupMap = MappedVector< ManagedGroup, ManagedGroup*, keyType, indexType  >;
+
+  /// type of the MappedVector to use for the collection of wrappers.
   using viewWrapperMap = MappedVector< ViewWrapperBase, ViewWrapperBase*, keyType, indexType  >;
+
   /**
    * @name constructors, destructor, copy, move, assignments
    */
   ///@{
 
   /**
-   * @author Randolph R. Settgast
-   * @param name the name of this object manager
+   * @param[in] name the name of this object manager
+   * @param[in]
    */
   explicit ManagedGroup( std::string const & name,
                          ManagedGroup * const parent );
 
-//  explicit ManagedGroup( std::string const & name,
-//                         ManagedGroup * const parent,
-//                         cxx_utilities::DocumentationNode * docNode );
-
 
   /**
    * @brief move constructor
-   * @param source source ManagedGroup
+   * @param[in] source source ManagedGroup
    */
   ManagedGroup( ManagedGroup&& source );
 
@@ -257,7 +259,7 @@ public:
 
   /**
    * @brief This will grab the pointer to an object in the data structure
-   * @param path a unix-style string (absolute, relative paths valid)
+   * @param[in] path a unix-style string (absolute, relative paths valid)
    */
   template< typename T = ManagedGroup >
   T const * GetGroupByPath( string const & path ) const
@@ -459,8 +461,8 @@ public:
 
   /**
    * @brief Register a ViewWrapper into this ManagedGroup
-   * @param name the key name to use for this new wrapper
-   * @param wrapper a pointer to the new wrapper
+   * @param[in] name the key name to use for this new wrapper
+   * @param[in] wrapper a pointer to the new wrapper
    * @return a ViewWrapperBase pointer that holds the address of the new wrapper
    */
   ViewWrapperBase * RegisterViewWrapper( string const & name,
