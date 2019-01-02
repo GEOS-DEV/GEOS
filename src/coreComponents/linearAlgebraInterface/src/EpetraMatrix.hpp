@@ -18,10 +18,6 @@
 
 /**
  * @file EpetraMatrix.hpp
- *
- *  Created on: Jul 24, 2018
- *  Author: Matthias Cremon
- *
  */
 
 #ifndef LAI_EPETRAMATRIX_HPP_
@@ -96,7 +92,7 @@ public:
    *
    */
   void createWithLocalSize( localIndex const localSize,
-                            localIndex const maxEntriesPerRow = 1,
+                            localIndex const maxEntriesPerRow,
                             MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
@@ -110,7 +106,7 @@ public:
    *
    */
   void createWithGlobalSize( globalIndex const globalSize,
-                             localIndex const maxEntriesPerRow = 1,
+                             localIndex const maxEntriesPerRow,
                              MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
@@ -123,7 +119,7 @@ public:
    */
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,
-                            localIndex const maxEntriesPerRow = 1,
+                            localIndex const maxEntriesPerRow,
                             MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
@@ -136,7 +132,7 @@ public:
    */
   void createWithGlobalSize( globalIndex const globalRows,
                              globalIndex const globalCols,
-                             localIndex const maxEntriesPerRow = 1,
+                             localIndex const maxEntriesPerRow,
                              MPI_Comm const & comm = MPI_COMM_WORLD );
 
 
@@ -329,6 +325,24 @@ public:
    */
   void multiply( EpetraVector const &src,
                  EpetraVector &dst ) const;
+
+
+  /**
+   * @brief Matrix/Matrix multiplication.
+   *
+   * Compute <tt>this*B = C<tt>.
+   *
+   * \param src Input matrix (B).
+   * \param dst Output matrix (C).
+   *
+   * Note that the output matrix C should have the same 
+   * row-map as this.  If close() has already been called
+   * on C, then C's sparsity pattern must already contain
+   * the nonzero entries produced by the product this*B. 
+   */
+  void multiply( EpetraMatrix const &src,
+                 EpetraMatrix &dst ) const;
+
 
   /**
    * @brief Compute residual <tt>r = Ax - b</tt>.
