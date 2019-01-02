@@ -25,7 +25,6 @@
 
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
-//#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
@@ -104,8 +103,6 @@ public:
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) {}
-
-  virtual void FillDocumentationNode() override = 0;
 
   virtual void resize( localIndex ) override;
 

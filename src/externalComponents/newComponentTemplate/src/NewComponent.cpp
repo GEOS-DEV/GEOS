@@ -48,7 +48,7 @@ void NewComponent::InitializePostSubGroups( ManagedGroup * const )
 
 
 
-void NewComponent::ReadXML_PostProcess( )
+void NewComponent::ProcessInputFile_PostProcess( )
 {}
 
 

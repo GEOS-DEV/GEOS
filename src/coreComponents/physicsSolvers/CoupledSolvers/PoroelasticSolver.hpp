@@ -42,9 +42,7 @@ public:
    */
   static string CatalogName() { return "Poroelastic"; }
 
-  virtual void FillDocumentationNode() override final;
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
@@ -114,7 +112,7 @@ public:
 //                                     real64 const & dt,
 //                                     DomainPartition * const domain );
 
-  virtual void ReadXML_PostProcess() override final;
+  virtual void ProcessInputFile_PostProcess() override final;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
@@ -124,15 +122,18 @@ public:
                             DomainPartition * const domain);
 
 
-  enum class couplingTypeOption
+  enum class couplingTypeOption : int
   {
     FixedStress,
-    FullyImplicit
+    TightlyCoupled
   };
+
+
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto couplingTypeOptionString = "couplingTypeOption";
+    constexpr static auto couplingTypeOptionString = "couplingTypeOptionEnum";
+    constexpr static auto couplingTypeOptionStringString = "couplingTypeOption";
 
     constexpr static auto totalMeanStressString = "totalMeanStress";
     constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
@@ -147,6 +148,7 @@ public:
 private:
   string m_solidSolverName;
   string m_flowSolverName;
+  string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
 
 };

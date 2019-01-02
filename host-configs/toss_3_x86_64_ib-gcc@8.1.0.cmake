@@ -24,13 +24,15 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
 set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
 set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
-set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
+
+#set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
+set(DOXYGEN_EXECUTABLE "${GEOSX_TPL_ROOT_DIR}/doxygen/bin/doxygen" CACHE PATH "" FORCE )
 
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
 
-set(ENABLE_PAMELA OFF CACHE BOOL "" FORCE)
-set(ENABLE_PVTPackage OFF CACHE BOOL "" FORCE)
+set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
+set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
 #######################################
 # RAJA/CHAI SETUP

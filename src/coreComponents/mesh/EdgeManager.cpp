@@ -136,7 +136,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
   // make sets from nodesets
 
-  auto const & nodeSets = nodeManager->GetGroup(dataRepository::keys::sets)->wrappers();
+  auto const & nodeSets = nodeManager->sets()->wrappers();
   for ( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -149,7 +149,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const set<localIndex>& targetSet = nodeManager->GetGroup(dataRepository::keys::sets)->getReference<set<localIndex>>( setName );
+    const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
 
@@ -759,7 +759,6 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
   GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
-
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
@@ -770,7 +769,6 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
   GEOS_ERROR_IF( faceListString != viewKeyStruct::faceListString, "");
-
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -782,13 +780,15 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void EdgeManager::FixUpDownMaps()
+void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
-                                    m_unmappedGlobalIndicesInToNodes);
+                                    m_unmappedGlobalIndicesInToNodes,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
-                                    m_unmappedGlobalIndicesInToFaces);
+                                    m_unmappedGlobalIndicesInToFaces,
+                                    clearIfUnmapped );
 
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);

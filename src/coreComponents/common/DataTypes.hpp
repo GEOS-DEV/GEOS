@@ -196,7 +196,7 @@ template< typename T, int MAXSIZE >
 using stackArray5d = stack_array<T, 5, MAXSIZE>;
 
 template< typename T >
-using set = SortedArray<T>;
+using set = SortedArray<T,localIndex>;
 
 template< typename TKEY, typename TVAL >
 using map = std::map<TKEY,TVAL>;
@@ -244,7 +244,6 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 
 
-
 using integer_array2d       = array2d<integer>;
 using integer_const_array2d = array2d<integer const>;
 
@@ -262,7 +261,6 @@ using localIndex_const_array2d = array2d<localIndex const>;
 
 using globalIndex_array2d       = array2d<globalIndex>;
 using globalIndex_const_array2d = array2d<globalIndex const>;
-
 
 
 
@@ -498,7 +496,15 @@ public:
       { std::type_index(typeid(string_array)), TypeIDs::string_array_id },
       { std::type_index(typeid(mapPair_array)),TypeIDs::mapPair_array_id }
     };
-    return type_names.at(typeIndex);
+    auto iterType = type_names.find(typeIndex);
+    if( iterType != type_names.end() )
+    {
+      return type_names.at(typeIndex);
+    }
+    else
+    {
+      return TypeIDs::none_id;
+    }
   }
 
 #ifdef GEOSX_USE_ATK
@@ -507,7 +513,11 @@ public:
   {
     const axom::sidre::TypeID integer_id = axom::sidre::detail::SidreTT<integer>::id;
     const axom::sidre::TypeID localIndex_id = axom::sidre::detail::SidreTT<localIndex>::id;
-    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT<globalIndex>::id;
+
+    /* We can't use SidreTT<globalIndex>::id here because that returns NO_TYPE_ID.
+     * This is due to a mismatch between globalIndex (long long int) and std::int64_t */
+    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT<axom::common::int64>::id;
+    
     const axom::sidre::TypeID real32_id = axom::sidre::detail::SidreTT<real32>::id;
     const axom::sidre::TypeID real64_id = axom::sidre::detail::SidreTT<real64>::id;
     const axom::sidre::TypeID char_id = axom::sidre::TypeID::UINT8_ID;
@@ -746,6 +756,7 @@ public:
    */
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda2( const TypeIDs type,
+                                     bool const errorIfTypeNotFound,
                                      LAMBDA && lambda )
   {
     switch( type )
@@ -855,11 +866,12 @@ public:
       return lambda( real64_array3d(), real64(1) );
       break;
     }
-
-
     default:
     {
-      GEOS_ERROR( LOCATION );
+      if( errorIfTypeNotFound )
+      {
+        GEOS_ERROR( LOCATION );
+      }
     }
     }
   }
@@ -1214,6 +1226,32 @@ public:
       return lambda( string_array(1), string("") );
       break;
     }
+    case ( TypeIDs::integer_array2d_id ):
+    {
+      return lambda( integer_array2d(), integer(1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array2d_id ):
+    {
+      return lambda( localIndex_array2d(), localIndex(1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array2d_id ):
+    {
+      return lambda( globalIndex_array2d(), globalIndex() );
+      break;
+    }
+    case ( TypeIDs::real32_array2d_id ):
+    {
+      return lambda( real32_array2d(), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array2d_id ):
+    {
+      return lambda( real64_array2d(), real64(1) );
+      break;
+    }
+
 //    case ( TypeIDs::mapPair_array_id ):
 //    {
 //      return lambda( mapPair_array(1), mapPair({}) );

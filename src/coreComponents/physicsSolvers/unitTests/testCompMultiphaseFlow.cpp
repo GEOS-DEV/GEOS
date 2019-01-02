@@ -602,14 +602,12 @@ protected:
       buf[1]
     };
 
-    problemManager.SetDocumentationNodes();
-    problemManager.RegisterDocumentationNodes();
-
     problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput( argc, argv );
     problemManager.ParseInputFile();
 
     problemManager.Initialize( &problemManager );
+    problemManager.RegisterDataOnMeshRecursive( nullptr );
     problemManager.IntermediateInitializationRecursive( &problemManager );
     problemManager.ApplyInitialConditions();
     problemManager.FinalInitializationRecursive( &problemManager );

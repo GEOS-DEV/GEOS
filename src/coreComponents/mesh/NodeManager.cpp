@@ -109,29 +109,29 @@ NodeManager::~NodeManager()
 
 
 
-void NodeManager::FillDocumentationNode()
-{
-  ObjectManagerBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->getCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "a node manager" );
-
-
-  docNode->AllocateChildNode( keys::referencePositionString,
-                              keys::referencePositionString,
-                              -1,
-                              "r1_array",
-                              "r1_array",
-                              "reference position of nodes",
-                              "reference position of nodes",
-                              "",
-                              "",
-                              1,
-                              0,
-                              1 );
-}
+//void NodeManager::FillDocumentationNode()
+//{
+//  ObjectManagerBase::FillDocumentationNode();
+//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+//
+//  docNode->setName( this->getCatalogName() );
+//  docNode->setSchemaType( "Node" );
+//  docNode->setShortDescription( "a node manager" );
+//
+//
+//  docNode->AllocateChildNode( keys::referencePositionString,
+//                              keys::referencePositionString,
+//                              -1,
+//                              "r1_array",
+//                              "r1_array",
+//                              "reference position of nodes",
+//                              "reference position of nodes",
+//                              "",
+//                              "",
+//                              1,
+//                              0,
+//                              1 );
+//}
 
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
@@ -318,13 +318,15 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void NodeManager::FixUpDownMaps()
+void NodeManager::FixUpDownMaps(  bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
-                                    m_unmappedGlobalIndicesInToEdges);
+                                    m_unmappedGlobalIndicesInToEdges,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
-                                    m_unmappedGlobalIndicesInToFaces);
+                                    m_unmappedGlobalIndicesInToFaces,
+                                    clearIfUnmapped );
 
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);

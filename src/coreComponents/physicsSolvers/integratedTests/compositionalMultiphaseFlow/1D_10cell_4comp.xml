@@ -45,15 +45,11 @@
 
 
   <Events maxTime="1e7">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
+
     <PeriodicEvent name="solverApplications"
                    forceDt="1e5"
                    target="/Solvers/compflow" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    timeFrequency="1e5"
                    targetExactTimestep="1"
@@ -67,18 +63,6 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3 name="linearBasis"  degree = "1"  />
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3 name="gaussian"   degree="2"  />
-    </QuadratureRules>
-
-    <FiniteElements>
-      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
-    </FiniteElements>
-
     <FiniteVolume>
       <TwoPointFluxApproximation name="fluidTPFA"
                                  fieldName="pressure"
@@ -87,7 +71,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" materialList="fluid1 rock relperm" />
+    <ElementRegion name="Region2" cellBlocks="cb1" material="fluid1" materialList="fluid1 rock relperm" />
   </ElementRegions>
 
   <Constitutive>

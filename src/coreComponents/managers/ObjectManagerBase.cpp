@@ -33,20 +33,21 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
   ManagedGroup(name,parent),
-  m_sets(keys::sets,this),
+  m_sets(groupKeyStruct::setsString,this),
   m_localToGlobalMap(),
   m_globalToLocalMap()
 {
 
+  RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
+  RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
+
   RegisterViewWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false );
   RegisterViewWrapper(viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
 
-  RegisterGroup( keys::sets, &m_sets, false );
-  RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
-  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
-    setPlotLevel(PlotLevel::LEVEL_0);
 
-  this->RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
+  RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
+  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->setPlotLevel(PlotLevel::LEVEL_0);
+  RegisterViewWrapper< array1d<integer> >( viewKeyStruct::domainBoundaryIndicatorString );
 
   m_sets.RegisterViewWrapper<set<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
@@ -76,66 +77,39 @@ ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog(
   return catalog;
 }
 
-void ObjectManagerBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.ghostRank.Key(),
-                              m_ObjectManagerBaseViewKeys.ghostRank.Key(),
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "Array that indicates whether or not an index is a ghost. ",
-                              "Array that indicates whether or not an index is a ghost. "
-                              "If it is not a ghost the value will be -1. If it "
-                              "is a ghost, then the value will be the owning rank.",
-                              "-1",
-                              "",
-                              1,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
-                              m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "List containing the element regions of the faces",
-                              "List containing the element regions of the faces",
-                              "0",
-                              "",
-                              1,
-                              0,
-                              2 );
-
-//  docNode->AllocateChildNode( viewKeys.globalToLocalMap.Key(),
-//                              viewKeys.globalToLocalMap.Key(),
-//                              -1,
-//                              "localIndex_map",
-//                              "localIndex_map",
-//                              "Map from globalIndex to localIndex. ",
-//                              "Map from globalIndex to localIndex. ",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
+//void ObjectManagerBase::FillDocumentationNode()
+//{
+//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 //
-//  docNode->AllocateChildNode( viewKeys.localToGlobalMap.Key(),
-//                              viewKeys.localToGlobalMap.Key(),
+//  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.ghostRank.Key(),
+//                              m_ObjectManagerBaseViewKeys.ghostRank.Key(),
 //                              -1,
-//                              "globalIndex_array",
-//                              "globalIndex_array",
-//                              "Array that maps from localIndex to globalIndex. ",
-//                              "Array that maps from localIndex to globalIndex. ",
-//                              "",
+//                              "integer_array",
+//                              "integer_array",
+//                              "Array that indicates whether or not an index is a ghost. ",
+//                              "Array that indicates whether or not an index is a ghost. "
+//                              "If it is not a ghost the value will be -1. If it "
+//                              "is a ghost, then the value will be the owning rank.",
+//                              "-1",
 //                              "",
 //                              1,
 //                              0,
 //                              0 );
-
-}
+//
+//  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
+//                              m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
+//                              -1,
+//                              "integer_array",
+//                              "integer_array",
+//                              "List containing the element regions of the faces",
+//                              "List containing the element regions of the faces",
+//                              "0",
+//                              "",
+//                              1,
+//                              0,
+//                              2 );
+//
+//}
 
 void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 {
@@ -145,16 +119,14 @@ void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 
 void ObjectManagerBase::CreateSet( const std::string& newSetName )
 {
-  ManagedGroup * sets = GetGroup(std::string("Sets"));
-  sets->RegisterViewWrapper<set<localIndex>>(newSetName);
+  m_sets.RegisterViewWrapper<set<localIndex>>(newSetName);
 }
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const array2d<localIndex>& map,
                                                    const std::string& setName )
 {
-  ManagedGroup * sets = GetGroup(std::string("Sets"));
-  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
+  set<localIndex>& newset = m_sets.getReference<set<localIndex>>(setName);
   newset.clear();
 
   localIndex mapSize = map.size(1);
@@ -179,7 +151,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
                                                    const array1d<localIndex_array>& map,
                                                    const std::string& setName )
 {
-  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  ManagedGroup * sets = GetGroup( groupKeyStruct::setsString );
   set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
   newset.clear();
 
@@ -329,6 +301,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   }
 
 
+
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
@@ -405,6 +378,62 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   return unpackedSize;
 }
 
+template< bool DOPACK >
+localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
+                                        arrayView1d<localIndex const> const & packList ) const
+{
+  localIndex packedSize = 0;
+  packedSize += bufferOps::Pack<DOPACK>( buffer, m_sets.getName() );
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, m_sets.wrappers().size() );
+  for( auto const & wrapperIter : m_sets.wrappers() )
+  {
+    string const & setName = wrapperIter.first;
+    set<localIndex> const & currentSet = m_sets.getReference<set<localIndex> >(setName);
+    packedSize += bufferOps::Pack<DOPACK>( buffer, setName );
+    packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                           currentSet,
+                                           packList,
+                                           set<globalIndex>(),
+                                           m_localToGlobalMap );
+  }
+  return packedSize;
+}
+//template<>
+//localIndex ObjectManagerBase::PackSets<true>( buffer_unit_type * &,
+//                                              arrayView1d<localIndex const> const & );
+//template<>
+//localIndex ObjectManagerBase::PackSets<false>( buffer_unit_type * &,
+//                                               arrayView1d<localIndex const> const & );
+
+
+localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
+{
+  localIndex unpackedSize = 0;
+  string name;
+  unpackedSize += bufferOps::Unpack( buffer, name );
+  GEOS_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match");
+
+  localIndex numUnpackedSets;
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets );
+  for( localIndex a=0 ; a<numUnpackedSets ; ++a )
+  {
+    string setName;
+    unpackedSize += bufferOps::Unpack( buffer, setName );
+    set<localIndex> & targetSet = m_sets.getReference<set<localIndex> >(setName);
+
+    set<globalIndex> junk;
+    unpackedSize += bufferOps::Unpack( buffer,
+                                       targetSet,
+                                       junk,
+                                       this->m_globalToLocalMap,
+                                       false );
+  }
+
+
+  return unpackedSize;
+}
+
 
 localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
                                 integer const recursive ) const
@@ -462,6 +491,8 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
       }
     }
   }
+
+  packedSize += PackSets<DOPACK>(buffer, packList );
 
   return packedSize;
 }
@@ -570,6 +601,10 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
                       UnpackGlobalMaps(buffer,packList, recursive);
     }
   }
+
+
+  unpackedSize += UnpackSets(buffer );
+
 
   return unpackedSize;
 }

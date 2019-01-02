@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DataObjectManager.cpp
- *
- *  Created on: Nov 21, 2014
- *      Author: rrsettgast
- */
-
 #include "ManagedGroup.hpp"
 
 #include "ArrayUtilities.hpp"
@@ -73,7 +66,6 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ):
-  m_docNode(nullptr),
   m_parent(parent),
   m_wrappers(),
   m_subGroups(),
@@ -84,71 +76,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_capacity(0),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_name(name)
-{
-
-  // Setup DocumentationNode
-  if( parent != nullptr )
-  {
-    if( parent->m_docNode != nullptr  )
-    {
-      if( this->m_docNode == nullptr )
-      {
-        m_docNode = parent->m_docNode->AllocateChildNode( name,
-                                                          name,
-                                                          0,
-                                                          "",
-                                                          "Node",
-                                                          "",
-                                                          "",
-                                                          "",
-                                                          parent->getName(),
-                                                          0,
-                                                          0,
-                                                          0 );
-      }
-    }
-    else
-    {
-      m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                        name,
-                                                        -1,
-                                                        "Node",
-                                                        "Node",
-                                                        "The Root DocumentationNode for " + name,
-                                                        "",
-                                                        "",
-                                                        "",
-                                                        0,
-                                                        0,
-                                                        0,
-                                                        0,
-                                                        nullptr );
-    }
-  }
-  else
-  {
-    m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                      name,
-                                                      -1,
-                                                      "Node",
-                                                      "Node",
-                                                      "The Root DocumentationNode for " + name,
-                                                      "",
-                                                      "",
-                                                      "",
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      nullptr );
-  }
-
-//  RegisterViewWrapper( "size", &(this->m_size), false );
-//  RegisterViewWrapper( "name", &(this->m_name), false );
-
-
-  RegisterDocumentationNodes();
-}
+{}
 
 ManagedGroup::~ManagedGroup()
 {}
@@ -190,6 +118,11 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
                             true );
 }
 
+void ManagedGroup::DeregisterViewWrapper( string const & name )
+{
+  m_wrappers.erase(name);
+}
+
 
 void ManagedGroup::resize( indexType const newsize )
 {
@@ -219,123 +152,9 @@ void ManagedGroup::reserve( indexType const newsize )
   m_capacity = newsize;
 }
 
-
-void ManagedGroup::RegisterDocumentationNodes()
+void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode )
 {
-  for( auto&& subNode : m_docNode->getChildNodes() )
-  {
-    if( ( subNode.second.getSchemaType().find("Node") == std::string::npos ) &&
-        ( subNode.second.m_isRegistered == 0 ) )
-    {
-      std::string childType = subNode.second.getDataType();
-      rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
-
-      ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
-                                                          typeID );
-
-      view->setSizedFromParent( subNode.second.m_managedByParent);
-      view->setRestartFlags( subNode.second.getRestartFlags() );
-      view->setPlotLevel( subNode.second.getVerbosity() );
-      subNode.second.m_isRegistered = 1;
-
-      string defVal = subNode.second.getDefault();
-
-      if (defVal == "ExplicitDynamic")
-      {
-        double TEMP = 10;
-        TEMP *= 2;
-      }
-
-      if( subNode.second.getIsInput() && defVal != "NONE" )
-      {
-        rtTypes::ApplyTypeLambda2 ( typeID,
-                                    [&]( auto a, auto b ) -> void
-        {
-          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
-          std::vector<decltype(b)> values;
-          stringutilities::StringToType( values, defVal );
-          localIndex const size = integer_conversion<localIndex>(values.size());
-          dataView.resize( size );
-          decltype(a) & data = dataView.reference();
-          cxx_utilities::equateStlVector(data, values);
-        });
-      }
-
-
-
-//      else if( defVal != "NONE" && defVal != "" )
-//      {
-//        rtTypes::ApplyTypeLambda2( typeID,
-//                                   [&]( auto a, auto b ) -> void
-//        {
-//
-//          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
-//          std::vector<decltype(b)> values;
-//          stringutilities::StringToType( values, defVal );
-//          localIndex const size = LvArray::integer_conversion<localIndex>(values.size());
-//          if( size != 1 )
-//          {
-//            GEOS_ERROR("Expect size of default value to be a scalar");
-//          }
-//          decltype(a) & data = dataView.reference();
-//          for( localIndex c=0 ; c<size ; ++c )
-//          {
-//            data[c] = values[0];
-//          }
-//          //data = values[0];
-//        });
-//      }
-    }
-  }
-
-  for( auto& subGroupIter : m_subGroups )
-  {
-    subGroupIter.second->RegisterDocumentationNodes();
-  }
-
-}
-
-void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const rootGroup )
-{
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->BuildDataStructure( rootGroup );
-  }
-}
-
-// These fill the documentation and initialize fields on this:
-void ManagedGroup::FillDocumentationNode()
-{}
-
-void ManagedGroup::SetDocumentationNodes()
-{
-  FillDocumentationNode();
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->SetDocumentationNodes();
-  }
-  RegisterDocumentationNodes();
-
-}
-
-// These fill the documentation and initialize fields on other objects:
-void ManagedGroup::SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup)
-{
-  FillOtherDocumentationNodes(rootGroup);
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->SetOtherDocumentationNodes(rootGroup);
-  }
-}
-
-void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
-{
-}
-
-
-
-void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
-{
+  // loop over the child nodes of the targetNode
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
@@ -346,70 +165,84 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
     }
 
     // Create children
-    CreateChild(childNode.name(), childName);
-
-    // Add grandchildren
-    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
-    if (newChild != nullptr)
+    ManagedGroup * newChild = CreateChild(childNode.name(), childName);
+    if( newChild == nullptr )
     {
-      newChild->AddChildren(childNode);
+      newChild = GetGroup(childName);
     }
-    else
+    if( newChild != nullptr )
     {
-      if( !this->hasView(childName) )
+      newChild->ProcessInputFileRecursive(childNode);
+    }
+  }
+
+  ProcessInputFile(targetNode);
+//  ProcessInputFile_PostProcess();
+}
+
+void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+{
+  for( auto wrapperPair : m_wrappers )
+  {
+    ViewWrapperBase * const wrapper = wrapperPair.second;
+    InputFlags const inputFlag = wrapper->getInputFlag();
+    if( inputFlag >= InputFlags::OPTIONAL )
+    {
+      string const & wrapperName = wrapperPair.first;
+      rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
+
+      rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
+                                          [&]( auto a, auto b ) -> void
       {
-        // GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
-      }
+//        using BASE_TYPE = decltype(b);
+        using COMPOSITE_TYPE = decltype(a);
+
+        ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
+        COMPOSITE_TYPE & objectReference = typedWrapper.reference();
+
+        if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
+        {
+          xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, inputFlag == InputFlags::REQUIRED );
+        }
+        else
+        {
+          xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, typedWrapper.getDefaultValueStruct() );
+        }
+      });
     }
   }
 }
 
-
-void ManagedGroup::CreateChild( string const & childKey, string const & childName )
+void ManagedGroup::ProcessInputFileRecursive_PostProcess()
 {
-  GEOS_LOG_RANK("Child not recognized: " << childKey << ", " << childName);
-}
-
-
-void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  for( auto const & subDocEntry : docNode->m_child )
+  for( auto const & subGroupIter : m_subGroups )
   {
-    cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
-
-    if (subDocNode.getIsInput() == 1)
-    {
-      xmlWrapper::ReadAttributeAsType( *this, subDocNode, targetNode );
-    }
+    subGroupIter.second->ProcessInputFileRecursive_PostProcess();
   }
-
-  ReadXMLsub(targetNode);
-  ReadXML_PostProcess();
+  ProcessInputFile_PostProcess();
 }
 
 
 
-void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies )
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  RegisterDataOnMesh(meshBodies);
+  for( auto&& subGroup : m_subGroups )
   {
-    // Get the child tag and name
-    std::string childName = childNode.attribute("name").value();
-    if (childName.empty())
-    {
-      childName = childNode.name();
-    }
-
-    // Read the xml on children
-    ManagedGroup * child = this->GetGroup<ManagedGroup>(childName);
-    if (child != nullptr)
-    {
-      child->ReadXML(childNode);
-    }
+    subGroup.second->RegisterDataOnMeshRecursive(meshBodies);
   }
 }
+
+
+ManagedGroup * ManagedGroup::CreateChild( string const & childKey, string const & childName )
+{
+  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
+                 "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog");
+  GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ManagedGroup::Catalog.");
+  return RegisterGroup( childName,
+                        CatalogInterface::Factory( childKey, childName, this ) );
+}
+
 
 void ManagedGroup::PrintDataHierarchy(integer indent)
 {

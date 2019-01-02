@@ -58,9 +58,7 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {

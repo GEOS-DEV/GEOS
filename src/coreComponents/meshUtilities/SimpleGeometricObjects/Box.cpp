@@ -30,53 +30,55 @@ namespace geosx
 using namespace dataRepository;
 
 Box::Box( const std::string& name, ManagedGroup * const parent ):
-  SimpleGeometricObjectBase( name, parent )
-{}
+  SimpleGeometricObjectBase( name, parent ),
+  m_min{0.0,0.0,0.0},
+  m_max{0.0,0.0,0.0},
+  m_strikeAngle{0.0},
+  m_boxCenter{0.0,0.0,0.0},
+  m_cosStrike{0.0},
+  m_sinStrike{0.0}
+{
+  RegisterViewWrapper( viewKeyStruct::xMinString, &m_min, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Minimum (x,y,z) coordinates of the box");
+
+  RegisterViewWrapper( viewKeyStruct::xMaxString, &m_max, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Maximum (x,y,z) coordinates of the box");
+
+  RegisterViewWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
+    setApplyDefaultValue(-90.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("The strike angle of the box");
+
+  RegisterViewWrapper( viewKeyStruct::boxCenterString, &m_boxCenter, false );
+  RegisterViewWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike, false );
+  RegisterViewWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike, false );
+}
 
 Box::~Box()
+{}
+
+
+
+
+void Box::ProcessInputFile_PostProcess()
 {
-  // TODO Auto-generated destructor stub
-}
+  m_boxCenter = m_min;
+  m_boxCenter += m_max;
+  m_boxCenter *= 0.5;
 
-void Box::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  m_strikeAngle += 90; // Counterclockwise from x-axis
+  if (std::fabs(m_strikeAngle) > 1e-20)
+  {
+    GEOS_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
+                   "Error: When a strike angle is specified, the box is supposed to represent a plane normal to the "
+                   "y direction. This box seems to be too thick.");
 
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("A simple box object");
+    m_cosStrike = std::cos(m_strikeAngle / 180 *M_PI);
+    m_sinStrike = std::sin(m_strikeAngle / 180 *M_PI);
+  }
 
-  docNode->AllocateChildNode( viewKeys.xmin.Key(),
-                              viewKeys.xmin.Key(),
-                              -1,
-                              "R1Tensor",
-                              "R1Tensor",
-                              "Lower corner of box",
-                              "Lower corner of box",
-                              "-1e99,-1e99,-1e99",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.xmax.Key(),
-                              viewKeys.xmax.Key(),
-                              -1,
-                              "R1Tensor",
-                              "R1Tensor",
-                              "Upper corner of box",
-                              "Upper corner of box",
-                              "1e99,1e99,1e99",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
-void Box::ReadXML_PostProcess()
-{
-  m_min = this->getReference<R1Tensor>(viewKeys.xmin);
-  m_max = this->getReference<R1Tensor>(viewKeys.xmax);
 }
 
 //void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )

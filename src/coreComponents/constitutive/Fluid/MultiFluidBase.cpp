@@ -35,27 +35,35 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   : ConstitutiveBase( name, parent ),
     m_useMass( false )
 {
-  RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false );
-  RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false );
+  RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of component names");
 
-  RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false );
+  RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Component molar weights");
 
-  RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false );
+
+  RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of fluid phases");
+
+  RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dPressureString, &m_dPhaseFraction_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dTemperatureString, &m_dPhaseFraction_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dGlobalCompFractionString, &m_dPhaseFraction_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false );
+  RegisterViewWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dPressureString, &m_dPhaseDensity_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dTemperatureString, &m_dPhaseDensity_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString, &m_dPhaseDensity_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false );
+  RegisterViewWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dPressureString, &m_dPhaseViscosity_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dTemperatureString, &m_dPhaseViscosity_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString, &m_dPhaseViscosity_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false );
+  RegisterViewWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString, &m_dPhaseCompFraction_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString, &m_dPhaseCompFraction_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString, &m_dPhaseCompFraction_dGlobalCompFraction, false );
@@ -66,12 +74,8 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   RegisterViewWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString, &m_dTotalDensity_dGlobalCompFraction, false );
 }
 
-void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                               localIndex const numPts )
+void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPts )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numPts );
-
-  localIndex const size = parent->size();
   localIndex const NP = numFluidPhases();
   localIndex const NC = numFluidComponents();
 
@@ -101,62 +105,21 @@ void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * co
   m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, NC );
 }
 
+void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
+{
+  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+}
+
 MultiFluidBase::~MultiFluidBase()
 {
 
 }
 
-void MultiFluidBase::FillDocumentationNode()
+void MultiFluidBase::ProcessInputFile_PostProcess()
 {
-  DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->GetCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Multi-component multiphase fluid model" );
-
-  docNode->AllocateChildNode( viewKeyStruct::phaseNamesString,
-                              viewKeyStruct::phaseNamesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of fluid phases",
-                              "List of fluid phases",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentNamesString,
-                              viewKeyStruct::componentNamesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of component names",
-                              "List of component names",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentMolarWeightString,
-                              viewKeyStruct::componentMolarWeightString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component molar weights",
-                              "Component molar weights",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
-void MultiFluidBase::ReadXML_PostProcess()
-{
-  ConstitutiveBase::ReadXML_PostProcess();
+  ConstitutiveBase::ProcessInputFile_PostProcess();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
@@ -182,6 +145,9 @@ void MultiFluidBase::ReadXML_PostProcess()
 
   MULTIFLUID_CHECK_INPUT_LENGTH( m_componentMolarWeight, NC,
                                  viewKeyStruct::componentMolarWeightString )
+
+  // call to correctly set member array tertiary sizes on the 'main' material object
+  ResizeFields( 0, 0 );
 }
 
 localIndex MultiFluidBase::numFluidComponents() const

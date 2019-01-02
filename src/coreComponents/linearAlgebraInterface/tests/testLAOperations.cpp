@@ -18,9 +18,6 @@
 
 /**
  * @file testLAOperations.cpp
- *
- *  Created on: Sep 19, 2018
- *      Author: Matthias Cremon
  */
 
 #ifdef __clang__
@@ -284,7 +281,7 @@ void testInterfaceSolvers()
   LinearSolver solver(parameters);             
 
   // Set basic options
-  parameters.verbosity = 1;
+  parameters.verbosity = 0;
   parameters.solverType = "cg";
   parameters.krylov.tolerance = 1e-8;
   parameters.krylov.maxIterations = 250;
@@ -533,6 +530,34 @@ void testGEOSXBlockSolvers()
 #endif
 }
 
+
+//------------------------------
+// Test matrix-matrix operations
+//------------------------------
+// Currently just test matrix-matrix multiply, but eventually
+// should include add and other level-III operations
+template< typename LAI >
+void testMatrixMatrixOperations()
+{
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+
+  globalIndex n = 100;
+  globalIndex N = n*n;
+
+  ParallelMatrix A = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
+
+  ParallelMatrix A_squared;
+                 A_squared.createWithGlobalSize( N, 1, MPI_COMM_WORLD) ;
+
+  A.multiply(A,A_squared);
+
+  real64 a = A.normInf();
+  real64 b = A_squared.normInf();
+
+  EXPECT_DOUBLE_EQ( a*a, b );
+} 
+
+
 // END_RST_NARRATIVE
 
 //@}
@@ -557,13 +582,13 @@ void testGEOSXBlockSolvers()
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
  */
-
 TEST(testLAOperations,testEpetraLAOperations)
 {
   MPI_Init( nullptr, nullptr );
   testInterfaceSolvers<TrilinosInterface>();
   testGEOSXSolvers<TrilinosInterface>();
   testGEOSXBlockSolvers<TrilinosInterface>();
+  testMatrixMatrixOperations<TrilinosInterface>();
   MPI_Finalize();
 }
 

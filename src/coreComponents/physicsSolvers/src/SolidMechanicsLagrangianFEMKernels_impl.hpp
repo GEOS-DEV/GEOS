@@ -103,7 +103,7 @@ void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
       
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -264,7 +264,7 @@ void ObjectOfArraysKernel_Shape(localIndex noElem, geosxIndex elemList, real64 d
                                 localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
 
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -435,7 +435,7 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(localIndex noElem, geosxIndex elemLi
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
       
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -588,7 +588,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
                                       localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
 
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -736,7 +736,7 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(localIndex noElem, geosxIndex el
                                                 localIndex nx=2, localIndex ny=2, localIndex nz=3)
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
        
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -863,7 +863,7 @@ RAJA_INLINE void ConstitutiveUpdateKernel(localIndex noElem, geosxIndex elemList
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
       
       for(localIndex q=0; q < inumQuadraturePoints; ++q){      
 
@@ -951,7 +951,7 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(localIndex noElem, geosxIndex 
                                                   localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
   
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
        
 #if defined(STRUCTURED_GRID)
        localIndex nodeList[inumNodesPerElement];       
@@ -1015,7 +1015,7 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(localIndex noElem, geosxIndex el
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
        
        real64 uhat_local_x[inumNodesPerElement];
        real64 uhat_local_y[inumNodesPerElement];
@@ -1158,7 +1158,7 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex 
                                                   
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (localIndex k) {
 
 #if defined(STRUCTURED_GRID)
        localIndex nodeList[inumNodesPerElement];       
@@ -1215,7 +1215,7 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
               real64 const dx,
               localIndex const length){
   
-  geosx::forall_in_range(0,length, GEOSX_LAMBDA (globalIndex a){
+  geosx::forall_in_range(0,length, GEOSX_LAMBDA (localIndex a){
       y[a][0] += dx*dydx[a][0];
       y[a][1] += dx*dydx[a][1];
       y[a][2] += dx*dydx[a][2];
@@ -1230,7 +1230,7 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
               localIndex * const indices,
               localIndex const length)
 {
-  geosx::forall_in_set(indices, length, GEOSX_LAMBDA (globalIndex a){
+  geosx::forall_in_set(indices, length, GEOSX_LAMBDA (localIndex a){
       y[a][0] += dx*dydx[a][0];
       y[a][1] += dx*dydx[a][1];
       y[a][2] += dx*dydx[a][2];
@@ -1245,7 +1245,7 @@ void OnePoint( geosx::arraySlice1d<real64> const & dydx_0,
                real64 const dx,
                localIndex const length )
 {  
-  geosx::forall_in_range(0,length, GEOSX_LAMBDA (globalIndex a){
+  geosx::forall_in_range(0,length, GEOSX_LAMBDA (localIndex a){
       y[a][0] += dx*dydx_0[a];
       y[a][1] += dx*dydx_1[a];
       y[a][2] += dx*dydx_2[a];
@@ -1259,7 +1259,7 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> dydx,
               real64 const dx,
               localIndex const length)
 {
-  geosx::forall_in_range(0, length, GEOSX_LAMBDA (globalIndex a){
+  geosx::forall_in_range(0, length, GEOSX_LAMBDA (localIndex a){
       dy[a][0] = dydx[a][0] * dx;
       dy[a][1] = dydx[a][1] * dx;
       dy[a][2] = dydx[a][2] * dx;

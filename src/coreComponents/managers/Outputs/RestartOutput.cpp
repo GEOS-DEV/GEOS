@@ -21,7 +21,6 @@
  */
 
 #include "RestartOutput.hpp"
-#include "DocumentationNode.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
@@ -43,17 +42,6 @@ RestartOutput::RestartOutput( std::string const & name,
 
 RestartOutput::~RestartOutput()
 {}
-
-void RestartOutput::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Restart");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs Restart format files");
-
-}
 
 void RestartOutput::Execute(real64 const& time_n,
                             real64 const& dt,

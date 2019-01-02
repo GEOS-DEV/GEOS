@@ -47,15 +47,22 @@ NumericalMethodsManager::~NumericalMethodsManager()
   // TODO Auto-generated destructor stub
 }
 
-void NumericalMethodsManager::FillDocumentationNode()
+ManagedGroup * NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("NumericalMethods");
-  docNode->setSchemaType("Node");
+  return nullptr;
 }
 
-void NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
+dataRepository::ManagedGroup const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const
 {
+  for( auto & iterNumericalMethod : this->GetSubGroups() )
+  {
+    if( iterNumericalMethod.second->getName() == name)
+    {
+      return iterNumericalMethod.second;
+    }
+  }
+  GEOS_ERROR("Can't find subgroup named " + name + " in " + this->getName());
+  return nullptr;
 }
 
 

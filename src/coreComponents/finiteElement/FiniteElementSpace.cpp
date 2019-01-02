@@ -44,49 +44,14 @@ using namespace dataRepository;
 
 FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
+  RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
+}
 
 FiniteElementSpace::~FiniteElementSpace()
 {
   delete m_finiteElement;
-}
-
-
-void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
-{}
-
-void FiniteElementSpace::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-
-  docNode->AllocateChildNode( keys::basis,
-                              keys::basis,
-                              -1,
-                              "string",
-                              "string",
-                              "name of basis function object.",
-                              "name of the basis function object.",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-  docNode->AllocateChildNode( keys::quadrature,
-                              keys::quadrature,
-                              -1,
-                              "string",
-                              "string",
-                              "name of basis function object.",
-                              "name of the basis function object.",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-
 }
 
 void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
@@ -136,7 +101,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> 
   }
 }
 
-void FiniteElementSpace::ReadXML_PostProcess()
+void FiniteElementSpace::ProcessInputFile_PostProcess()
 {
   auto const & basisName = this->getReference<string>(keys::basis);
   auto const & quadratureName = this->getReference<string>(keys::quadrature);

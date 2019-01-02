@@ -40,27 +40,25 @@ using namespace dataRepository;
 FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
-  m_toElements.m_toElementRegion.setDefaultValue(-1);
-  m_toElements.m_toElementSubRegion.setDefaultValue(-1);
-  m_toElements.m_toElementIndex.setDefaultValue(-1);
-
   this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
-                             &(elementRegionList()),
-                             false );
+                             &(m_toElements.m_toElementRegion),
+                             false )->setApplyDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
-                             &(elementSubRegionList()),
-                             false );
+                             &(m_toElements.m_toElementSubRegion),
+                             false )->setApplyDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
-                             &(elementList()),
-                             false );
+                             &(m_toElements.m_toElementIndex),
+                             false )->setApplyDefaultValue(-1);
 
+  this->RegisterViewWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false);
   this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
+  this->RegisterViewWrapper( viewKeyStruct::faceNormalString, &m_faceNormal, false);
 
   m_toElements.resize(0,2);
 
@@ -80,70 +78,57 @@ FaceManager::~FaceManager()
 
 
 
-void FaceManager::FillDocumentationNode()
-{
-  ObjectManagerBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( "InternalMesh" );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "a mesh generator" );
-
-
-//  docNode->AllocateChildNode( viewKeys.elementRegionList.Key(),
-//                              viewKeys.elementRegionList.Key(),
+//void FaceManager::FillDocumentationNode()
+//{
+//  ObjectManagerBase::FillDocumentationNode();
+//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+//
+//  docNode->setName( "InternalMesh" );
+//  docNode->setSchemaType( "Node" );
+//  docNode->setShortDescription( "a mesh generator" );
+//
+//
+//  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
+//                              viewKeyStruct::faceAreaString,
 //                              -1,
-//                              "integer_array",
-//                              "integer_array",
-//                              "List containing the element regions of the faces",
-//                              "List containing the element regions of the faces",
-//                              "1",
+//                              "real64_array",
+//                              "real64_array",
+//                              "Face surface area",
+//                              "Face surface area",
 //                              "",
+//                              this->getName(),
 //                              1,
 //                              0,
-//                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
-                              viewKeyStruct::faceAreaString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Face surface area",
-                              "Face surface area",
-                              "",
-                              this->getName(),
-                              1,
-                              0,
-                              1 );
-
-  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
-                              viewKeyStruct::faceCenterString,
-                              -1,
-                              "r1_array",
-                              "r1_array",
-                              "Face centroid coordinates",
-                              "Face centroid coordinates",
-                              "",
-                              this->getName(),
-                              1,
-                              0,
-                              1 );
-
-  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
-                              viewKeyStruct::faceNormalString,
-                              -1,
-                              "r1_array",
-                              "r1_array",
-                              "Face normal ",
-                              "Face normal",
-                              "",
-                              this->getName(),
-                              1,
-                              0,
-                              1 );
-
-
-}
+//                              1 );
+//
+//  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
+//                              viewKeyStruct::faceCenterString,
+//                              -1,
+//                              "r1_array",
+//                              "r1_array",
+//                              "Face centroid coordinates",
+//                              "Face centroid coordinates",
+//                              "",
+//                              this->getName(),
+//                              1,
+//                              0,
+//                              1 );
+//
+//  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
+//                              viewKeyStruct::faceNormalString,
+//                              -1,
+//                              "r1_array",
+//                              "r1_array",
+//                              "Face normal ",
+//                              "Face normal",
+//                              "",
+//                              this->getName(),
+//                              1,
+//                              0,
+//                              1 );
+//
+//
+//}
 
 void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
 {
@@ -273,7 +258,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
   // make sets from nodesets
   // First create the sets
-  auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
+  auto const & nodeSets = nodeManager->sets()->wrappers();
   for ( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -286,7 +271,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const set<localIndex>& targetSet = nodeManager->GetGroup(keys::sets)->getReference<set<localIndex>>( setName );
+    const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
 
@@ -666,13 +651,15 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
-void FaceManager::FixUpDownMaps()
+void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_nodeList,
-                                    m_unmappedGlobalIndicesInToNodes);
+                                    m_unmappedGlobalIndicesInToNodes,
+                                    clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_edgeList,
-                                    m_unmappedGlobalIndicesInToEdges);
+                                    m_unmappedGlobalIndicesInToEdges,
+                                    clearIfUnmapped );
 
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);

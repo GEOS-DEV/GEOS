@@ -84,8 +84,6 @@ public:
   using CellStencil     = StencilCollection<CellDescriptor, real64>;
   using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
 
-  void FillDocumentationNode() override;
-
   void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
   FluxApproximationBase() = delete;

@@ -93,9 +93,7 @@ public:
 
   virtual ~MultiFluidBase() override;
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -192,6 +190,13 @@ public:
   } viewKeysMultiFluidBase;
 
 protected:
+
+  /**
+   * @brief Function called internally to resize member arrays
+   * @param size primary dimension (e.g. number of cells)
+   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   */
+  void ResizeFields( localIndex const size, localIndex const numPts );
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   bool m_useMass;

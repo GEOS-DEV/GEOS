@@ -48,9 +48,6 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "Restart"; }
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
   /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
