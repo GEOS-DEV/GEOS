@@ -26,7 +26,6 @@
 #include "ArrayUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "xmlWrapper.hpp"
-#include "DocumentationNode.hpp"
 #include "IntegerConversion.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"

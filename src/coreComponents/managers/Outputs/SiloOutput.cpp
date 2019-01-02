@@ -21,7 +21,6 @@
  */
 
 #include "SiloOutput.hpp"
-#include "DocumentationNode.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"

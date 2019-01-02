@@ -21,7 +21,6 @@
  */
 
 #include "OutputBase.hpp"
-#include "DocumentationNode.hpp"
 
 
 namespace geosx

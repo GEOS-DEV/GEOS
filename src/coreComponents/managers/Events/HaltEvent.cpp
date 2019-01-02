@@ -17,7 +17,6 @@
  */
 
 #include "HaltEvent.hpp"
-#include "DocumentationNode.hpp"
 #include <sys/time.h>
 
 /**

@@ -21,7 +21,6 @@
   */
 
 #include "PeriodicEvent.hpp"
-#include "DocumentationNode.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 
 namespace geosx

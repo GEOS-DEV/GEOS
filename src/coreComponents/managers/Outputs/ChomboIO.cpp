@@ -20,7 +20,6 @@
  * @file ChomboIO.cpp
  */
 #include "ChomboIO.hpp"
-#include "DocumentationNode.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "managers/DomainPartition.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"

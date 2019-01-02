@@ -25,7 +25,6 @@
 
 #include "PhysicsSolverManager.hpp"
 
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "SolverBase.hpp"
 
 namespace geosx

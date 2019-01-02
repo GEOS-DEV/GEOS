@@ -24,8 +24,6 @@
 #include "managers/Events/EventBase.hpp"
 #include "common/TimingMacros.hpp"
 
-#include "DocumentationNode.hpp"
-
 namespace geosx
 {
 

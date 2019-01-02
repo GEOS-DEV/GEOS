@@ -38,7 +38,6 @@
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 
 namespace geosx
 {

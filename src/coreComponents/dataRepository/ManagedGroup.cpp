@@ -66,7 +66,6 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ):
-  m_docNode(nullptr),
   m_parent(parent),
   m_wrappers(),
   m_subGroups(),
