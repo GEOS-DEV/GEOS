@@ -19,18 +19,32 @@
 #ifndef RESTARTFLAGS_H_
 #define RESTARTFLAGS_H_
 
+/**
+ * @file RestartFlags.hpp
+ */
+
 namespace geosx
 {
 namespace dataRepository
 {
 
+/**
+ * @enum RestartFlags
+ *
+ * A scoped enum for the restart options.
+ */
 enum class RestartFlags : unsigned char
 {
-  NO_WRITE,
-  WRITE,
-  WRITE_AND_READ
+  NO_WRITE,     //!< NO_WRITE
+  WRITE,        //!< WRITE
+  WRITE_AND_READ//!< WRITE_AND_READ
 };
 
+/**
+ * @enum PlotLevel
+ *
+ * A scoped enum for the Plot options.
+ */
 enum class PlotLevel : int
 {
   LEVEL_0,
@@ -40,6 +54,11 @@ enum class PlotLevel : int
   NOPLOT
 };
 
+/**
+ * @brief Function to get a PlotLevel enum from an int
+ * @param val int that represents the PlotLevel
+ * @return The PlotLevel that corresponds to the input
+ */
 inline PlotLevel IntToPlotLevel( int const val )
 {
   PlotLevel rval = PlotLevel::NOPLOT;
@@ -72,21 +91,46 @@ inline PlotLevel IntToPlotLevel( int const val )
   }
   return rval;
 }
+
+/**
+ * @brief boolean operator< for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left<right
+ */
 inline bool operator<( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) < static_cast<int>(right);
 }
 
+/**
+ * @brief boolean operator> for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left>right
+ */
 inline bool operator>( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) > static_cast<int>(right);
 }
 
+/**
+ * @brief boolean operator== for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left==right
+ */
 inline bool operator==( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) == static_cast<int>(right);
 }
 
+/**
+ * @brief boolean operator!= for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left!=right
+ */
 inline bool operator!=( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) != static_cast<int>(right);
