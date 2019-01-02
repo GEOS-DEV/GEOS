@@ -37,9 +37,7 @@ public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~CellBlockSubRegion() override;
 
-  void FillDocumentationNode() override final;
-
-  void ReadXML_PostProcess() override;
+  void ProcessInputFile_PostProcess() override;
 
   void InitializePreSubGroups( ManagedGroup * const ) override final;
 

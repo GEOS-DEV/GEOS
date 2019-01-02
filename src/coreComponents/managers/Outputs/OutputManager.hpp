@@ -50,11 +50,8 @@ public:
   /// Destructor
   virtual ~OutputManager() override;
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
   /// Catalog name interface
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   struct viewKeyStruct
   {

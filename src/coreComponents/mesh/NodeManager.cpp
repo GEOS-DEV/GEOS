@@ -109,29 +109,29 @@ NodeManager::~NodeManager()
 
 
 
-void NodeManager::FillDocumentationNode()
-{
-  ObjectManagerBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->getCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "a node manager" );
-
-
-  docNode->AllocateChildNode( keys::referencePositionString,
-                              keys::referencePositionString,
-                              -1,
-                              "r1_array",
-                              "r1_array",
-                              "reference position of nodes",
-                              "reference position of nodes",
-                              "",
-                              "",
-                              1,
-                              0,
-                              1 );
-}
+//void NodeManager::FillDocumentationNode()
+//{
+//  ObjectManagerBase::FillDocumentationNode();
+//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+//
+//  docNode->setName( this->getCatalogName() );
+//  docNode->setSchemaType( "Node" );
+//  docNode->setShortDescription( "a node manager" );
+//
+//
+//  docNode->AllocateChildNode( keys::referencePositionString,
+//                              keys::referencePositionString,
+//                              -1,
+//                              "r1_array",
+//                              "r1_array",
+//                              "reference position of nodes",
+//                              "reference position of nodes",
+//                              "",
+//                              "",
+//                              1,
+//                              0,
+//                              1 );
+//}
 
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )

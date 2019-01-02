@@ -51,8 +51,7 @@ public:
   ConstitutiveManager( string const & name,
                        ManagedGroup * const parent );
 
-  void FillDocumentationNode() override final;
-  virtual void CreateChild( string const & childKey, string const & childName ) override final;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override final;
 
   ConstitutiveBase *
   HangConstitutiveRelation( string const & constitutiveRelationInstanceName,

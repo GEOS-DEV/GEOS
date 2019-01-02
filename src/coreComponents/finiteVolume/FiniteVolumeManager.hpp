@@ -40,11 +40,9 @@ public:
   FiniteVolumeManager(string const & name, ManagedGroup * const parent);
   virtual ~FiniteVolumeManager() override;
 
-  virtual void FillDocumentationNode() override;
-
   void IntermediateInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
-  virtual void CreateChild(string const & childKey, string const & childName) override;
+  virtual ManagedGroup * CreateChild(string const & childKey, string const & childName) override;
 
   FluxApproximationBase const * getFluxApproximation(string const &name) const;
 

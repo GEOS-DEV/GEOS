@@ -73,7 +73,7 @@ public:
 
 //  void Initialize(  ){}
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   using ManagedGroup::resize;
 

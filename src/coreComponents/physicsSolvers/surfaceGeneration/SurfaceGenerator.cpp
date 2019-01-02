@@ -140,126 +140,46 @@ SurfaceGenerator::~SurfaceGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void SurfaceGenerator::FillDocumentationNode()
+void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
-  SolverBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const
-  docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( viewKeyStruct::ruptureStateString,
-                              viewKeyStruct::ruptureStateString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "",
-                              "",
-                              "",
-                              this->getName(),
-                              0,
-                              1,
-                              1 );
-
-}
-
-void SurfaceGenerator::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-  SolverBase::FillOtherDocumentationNodes( rootGroup );
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>( dataRepository::keys::domain );
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
 
-    {
-      NodeManager * const nodeManager = meshLevel->getNodeManager();
-      EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-      FaceManager * const faceManager = meshLevel->getFaceManager();
-      cxx_utilities::DocumentationNode * const
-      nodeDocNode = nodeManager->getDocumentationNode();
-      cxx_utilities::DocumentationNode * const
-      edgeDocNode = edgeManager->getDocumentationNode();
-      cxx_utilities::DocumentationNode * const
-      faceDocNode = faceManager->getDocumentationNode();
+    NodeManager * const nodeManager = meshLevel->getNodeManager();
+    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+    FaceManager * const faceManager = meshLevel->getFaceManager();
 
-      nodeDocNode->AllocateChildNode( ObjectManagerBase::viewKeyStruct::parentIndexString,
-                                      ObjectManagerBase::viewKeyStruct::parentIndexString,
-                                      -1,
-                                      "localIndex_array",
-                                      "localIndex_array",
-                                      "",
-                                      "",
-                                      "-1",
-                                      nodeManager->getName(),
-                                      1,
-                                      0,
-                                      1 );
+    nodeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of node.");
 
-      nodeDocNode->AllocateChildNode( viewKeyStruct::degreeFromCrackString,
-                                      viewKeyStruct::degreeFromCrackString,
-                                      -1,
-                                      "integer_array",
-                                      "integer_array",
-                                      "",
-                                      "",
-                                      "",
-                                      nodeManager->getName(),
-                                      1,
-                                      0,
-                                      1 );
+    nodeManager->RegisterViewWrapper<integer_array>(viewKeyStruct::degreeFromCrackString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("connectivity distance from crack.");
 
-      edgeDocNode->AllocateChildNode( ObjectManagerBase::viewKeyStruct::parentIndexString,
-                                      ObjectManagerBase::viewKeyStruct::parentIndexString,
-                                      -1,
-                                      "localIndex_array",
-                                      "localIndex_array",
-                                      "",
-                                      "",
-                                      "-1",
-                                      edgeManager->getName(),
-                                      1,
-                                      0,
-                                      1 );
 
-      faceDocNode->AllocateChildNode( ObjectManagerBase::viewKeyStruct::parentIndexString,
-                                      ObjectManagerBase::viewKeyStruct::parentIndexString,
-                                      -1,
-                                      "localIndex_array",
-                                      "localIndex_array",
-                                      "",
-                                      "",
-                                      "-1",
-                                      faceManager->getName(),
-                                      1,
-                                      0,
-                                      1 );
+    edgeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of the edge.");
 
-      faceDocNode->AllocateChildNode( ObjectManagerBase::viewKeyStruct::childIndexString,
-                                      ObjectManagerBase::viewKeyStruct::childIndexString,
-                                      -1,
-                                      "localIndex_array",
-                                      "localIndex_array",
-                                      "",
-                                      "",
-                                      "-1",
-                                      faceManager->getName(),
-                                      1,
-                                      0,
-                                      1 );
+    faceManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of the face.");
 
-      faceDocNode->AllocateChildNode( viewKeyStruct::ruptureStateString,
-                                      viewKeyStruct::ruptureStateString,
-                                      -1,
-                                      "integer_array",
-                                      "integer_array",
-                                      "",
-                                      "",
-                                      "",
-                                      faceManager->getName(),
-                                      1,
-                                      0,
-                                      1 );
+    faceManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("child index of the face.");
 
-    }
+    faceManager->RegisterViewWrapper<integer_array>(viewKeyStruct::ruptureStateString)->
+      setApplyDefaultValue(0)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+      setDescription("Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured");
   }
 }
 

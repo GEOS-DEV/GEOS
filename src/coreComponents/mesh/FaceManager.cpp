@@ -46,17 +46,19 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
                              &(m_toElements.m_toElementRegion),
-                             false )->setDefaultValue(-1);
+                             false )->setApplyDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
                              &(m_toElements.m_toElementSubRegion),
-                             false )->setDefaultValue(-1);
+                             false )->setApplyDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
                              &(m_toElements.m_toElementIndex),
-                             false )->setDefaultValue(-1);
+                             false )->setApplyDefaultValue(-1);
 
+  this->RegisterViewWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false);
   this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
+  this->RegisterViewWrapper( viewKeyStruct::faceNormalString, &m_faceNormal, false);
 
   m_toElements.resize(0,2);
 
@@ -76,70 +78,57 @@ FaceManager::~FaceManager()
 
 
 
-void FaceManager::FillDocumentationNode()
-{
-  ObjectManagerBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( "InternalMesh" );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "a mesh generator" );
-
-
-//  docNode->AllocateChildNode( viewKeys.elementRegionList.Key(),
-//                              viewKeys.elementRegionList.Key(),
+//void FaceManager::FillDocumentationNode()
+//{
+//  ObjectManagerBase::FillDocumentationNode();
+//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+//
+//  docNode->setName( "InternalMesh" );
+//  docNode->setSchemaType( "Node" );
+//  docNode->setShortDescription( "a mesh generator" );
+//
+//
+//  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
+//                              viewKeyStruct::faceAreaString,
 //                              -1,
-//                              "integer_array",
-//                              "integer_array",
-//                              "List containing the element regions of the faces",
-//                              "List containing the element regions of the faces",
-//                              "1",
+//                              "real64_array",
+//                              "real64_array",
+//                              "Face surface area",
+//                              "Face surface area",
 //                              "",
+//                              this->getName(),
 //                              1,
 //                              0,
-//                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
-                              viewKeyStruct::faceAreaString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Face surface area",
-                              "Face surface area",
-                              "",
-                              this->getName(),
-                              1,
-                              0,
-                              1 );
-
-  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
-                              viewKeyStruct::faceCenterString,
-                              -1,
-                              "r1_array",
-                              "r1_array",
-                              "Face centroid coordinates",
-                              "Face centroid coordinates",
-                              "",
-                              this->getName(),
-                              1,
-                              0,
-                              1 );
-
-  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
-                              viewKeyStruct::faceNormalString,
-                              -1,
-                              "r1_array",
-                              "r1_array",
-                              "Face normal ",
-                              "Face normal",
-                              "",
-                              this->getName(),
-                              1,
-                              0,
-                              1 );
-
-
-}
+//                              1 );
+//
+//  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
+//                              viewKeyStruct::faceCenterString,
+//                              -1,
+//                              "r1_array",
+//                              "r1_array",
+//                              "Face centroid coordinates",
+//                              "Face centroid coordinates",
+//                              "",
+//                              this->getName(),
+//                              1,
+//                              0,
+//                              1 );
+//
+//  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
+//                              viewKeyStruct::faceNormalString,
+//                              -1,
+//                              "r1_array",
+//                              "r1_array",
+//                              "Face normal ",
+//                              "Face normal",
+//                              "",
+//                              this->getName(),
+//                              1,
+//                              0,
+//                              1 );
+//
+//
+//}
 
 void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
 {

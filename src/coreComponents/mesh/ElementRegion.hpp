@@ -83,10 +83,7 @@ public:
   ElementRegion(const ElementRegion& init);
 //  ElementRegion( ElementRegion&& init);
 
-
-  virtual void FillDocumentationNode() override final;
-
-  virtual void ReadXML_PostProcess() override;
+  virtual void ProcessInputFile_PostProcess() override;
 
 //  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
 //                           map<string,localIndex> & counts );
@@ -195,6 +192,7 @@ public:
 
   private:
   ElementRegion& operator=(const ElementRegion& rhs);
+  string m_defaultMaterial;
   string_array m_materialList;
 //  string & m_elementType;
 

@@ -55,7 +55,8 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void FillDocumentationNode() override;
+  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
+
 
   void InitializationOrder( string_array & order ) override final;
 

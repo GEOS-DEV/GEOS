@@ -226,7 +226,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 
-  relPerm->ReadXML_PostProcess();
+  relPerm->ProcessInputFile_PostProcess();
   return relPerm;
 }
 

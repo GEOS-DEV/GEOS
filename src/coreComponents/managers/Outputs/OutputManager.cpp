@@ -21,7 +21,6 @@
  */
 
 #include "OutputManager.hpp"
-#include "DocumentationNode.hpp"
 #include "SiloOutput.hpp"
 
 namespace geosx
@@ -39,21 +38,13 @@ OutputManager::OutputManager( std::string const & name,
 OutputManager::~OutputManager()
 {}
 
-void OutputManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Outputs");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Manages output types");
-}
 
 
-void OutputManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * OutputManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Output: " << childKey << ", " << childName);
   std::unique_ptr<OutputBase> output = OutputBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<OutputBase>( childName, std::move(output) );
+  return this->RegisterGroup<OutputBase>( childName, std::move(output) );
 }
 
 

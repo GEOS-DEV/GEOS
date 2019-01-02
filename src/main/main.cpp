@@ -75,11 +75,10 @@ int main( int argc, char *argv[] )
   }
 
   ProblemManager problemManager( "ProblemManager", nullptr );
-  problemManager.SetDocumentationNodes();
-  problemManager.RegisterDocumentationNodes();  
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
+
 
 
   problemManager.ParseInputFile();
@@ -87,6 +86,9 @@ int main( int argc, char *argv[] )
   GEOSX_MARK_BEGIN("problemManager.Initialize");
   problemManager.Initialize( &problemManager );
   GEOSX_MARK_END("problemManager.Initialize");
+
+  problemManager.RegisterDataOnMeshRecursive( nullptr );
+
 
   problemManager.IntermediateInitializationRecursive( &problemManager );
 

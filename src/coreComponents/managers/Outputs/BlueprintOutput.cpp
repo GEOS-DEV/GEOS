@@ -20,7 +20,6 @@
  * @file BlueprintOutput.cpp
  */
 #include "BlueprintOutput.hpp"
-#include "DocumentationNode.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "managers/DomainPartition.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
@@ -41,15 +40,6 @@ BlueprintOutput::BlueprintOutput( std::string const & name,
 BlueprintOutput::~BlueprintOutput()
 {}
 
-void BlueprintOutput::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Blueprint");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs Blueprint format files");
-}
 
 void BlueprintOutput::Execute(real64 const& time_n,
                               real64 const& dt,

@@ -31,12 +31,6 @@
 #include "mesh/MeshForLoopInterface.hpp"
 //#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
 
-
-struct stabledt
-{
-  double m_maxdt;
-};
-
 namespace ML_Epetra
 { class MultiLevelPreconditioner; }
 
@@ -67,13 +61,16 @@ public:
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void FillDocumentationNode() override final;
-  
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
+//  virtual void FillDocumentationNode() override final;
+//  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
   virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void ReadXML_PostProcess() override final;
+  virtual void ProcessInputFile_PostProcess() override final;
+
+//  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
+
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
@@ -213,25 +210,57 @@ public:
                         systemSolverInterface::EpetraBlockSystem & blockSystem );
 
 
-  enum class timeIntegrationOption
+  enum class timeIntegrationOption : int
   {
     QuasiStatic,
     ImplicitDynamic,
     ExplicitDynamic
   };
 
+  void SetTimeIntegrationOption( string const & stringVal )
+  {
+    if( stringVal == "ExplicitDynamic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
+    }
+    else if( stringVal == "ImplicitDynamic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
+    }
+    else if ( stringVal == "QuasiStatic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
+    }
+    else
+    {
+      GEOS_ERROR("Invalid time integration option: " << stringVal);
+    }
+  }
+
   struct viewKeyStruct
   {
-    dataRepository::ViewKey vTilde = { "velocityTilde" };
-    dataRepository::ViewKey uhatTilde = { "uhatTilde" };
-    dataRepository::ViewKey newmarkGamma = { "newmarkGamma" };
-    dataRepository::ViewKey newmarkBeta = { "newmarkBeta" };
-    dataRepository::ViewKey massDamping = { "massDamping" };
-    dataRepository::ViewKey stiffnessDamping = { "stiffnessDamping" };
-    dataRepository::ViewKey useVelocityEstimateForQS = { "useVelocityEstimateForQuasiStatic" };
-    dataRepository::ViewKey trilinosIndex = { "trilinosIndex" };
-    dataRepository::ViewKey ghostRank = { "ghostRank" };
-    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
+    static constexpr auto vTildeString = "velocityTilde";
+    static constexpr auto uhatTildeString = "uhatTilde";
+    static constexpr auto cflFactorString = "cflFactor";
+    static constexpr auto newmarkGammaString = "newmarkGamma";
+    static constexpr auto newmarkBetaString = "newmarkBeta";
+    static constexpr auto massDampingString = "massDamping";
+    static constexpr auto stiffnessDampingString = "stiffnessDamping";
+    static constexpr auto useVelocityEstimateForQSString = "useVelocityEstimateForQuasiStatic";
+    static constexpr auto trilinosIndexString = "trilinosIndex";
+    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
+
+
+    dataRepository::ViewKey vTilde = { vTildeString };
+    dataRepository::ViewKey uhatTilde = { uhatTildeString };
+    dataRepository::ViewKey newmarkGamma = { newmarkGammaString };
+    dataRepository::ViewKey newmarkBeta = { newmarkBetaString };
+    dataRepository::ViewKey massDamping = { massDampingString };
+    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString };
+    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString };
+    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
+    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString };
   } solidMechanicsViewKeys;
 
   struct groupKeyStruct
@@ -240,10 +269,14 @@ public:
   } solidMechanicsGroupKeys;
 
 private:
-
-  real64 m_maxForce = 0.0;
-  stabledt m_stabledt;
+  real64 m_newmarkGamma;
+  real64 m_newmarkBeta;
+  real64 m_massDamping;
+  real64 m_stiffnessDamping;
+  string m_timeIntegrationOptionString;
   timeIntegrationOption m_timeIntegrationOption;
+  integer m_useVelocityEstimateForQS;
+  real64 m_maxForce = 0.0;
 
   array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;

@@ -58,169 +58,31 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
   getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }
 
-
-void SinglePhaseFlow::FillDocumentationNode(  )
+void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
 {
-  FlowSolverBase::FillDocumentationNode();
+  FlowSolverBase::RegisterDataOnMesh(MeshBodies);
 
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(SinglePhaseFlow::CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("A single phase flow solver");
-}
-
-void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-  FlowSolverBase::FillOtherDocumentationNodes( rootGroup );
-
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>( keys::domain );
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-
-    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
-      {
-        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-
-        docNode->AllocateChildNode( viewKeysSinglePhaseFlow.pressure.Key(),
-                                    viewKeysSinglePhaseFlow.pressure.Key(),
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Fluid pressure",
-                                    "Fluid pressure",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
-        docNode->AllocateChildNode( viewKeysSinglePhaseFlow.deltaPressure.Key(),
-                                    viewKeysSinglePhaseFlow.deltaPressure.Key(),
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Change in fluid pressure",
-                                    "Change in fluid pressure",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    1 );
-
-        docNode->AllocateChildNode( viewKeyStruct::deltaVolumeString,
-                                    viewKeyStruct::deltaVolumeString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Change in fluid volume",
-                                    "Change in fluid volume",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    1 );
-
-        docNode->AllocateChildNode( viewKeysSinglePhaseFlow.density.Key(),
-                                    viewKeysSinglePhaseFlow.density.Key(),
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Fluid density",
-                                    "Fluid density",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    3 );
-
-        docNode->AllocateChildNode( viewKeysSinglePhaseFlow.porosity.Key(),
-                                    viewKeysSinglePhaseFlow.porosity.Key(),
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Porosity",
-                                    "Porosity",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    3 );
-
-        docNode->AllocateChildNode( viewKeysSinglePhaseFlow.oldPorosity.Key(),
-                                    viewKeysSinglePhaseFlow.oldPorosity.Key(),
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Porosity old value",
-                                    "Porosity old value",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    3 );
-
-        docNode->AllocateChildNode( viewKeysSinglePhaseFlow.blockLocalDofNumber.Key(),
-                                    viewKeysSinglePhaseFlow.blockLocalDofNumber.Key(),
-                                    -1,
-                                    "globalIndex_array",
-                                    "globalIndex_array",
-                                    "DOF index",
-                                    "DOF index",
-                                    "0",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    3 );
-
-      });
-
+    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
     {
-      FaceManager * const faceManager = meshLevel->getFaceManager();
-      cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityString );
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldPorosityString );
+      cellBlock->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+    });
 
-      docNode->AllocateChildNode( viewKeysSinglePhaseFlow.facePressure.Key(),
-                                  viewKeysSinglePhaseFlow.facePressure.Key(),
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Fluid pressure",
-                                  "Fluid pressure",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeysSinglePhaseFlow.density.Key(),
-                                  viewKeysSinglePhaseFlow.density.Key(),
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Fluid density",
-                                  "Fluid density",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
-
-      docNode->AllocateChildNode( viewKeysSinglePhaseFlow.viscosity.Key(),
-                                  viewKeysSinglePhaseFlow.viscosity.Key(),
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Fluid viscosity",
-                                  "Fluid viscosity",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  3 );
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+    {
+      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::facePressureString );
+      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::densityString );
+      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::viscosityString );
     }
   }
 }
@@ -256,6 +118,7 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
     } );
   } );
 }
+
 
 void SinglePhaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
 {
@@ -298,7 +161,6 @@ void SinglePhaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const root
     } );
   } );
 }
-
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
                                     real64 const& dt,
@@ -357,6 +219,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
   SetupSystem( domain, blockSystem );
 }
 
+
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
                                             real64 const & dt,
                                             DomainPartition * const domain )
@@ -382,7 +245,6 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
     } );
   } );
 }
-
 
 void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                     localIndex & numLocalRows,
@@ -447,6 +309,8 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
 
   GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
+
+
 
 void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem )
@@ -520,8 +384,6 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 
 }
-
-
 
 void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
                                                Epetra_FECrsGraph * const sparsity )
@@ -895,6 +757,7 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   });
 }
 
+
 void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                EpetraBlockSystem * const blockSystem,
                                                real64 const time_n,
@@ -917,7 +780,6 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
   }
 
 }
-
 
 void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                  real64 const time_n, real64 const dt,

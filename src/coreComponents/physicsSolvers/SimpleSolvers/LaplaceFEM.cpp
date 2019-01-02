@@ -71,6 +71,14 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
   getLinearSystemRepository()->
     SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
 
+  RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("option for default time integration method");
+
+  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("name of field variable");
+
 }
 
 
@@ -81,84 +89,26 @@ LaplaceFEM::~LaplaceFEM()
 }
 
 
-void LaplaceFEM::FillDocumentationNode(  )
+void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example solid mechanics solver");
-
-
-  docNode->AllocateChildNode( laplaceFEMViewKeys.timeIntegrationOption.Key(),
-                              laplaceFEMViewKeys.timeIntegrationOption.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "option for default time integration method",
-                              "option for default time integration method",
-                              "ExplicitDynamic",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( laplaceFEMViewKeys.fieldVarName.Key(),
-                              laplaceFEMViewKeys.fieldVarName.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "name of field variable",
-                              "name of field variable",
-                              "Pressure",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
-void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    NodeManager * const nodes = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
+    NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
-    docNode->AllocateChildNode( "Temperature",
-                                "Temperature",
-                                -1,
-                                "real64_array",
-                                "real64_array",
-                                "",
-                                "",
-                                "",
-                                nodes->getName(),
-                                1,
-                                0,
-                                0 );
+    nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
+      setApplyDefaultValue(0.0)->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setDescription("Primary field variable");
 
-    docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
-                                viewKeyStruct::blockLocalDofNumberString,
-                                -1,
-                                "globalIndex_array",
-                                "globalIndex_array",
-                                "dof",
-                                "dof",
-                                "-1",
-                                nodes->getName(),
-                                1,
-                                0,
-                                0 );
-
+    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString )->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(PlotLevel::LEVEL_1)->
+      setDescription("Global DOF numbers for the primary field variable");
   }
 }
 
 
-void LaplaceFEM::ReadXML_PostProcess()
+void LaplaceFEM::ProcessInputFile_PostProcess()
 {
   string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 

@@ -45,7 +45,7 @@ public:
 
   static std::string CatalogName() { return "NewComponent"; }
 
-  virtual void ReadXML_PostProcess( ) override;
+  virtual void ProcessInputFile_PostProcess( ) override;
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 

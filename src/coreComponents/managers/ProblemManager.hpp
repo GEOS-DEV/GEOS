@@ -38,7 +38,6 @@
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -76,11 +75,9 @@ public:
   { return ProblemManager::CatalogName(); }
   ///@}
 
+  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
 
-
-  virtual void FillDocumentationNode() override;
-
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int argc, char* argv[]);
 
