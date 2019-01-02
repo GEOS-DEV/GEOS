@@ -432,10 +432,7 @@ public:
    */
   virtual ~BoundaryConditionBase() override;
 
-
-  void FillDocumentationNode() override;
-
-  void ReadXML_PostProcess() override final;
+  void ProcessInputFile_PostProcess() override final;
 
   /**
    * @tparam BC_OP type that contains static functions to apply the boundary condition to the field

@@ -36,7 +36,7 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
   m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this)
 {
   RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
-      setSizedFromParent(0);
+    setSizedFromParent(0);
 
   RegisterViewWrapper( viewKeyStruct::constitutiveMapString,
                        &m_constitutiveMapView, 0);
@@ -64,78 +64,7 @@ CellBlockSubRegion::~CellBlockSubRegion()
 }
 
 
-
-void CellBlockSubRegion::FillDocumentationNode()
-{
-  CellBlock::FillDocumentationNode();
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->getCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "an element region" );
-
-  CellBlock::FillDocumentationNode();
-
-//  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
-//                              viewKeys.numNodesPerElement.Key(),
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-//  docNode->AllocateChildNode( keys::numNodesPerElement,
-//                              keys::numNodesPerElement,
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-
-
-//  docNode->AllocateChildNode( keys::constitutiveMap,
-//                              keys::constitutiveMap,
-//                              -1,
-//                              "mapPair_array",
-//                              "mapPair_array",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-//  docNode->AllocateChildNode( keys::constitutiveMap,
-//                              keys::constitutiveMap,
-//                              -1,
-//                              "mapPair_array",
-//                              "mapPair_array",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-
-
-}
-
-void CellBlockSubRegion::ReadXML_PostProcess()
+void CellBlockSubRegion::ProcessInputFile_PostProcess()
 {
 //  integer & numNodesPerElem = numNodesPerElement();
 //  numNodesPerElem = 8;

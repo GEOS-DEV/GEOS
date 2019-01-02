@@ -60,7 +60,7 @@ public:
    * @param childKey the catalog key of the new BoundaryConditionBase derived type to create
    * @param childName the name of the new BoundaryConditionBase object in the repository
    */
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
 
   /**

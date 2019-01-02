@@ -46,9 +46,6 @@ public:
 
   // Catalog name interface
   static string CatalogName() { return "HaltEvent"; }
-
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
   
   /**
    * This event is designed to look at the external clock. Currently,

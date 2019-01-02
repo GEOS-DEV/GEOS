@@ -47,8 +47,6 @@ public:
   static string CatalogName()
   { return "ChomboIO"; }
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() final override;
 
   /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,

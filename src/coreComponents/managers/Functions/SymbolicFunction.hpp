@@ -46,9 +46,6 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "SymbolicFunction"; }
-
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
   
   /// Function initialization
   virtual void InitializeFunction() override;

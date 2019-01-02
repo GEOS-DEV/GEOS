@@ -20,7 +20,6 @@
  * @file ChomboIO.cpp
  */
 #include "ChomboIO.hpp"
-#include "DocumentationNode.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "managers/DomainPartition.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
@@ -43,16 +42,6 @@ ChomboIO::~ChomboIO()
 {
   delete m_coupler;
   m_coupler = nullptr;
-}
-
-void ChomboIO::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("ChomboIO");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Couples to CHOMBO");
 }
 
 void ChomboIO::Execute( real64 const & time_n,

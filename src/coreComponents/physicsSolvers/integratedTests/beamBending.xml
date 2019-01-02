@@ -9,7 +9,7 @@
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="0"
                                   >
-      <SystemSolverParameters name="SystemSolverParameters"
+      <SystemSolverParameters name="solverParams0"
                               useMLPrecond="1"
                               scalingOption="0"
                               krylovTol="1.0e-8"

@@ -52,14 +52,11 @@ public:
   /// Destructor
   virtual ~FunctionBase() override;
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
   /// Catalog name interface
   static string CatalogName() { return "FunctionBase"; }
 
   /// After reading the xml, call the function initialization
-  virtual void ReadXML_PostProcess() override { InitializeFunction(); }
+  virtual void ProcessInputFile_PostProcess() override { InitializeFunction(); }
 
   /// Function initialization
   virtual void InitializeFunction(){}
@@ -105,6 +102,8 @@ public:
                               set<localIndex> const & set) const;
 
 protected:
+  string_array m_inputVarNames;
+
   template< typename LEAF >
   void EvaluateT( dataRepository::ManagedGroup const * const group,
                   real64 const time,

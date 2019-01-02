@@ -119,6 +119,56 @@ ProblemManager::ProblemManager( const std::string& name,
 
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();
+
+
+  commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Name of the input xml file.");
+
+  commandLine->RegisterViewWrapper<string>( viewKeys.restartFileName.Key() )->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Name of the restart file.");
+
+  commandLine->RegisterViewWrapper<integer>( viewKeys.beginFromRestart.Key() )->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Flag to indicate restart run.");
+
+  commandLine->RegisterViewWrapper<string>( viewKeys.problemName.Key() )->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Used in writing the output files, if not specified defaults to the name of the input file..");
+
+  commandLine->RegisterViewWrapper<string>( viewKeys.outputDirectory.Key() )->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Directory in which to put the output files, if not specified defaults to the current directory.");
+
+  commandLine->RegisterViewWrapper<integer>( viewKeys.xPartitionsOverride.Key() )->
+    setApplyDefaultValue(1)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Number of partitions in the x-direction");
+
+  commandLine->RegisterViewWrapper<integer>( viewKeys.yPartitionsOverride.Key() )->
+    setApplyDefaultValue(1)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Number of partitions in the y-direction");
+
+  commandLine->RegisterViewWrapper<integer>( viewKeys.zPartitionsOverride.Key() )->
+    setApplyDefaultValue(1)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Number of partitions in the z-direction");
+
+  commandLine->RegisterViewWrapper<integer>( viewKeys.overridePartitionNumbers.Key() )->
+    setApplyDefaultValue(0)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Flag to indicate partition number override");
+
+  commandLine->RegisterViewWrapper<string>( keys::schema )->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Name of the output schema");
+
+  commandLine->RegisterViewWrapper<integer>( viewKeys.schemaLevel.Key() )->
+    setApplyDefaultValue(0)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Schema verbosity level (0=default, 1=development, 2=all)");
 }
 
 
@@ -126,191 +176,17 @@ ProblemManager::~ProblemManager()
 {}
 
 
-void ProblemManager::CreateChild( string const & childKey, string const & childName )
-{}
+ManagedGroup * ProblemManager::CreateChild( string const & childKey, string const & childName )
+{ return nullptr; }
 
-
-void ProblemManager::FillDocumentationNode()
+void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
 {
-  // Problem node documentation
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  ObjectManagerBase::FillDocumentationNode();
-  docNode->setName("Problem");
-  docNode->setSchemaType("RootNode");
-
-  // Command line documentation
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  cxx_utilities::DocumentationNode * const commandDocNode = commandLine->getDocumentationNode();
-  commandDocNode->setShortDescription("Command line input parameters");
-  commandDocNode->setVerbosity(2);
-
-  commandDocNode->AllocateChildNode( viewKeys.inputFileName.Key(),
-                                     viewKeys.inputFileName.Key(),
-                                     -1,
-                                     "string",
-                                     "",
-                                     "Name of the input xml file.",
-                                     "Name of the input xml file.",
-                                     "input.xml",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.restartFileName.Key(),
-                                     viewKeys.restartFileName.Key(),
-                                     -1,
-                                     "string",
-                                     "",
-                                     "Name of the restart file.",
-                                     "Name of the restart file.",
-                                     "",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.beginFromRestart.Key(),
-                                     viewKeys.beginFromRestart.Key(),
-                                     -1,
-                                     "integer",
-                                     "",
-                                     "Flag to indicate restart run",
-                                     "Flag to indicate restart run",
-                                     "0",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.problemName.Key(),
-                                     viewKeys.problemName.Key(),
-                                     -1,
-                                     "string",
-                                     "",
-                                     "Problem name.",
-                                     "Used in writing the output files, if not specified defaults to the name of the input file.",
-                                     "",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.outputDirectory.Key(),
-                                     viewKeys.outputDirectory.Key(),
-                                     -1,
-                                     "string",
-                                     "",
-                                     "Output directory.",
-                                     "Directory in which to put the output files, if not specified defaults to the current directory.",
-                                     "",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.xPartitionsOverride.Key(),
-                                     viewKeys.xPartitionsOverride.Key(),
-                                     -1,
-                                     "integer",
-                                     "",
-                                     "Number of partitions in the x-direction",
-                                     "Number of partitions in the x-direction",
-                                     "1",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.yPartitionsOverride.Key(),
-                                     viewKeys.yPartitionsOverride.Key(),
-                                     -1,
-                                     "integer",
-                                     "",
-                                     "Number of partitions in the y-direction",
-                                     "Number of partitions in the y-direction",
-                                     "1",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.zPartitionsOverride.Key(),
-                                     viewKeys.zPartitionsOverride.Key(),
-                                     -1,
-                                     "integer",
-                                     "",
-                                     "Number of partitions in the z-direction",
-                                     "Number of partitions in the z-direction",
-                                     "1",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.overridePartitionNumbers.Key(),
-                                     viewKeys.overridePartitionNumbers.Key(),
-                                     -1,
-                                     "integer",
-                                     "",
-                                     "Flag to indicate partition number override",
-                                     "Flag to indicate partition number override",
-                                     "0",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( keys::schema,
-                                     keys::schema,
-                                     -1,
-                                     "string",
-                                     "",
-                                     "Name of the output schema",
-                                     "Name of the output schema",
-                                     "gpac.xsd",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  commandDocNode->AllocateChildNode( viewKeys.schemaLevel.Key(),
-                                     viewKeys.schemaLevel.Key(),
-                                     -1,
-                                     "integer",
-                                     "",
-                                     "Schema verbosity level",
-                                     "Schema verbosity level (0=default, 1=development, 2=all)",
-                                     "0",
-                                     "CommandLine",
-                                     0,
-                                     0,
-                                     0,
-                                     RestartFlags::WRITE );
-
-  // // Mesh node documentation
-  // ManagedGroup * meshGenerators =
-  // GetGroup<ManagedGroup>(groupKeys.meshGenerators);
-  // cxx_utilities::DocumentationNode * const meshDocNode =
-  // meshGenerators->getDocumentationNode();
-  // meshDocNode->setName("Mesh");
-  // meshDocNode->setShortDescription("Mesh Generators");
+  ManagedGroup::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 }
 
 void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  commandLine->RegisterDocumentationNodes();
 
   std::string& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
   std::string& restartFileName = commandLine->getReference<std::string>(viewKeys.restartFileName);
@@ -653,44 +529,41 @@ void ProblemManager::ParseInputFile()
   }
   xmlProblemNode = xmlDocument.child("Problem");
 
-
-  // Call manager readXML methods:
-  this->AddChildren(xmlProblemNode);
-  this->SetDocumentationNodes();
-  this->ReadXML( xmlProblemNode );
+  ProcessInputFileRecursive( xmlProblemNode );
+  ProcessInputFileRecursive_PostProcess();
 
 
   // The function manager is handled separately
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
-    this->m_functionManager->AddChildren( topLevelNode );
-    this->m_functionManager->SetDocumentationNodes();
-    this->m_functionManager->ReadXML( topLevelNode );
+    m_functionManager->ProcessInputFileRecursive( topLevelNode );
+    m_functionManager->ProcessInputFileRecursive_PostProcess(  );
   }
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
     BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
-    bcManager->AddChildren( topLevelNode );
-    bcManager->SetDocumentationNodes();
-    bcManager->ReadXML( topLevelNode );
+    bcManager->ProcessInputFileRecursive( topLevelNode );
+    bcManager->ProcessInputFileRecursive_PostProcess();
+
   }
 
   // The objects in domain are handled separately for now
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-    constitutiveManager->AddChildren( topLevelNode );
-    constitutiveManager->SetDocumentationNodes();
-    constitutiveManager->ReadXML( topLevelNode );
+    constitutiveManager->ProcessInputFileRecursive( topLevelNode );
+    constitutiveManager->ProcessInputFileRecursive_PostProcess();
 
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+//    meshManager->ProcessInputFileRecursive()
     meshManager->GenerateMeshLevels(domain);
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-    elementManager->ReadXML(topLevelNode);
+    elementManager->ProcessInputFileRecursive( topLevelNode );
+    elementManager->ProcessInputFileRecursive_PostProcess();
   }
 
   // Documentation output
@@ -698,7 +571,7 @@ void ProblemManager::ParseInputFile()
   if (schemaName.empty() == 0)
   {
     integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
+//    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
   }
 }
 
@@ -737,7 +610,6 @@ void ProblemManager::InitializationOrder( string_array & order )
 void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 {
   DomainPartition * domain  = getDomainPartition();
-  domain->RegisterDocumentationNodes();
 
   ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
@@ -772,10 +644,6 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
 
-  // Once the mesh is generated, fill and register other fields
-//  this->SetOtherDocumentationNodes(this);
-  this->RegisterDocumentationNodes();
-
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     NodeManager * const nodeManager = (*mesh.second).group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
@@ -792,8 +660,6 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
-  this->SetOtherDocumentationNodes(this);
-  this->RegisterDocumentationNodes();
 
   ObjectManagerBase::InitializePostSubGroups(nullptr);
 
