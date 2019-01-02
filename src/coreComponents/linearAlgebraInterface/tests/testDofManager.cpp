@@ -79,6 +79,16 @@ TEST_F(DofManagerTest, TestOne)
   DomainPartition * const domain = problemManager.getDomainPartition();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   DofManager dofManager(*mesh);
+
+  //GEOS_LOG_RANK_0("aaaaa");
+
+  std::cout << "aaaaaaa" << std::endl;
+
+  dofManager.add("displacement",NODE,ELEM,3);
+  dofManager.add("pressure",ELEM,FACE,1);
+  dofManager.add("temperature",ELEM,NODE,1);
+ 
+  dofManager.close();     
 }
 
 

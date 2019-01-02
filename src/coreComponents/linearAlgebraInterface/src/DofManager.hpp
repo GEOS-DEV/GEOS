@@ -30,10 +30,12 @@ namespace geosx
 {
 
 /**
- * Defines a simple native GEOSX sparsity pattern.  
+ * Defines a simple GEOSX sparsity pattern.  
  * It is intended to be a lightweight way to communicate between the
  * DoFManager and the LAI implementation, without relying on a specific
- * LAI choice 
+ * LAI choice.
+ *
+ * TODO: replace with proper CrsArray 
  */
 struct SparsityPattern
 {
@@ -64,7 +66,7 @@ public:
   /**
    * Enumeration of supported objects for location and connection support
    */
-  enum GeometricObject {CELL,FACE,NODE,NONE}; // Add edges later.  Also, for now NODE = VERTEX
+  enum GeometricObject {ELEM,FACE,NODE,NONE}; // Add edges later.  Also, for now NODE = VERTEX
 
   /**
    * Add fields.
@@ -76,10 +78,10 @@ public:
    * and connected through adjacent faces.  In this example, LC is the cell-to-face connectivity, and LC*CL is the 
    * desired TPFA sparsity pattern.  More generally,
    *
-   * Example 1 = add("displacement",NODE,CELL,3) for a Q1 finite-element interpolation for elasticity
-   * Example 2 = add("pressure",CELL,FACE,1) for a scalar TPFA-type approximation
-   * Example 3 = add("pressure",CELL,NODE,1) for a scalar MPFA-type approximation 
-   * Example 4 = add("mass",CELL,NONE,1) for a diagonal-only sparsity pattern (no connections)
+   * Example 1 = add("displacement",NODE,ELEM,3) for a Q1 finite-element interpolation for elasticity
+   * Example 2 = add("pressure",ELEM,FACE,1) for a scalar TPFA-type approximation
+   * Example 3 = add("pressure",ELEM,NODE,1) for a scalar MPFA-type approximation 
+   * Example 4 = add("mass",ELEM,NONE,1) for a diagonal-only sparsity pattern (no connections)
    *
    * When the number of components is greater than one, we always assume they are tightly coupled to one another
    * and form a dense block.  The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
@@ -120,7 +122,7 @@ public:
    * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only 
    * implement appropriate combinations.
    *
-   * Example 1 = getIndices(indices,CELL,er,esr,ei,"pressure") = get pressure indices connected to this cell 
+   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell 
    * Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
    * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
    */
@@ -136,7 +138,7 @@ public:
    * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only 
    * implement appropriate combinations.
    *
-   * Example 1 = getIndices(indices,CELL,er,esr,ei,"pressure") = get pressure indices connected to this cell 
+   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell 
    * Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
    * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
    */
@@ -151,7 +153,21 @@ private:
    */
   MeshLevel const & m_meshLevel;
 
-  // ... private data TBD ...
+  /**
+   * Field description
+   */
+  struct FieldDescription
+  {
+    string name;
+    GeometricObject location;
+    GeometricObject connector;
+    integer components;
+  };
+
+  /**
+   * Array of field descriptions
+   */
+  //std::vector<FieldDescription> m_field;
 
 };
 
