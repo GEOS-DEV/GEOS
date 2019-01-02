@@ -19,7 +19,6 @@
 
 #include "MeshManager.hpp"
 
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "MeshGeneratorBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 

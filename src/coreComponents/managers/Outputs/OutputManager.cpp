@@ -21,7 +21,6 @@
  */
 
 #include "OutputManager.hpp"
-#include "DocumentationNode.hpp"
 #include "SiloOutput.hpp"
 
 namespace geosx

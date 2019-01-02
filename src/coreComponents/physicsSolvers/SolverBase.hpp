@@ -24,7 +24,6 @@
 #include <string>
 #include <limits>
 
-#include "cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"

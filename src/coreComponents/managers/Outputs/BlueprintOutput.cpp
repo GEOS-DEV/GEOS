@@ -20,7 +20,6 @@
  * @file BlueprintOutput.cpp
  */
 #include "BlueprintOutput.hpp"
-#include "DocumentationNode.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "managers/DomainPartition.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"

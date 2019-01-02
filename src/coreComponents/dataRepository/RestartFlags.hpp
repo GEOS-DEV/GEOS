@@ -47,11 +47,11 @@ enum class RestartFlags : unsigned char
  */
 enum class PlotLevel : int
 {
-  LEVEL_0,
-  LEVEL_1,
-  LEVEL_2,
-  LEVEL_3,
-  NOPLOT
+  LEVEL_0, ///< Write to plot always
+  LEVEL_1, ///< Write to plot when plotLevel>=1 is specified in input
+  LEVEL_2, ///< Write to plot when plotLevel>=2 is specified in input
+  LEVEL_3, ///< Write to plot when plotLevel>=3 is specified in input
+  NOPLOT   ///< Do not ever write to plot file
 };
 
 /**

@@ -21,7 +21,6 @@
   */
 
 #include "SoloEvent.hpp"
-#include "DocumentationNode.hpp"
 
 namespace geosx
 {
