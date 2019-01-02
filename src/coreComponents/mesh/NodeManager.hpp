@@ -103,7 +103,9 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) override;
+                                       localIndex_array & packList ) override;
+
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -218,6 +220,12 @@ private:
 
   /// nodeToElement relation
   OrderedVariableToManyElementRelation m_toElements;
+
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< set<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+
+
 
   /// deleted constructor
   NodeManager() = delete;

@@ -4,6 +4,8 @@
 #
 set(dataRepository_headers
     BufferOps_inline.hpp
+    BufferOps.hpp
+    InputFlags.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
     ExecutableGroup.hpp
@@ -12,7 +14,6 @@ set(dataRepository_headers
     SidreWrapper.hpp
     ViewWrapper.hpp
     ViewWrapperBase.hpp
-    Buffer.hpp
     RestartFlags.hpp )
 
 #

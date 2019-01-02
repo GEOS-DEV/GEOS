@@ -74,15 +74,15 @@ public:
                                       real64 & visc,
                                       real64 & dVisc_dPres ) override final;
 
-  virtual void PressureUpdatePoint( real64 const & pres,
-                                    localIndex const k,
-                                    localIndex const q ) override final;
+  virtual void StateUpdatePointPressure(real64 const & pres,
+                                        localIndex const k,
+                                        localIndex const q) override final;
 
   virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void FinalInitialization( ManagedGroup * const parent ) override final;
+  virtual void InitializePostSubGroups(ManagedGroup * const group) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -134,9 +134,9 @@ private:
 };
 
 
-inline void CompressibleSinglePhaseFluid::PressureUpdatePoint(real64 const & pres,
-                                                              localIndex const k,
-                                                              localIndex const q)
+inline void CompressibleSinglePhaseFluid::StateUpdatePointPressure(real64 const & pres,
+                                                                   localIndex const k,
+                                                                   localIndex const q)
 {
   m_densityRelation.Compute( pres, m_density[k][q], m_dDensity_dPressure[k][q] );
   m_viscosityRelation.Compute( pres, m_viscosity[k][q], m_dViscosity_dPressure[k][q] );

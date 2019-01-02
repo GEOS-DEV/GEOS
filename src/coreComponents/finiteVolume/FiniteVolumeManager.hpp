@@ -42,7 +42,7 @@ public:
 
   virtual void FillDocumentationNode() override;
 
-  void FinalInitialization(ManagedGroup *const rootGroup) override;
+  void IntermediateInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
   virtual void CreateChild(string const & childKey, string const & childName) override;
 

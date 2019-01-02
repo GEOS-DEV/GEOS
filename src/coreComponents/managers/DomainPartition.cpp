@@ -120,7 +120,7 @@ void DomainPartition::GenerateSets(  )
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
   ManagedGroup * nodeManager = mesh->getNodeManager();
 
-  dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(dataRepository::keys::sets);
+  dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
   std::map< string, integer_array > nodeInSet;
   string_array setNames;
@@ -146,16 +146,13 @@ void DomainPartition::GenerateSets(  )
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
 
   for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
-//  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion
-// )
   {
     ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
-//    elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
     for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
       CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
       array2d<localIndex> const & elemsToNodes = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
-      dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
+      dataRepository::ManagedGroup * elementSets = subRegion->sets();
       std::map< string, integer_array > numNodesInSet;
 
       for( auto & setName : setNames )
@@ -224,6 +221,8 @@ void DomainPartition::SetupCommunications()
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+
+  nodeManager->SetMaxGlobalIndex();
 
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
 

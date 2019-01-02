@@ -27,6 +27,8 @@
 
 #include <vector>
 
+#include "optionparser.h"
+
 #include "DomainPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -36,8 +38,6 @@
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
-#include "fileIO/silo/SiloFile.hpp"
-#include "fileIO/blueprint/Blueprint.hpp"
 #include "fileIO/utils/utils.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
@@ -54,6 +54,43 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+
+
+struct Arg : public option::Arg
+{
+  static option::ArgStatus Unknown(const option::Option& option, bool /*error*/)
+  {
+    GEOS_LOG_RANK("Unknown option: " << option.name);
+    return option::ARG_ILLEGAL;
+  }
+
+
+  static option::ArgStatus NonEmpty(const option::Option& option, bool /*error*/)
+  {
+    if ((option.arg != nullptr) && (option.arg[0] != 0))
+    {
+      return option::ARG_OK;
+    }
+
+    GEOS_LOG_RANK("Error: " << option.name << " requires a non-empty argument!");
+    return option::ARG_ILLEGAL;
+  }
+
+
+  static option::ArgStatus Numeric(const option::Option& option, bool /*error*/)
+  {
+    char* endptr = nullptr;
+    if ((option.arg != nullptr) && strtol(option.arg, &endptr, 10)) {};
+    if ((endptr != option.arg) && (*endptr == 0))
+    {
+      return option::ARG_OK;
+    }
+
+    GEOS_LOG_RANK("Error: " << option.name << " requires a long-int argument!");
+    return option::ARG_ILLEGAL;
+  }
+
+};
 
 
 ProblemManager::ProblemManager( const std::string& name,
@@ -780,6 +817,7 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
   nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+  domain->GenerateSets();
   domain->SetupCommunications();
 
   faceManager->SetIsExternal();
@@ -812,7 +850,6 @@ void ProblemManager::ApplyInitialConditions()
 {
   GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
-  domain->GenerateSets();
 
   BoundaryConditionManager const * boundaryConditionManager = BoundaryConditionManager::get();
 

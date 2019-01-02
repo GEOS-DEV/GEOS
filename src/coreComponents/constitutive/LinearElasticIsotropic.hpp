@@ -142,16 +142,11 @@ public:
     array2d<real64> * restrict m_meanStress = nullptr;
   } m_dataPointers;
 
-  virtual void PoreVolumeMultiplierCompute(real64 const & pres,
-                                           localIndex const i,
-                                           real64 & poro,
-                                           real64 & dPVMult_dPres) override final;
+  virtual void StateUpdatePointPressure(real64 const & pres,
+                                        localIndex const k,
+                                        localIndex const q) override final;
 
-  virtual void PressureUpdatePoint(real64 const & pres,
-                                   localIndex const k,
-                                   localIndex const q) override final;
-
-  virtual void FinalInitialization( ManagedGroup * const parent ) override final;
+  virtual void FinalInitializationPreSubGroups(ManagedGroup * const parent) override final;
 
 private:
   real64 m_bulkModulus0;
@@ -178,9 +173,9 @@ private:
   ExponentialRelation<localIndex, real64> m_poreVolumeRelation;
 };
 
-inline void LinearElasticIsotropic::PressureUpdatePoint(real64 const & pres,
-                                                             localIndex const k,
-                                                             localIndex const q)
+inline void LinearElasticIsotropic::StateUpdatePointPressure( real64 const & pres,
+                                                              localIndex const k,
+                                                              localIndex const q )
 {
   m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
 }

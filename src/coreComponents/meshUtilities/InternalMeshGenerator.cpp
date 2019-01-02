@@ -482,7 +482,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   nodeManager->SetDocumentationNodes();
 
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
-  ManagedGroup * nodeSets = nodeManager->GetGroup( std::string( "Sets" ) );
+  ManagedGroup * nodeSets = nodeManager->sets();
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
 

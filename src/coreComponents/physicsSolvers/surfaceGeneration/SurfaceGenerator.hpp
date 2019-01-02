@@ -22,6 +22,7 @@
 #ifndef SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 #define SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
+#include "MPI_Communications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/DomainPartition.hpp"
 
@@ -70,7 +71,7 @@ public:
   virtual void
   FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
-  virtual void FinalInitialization( ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitializationPreSubGroups( ManagedGroup * const problemManager ) override final;
 
 
   /**
@@ -119,15 +120,12 @@ public:
 /**@}*/
 
 
-  int SeparationDriver( NodeManager& nodeManager,
-                        EdgeManager& edgeManager,
-                        FaceManager& faceManager,
-                        ElementRegionManager& elementManager,
-                        SpatialPartition& partition,
+  int SeparationDriver( MeshLevel * const mesh,
+                        array1d<NeighborCommunicator> & neighbors,
+                        int const tileColor,
+                        int const numTileColors,
                         const bool prefrac,
                         const realT time );
-private:
-
 
 private:
 

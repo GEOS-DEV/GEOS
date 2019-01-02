@@ -228,6 +228,11 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementRegionListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
+
+  if( this->hasView( "usedFaces" ) )
+  {
+    exclusionList.insert(this->getWrapperIndex("usedFaces"));
+  }
 }
 
 //**************************************************************************************************
@@ -254,6 +259,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        m_toEdgesRelation,
+                                       m_unmappedGlobalIndicesInToEdges,
                                        packList,
                                        this->m_localToGlobalMap,
                                        m_toEdgesRelation.RelatedObjectLocalToGlobal() );
@@ -261,21 +267,22 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                        m_toFacesRelation,
+                                       m_unmappedGlobalIndicesInToFaces,
                                        packList,
                                        this->m_localToGlobalMap,
                                        m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       this->m_toElements,
-                                       packList,
-                                       m_toElements.getElementRegionManager() );
+                                         this->m_toElements,
+                                         packList,
+                                         m_toElements.getElementRegionManager() );
   return packedSize;
 }
 
 //**************************************************************************************************
 localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          arrayView1d<localIndex const> const & packList )
+                                          localIndex_array & packList )
 {
   localIndex unPackedSize = 0;
 
@@ -285,25 +292,44 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                    m_toEdgesRelation,
                                    packList,
+                                   m_unmappedGlobalIndicesInToEdges,
                                    this->m_globalToLocalMap,
-                                   m_toEdgesRelation.RelatedObjectGlobalToLocal() );
+                                   m_toEdgesRelation.RelatedObjectGlobalToLocal(),
+                                   false );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                    m_toFacesRelation,
                                    packList,
+                                   m_unmappedGlobalIndicesInToFaces,
                                    this->m_globalToLocalMap,
-                                   m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                   m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                   false );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                    this->m_toElements,
                                    packList,
-                                   m_toElements.getElementRegionManager() );
+                                   m_toElements.getElementRegionManager(),
+                                   false );
 
   return unPackedSize;
+}
+
+void NodeManager::FixUpDownMaps(  bool const clearIfUnmapped )
+{
+  ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
+                                    m_unmappedGlobalIndicesInToEdges,
+                                    clearIfUnmapped );
+
+  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
+                                    m_unmappedGlobalIndicesInToFaces,
+                                    clearIfUnmapped );
+
+//  ObjectManagerBase::FixUpDownMaps( faceList(),
+//                                    m_unmappedGlobalIndicesInFacelist);
 }
 
 

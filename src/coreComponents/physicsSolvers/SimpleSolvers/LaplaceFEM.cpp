@@ -46,6 +46,8 @@
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
+
 
 namespace geosx
 {
@@ -430,7 +432,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
     {
       CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second );
 
-      LvArray::Array< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< LvArray::Array< R1Tensor, 3 > >(keys::dNdX);
+      array3d< R1Tensor > & dNdX = cellBlockSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
       array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
 

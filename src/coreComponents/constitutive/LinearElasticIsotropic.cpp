@@ -109,9 +109,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_poreVolumeRelation  = this->m_poreVolumeRelation;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
-
-  return rval;
+  return std::move(newConstitutiveRelation);
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
@@ -302,15 +300,7 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
   }
 }
 
-void LinearElasticIsotropic::PoreVolumeMultiplierCompute(real64 const & pres,
-                                                              localIndex const i,
-                                                              real64 & poro,
-                                                              real64 & dPVMult_dPres)
-{
-  m_poreVolumeRelation.Compute( pres, poro, dPVMult_dPres );
-}
-
-void LinearElasticIsotropic::FinalInitialization( ManagedGroup *const parent )
+void LinearElasticIsotropic::FinalInitializationPreSubGroups(ManagedGroup * const parent)
 {
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 }

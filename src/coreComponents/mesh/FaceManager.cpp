@@ -40,22 +40,21 @@ using namespace dataRepository;
 FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
-
   this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
-                             &(elementRegionList()),
-                             false );
+                             &(m_toElements.m_toElementRegion),
+                             false )->setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
-                             &(elementSubRegionList()),
-                             false );
+                             &(m_toElements.m_toElementSubRegion),
+                             false )->setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
-                             &(elementList()),
-                             false );
+                             &(m_toElements.m_toElementIndex),
+                             false )->setDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
 
@@ -270,7 +269,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
   // make sets from nodesets
   // First create the sets
-  auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
+  auto const & nodeSets = nodeManager->sets()->wrappers();
   for ( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -283,7 +282,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const set<localIndex>& targetSet = nodeManager->GetGroup(keys::sets)->getReference<set<localIndex>>( setName );
+    const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
 
@@ -591,8 +590,10 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
+
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          m_nodeList.Base(),
+                                         m_unmappedGlobalIndicesInToNodes,
                                          packList,
                                          this->m_localToGlobalMap,
                                          m_nodeList.RelatedObjectLocalToGlobal() );
@@ -600,6 +601,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          m_edgeList.Base(),
+                                         m_unmappedGlobalIndicesInToEdges,
                                          packList,
                                          this->m_localToGlobalMap,
                                          m_edgeList.RelatedObjectLocalToGlobal() );
@@ -617,7 +619,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          arrayView1d<localIndex const> const & packList )
+                                          localIndex_array & packList )
 {
   localIndex unPackedSize = 0;
 
@@ -628,8 +630,10 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_nodeList,
                                      packList,
+                                     m_unmappedGlobalIndicesInToNodes,
                                      this->m_globalToLocalMap,
                                      m_nodeList.RelatedObjectGlobalToLocal() );
+
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
@@ -638,6 +642,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_edgeList,
                                      packList,
+                                     m_unmappedGlobalIndicesInToEdges,
                                      this->m_globalToLocalMap,
                                      m_edgeList.RelatedObjectGlobalToLocal() );
 
@@ -649,13 +654,27 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toElements,
                                      packList,
-                                     m_toElements.getElementRegionManager() );
+                                     m_toElements.getElementRegionManager(),
+                                     false );
 
 
 
   return unPackedSize;
 }
 
+void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
+{
+  ObjectManagerBase::FixUpDownMaps( m_nodeList,
+                                    m_unmappedGlobalIndicesInToNodes,
+                                    clearIfUnmapped );
+
+  ObjectManagerBase::FixUpDownMaps( m_edgeList,
+                                    m_unmappedGlobalIndicesInToEdges,
+                                    clearIfUnmapped );
+
+//  ObjectManagerBase::FixUpDownMaps( faceList(),
+//                                    m_unmappedGlobalIndicesInFacelist);
+}
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )

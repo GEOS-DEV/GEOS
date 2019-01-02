@@ -55,7 +55,7 @@ public:
                                      real64 const& dt,
                                      DomainPartition * const domain) override final;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitializationPreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,

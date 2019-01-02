@@ -136,7 +136,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
   // make sets from nodesets
 
-  auto const & nodeSets = nodeManager->GetGroup(dataRepository::keys::sets)->wrappers();
+  auto const & nodeSets = nodeManager->sets()->wrappers();
   for ( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -149,7 +149,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const set<localIndex>& targetSet = nodeManager->GetGroup(dataRepository::keys::sets)->getReference<set<localIndex>>( setName );
+    const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
 
@@ -731,6 +731,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          m_toNodesRelation.Base(),
+                                         m_unmappedGlobalIndicesInToNodes,
                                          packList,
                                          m_localToGlobalMap,
                                          m_toNodesRelation.RelatedObjectLocalToGlobal() );
@@ -739,6 +740,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          m_toFacesRelation.Base(),
+                                         m_unmappedGlobalIndicesInToFaces,
                                          packList,
                                          m_localToGlobalMap,
                                          m_toFacesRelation.RelatedObjectLocalToGlobal() );
@@ -750,31 +752,46 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          arrayView1d<localIndex const> const & packList )
+                                          localIndex_array & packList )
 {
   localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
   GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
-
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
+                                     m_unmappedGlobalIndicesInToNodes,
                                      this->m_globalToLocalMap,
                                      m_toNodesRelation.RelatedObjectGlobalToLocal() );
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
   GEOS_ERROR_IF( faceListString != viewKeyStruct::faceListString, "");
-
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
+                                     m_unmappedGlobalIndicesInToFaces,
                                      this->m_globalToLocalMap,
-                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                     false );
 
   return unPackedSize;
+}
+
+void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
+{
+  ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
+                                    m_unmappedGlobalIndicesInToNodes,
+                                    clearIfUnmapped );
+
+  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
+                                    m_unmappedGlobalIndicesInToFaces,
+                                    clearIfUnmapped );
+
+//  ObjectManagerBase::FixUpDownMaps( faceList(),
+//                                    m_unmappedGlobalIndicesInFacelist);
 }
 
 }

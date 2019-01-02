@@ -76,8 +76,9 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) override;
+                                       localIndex_array & packList ) override;
 
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
@@ -153,6 +154,9 @@ public:
 private:
   FixedOneToManyRelation m_toNodesRelation;
   UnorderedVariableOneToManyRelation m_toFacesRelation;
+
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
 
 
   template<bool DOPACK>

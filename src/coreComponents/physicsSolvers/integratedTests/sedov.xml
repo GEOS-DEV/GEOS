@@ -33,10 +33,10 @@
     <!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
+    <!-- PeriodicEvent name="outputs"
                    timeFrequency="1e-6"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput" /-->
 
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
@@ -94,6 +94,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="shale_MeanStress"
                dataType="real64" 
+               component="-1"
                scale="-1.0e6"
                function="spaceFunction"/>
                

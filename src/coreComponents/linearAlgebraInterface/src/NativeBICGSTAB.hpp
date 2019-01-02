@@ -28,6 +28,8 @@
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
+#include "BlockMatrixView.hpp"
+#include "BlockVectorView.hpp"
 
 namespace geosx
 {
@@ -127,14 +129,13 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 {
 
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  localIndex numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define vectors
   ParallelVector rk( x );
@@ -170,13 +171,13 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   real64 temp1;
   real64 temp2;
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: needs a maxIter param of type localIndex
   {
     // Keep the old value of rho
     rhokminus1 = rhok;
 
     // Compute r0_hat.rk
-    rk.dot( r0_hat, rhok );
+    rhok = rk.dot( r0_hat );
 
     // Compute beta
     beta = rhok/rhokminus1*alpha/omegak;
@@ -190,7 +191,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     A.multiply( y, vk );
 
     // Compute alpha
-    vk.dot( r0_hat, temp1 );
+    temp1 = vk.dot( r0_hat );
     alpha = rhok/temp1;
 
     // compute h = x + alpha*y
@@ -211,8 +212,8 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     M.multiply( t, t );
 
     // Update omega
-    t.dot( z, temp1 );
-    t.dot( t, temp2 );
+    temp1 = t.dot( z );
+    temp2 = t.dot( t );
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
@@ -224,7 +225,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     rk.copy( s );
 
     // Convergence check on ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
@@ -237,9 +238,9 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // veborse output (TODO verbosity manager?)
-  if( rank == 1 )
-    std::cout << std::endl << "BiCGSTAB converged in " << numIt << " iterations." << std::endl;
+  // TODO verbosity management
+  if( rank == 0 )
+    std::cout << "Native BiCGSTAB (no preconditioner) converged in " << numIt << " iterations." << std::endl;
   return;
 
 }
@@ -254,16 +255,22 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
                                  BlockMatrixView<LAI> const &M )
 
 {
+  GEOS_ERROR( "Not implemented" );
+
+  // TODO: BlockVectorView is a view that doesn't handle any vector
+  //       storage.  The copy and copy constructor functions below
+  //       won't work.
+
+#if 0
 
   // Get the global size
-  typename LAI::laiGID N = x.globalSize();
+  globalIndex N = x.globalSize();
 
   // Placeholder for the number of iterations
-  typename LAI::laiGID numIt = 0;
+  globalIndex numIt = 0;
 
   // Get the norm of the right hand side
-  real64 normb;
-  b.norm2( normb );
+  real64 normb = b.norm2();
 
   // Define vectors
   BlockVectorView<LAI> rk( x );
@@ -301,13 +308,13 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
   real64 temp1;
   real64 temp2;
 
-  for( typename LAI::laiGID k = 0 ; k < N ; k++ )
+  for( globalIndex k = 0 ; k < N ; k++ ) //TODO: needs a maxIter param of size localIndex
   {
     // Keep previous value of rho
     rhokminus1 = rhok;
 
     // Compute r0_hat.rk
-    rk.dot( r0_hat, rhok );
+    rhok = rk.dot( r0_hat );
 
     // Compute beta
     beta = rhok/rhokminus1*alpha/omegak;
@@ -321,7 +328,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     A.multiply( y, vk );
 
     // Compute alpha
-    vk.dot( r0_hat, temp1 );
+    temp1 = vk.dot( r0_hat );
     alpha = rhok/temp1;
 
     // compute h = x + alpha*y
@@ -342,8 +349,8 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     M.multiply( t, u );
 
     // Update omega
-    u.dot( z, temp1 );
-    u.dot( u, temp2 );
+    temp1 = u.dot( z );
+    temp2 = u.dot( u );
     omegak = temp1/temp2;
 
     // Update x = h + omega*z
@@ -355,7 +362,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     rk.copy( s );
 
     // Convergence check ||rk||/||b||
-    rk.norm2( convCheck );
+    convCheck = rk.norm2();
     if( convCheck/normb < 1e-8 )
     {
       numIt = k;
@@ -373,6 +380,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
     std::cout << std::endl << "Block BiCGSTAB converged in " << numIt << " iterations." << std::endl;
   return;
 
+#endif
 }
 
 } // namespace GEOSX

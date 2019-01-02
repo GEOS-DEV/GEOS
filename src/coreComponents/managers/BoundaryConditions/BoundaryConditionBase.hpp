@@ -89,10 +89,10 @@ struct BcEqual
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
+   * @param[in] component The index along second dimension of 2d array.
    * @param[in] value The value of the boundary condition to apply to @p field.
    *
-   * This function performs field[index] = value for all values of field[index].
+   * This function performs field[index][component] = value.
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
@@ -101,9 +101,16 @@ struct BcEqual
                 int const component,
                 real64 const & value )
   {
-    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+    if( component >= 0 )
     {
-      field[index][a] = static_cast<T>(value);
+      field[index][component] = static_cast<T>(value);
+    }
+    else
+    {
+      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+      {
+        field[index][a] = static_cast<T>(value);
+      }
     }
   }
 
@@ -125,9 +132,72 @@ struct BcEqual
                 int const component,
                 real64 const & value )
   {
+    if( component >= 0)
+    {
+      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+      {
+        field[index][a].Data()[component] = value;
+      }
+    }
+    else
+    {
+      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+      {
+        field[index][a] = value;
+      }
+    }
+  }
+
+  /**
+   * @brief Pointwise application of a boundary condition to a field variable.
+   * @tparam T The type of the array2d field variable specified in @p field.
+   * @param[in] field The array2d field variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to.
+   * @param[in] component not used.
+   * @param[in] value The value of the boundary condition to apply to @p field.
+   *
+   * This function performs field[index] = value for all values of field[index].
+   */
+  template< typename T >
+  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( arrayView3d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
-      field[index][a] = value;
+      for( localIndex b=0; b<field.size( 2 ) ; ++b )
+      {
+        field[index][a][b] = static_cast<T>(value);
+      }
+    }
+  }
+
+  /**
+   * @brief Pointwise application of a boundary condition to a field variable.
+   * @tparam T The type of the array2d field variable specified in @p field.
+   * @param[in] field The array2d field variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to.
+   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
+   *                      this will not be used.
+   * @param[in] value The value of the boundary condition to apply to @p field.
+   *
+   * This function performs field[index][component] = value for all values of field[index].
+   */
+  template< typename T >
+  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( arrayView3d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+    {
+      for( localIndex b=0; b<field.size( 2 ) ; ++b )
+      {
+        field[index][a][b].Data()[component] = value;
+      }
     }
   }
 
@@ -451,7 +521,7 @@ public:
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   real64 const time,
                                   dataRepository::ManagedGroup * dataGroup,
-                                  arrayView1d<globalIndex> const & dofMap,
+                                  arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                   systemSolverInterface::BlockIDs const blockID,
@@ -590,7 +660,9 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( vw->get_typeid());
 
-  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ), [&]( auto type, auto baseType ) -> void
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                  false,
+                                  [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
@@ -671,7 +743,7 @@ BoundaryConditionBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const time,
                                 dataRepository::ManagedGroup * dataGroup,
-                                arrayView1d<globalIndex> const & dofMap,
+                                arrayView1d<globalIndex const> const & dofMap,
                                 integer const & dofDim,
                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                 systemSolverInterface::BlockIDs const blockID,
