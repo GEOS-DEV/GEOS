@@ -36,8 +36,10 @@
 
 #include "RAJA/RAJA.hpp"
 #include "Layout.hpp"
+#if defined(RAJA_ENABLE_CHAI)
 #include "chai/ManagedArray.hpp"
 #include "chai/util/forall.hpp"
+#endif
 
 /*
   As RAJA does not manage memory we include a general purpose memory
