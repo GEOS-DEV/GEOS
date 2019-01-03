@@ -66,7 +66,6 @@ public:
                                                           ManagedGroup * const parent ) const = 0;
 
 
-
   virtual void SetParamStatePointers( void *& ) {}
 
 
