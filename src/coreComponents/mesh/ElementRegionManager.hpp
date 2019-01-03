@@ -95,6 +95,8 @@ public:
 
 //  void Initialize(  ){}
 
+  void GenerateMesh( ManagedGroup const * const cellBlockManager );
+
   void InitializePreSubGroups( ManagedGroup * const ) override final;
   void InitializePostSubGroups( ManagedGroup * const ) override final;
 

@@ -576,38 +576,7 @@ void ProblemManager::ParseInputFile()
 }
 
 
-void ProblemManager::InitializationOrder( string_array & order )
-{
-  set<string> usedNames;
-
-
-  {
-    order.push_back(groupKeys.numericalMethodsManager.Key());
-    usedNames.insert(groupKeys.numericalMethodsManager.Key());
-  }
-
-  {
-    order.push_back(groupKeys.domain.Key());
-    usedNames.insert(groupKeys.domain.Key());
-  }
-
-  {
-    order.push_back(groupKeys.eventManager.Key());
-    usedNames.insert(groupKeys.eventManager.Key());
-  }
-
-  for( auto const & subGroup : this->GetSubGroups() )
-  {
-    if( usedNames.count(subGroup.first) == 0 )
-    {
-      order.push_back(subGroup.first);
-    }
-  }
-}
-
-
-
-void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
+void ProblemManager::ProcessInputFile_PostProcess()
 {
   DomainPartition * domain  = getDomainPartition();
 
@@ -640,9 +609,47 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   {
     partition.setPartitions( xpar,  ypar, zpar );
   }
+}
+
+
+void ProblemManager::InitializationOrder( string_array & order )
+{
+  set<string> usedNames;
+
+
+  {
+    order.push_back(groupKeys.numericalMethodsManager.Key());
+    usedNames.insert(groupKeys.numericalMethodsManager.Key());
+  }
+
+  {
+    order.push_back(groupKeys.domain.Key());
+    usedNames.insert(groupKeys.domain.Key());
+  }
+
+  {
+    order.push_back(groupKeys.eventManager.Key());
+    usedNames.insert(groupKeys.eventManager.Key());
+  }
+
+  for( auto const & subGroup : this->GetSubGroups() )
+  {
+    if( usedNames.count(subGroup.first) == 0 )
+    {
+      order.push_back(subGroup.first);
+    }
+  }
+}
+
+
+void ProblemManager::GenerateMesh()
+{
+
+  DomainPartition * domain  = getDomainPartition();
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
+  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
@@ -654,7 +661,12 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
                                      nodeManager );
     nodeManager->ConstructGlobalToLocalMap();
 
+    ElementRegionManager * const elemManager = (*mesh.second).group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
+
+    elemManager->GenerateMesh( cellBlockManager );
   }
+
+
 }
 
 

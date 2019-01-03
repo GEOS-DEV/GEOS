@@ -95,6 +95,8 @@ public:
 //  array2d<integer> & m_toNodesRelation;
 
 
+  void GenerateMesh( ManagedGroup const * const cellBlocks );
+
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
   subGroupMap & GetSubRegions()
