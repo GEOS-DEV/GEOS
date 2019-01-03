@@ -81,7 +81,7 @@ public:
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const = 0;
+                            integer const systemAssembleFlag ) const {}
 
 
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
