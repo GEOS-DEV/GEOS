@@ -52,6 +52,12 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
+
+  template< typename LEAFCLASS, typename ... ARGS >
+  void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
+                          ARGS&& ... args );
+
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
@@ -89,6 +95,9 @@ public:
 
 protected:
 
+  template< typename LEAFCLASS, typename ... ARGS >
+  void StateUpdatePointRelPerm( ARGS ... args);
+
   /**
    * @brief Function called internally to resize member arrays
    * @param size primary dimension (e.g. number of cells)
@@ -108,6 +117,31 @@ protected:
   array4d<real64>  m_dPhaseRelPerm_dPhaseVolFrac;
 
 };
+
+
+template< typename LEAFCLASS, typename ... ARGS >
+void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
+                                                  ARGS&& ... args)
+{
+  localIndex const numElem = m_phaseRelPerm.size(0);
+  localIndex const numQ = m_phaseRelPerm.size(1);
+  localIndex const NP = numFluidPhases();
+
+  arrayView3d<real64> const & phaseRelPerm = m_phaseRelPerm;
+  arrayView4d<real64> const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
+
+  forall_in_range( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  {
+    for( localIndex q=0 ; q<numQ ; ++q )
+    {
+      LEAFCLASS::StateUpdatePointRelPerm( NP,
+                                          phaseVolumeFraction[k],
+                                          phaseRelPerm[k][q],
+                                          dPhaseRelPerm_dPhaseVolFrac[k][q],
+                                          args...);
+    }
+  });
+}
 
 } // namespace constitutive
 

@@ -503,10 +503,12 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
   arrayView2d<real64> const & phaseVolFrac =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-    relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
-  });
+//  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+//  {
+//    relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
+//  });
+
+  relPerm->BatchUpdate( phaseVolFrac );
 }
 
 void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const domain )
