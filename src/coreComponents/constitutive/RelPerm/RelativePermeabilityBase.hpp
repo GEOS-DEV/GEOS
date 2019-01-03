@@ -54,17 +54,16 @@ public:
 
   virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
 
-  template< typename LEAFCLASS, typename ... ARGS >
-  void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                          ARGS&& ... args );
-
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override {}
-
-  // RelPerm-specific interface
-
+  /**
+   * @brief Function to update state of a single material point.
+   * @param[in] phaseVolFraction input phase volume fraction
+   * @param[in] k the first index of the storage arrays (elem index)
+   * @param[in] q the secound index of the storage arrays (quadrature index)
+   *
+   * @note This function performs a point update, but should not be called
+   *       within a kernel since it is virtual, and the required data is not
+   *       guaranteed to be in the target memory space.
+   */
   virtual void StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
                                         localIndex const k,
                                         localIndex const q ) {}
@@ -94,6 +93,21 @@ public:
   } viewKeysRelativePermeabilityBase;
 
 protected:
+
+  /**
+   * @brief Function to batch process constitutive updates via a kernel launch.
+   * @tparam LEAFCLASS The derived class that provides the functions for use
+   *                   in the kernel
+   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for
+   *              the function parameter list
+   * @param phaseVolumeFraction array containing the phase volume fraction,
+   *                            which is input to the update.
+   * @param args arbitrary number of arbitrary types that are passed to the
+   *             kernel
+   */
+  template< typename LEAFCLASS, typename ... ARGS >
+  void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
+                          ARGS&& ... args );
 
   /**
    * @brief Function called internally to resize member arrays
