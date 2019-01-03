@@ -33,6 +33,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 //#include "legacy/Constitutive/Material/MaterialFactory.h"
 //#include "legacy/ArrayT/ArrayT.h"
+#include "CellBlockManager.hpp"
 
 namespace geosx
 {
@@ -117,6 +118,13 @@ ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, strin
 //  }
 //}
 
+void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
+{
+  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  {
+    elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
+  });
+}
 
 void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
 {

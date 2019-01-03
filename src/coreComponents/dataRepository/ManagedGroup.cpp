@@ -282,12 +282,6 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
     --indent;
   }
 
-//  forSubGroups( [&]( ManagedGroup * subGroup ) -> void
-//  {
-//    ++indent;
-//    subGroup->Initialize(group);
-//    --indent;
-//  });
   InitializePostSubGroups(group);
 }
 

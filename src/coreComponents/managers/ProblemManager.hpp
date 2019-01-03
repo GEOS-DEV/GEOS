@@ -81,6 +81,8 @@ public:
 
   void ParseCommandLineInput( int argc, char* argv[]);
 
+  virtual void ProcessInputFile_PostProcess() override final;
+
   static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
 
   void InitializePythonInterpreter();
@@ -89,9 +91,10 @@ public:
 
   void ParseInputFile();
 
+  void GenerateMesh();
+
   void InitializationOrder( string_array & order ) override final;
 
-  void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
   void InitializePostSubGroups( ManagedGroup * const group ) override final;
 

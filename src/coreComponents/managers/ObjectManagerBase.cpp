@@ -42,11 +42,16 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
 
   RegisterViewWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false );
+
   RegisterViewWrapper(viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
 
 
   RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
-  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->setPlotLevel(PlotLevel::LEVEL_0);
+
+  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+      setDefaultValue(-2)->
+      setPlotLevel(PlotLevel::LEVEL_0);
+
   RegisterViewWrapper< array1d<integer> >( viewKeyStruct::domainBoundaryIndicatorString );
 
   m_sets.RegisterViewWrapper<set<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
