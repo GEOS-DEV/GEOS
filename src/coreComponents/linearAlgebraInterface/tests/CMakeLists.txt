@@ -6,7 +6,7 @@ set( LAI_tests
      testLAOperations.cpp )
 
 set( LAI_tests_with_xml
-     testDofManager.cpp)
+     testDofManager.cpp )
 
 set( nranks 2 )
 
@@ -33,7 +33,7 @@ endforeach()
 #  Add tests requiring input xml
 #
 
-foreach(test ${LAI_tests_w_xml})
+foreach(test ${LAI_tests_with_xml})
   get_filename_component( test_name ${test} NAME_WE )
   message("processing test_name ${test_name}")
 	

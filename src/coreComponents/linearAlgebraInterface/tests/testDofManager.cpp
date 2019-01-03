@@ -54,8 +54,6 @@ protected:
 
   static void SetUpTestCase()
   {
-    problemManager.SetDocumentationNodes();
-    problemManager.RegisterDocumentationNodes();
     problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput( global_argc, global_argv );
     problemManager.ParseInputFile();
@@ -80,14 +78,14 @@ TEST_F(DofManagerTest, TestOne)
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   DofManager dofManager(*mesh);
 
-  //GEOS_LOG_RANK_0("aaaaa");
+  GEOS_LOG_RANK_0("DofManager Test > Add()");
 
-  std::cout << "aaaaaaa" << std::endl;
-
-  dofManager.add("displacement",NODE,ELEM,3);
-  dofManager.add("pressure",ELEM,FACE,1);
-  dofManager.add("temperature",ELEM,NODE,1);
+  dofManager.add("displacement",DofManager::Location::Node, DofManager::Connectivity::Elem, 3);
+  dofManager.add("pressure",    DofManager::Location::Elem, DofManager::Connectivity::Face, 1);
+  dofManager.add("temperature", DofManager::Location::Elem, DofManager::Connectivity::Node, 1);
  
+  GEOS_LOG_RANK_0("DofManager Test > Close()");
+
   dofManager.close();     
 }
 

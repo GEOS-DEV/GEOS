@@ -33,31 +33,27 @@ DofManager::DofManager(MeshLevel const & meshLevel)
 
 
 void DofManager::add(string const & field,
-                     GeometricObject location, 
-                     GeometricObject connector, 
+                     Location location, 
+                     Connectivity connectivity, 
                      integer const components)
 {
-/*
   FieldDescription description;
                    description.name = field;
                    description.location = location;
-                   description.connector = connector;
+                   description.connectivity = connectivity;
                    description.components = components;
-*/
-  //m_field.push_back(description);
-  
-  //std::cout << m_field.size() << std::endl;
+
+  m_field.push_back(description);
 }
 
 
 void DofManager::close()
 {
-  //std::cout << m_field.size() << std::endl;
+  GEOS_LOG_RANK_0("DofManager > Registered fields: " << m_field.size());
 
   NodeManager const * nodeManager = m_meshLevel.getNodeManager();
   localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
   localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
-  std::cout << "No local rows" << n_local_rows << std::endl; 
 }
 
 

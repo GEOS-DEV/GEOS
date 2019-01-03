@@ -64,15 +64,24 @@ public:
   ~DofManager() = default;
 
   /**
-   * Enumeration of supported objects for location and connection support
+   * Enumeration of geometric objects for support location.  Note that this enum
+   * is nearly identical to Connectivity, but we keep both for code readability
+   * in function calls.
    */
-  enum GeometricObject {ELEM,FACE,NODE,NONE}; // Add edges later.  Also, for now NODE = VERTEX
+  enum class Location {Elem,Face,Node};    
+
+  /**
+   * Enumeration of geometric objects for connectivity type.  Note that this enum
+   * is nearly identical to Location, but we keep both for code readability
+   * in function calls.
+   */
+  enum class Connectivity {Elem,Face,Node,None};
 
   /**
    * Add fields.
-   * The user can add a field with a support location, connection type, string key, and number of scalar components.
+   * The user can add a field with a support location, connectivity type, string key, and number of scalar components.
    *
-   * The connection type is used to infer the sparsity pattern that connects degrees of freedom.
+   * The connectivity type is used to infer the sparsity pattern that connects degrees of freedom.
    * If LC denotes a boolean connectivity graph between support locations L and connectors C, the desired sparsity
    * pattern will be computed as LC*CL.  For example, for a TPFA discretization we have dofs located at cell centers,
    * and connected through adjacent faces.  In this example, LC is the cell-to-face connectivity, and LC*CL is the 
@@ -81,15 +90,15 @@ public:
    * Example 1 = add("displacement",NODE,ELEM,3) for a Q1 finite-element interpolation for elasticity
    * Example 2 = add("pressure",ELEM,FACE,1) for a scalar TPFA-type approximation
    * Example 3 = add("pressure",ELEM,NODE,1) for a scalar MPFA-type approximation 
-   * Example 4 = add("mass",ELEM,NONE,1) for a diagonal-only sparsity pattern (no connections)
+   * Example 4 = add("mass",ELEM,NONE,1) for a diagonal-only sparsity pattern (no connectivitys)
    *
    * When the number of components is greater than one, we always assume they are tightly coupled to one another
    * and form a dense block.  The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
    * dense sub-blocks.
    */
   void add(string const & field, 
-           GeometricObject location, 
-           GeometricObject connector, 
+           Location location, 
+           Connectivity connectivity, 
            integer const components = 1 );
 
   /**
@@ -127,7 +136,7 @@ public:
    * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
    */
   void getIndices( array1d<globalIndex> & indices,
-                   GeometricObject connector,
+                   Connectivity connectivity,
                    localIndex const region,
                    localIndex const subregion,
                    localIndex const index,
@@ -143,7 +152,7 @@ public:
    * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
    */
   void getIndices( array1d<globalIndex> & indices,
-                   GeometricObject connector,
+                   Connectivity connectivity,
                    localIndex const index,
                    string const & field = "all") const;
 
@@ -159,16 +168,15 @@ private:
   struct FieldDescription
   {
     string name;
-    GeometricObject location;
-    GeometricObject connector;
+    Location location;
+    Connectivity connectivity;
     integer components;
   };
 
   /**
    * Array of field descriptions
    */
-  //std::vector<FieldDescription> m_field;
-
+  array1d<FieldDescription> m_field;
 };
 
 } /* namespace geosx */
