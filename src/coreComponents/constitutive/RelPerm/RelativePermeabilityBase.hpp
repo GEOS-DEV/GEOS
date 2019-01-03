@@ -95,9 +95,6 @@ public:
 
 protected:
 
-  template< typename LEAFCLASS, typename ... ARGS >
-  void StateUpdatePointRelPerm( ARGS ... args);
-
   /**
    * @brief Function called internally to resize member arrays
    * @param size primary dimension (e.g. number of cells)
