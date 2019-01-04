@@ -182,6 +182,8 @@ void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & target
 
 void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
+
+  std::set<string> processedXmlNodes;
   for( auto wrapperPair : m_wrappers )
   {
     ViewWrapperBase * const wrapper = wrapperPair.second;
@@ -199,6 +201,7 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 
         ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
         COMPOSITE_TYPE & objectReference = typedWrapper.reference();
+        processedXmlNodes.insert(wrapperName);
 
         if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
         {
@@ -211,6 +214,19 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
       });
     }
   }
+
+//  for (xmlWrapper::xmlAttribute attribute=targetNode.first_attribute() ; attribute ; attribute = attribute.next_attribute() )
+//  {
+//    string const childName = attribute.name();
+//    if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation")
+//    {
+//      GEOS_ERROR_IF( processedXmlNodes.count(childName)==0,
+//                     "XML Node ("<<targetNode.name()<<") with attribute name=("<<
+//                     targetNode.attribute("name").value()<<") contains child node named ("<<
+//                     childName<<") that is not read.");
+//    }
+//  }
+
 }
 
 void ManagedGroup::PostProcessInputRecursive()

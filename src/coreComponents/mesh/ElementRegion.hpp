@@ -43,7 +43,6 @@ string const defaultMaterial = "material";
 //string const numNodesPerElement = "numNodesPerElement";
 //string const nodeList = "nodeList";
 //string const constitutiveMap = "constitutiveMap";
-string const numericalMethod = "numericalMethod";
 string const cellBlockSubRegions = "cellBlockSubRegions";
 string const cellBlockSubRegionNames = "cellBlocks";
 }
@@ -81,18 +80,8 @@ public:
 
 
   ElementRegion(const ElementRegion& init);
-//  ElementRegion( ElementRegion&& init);
-
-
-//  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
-//                           map<string,localIndex> & counts );
-
-  void HangConstitutiveRelations( ManagedGroup const * problemManager );
 
   virtual ~ElementRegion() override;
-
-//  array2d<integer> & m_toNodesRelation;
-
 
   void GenerateMesh( ManagedGroup const * const cellBlocks );
 
@@ -176,12 +165,6 @@ public:
   }
 
 
-  string const & getNumericalMethod() const
-  {
-    return this->getReference<string>(dataRepository::keys::numericalMethod);
-  }
-
-
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
@@ -199,7 +182,6 @@ private:
   ElementRegion& operator=(const ElementRegion& rhs);
   string m_defaultMaterial;
   string_array m_materialList;
-//  string & m_elementType;
 
 };
 

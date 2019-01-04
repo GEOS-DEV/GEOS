@@ -10,6 +10,7 @@
                                  verboseLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
+                                 targetRegions="Region2"
                                  fluidName="fluid1"
                                  solidName="rock"
                                  relPermName="relperm"

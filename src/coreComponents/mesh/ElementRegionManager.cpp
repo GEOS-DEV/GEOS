@@ -127,17 +127,6 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
 }
 
 
-void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problemManager )
-{
-  ObjectManagerBase::InitializePostSubGroups(nullptr);
-
-  this->forElementRegions( [&]( ElementRegion * elemRegion )->void
-  {
-    elemRegion->HangConstitutiveRelations( problemManager );
-  });
-
-}
-
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {

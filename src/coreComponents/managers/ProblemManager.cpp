@@ -27,6 +27,7 @@
 
 #include <vector>
 
+#include "../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "optionparser.h"
 
 #include "DomainPartition.hpp"
@@ -39,7 +40,6 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
@@ -697,6 +697,7 @@ void ProblemManager::ApplyNumericalMethods()
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
   ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
 
   ManagedGroup * const meshBodies = domain->getMeshBodies();
@@ -706,37 +707,47 @@ void ProblemManager::ApplyNumericalMethods()
   for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
   {
     SolverBase const * const solver = m_physicsSolverManager->GetGroup<SolverBase>(solverIndex);
-    string const numericalMethodName = solver->getNumericalMethod();
+    string const numericalMethodName = solver->getDiscretization();
     string_array const & targetRegions = solver->getTargetRegions();
 
-    FiniteElementSpaceManager const *
-    feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+    FiniteElementDiscretizationManager const *
+    feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numericalMethodName);
 
-    if( feSpace != nullptr )
+
+    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(numericalMethodName);
+
+    for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
     {
-      for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
+      MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
+      for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
       {
-        MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
-        for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
-        {
-          MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
-          NodeManager * const nodeManager = meshLevel->getNodeManager();
-          ElementRegionManager * const elemManager = meshLevel->getElemManager();
-          arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
+        MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
+        NodeManager * const nodeManager = meshLevel->getNodeManager();
+        ElementRegionManager * const elemManager = meshLevel->getElemManager();
+        arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
 
-          for( auto const & regionName : targetRegions )
+        for( auto const & regionName : targetRegions )
+        {
+          ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+          if( elemRegion != nullptr )
           {
-            ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
-            if( elemRegion != nullptr )
+            string_array const & materialList = elemRegion->getMaterialList();
+            localIndex quadratureSize = 1;
+
+            elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )->void
             {
-              elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )
+              if( feSpace != nullptr )
               {
                 feSpace->ApplySpaceToTargetCells(subRegion);
                 feSpace->CalculateShapeFunctionGradients( X, subRegion);
-              });
-            }
+                quadratureSize = feSpace->getNumberOfQuadraturePoints();
+              }
+              for( auto & materialName : materialList )
+              {
+                constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
+              }
+            });
           }
         }
       }

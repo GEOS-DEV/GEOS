@@ -11,6 +11,8 @@
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
                  verboseLevel="1"
+                 discretization="FE1"
+                 targetRegions="Region2"
                  >
       <SystemSolverParameters name="SystemSolverParameters"
                               maxIterNewton="40"
@@ -21,6 +23,8 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="1"
+                                  discretization="FE1"
+                                  targetRegions="Region2"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -33,6 +37,7 @@
                      verboseLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
+                     targetRegions="Region2"
                      fluidName="water"
                      solidName="shale">
       <SystemSolverParameters name="SystemSolverParameters"

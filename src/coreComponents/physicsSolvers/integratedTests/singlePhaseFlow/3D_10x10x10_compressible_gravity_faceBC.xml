@@ -10,6 +10,7 @@
                      verboseLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
+                     targetRegions="Region2"
                      fluidName="water"
                      solidName="rock">
       <SystemSolverParameters name="SystemSolverParameters"

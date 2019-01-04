@@ -7,7 +7,8 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  discretization="FE1"
+                                  targetRegions="Region2"
                                   >
       <SystemSolverParameters name="solverParams0"
                               useMLPrecond="1"

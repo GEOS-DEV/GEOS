@@ -23,7 +23,8 @@
  *      Author: rrsettgast
  */
 
-#include "FiniteElementSpace.hpp"
+#include "FiniteElementDiscretization.hpp"
+
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
@@ -42,19 +43,24 @@ using namespace dataRepository;
 
 
 
-FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup * const parent ):
+FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
   RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
   RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
 }
 
-FiniteElementSpace::~FiniteElementSpace()
+FiniteElementDiscretization::~FiniteElementDiscretization()
 {
   delete m_finiteElement;
 }
 
-void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
+localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
+{
+  return m_quadrature->size();
+}
+
+void FiniteElementDiscretization::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
 {
 
   // TODO THis crap needs to get cleaned up and worked out in the data structure
@@ -75,7 +81,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   detJ.resize(cellBlock->size(), m_quadrature->size() );
 }
 
-void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
+void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
   arrayView3d<R1Tensor> & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
@@ -101,7 +107,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> 
   }
 }
 
-void FiniteElementSpace::PostProcessInput()
+void FiniteElementDiscretization::PostProcessInput()
 {
   auto const & basisName = this->getReference<string>(keys::basis);
   auto const & quadratureName = this->getReference<string>(keys::quadrature);
@@ -120,6 +126,6 @@ void FiniteElementSpace::PostProcessInput()
 
 
 
-REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementSpace, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementDiscretization, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */
