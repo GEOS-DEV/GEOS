@@ -11,7 +11,8 @@
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
-                     solidName="rock">
+                     solidName="rock"
+                     targetRegions="Region2">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-12"
                               newtonTol="1.0e-8"

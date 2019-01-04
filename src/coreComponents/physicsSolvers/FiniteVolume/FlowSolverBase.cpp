@@ -36,7 +36,6 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
                                 ManagedGroup * const parent )
   : SolverBase( name, parent ),
     m_gravityFlag(1),
-    m_discretizationName(),
     m_fluidName(),
     m_solidName(),
     m_fluidIndex(),

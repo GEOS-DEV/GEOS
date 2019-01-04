@@ -101,7 +101,6 @@ public:
     static constexpr auto gravityDepthString = "gravityDepth";
 
     // misc inputs
-    static constexpr auto discretizationString = "discretization";
     static constexpr auto fluidNameString      = "fluidName";
     static constexpr auto solidNameString      = "solidName";
     static constexpr auto fluidIndexString     = "fluidIndex";
@@ -147,9 +146,6 @@ protected:
 
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;
-
-  /// name of the FV discretization object in the data repository
-  string m_discretizationName;
 
   /// name of the fluid constitutive model
   string m_fluidName;

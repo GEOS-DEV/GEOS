@@ -355,7 +355,7 @@ public:
     constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
     constexpr static auto maxStableDtString = "maxStableDt";
-    constexpr static auto numericalMethodString = "numericalMethod";
+    static constexpr auto discretizationString = "discretization";
     constexpr static auto targetRegionsString = "targetRegions";
 
   } viewKeys;
@@ -391,7 +391,7 @@ public:
     return &m_systemSolverParameters;
   }
 
-  string getNumericalMethod() const {return m_numericalMethod;}
+  string getDiscretization() const {return m_discretizationName;}
 
   string_array const & getTargetRegions() const {return m_targetRegions;}
 
@@ -401,7 +401,9 @@ protected:
 
   void PostProcessInput() override;
 
-private:
+  string getDiscretizationName() const {return m_discretizationName;}
+
+protected:
 
 
   integer m_verboseLevel = 0;
@@ -411,7 +413,8 @@ private:
   real64 m_cflFactor;
   real64 m_maxStableDt;
 
-  string m_numericalMethod;
+  /// name of the FV discretization object in the data repository
+  string m_discretizationName;
 
   string_array m_targetRegions;
 

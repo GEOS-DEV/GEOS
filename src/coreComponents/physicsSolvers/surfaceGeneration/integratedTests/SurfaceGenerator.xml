@@ -10,6 +10,8 @@
     <SolidMechanics_LagrangianFEM name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="0"
+                                  discretization="FE1"
+                                  targetRegions="Region2"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -20,7 +22,8 @@
   
     <SurfaceGenerator name="SurfaceGen"
                       failCriterion="1"
-                      verboseLevel="3">
+                      verboseLevel="3"
+                      targetRegions="Region2">
     </SurfaceGenerator>
   </Solvers>
 

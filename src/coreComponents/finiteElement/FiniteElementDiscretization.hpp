@@ -50,15 +50,15 @@ class BasisBase;
 class QuadratureBase;
 class FiniteElementBase;
 
-class FiniteElementSpace : public dataRepository::ManagedGroup
+class FiniteElementDiscretization : public dataRepository::ManagedGroup
 {
 public:
 
-  FiniteElementSpace() = delete;
+  FiniteElementDiscretization() = delete;
 
-  explicit FiniteElementSpace( std::string const & name, ManagedGroup * const parent );
+  explicit FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent );
 
-  ~FiniteElementSpace() override;
+  ~FiniteElementDiscretization() override;
 
   /**
    * @name Static Factory Catalog Functions
@@ -76,6 +76,8 @@ public:
 
   void CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const & X,
                                         dataRepository::ManagedGroup * const cellBlock ) const;
+
+  localIndex getNumberOfQuadraturePoints() const;
 
 public:
 

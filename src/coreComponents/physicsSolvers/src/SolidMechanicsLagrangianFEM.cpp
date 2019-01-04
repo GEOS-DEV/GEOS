@@ -30,10 +30,10 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include <common/DataTypes.hpp>
+#include "../../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 //#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
@@ -382,7 +382,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
@@ -449,8 +449,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -508,8 +507,8 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -1064,7 +1063,6 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion(er);
-    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -1109,7 +1107,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
@@ -1153,8 +1151,8 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {

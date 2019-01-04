@@ -26,6 +26,7 @@
 #include <vector>
 #include <math.h>
 
+#include "../../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/defines.hpp"
 
@@ -36,7 +37,6 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 //#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
@@ -308,7 +308,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
-      auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
+      auto const & numMethodName = m_discretizationName;
 
       for( localIndex subRegionIndex=0 ; subRegionIndex<elementRegion->numSubRegions() ; ++subRegionIndex )
       {
@@ -356,7 +356,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::dummyScalarBlock,
@@ -369,8 +369,8 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
     ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second);
-    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {

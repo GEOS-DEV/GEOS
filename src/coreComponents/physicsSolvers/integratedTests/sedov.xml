@@ -6,8 +6,8 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  courant="0.25"
-                                  numericalMethod="FE1"
+                                  cflFactor="0.25"
+                                  discretization="FE1"
                                   targetRegions="Region2"/>
   </Solvers>
 
@@ -63,7 +63,6 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
     <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
   </ElementRegions>
 
@@ -137,8 +136,15 @@
 
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction name="timeFunction"
+                   inputVarNames="time"
+                   coordinates="0.0 1.0e-6 2.0e-6 1.0e9"
+                   values="0.0 1.0 1.0 1.0" />
+                   
+    <SymbolicFunction name="spaceFunction"
+                      inputVarNames="ReferencePosition" 
+                      variableNames="x y z" 
+                      expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
@@ -147,13 +153,16 @@
   </Partition>
   
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Silo name="siloOutput" 
+          parallelThreads="32"
+           plotFileRoot="plot" 
+           slaveDirectory="sub"
+           />
     <Restart name="sidreRestart"/>
-
   </Outputs>
 
   <Geometry>
-    <Box name="source" type="0" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
+    <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
 
 

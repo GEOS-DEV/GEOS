@@ -63,9 +63,10 @@ SolverBase::SolverBase( std::string const & name,
     setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
           "Values should be in the interval (0,1] ");
 
-  RegisterViewWrapper(viewKeyStruct::numericalMethodString, &m_numericalMethod, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Numerical method to apply in the solution of the governing equations");
+  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+    setApplyDefaultValue("none")->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of discretization object to use for this solver.");
 
   RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
     setInputFlag(InputFlags::REQUIRED)->

@@ -178,8 +178,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   NumericalMethodsManager const * const numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteElementSpaceManager const * const feSpaceManager =
-    numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * const feSpaceManager =
+    numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -230,8 +230,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
 
-    string const & numMethodName = elemRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {

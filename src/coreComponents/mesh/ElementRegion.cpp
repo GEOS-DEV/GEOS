@@ -24,11 +24,12 @@
  */
 
 #include "ElementRegion.hpp"
+
+#include "../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "CellBlockManager.hpp"
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
 
@@ -56,9 +57,6 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
   RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of materials present in this region");
-
-  RegisterViewWrapper<string>( keys::numericalMethod )->
-    setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->
     setInputFlag(InputFlags::REQUIRED);
@@ -156,29 +154,29 @@ void ElementRegion::PostProcessInput()
 ////  return counts;
 //}
 
-void ElementRegion::HangConstitutiveRelations( ManagedGroup const * problemManager )
-{
-  string const & numMethodName = this->getReference<string>(keys::numericalMethod);
-  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  int quadratureSize = 1;
-  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
-  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
-  if( feSpace)
-  {
-    string const & quadratureName = feSpace->getReference<string>(keys::quadrature);
-    QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
-    quadratureSize = quadrature.size() ;
-  }
-  forCellBlocksIndex( [&] ( localIndex const esr, CellBlockSubRegion * subRegion ) -> void
-      {
-      for( auto & materialName : m_materialList )
-      {
-        constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
-      }
-      });
-}
+//void ElementRegion::HangConstitutiveRelations( ManagedGroup const * problemManager )
+//{
+//  string const & numMethodName = this->getReference<string>(keys::numericalMethod);
+//  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+//  int quadratureSize = 1;
+//  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
+//  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+//  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementDiscretizations);
+//    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(numMethodName);
+//  if( feSpace)
+//  {
+//    string const & quadratureName = feSpace->getReference<string>(keys::quadrature);
+//    QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
+//    quadratureSize = quadrature.size() ;
+//  }
+//  forCellBlocksIndex( [&] ( localIndex const esr, CellBlockSubRegion * subRegion ) -> void
+//      {
+//      for( auto & materialName : m_materialList )
+//      {
+//        constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
+//      }
+//      });
+//}
 
 void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
 {
