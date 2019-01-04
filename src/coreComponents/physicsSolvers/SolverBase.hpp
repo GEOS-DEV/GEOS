@@ -74,7 +74,7 @@ public:
 
   static string CatalogName() { return "SolverBase"; }
 
-  void ProcessInputFile_PostProcess() override;
+  void PostProcessInput() override;
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
@@ -355,7 +355,9 @@ public:
     constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
-    static constexpr auto maxStableDtString = "maxStableDt";
+    constexpr static auto maxStableDtString = "maxStableDt";
+    constexpr static auto numericalMethodString = "numericalMethod";
+    constexpr static auto targetRegionsString = "targetRegions";
 
   } viewKeys;
 
@@ -402,6 +404,10 @@ private:
 
   real64 m_cflFactor;
   real64 m_maxStableDt;
+
+  string m_discretizationMethod;
+
+  string_array m_targetRegions;
 
 
 //  localIndex_array m_blockLocalDofNumber;
