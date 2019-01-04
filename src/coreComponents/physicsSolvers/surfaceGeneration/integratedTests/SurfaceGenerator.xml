@@ -21,8 +21,7 @@
      </SolidMechanics_LagrangianFEM>
   
     <SurfaceGenerator name="SurfaceGen"
-                      failCriterion="1"
-                      verboseLevel="3"
+                      verboseLevel="1"
                       targetRegions="Region2">
     </SurfaceGenerator>
   </Solvers>
@@ -41,7 +40,7 @@
   </Mesh>
 
   <Geometry>
-    <Box name="fracPlane" type="0" xMin="-1.00, -0.1, -1.00" xMax="2.01, 0.01, 1.01"/>
+    <Box name="fracPlane" xMin="-1.00, -0.1, -1.00" xMax="2.01, 0.01, 1.01"/>
   </Geometry>
 
 
@@ -78,7 +77,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="granite" materialList="granite" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="granite" />
   </ElementRegions>
 
   <Constitutive>
@@ -99,7 +98,6 @@
                setNames="fracPlane"
                objectPath="faceManager"
                fieldName="ruptureState"
-               dataType="integer" 
                scale="1"/>
   
   
@@ -107,7 +105,6 @@
                component="0" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
-               dataType="Vector"  
                scale="0.0" 
                setNames="yneg ypos"/>
 
@@ -115,7 +112,6 @@
                component="2" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
-               dataType="Vector"  
                scale="0.0" 
                setNames="yneg ypos"/>
                               
@@ -123,7 +119,6 @@
                component="1" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
-               dataType="Vector"  
                scale="-0.1" 
                setNames="yneg"/>
                
@@ -131,7 +126,6 @@
                component="1" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
-               dataType="Vector"  
                scale="0.1" 
                setNames="ypos"/>
                
@@ -147,7 +141,7 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot" restartInterval="1e6"/>
+    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="sidreRestart"/>
   </Outputs>
 

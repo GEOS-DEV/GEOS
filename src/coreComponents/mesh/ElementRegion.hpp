@@ -39,10 +39,6 @@ namespace dataRepository
 {
 namespace keys
 {
-string const defaultMaterial = "material";
-//string const numNodesPerElement = "numNodesPerElement";
-//string const nodeList = "nodeList";
-//string const constitutiveMap = "constitutiveMap";
 string const cellBlockSubRegions = "cellBlockSubRegions";
 string const cellBlockSubRegionNames = "cellBlocks";
 }
@@ -180,7 +176,6 @@ protected:
 private:
 
   ElementRegion& operator=(const ElementRegion& rhs);
-  string m_defaultMaterial;
   string_array m_materialList;
 
 };
