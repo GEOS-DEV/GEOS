@@ -55,6 +55,9 @@ public:
   /// A method to add child events
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
+
   /**
    * The main execution loop for the code.  During each cycle, it will:
    *   - Calculate the event forecast (number of cycles until its expected execution)

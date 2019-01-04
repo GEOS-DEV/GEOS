@@ -41,6 +41,17 @@ ManagedGroup * BasisFunctionManager::CreateChild( string const & childKey, strin
   return nullptr;
 }
 
+
+void BasisFunctionManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from BasisBase here
+  for (auto& catalogIter: BasisBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:
 void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {

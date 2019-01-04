@@ -53,4 +53,14 @@ ManagedGroup * NewFunctionManager::CreateChild( string const & functionCatalogKe
   return this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
 }
 
+
+void NewFunctionManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from FunctionBase here
+  for (auto& catalogIter: FunctionBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 } /* namespace ANST */

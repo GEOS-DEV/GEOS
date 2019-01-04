@@ -48,6 +48,15 @@ ManagedGroup * GeometricObjectManager::CreateChild( string const & childKey, str
   return this->RegisterGroup<SimpleGeometricObjectBase>( childName, std::move(geometriObject) );
 }
 
+void GeometricObjectManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from SimpleGeometricObjectBase here
+  for (auto& catalogIter: SimpleGeometricObjectBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 
 
 } /* namespace geosx */

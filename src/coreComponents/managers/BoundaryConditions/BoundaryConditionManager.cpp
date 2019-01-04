@@ -64,6 +64,15 @@ ManagedGroup * BoundaryConditionManager::CreateChild( string const & childKey, s
 }
 
 
+void BoundaryConditionManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from BoundaryConditionBase here
+  for (auto& catalogIter: BoundaryConditionBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 
 void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {

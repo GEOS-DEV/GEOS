@@ -63,5 +63,14 @@ ManagedGroup * PhysicsSolverManager::CreateChild( string const & childKey, strin
 }
 
 
+void PhysicsSolverManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from SolverBase here
+  for (auto& catalogIter: SolverBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 
 } /* namespace geosx */

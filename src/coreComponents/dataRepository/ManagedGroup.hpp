@@ -645,6 +645,32 @@ public:
    */
   virtual void ProcessInputFile_PostProcess() {}
 
+  /**
+   * This function is used to build a complete datastructure for schema generation
+   */
+  void GenerateDataStructureSkeleton(integer const level)
+  {
+    ExpandObjectCatalogs();
+    std::string indent( level*2, ' ');
+
+    for( auto const & subGroupIter : m_subGroups )
+    {
+      std::cout << indent << subGroupIter.second->getName() << std::endl;
+      subGroupIter.second->GenerateDataStructureSkeleton( level + 1 );
+    }
+  }
+
+  /**
+   * This function is used to expand any catalogs in the data structure
+   */
+  virtual void ExpandObjectCatalogs() {}
+
+  /**
+   * This function is used to inform the schema generator of any
+   * deviations between the xml and GEOS data structures.
+   */
+  virtual void GetSchemaDeviations() {}
+
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) {}
