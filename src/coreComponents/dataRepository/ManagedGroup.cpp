@@ -215,17 +215,17 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
     }
   }
 
-//  for (xmlWrapper::xmlAttribute attribute=targetNode.first_attribute() ; attribute ; attribute = attribute.next_attribute() )
-//  {
-//    string const childName = attribute.name();
-//    if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation")
-//    {
-//      GEOS_ERROR_IF( processedXmlNodes.count(childName)==0,
-//                     "XML Node ("<<targetNode.name()<<") with attribute name=("<<
-//                     targetNode.attribute("name").value()<<") contains child node named ("<<
-//                     childName<<") that is not read.");
-//    }
-//  }
+  for (xmlWrapper::xmlAttribute attribute=targetNode.first_attribute() ; attribute ; attribute = attribute.next_attribute() )
+  {
+    string const childName = attribute.name();
+    if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation")
+    {
+      GEOS_ERROR_IF( processedXmlNodes.count(childName)==0,
+                     "XML Node ("<<targetNode.name()<<") with attribute name=("<<
+                     targetNode.attribute("name").value()<<") contains child node named ("<<
+                     childName<<") that is not read.");
+    }
+  }
 
 }
 

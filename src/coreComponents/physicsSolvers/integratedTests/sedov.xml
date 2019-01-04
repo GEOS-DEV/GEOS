@@ -63,7 +63,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
@@ -94,24 +94,12 @@
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="shale_MeanStress"
-               dataType="real64" 
                component="-1"
-               scale="-1.0e6"
-               function="spaceFunction"/>
-               
-    <!--Dirichlet name="xpos"  
-               initialCondition="1"  
-               setNames="xpos"
-               objectPath="nodeManager"
-               fieldName="Velocity"
-               dataType="r1Tensor" 
-               component="1"
-               scale="1.0"/-->
+               scale="-1.0e6"/>
 
     <Dirichlet name="xconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="0"  
                scale="0.0" 
                setNames="xneg"/>
@@ -119,7 +107,6 @@
     <Dirichlet name="yconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="1"  
                scale="0.0" 
                setNames="yneg"/>
@@ -127,7 +114,6 @@
     <Dirichlet name="zconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="2"  
                scale="0.0" 
                setNames="zneg"/>

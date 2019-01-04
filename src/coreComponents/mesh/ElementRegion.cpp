@@ -50,10 +50,6 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
   this->RegisterGroup(keys::cellBlockSubRegions);
 
-  RegisterViewWrapper( keys::defaultMaterial, &m_defaultMaterial, 0 )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default Material Name");
-
   RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of materials present in this region");
