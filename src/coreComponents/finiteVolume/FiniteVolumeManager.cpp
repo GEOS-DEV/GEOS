@@ -51,6 +51,17 @@ ManagedGroup * FiniteVolumeManager::CreateChild(string const &childKey, string c
   return this->RegisterGroup<FluxApproximationBase>(childName, std::move(approx));
 }
 
+
+void FiniteVolumeManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from FluxApproximationBase here
+  for (auto& catalogIter: FluxApproximationBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+
 FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::string const &name) const
 {
   return this->GetGroup<FluxApproximationBase>(name);

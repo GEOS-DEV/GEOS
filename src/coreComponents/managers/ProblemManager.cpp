@@ -161,7 +161,7 @@ ProblemManager::ProblemManager( const std::string& name,
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Flag to indicate partition number override");
 
-  commandLine->RegisterViewWrapper<string>( keys::schema )->
+  commandLine->RegisterViewWrapper<string>( viewKeys.schemaFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the output schema");
 
@@ -195,7 +195,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   integer& yPartitionsOverride = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
   integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
   integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
-  std::string&  schemaName = commandLine->getReference<std::string>(keys::schema);
+  std::string&  schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
   integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
   schemaLevel = 0;
   std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
@@ -245,7 +245,10 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 
   if (options[INPUT].count() == 0)
   {
-    GEOS_ERROR("An input xml must be specified!");
+    if (options[SCHEMA].count() == 0)
+    {
+      GEOS_ERROR("An input xml must be specified!");
+    }
   }
 
 
@@ -295,30 +298,33 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     }
   }
 
-  getAbsolutePath(inputFileName, inputFileName);
-
-  if (problemName == "") 
+  if (schemaName.empty())
   {
-    if (inputFileName.length() > 4 && inputFileName.substr(inputFileName.length() - 4, 4) == ".xml")
+    getAbsolutePath(inputFileName, inputFileName);
+
+    if (problemName == "") 
     {
-      string::size_type start = inputFileName.find_last_of('/') + 1;
-      if (start >= inputFileName.length())
+      if (inputFileName.length() > 4 && inputFileName.substr(inputFileName.length() - 4, 4) == ".xml")
       {
-        start = 0;
+        string::size_type start = inputFileName.find_last_of('/') + 1;
+        if (start >= inputFileName.length())
+        {
+          start = 0;
+        }
+        problemName.assign(inputFileName, start, inputFileName.length() - 4 - start);
       }
-      problemName.assign(inputFileName, start, inputFileName.length() - 4 - start);
+      else {
+        problemName.assign(inputFileName);
+      }
     }
-    else {
-      problemName.assign(inputFileName);
-    }
-  }
 
-  if (outputDirectory != ".")
-  {
-    mkdir(outputDirectory.data(), 0755);
-    if (chdir(outputDirectory.data()) != 0)
+    if (outputDirectory != ".")
     {
-      GEOS_ERROR("Could not change to the ouput directory: " + outputDirectory);
+      mkdir(outputDirectory.data(), 0755);
+      if (chdir(outputDirectory.data()) != 0)
+      {
+        GEOS_ERROR("Could not change to the ouput directory: " + outputDirectory);
+      }
     }
   }
 }
@@ -367,7 +373,10 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
 
   if (options[INPUT].count() == 0)
   {
-    GEOS_ERROR("An input xml must be specified!");
+    if (options[SCHEMA].count() == 0)
+    {
+      GEOS_ERROR("An input xml must be specified!");
+    }
   }
 
   // Iterate over the remaining inputs
@@ -482,6 +491,20 @@ void ProblemManager::ClosePythonInterpreter()
 }
 
 
+void ProblemManager::GenerateDocumentation()
+{
+  // Documentation output
+  std::cout << "Trying to generate schema..." << std::endl;
+  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  std::string const & schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
+  
+  if (schemaName.empty() == 0)
+  {
+    GenerateDataStructureSkeleton(0);
+  }
+}
+
+
 void ProblemManager::ParseInputFile()
 {
   GEOSX_MARK_FUNCTION;
@@ -567,12 +590,12 @@ void ProblemManager::ParseInputFile()
   }
 
   // Documentation output
-  std::string const & schemaName = commandLine->getReference<std::string>(keys::schema);
-  if (schemaName.empty() == 0)
-  {
-    integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-//    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
-  }
+  // std::string const & schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
+  // if (schemaName.empty() == 0)
+  // {
+  //   integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
+  //   ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
+  // }
 }
 
 

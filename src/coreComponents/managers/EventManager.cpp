@@ -114,6 +114,16 @@ ManagedGroup * EventManager::CreateChild( string const & childKey, string const 
 }
 
 
+void EventManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from EventBase here
+  for (auto& catalogIter: EventBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;

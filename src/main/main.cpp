@@ -79,42 +79,48 @@ int main( int argc, char *argv[] )
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
 
-
-
-  problemManager.ParseInputFile();
-
-  GEOSX_MARK_BEGIN("problemManager.Initialize");
-  problemManager.Initialize( &problemManager );
-  GEOSX_MARK_END("problemManager.Initialize");
-
-  problemManager.RegisterDataOnMeshRecursive( nullptr );
-
-
-  problemManager.IntermediateInitializationRecursive( &problemManager );
-
-  problemManager.ApplyInitialConditions();
-
-  GEOSX_MARK_BEGIN("problemManager.FinalInitializationRecursive");
-  problemManager.FinalInitializationRecursive( &problemManager );
-  GEOSX_MARK_END("problemManager.FinalInitializationRecursive");
-
-  if (restart) {
-    problemManager.ReadRestartOverwrite( restartFileName );
+  if ( !problemManager.getSchemaFileName().empty() )
+  {
+    problemManager.GenerateDocumentation();
   }
+  else
+  {
+    problemManager.ParseInputFile();
 
-  MPI_Barrier(MPI_COMM_GEOSX);
-  GEOS_LOG_RANK_0("Running simulation");
+    GEOSX_MARK_BEGIN("problemManager.Initialize");
+    problemManager.Initialize( &problemManager );
+    GEOSX_MARK_END("problemManager.Initialize");
 
-  gettimeofday(&tim, nullptr);
-  const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    problemManager.RegisterDataOnMeshRecursive( nullptr );
 
-  problemManager.RunSimulation();
 
-  gettimeofday(&tim, nullptr);
-  const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    problemManager.IntermediateInitializationRecursive( &problemManager );
 
-  GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
-                  "s, run time = " << t_run-t_initialize << "s");
+    problemManager.ApplyInitialConditions();
+
+    GEOSX_MARK_BEGIN("problemManager.FinalInitializationRecursive");
+    problemManager.FinalInitializationRecursive( &problemManager );
+    GEOSX_MARK_END("problemManager.FinalInitializationRecursive");
+
+    if (restart) {
+      problemManager.ReadRestartOverwrite( restartFileName );
+    }
+
+    MPI_Barrier(MPI_COMM_GEOSX);
+    GEOS_LOG_RANK_0("Running simulation");
+
+    gettimeofday(&tim, nullptr);
+    const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+    problemManager.RunSimulation();
+
+    gettimeofday(&tim, nullptr);
+    const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+    GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
+                    "s, run time = " << t_run-t_initialize << "s");
+  }
+  
 
   problemManager.ClosePythonInterpreter();
 

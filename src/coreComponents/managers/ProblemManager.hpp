@@ -87,6 +87,8 @@ public:
 
   void ClosePythonInterpreter();
 
+  void GenerateDocumentation();
+
   void ParseInputFile();
 
   void InitializationOrder( string_array & order ) override final;
@@ -120,6 +122,9 @@ public:
   const string & getRestartFileName() const
   { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
 
+  const string & getSchemaFileName() const
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
   xmlWrapper::xmlNode xmlProblemNode;
@@ -134,6 +139,7 @@ public:
     dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};
     dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
     dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
+    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};
     dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};

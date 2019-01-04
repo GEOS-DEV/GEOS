@@ -44,6 +44,16 @@ ManagedGroup * MeshManager::CreateChild( string const & childKey, string const &
 }
 
 
+void MeshManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from MeshGeneratorBase here
+  for (auto& catalogIter: MeshGeneratorBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+
 void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
   forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void

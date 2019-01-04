@@ -49,6 +49,19 @@ ManagedGroup * ConstitutiveManager::CreateChild( string const & childKey, string
   return RegisterGroup<ConstitutiveBase>( childName, std::move( material ) );
 }
 
+
+void ConstitutiveManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from ConstitutiveBase here
+  // cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >& catalog = ConstitutiveBase::GetCatalog();
+
+  for (auto& catalogIter: ConstitutiveBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+
 ConstitutiveBase *
 ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                                                dataRepository::ManagedGroup * const parent,

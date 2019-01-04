@@ -40,6 +40,17 @@ ManagedGroup * QuadratureRuleManager::CreateChild( string const & childKey, stri
   return nullptr;
 }
 
+
+void QuadratureRuleManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from QuadratureBase here
+  for (auto& catalogIter: QuadratureBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:
 void QuadratureRuleManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {

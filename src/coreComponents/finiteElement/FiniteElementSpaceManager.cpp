@@ -48,5 +48,14 @@ ManagedGroup * FiniteElementSpaceManager::CreateChild( string const & childKey, 
 }
 
 
+void FiniteElementSpaceManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from ManagedGroup here
+  for (auto& catalogIter: ManagedGroup::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 
 } /* namespace geosx */
