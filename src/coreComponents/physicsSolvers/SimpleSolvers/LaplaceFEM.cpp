@@ -108,7 +108,7 @@ void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 }
 
 
-void LaplaceFEM::ProcessInputFile_PostProcess()
+void LaplaceFEM::PostProcessInput()
 {
   string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 
@@ -128,12 +128,6 @@ void LaplaceFEM::ProcessInputFile_PostProcess()
   {
     GEOS_ERROR("invalid time integration option");
   }
-}
-
-
-void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
-{
-
 }
 
 

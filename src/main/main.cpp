@@ -85,6 +85,8 @@ int main( int argc, char *argv[] )
 
   problemManager.GenerateMesh();
 
+  problemManager.ApplyNumericalMethods();
+
   GEOSX_MARK_BEGIN("problemManager.Initialize");
   problemManager.Initialize( &problemManager );
   GEOSX_MARK_END("problemManager.Initialize");

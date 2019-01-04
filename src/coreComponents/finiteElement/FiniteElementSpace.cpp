@@ -101,7 +101,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> 
   }
 }
 
-void FiniteElementSpace::ProcessInputFile_PostProcess()
+void FiniteElementSpace::PostProcessInput()
 {
   auto const & basisName = this->getReference<string>(keys::basis);
   auto const & quadratureName = this->getReference<string>(keys::quadrature);
@@ -118,20 +118,6 @@ void FiniteElementSpace::ProcessInputFile_PostProcess()
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 }
 
-void FiniteElementSpace::InitializePreSubGroups( ManagedGroup * const group )
-{
-//  auto const & basisName = this->getData<string>(keys::basis) ;
-//  auto const & quadratureName = this->getData<string>(keys::quadrature) ;
-//
-//  // TODO find a better way to do this that doesn't involve getParent(). We
-// shouldn't really use that unless there is no
-//  // other choice.
-//  m_basis =
-// this->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
-//  m_quadrature =
-// this->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
-//  m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
-}
 
 
 REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementSpace, std::string const &, ManagedGroup * const )

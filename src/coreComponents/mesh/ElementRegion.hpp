@@ -83,7 +83,6 @@ public:
   ElementRegion(const ElementRegion& init);
 //  ElementRegion( ElementRegion&& init);
 
-  virtual void ProcessInputFile_PostProcess() override;
 
 //  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
 //                           map<string,localIndex> & counts );
@@ -192,7 +191,11 @@ public:
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
 
-  private:
+protected:
+  virtual void PostProcessInput() override;
+
+private:
+
   ElementRegion& operator=(const ElementRegion& rhs);
   string m_defaultMaterial;
   string_array m_materialList;

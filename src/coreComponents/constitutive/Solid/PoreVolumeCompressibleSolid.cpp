@@ -79,7 +79,7 @@ void PoreVolumeCompressibleSolid::AllocateConstitutiveData( dataRepository::Mana
   m_poreVolumeMultiplier = 1.0;
 }
 
-void PoreVolumeCompressibleSolid::ProcessInputFile_PostProcess()
+void PoreVolumeCompressibleSolid::PostProcessInput()
 {
   if( m_compressibility < 0.0 )
   {

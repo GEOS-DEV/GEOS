@@ -80,7 +80,6 @@ public:
    */
   CellBlock(const CellBlock& init);
 
-  virtual void ProcessInputFile_PostProcess() override;
 
   virtual ~CellBlock() override;
 
@@ -207,6 +206,7 @@ public:
   void SetElementType( string const & elementType);
 
 private:
+
   /// The number of nodes per element in this cell block
   localIndex m_numNodesPerElement;
 

@@ -213,13 +213,13 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
-void ManagedGroup::ProcessInputFileRecursive_PostProcess()
+void ManagedGroup::PostProcessInputRecursive()
 {
   for( auto const & subGroupIter : m_subGroups )
   {
-    subGroupIter.second->ProcessInputFileRecursive_PostProcess();
+    subGroupIter.second->PostProcessInputRecursive();
   }
-  ProcessInputFile_PostProcess();
+  PostProcessInput();
 }
 
 

@@ -230,7 +230,7 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
           "initial estimate for the incremental displacement of the current step.");
 }
 
-void SolidMechanics_LagrangianFEM::ProcessInputFile_PostProcess()
+void SolidMechanics_LagrangianFEM::PostProcessInput()
 {
   if( !m_timeIntegrationOptionString.empty() )
   {
@@ -242,23 +242,6 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 {
   // TODO Auto-generated destructor stub
 }
-
-
-
-
-//void SolidMechanics_LagrangianFEM::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-//{
-//  string tiOption;
-//  xmlWrapper::ReadAttributeAsType<string>( tiOption, viewKeyStruct::timeIntegrationOptionString, targetNode, "ExplicitDynamic" );
-//  SetTimeIntegrationOption( tiOption );
-//
-//  xmlWrapper::ReadAttributeAsType( m_cflFactor, viewKeyStruct::cflString, targetNode, 0.5 );
-//  xmlWrapper::ReadAttributeAsType( m_newmarkGamma, viewKeyStruct::newmarkGammaString, targetNode, 0.5 );
-//  xmlWrapper::ReadAttributeAsType( m_newmarkBeta, viewKeyStruct::newmarkBetaString, targetNode, 0.25 );
-//  xmlWrapper::ReadAttributeAsType( m_massDamping, viewKeyStruct::massDampingString, targetNode, 0.0 );
-//  xmlWrapper::ReadAttributeAsType( m_stiffnessDamping, viewKeyStruct::stiffnessDampingString, targetNode, 0.0 );
-//  xmlWrapper::ReadAttributeAsType( m_useVelocityEstimateForQS, viewKeyStruct::useVelocityEstimateForQSString, targetNode, 0 );
-//}
 
 
 void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )

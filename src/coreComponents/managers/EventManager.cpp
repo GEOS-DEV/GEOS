@@ -89,7 +89,7 @@ EventManager::~EventManager()
 
 
 
-void EventManager::ProcessInputFile_PostProcess()
+void EventManager::PostProcessInput()
 {
   real64 & maxTime = this->getReference<real64>(viewKeys.maxTime);
   integer & maxCycle = this->getReference<integer>(viewKeys.maxCycle);
