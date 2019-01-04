@@ -81,11 +81,11 @@ void MultiFluidPVTPackageWrapper::InitializePostSubGroups( ManagedGroup * const 
   createFluid();
 }
 
-void MultiFluidPVTPackageWrapper::StateUpdatePointMultiFluid( real64 const & pres,
-                                                              real64 const & temp,
-                                                              arraySlice1d<real64 const> const & composition,
-                                                              localIndex const k,
-                                                              localIndex const q )
+void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
+                                              real64 const & temp,
+                                              arraySlice1d<real64 const> const & composition,
+                                              localIndex const k,
+                                              localIndex const q)
 {
   // 0. set array views to the element/point data to avoid awkward quadruple indexing
   CompositionalVarContainer<1> phaseFrac {

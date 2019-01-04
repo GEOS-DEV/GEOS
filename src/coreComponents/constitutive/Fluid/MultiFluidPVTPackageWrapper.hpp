@@ -56,11 +56,11 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
-  virtual void StateUpdatePointMultiFluid( real64 const & pres,
-                                           real64 const & temp,
-                                           arraySlice1d<real64 const> const & composition,
-                                           localIndex const k,
-                                           localIndex const q ) override;
+  virtual void PointUpdate(real64 const & pres,
+                           real64 const & temp,
+                           arraySlice1d<real64 const> const & composition,
+                           localIndex const k,
+                           localIndex const q) override;
 
 
 

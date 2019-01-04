@@ -280,12 +280,12 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 #undef GET_FLUID_DATA
 
   // set the fluid state to current
-  fluid->StateUpdatePointMultiFluid(P, T, composition, 0, 0);
+  fluid->PointUpdate(P, T, composition, 0, 0);
 
   // update pressure and check derivatives
   {
     real64 const dP = perturbParameter * (P + perturbParameter);
-    fluidCopy->StateUpdatePointMultiFluid( P + dP, T, composition, 0, 0 );
+    fluidCopy->PointUpdate(P + dP, T, composition, 0, 0);
 
     checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
@@ -298,7 +298,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   // update temperature and check derivatives
   {
     real64 const dT = perturbParameter * (T + perturbParameter);
-    fluidCopy->StateUpdatePointMultiFluid( P, T + dT, composition, 0, 0 );
+    fluidCopy->PointUpdate(P, T + dT, composition, 0, 0);
 
     checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
@@ -332,7 +332,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     for (localIndex ic = 0; ic < NC; ++ic)
       compNew[ic] /= sum;
 
-    fluidCopy->StateUpdatePointMultiFluid( P, T, compNew, 0, 0 );
+    fluidCopy->PointUpdate(P, T, compNew, 0, 0);
     string var = "compFrac[" + components[jc] + "]";
 
     checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );

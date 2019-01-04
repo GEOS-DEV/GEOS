@@ -463,7 +463,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
   // currently not thread-safe, force sequential policy
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
-    fluid->StateUpdatePointMultiFluid(pres[a] + dPres[a], m_temperature, compFrac[a], a, 0);
+    fluid->PointUpdate(pres[a] + dPres[a], m_temperature, compFrac[a], a, 0);
   });
 }
 
@@ -1679,7 +1679,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     for (localIndex a : targetSet)
     {
-      fluid->StateUpdatePointMultiFluid(bcPres[a], m_temperature, compFrac[a], a, 0);
+      fluid->PointUpdate(bcPres[a], m_temperature, compFrac[a], a, 0);
 
       globalIndex const offset = m_numDofPerCell * dofNumber[a];
       dof[counter] = offset;

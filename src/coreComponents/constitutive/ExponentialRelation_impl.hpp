@@ -24,11 +24,9 @@
 #ifndef GEOSX_EXPONENTIALRELATION_IMPL_HPP_
 #define GEOSX_EXPONENTIALRELATION_IMPL_HPP_
 
-#include "RAJA/RAJA.hpp"
-#include "RAJA/index/RangeSegment.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <cmath>
-
 
 namespace geosx
 {
@@ -36,69 +34,65 @@ namespace geosx
 namespace constitutive
 {
 
-
 template< typename LAMBDA >
 static auto ExponentApproximationTypeSwitchBlock( ExponentApproximationType const eat,
                                                   LAMBDA&& lambda )
 {
   switch( eat )
   {
-  case ExponentApproximationType::Full:
-  {
-    return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Full>() );
-  }
-  case ExponentApproximationType::Quadratic:
-  {
-    return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Quadratic>() );
-  }
+    case ExponentApproximationType::Full:
+    {
+      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Full>() );
+    }
+    case ExponentApproximationType::Quadratic:
+    {
+      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Quadratic>() );
+    }
 
-  case ExponentApproximationType::Linear:
-  {
-    return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Linear>() );
-  }
-  default:
-  {
-    GEOS_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
-  }
-
+    case ExponentApproximationType::Linear:
+    {
+      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Linear>() );
+    }
+    default:
+    {
+      GEOS_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
+    }
   }
 }
 
 
-template<typename IndexType, typename RealType>
-ExponentialRelation<IndexType, RealType>::ExponentialRelation()
+template<typename T>
+ExponentialRelation<T>::ExponentialRelation()
   : ExponentialRelation( ExponentApproximationType::Full )
 {}
 
-template<typename IndexType, typename RealType>
-ExponentialRelation<IndexType, RealType>::ExponentialRelation( ExponentApproximationType type )
-  : ExponentialRelation( type, RealType( 0 ), RealType( 1 ), RealType( 1 ))
+template<typename T>
+ExponentialRelation<T>::ExponentialRelation( ExponentApproximationType type )
+  : ExponentialRelation( type, T( 0 ), T( 1 ), T( 1 ))
 {}
 
-template<typename IndexType, typename RealType>
-ExponentialRelation<IndexType, RealType>::ExponentialRelation( ExponentApproximationType type,
-                                                               RealType x0, RealType y0, RealType alpha )
+template<typename T>
+ExponentialRelation<T>::ExponentialRelation( ExponentApproximationType type, T x0, T y0, T alpha )
 {
   SetParameters( type, x0, y0, alpha );
 }
 
-template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::SetApproximationType( ExponentApproximationType type )
+template<typename T>
+void ExponentialRelation<T>::SetApproximationType( ExponentApproximationType type )
 {
   m_approximationType = type;
 }
 
-template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::SetCoefficients( RealType x0, RealType y0, RealType alpha )
+template<typename T>
+void ExponentialRelation<T>::SetCoefficients( T x0, T y0, T alpha )
 {
   m_x0 = x0;
   m_y0 = y0;
   m_alpha = alpha;
 }
 
-template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::SetParameters( ExponentApproximationType type,
-                                                              RealType x0, RealType y0, RealType alpha )
+template<typename T>
+void ExponentialRelation<T>::SetParameters( ExponentApproximationType type, T x0, T y0, T alpha )
 {
   SetApproximationType( type );
   SetCoefficients( x0, y0, alpha );
@@ -123,7 +117,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Full>
     y = y0 * exp( alpha * (x - x0));
   }
 
-  inline static void Compute2( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
     y = y0 * exp( alpha * (x - x0));
     dy_dx = alpha * y;
@@ -134,7 +128,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Full>
     x = x0 + log( y / y0 ) / alpha;
   }
 
-  inline static void Inverse2( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  inline static void Inverse( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
     x = x0 + alpha_inv * log( y / y0 );
@@ -151,7 +145,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Quadratic>
     y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
   }
 
-  inline static void Compute2( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
     const T z = T( 1.0 ) + alpha * (x - x0);
     y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
@@ -164,7 +158,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Quadratic>
     x = x0 + (z - 1) / alpha;
   }
 
-  inline static void Inverse2( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  inline static void Inverse( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
     const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
@@ -181,7 +175,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear>
     y = y0 * (T( 1.0 ) + alpha * (x - x0));
   }
 
-  inline static void Compute2( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
     y = y0 * (T( 1.0 ) + alpha * (x - x0));
     dy_dx = alpha * y0;
@@ -192,7 +186,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear>
     x = x0 + (y / y0 - 1) / alpha;
   }
 
-  inline static void Inverse2( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  inline static void Inverse( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
     x = x0 + alpha_inv * (y / y0 - 1);
@@ -200,112 +194,284 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear>
   }
 };
 
-template<typename Policy, typename I, typename Lambda>
-void forall_compute( I first, I last, Lambda lambda )
+}
+
+template<typename T>
+void ExponentialRelation<T>::Compute( const T & x, T & y )
 {
-  RAJA::RangeSegment seg( first, last );
-  RAJA::forall<Policy>( seg, [=] ( I index ) mutable -> void
-        {
-          lambda( index );
-        } );
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    detail::ExponentialCompute<T, decltype(eat)::value>::Compute( m_x0, m_y0, m_alpha, x, y );
+  } );
 }
 
-}
-
-template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, RealType & y )
+template<typename T>
+void ExponentialRelation<T>::Inverse( const T & y, T & x )
 {
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
-      {
-        detail::ExponentialCompute<RealType, eat>::Compute( m_x0, m_y0, m_alpha, x, y );
-      } );
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( m_x0, m_y0, m_alpha, y, x );
+  } );
 }
 
-template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, RealType & x )
-{
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
-      {
-        detail::ExponentialCompute<RealType, eat>::Inverse( m_x0, m_y0, m_alpha, y, x );
-      } );
-}
-
-template<typename IndexType, typename RealType>
+template<typename T>
 template<typename Policy>
-void ExponentialRelation<IndexType, RealType>::BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr )
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1d<T> & y )
 {
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
-      {
-        detail::forall_compute<Policy>( 0, size, [&] ( IndexType i ) -> void
-        {
-          detail::ExponentialCompute<RealType, decltype(eat)::value >::
-          Compute( m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i] );
-        } );
-      } );
+  GEOS_ERROR_IF( y.size(0) != x.size(0), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    forall_in_range<Policy>( 0, x.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      detail::ExponentialCompute<T, decltype(eat)::value>::Compute( x0, y0, alpha, x[i], y[i] );
+    } );
+  } );
 }
 
-template<typename IndexType, typename RealType>
+template<typename T>
 template<typename Policy>
-void ExponentialRelation<IndexType, RealType>::BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr )
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x )
 {
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
-      {
-        detail::forall_compute<Policy>( 0, size, [&] ( IndexType i ) -> void
-        {
-          detail::ExponentialCompute<RealType, decltype(eat)::value >::
-          Inverse( m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i] );
-        } );
-      } );
+  GEOS_ERROR_IF( x.size(0) != y.size(0), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    forall_in_range<Policy>( 0, y.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( x0, y0, alpha, y[i], x[i] );
+    } );
+  } );
 }
 
-template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Compute( const RealType & x, RealType & y, RealType & dy_dx )
-{
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
-      {
-        detail::ExponentialCompute<RealType, decltype(eat)::value >::
-        Compute2( m_x0, m_y0, m_alpha, x, y, dy_dx );
-      } );
-}
-
-template<typename IndexType, typename RealType>
-void ExponentialRelation<IndexType, RealType>::Inverse( const RealType & y, RealType & x, RealType & dx_dy )
-{
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
-      {
-        detail::ExponentialCompute<RealType, decltype(eat)::value >::
-        Inverse2( m_x0, m_y0, m_alpha, y, x, dx_dy );
-      } );
-}
-
-template<typename IndexType, typename RealType>
+template<typename T>
 template<typename Policy>
-void ExponentialRelation<IndexType, RealType>::BatchCompute( IndexType size, ConstPtrType x_ptr,
-                                                             PtrType y_ptr, PtrType dy_dx_ptr )
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2d<T> & y )
 {
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
+  GEOS_ERROR_IF( y.size(0) != x.size(0), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = y.size(1);
+    forall_in_range<Policy>( 0, x.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
       {
-        detail::forall_compute<Policy>( 0, size, [&] ( IndexType i ) -> void
-        {
-          detail::ExponentialCompute<RealType, decltype(eat)::value >::
-          Compute2( m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i], dy_dx_ptr[i] );
-        } );
-      } );
+        detail::ExponentialCompute<T, decltype(eat)::value>::Compute( x0, y0, alpha, x[i], y[i][j] );
+      }
+    } );
+  } );
 }
 
-template<typename IndexType, typename RealType>
+template<typename T>
 template<typename Policy>
-void ExponentialRelation<IndexType, RealType>::BatchInverse( IndexType size, ConstPtrType y_ptr,
-                                                             PtrType x_ptr, PtrType dx_dy_ptr )
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x )
 {
-  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
+  GEOS_ERROR_IF( x.size(0) != y.size(0), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = x.size(1);
+    forall_in_range<Policy>( 0, y.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
       {
-        detail::forall_compute<Policy>( 0, size, [&] ( IndexType i ) -> void
-        {
-          detail::ExponentialCompute<RealType, decltype(eat)::value >::
-          Inverse2( m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i], dx_dy_ptr[i] );
-        } );
-      } );
+        detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( x0, y0, alpha, y[i], x[i][j] );
+      }
+    } );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2d<T> & y )
+{
+  GEOS_ERROR_IF( y.size(0) != x.size(0), "Array size mismatch" );
+  GEOS_ERROR_IF( y.size(1) != x.size(1), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = x.size(1);
+    forall_in_range<Policy>( 0, x.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
+      {
+        detail::ExponentialCompute<T, decltype(eat)::value>::Compute( x0, y0, alpha, x[i][j], y[i][j] );
+      }
+    } );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x )
+{
+  GEOS_ERROR_IF( x.size(0) != y.size(0), "Array size mismatch" );
+  GEOS_ERROR_IF( x.size(1) != y.size(1), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = y.size(1);
+    forall_in_range<Policy>( 0, y.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
+      {
+        detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( x0, y0, alpha, y[i][j], x[i][j] );
+      }
+    } );
+  } );
+}
+
+template<typename T>
+void ExponentialRelation<T>::Compute( const T & x, T & y, T & dy_dx )
+{
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    detail::ExponentialCompute<T, decltype(eat)::value>::Compute( m_x0, m_y0, m_alpha, x, y, dy_dx );
+  } );
+}
+
+template<typename T>
+void ExponentialRelation<T>::Inverse( const T & y, T & x, T & dx_dy )
+{
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( m_x0, m_y0, m_alpha, y, x, dx_dy );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1d<T> & y, arrayView1d<T> & dy_dx )
+{
+  GEOS_ERROR_IF( y.size(0) != x.size(0) || dy_dx.size(0) != x.size(0), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    forall_in_range<Policy>( 0, x.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      detail::ExponentialCompute<T, decltype(eat)::value>::Compute( x0, y0, alpha, x[i], y[i], dy_dx[i] );
+    } );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x, arrayView1d<T> & dx_dy )
+{
+  GEOS_ERROR_IF( x.size(0) != y.size(0) || dx_dy.size(0) != y.size(0), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    forall_in_range<Policy>( 0, y.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( x0, y0, alpha, y[i], x[i], dx_dy[i] );
+    } );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx )
+{
+  GEOS_ERROR_IF( y.size(0) != x.size(0) || dy_dx.size(0) != x.size(0), "Array size mismatch" );
+  GEOS_ERROR_IF( dy_dx.size(1) != y.size(1), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = y.size(1);
+    forall_in_range<Policy>( 0, x.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
+      {
+        detail::ExponentialCompute<T, decltype(eat)::value>::Compute( x0, y0, alpha, x[i], y[i][j], dy_dx[i][j] );
+      }
+    } );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy )
+{
+  GEOS_ERROR_IF( x.size(0) != y.size(0) || dx_dy.size(0) != y.size(0), "Array size mismatch" );
+  GEOS_ERROR_IF( dx_dy.size(1) != x.size(1), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = x.size(1);
+    forall_in_range<Policy>( 0, y.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
+      {
+        detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( x0, y0, alpha, y[i], x[i][j], dx_dy[i][j] );
+      }
+    } );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx )
+{
+  GEOS_ERROR_IF( y.size(0) != x.size(0) || dy_dx.size(0) != x.size(0), "Array size mismatch" );
+  GEOS_ERROR_IF( y.size(1) != x.size(1) || dy_dx.size(1) != x.size(1), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = x.size(1);
+    forall_in_range<Policy>( 0, x.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
+      {
+        detail::ExponentialCompute<T, decltype(eat)::value>::Compute( x0, y0, alpha, x[i][j], y[i][j], dy_dx[i][j] );
+      }
+    } );
+  } );
+}
+
+template<typename T>
+template<typename Policy>
+void ExponentialRelation<T>::Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy )
+{
+  GEOS_ERROR_IF( x.size(0) != y.size(0) || dx_dy.size(0) != y.size(0), "Array size mismatch" );
+  GEOS_ERROR_IF( x.size(1) != y.size(1) || dx_dy.size(1) != y.size(1), "Array size mismatch" );
+  T x0 = m_x0;
+  T y0 = m_y0;
+  T alpha = m_alpha;
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
+  {
+    auto const numJ = y.size(1);
+    forall_in_range<Policy>( 0, y.size(0), GEOSX_LAMBDA ( auto i )
+    {
+      for (localIndex j = 0; j < numJ; ++j)
+      {
+        detail::ExponentialCompute<T, decltype(eat)::value>::Inverse( x0, y0, alpha, y[i][j], x[i][j], dx_dy[i][j] );
+      }
+    } );
+  } );
 }
 
 } // namespace constitutive

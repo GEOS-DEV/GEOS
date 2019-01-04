@@ -23,6 +23,8 @@
 #ifndef GEOSX_EXPONENTIALRELATION_HPP_
 #define GEOSX_EXPONENTIALRELATION_HPP_
 
+#include <common/DataTypes.hpp>
+
 namespace geosx
 {
 
@@ -56,16 +58,12 @@ static auto ExponentApproximationTypeSwitchBlock( ExponentApproximationType cons
  * Optional linear and quadratic Taylor series approximation of the exponent.
  * Implements point and batch direct (y(x)) and inverse (x(y)) compute functions and provides derivatives.
  *
- * @tparam IndexType index type used in batch updates
- * @tparam RealType scalar real type used in computation
+ * @tparam T scalar real type used in computation
  */
-template<typename IndexType, typename RealType>
+template<typename T>
 class ExponentialRelation
 {
 public:
-
-  using PtrType = RealType *;
-  using ConstPtrType = RealType const *;
 
   // *** constructors ***
 
@@ -73,39 +71,63 @@ public:
 
   explicit ExponentialRelation( ExponentApproximationType type );
 
-  explicit ExponentialRelation( ExponentApproximationType type, RealType x0, RealType y0, RealType alpha );
+  explicit ExponentialRelation( ExponentApproximationType type, T x0, T y0, T alpha );
 
   // *** setters ***
 
   void SetApproximationType( ExponentApproximationType type );
 
-  void SetCoefficients( RealType x0, RealType y0, RealType alpha );
+  void SetCoefficients( T x0, T y0, T alpha );
 
-  void SetParameters( ExponentApproximationType type, RealType x0, RealType y0, RealType alpha );
+  void SetParameters( ExponentApproximationType type, T x0, T y0, T alpha );
 
   // *** no-derivative computes ***
 
-  void Compute( const RealType & x, RealType & y );
+  void Compute( const T & x, T & y );
 
-  void Inverse( const RealType & y, RealType & x );
-
-  template<typename Policy>
-  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr );
+  void Inverse( const T & y, T & x );
 
   template<typename Policy>
-  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr );
+  void Compute( arrayView1d<T const> const & x, arrayView1d<T> & y );
+
+  template<typename Policy>
+  void Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x );
+
+  template<typename Policy>
+  void Compute( arrayView1d<T const> const & x, arrayView2d<T> & y );
+
+  template<typename Policy>
+  void Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x );
+
+  template<typename Policy>
+  void Compute( arrayView2d<T const> const & x, arrayView2d<T> & y );
+
+  template<typename Policy>
+  void Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x );
 
   // *** derivative computes ***
 
-  void Compute( const RealType & x, RealType & y, RealType & dy_dx );
+  void Compute( const T & x, T & y, T & dy_dx );
 
-  void Inverse( const RealType & y, RealType & x, RealType & dx_dy );
-
-  template<typename Policy>
-  void BatchCompute( IndexType size, ConstPtrType x_ptr, PtrType y_ptr, PtrType dy_dx_ptr );
+  void Inverse( const T & y, T & x, T & dx_dy );
 
   template<typename Policy>
-  void BatchInverse( IndexType size, ConstPtrType y_ptr, PtrType x_ptr, PtrType dx_dy_ptr );
+  void Compute( arrayView1d<T const> const & x, arrayView1d<T> & y, arrayView1d<T> & dy_dx );
+
+  template<typename Policy>
+  void Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x, arrayView1d<T> & dx_dy );
+
+  template<typename Policy>
+  void Compute( arrayView1d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx );
+
+  template<typename Policy>
+  void Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy );
+
+  template<typename Policy>
+  void Compute( arrayView2d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx );
+
+  template<typename Policy>
+  void Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy );
 
 private:
 
@@ -113,9 +135,9 @@ private:
   ExponentApproximationType m_approximationType;
 
   /// coefficients of exponential relations
-  RealType m_x0;
-  RealType m_y0;
-  RealType m_alpha;
+  T m_x0;
+  T m_y0;
+  T m_alpha;
 
 };
 

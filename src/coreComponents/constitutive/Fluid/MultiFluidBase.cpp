@@ -43,7 +43,6 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Component molar weights");
 
-
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of fluid phases");

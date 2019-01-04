@@ -98,18 +98,13 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override {}
+  // *** MultiFluid-specific interface
 
-  // *** MultiphaseFluid-specific interface
-
-  virtual void StateUpdatePointMultiFluid( real64 const & pres,
-                                           real64 const & temp,
-                                           arraySlice1d<real64 const> const & composition,
-                                           localIndex const k,
-                                           localIndex const q ) {}
+  virtual void PointUpdate( real64 const & pres,
+                            real64 const & temp,
+                            arraySlice1d<real64 const> const & composition,
+                            localIndex const k,
+                            localIndex const q ) {}
 
   localIndex numFluidComponents() const;
 
