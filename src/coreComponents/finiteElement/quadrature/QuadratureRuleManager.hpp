@@ -41,6 +41,7 @@ public:
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+private:
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
 };

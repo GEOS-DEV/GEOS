@@ -6,7 +6,9 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  courant="0.25"/>
+                                  courant="0.25"
+                                  numericalMethod="FE1"
+                                  targetRegions="Region2"/>
   </Solvers>
 
   

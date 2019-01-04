@@ -72,9 +72,7 @@ public:
   void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
 
 
-  void ProcessInputFile_PostProcess() override final;
 
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 
   void CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const & X,
                                         dataRepository::ManagedGroup * const cellBlock ) const;
@@ -87,6 +85,8 @@ public:
   BasisBase const *    m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;
   FiniteElementBase * m_finiteElement = nullptr;
+protected:
+  void PostProcessInput() override final;
 
 };
 

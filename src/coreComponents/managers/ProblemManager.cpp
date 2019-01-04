@@ -39,6 +39,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
+#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
@@ -530,21 +531,21 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
 
   ProcessInputFileRecursive( xmlProblemNode );
-  ProcessInputFileRecursive_PostProcess();
+  PostProcessInputRecursive();
 
 
   // The function manager is handled separately
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
     m_functionManager->ProcessInputFileRecursive( topLevelNode );
-    m_functionManager->ProcessInputFileRecursive_PostProcess(  );
+    m_functionManager->PostProcessInputRecursive(  );
   }
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
     BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
     bcManager->ProcessInputFileRecursive( topLevelNode );
-    bcManager->ProcessInputFileRecursive_PostProcess();
+    bcManager->PostProcessInputRecursive();
 
   }
 
@@ -553,17 +554,16 @@ void ProblemManager::ParseInputFile()
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
-    constitutiveManager->ProcessInputFileRecursive_PostProcess();
+    constitutiveManager->PostProcessInputRecursive();
 
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
-//    meshManager->ProcessInputFileRecursive()
     meshManager->GenerateMeshLevels(domain);
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     elementManager->ProcessInputFileRecursive( topLevelNode );
-    elementManager->ProcessInputFileRecursive_PostProcess();
+    elementManager->PostProcessInputRecursive();
   }
 
   // Documentation output
@@ -576,7 +576,7 @@ void ProblemManager::ParseInputFile()
 }
 
 
-void ProblemManager::ProcessInputFile_PostProcess()
+void ProblemManager::PostProcessInput()
 {
   DomainPartition * domain  = getDomainPartition();
 
@@ -651,30 +651,105 @@ void ProblemManager::GenerateMesh()
   meshManager->GenerateMeshes(domain);
   ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+
+  ManagedGroup * const meshBodies = domain->getMeshBodies();
+
+  for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
   {
-    NodeManager * const nodeManager = (*mesh.second).group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
+    MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
+    for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
+    {
+      MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
 
-    GeometricObjectManager * geometricObjects = this->GetGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
+      NodeManager * const nodeManager = meshLevel->getNodeManager();
+      EdgeManager * edgeManager = meshLevel->getEdgeManager();
+      FaceManager * const faceManager = meshLevel->getFaceManager();
+      ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-    MeshUtilities::GenerateNodesets( geometricObjects,
-                                     nodeManager );
-    nodeManager->ConstructGlobalToLocalMap();
+      GeometricObjectManager * geometricObjects = this->GetGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
 
-    ElementRegionManager * const elemManager = (*mesh.second).group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
+      MeshUtilities::GenerateNodesets( geometricObjects,
+                                       nodeManager );
+      nodeManager->ConstructGlobalToLocalMap();
 
-    elemManager->GenerateMesh( cellBlockManager );
+      elemManager->GenerateMesh( cellBlockManager );
+
+      faceManager->BuildFaces( nodeManager, elemManager );
+
+      edgeManager->BuildEdges(faceManager, nodeManager );
+
+      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
+      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
+      nodeManager->SetElementMaps( meshLevel->getElemManager() );
+
+      domain->GenerateSets();
+    }
   }
+}
+
+void ProblemManager::ApplyNumericalMethods()
+{
+  NumericalMethodsManager const * const
+  numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  DomainPartition * domain  = getDomainPartition();
+
+  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+  meshManager->GenerateMeshes(domain);
+  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
 
+  ManagedGroup * const meshBodies = domain->getMeshBodies();
+
+
+
+  for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
+  {
+    SolverBase const * const solver = m_physicsSolverManager->GetGroup<SolverBase>(solverIndex);
+    string const numericalMethodName = solver->getNumericalMethod();
+    string_array const & targetRegions = solver->getTargetRegions();
+
+    FiniteElementSpaceManager const *
+    feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+
+    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numericalMethodName);
+
+    if( feSpace != nullptr )
+    {
+      for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
+      {
+        MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
+        for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
+        {
+          MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
+          NodeManager * const nodeManager = meshLevel->getNodeManager();
+          ElementRegionManager * const elemManager = meshLevel->getElemManager();
+          arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
+
+          for( auto const & regionName : targetRegions )
+          {
+            ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+            if( elemRegion != nullptr )
+            {
+              elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )
+              {
+                feSpace->ApplySpaceToTargetCells(subRegion);
+                feSpace->CalculateShapeFunctionGradients( X, subRegion);
+              });
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
 
-  ObjectManagerBase::InitializePostSubGroups(nullptr);
-
+//  ObjectManagerBase::InitializePostSubGroups(nullptr);
+//
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * const meshBodies = domain->getMeshBodies();
@@ -682,22 +757,8 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
   FaceManager * const faceManager = meshLevel->getFaceManager();
-
-  ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-
-  NodeManager * nodeManager = meshLevel->getNodeManager();
-  faceManager->BuildFaces( nodeManager, elementManager );
-
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
-  edgeManager->BuildEdges(faceManager, nodeManager );
-
-  nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
-  nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
-  nodeManager->SetElementMaps( meshLevel->getElemManager() );
-
-  domain->GenerateSets();
   domain->SetupCommunications();
-
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
 

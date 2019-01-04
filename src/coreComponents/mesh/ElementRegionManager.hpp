@@ -97,7 +97,6 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlockManager );
 
-  void InitializePreSubGroups( ManagedGroup * const ) override final;
   void InitializePostSubGroups( ManagedGroup * const ) override final;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;

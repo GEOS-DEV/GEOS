@@ -126,58 +126,10 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
   });
 }
 
-void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
-{
-//    map<string,integer> constitutiveSizes;
-//    ManagedGroup * domain = problemManager.GetGroup(keys::domain);
-//    forElementRegions([&]( ElementRegion& elementRegion ) -> void
-//    {
-//      map<string,integer> sizes = elementRegion.SetConstitutiveMap(
-// problemManager );
-//      for( auto& entry : sizes )
-//      {
-//        constitutiveSizes[entry.first] += entry.second;
-//      }
-//    });
-//
-//    ManagedGroup * constitutiveManager =
-// domain->GetGroup(keys::ConstitutiveManager);
-//    for( auto & material : constitutiveManager->GetSubGroups() )
-//    {
-//      string name = material.first;
-//      if( constitutiveSizes.count(name) > 0 )
-//      {
-//        material.second->resize( constitutiveSizes.at(name) );
-//      }
-//    }
-}
 
 void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problemManager )
 {
   ObjectManagerBase::InitializePostSubGroups(nullptr);
-
-//  map<string,localIndex> constitutiveSizes;
-//  ManagedGroup * domain = problemManager->GetGroup(keys::domain);
-//  forElementRegions([&]( ElementRegion * elementRegion ) -> void
-//    {
-////      map<string,localIndex> sizes;
-//      elementRegion->SetConstitutiveMap(problemManager, constitutiveSizes);
-////      for( auto& entry : sizes )
-////      {
-////        constitutiveSizes[entry.first] += entry.second;
-////      }
-//    });
-//
-//  constitutive::ConstitutiveManager *
-//  constitutiveManager = domain->GetGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
-//  for( auto & material : constitutiveManager->GetSubGroups() )
-//  {
-//    string name = material.first;
-//    if( constitutiveSizes.count(name) > 0 )
-//    {
-//      material.second->resize(constitutiveSizes.at(name));
-//    }
-//  }
 
   this->forElementRegions( [&]( ElementRegion * elemRegion )->void
   {

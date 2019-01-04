@@ -116,7 +116,7 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Man
 
 
 
-void CompressibleSinglePhaseFluid::ProcessInputFile_PostProcess()
+void CompressibleSinglePhaseFluid::PostProcessInput()
 {
   if( m_compressibility < 0.0 )
   {

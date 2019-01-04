@@ -83,8 +83,6 @@ public:
 
   virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
-
   virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
   virtual real64 SolverStep( real64 const& time_n,

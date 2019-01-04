@@ -62,7 +62,7 @@ PAMELAMeshGenerator::~PAMELAMeshGenerator()
 void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {}
 
-void PAMELAMeshGenerator::ProcessInputFile_PostProcess()
+void PAMELAMeshGenerator::PostProcessInput()
 {
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >
@@ -141,7 +141,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         auto cellBlockName = ElementToLabel.at( cellBlockType );
         CellBlock * cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( cellBlockName );
-        cellBlock->ProcessInputFile_PostProcess();
+//        cellBlock->PostProcessInput();
 
         if( cellBlockName == "HEX" )
         {

@@ -66,8 +66,6 @@ public:
 
   virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void ProcessInputFile_PostProcess() override final;
-
 //  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
@@ -268,7 +266,11 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
+protected:
+  virtual void PostProcessInput() override final;
+
 private:
+
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;

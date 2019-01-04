@@ -74,7 +74,6 @@ public:
 
   static string CatalogName() { return "SolverBase"; }
 
-  void PostProcessInput() override;
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
@@ -392,12 +391,19 @@ public:
     return &m_systemSolverParameters;
   }
 
+  string getNumericalMethod() const {return m_numericalMethod;}
+
+  string_array const & getTargetRegions() const {return m_targetRegions;}
+
 protected:
   /// This is a wrapper for the linear solver package
   systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
 
+  void PostProcessInput() override;
 
 private:
+
+
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
@@ -405,7 +411,7 @@ private:
   real64 m_cflFactor;
   real64 m_maxStableDt;
 
-  string m_discretizationMethod;
+  string m_numericalMethod;
 
   string_array m_targetRegions;
 

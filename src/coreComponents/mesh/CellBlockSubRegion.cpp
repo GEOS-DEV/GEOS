@@ -63,27 +63,6 @@ CellBlockSubRegion::~CellBlockSubRegion()
   // TODO Auto-generated destructor stub
 }
 
-
-void CellBlockSubRegion::ProcessInputFile_PostProcess()
-{
-//  integer & numNodesPerElem = numNodesPerElement();
-//  numNodesPerElem = 8;
-
-}
-
-void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
-{
-//  auto const & elementRegion = static_cast<ElementRegion const&>(
-// *(this->getParent()) );
-//  auto const & numMethod = elementRegion.getNumericalMethod();
-
-}
-
-void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
-{
-  ObjectManagerBase::InitializePostSubGroups(nullptr);
-}
-
 void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
   this->SetElementType(source->GetElementType());

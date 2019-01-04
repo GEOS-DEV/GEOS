@@ -52,7 +52,6 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override final {}
 
-  virtual void ProcessInputFile_PostProcess() override;
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
@@ -65,6 +64,7 @@ public:
 
 
 protected:
+  virtual void PostProcessInput() override;
 
   // function that populates m_fluid ptr; to be overriden by derived classes
   virtual void createFluid() = 0;

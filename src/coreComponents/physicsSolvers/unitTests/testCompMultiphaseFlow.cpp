@@ -605,6 +605,7 @@ protected:
     problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput( argc, argv );
     problemManager.ParseInputFile();
+    problemManager.GenerateMesh();
 
     problemManager.Initialize( &problemManager );
     problemManager.RegisterDataOnMeshRecursive( nullptr );

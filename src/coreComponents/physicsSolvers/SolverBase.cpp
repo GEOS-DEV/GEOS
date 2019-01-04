@@ -63,16 +63,16 @@ SolverBase::SolverBase( std::string const & name,
     setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
           "Values should be in the interval (0,1] ");
 
-//  RegisterViewWrapper(viewKeyStruct::numericalMethodString, &m_discretizationMethod, false )->
-//    setInputFlag(InputFlags::REQUIRED)->
-//    setDescription("Numerical method to apply in the solution of the governing equations");
-//
-//  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
-//    setInputFlag(InputFlags::REQUIRED)->
-//    setDescription("Allowable regions that the solver may be applied to. Note that this does not indicate that "
-//                   "the solver will be applied to these regions, only that allocation will occur such that the "
-//                   "solver may be applied to these regions. The decision about what regions this solver will be"
-//                   "applied to rests in the EventManager.");
+  RegisterViewWrapper(viewKeyStruct::numericalMethodString, &m_numericalMethod, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Numerical method to apply in the solution of the governing equations");
+
+  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Allowable regions that the solver may be applied to. Note that this does not indicate that "
+                   "the solver will be applied to these regions, only that allocation will occur such that the "
+                   "solver may be applied to these regions. The decision about what regions this solver will be"
+                   "applied to rests in the EventManager.");
 
 }
 

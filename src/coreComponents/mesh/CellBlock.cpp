@@ -61,45 +61,6 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
 CellBlock::~CellBlock()
 {}
 
-
-
-
-void CellBlock::ProcessInputFile_PostProcess()
-{
-//  integer & numNodesPerElem = this->numNodesPerElement();
-//  numNodesPerElem = 8;
-
-
-}
-
-//map<string,integer> CellBlock::SetConstitutiveMap( ManagedGroup const * domain
-// )
-//{
-//  map<string,integer> counts;
-//  view_rtype<mapPair_array> cellToConstitutiveMap =
-// this->getData<mapPair_array>(keys::constitutiveMap);
-//  ConstitutiveManager const * constitutiveManager =
-// domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-//
-//  ConstitutiveManager::constitutiveMaps constitutiveMapPair =
-// constitutiveManager->GetMaps( 1 );
-//
-//  string defaultMaterial = this->getData<string>(keys::defaultMaterial);
-//  integer defaultMaterialIndex =
-// constitutiveMapPair.second.at(defaultMaterial);
-//
-//
-//  localIndex counter = 0;
-//  for( localIndex k=0 ; k<this->size() ; ++k )
-//  {
-//    cellToConstitutiveMap[k] = std::make_pair( defaultMaterialIndex, counter++
-// );
-//    ++(counts.at(defaultMaterial));
-//  }
-//  return counts;
-//}
-
-
 void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               const localIndex localFaceIndex,
                               localIndex_array& nodeIndicies) const

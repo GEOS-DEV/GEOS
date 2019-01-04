@@ -81,8 +81,6 @@ public:
 
   void ParseCommandLineInput( int argc, char* argv[]);
 
-  virtual void ProcessInputFile_PostProcess() override final;
-
   static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
 
   void InitializePythonInterpreter();
@@ -92,6 +90,8 @@ public:
   void ParseInputFile();
 
   void GenerateMesh();
+
+  void ApplyNumericalMethods();
 
   void InitializationOrder( string_array & order ) override final;
 
@@ -167,7 +167,11 @@ public:
     return *m_physicsSolverManager;
   }
 
+protected:
+  virtual void PostProcessInput() override final;
+
 private:
+
   PhysicsSolverManager * m_physicsSolverManager;
   //SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;

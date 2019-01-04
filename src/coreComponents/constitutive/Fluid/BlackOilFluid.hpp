@@ -58,7 +58,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void ProcessInputFile_PostProcess() override;
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
@@ -71,6 +70,9 @@ public:
     ViewKey tableFiles       = { tableFilesString };
 
   } viewKeysBlackOilFluid;
+
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 

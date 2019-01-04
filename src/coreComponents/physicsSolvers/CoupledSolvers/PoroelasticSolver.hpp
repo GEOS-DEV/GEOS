@@ -112,7 +112,6 @@ public:
 //                                     real64 const & dt,
 //                                     DomainPartition * const domain );
 
-  virtual void ProcessInputFile_PostProcess() override final;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
@@ -143,9 +142,11 @@ public:
   } poroElasticSolverViewKeys;
 
 
-
+protected:
+  virtual void PostProcessInput() override final;
 
 private:
+
   string m_solidSolverName;
   string m_flowSolverName;
   string m_couplingTypeOptionString;
