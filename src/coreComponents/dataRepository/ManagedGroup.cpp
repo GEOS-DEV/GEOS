@@ -282,7 +282,7 @@ void ManagedGroup::InitializationOrder( string_array & order )
   }
 }
 
-void ManagedGroup::InitializeRecursive( ManagedGroup * const group )
+void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static localIndex indent = 0;
 
@@ -294,7 +294,7 @@ void ManagedGroup::InitializeRecursive( ManagedGroup * const group )
   for( auto const & groupName : initOrder )
   {
     ++indent;
-    this->GetGroup(groupName)->InitializeRecursive(group);
+    this->GetGroup(groupName)->Initialize(group);
     --indent;
   }
 
@@ -302,19 +302,19 @@ void ManagedGroup::InitializeRecursive( ManagedGroup * const group )
 }
 
 
-void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
+void ManagedGroup::InitializePostInitialConditions( ManagedGroup * const rootGroup)
 {
-  FinalInitializationPreSubGroups(rootGroup);
+  InitializePostInitialConditions_PreSubGroups(rootGroup);
 
   string_array initOrder;
   InitializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
   {
-    this->GetGroup(groupName)->FinalInitializationRecursive( rootGroup );
+    this->GetGroup(groupName)->InitializePostInitialConditions( rootGroup );
   }
 
-  FinalInitializationPostSubGroups( rootGroup );
+  InitializePostInitialConditions_PostSubGroups( rootGroup );
 }
 
 

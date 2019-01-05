@@ -90,13 +90,13 @@ int main( int argc, char *argv[] )
   problemManager.RegisterDataOnMeshRecursive( nullptr );
 
   GEOSX_MARK_BEGIN("problemManager.Initialize");
-  problemManager.InitializeRecursive( &problemManager );
+  problemManager.Initialize( &problemManager );
   GEOSX_MARK_END("problemManager.Initialize");
 
   problemManager.ApplyInitialConditions();
 
   GEOSX_MARK_BEGIN("problemManager.FinalInitializationRecursive");
-  problemManager.FinalInitializationRecursive( &problemManager );
+  problemManager.InitializePostInitialConditions( &problemManager );
   GEOSX_MARK_END("problemManager.FinalInitializationRecursive");
 
   if (restart) {

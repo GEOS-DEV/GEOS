@@ -83,8 +83,6 @@ public:
 
   virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
-  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
-
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
@@ -220,6 +218,9 @@ public:
 
   groupKeyStruct & groupKeys() { return groupKeysSinglePhaseFlow; }
   groupKeyStruct const & groupKeys() const { return groupKeysSinglePhaseFlow; }
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 private:
 

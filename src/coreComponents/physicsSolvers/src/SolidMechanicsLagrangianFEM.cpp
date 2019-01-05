@@ -264,7 +264,7 @@ void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const Mesh
 
 
 
-void SolidMechanics_LagrangianFEM::FinalInitializationPreSubGroups( ManagedGroup * const problemManager )
+void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);

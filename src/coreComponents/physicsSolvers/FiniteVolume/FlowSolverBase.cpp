@@ -107,9 +107,9 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   m_solidIndex = solid->getIndexInParent();
 }
 
-void FlowSolverBase::FinalInitializationPreSubGroups(ManagedGroup * const rootGroup)
+void FlowSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
 {
-  SolverBase::FinalInitializationPreSubGroups(rootGroup);
+  SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 

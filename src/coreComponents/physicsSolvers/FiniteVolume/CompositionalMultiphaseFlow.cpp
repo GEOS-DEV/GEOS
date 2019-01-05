@@ -565,9 +565,9 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   UpdateRelPermModelAll( domain );
 }
 
-void CompositionalMultiphaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
-  FlowSolverBase::FinalInitializationPreSubGroups( rootGroup );
+  FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 

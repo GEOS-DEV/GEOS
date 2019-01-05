@@ -96,8 +96,6 @@ public:
   void InitializationOrder( string_array & order ) override final;
 
 
-  void InitializePostSubGroups( ManagedGroup * const group ) override final;
-
   void RunSimulation();
 
   void ApplySchedulerEvent();
@@ -169,6 +167,8 @@ public:
 
 protected:
   virtual void PostProcessInput() override final;
+
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) override final;
 
 private:
 

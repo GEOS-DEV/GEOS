@@ -607,11 +607,11 @@ protected:
     problemManager.ParseInputFile();
     problemManager.GenerateMesh();
     problemManager.ApplyNumericalMethods();
-
-    problemManager.InitializeRecursive( &problemManager );
     problemManager.RegisterDataOnMeshRecursive( nullptr );
+
+    problemManager.Initialize( &problemManager );
     problemManager.ApplyInitialConditions();
-    problemManager.FinalInitializationRecursive( &problemManager );
+    problemManager.InitializePostInitialConditions( &problemManager );
 
     solver = problemManager.GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
   }

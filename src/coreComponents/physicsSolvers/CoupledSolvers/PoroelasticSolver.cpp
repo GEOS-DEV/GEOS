@@ -132,7 +132,7 @@ void PoroelasticSolver::PostProcessInput()
 
 }
 
-void PoroelasticSolver::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
+void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
 {
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
