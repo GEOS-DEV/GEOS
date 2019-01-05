@@ -581,12 +581,6 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
-  virtual void IntermediateInitializationRecursive( ManagedGroup * const group );
-
-  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const group ) {}
-
-  virtual void IntermediateInitializationPostSubGroups( ManagedGroup * const group ) {}
-
   virtual void FinalInitializationRecursive( ManagedGroup * const group );
 
   virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}

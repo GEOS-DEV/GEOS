@@ -102,6 +102,8 @@ public:
    */
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
 
+  void CalculateCellVolumes( array1d<localIndex> const & indices ) const;
+
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
 
