@@ -78,10 +78,6 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
-
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
-
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
   localIndex fluidIndex() const { return m_fluidIndex; }
@@ -138,6 +134,11 @@ private:
   void PrecomputeData(DomainPartition *const domain);
 
 protected:
+
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+
 
   /**
    * @brief Setup stored views into domain data for the current step

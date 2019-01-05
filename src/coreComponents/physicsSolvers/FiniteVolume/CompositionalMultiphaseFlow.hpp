@@ -95,10 +95,6 @@ public:
 
   virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
-
-  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
-
   /**
    * @defgroup Solver Interface Functions
    *
@@ -357,6 +353,11 @@ public:
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
   } groupKeysCompMultiphaseFlow;
+
+protected:
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 
 private:

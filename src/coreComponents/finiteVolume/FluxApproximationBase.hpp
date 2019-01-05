@@ -84,8 +84,6 @@ public:
   using CellStencil     = StencilCollection<CellDescriptor, real64>;
   using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
 
-  void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
-
   FluxApproximationBase() = delete;
 
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
@@ -126,6 +124,7 @@ public:
   };
 
 protected:
+  void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;

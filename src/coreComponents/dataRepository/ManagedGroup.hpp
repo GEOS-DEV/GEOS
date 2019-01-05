@@ -573,20 +573,12 @@ public:
     }
   }
 
-  void InitializeRecursive( ManagedGroup * const group );
+  void Initialize( ManagedGroup * const group );
 
   virtual void InitializationOrder( string_array & order );
 
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
-
-  void FinalInitializationRecursive( ManagedGroup * const group );
-
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}
-
-  virtual void FinalInitializationPostSubGroups( ManagedGroup * const group ) {}
-
+  void InitializePostInitialConditions( ManagedGroup * const group );
 
   template< typename T, typename TBASE=T >
   ViewWrapper<TBASE> *
@@ -891,6 +883,15 @@ protected:
    * @brief Post processing of the input values.
    */
   virtual void PostProcessInput() {}
+
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const group ) {}
+
 
 private:  
   /**

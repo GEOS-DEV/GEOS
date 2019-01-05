@@ -393,8 +393,8 @@ protected:
 
     fluid = makeCompositionalFluid( "fluid", parent.get() );
 
-    parent->InitializeRecursive( parent.get() );
-    parent->FinalInitializationRecursive( parent.get() );
+    parent->Initialize( parent.get() );
+    parent->InitializePostInitialConditions( parent.get() );
   }
 
   static void TearDownTestCase()
@@ -499,8 +499,8 @@ protected:
     parent->resize( 1 );
     fluid = makeBlackOilFluid( "fluid", parent.get() );
 
-    parent->InitializeRecursive( parent.get() );
-    parent->FinalInitializationRecursive( parent.get() );
+    parent->Initialize( parent.get() );
+    parent->InitializePostInitialConditions( parent.get() );
   }
 
   static void TearDownTestCase()
