@@ -52,6 +52,8 @@ void SingleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  this->resize( parent->size() );
+
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_dDensity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
 

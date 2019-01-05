@@ -111,10 +111,12 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
     arrayView1d<real64 const> const & pres  = m_pressure[er][esr];
     arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
 
+    SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
+
     for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
     {
       real64 const presNew = pres[ei] + dPres[ei];
-      constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // fluid
+      fluid->PointUpdate( presNew, ei, 0 ); // fluid
       constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // solid
     } );
   } );
