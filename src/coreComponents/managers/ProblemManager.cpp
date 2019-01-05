@@ -767,12 +767,18 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
+
   domain->SetupCommunications();
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
 
+  elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
+  {
+    subRegion->CalculateCellVolumes( array1d<localIndex>() );
+  });
 }
 
 void ProblemManager::RunSimulation()

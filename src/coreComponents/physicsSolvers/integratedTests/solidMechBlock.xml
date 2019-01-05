@@ -25,12 +25,12 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 0.25"
-                  yCoords="0, 0.25"
-                  zCoords="0, 0.25"
-                  nx="25"
-                  ny="25"
-                  nz="25"
+                  xCoords="0, 0.10"
+                  yCoords="0, 0.10"
+                  zCoords="0, 0.10"
+                  nx="10"
+                  ny="10"
+                  nz="10"
                   cellBlockNames="cb1"/>
   </Mesh>
 
@@ -45,10 +45,10 @@
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
+    <!--PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput" /-->
 
     <PeriodicEvent name="restarts"
                    timeFrequency="5"

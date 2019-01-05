@@ -43,11 +43,6 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 
   RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
 
-//  RegisterViewWrapper( viewKeyStruct::constitutiveRelationIndexString,
-//                       &m_constitutiveRelationIndex, 0);
-//
-//  RegisterViewWrapper( viewKeyStruct::constitutivePointIndexString,
-//                       &m_constitutivePointIndex, 0);
 
   RegisterViewWrapper( viewKeyStruct::constitutivePointVolumeFraction,
                        &m_constitutivePointVolumeFraction, 0);

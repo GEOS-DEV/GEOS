@@ -24,7 +24,7 @@
 #include "CellBlock.hpp"
 
 #include "NodeManager.hpp"
-
+#include "meshUtilities/ComputationalGeometry.hpp"
 namespace geosx
 {
 using namespace dataRepository;
@@ -51,10 +51,6 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
   RegisterViewWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
-
-
-//  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
-
 }
 
 
@@ -340,62 +336,57 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
 }
 
 
-//
-//void CellBlock::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
-//{
-//  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
-//}
-//
-//
-//
-//
-//int CellBlock::PackUpDownMapsSize( localIndex_array const & packList ) const
-//{
-//  int packedSize = 0;
-//  buffer_unit_type * junk = nullptr;
-//  packedSize += CommBufferOps::Pack<false>( junk,
-//                                           m_nodeList,
-//                                           packList,
-//                                           this->m_localToGlobalMap,
-//                                           m_nodeList.RelatedObjectLocalToGlobal() );
-//  return packedSize;
-//
-//}
-//
-//
-//int CellBlock::PackUpDownMaps( buffer_unit_type * & buffer,
-//                               localIndex_array const & packList ) const
-//{
-//  int packedSize = 0;
-//
-//  packedSize += CommBufferOps::Pack<true>( buffer,
-//                                           m_nodeList,
-//                                           packList,
-//                                           this->m_localToGlobalMap,
-//                                           m_nodeList.RelatedObjectLocalToGlobal() );
-//
-//  return packedSize;
-//}
-//
-//
-//int CellBlock::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-//                                 localIndex_array const & packList )
-//{
-//  int unPackedSize = 0;
-//
-//  unPackedSize += CommBufferOps::Unpack( buffer,
-//                                         m_nodeList,
-//                                         packList,
-//                                         this->m_globalToLocalMap,
-//                                         m_nodeList.RelatedObjectGlobalToLocal() );
-//
-//  return unPackedSize;
-//}
+void CellBlock::CalculateCellVolumes( array1d<localIndex> const & indices ) const
+{
+  R1Tensor Xlocal[100];
+
+  array1d<R1Tensor> const &
+  X = m_toNodesRelation.RelatedObject()->
+      getReference<array1d<R1Tensor> >(NodeManager::viewKeyStruct::referencePositionString);
+
+
+  if( indices.empty() )
+  {
+    for( localIndex k=0 ; k<size() ; ++k  )
+    {
+      R1Tensor & center = m_elementCenter[k];
+      center = 0.0;
+
+      // TODO different center options
+      for (localIndex a = 0; a < m_numNodesPerElement; ++a)
+      {
+        Xlocal[a] = X[m_toNodesRelation[k][a]];
+        center += Xlocal[a];
+      }
+      center /= m_numNodesPerElement;
+
+      // TODO proper volumes for all shapes
+      if( m_numNodesPerElement == 8 )
+      {
+        m_elementVolume[k] = computationalGeometry::HexVolume(Xlocal);
+      }
+      else if( m_numNodesPerElement == 4)
+      {
+        m_elementVolume[k] = computationalGeometry::TetVolume(Xlocal);
+      }
+      else if( m_numNodesPerElement == 6)
+      {
+        m_elementVolume[k] = computationalGeometry::WedgeVolume(Xlocal);
+      }
+      else if ( m_numNodesPerElement == 5)
+      {
+        m_elementVolume[k] = computationalGeometry::PyramidVolume(Xlocal);
+      }
+      else
+      {
+          GEOS_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
+      }
+    }
+  }
+
+}
+
+
 
 void CellBlock::SetElementType( string const & elementType)
 {

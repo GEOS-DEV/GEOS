@@ -301,20 +301,6 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-void ManagedGroup::IntermediateInitializationRecursive( ManagedGroup * const rootGroup)
-{
-  IntermediateInitializationPreSubGroups(rootGroup);
-
-  string_array initOrder;
-  InitializationOrder( initOrder );
-
-  for( auto const & groupName : initOrder )
-  {
-    this->GetGroup(groupName)->IntermediateInitializationRecursive( rootGroup );
-  }
-
-  IntermediateInitializationPostSubGroups( rootGroup );
-}
 
 void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 {

@@ -609,7 +609,6 @@ protected:
 
     problemManager.Initialize( &problemManager );
     problemManager.RegisterDataOnMeshRecursive( nullptr );
-    problemManager.IntermediateInitializationRecursive( &problemManager );
     problemManager.ApplyInitialConditions();
     problemManager.FinalInitializationRecursive( &problemManager );
 
