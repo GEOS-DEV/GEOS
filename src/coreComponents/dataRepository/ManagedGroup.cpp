@@ -282,7 +282,7 @@ void ManagedGroup::InitializationOrder( string_array & order )
   }
 }
 
-void ManagedGroup::Initialize( ManagedGroup * const group )
+void ManagedGroup::InitializeRecursive( ManagedGroup * const group )
 {
   static localIndex indent = 0;
 
@@ -294,7 +294,7 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   for( auto const & groupName : initOrder )
   {
     ++indent;
-    this->GetGroup(groupName)->Initialize(group);
+    this->GetGroup(groupName)->InitializeRecursive(group);
     --indent;
   }
 

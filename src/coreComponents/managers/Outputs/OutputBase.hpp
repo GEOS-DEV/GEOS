@@ -54,7 +54,7 @@ public:
   OutputBase& operator=( OutputBase&& ) = default;
 
   /// Output initialization
-  virtual void Initialize( ManagedGroup * const group ) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 
   /// Method for setting up output directories
   virtual void SetupDirectoryStructure();

@@ -186,43 +186,6 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
 
 }
 
-void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
-{
-
-  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
-//  ManagedGroup const * cellBlockManager = domain->GetGroup(keys::cellManager);
-
-//  ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
-//
-//  for( string const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
-//  {
-//    CellBlockSubRegion * cellBlock = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
-//  }
-//
-//  forCellBlocks([&]( CellBlockSubRegion * subRegion )
-//    {
-//      ManagedGroup const * cellBlocks = cellBlockManager->GetGroup(keys::cellBlocks);
-//      subRegion->CopyFromCellBlock( cellBlocks->GetGroup<CellBlock>( subRegion->getName() ) );
-//    });
-//
-//  // TODO For the moment, there is a special behavior for the fe. It should be done elsewhere, or
-//  // generalized here for the other numerical methods
-//  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-//  string const & numMethodName = this->getReference<string>(keys::numericalMethod);
-//
-//  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
-//    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
-//  if( feSpace)
-//  {
-//    MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-//    arrayView1d<R1Tensor> const & X = mesh->getNodeManager()->getReference<array1d<R1Tensor>>(keys::referencePositionString);
-//  forCellBlocks([&]( CellBlockSubRegion * subRegion )
-//    {
-//      feSpace->ApplySpaceToTargetCells(subRegion);
-//      feSpace->CalculateShapeFunctionGradients( X, subRegion);
-//    });
-//  }
-}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
 

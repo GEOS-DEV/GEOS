@@ -125,7 +125,6 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString);
     faceManager->RegisterViewWrapper<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString);
 
-    ResizeFields( meshLevel );
   }
 }
 
@@ -133,8 +132,8 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition     const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  ConstitutiveManager const * cm     = domain->getConstitutiveManager();
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
   MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
   m_numPhases     = fluid->numFluidPhases();
@@ -157,6 +156,12 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
     GEOS_ERROR_IF( phase_fl != phase_rp, "Phase '" << phase_fl << "' in fluid model '" << m_fluidName
                    << "' does not match phase '" << phase_rp << "' in relperm model '" << m_relPermName << "'" );
   }
+
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    ResizeFields( meshLevel );
+  }
 }
 
 void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
@@ -167,7 +172,7 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion )
-                              {
+  {
     subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
     subRegion->getReference<array2d<real64>>(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
 
@@ -181,7 +186,7 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
     subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionOldString).resizeDimension<1>(NP);
     subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
     subRegion->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);
-                              });
+  });
 
   {
     FaceManager * const faceManager = meshLevel->getFaceManager();

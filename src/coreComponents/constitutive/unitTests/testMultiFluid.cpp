@@ -393,7 +393,7 @@ protected:
 
     fluid = makeCompositionalFluid( "fluid", parent.get() );
 
-    parent->Initialize( parent.get() );
+    parent->InitializeRecursive( parent.get() );
     parent->FinalInitializationRecursive( parent.get() );
   }
 
@@ -499,7 +499,7 @@ protected:
     parent->resize( 1 );
     fluid = makeBlackOilFluid( "fluid", parent.get() );
 
-    parent->Initialize( parent.get() );
+    parent->InitializeRecursive( parent.get() );
     parent->FinalInitializationRecursive( parent.get() );
   }
 

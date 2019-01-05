@@ -68,9 +68,6 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const parent ) override final;
-
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     dataRepository::ViewKey compressibility   = { "compressibility"   };
