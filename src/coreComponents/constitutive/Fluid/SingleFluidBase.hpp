@@ -121,7 +121,7 @@ protected:
    * @param pressure array containing the pressure values,  which is input to the update.
    * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
-  template< typename LEAFCLASS, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
                           ARGS && ... args );
 
@@ -134,7 +134,7 @@ protected:
 };
 
 
-template< typename LEAFCLASS, typename ... ARGS >
+template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
 void SingleFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
                                          ARGS && ... args)
 {
@@ -147,9 +147,9 @@ void SingleFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & press
   arrayView2d<real64> const & viscosity = m_viscosity;
   arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
 
-  forall_in_range( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
   {
-    for( localIndex q=0 ; q<numQ ; ++q )
+    for (localIndex q = 0; q < numQ; ++q)
     {
       LEAFCLASS::Compute( pressure[k],
                           density[k][q],

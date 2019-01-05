@@ -58,20 +58,20 @@ public:
 
   // RelPerm-specific interface
 
+  virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+                            localIndex const k,
+                            localIndex const q ) override;
+
   virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) override;
 
-  virtual void StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
-                                        localIndex const k,
-                                        localIndex const q ) override;
-
-  inline static void StateUpdatePointRelPerm( localIndex const NP,
-                                              arraySlice1d<real64 const> const & phaseVolFraction,
-                                              arraySlice1d<real64> const & phaseRelPerm,
-                                              arraySlice2d<real64> const & dPhaseRelPerm_dPhaseVolFrac,
-                                              arraySlice1d<real64 const> const &  phaseMinVolumeFraction,
-                                              arraySlice1d<real64 const> const & phaseRelPermExponent,
-                                              arraySlice1d<real64 const> const & phaseRelPermMaxValue,
-                                              real64 const & satScale );
+  inline static void Compute( localIndex const NP,
+                              arraySlice1d<real64 const> const & phaseVolFraction,
+                              arraySlice1d<real64> const & phaseRelPerm,
+                              arraySlice2d<real64> const & dPhaseRelPerm_dPhaseVolFrac,
+                              arraySlice1d<real64 const> const & phaseMinVolumeFraction,
+                              arraySlice1d<real64 const> const & phaseRelPermExponent,
+                              arraySlice1d<real64 const> const & phaseRelPermMaxValue,
+                              real64 const & satScale );
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
@@ -98,21 +98,21 @@ protected:
 
 
 inline void
-BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( localIndex const NP,
-                                                          arraySlice1d<real64 const> const & phaseVolFraction,
-                                                          arraySlice1d<real64> const & relPerm,
-                                                          arraySlice2d<real64> const & dRelPerm_dVolFrac,
-                                                          arraySlice1d<real64 const> const & phaseMinVolumeFraction,
-                                                          arraySlice1d<real64 const> const & phaseRelPermExponent,
-                                                          arraySlice1d<real64 const> const & phaseRelPermMaxValue,
-                                                          real64 const & satScale )
+BrooksCoreyRelativePermeability::Compute( localIndex const NP,
+                                          arraySlice1d<real64 const> const & phaseVolFraction,
+                                          arraySlice1d<real64> const & phaseRelPerm,
+                                          arraySlice2d<real64> const & dPhaseRelPerm_dPhaseVolFrac,
+                                          arraySlice1d<real64 const> const & phaseMinVolumeFraction,
+                                          arraySlice1d<real64 const> const & phaseRelPermExponent,
+                                          arraySlice1d<real64 const> const & phaseRelPermMaxValue,
+                                          real64 const & satScale )
 {
 
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     for (localIndex jp = 0; jp < NP; ++jp)
     {
-      dRelPerm_dVolFrac[ip][jp] = 0.0;
+      dPhaseRelPerm_dPhaseVolFrac[ip][jp] = 0.0;
     }
   }
   real64 const satScaleInv = 1.0 / satScale;
@@ -128,12 +128,12 @@ BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( localIndex const NP,
       // intermediate value
       real64 const v = scale * std::pow( satScaled, exponent - 1.0 );
 
-      relPerm[ip] = v * satScaled;
-      dRelPerm_dVolFrac[ip][ip] = v * exponent * satScaleInv;
+      phaseRelPerm[ip] = v * satScaled;
+      dPhaseRelPerm_dPhaseVolFrac[ip][ip] = v * exponent * satScaleInv;
     }
     else
     {
-      relPerm[ip] = (satScaled < 0.0) ? 0.0 : scale;
+      phaseRelPerm[ip] = (satScaled < 0.0) ? 0.0 : scale;
     }
   }
 }

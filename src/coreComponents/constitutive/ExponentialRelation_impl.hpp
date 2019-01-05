@@ -197,7 +197,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear>
 }
 
 template<typename T>
-void ExponentialRelation<T>::Compute( const T & x, T & y )
+void ExponentialRelation<T>::Compute( const T & x, T & y ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
   {
@@ -206,7 +206,7 @@ void ExponentialRelation<T>::Compute( const T & x, T & y )
 }
 
 template<typename T>
-void ExponentialRelation<T>::Inverse( const T & y, T & x )
+void ExponentialRelation<T>::Inverse( const T & y, T & x ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
   {
@@ -216,7 +216,7 @@ void ExponentialRelation<T>::Inverse( const T & y, T & x )
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1d<T> & y )
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1d<T> & y ) const
 {
   GEOS_ERROR_IF( y.size(0) != x.size(0), "Array size mismatch" );
   T x0 = m_x0;
@@ -233,7 +233,7 @@ void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x )
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x ) const
 {
   GEOS_ERROR_IF( x.size(0) != y.size(0), "Array size mismatch" );
   T x0 = m_x0;
@@ -250,7 +250,7 @@ void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2d<T> & y )
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2d<T> & y ) const
 {
   GEOS_ERROR_IF( y.size(0) != x.size(0), "Array size mismatch" );
   T x0 = m_x0;
@@ -271,7 +271,7 @@ void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x )
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x ) const
 {
   GEOS_ERROR_IF( x.size(0) != y.size(0), "Array size mismatch" );
   T x0 = m_x0;
@@ -292,7 +292,7 @@ void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2d<T> & y )
+void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2d<T> & y ) const
 {
   GEOS_ERROR_IF( y.size(0) != x.size(0), "Array size mismatch" );
   GEOS_ERROR_IF( y.size(1) != x.size(1), "Array size mismatch" );
@@ -314,7 +314,7 @@ void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x )
+void ExponentialRelation<T>::Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x ) const
 {
   GEOS_ERROR_IF( x.size(0) != y.size(0), "Array size mismatch" );
   GEOS_ERROR_IF( x.size(1) != y.size(1), "Array size mismatch" );
@@ -335,7 +335,7 @@ void ExponentialRelation<T>::Inverse( arrayView2d<T const> const & y, arrayView2
 }
 
 template<typename T>
-void ExponentialRelation<T>::Compute( const T & x, T & y, T & dy_dx )
+void ExponentialRelation<T>::Compute( const T & x, T & y, T & dy_dx ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
   {
@@ -344,7 +344,7 @@ void ExponentialRelation<T>::Compute( const T & x, T & y, T & dy_dx )
 }
 
 template<typename T>
-void ExponentialRelation<T>::Inverse( const T & y, T & x, T & dx_dy )
+void ExponentialRelation<T>::Inverse( const T & y, T & x, T & dx_dy ) const
 {
   ExponentApproximationTypeSwitchBlock( m_approximationType, [&] ( auto const eat )
   {
@@ -354,7 +354,7 @@ void ExponentialRelation<T>::Inverse( const T & y, T & x, T & dx_dy )
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1d<T> & y, arrayView1d<T> & dy_dx )
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1d<T> & y, arrayView1d<T> & dy_dx ) const
 {
   GEOS_ERROR_IF( y.size(0) != x.size(0) || dy_dx.size(0) != x.size(0), "Array size mismatch" );
   T x0 = m_x0;
@@ -371,7 +371,7 @@ void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView1
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x, arrayView1d<T> & dx_dy )
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x, arrayView1d<T> & dx_dy ) const
 {
   GEOS_ERROR_IF( x.size(0) != y.size(0) || dx_dy.size(0) != y.size(0), "Array size mismatch" );
   T x0 = m_x0;
@@ -388,7 +388,7 @@ void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView1
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx )
+void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx ) const
 {
   GEOS_ERROR_IF( y.size(0) != x.size(0) || dy_dx.size(0) != x.size(0), "Array size mismatch" );
   GEOS_ERROR_IF( dy_dx.size(1) != y.size(1), "Array size mismatch" );
@@ -410,7 +410,7 @@ void ExponentialRelation<T>::Compute( arrayView1d<T const> const & x, arrayView2
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy )
+void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy ) const
 {
   GEOS_ERROR_IF( x.size(0) != y.size(0) || dx_dy.size(0) != y.size(0), "Array size mismatch" );
   GEOS_ERROR_IF( dx_dy.size(1) != x.size(1), "Array size mismatch" );
@@ -432,7 +432,7 @@ void ExponentialRelation<T>::Inverse( arrayView1d<T const> const & y, arrayView2
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx )
+void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx ) const
 {
   GEOS_ERROR_IF( y.size(0) != x.size(0) || dy_dx.size(0) != x.size(0), "Array size mismatch" );
   GEOS_ERROR_IF( y.size(1) != x.size(1) || dy_dx.size(1) != x.size(1), "Array size mismatch" );
@@ -454,7 +454,7 @@ void ExponentialRelation<T>::Compute( arrayView2d<T const> const & x, arrayView2
 
 template<typename T>
 template<typename Policy>
-void ExponentialRelation<T>::Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy )
+void ExponentialRelation<T>::Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy ) const
 {
   GEOS_ERROR_IF( x.size(0) != y.size(0) || dx_dy.size(0) != y.size(0), "Array size mismatch" );
   GEOS_ERROR_IF( x.size(1) != y.size(1) || dx_dy.size(1) != y.size(1), "Array size mismatch" );

@@ -83,51 +83,51 @@ public:
 
   // *** no-derivative computes ***
 
-  void Compute( const T & x, T & y );
+  void Compute( const T & x, T & y ) const;
 
-  void Inverse( const T & y, T & x );
-
-  template<typename Policy>
-  void Compute( arrayView1d<T const> const & x, arrayView1d<T> & y );
+  void Inverse( const T & y, T & x ) const;
 
   template<typename Policy>
-  void Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x );
+  void Compute( arrayView1d<T const> const & x, arrayView1d<T> & y ) const;
 
   template<typename Policy>
-  void Compute( arrayView1d<T const> const & x, arrayView2d<T> & y );
+  void Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x ) const;
 
   template<typename Policy>
-  void Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x );
+  void Compute( arrayView1d<T const> const & x, arrayView2d<T> & y ) const;
 
   template<typename Policy>
-  void Compute( arrayView2d<T const> const & x, arrayView2d<T> & y );
+  void Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x ) const;
 
   template<typename Policy>
-  void Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x );
+  void Compute( arrayView2d<T const> const & x, arrayView2d<T> & y ) const;
+
+  template<typename Policy>
+  void Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x ) const;
 
   // *** derivative computes ***
 
-  void Compute( const T & x, T & y, T & dy_dx );
+  void Compute( const T & x, T & y, T & dy_dx ) const;
 
-  void Inverse( const T & y, T & x, T & dx_dy );
-
-  template<typename Policy>
-  void Compute( arrayView1d<T const> const & x, arrayView1d<T> & y, arrayView1d<T> & dy_dx );
+  void Inverse( const T & y, T & x, T & dx_dy ) const;
 
   template<typename Policy>
-  void Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x, arrayView1d<T> & dx_dy );
+  void Compute( arrayView1d<T const> const & x, arrayView1d<T> & y, arrayView1d<T> & dy_dx ) const;
 
   template<typename Policy>
-  void Compute( arrayView1d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx );
+  void Inverse( arrayView1d<T const> const & y, arrayView1d<T> & x, arrayView1d<T> & dx_dy ) const;
 
   template<typename Policy>
-  void Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy );
+  void Compute( arrayView1d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx ) const;
 
   template<typename Policy>
-  void Compute( arrayView2d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx );
+  void Inverse( arrayView1d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy ) const;
 
   template<typename Policy>
-  void Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy );
+  void Compute( arrayView2d<T const> const & x, arrayView2d<T> & y, arrayView2d<T> & dy_dx ) const;
+
+  template<typename Policy>
+  void Inverse( arrayView2d<T const> const & y, arrayView2d<T> & x, arrayView2d<T> & dx_dy ) const;
 
 private:
 

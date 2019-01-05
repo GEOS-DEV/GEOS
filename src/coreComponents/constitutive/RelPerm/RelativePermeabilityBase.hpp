@@ -52,8 +52,6 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
-
   /**
    * @brief Function to update state of a single material point.
    * @param[in] phaseVolFraction input phase volume fraction
@@ -64,9 +62,11 @@ public:
    *       within a kernel since it is virtual, and the required data is not
    *       guaranteed to be in the target memory space.
    */
-  virtual void StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
-                                        localIndex const k,
-                                        localIndex const q ) {}
+  virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+                            localIndex const k,
+                            localIndex const q ) = 0;
+
+  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
 
   localIndex numFluidPhases() const;
 
@@ -105,7 +105,7 @@ protected:
    * @param args arbitrary number of arbitrary types that are passed to the
    *             kernel
    */
-  template< typename LEAFCLASS, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                           ARGS&& ... args );
 
@@ -130,7 +130,7 @@ protected:
 };
 
 
-template< typename LEAFCLASS, typename ... ARGS >
+template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
 void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                                                   ARGS&& ... args)
 {
@@ -141,15 +141,15 @@ void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d<real64 const> cons
   arrayView3d<real64> const & phaseRelPerm = m_phaseRelPerm;
   arrayView4d<real64> const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
 
-  forall_in_range( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
   {
     for( localIndex q=0 ; q<numQ ; ++q )
     {
-      LEAFCLASS::StateUpdatePointRelPerm( NP,
-                                          phaseVolumeFraction[k],
-                                          phaseRelPerm[k][q],
-                                          dPhaseRelPerm_dPhaseVolFrac[k][q],
-                                          args...);
+      LEAFCLASS::Compute( NP,
+                          phaseVolumeFraction[k],
+                          phaseRelPerm[k][q],
+                          dPhaseRelPerm_dPhaseVolFrac[k][q],
+                          args... );
     }
   });
 }

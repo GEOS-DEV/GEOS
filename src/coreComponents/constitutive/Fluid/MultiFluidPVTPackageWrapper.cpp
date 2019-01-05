@@ -81,59 +81,126 @@ void MultiFluidPVTPackageWrapper::InitializePostSubGroups( ManagedGroup * const 
   createFluid();
 }
 
-void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
-                                              real64 const & temp,
-                                              arraySlice1d<real64 const> const & composition,
-                                              localIndex const k,
-                                              localIndex const q)
+void MultiFluidPVTPackageWrapper::PointUpdate( real64 const & pressure,
+                                               real64 const & temperature,
+                                               arraySlice1d<real64 const> const & composition,
+                                               localIndex const k,
+                                               localIndex const q )
 {
-  // 0. set array views to the element/point data to avoid awkward quadruple indexing
+  localIndex const NC = numFluidComponents();
+  localIndex const NP = numFluidPhases();
+
+  Compute( NC, NP, m_useMass,
+           m_phaseNames,
+           m_componentMolarWeight,
+           pressure,
+           temperature,
+           composition,
+           m_phaseFraction[k][q],
+           m_dPhaseFraction_dPressure[k][q],
+           m_dPhaseFraction_dTemperature[k][q],
+           m_dPhaseFraction_dGlobalCompFraction[k][q],
+           m_phaseDensity[k][q],
+           m_dPhaseDensity_dPressure[k][q],
+           m_dPhaseDensity_dTemperature[k][q],
+           m_dPhaseDensity_dGlobalCompFraction[k][q],
+           m_phaseViscosity[k][q],
+           m_dPhaseViscosity_dPressure[k][q],
+           m_dPhaseViscosity_dTemperature[k][q],
+           m_dPhaseViscosity_dGlobalCompFraction[k][q],
+           m_phaseCompFraction[k][q],
+           m_dPhaseCompFraction_dPressure[k][q],
+           m_dPhaseCompFraction_dTemperature[k][q],
+           m_dPhaseCompFraction_dGlobalCompFraction[k][q],
+           m_totalDensity[k][q],
+           m_dTotalDensity_dPressure[k][q],
+           m_dTotalDensity_dTemperature[k][q],
+           m_dTotalDensity_dGlobalCompFraction[k][q],
+           m_fluid );
+}
+
+void MultiFluidPVTPackageWrapper::BatchUpdate( arrayView1d<real64 const> const & pressure,
+                                               arrayView1d<real64 const> const & temperature,
+                                               arrayView2d<real64 const> const & composition )
+{
+  // currently PVTPackage is not thread-safe or device-compatible, force sequential host policy
+  MultiFluidBase::BatchUpdateKernel<MultiFluidPVTPackageWrapper, RAJA::seq_exec>( pressure,
+                                                                                  temperature,
+                                                                                  composition,
+                                                                                  m_fluid );
+}
+
+void MultiFluidPVTPackageWrapper::Compute( localIndex const NC, localIndex const NP, bool const useMass,
+                                           arrayView1d<string const> const & phaseNames,
+                                           arrayView1d<real64 const> const & componentMolarWeight,
+                                           real64 const & pressure,
+                                           real64 const & temperature,
+                                           arraySlice1d<real64 const> const & composition,
+                                           arraySlice1d<real64> const & phaseFraction,
+                                           arraySlice1d<real64> const & dPhaseFraction_dPressure,
+                                           arraySlice1d<real64> const & dPhaseFraction_dTemperature,
+                                           arraySlice2d<real64> const & dPhaseFraction_dGlobalCompFraction,
+                                           arraySlice1d<real64> const & phaseDensity,
+                                           arraySlice1d<real64> const & dPhaseDensity_dPressure,
+                                           arraySlice1d<real64> const & dPhaseDensity_dTemperature,
+                                           arraySlice2d<real64> const & dPhaseDensity_dGlobalCompFraction,
+                                           arraySlice1d<real64> const & phaseViscosity,
+                                           arraySlice1d<real64> const & dPhaseViscosity_dPressure,
+                                           arraySlice1d<real64> const & dPhaseViscosity_dTemperature,
+                                           arraySlice2d<real64> const & dPhaseViscosity_dGlobalCompFraction,
+                                           arraySlice2d<real64> const & phaseCompFraction,
+                                           arraySlice2d<real64> const & dPhaseCompFraction_dPressure,
+                                           arraySlice2d<real64> const & dPhaseCompFraction_dTemperature,
+                                           arraySlice3d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
+                                           real64 & totalDensity, real64 & dTotalDensity_dPressure,
+                                           real64 & dTotalDensity_dTemperature,
+                                           arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction,
+                                           MultiphaseSystem * const fluid )
+{
+  // 0. make shortcut structs to avoid long names (TODO maybe remove)
   CompositionalVarContainer<1> phaseFrac {
-    m_phaseFraction[k][q],
-    m_dPhaseFraction_dPressure[k][q],
-    m_dPhaseFraction_dTemperature[k][q],
-    m_dPhaseFraction_dGlobalCompFraction[k][q]
+    phaseFraction,
+    dPhaseFraction_dPressure,
+    dPhaseFraction_dTemperature,
+    dPhaseFraction_dGlobalCompFraction
   };
 
   CompositionalVarContainer<1> phaseDens {
-    m_phaseDensity[k][q],
-    m_dPhaseDensity_dPressure[k][q],
-    m_dPhaseDensity_dTemperature[k][q],
-    m_dPhaseDensity_dGlobalCompFraction[k][q]
+    phaseDensity,
+    dPhaseDensity_dPressure,
+    dPhaseDensity_dTemperature,
+    dPhaseDensity_dGlobalCompFraction
   };
 
   CompositionalVarContainer<1> phaseVisc {
-    m_phaseViscosity[k][q],
-    m_dPhaseViscosity_dPressure[k][q],
-    m_dPhaseViscosity_dTemperature[k][q],
-    m_dPhaseViscosity_dGlobalCompFraction[k][q]
+    phaseViscosity,
+    dPhaseViscosity_dPressure,
+    dPhaseViscosity_dTemperature,
+    dPhaseViscosity_dGlobalCompFraction
   };
 
   CompositionalVarContainer<2> phaseCompFrac {
-    m_phaseCompFraction[k][q],
-    m_dPhaseCompFraction_dPressure[k][q],
-    m_dPhaseCompFraction_dTemperature[k][q],
-    m_dPhaseCompFraction_dGlobalCompFraction[k][q]
+    phaseCompFraction,
+    dPhaseCompFraction_dPressure,
+    dPhaseCompFraction_dTemperature,
+    dPhaseCompFraction_dGlobalCompFraction
   };
 
   CompositionalVarContainer<0> totalDens {
-    m_totalDensity[k][q],
-    m_dTotalDensity_dPressure[k][q],
-    m_dTotalDensity_dTemperature[k][q],
-    m_dTotalDensity_dGlobalCompFraction[k][q]
+    totalDensity,
+    dTotalDensity_dPressure,
+    dTotalDensity_dTemperature,
+    dTotalDensity_dGlobalCompFraction
   };
 
   localIndex constexpr maxNumComp = MAX_NUM_COMPONENTS;
-
-  localIndex const NP = numFluidPhases();
-  localIndex const NC = numFluidComponents();
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
   std::vector<double> compMoleFrac( NC );
   stackArray2d<real64, maxNumComp * maxNumComp> dCompMoleFrac_dCompMassFrac( NC, NC );
 
-  if (m_useMass)
+  if (useMass)
   {
     dCompMoleFrac_dCompMassFrac.resize( NC, NC );
     dCompMoleFrac_dCompMassFrac = 0.0;
@@ -141,7 +208,7 @@ void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
     real64 totalMolality = 0.0;
     for (localIndex ic = 0; ic < NC; ++ic)
     {
-      real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
+      real64 const mwInv = 1.0 / componentMolarWeight[ic];
       compMoleFrac[ic] = composition[ic] * mwInv; // this is molality (units of mole/mass)
       dCompMoleFrac_dCompMassFrac[ic][ic] = mwInv;
       totalMolality += compMoleFrac[ic];
@@ -154,7 +221,7 @@ void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
 
       for (localIndex jc = 0; jc < NC; ++jc)
       {
-        dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / m_componentMolarWeight[jc];
+        dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / componentMolarWeight[jc];
         dCompMoleFrac_dCompMassFrac[ic][jc] *= totalMolalityInv;
       }
     }
@@ -168,22 +235,22 @@ void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
   }
 
   // 2. Trigger PVTPackage compute and get back phase split
-  m_fluid->Update(pres, temp, compMoleFrac);
+  fluid->Update( pressure, temperature, compMoleFrac );
 
-  GEOS_WARNING_IF( m_fluid->getState() != MultiphaseSystem::State::SUCCESS,
-                   "Phase equilibrium calculations not converged at constitutive point (" << k << "," << q << ")");
+  GEOS_WARNING_IF( fluid->getState() != MultiphaseSystem::State::SUCCESS,
+                   "Phase equilibrium calculations not converged");
 
-  MultiphaseSystemProperties const & split = m_fluid->get_MultiphaseSystemProperties();
+  MultiphaseSystemProperties const & split = fluid->get_MultiphaseSystemProperties();
 
   // 3. Extract phase split, phase properties and derivatives from PVTPackage
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    PHASE_TYPE phase = PVTPackage_phaseDict.at(m_phaseNames[ip]);
-    PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
+    PHASE_TYPE phase = PVTPackage_phaseDict.at(phaseNames[ip]);
+    PhaseProperties const & props = fluid->get_PhaseProperties(phase);
 
     auto const & frac = split.PhaseMoleFraction.at(phase);
     auto const & comp = props.MoleComposition;
-    auto const & dens = m_useMass ? props.MassDensity : props.MoleDensity;
+    auto const & dens = useMass ? props.MassDensity : props.MoleDensity;
 
     phaseFrac.value[ip] = frac.value;
     phaseFrac.dPres[ip] = frac.dP;
@@ -214,7 +281,7 @@ void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
   }
 
   // 4. if mass variables used instead of molar, perform the conversion
-  if (m_useMass)
+  if (useMass)
   {
     // 4.1. Convert phase fractions (requires two passes)
     real64 totalMass = 0.0;
@@ -225,8 +292,8 @@ void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
     // 4.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
     for (localIndex ip = 0; ip < NP; ++ip)
     {
-      PHASE_TYPE phase = PVTPackage_phaseDict.at(m_phaseNames[ip]);
-      PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
+      PHASE_TYPE phase = PVTPackage_phaseDict.at(phaseNames[ip]);
+      PhaseProperties const & props = fluid->get_PhaseProperties(phase);
 
       auto const & phaseMW = props.MolecularWeight;
       real64 const nu = phaseFrac.value[ip];
@@ -263,8 +330,8 @@ void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
     // 4.2. Convert phase compositions
     for (localIndex ip = 0; ip < NP; ++ip)
     {
-      PHASE_TYPE phase = PVTPackage_phaseDict.at(m_phaseNames[ip]);
-      PhaseProperties const & props = m_fluid->get_PhaseProperties(phase);
+      PHASE_TYPE phase = PVTPackage_phaseDict.at(phaseNames[ip]);
+      PhaseProperties const & props = fluid->get_PhaseProperties(phase);
 
       auto const & phaseMW = props.MolecularWeight;
       real64 const phaseMWInv = 1.0 / phaseMW.value;
@@ -272,7 +339,7 @@ void MultiFluidPVTPackageWrapper::PointUpdate(real64 const & pres,
       for (localIndex ic = 0; ic < NC; ++ic)
       {
 
-        real64 const compMW = m_componentMolarWeight[ic];
+        real64 const compMW = componentMolarWeight[ic];
 
         phaseCompFrac.value[ip][ic] = phaseCompFrac.value[ip][ic] * compMW * phaseMWInv;
         phaseCompFrac.dPres[ip][ic] =

@@ -68,8 +68,8 @@ public:
                               real64 & dDensity_dPressure,
                               real64 & viscosity,
                               real64 & dViscosity_dPressure,
-                              ExponentialRelation<real64> densityRelation,
-                              ExponentialRelation<real64> viscosityRelation );
+                              ExponentialRelation<real64> const & densityRelation,
+                              ExponentialRelation<real64> const & viscosityRelation );
 
   virtual void Compute( real64 const & pressure,
                         real64 & density,
@@ -120,8 +120,8 @@ inline
 void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
                                             real64 & density, real64 & dDensity_dPressure,
                                             real64 & viscosity, real64 & dViscosity_dPressure,
-                                            ExponentialRelation<real64> densityRelation,
-                                            ExponentialRelation<real64> viscosityRelation )
+                                            ExponentialRelation<real64> const & densityRelation,
+                                            ExponentialRelation<real64> const & viscosityRelation )
 {
   densityRelation.Compute( pressure, density, dDensity_dPressure );
   viscosityRelation.Compute( pressure, viscosity, dViscosity_dPressure );

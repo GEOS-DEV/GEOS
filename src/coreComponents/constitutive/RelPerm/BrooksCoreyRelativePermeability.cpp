@@ -136,23 +136,23 @@ void BrooksCoreyRelativePermeability::BatchUpdate( arrayView2d<real64 const> con
 }
 
 
-void BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
-                                                               localIndex const k,
-                                                               localIndex const q )
+void BrooksCoreyRelativePermeability::PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+                                                   localIndex const k,
+                                                   localIndex const q )
 {
   arraySlice1d<real64> const relPerm           = m_phaseRelPerm[k][q];
   arraySlice2d<real64> const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
 
   localIndex const NP = numFluidPhases();
 
-  StateUpdatePointRelPerm( NP,
-                           phaseVolFraction,
-                           relPerm,
-                           dRelPerm_dVolFrac,
-                           m_phaseMinVolumeFraction,
-                           m_phaseRelPermExponent,
-                           m_phaseRelPermMaxValue,
-                           m_satScale );
+  Compute( NP,
+           phaseVolFraction,
+           relPerm,
+           dRelPerm_dVolFrac,
+           m_phaseMinVolumeFraction,
+           m_phaseRelPermExponent,
+           m_phaseRelPermMaxValue,
+           m_satScale );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, ManagedGroup * const )
