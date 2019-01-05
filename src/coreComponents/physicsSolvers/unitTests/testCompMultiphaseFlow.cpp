@@ -606,6 +606,7 @@ protected:
     problemManager.ParseCommandLineInput( argc, argv );
     problemManager.ParseInputFile();
     problemManager.GenerateMesh();
+    problemManager.ApplyNumericalMethods();
 
     problemManager.Initialize( &problemManager );
     problemManager.RegisterDataOnMeshRecursive( nullptr );
