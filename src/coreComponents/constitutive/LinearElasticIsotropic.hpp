@@ -142,8 +142,6 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const parent) override final;
-
 protected:
   virtual void PostProcessInput() override;
 

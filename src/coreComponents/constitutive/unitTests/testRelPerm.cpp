@@ -237,7 +237,7 @@ TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
 
   RelativePermeabilityBase * fluid = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
 
-  parent->Initialize( parent.get() );
+  parent->InitializeRecursive( parent.get() );
   parent->FinalInitializationRecursive( parent.get() );
 
   // TODO test over a range of values

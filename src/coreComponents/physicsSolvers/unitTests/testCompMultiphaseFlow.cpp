@@ -608,7 +608,7 @@ protected:
     problemManager.GenerateMesh();
     problemManager.ApplyNumericalMethods();
 
-    problemManager.Initialize( &problemManager );
+    problemManager.InitializeRecursive( &problemManager );
     problemManager.RegisterDataOnMeshRecursive( nullptr );
     problemManager.ApplyInitialConditions();
     problemManager.FinalInitializationRecursive( &problemManager );

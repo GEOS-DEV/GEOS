@@ -141,6 +141,10 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
     string const message = "An invalid value of reference viscosity ("+std::to_string( m_referenceViscosity )+") is specified";
     GEOS_ERROR( message );
   }
+
+  m_densityRelation.SetCoefficients( m_referencePressure, m_referenceDensity, m_compressibility );
+  m_viscosityRelation.SetCoefficients( m_referencePressure, m_referenceViscosity, m_viscosibility );
+
 }
 
 void CompressibleSinglePhaseFluid::FluidDensityCompute( real64 const & pres,
@@ -160,12 +164,6 @@ void CompressibleSinglePhaseFluid::FluidViscosityCompute( real64 const & pres,
   m_viscosityRelation.Compute( pres, visc, dVisc_dPres );
 }
 
-
-void CompressibleSinglePhaseFluid::InitializePostSubGroups( ManagedGroup * const group )
-{
-  m_densityRelation.SetCoefficients( m_referencePressure, m_referenceDensity, m_compressibility );
-  m_viscosityRelation.SetCoefficients( m_referencePressure, m_referenceViscosity, m_viscosibility );
-}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, ManagedGroup * const )
 

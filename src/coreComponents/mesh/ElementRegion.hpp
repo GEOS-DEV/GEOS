@@ -81,8 +81,6 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlocks );
 
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
-
   subGroupMap & GetSubRegions()
   {
     return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();

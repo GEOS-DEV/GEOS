@@ -573,7 +573,7 @@ public:
     }
   }
 
-  virtual void Initialize( ManagedGroup * const group );
+  void InitializeRecursive( ManagedGroup * const group );
 
   virtual void InitializationOrder( string_array & order );
 
@@ -581,7 +581,7 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
-  virtual void FinalInitializationRecursive( ManagedGroup * const group );
+  void FinalInitializationRecursive( ManagedGroup * const group );
 
   virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}
 

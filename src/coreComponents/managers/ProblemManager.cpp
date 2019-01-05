@@ -682,7 +682,16 @@ void ProblemManager::GenerateMesh()
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+
       domain->GenerateSets();
+
+      elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
+      {
+        subRegion->nodeList().SetRelatedObject(nodeManager);
+        subRegion->faceList().SetRelatedObject(faceManager);
+        subRegion->CalculateCellVolumes( array1d<localIndex>() );
+      });
+
     }
   }
 }
@@ -775,10 +784,6 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
 
-  elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
-  {
-    subRegion->CalculateCellVolumes( array1d<localIndex>() );
-  });
 }
 
 void ProblemManager::RunSimulation()

@@ -79,7 +79,6 @@ public:
                                         localIndex const q) override final;
 
 
-  virtual void InitializePostSubGroups(ManagedGroup * const group) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {

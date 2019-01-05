@@ -86,11 +86,8 @@ void PoreVolumeCompressibleSolid::PostProcessInput()
     string const message = "An invalid value of fluid bulk modulus (" + std::to_string(m_compressibility) + ") is specified";
     GEOS_ERROR(message);
   }
-}
-
-void PoreVolumeCompressibleSolid::FinalInitializationPreSubGroups( ManagedGroup *const parent )
-{
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
+
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, std::string const &, ManagedGroup * const )

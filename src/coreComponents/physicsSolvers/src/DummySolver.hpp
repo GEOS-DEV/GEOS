@@ -41,7 +41,7 @@ public:
 
   static string CatalogName() { return "DummySolver"; }
 
-  virtual void Initialize( ManagedGroup * const problemManager ) override final;
+  virtual void InitializePreSubGroups( ManagedGroup * const problemManager ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
