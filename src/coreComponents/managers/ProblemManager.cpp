@@ -180,8 +180,32 @@ ProblemManager::~ProblemManager()
 ManagedGroup * ProblemManager::CreateChild( string const & childKey, string const & childName )
 { return nullptr; }
 
+
+void ProblemManager::ProblemSetup()
+{
+  PostProcessInputRecursive();
+
+  GenerateMesh();
+
+  ApplyNumericalMethods();
+
+  RegisterDataOnMeshRecursive( nullptr );
+
+  GEOSX_MARK_BEGIN("problemManager.Initialize");
+  Initialize( this );
+  GEOSX_MARK_END("problemManager.Initialize");
+
+  ApplyInitialConditions();
+
+  GEOSX_MARK_BEGIN("problemManager.InitializePostInitialConditions");
+  InitializePostInitialConditions( this );
+  GEOSX_MARK_END("problemManager.InitializePostInitialConditions");
+}
+
+
 void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
 {
+  GEOSX_MARK_FUNCTION;
   ManagedGroup::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 }
 
@@ -531,7 +555,6 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
 
   ProcessInputFileRecursive( xmlProblemNode );
-  PostProcessInputRecursive();
 
 
   // The function manager is handled separately
@@ -644,7 +667,7 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 void ProblemManager::GenerateMesh()
 {
-
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
@@ -698,6 +721,7 @@ void ProblemManager::GenerateMesh()
 
 void ProblemManager::ApplyNumericalMethods()
 {
+  GEOSX_MARK_FUNCTION;
   NumericalMethodsManager const * const
   numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
@@ -791,11 +815,6 @@ void ProblemManager::RunSimulation()
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run(domain);
 }
-
-
-void ProblemManager::ApplySchedulerEvent()
-{}
-
 
 DomainPartition * ProblemManager::getDomainPartition()
 {

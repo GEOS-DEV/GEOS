@@ -78,26 +78,9 @@ int main( int argc, char *argv[] )
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
-
-
-
   problemManager.ParseInputFile();
 
-  problemManager.GenerateMesh();
-
-  problemManager.ApplyNumericalMethods();
-
-  problemManager.RegisterDataOnMeshRecursive( nullptr );
-
-  GEOSX_MARK_BEGIN("problemManager.Initialize");
-  problemManager.Initialize( &problemManager );
-  GEOSX_MARK_END("problemManager.Initialize");
-
-  problemManager.ApplyInitialConditions();
-
-  GEOSX_MARK_BEGIN("problemManager.FinalInitializationRecursive");
-  problemManager.InitializePostInitialConditions( &problemManager );
-  GEOSX_MARK_END("problemManager.FinalInitializationRecursive");
+  problemManager.ProblemSetup();
 
   if (restart) {
     problemManager.ReadRestartOverwrite( restartFileName );

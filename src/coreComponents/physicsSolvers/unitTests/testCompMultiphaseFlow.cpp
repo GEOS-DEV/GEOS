@@ -605,13 +605,8 @@ protected:
     problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput( argc, argv );
     problemManager.ParseInputFile();
-    problemManager.GenerateMesh();
-    problemManager.ApplyNumericalMethods();
-    problemManager.RegisterDataOnMeshRecursive( nullptr );
 
-    problemManager.Initialize( &problemManager );
-    problemManager.ApplyInitialConditions();
-    problemManager.InitializePostInitialConditions( &problemManager );
+    problemManager.ProblemSetup();
 
     solver = problemManager.GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
   }
