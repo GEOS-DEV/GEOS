@@ -95,15 +95,18 @@ public:
 
   void InitializationOrder( string_array & order ) override final;
 
+  /**
+   * Function to setup the problem once the input has been read in, or the values
+   * of the objects in the hierarchy have been sufficently set to generate a
+   * mesh, etc.
+   */
+  void ProblemSetup();
 
+  /**
+   * Run the events in the scheduler.
+   */
   void RunSimulation();
 
-  void ApplySchedulerEvent();
-
-  void WriteSilo( integer const cycleNumber, real64 const problemTime );
-
-  // function to create and dump the restart file
-  void WriteRestart( integer const cycleNumber );
 
   void ReadRestartOverwrite( const std::string& restartFileName );
 
@@ -173,7 +176,6 @@ protected:
 private:
 
   PhysicsSolverManager * m_physicsSolverManager;
-  //SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
 };
