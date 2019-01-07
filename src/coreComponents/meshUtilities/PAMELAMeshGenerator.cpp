@@ -89,7 +89,6 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
-  std::cout << "begin mesh reading" << std::endl;
   int nranks = 1;
 #ifdef GEOSX_USE_MPI
   MPI_Comm_size( MPI_COMM_GEOSX, &nranks );
@@ -145,8 +144,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         auto cellBlockType = cellBlockPAMELA->ElementType;
         auto cellBlockName = ElementToLabel.at( cellBlockType );
         CellBlock * cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( cellBlockName );
-        //cellBlock->PostProcessInputRecursive();
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionName +"_" + cellBlockName );
         if( cellBlockName == "HEX" )
         {
           cellBlock -> SetElementType("C3D8");
@@ -215,7 +213,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         }
         else if( cellBlockName == "WEDGE" )
         {
-          std::cout << "WRITING WEDGE" << std::endl;
           cellBlock -> SetElementType("C3D6");
           auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
           auto & cellToVertex = cellBlock->nodeList();
@@ -284,7 +281,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       }
     }
   }
-  std::cout << "Mesh was read" << std::endl;
 }
 
 void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,

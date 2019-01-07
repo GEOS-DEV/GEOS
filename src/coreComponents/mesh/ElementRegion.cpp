@@ -180,7 +180,9 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
   for( string const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
   {
     CellBlockSubRegion * subRegion = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
-    subRegion->CopyFromCellBlock( cellBlocks->GetGroup<CellBlock>( subRegion->getName() ) );
+    CellBlock const * source = cellBlocks->GetGroup<CellBlock>( subRegion->getName() );
+    GEOS_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
+    subRegion->CopyFromCellBlock( source );
   }
 
 }

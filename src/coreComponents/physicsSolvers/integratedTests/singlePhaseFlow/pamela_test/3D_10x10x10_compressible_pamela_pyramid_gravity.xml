@@ -11,7 +11,8 @@
                           gravityFlag="1"
                           fluidName="water"
                           solidName="rock"
-                          discretization="singlePhaseTPFA">
+                          discretization="singlePhaseTPFA"
+                          targetRegions="Domain">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -25,8 +26,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="all"    type="0" xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
-    <Box name="left" type="0" xMin="-1, -1, -1" xMax=" 0.9, 11, 11"/>
+    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
+    <Box name="left" xMin="-1, -1, -1" xMax=" 0.9, 11, 11"/>
   </Geometry>
 
 
@@ -49,7 +50,7 @@
                    timeFrequency="1e99"
                    targetExactTimestep="0"
                    target="/Outputs/sidreRestart"
-                   endtime="-1"/>
+                   endTime="-1"/>
   </Events>
 
 
@@ -58,16 +59,14 @@
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
                                  boundaryFieldName="facePressure"
-                                 coefficientName="permeability"
-                                 cellLocation="center"
-                                 faceLocation="center"/>
+                                 coefficientName="permeability"/>
     </FiniteVolume>
 
   </NumericalMethods>
 
 
   <ElementRegions>
-    <ElementRegion name="Domain" cellBlocks="PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID" material="water" materialList="water rock"/>
+    <ElementRegion name="Domain" cellBlocks="PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID" materialList="water rock"/>
   </ElementRegions>
 
   <Constitutive>
@@ -93,7 +92,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-14"/>
 
     <Dirichlet name="permy"
@@ -102,7 +100,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-14"/>
 
     <Dirichlet name="permz"
@@ -111,7 +108,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-14"/>
 
     <Dirichlet name="referencePorosity"
@@ -119,7 +115,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.05"/>
 
     <Dirichlet name="initialPressure"
@@ -127,12 +122,10 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
                fieldName="pressure"
-               dataType="real64"
                scale="1e3"/>
     <Dirichlet name="boundaryPressure"
                objectPath="faceManager"
                fieldName="facePressure"
-               dataType="Scalar"
                scale="1.1e3"
                setNames="left"/>
   </BoundaryConditions>
