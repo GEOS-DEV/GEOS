@@ -19,8 +19,8 @@
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
-#include "../finiteElement/FiniteElementDiscretization.hpp"
-#include "../finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "common/DataTypes.hpp"

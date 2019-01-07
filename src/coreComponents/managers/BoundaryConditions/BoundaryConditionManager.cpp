@@ -25,13 +25,13 @@
 
 #include "BoundaryConditionManager.hpp"
 
-#include "../../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "BoundaryConditionBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "mesh/MeshBody.hpp"
 
 #include "managers/NumericalMethodsManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "codingUtilities/StringUtilities.hpp"
 

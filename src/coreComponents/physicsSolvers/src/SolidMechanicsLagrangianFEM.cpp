@@ -30,13 +30,12 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include <common/DataTypes.hpp>
-#include "../../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-//#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"

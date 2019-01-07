@@ -27,7 +27,6 @@
 
 #include <vector>
 
-#include "../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "optionparser.h"
 
 #include "DomainPartition.hpp"
@@ -40,6 +39,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"

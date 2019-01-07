@@ -25,9 +25,9 @@
 
 #include "NumericalMethodsManager.hpp"
 
-#include "../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/basis/BasisFunctionManager.hpp"
 #include "finiteElement/quadrature/QuadratureRuleManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 
 namespace geosx
