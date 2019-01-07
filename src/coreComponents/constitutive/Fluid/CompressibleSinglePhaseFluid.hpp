@@ -57,6 +57,9 @@ public:
 
   virtual void ProcessInputFile_PostProcess() override;
 
+  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   // *** SingleFluid-specific interface
 
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) override;

@@ -65,6 +65,15 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
 
+void CompressibleSinglePhaseFluid::AllocateConstitutiveData(dataRepository::ManagedGroup * const parent,
+                                                            localIndex const numConstitutivePointsPerParentIndex)
+{
+  SingleFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
+
+  m_density = m_referenceDensity;
+  m_viscosity = m_referenceViscosity;
+}
+
 std::unique_ptr<ConstitutiveBase>
 CompressibleSinglePhaseFluid::DeliverClone( string const & name,
                                             ManagedGroup * const parent ) const
@@ -100,10 +109,6 @@ void CompressibleSinglePhaseFluid::ProcessInputFile_PostProcess()
 
   m_densityRelation.SetCoefficients( m_referencePressure, m_referenceDensity, m_compressibility );
   m_viscosityRelation.SetCoefficients( m_referencePressure, m_referenceViscosity, m_viscosibility );
-
-  // just in case, should not be necessary
-  getWrapper<array2d<real64>>( viewKeyStruct::densityString )->setDefaultValue( m_referenceDensity );
-  getWrapper<array2d<real64>>( viewKeyStruct::viscosityString )->setDefaultValue( m_referenceViscosity );
 }
 
 void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIndex const k, localIndex const q )
