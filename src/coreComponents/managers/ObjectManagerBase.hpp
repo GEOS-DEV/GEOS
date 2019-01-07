@@ -24,7 +24,6 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -61,9 +60,7 @@ public:
   virtual const string getCatalogName() const = 0;
   ///@}
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void InitializePostSubGroups( ManagedGroup * const ) override;
+//  virtual void FillDocumentationNode() override;
 
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;

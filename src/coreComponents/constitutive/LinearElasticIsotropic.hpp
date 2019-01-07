@@ -74,10 +74,6 @@ public:
                                  integer const systemAssembleFlag ) override;
 
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
-
   void GetStiffness( realT c[6][6] ) const override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -146,9 +142,12 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const parent) override final;
+protected:
+  virtual void PostProcessInput() override;
 
 private:
+
+
   real64 m_bulkModulus0;
   real64 m_shearModulus0;
   real64 m_density0;

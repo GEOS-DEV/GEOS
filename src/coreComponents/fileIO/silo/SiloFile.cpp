@@ -1129,7 +1129,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     {
       auto const & wrapper = wrapperIter.second;
 
-      if( wrapper->getPlotLevel() < dataRepository::PlotLevel::LEVEL_1 )
+      if( wrapper->getPlotLevel() < m_plotLevel )
       {
         std::type_info const & typeID = wrapper->get_typeid();
 

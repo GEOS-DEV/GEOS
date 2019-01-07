@@ -93,15 +93,7 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
-
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
-
-  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const rootGroup ) override;
-
-  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -362,6 +354,11 @@ public:
   {
   } groupKeysCompMultiphaseFlow;
 
+protected:
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+
 
 private:
 
@@ -414,7 +411,7 @@ private:
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  void ResizeFields( DomainPartition * const domain );
+  void ResizeFields( MeshLevel * const meshLevel );
 
   /**
    * @brief Initialize all variables from initial conditions

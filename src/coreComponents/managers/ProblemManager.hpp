@@ -33,13 +33,11 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #endif
-#include "optionparser.h"
 
 #include "ObjectManagerBase.hpp"
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -52,42 +50,6 @@ namespace keys
 string const eventManager="EventManager";
 }
 }
-
-struct Arg : public option::Arg
-{
-  static option::ArgStatus Unknown(const option::Option& option, bool /*error*/)
-  {
-    GEOS_LOG_RANK("Unknown option: " << option.name);
-    return option::ARG_ILLEGAL;
-  }
-
-
-  static option::ArgStatus NonEmpty(const option::Option& option, bool /*error*/)
-  {
-    if ((option.arg != nullptr) && (option.arg[0] != 0))
-    {
-      return option::ARG_OK;
-    }
-
-    GEOS_LOG_RANK("Error: " << option.name << " requires a non-empty argument!");
-    return option::ARG_ILLEGAL;
-  }
-
-
-  static option::ArgStatus Numeric(const option::Option& option, bool /*error*/)
-  {
-    char* endptr = nullptr;
-    if ((option.arg != nullptr) && strtol(option.arg, &endptr, 10)) {};
-    if ((endptr != option.arg) && (*endptr == 0))
-    {
-      return option::ARG_OK;
-    }
-
-    GEOS_LOG_RANK("Error: " << option.name << " requires a long-int argument!");
-    return option::ARG_ILLEGAL;
-  }
-
-};
 
 
 class DomainPartition;
@@ -113,11 +75,9 @@ public:
   { return ProblemManager::CatalogName(); }
   ///@}
 
+  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
 
-
-  virtual void FillDocumentationNode() override;
-
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int argc, char* argv[]);
 
@@ -129,20 +89,24 @@ public:
 
   void ParseInputFile();
 
+  void GenerateMesh();
+
+  void ApplyNumericalMethods();
+
   void InitializationOrder( string_array & order ) override final;
 
-  void InitializePreSubGroups( ManagedGroup * const group ) override final;
+  /**
+   * Function to setup the problem once the input has been read in, or the values
+   * of the objects in the hierarchy have been sufficently set to generate a
+   * mesh, etc.
+   */
+  void ProblemSetup();
 
-  void InitializePostSubGroups( ManagedGroup * const group ) override final;
-
+  /**
+   * Run the events in the scheduler.
+   */
   void RunSimulation();
 
-  void ApplySchedulerEvent();
-
-  void WriteSilo( integer const cycleNumber, real64 const problemTime );
-
-  // function to create and dump the restart file
-  void WriteRestart( integer const cycleNumber );
 
   void ReadRestartOverwrite( const std::string& restartFileName );
 
@@ -151,8 +115,14 @@ public:
   DomainPartition * getDomainPartition();
   DomainPartition const * getDomainPartition() const;
 
-  const std::string& getProblemName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<std::string>(viewKeys.problemName); }
+  const string & getProblemName() const
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
+
+  const string & getInputFileName() const
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
+
+  const string & getRestartFileName() const
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
@@ -198,9 +168,14 @@ public:
     return *m_physicsSolverManager;
   }
 
+protected:
+  virtual void PostProcessInput() override final;
+
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) override final;
+
 private:
+
   PhysicsSolverManager * m_physicsSolverManager;
-  //SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
 };

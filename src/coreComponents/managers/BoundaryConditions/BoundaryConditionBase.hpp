@@ -432,11 +432,6 @@ public:
    */
   virtual ~BoundaryConditionBase() override;
 
-
-  void FillDocumentationNode() override;
-
-  void ReadXML_PostProcess() override final;
-
   /**
    * @tparam BC_OP type that contains static functions to apply the boundary condition to the field
    * @param[in] targetSet the set of indices which the boundary condition will be applied.
@@ -602,7 +597,12 @@ public:
   real64 GetScale() const
   { return m_scale; }
 
+
+protected:
+  void PostProcessInput() override final;
+
 private:
+
 
   /// the names of the sets that the boundary condition is applied to
   string_array m_setNames;

@@ -16,12 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/**
- * @file DataObjectManager.h
- * @date created on Nov 21, 2014
- * @author Randolph R. Settgast
- */
-
+/** @file */
 
 #ifndef MANAGEDGROUP_H_
 #define MANAGEDGROUP_H_
@@ -35,18 +30,18 @@
 #include "RestartFlags.hpp"
 
 #include "depricated/Common.h"
-#include "DocumentationNode.hpp"
 
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
-//#include "CodingUtilities/ANSTexception.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
+/// macro definition to specify whether or not to use dynamic_cast
 #define USE_DYNAMIC_CASTING 1;
 #endif
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
+/// macro definition to enable/disable char * lookups
 #define NOCHARTOSTRING_KEYLOOKUP 0
 #endif
 
@@ -67,42 +62,41 @@ namespace geosx
 namespace dataRepository
 {
 
+/// the default key type
 using keyType = string;
+
+/// the default index type
 using indexType = localIndex;
-//using DataKey = DataKeyT<keyType,indexType>;
 
 /**
- * @author Randolph R. Settgast
- *
  * class that encapsulates and manages a collection of DataObjects. Can be
  * considered a "node" in a hierarchy of managers that represent physical groupings of data/
- *
  */
 class ManagedGroup
 {
 public:
+  /// the type of MappedVector to use for the subGroup collection
   using subGroupMap = MappedVector< ManagedGroup, ManagedGroup*, keyType, indexType  >;
+
+  /// type of the MappedVector to use for the collection of wrappers.
   using viewWrapperMap = MappedVector< ViewWrapperBase, ViewWrapperBase*, keyType, indexType  >;
+
   /**
    * @name constructors, destructor, copy, move, assignments
    */
   ///@{
 
   /**
-   * @author Randolph R. Settgast
-   * @param name the name of this object manager
+   * @param[in] name the name of this object manager
+   * @param[in]
    */
   explicit ManagedGroup( std::string const & name,
                          ManagedGroup * const parent );
 
-//  explicit ManagedGroup( std::string const & name,
-//                         ManagedGroup * const parent,
-//                         cxx_utilities::DocumentationNode * docNode );
-
 
   /**
    * @brief move constructor
-   * @param source source ManagedGroup
+   * @param[in] source source ManagedGroup
    */
   ManagedGroup( ManagedGroup&& source );
 
@@ -131,32 +125,85 @@ public:
   ///@}
 
 
-
+  /// returns typeid(*this)
   virtual const std::type_info& get_typeid() const
   {
     return typeid(*this);
   }
 
+  /**
+   * @brief Check a type_info against the type_info of this ManagedGroup
+   * @param typeToCheck value to check against
+   * @return true of types are the same, false if not
+   */
   bool CheckTypeID( std::type_info const & typeToCheck ) const
   {
     return typeToCheck == get_typeid() ? true : false;
   }
 
 
+  /**
+   * @brief Register a new subgroup
+   * @tparam T        The type of the group to register
+   * @param name      The repository name of the group
+   * @param newObject A unique_ptr to the object that is being registered.
+   * @return pointer to the subgroup
+   *
+   * This registration function takes an ManagedGroup or class derived from
+   * ManagedGroup and registers it as a subgroup of this ManagedGroup. The
+   * data repository takes ownership of the object that is passed in through
+   * a unique_ptr.
+   */
   template< typename T = ManagedGroup >
   T * RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject );
 
+  /**
+   *
+   * @brief Register a new subgroup
+   * @tparam T        The type of the group to register
+   * @param name      The repository name of the group
+   * @param newObject Pointer to the object tp register
+   * @param takeOwnership flag to indicate whether or not the repository should
+   *                      take ownership of the group.
+   * @return pointer to the subgroup
+   *
+   * This registration function creates and registers a ManagedGroup or class
+   * derived from ManagedGroup and registers it as a subgroup of this
+   * ManagedGroup. The data repository takes ownership of the new object if
+   * \p takeOwnership is true.
+   */
   template< typename T = ManagedGroup >
   T * RegisterGroup( std::string const & name,
                      T * newObject,
                      bool const takeOwnership );
 
+  /**
+   * @brief      Register a new subgroup
+   * @tparam T   The type of the group to register
+   * @param name The repository name of the group
+   * @return     pointer to the subgroup
+   *
+   * This registration function creates and registers a ManagedGroup or class
+   * derived from ManagedGroup and registers it as a subgroup of this
+   * ManagedGroup. The data repository takes ownership of the new object.
+   */
   template< typename T = ManagedGroup >
   T * RegisterGroup( std::string const & name )
   {
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
   }
 
+  /**
+   * @brief          Register a new subgroup
+   * @tparam T       The type of the group to register
+   * @param keyIndex A KeyIndex object that will be used to specify the name of
+   *                 the new group.
+   * @return         pointer to the subgroup
+   *
+   * This registration function creates and registers a ManagedGroup or class
+   * derived from ManagedGroup and registers it as a subgroup of this
+   * ManagedGroup. The data repository takes ownership of the new object.
+   */
   template< typename T = ManagedGroup >
   T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
   {
@@ -165,14 +212,35 @@ public:
     return rval;
   }
 
+  /**
+   * @brief             Register a new subgroup
+   * @tparam T          The type of the group to register
+   * @tparam TBASE      The type of the group that contains an object catalog
+   *                    for the creation of a new \p T
+   * @param name        The repository name of the new group
+   * @param catalogName The catalog name of the type
+   * @return            A pointer to the subgroup
+   *
+   * This registration function creates and registers a ManagedGroup or class
+   * derived from ManagedGroup and registers it as a subgroup of this
+   * ManagedGroup. The \p TBASE type provide the object catalog that is used
+   * to create the new group. The data repository takes ownership of the new
+   * object.
+   *
+   */
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
   T * RegisterGroup( std::string const & name, std::string const & catalogName )
   {
     std::unique_ptr<TBASE> newGroup = TBASE::CatalogInterface::Factory(catalogName, name, this );
-    return RegisterGroup<T,TBASE>( name, std::move(newGroup) );
+    return RegisterGroup<T>( name, std::move(newGroup) );
   }
 
-
+  /**
+   * @brief       Downcast a ManagedGroup *
+   * @tparam T    Pointer to the type to downcast into
+   * @param group A pointer the group to be casted
+   * @return a    Pointer to \p T that refers to the downcasted group
+   */
   template< typename T >
   static T group_cast( ManagedGroup * group )
   {
@@ -183,6 +251,12 @@ public:
 #endif
   }
 
+  /**
+   * @brief       Downcast a ManagedGroup const *
+   * @tparam T    Pointer to the type to downcast into
+   * @param group A pointer the group to be casted
+   * @return a    Pointer to \p T that refers to the downcasted group
+   */
   template< typename T >
   static T group_cast( ManagedGroup const * group )
   {
@@ -193,6 +267,11 @@ public:
 #endif
   }
 
+  /**
+   * @brief       Downcast this ManagedGroup
+   * @tparam T    Pointer to the type to downcast into
+   * @return a    Pointer to \p T that refers to the this
+   */
   template< typename T >
   T group_cast()
   {
@@ -203,6 +282,11 @@ public:
 #endif
   }
 
+  /**
+   * @brief       Downcast this ManagedGroup
+   * @tparam T    Pointer to the type to downcast into
+   * @return a    Pointer to \p T that refers to the this
+   */
   template< typename T >
   T group_cast() const
   {
@@ -214,49 +298,98 @@ public:
   }
 
 
+  /**
+   * @brief Get a ManagedGroup from the repository using direct index
+   * @param index integral index to use for as a lookup
+   * @return A pointer to \p T that refers to the group retrieved from the
+   *         repository.
+   */
   template< typename T = ManagedGroup >
   T * GetGroup( localIndex index )
   {
     return group_cast<T*>(m_subGroups[index]);
   }
 
+  /**
+   * @brief Get a ManagedGroup from the repository using direct index
+   * @param index integral index to use for as a lookup
+   * @return A pointer to const \p T that refers to the group retrieved from the
+   *         repository.
+   */
   template< typename T = ManagedGroup >
   T const * GetGroup( localIndex index ) const
   {
     return group_cast<T const *>(m_subGroups[index]);
   }
 
+  /**
+   * @brief Get a ManagedGroup from the repository using string lookup
+   * @param name Name of the group to retrieve
+   * @return A pointer to \p T that refers to the group retrieved from the
+   *         repository.
+   */
   template< typename T = ManagedGroup >
   T * GetGroup( string const & name )
   {
     return group_cast<T *>(m_subGroups[name]);
   }
 
+  /**
+   * @brief Get a ManagedGroup from the repository using string lookup
+   * @param name Name of the group to retrieve
+   * @return A pointer to const \p T that refers to the group retrieved from the
+   *         repository.
+   */
   template< typename T = ManagedGroup >
   T const * GetGroup( string const & name ) const
   {
     return group_cast<T const *>(m_subGroups[name]);
   }
 
-
+  /**
+   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @param key the KeyIndex to use for the lookup
+   * @return A pointer to \p T that refers to the group retrieved from the
+   *         repository.
+   */
   template< typename T = ManagedGroup >
   T * GetGroup( subGroupMap::KeyIndex & key )
   {
     return group_cast<T *>(m_subGroups[key]);
   }
 
+  /**
+   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @param key the KeyIndex to use for the lookup
+   * @return A pointer to const \p T that refers to the group retrieved from
+   *         the repository.
+   */
   template< typename T = ManagedGroup >
   T const * GetGroup( subGroupMap::KeyIndex & key ) const
   {
     return group_cast<T const *>(m_subGroups[key]);
   }
 
+  /**
+   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @param key the KeyIndex to use for the lookup. Note that
+   *            const-correctness may be broken if the key is incorrect.
+   * @return A pointer to \p T that refers to the group retrieved from the
+   *         repository.
+   */
   template< typename T = ManagedGroup >
   T * GetGroup( subGroupMap::KeyIndex const & key )
   {
     return group_cast<T *>(m_subGroups[key]);
   }
 
+  /**
+   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @param key the KeyIndex to use for the lookup. Note that
+   *            const-correctness may be broken if the key is incorrect.
+   * @return A pointer to const \p T that refers to the group retrieved from
+   *         the repository.
+   */
   template< typename T = ManagedGroup >
   T const * GetGroup( subGroupMap::KeyIndex const & key ) const
   {
@@ -265,17 +398,24 @@ public:
 
   /**
    * @brief This will grab the pointer to an object in the data structure
-   * @param path a unix-style string (absolute, relative paths valid)
+   * @param[in] path a unix-style string (absolute, relative paths valid)
+   * @return A pointer to const \p T that refers to the target group.
    */
   template< typename T = ManagedGroup >
   T const * GetGroupByPath( string const & path ) const
   {
-    size_t directoryMarker = path.find("/");
+    // needed for getting root correctly with GetGroupByPath("/");
+    if (path.empty())
+    {
+      return group_cast<T const *>( this );
+    }
+
+    size_t directoryMarker = path.find('/');
 
     if (directoryMarker == std::string::npos)
     {
       // Target should be a child of this group
-      return m_subGroups[path];
+      return this->GetGroup<T>(path);
     }
     else
     {
@@ -287,42 +427,55 @@ public:
       {
         if (this->getParent() == nullptr)  // At root
         {
-          return this->GetGroupByPath(subPath);
+          return this->GetGroupByPath<T>(subPath);
         }
         else                               // Not at root
         {
-          return this->getParent()->GetGroupByPath(path);
+          return this->getParent()->GetGroupByPath<T>(path);
         }
       }
       else if (child[0] == '.')
       {
         if (child[1] == '.')               // '../' = Reverse path
         {
-          return this->getParent()->GetGroupByPath(subPath); 
+          return this->getParent()->GetGroupByPath<T>(subPath);
         }
         else                               // './' = This path
         {
-          return this->GetGroupByPath(subPath);
+          return this->GetGroupByPath<T>(subPath);
         }
       }
       else
       {
-        return m_subGroups[child]->GetGroupByPath(subPath);
+        return m_subGroups[child]->GetGroupByPath<T>(subPath);
       }
     }
   }
-  
+
+  /**
+   * @brief This will grab the pointer to an object in the data structure
+   * @param[in] path a unix-style string (absolute, relative paths valid)
+   * @return A pointer to \p T that refers to the target group.
+   */
   template< typename T = ManagedGroup >
   T * GetGroupByPath( string const & path )
   {
-    return const_cast<T *>(const_cast< ManagedGroup const * >(this)->GetGroupByPath(path));
+    return const_cast<T *>(const_cast< ManagedGroup const * >(this)->GetGroupByPath<T>(path));
   }
 
+  /**
+   * @brief Get the subgroups object
+   * @return a reference to the sub-group map.
+   */
   subGroupMap & GetSubGroups()
   {
     return m_subGroups;
   }
 
+  /**
+   * @brief Get the subgroups object
+   * @return a reference to const that points to the sub-group map.
+   */
   subGroupMap const & GetSubGroups() const
   {
     return m_subGroups;
@@ -348,6 +501,10 @@ public:
     }
   }
 
+  /**
+   *
+   * @param lambda
+   */
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda ) const
   {
@@ -416,26 +573,12 @@ public:
     }
   }
 
-  virtual void Initialize( ManagedGroup * const group );
+  void Initialize( ManagedGroup * const group );
 
   virtual void InitializationOrder( string_array & order );
 
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
-
-  virtual void IntermediateInitializationRecursive( ManagedGroup * const group );
-
-  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const group ) {}
-
-  virtual void IntermediateInitializationPostSubGroups( ManagedGroup * const group ) {}
-
-  virtual void FinalInitializationRecursive( ManagedGroup * const group );
-
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}
-
-  virtual void FinalInitializationPostSubGroups( ManagedGroup * const group ) {}
-
+  void InitializePostInitialConditions( ManagedGroup * const group );
 
   template< typename T, typename TBASE=T >
   ViewWrapper<TBASE> *
@@ -461,8 +604,8 @@ public:
 
   /**
    * @brief Register a ViewWrapper into this ManagedGroup
-   * @param name the key name to use for this new wrapper
-   * @param wrapper a pointer to the new wrapper
+   * @param[in] name the key name to use for this new wrapper
+   * @param[in] wrapper a pointer to the new wrapper
    * @return a ViewWrapperBase pointer that holds the address of the new wrapper
    */
   ViewWrapperBase * RegisterViewWrapper( string const & name,
@@ -470,67 +613,27 @@ public:
 
   void DeregisterViewWrapper( string const & name );
 
-//  template< typename T >
-//  void RegisterViewWrapperRecursive( string const & name );
-//
-//  template< typename T >
-//  void RegisterViewWrapperRecursive( string const & name, string const & targetGroupName );
-
-  ///@}
-
-
-  /**
-   * @name Self Documentation Functions
-   */
-  ///@{
-
-  cxx_utilities::DocumentationNode * getDocumentationNode()
-  {
-    return m_docNode;
-  }
-
-  void RegisterDocumentationNodes();
-
-
-  ///@}
-  ///
-
 
   void PrintDataHierarchy(integer indent = 0);
 
-  virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
-
-  virtual void CreateChild( string const & childKey, string const & childName );
-
-  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
-
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName );
 
   /**
-   * This function provides a mechanism by which to post process any values that were read into the
-   * xml file prior to initialization.
+   * @brief Recursively read values using ProcessInputFile() from the input
+   *        file and put them into the wrapped values for this group.
+   * @param[in] targetNode the XML node that to extract input values from.
    */
-  virtual void ReadXML_PostProcess() {}
-
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
-
-  void SetDocumentationNodes();
+  void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
 
   /**
-   * Function to generate documentation nodes for each variable in this object. The documentation
-   * nodes are then used to register variables and read xml input into variables.
+   * @brief Recursively call PostProcessInput() to apply post processing after
+   * reading input values.
    */
-  virtual void FillDocumentationNode();
+  void PostProcessInputRecursive();
 
+  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 
-  /**
-   * @param rootGroup The group for which to register new documentation node to.
-   * Function to generate documentation nodes for each variable in this an object. The documentation
-   * nodes are then used to register variables and read xml input into variables.
-   */
-  void SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup);
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) {}
   
   virtual localIndex PackSize( string_array const & wrapperNames,
                                integer const recursive ) const;
@@ -554,30 +657,6 @@ public:
 
 
   //***********************************************************************************************
-
-  // user defined conversion doesn't work. can't infer template argument
-//  class GetDataClass
-//  {
-//  public:
-//    GetDataClass( ManagedGroup & parent ): m_parent( parent ) {}
-//
-//    inline GetDataClass& operator() ( std::string const & name )
-//    {
-//      m_name = name;
-//      return *this;
-//    }
-//
-//    template< typename T>
-//    operator typename ViewWrapper<T>::rtype ()
-//    {
-//      return m_parent.getData<T>( m_name );
-//    }
-//  private:
-//    ManagedGroup & m_parent;
-//    std::string m_name;
-//  };
-//  GetDataClass GetData = {*this};
-
 
   ViewWrapperBase const * getWrapperBase( indexType const index ) const
   { return m_wrappers[index]; }
@@ -799,24 +878,49 @@ public:
 
   void finishReading();
 
-
 protected:
-  cxx_utilities::DocumentationNode * m_docNode = nullptr;
+  /**
+   * @brief Post processing of the input values.
+   */
+  virtual void PostProcessInput() {}
+
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const group ) {}
+
 
 private:  
+  /**
+   * @brief Read values from the input file and put them into the
+   *        wrapped values for this group.
+   * @param[in] targetNode the XML node that to extract input values from.
+   */
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
+  /// the parent of this group
   ManagedGroup* m_parent = nullptr;
+
+  /// the container for all wrappers
   viewWrapperMap m_wrappers;
+
+  /// The container for all sub-groups
   subGroupMap m_subGroups;
 
 #ifdef GEOSX_USE_ATK
+  /// Pointer to the sidre group that mirrors this group
   axom::sidre::Group* m_sidreGroup;
 #endif
 
-  indexType m_size;
-  indexType m_capacity;
-  RestartFlags m_restart_flags;
-  string m_name;
+  indexType m_size;             ///< The size/length wrappers in this group
+  indexType m_capacity;         ///< The capacity for wrappers in this group
+  RestartFlags m_restart_flags; ///< Restart flag for this group...and
+                                ///< subsequently all wrappers in this group
+  string m_name;                ///< the repository name of this group. This
+                                ///< is the key in the parent group.
 
 };
 
@@ -915,39 +1019,6 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
   }
   return rval;
 }
-
-//template< typename T >
-//void ManagedGroup::RegisterViewWrapperRecursive( string const & name )
-//{
-//  this->RegisterViewWrapper<T>(name);
-//  forSubGroups( [&] ( ManagedGroup & group ) -> void
-//  {
-//    group.RegisterViewWrapperRecursive<T>(name);
-//  });
-//}
-//
-//template< typename T >
-//void ManagedGroup::RegisterViewWrapperRecursive( string const & name, string const & targetGroupName )
-//{
-//  if( this->m_name == targetGroupName )
-//  {
-//    forSubGroups( [&] ( ManagedGroup & group ) -> void
-//    {
-//      this->RegisterViewWrapperRecursive<T>(name);
-//    });
-//  }
-//  else
-//  {
-//    forSubGroups( [&] ( ManagedGroup & group ) -> void
-//    {
-//      group.RegisterViewWrapperRecursive<T>(name, targetGroupName);
-//    });
-//  }
-//}
-
-
-
-
 
 
 } /* end namespace dataRepository */

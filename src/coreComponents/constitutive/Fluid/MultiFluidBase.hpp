@@ -93,10 +93,6 @@ public:
 
   virtual ~MultiFluidBase() override;
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
-
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -192,6 +188,7 @@ public:
   } viewKeysMultiFluidBase;
 
 protected:
+  virtual void PostProcessInput() override;
 
   /**
    * @brief Function called internally to resize member arrays

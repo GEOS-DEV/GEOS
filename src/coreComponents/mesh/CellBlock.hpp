@@ -81,10 +81,6 @@ public:
   CellBlock(const CellBlock& init);
 
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
-
   virtual ~CellBlock() override;
 
   /**
@@ -105,6 +101,8 @@ public:
    * @return
    */
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
+
+  void CalculateCellVolumes( array1d<localIndex> const & indices ) const;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -210,6 +208,7 @@ public:
   void SetElementType( string const & elementType);
 
 private:
+
   /// The number of nodes per element in this cell block
   localIndex m_numNodesPerElement;
 

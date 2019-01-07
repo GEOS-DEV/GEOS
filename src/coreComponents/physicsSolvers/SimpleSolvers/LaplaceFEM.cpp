@@ -35,11 +35,10 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
-//#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
+#include "managers/NumericalMethodsManager.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"
@@ -71,6 +70,14 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
   getLinearSystemRepository()->
     SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
 
+  RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("option for default time integration method");
+
+  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("name of field variable");
+
 }
 
 
@@ -81,84 +88,26 @@ LaplaceFEM::~LaplaceFEM()
 }
 
 
-void LaplaceFEM::FillDocumentationNode(  )
+void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example solid mechanics solver");
-
-
-  docNode->AllocateChildNode( laplaceFEMViewKeys.timeIntegrationOption.Key(),
-                              laplaceFEMViewKeys.timeIntegrationOption.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "option for default time integration method",
-                              "option for default time integration method",
-                              "ExplicitDynamic",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( laplaceFEMViewKeys.fieldVarName.Key(),
-                              laplaceFEMViewKeys.fieldVarName.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "name of field variable",
-                              "name of field variable",
-                              "Pressure",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
-void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    NodeManager * const nodes = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
+    NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
-    docNode->AllocateChildNode( "Temperature",
-                                "Temperature",
-                                -1,
-                                "real64_array",
-                                "real64_array",
-                                "",
-                                "",
-                                "",
-                                nodes->getName(),
-                                1,
-                                0,
-                                0 );
+    nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
+      setApplyDefaultValue(0.0)->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setDescription("Primary field variable");
 
-    docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
-                                viewKeyStruct::blockLocalDofNumberString,
-                                -1,
-                                "globalIndex_array",
-                                "globalIndex_array",
-                                "dof",
-                                "dof",
-                                "-1",
-                                nodes->getName(),
-                                1,
-                                0,
-                                0 );
-
+    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString )->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(PlotLevel::LEVEL_1)->
+      setDescription("Global DOF numbers for the primary field variable");
   }
 }
 
 
-void LaplaceFEM::ReadXML_PostProcess()
+void LaplaceFEM::PostProcessInput()
 {
   string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 
@@ -178,12 +127,6 @@ void LaplaceFEM::ReadXML_PostProcess()
   {
     GEOS_ERROR("invalid time integration option");
   }
-}
-
-
-void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
-{
-
 }
 
 
@@ -364,7 +307,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
-      auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
+      auto const & numMethodName = m_discretizationName;
 
       for( localIndex subRegionIndex=0 ; subRegionIndex<elementRegion->numSubRegions() ; ++subRegionIndex )
       {
@@ -412,7 +355,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::dummyScalarBlock,
@@ -425,8 +368,8 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
     ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second);
-    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
@@ -445,7 +388,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
                                                     numNodesPerElement);
 
       array1d<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
-      const int n_q_points = feSpace->m_finiteElement->n_quadrature_points();
+      const int n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
       for( localIndex k=0 ; k<cellBlockSubRegion->size() ; ++k )

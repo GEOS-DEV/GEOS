@@ -58,9 +58,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
@@ -83,6 +80,9 @@ public:
     ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
 
   } viewKeysCompositionalMultiphaseFluid;
+
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 

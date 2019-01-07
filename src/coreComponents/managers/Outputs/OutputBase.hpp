@@ -53,12 +53,6 @@ public:
   OutputBase& operator=( OutputBase const & ) = default;
   OutputBase& operator=( OutputBase&& ) = default;
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
-  /// Output initialization
-  virtual void Initialize( ManagedGroup * const group ) override;
-
   /// Method for setting up output directories
   virtual void SetupDirectoryStructure();
 
@@ -66,11 +60,21 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
-  struct viewKeyStruct
+  struct viewKeysStruct
   {
-    dataRepository::ViewKey slaveDirectory = { "slaveDirectory" };
-    dataRepository::ViewKey parallelThreads = { "parallelThreads" };
+    static constexpr auto slaveDirectoryString = "slaveDirectory";
+    static constexpr auto parallelThreadsString = "parallelThreads";
   } outputBaseViewKeys;
+
+  string slaveDirectory() const { return m_slaveDirectory; }
+  integer parallelThreads() const { return m_parallelThreads; }
+
+protected:
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
+
+private:
+  string m_slaveDirectory;
+  integer m_parallelThreads;
 
 };
 

@@ -50,36 +50,19 @@ using namespace dataRepository;
 
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
   MeshGeneratorBase( name, parent )
-{}
+{
+  this->RegisterViewWrapper<string>(keys::filePath)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("path to the mesh file");
+}
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {}
 
-void PAMELAMeshGenerator::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( "PAMELAMeshGenerator" );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Generate a mesh using PAMELA library" );
-
-  docNode->AllocateChildNode( keys::filePath,
-                              keys::filePath,
-                              -1,
-                              "string",
-                              "string",
-                              "path to the mesh file",
-                              "path to the mesh file",
-                              "filePath",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
 void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {}
 
-void PAMELAMeshGenerator::ReadXML_PostProcess()
+void PAMELAMeshGenerator::PostProcessInput()
 {
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >
@@ -99,13 +82,14 @@ void PAMELAMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain
   return;
 }
 
-void PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
-  return;
+  return nullptr;
 }
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
+  std::cout << "begin mesh reading" << std::endl;
   int nranks = 1;
 #ifdef GEOSX_USE_MPI
   MPI_Comm_size( MPI_COMM_GEOSX, &nranks );
@@ -161,11 +145,8 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         auto cellBlockType = cellBlockPAMELA->ElementType;
         auto cellBlockName = ElementToLabel.at( cellBlockType );
         CellBlock * cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionName + "_" + cellBlockName );
-        cellBlock->SetDocumentationNodes();
-        cellBlock->RegisterDocumentationNodes();
-        cellBlock->ReadXML_PostProcess();
-
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( cellBlockName );
+        //cellBlock->PostProcessInputRecursive();
         if( cellBlockName == "HEX" )
         {
           cellBlock -> SetElementType("C3D8");
@@ -303,6 +284,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       }
     }
   }
+  std::cout << "Mesh was read" << std::endl;
 }
 
 void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,

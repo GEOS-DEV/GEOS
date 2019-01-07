@@ -53,13 +53,29 @@ std::unordered_map<string, EOS_TYPE> const PVTPackage_eosDict =
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false );
+  RegisterViewWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of equation of state types for each phase");
 
-  RegisterViewWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure, false );
-  RegisterViewWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature, false );
-  RegisterViewWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor, false );
-  RegisterViewWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift, false );
-  RegisterViewWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff, false );
+  RegisterViewWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Component critical pressures");
+
+  RegisterViewWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Component critical temperatures");
+
+  RegisterViewWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Component acentric factors");
+
+  RegisterViewWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Component volume shifts");
+
+  RegisterViewWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Table of binary interaction coefficients");
 }
 
 CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
@@ -92,82 +108,9 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
   return std::move(clone);
 }
 
-void CompositionalMultiphaseFluid::FillDocumentationNode()
+void CompositionalMultiphaseFluid::PostProcessInput()
 {
-  MultiFluidPVTPackageWrapper::FillDocumentationNode();
-
-  DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setShortDescription( "Compositional multiphase fluid model based on PVTPackage" );
-
-  docNode->AllocateChildNode( viewKeyStruct::equationsOfStateString,
-                              viewKeyStruct::equationsOfStateString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of equation of state types for each phase",
-                              "List of equation of state types for each phase",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentCriticalPressureString,
-                              viewKeyStruct::componentCriticalPressureString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component critical pressures",
-                              "Component critical pressures",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentCriticalTemperatureString,
-                              viewKeyStruct::componentCriticalTemperatureString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component critical temperatures",
-                              "Component critical temperatures",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentAcentricFactorString,
-                              viewKeyStruct::componentAcentricFactorString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component acentric factors",
-                              "Component acentric factors",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentVolumeShiftString,
-                              viewKeyStruct::componentVolumeShiftString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component volume shifts",
-                              "Component volume shifts",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
-void CompositionalMultiphaseFluid::ReadXML_PostProcess()
-{
-  MultiFluidPVTPackageWrapper::ReadXML_PostProcess();
+  MultiFluidPVTPackageWrapper::PostProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();

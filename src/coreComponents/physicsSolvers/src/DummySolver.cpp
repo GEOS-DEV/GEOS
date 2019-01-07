@@ -32,7 +32,13 @@ using namespace dataRepository;
 DummySolver::DummySolver( const std::string& name,
                                                   ManagedGroup * const parent ):
   SolverBase( name, parent )
-{}
+{
+
+  RegisterViewWrapper<real64>( dummyViewKeys.rand_scale.Key() )->
+    setApplyDefaultValue(1e-9)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Scale for modifying requested dt");
+}
 
 
 
@@ -42,32 +48,7 @@ DummySolver::~DummySolver()
 }
 
 
-void DummySolver::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Dummy solver for testing time-stepping behavior");
-
-  docNode->AllocateChildNode( dummyViewKeys.rand_scale.Key(),
-                              dummyViewKeys.rand_scale.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Scale for modifying requested dt",
-                              "Scale for modifying requested dt",
-                              "1e-9",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-}
-
-
-void DummySolver::Initialize( ManagedGroup * const problemManager )
+void DummySolver::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
   integer rank = 0;
   #if USE_MPI

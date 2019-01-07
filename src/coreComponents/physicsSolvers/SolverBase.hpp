@@ -24,7 +24,6 @@
 #include <string>
 #include <limits>
 
-#include "cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
@@ -75,7 +74,6 @@ public:
 
   static string CatalogName() { return "SolverBase"; }
 
-  void ReadXML_PostProcess() override;
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
@@ -346,14 +344,7 @@ public:
                     systemSolverInterface::BlockIDs const blockID );
 
 
-
-  virtual void FillDocumentationNode() override;
-
-  virtual void
-  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
-
-
-//  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
@@ -362,13 +353,16 @@ public:
   {
     constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
+    constexpr static auto cflFactorString = "cflFactor";
+    constexpr static auto maxStableDtString = "maxStableDt";
+    static constexpr auto discretizationString = "discretization";
+    constexpr static auto targetRegionsString = "targetRegions";
 
   } viewKeys;
 
   struct groupKeyStruct
   {
     constexpr static auto systemSolverParametersString = "SystemSolverParameters";
-    dataRepository::GroupKey systemSolverParameters = { systemSolverParametersString };
   } groupKeys;
 
 
@@ -397,15 +391,33 @@ public:
     return &m_systemSolverParameters;
   }
 
+  string getDiscretization() const {return m_discretizationName;}
+
+  string_array const & getTargetRegions() const {return m_targetRegions;}
+
 protected:
   /// This is a wrapper for the linear solver package
   systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
 
+  void PostProcessInput() override;
 
-private:
+  string getDiscretizationName() const {return m_discretizationName;}
+
+protected:
+
+
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
+
+  real64 m_cflFactor;
+  real64 m_maxStableDt;
+
+  /// name of the FV discretization object in the data repository
+  string m_discretizationName;
+
+  string_array m_targetRegions;
+
 
 //  localIndex_array m_blockLocalDofNumber;
 

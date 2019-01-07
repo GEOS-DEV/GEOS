@@ -60,12 +60,9 @@ public:
 
   static string CatalogName() { return "MeshFile"; }
 
-
-  virtual void FillDocumentationNode() override;
-
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
 
@@ -80,10 +77,13 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ReadXML_PostProcess() override final;
 //  int m_delayMeshDeformation;
 
+protected:
+  void PostProcessInput() override final;
+
 private:
+
   /// Contains the path to the VTM file
   string m_fileName;
 

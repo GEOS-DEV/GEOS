@@ -24,13 +24,14 @@
  */
 
 #include "BoundaryConditionManager.hpp"
+
 #include "BoundaryConditionBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "mesh/MeshBody.hpp"
 
 #include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "codingUtilities/StringUtilities.hpp"
 
@@ -57,10 +58,10 @@ BoundaryConditionManager::~BoundaryConditionManager()
   // TODO Auto-generated destructor stub
 }
 
-void BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup( childName, std::move( bc ) );
+  return this->RegisterGroup( childName, std::move( bc ) );
 }
 
 

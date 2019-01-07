@@ -7,9 +7,10 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  discretization="FE1"
+                                  targetRegions="Region2"
                                   >
-      <SystemSolverParameters name="SystemSolverParameters"
+      <SystemSolverParameters name="solverParams0"
                               useMLPrecond="1"
                               scalingOption="0"
                               krylovTol="1.0e-8"
@@ -26,9 +27,9 @@
                   xCoords="0, 80"
                   yCoords="0, 8"
                   zCoords="0, 4"
-                  nx="160"
-                  ny="16"
-                  nz="8"
+                  nx="80"
+                  ny="8"
+                  nz="4"
                   cellBlockNames="cb1"/>
   </Mesh>
 
@@ -43,10 +44,10 @@
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
+    <!-- PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput" /-->
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -72,8 +73,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
@@ -93,19 +93,10 @@
   </InitialConditions>
 
   <BoundaryConditions>
-    <!--Dirichlet name="source"  
-               initialCondition="1"  
-               elementRegionName="Region2" 
-               setNames="source"
-               fieldName="ConstitutiveManager/shale/StateData/MeanStress"
-               dataType="real64" 
-               scale="-1.0e6"
-               function="spaceFunction"/-->
 
     <Dirichlet name="xnegconstraint" 
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="0" 
                scale="0.0" 
                setNames="xneg"/>
@@ -113,7 +104,6 @@
     <Dirichlet name="yconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="1" 
                scale="0.0" 
                setNames="xneg"/>
@@ -121,7 +111,6 @@
     <Dirichlet name="zconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="2" 
                scale="0.0" 
                setNames="zneg zpos"/>
@@ -129,19 +118,17 @@
     <Dirichlet name="xposconstraint" 
                objectPath="faceManager" 
                fieldName="Traction" 
-               dataType="Vector" 
                component="1" 
                scale="1.0e6" 
                functionName="timeFunction"
                setNames="xpos"/>
-    <!-- Dirichlet name="xposconstraint" component="1" fieldName="Traction" dataType="Vector" object="Face" scale="1.0e5" setNames="xpos"/-->
 
 
   </BoundaryConditions>
 
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="real64" coordinates="0.0 10.0" values="0.0 10.0" />
+    <TableFunction     name="timeFunction"         inputVarNames="time"  coordinates="0.0 10.0" values="0.0 10.0" />
   </Functions>
 
   <Partition>
@@ -150,7 +137,7 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub"/>
     <Restart name="sidre_restart"/>
   </Outputs>
   

@@ -33,6 +33,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 //#include "legacy/Constitutive/Material/MaterialFactory.h"
 //#include "legacy/ArrayT/ArrayT.h"
+#include "CellBlockManager.hpp"
 
 namespace geosx
 {
@@ -91,88 +92,40 @@ void ElementRegionManager::resize( integer_array const & numElements,
 ////  elemRegion->resize(numElements);
 //}
 
-// void ElementRegionManager::CreateChild( string const & childKey, string const & childName )
-// {
-// }
+ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+ {
+   GEOS_ERROR_IF( !(childKey == "ElementRegion"),
+                  "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog");
+   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName);
+   ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
+   return elementRegions->RegisterGroup<ElementRegion>( childName );
+ }
 
 
-void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
-{
-  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    if( childNode.name() == string("ElementRegion") )
-    {
-      std::string regionName = childNode.attribute("name").value();
-      GEOS_LOG_RANK_0(regionName);
-
-      ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
-      elemRegion->SetDocumentationNodes();
-      elemRegion->ReadXML(childNode);
-    }
-  }
-}
-
-
-void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
-{
-//    map<string,integer> constitutiveSizes;
-//    ManagedGroup * domain = problemManager.GetGroup(keys::domain);
-//    forElementRegions([&]( ElementRegion& elementRegion ) -> void
-//    {
-//      map<string,integer> sizes = elementRegion.SetConstitutiveMap(
-// problemManager );
-//      for( auto& entry : sizes )
-//      {
-//        constitutiveSizes[entry.first] += entry.second;
-//      }
-//    });
-//
-//    ManagedGroup * constitutiveManager =
-// domain->GetGroup(keys::ConstitutiveManager);
-//    for( auto & material : constitutiveManager->GetSubGroups() )
-//    {
-//      string name = material.first;
-//      if( constitutiveSizes.count(name) > 0 )
-//      {
-//        material.second->resize( constitutiveSizes.at(name) );
-//      }
-//    }
-}
-
-void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problemManager )
-{
-  ObjectManagerBase::InitializePostSubGroups(nullptr);
-
-//  map<string,localIndex> constitutiveSizes;
-//  ManagedGroup * domain = problemManager->GetGroup(keys::domain);
-//  forElementRegions([&]( ElementRegion * elementRegion ) -> void
-//    {
-////      map<string,localIndex> sizes;
-//      elementRegion->SetConstitutiveMap(problemManager, constitutiveSizes);
-////      for( auto& entry : sizes )
-////      {
-////        constitutiveSizes[entry.first] += entry.second;
-////      }
-//    });
-//
-//  constitutive::ConstitutiveManager *
-//  constitutiveManager = domain->GetGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
-//  for( auto & material : constitutiveManager->GetSubGroups() )
+//void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+//{
+//  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
+//  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
 //  {
-//    string name = material.first;
-//    if( constitutiveSizes.count(name) > 0 )
+//    if( childNode.name() == string("ElementRegion") )
 //    {
-//      material.second->resize(constitutiveSizes.at(name));
+//      std::string regionName = childNode.attribute("name").value();
+//      GEOS_LOG_RANK_0(regionName);
+//
+//      ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
+//      elemRegion->ReadXML(childNode);
 //    }
 //  }
+//}
 
-  this->forElementRegions( [&]( ElementRegion * elemRegion )->void
+void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
+{
+  this->forElementRegions([&](ElementRegion * const elemRegion)->void
   {
-    elemRegion->HangConstitutiveRelations( problemManager );
+    elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
   });
-
 }
+
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const

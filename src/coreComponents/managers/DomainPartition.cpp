@@ -54,11 +54,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::FillDocumentationNode()
+void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Domain");
-  docNode->setSchemaType("UniqueNode");
+  ManagedGroup::RegisterDataOnMeshRecursive( getMeshBodies() );
 }
 
 

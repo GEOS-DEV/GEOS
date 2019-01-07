@@ -31,16 +31,28 @@ namespace geosx
 using namespace dataRepository;
 
 FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *const parent)
-  : ManagedGroup(name, parent)
+  : ManagedGroup(name, parent),
+    m_boundarySetData(nullptr),
+    m_fieldName(),
+    m_boundaryFieldName(),
+    m_coeffName()
 {
   m_boundarySetData = this->RegisterGroup(groupKeyStruct::boundarySetDataString);
 
-  this->RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false);
-  this->RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false);
-  this->RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false);
+  RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of primary solution field");
 
-  ViewWrapper<CellStencil> * stencil = this->RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString);
-  stencil->setRestartFlags(RestartFlags::NO_WRITE);
+  RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of boundary (face) field");
+
+  RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of coefficient field");
+
+  RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -48,50 +60,6 @@ FluxApproximationBase::GetCatalog()
 {
   static FluxApproximationBase::CatalogInterface::CatalogType catalog;
   return catalog;
-}
-
-void FluxApproximationBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode(viewKeyStruct::fieldNameString,
-                             viewKeyStruct::fieldNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of primary solution field",
-                             "Name of primary solution field",
-                             "REQUIRED",
-                             "",
-                             0,
-                             1,
-                             0 );
-
-  docNode->AllocateChildNode(viewKeyStruct::boundaryFieldNameString,
-                             viewKeyStruct::boundaryFieldNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of boundary (face) field",
-                             "Name of boundary (face) field",
-                             "",
-                             "",
-                             0,
-                             1,
-                             0 );
-
-  docNode->AllocateChildNode(viewKeyStruct::coeffNameString,
-                             viewKeyStruct::coeffNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of coefficient field",
-                             "Name of coefficient field",
-                             "REQUIRED",
-                             "",
-                             0,
-                             1,
-                             0 );
 }
 
 void FluxApproximationBase::compute(DomainPartition * domain)
@@ -145,7 +113,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
   return this->hasView(setName);
 }
 
-void FluxApproximationBase::FinalInitializationPreSubGroups(ManagedGroup * const rootGroup)
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
 {
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   compute(domain);

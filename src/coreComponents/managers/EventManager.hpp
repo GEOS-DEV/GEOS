@@ -49,14 +49,8 @@ public:
   /// Destructor
   virtual ~EventManager() override;
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
-  /// XML post processing
-  virtual void ReadXML_PostProcess() override;
-
   /// A method to add child events
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   /**
    * The main execution loop for the code.  During each cycle, it will:
@@ -70,6 +64,16 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr auto maxTimeString = "maxTime";
+    static constexpr auto maxCycleString = "maxCycle";
+    static constexpr auto verbosityString = "verbosity";
+
+    static constexpr auto timeString = "time";
+    static constexpr auto dtString = "dt";
+    static constexpr auto cycleString = "cycle";
+    static constexpr auto currentSubEventString = "currentSubEvent";
+    static constexpr auto currentMaxDtString = "currentMaxDt";
+
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
     dataRepository::ViewKey cycle = { "cycle" };
@@ -84,7 +88,22 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
+protected:
+  virtual void PostProcessInput() override;
+
+private:
+
+  real64 m_maxTime;
+  integer m_maxCycle;
+  integer m_verbosity;
+
+  real64 m_time;
+  real64 m_dt;
+  integer m_cycle;
+  integer m_currentSubEvent;
+  real64 m_currentMaxDt;
 };
+
 
 } /* namespace geosx */
 

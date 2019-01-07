@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * QuadratureRuleManager.cpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
- */
-
 #include "QuadratureRuleManager.hpp"
 #include "QuadratureBase.hpp"
 
@@ -39,21 +32,16 @@ QuadratureRuleManager::~QuadratureRuleManager()
   // TODO Auto-generated destructor stub
 }
 
-void QuadratureRuleManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("QuadratureRules");
-  docNode->setSchemaType("UniqueNode");
-}
 
-void QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey );
   this->RegisterViewWrapper( childName, std::move(quadrature) )->setRestartFlags(RestartFlags::NO_WRITE);
+  return nullptr;
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void QuadratureRuleManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
@@ -66,6 +54,7 @@ void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
     }
   }
 }
+
 
 
 } /* namespace geosx */

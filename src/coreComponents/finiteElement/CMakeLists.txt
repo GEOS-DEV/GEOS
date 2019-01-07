@@ -2,7 +2,7 @@
 # Specify all headers
 #
 set( finiteElement_headers
-     FiniteElementSpace.hpp
+     FiniteElementDiscretization.hpp
      ElementLibrary/FiniteElement.h
      ElementLibrary/FiniteElementBase.h
      Kinematics.h
@@ -11,7 +11,7 @@ set( finiteElement_headers
      basis/Polynomial.hpp    
      quadrature/QuadratureBase.hpp
      quadrature/GaussQuadrature.hpp
-     FiniteElementSpaceManager.hpp
+     FiniteElementDiscretizationManager.hpp
      basis/BasisFunctionManager.hpp
      quadrature/QuadratureRuleManager.hpp
    )
@@ -19,7 +19,7 @@ set( finiteElement_headers
 # Specify all sources
 #
 set( finiteElement_sources
-     FiniteElementSpace.cpp
+     FiniteElementDiscretization.cpp
      ElementLibrary/FiniteElement.cpp
      ElementLibrary/FiniteElementBase.cpp
      Kinematics.cpp
@@ -28,7 +28,7 @@ set( finiteElement_sources
      basis/Polynomial.cpp    
      quadrature/QuadratureBase.cpp
      quadrature/GaussQuadrature.cpp
-     FiniteElementSpaceManager.cpp
+     FiniteElementDiscretizationManager.cpp
      basis/BasisFunctionManager.cpp
      quadrature/QuadratureRuleManager.cpp
    )

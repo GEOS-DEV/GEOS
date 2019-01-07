@@ -66,13 +66,7 @@ public:
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void
-  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
-
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const problemManager ) override final;
-
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -126,6 +120,9 @@ public:
                         int const numTileColors,
                         const bool prefrac,
                         const realT time );
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
 
 private:
 

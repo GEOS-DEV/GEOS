@@ -253,6 +253,23 @@ void EpetraMatrix::multiply( EpetraVector const &src,
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Matrix/matrix multiplication
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Perform the matrix-matrix product A*src = dst.
+void EpetraMatrix::multiply( EpetraMatrix const &src,
+                             EpetraMatrix &dst ) const
+{
+  int err = EpetraExt::MatrixMatrix::Multiply(*m_matrix,
+                                              false,//don't use transpose
+                                              *src.unwrappedPointer(),
+                                              false,//don't use tranpose,
+                                              *dst.unwrappedPointer());
+
+  GEOS_ERROR_IF(err != 0,"Error thrown in matrix/matrix multiply routine");
+}
+
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute residual.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute res = b - Ax (residual form).

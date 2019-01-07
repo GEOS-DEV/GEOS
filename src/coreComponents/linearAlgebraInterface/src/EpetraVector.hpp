@@ -18,9 +18,6 @@
 
 /**
  * @file EpetraVector.hpp
- *  Created on: Jul 24, 2018
- *  Author: Matthias Cremon
- *
  */
 
 #ifndef LAI_EPETRAVECTOR_HPP_

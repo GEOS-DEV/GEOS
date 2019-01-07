@@ -68,12 +68,14 @@ public:
 
   static string CatalogName() { return "InternalMesh"; }
 
-
-  virtual void FillDocumentationNode() override;
+//  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
+//
+//
+//  virtual void FillDocumentationNode() override;
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
 
@@ -88,11 +90,12 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ReadXML_PostProcess() override final;
 //  int m_delayMeshDeformation;
 
-private:
+protected:
+  void PostProcessInput() override final;
 
+private:
 
   int m_dim;
   array1d<real64> m_vertices[3];

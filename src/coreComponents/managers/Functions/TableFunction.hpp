@@ -45,9 +45,6 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "TableFunction"; }
-
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override final;
   
   /// Initialize the function
   virtual void InitializeFunction() override;

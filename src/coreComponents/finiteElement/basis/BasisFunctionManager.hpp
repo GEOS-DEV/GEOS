@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * BasisFunctionManager.hpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
- */
-
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_
 
@@ -46,9 +39,10 @@ public:
   BasisFunctionManager(string const & name, ManagedGroup * const parent);
   virtual ~BasisFunctionManager() override final;
 
-  virtual void FillDocumentationNode() override;
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+
+private:
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
 };
 

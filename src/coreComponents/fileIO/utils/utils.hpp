@@ -82,6 +82,11 @@ inline void splitPath(const std::string& path, std::string& dirname, std::string
   }
 }
 
+inline bool isAbsolutePath(const std::string & path)
+{
+  return path[0] == '/';
+}
+
 template <typename REGEX>
 inline bool regexMatch(const std::string & str, REGEX regex)
 {

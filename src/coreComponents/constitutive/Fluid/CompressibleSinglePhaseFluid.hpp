@@ -78,11 +78,7 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-  virtual void FillDocumentationNode() override;
 
-  virtual void ReadXML_PostProcess() override;
-
-  virtual void InitializePostSubGroups(ManagedGroup * const group) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -105,6 +101,8 @@ public:
   array2d<real64> const & dViscosity_dDensity() const { return m_dViscosity_dPressure; }
   array2d<real64>       & dViscosity_dDensity()       { return m_dViscosity_dPressure; }
 
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 

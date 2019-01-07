@@ -17,7 +17,6 @@
  */
 
 #include "HaltEvent.hpp"
-#include "DocumentationNode.hpp"
 #include <sys/time.h>
 
 /**
@@ -32,42 +31,24 @@ using namespace dataRepository;
 
 HaltEvent::HaltEvent( const std::string& name,
                       ManagedGroup * const parent ):
-  EventBase(name,parent)
+  EventBase(name,parent),
+  m_startTime(),
+  m_lastTime(),
+  m_realDt()
 {
   timeval tim;
   gettimeofday(&tim, nullptr);
   m_startTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
   m_lastTime = m_startTime;  
+
+  RegisterViewWrapper<real64>( haltEventViewKeys.maxRuntime.Key() )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription( "max runtime" );
 }
 
 
 HaltEvent::~HaltEvent()
 {}
-
-
-void HaltEvent::FillDocumentationNode()
-{
-  EventBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("HaltEvent");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Describes the timing of the solver application");
-
-  docNode->AllocateChildNode( haltEventViewKeys.maxRuntime.Key(),
-                              haltEventViewKeys.maxRuntime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "max runtime",
-                              "max runtime",
-                              "cycle",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-}
 
 
 void HaltEvent::EstimateEventTiming(real64 const time,

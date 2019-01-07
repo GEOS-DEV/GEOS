@@ -54,15 +54,23 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
 
   // RelPerm-specific interface
+
+  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) override;
 
   virtual void StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
                                         localIndex const k,
                                         localIndex const q ) override;
+
+  inline static void StateUpdatePointRelPerm( localIndex const NP,
+                                              arraySlice1d<real64 const> const & phaseVolFraction,
+                                              arraySlice1d<real64> const & phaseRelPerm,
+                                              arraySlice2d<real64> const & dPhaseRelPerm_dPhaseVolFrac,
+                                              arraySlice1d<real64 const> const &  phaseMinVolumeFraction,
+                                              arraySlice1d<real64 const> const & phaseRelPermExponent,
+                                              arraySlice1d<real64 const> const & phaseRelPermMaxValue,
+                                              real64 const & satScale );
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
@@ -79,12 +87,58 @@ public:
   } vieKeysBrooksCoreyRelativePermeability;
 
 protected:
+  virtual void PostProcessInput() override;
 
   array1d<real64> m_phaseMinVolumeFraction;
   array1d<real64> m_phaseRelPermExponent;
   array1d<real64> m_phaseRelPermMaxValue;
 
+  real64 m_satScale;
+
+
 };
+
+
+inline void
+BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( localIndex const NP,
+                                                          arraySlice1d<real64 const> const & phaseVolFraction,
+                                                          arraySlice1d<real64> const & relPerm,
+                                                          arraySlice2d<real64> const & dRelPerm_dVolFrac,
+                                                          arraySlice1d<real64 const> const & phaseMinVolumeFraction,
+                                                          arraySlice1d<real64 const> const & phaseRelPermExponent,
+                                                          arraySlice1d<real64 const> const & phaseRelPermMaxValue,
+                                                          real64 const & satScale )
+{
+
+  for (localIndex ip = 0; ip < NP; ++ip)
+  {
+    for (localIndex jp = 0; jp < NP; ++jp)
+    {
+      dRelPerm_dVolFrac[ip][jp] = 0.0;
+    }
+  }
+  real64 const satScaleInv = 1.0 / satScale;
+
+  for (localIndex ip = 0; ip < NP; ++ip)
+  {
+    real64 const satScaled = (phaseVolFraction[ip] - phaseMinVolumeFraction[ip]) * satScaleInv;
+    real64 const exponent  = phaseRelPermExponent[ip];
+    real64 const scale     = phaseRelPermMaxValue[ip];
+
+    if (satScaled > 0.0 && satScaled < 1.0)
+    {
+      // intermediate value
+      real64 const v = scale * std::pow( satScaled, exponent - 1.0 );
+
+      relPerm[ip] = v * satScaled;
+      dRelPerm_dVolFrac[ip][ip] = v * exponent * satScaleInv;
+    }
+    else
+    {
+      relPerm[ip] = (satScaled < 0.0) ? 0.0 : scale;
+    }
+  }
+}
 
 } // namespace constitutive
 

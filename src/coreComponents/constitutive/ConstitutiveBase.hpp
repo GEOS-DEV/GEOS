@@ -25,7 +25,6 @@
 
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
-//#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
@@ -82,7 +81,7 @@ public:
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const = 0;
+                            integer const systemAssembleFlag ) const {}
 
 
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
@@ -104,8 +103,6 @@ public:
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) {}
-
-  virtual void FillDocumentationNode() override = 0;
 
   virtual void resize( localIndex ) override;
 
