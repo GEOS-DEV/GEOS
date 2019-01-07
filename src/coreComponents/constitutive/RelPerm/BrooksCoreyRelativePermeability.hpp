@@ -54,7 +54,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void ProcessInputFile_PostProcess() override;
 
   // RelPerm-specific interface
 
@@ -88,12 +87,15 @@ public:
   } vieKeysBrooksCoreyRelativePermeability;
 
 protected:
+  virtual void PostProcessInput() override;
 
   array1d<real64> m_phaseMinVolumeFraction;
   array1d<real64> m_phaseRelPermExponent;
   array1d<real64> m_phaseRelPermMaxValue;
 
   real64 m_satScale;
+
+
 };
 
 

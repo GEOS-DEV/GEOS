@@ -113,7 +113,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
   return this->hasView(setName);
 }
 
-void FluxApproximationBase::FinalInitializationPreSubGroups(ManagedGroup * const rootGroup)
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
 {
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   compute(domain);

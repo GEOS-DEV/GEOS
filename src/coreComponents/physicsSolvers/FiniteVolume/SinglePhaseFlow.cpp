@@ -87,11 +87,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
   }
 }
 
-void SinglePhaseFlow::InitializePreSubGroups(ManagedGroup * const rootGroup)
-{
-  FlowSolverBase::InitializePreSubGroups(rootGroup);
-}
-
 void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -120,9 +115,9 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
 }
 
 
-void SinglePhaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
+void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
-  FlowSolverBase::FinalInitializationPreSubGroups( rootGroup );
+  FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 

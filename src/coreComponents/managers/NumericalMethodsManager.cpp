@@ -24,9 +24,10 @@
  */
 
 #include "NumericalMethodsManager.hpp"
+
 #include "finiteElement/basis/BasisFunctionManager.hpp"
 #include "finiteElement/quadrature/QuadratureRuleManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 
 namespace geosx
@@ -38,7 +39,7 @@ NumericalMethodsManager::NumericalMethodsManager( string const & name, ManagedGr
 {
   this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
   this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
-  this->RegisterGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  this->RegisterGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
   this->RegisterGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 }
 

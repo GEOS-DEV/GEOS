@@ -10,6 +10,7 @@
                      verboseLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
+                     targetRegions="Region2"
                      fluidName="water"
                      solidName="rock">
       <SystemSolverParameters name="SystemSolverParameters"
@@ -32,10 +33,10 @@
   </Mesh>
 
   <Geometry>
-    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.11, 10.01, 1.01"/>
-    <Box name="right"  type="0" xMin=" 9.89, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  0.11, 1.01"/>
-    <Box name="top"    type="0" xMin="-0.01,  9.89, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="left"   xMin="-0.01, -0.01, -0.01" xMax=" 0.11, 10.01, 1.01"/>
+    <Box name="right"  xMin=" 9.89, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="10.01,  0.11, 1.01"/>
+    <Box name="top"    xMin="-0.01,  9.89, -0.01" xMax="10.01, 10.01, 1.01"/>
   </Geometry>
 
 
@@ -72,7 +73,6 @@
   <ElementRegions>
     <ElementRegion name="Region2"
                    cellBlocks="cb1"
-                   material="water"
                    materialList="water rock"/>
   </ElementRegions>
 
@@ -100,7 +100,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <Dirichlet name="permy"
@@ -109,7 +108,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <Dirichlet name="permz"
@@ -118,7 +116,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <Dirichlet name="referencePorosity"
@@ -126,7 +123,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.05"/>
 
     <Dirichlet name="initialPressure"
@@ -134,13 +130,11 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="0.0"/>
 
     <Dirichlet name="boundaryPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="Scalar"
                functionName="boundaryPressureFunc"
                scale="1.0e7"
                setNames="left right"/>
@@ -149,13 +143,11 @@
   <Functions>
     <SymbolicFunction name="boundaryPressureFunc"
                       inputVarNames="elementCenter"
-                      inputVarTypes=""
                       variableNames="x y z"
                       expression="(10-x)/10"/>
 
     <SymbolicFunction name="solutionFunction"
                       inputVarNames="elementCenter"
-                      inputVarTypes=""
                       variableNames="x y z"
                       expression="1e7*(10-x)/10"/>
   </Functions>

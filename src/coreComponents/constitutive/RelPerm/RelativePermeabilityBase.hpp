@@ -47,8 +47,6 @@ public:
 
   virtual ~RelativePermeabilityBase() override;
 
-  virtual void ProcessInputFile_PostProcess() override;
-
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -93,6 +91,7 @@ public:
   } viewKeysRelativePermeabilityBase;
 
 protected:
+  virtual void PostProcessInput() override;
 
   /**
    * @brief Function to batch process constitutive updates via a kernel launch.
@@ -126,6 +125,7 @@ protected:
   // output quantities
   array3d<real64>  m_phaseRelPerm;
   array4d<real64>  m_dPhaseRelPerm_dPhaseVolFrac;
+
 
 };
 

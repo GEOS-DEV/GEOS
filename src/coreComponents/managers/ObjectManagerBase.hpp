@@ -62,8 +62,6 @@ public:
 
 //  virtual void FillDocumentationNode() override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const ) override;
-
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
 

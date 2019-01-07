@@ -108,9 +108,9 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
   return std::move(clone);
 }
 
-void CompositionalMultiphaseFluid::ProcessInputFile_PostProcess()
+void CompositionalMultiphaseFluid::PostProcessInput()
 {
-  MultiFluidPVTPackageWrapper::ProcessInputFile_PostProcess();
+  MultiFluidPVTPackageWrapper::PostProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();

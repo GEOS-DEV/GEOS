@@ -41,7 +41,6 @@ public:
 
   static string CatalogName() { return "DummySolver"; }
 
-  virtual void Initialize( ManagedGroup * const problemManager ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
@@ -54,6 +53,9 @@ public:
   {
     dataRepository::ViewKey rand_scale = { "rand_scale" };
   } dummyViewKeys;
+
+protected:
+  virtual void InitializePreSubGroups( ManagedGroup * const problemManager ) override final;
 
 };
 
