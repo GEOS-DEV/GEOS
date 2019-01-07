@@ -355,7 +355,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementDiscretizationManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::dummyScalarBlock,
@@ -369,7 +369,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   {
     ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second);
 
-    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
@@ -388,7 +388,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
                                                     numNodesPerElement);
 
       array1d<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
-      const int n_q_points = feSpace->m_finiteElement->n_quadrature_points();
+      const int n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
       for( localIndex k=0 ; k<cellBlockSubRegion->size() ; ++k )

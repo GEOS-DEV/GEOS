@@ -178,7 +178,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   NumericalMethodsManager const * const numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteElementDiscretizationManager const * const feSpaceManager =
+  FiniteElementDiscretizationManager const * const feDiscretizationManager =
     numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ConstitutiveManager * const constitutiveManager =
@@ -230,7 +230,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
 
-    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
@@ -247,7 +247,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
         CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
 
         real64 volumetricStrain = 0.0;
-        localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points() ;
+        localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points() ;
         for( localIndex q=0 ; q<numQuadraturePoints; ++q )
         {
           R2Tensor dUdX;

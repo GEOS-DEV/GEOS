@@ -360,7 +360,6 @@ void CellBlock::CalculateCellVolumes( array1d<localIndex> const & indices ) cons
       }
       center /= m_numNodesPerElement;
 
-      // TODO proper volumes for all shapes
       if( m_numNodesPerElement == 8 )
       {
         m_elementVolume[k] = computationalGeometry::HexVolume(Xlocal);

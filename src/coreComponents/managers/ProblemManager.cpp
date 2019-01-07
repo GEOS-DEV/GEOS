@@ -744,11 +744,11 @@ void ProblemManager::ApplyNumericalMethods()
     string_array const & targetRegions = solver->getTargetRegions();
 
     FiniteElementDiscretizationManager const *
-    feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+    feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
 
 
-    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(numericalMethodName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(numericalMethodName);
 
     for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
     {
@@ -770,11 +770,11 @@ void ProblemManager::ApplyNumericalMethods()
 
             elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )->void
             {
-              if( feSpace != nullptr )
+              if( feDiscretization != nullptr )
               {
-                feSpace->ApplySpaceToTargetCells(subRegion);
-                feSpace->CalculateShapeFunctionGradients( X, subRegion);
-                quadratureSize = feSpace->getNumberOfQuadraturePoints();
+                feDiscretization->ApplySpaceToTargetCells(subRegion);
+                feDiscretization->CalculateShapeFunctionGradients( X, subRegion);
+                quadratureSize = feDiscretization->getNumberOfQuadraturePoints();
               }
               for( auto & materialName : materialList )
               {

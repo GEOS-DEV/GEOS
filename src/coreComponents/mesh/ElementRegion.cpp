@@ -110,9 +110,9 @@ void ElementRegion::PostProcessInput()
 //
 //  auto const & numMethodName = this->getData<string>(keys::numericalMethod);
 //  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-//  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
-//  FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
-//  auto const & quadratureName = feSpace->getData<string>(keys::quadrature);
+//  FiniteElementSpaceManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+//  FiniteElementSpace const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
+//  auto const & quadratureName = feDiscretization->getData<string>(keys::quadrature);
 //  QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 //
 //
@@ -156,11 +156,11 @@ void ElementRegion::PostProcessInput()
 //  int quadratureSize = 1;
 //  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
 //  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-//  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementDiscretizations);
-//    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(numMethodName);
-//  if( feSpace)
+//  FiniteElementSpaceManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementDiscretizations);
+//    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(numMethodName);
+//  if( feDiscretization)
 //  {
-//    string const & quadratureName = feSpace->getReference<string>(keys::quadrature);
+//    string const & quadratureName = feDiscretization->getReference<string>(keys::quadrature);
 //    QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 //    quadratureSize = quadrature.size() ;
 //  }
