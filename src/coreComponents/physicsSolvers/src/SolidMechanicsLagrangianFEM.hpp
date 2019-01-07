@@ -61,15 +61,6 @@ public:
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-//  virtual void FillDocumentationNode() override final;
-//  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
-
-  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
-
-  virtual void ProcessInputFile_PostProcess() override final;
-
-//  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
-
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
@@ -268,7 +259,14 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
+protected:
+  virtual void PostProcessInput() override final;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+
+
 private:
+
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;

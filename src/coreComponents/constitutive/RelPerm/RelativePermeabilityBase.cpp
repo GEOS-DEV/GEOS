@@ -69,9 +69,9 @@ RelativePermeabilityBase::~RelativePermeabilityBase()
 }
 
 
-void RelativePermeabilityBase::ProcessInputFile_PostProcess()
+void RelativePermeabilityBase::PostProcessInput()
 {
-  ConstitutiveBase::ProcessInputFile_PostProcess();
+  ConstitutiveBase::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 

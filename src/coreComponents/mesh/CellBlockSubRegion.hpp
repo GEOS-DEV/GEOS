@@ -37,12 +37,6 @@ public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~CellBlockSubRegion() override;
 
-  void ProcessInputFile_PostProcess() override;
-
-  void InitializePreSubGroups( ManagedGroup * const ) override final;
-
-  void InitializePostSubGroups( ManagedGroup * const ) override final;
-
   void CopyFromCellBlock( CellBlock const * source );
 
   template< typename LAMBDA >

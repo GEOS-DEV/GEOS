@@ -53,8 +53,6 @@ public:
   EventBase& operator=( EventBase const & ) = default;
   EventBase& operator=( EventBase&& ) = default;
 
-  // virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
-
   /**
    * If the event forecast is equal to 1, then signal the targets to prepare for execution
    * during the next cycle.
