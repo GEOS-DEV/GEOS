@@ -78,7 +78,7 @@ public:
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure ) override;
+                        real64 & dViscosity_dPressure ) const override;
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
   {

@@ -128,7 +128,7 @@ void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d<double const> const 
 
 void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
                                             real64 & density, real64 & dDensity_dPressure,
-                                            real64 & viscosity, real64 & dViscosity_dPressure )
+                                            real64 & viscosity, real64 & dViscosity_dPressure ) const
 {
   Compute( pressure, density, dDensity_dPressure, viscosity, dViscosity_dPressure,
            m_densityRelation, m_viscosityRelation );

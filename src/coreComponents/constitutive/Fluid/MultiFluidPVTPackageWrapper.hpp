@@ -94,6 +94,30 @@ public:
                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction,
                        PVTPackage::MultiphaseSystem * const fluid );
 
+  virtual void Compute( real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d<real64 const> const & composition,
+                        arraySlice1d<real64> const & phaseFraction,
+                        arraySlice1d<real64> const & dPhaseFraction_dPressure,
+                        arraySlice1d<real64> const & dPhaseFraction_dTemperature,
+                        arraySlice2d<real64> const & dPhaseFraction_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseDensity,
+                        arraySlice1d<real64> const & dPhaseDensity_dPressure,
+                        arraySlice1d<real64> const & dPhaseDensity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseDensity_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseViscosity,
+                        arraySlice1d<real64> const & dPhaseViscosity_dPressure,
+                        arraySlice1d<real64> const & dPhaseViscosity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseViscosity_dGlobalCompFraction,
+                        arraySlice2d<real64> const & phaseCompFraction,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dPressure,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dTemperature,
+                        arraySlice3d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
+                        real64 & totalDensity,
+                        real64 & dTotalDensity_dPressure,
+                        real64 & dTotalDensity_dTemperature,
+                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction ) const override;
+
 protected:
 
   // function that populates m_fluid ptr; to be overriden by derived classes

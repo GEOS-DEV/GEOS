@@ -80,7 +80,7 @@ public:
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure ) = 0;
+                        real64 & dViscosity_dPressure ) const = 0;
 
   array2d<real64> const & density() const { return m_density; }
   array2d<real64>       & density()       { return m_density; }

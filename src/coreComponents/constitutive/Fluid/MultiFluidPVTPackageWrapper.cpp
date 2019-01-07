@@ -408,6 +408,38 @@ void MultiFluidPVTPackageWrapper::Compute( localIndex const NC, localIndex const
   }
 }
 
+void MultiFluidPVTPackageWrapper::Compute(real64 const & pressure, real64 const & temperature,
+                                          arraySlice1d<double const> const & composition,
+                                          arraySlice1d<real64> const & phaseFraction,
+                                          arraySlice1d<real64> const & dPhaseFraction_dPressure,
+                                          arraySlice1d<real64> const & dPhaseFraction_dTemperature,
+                                          arraySlice2d<real64> const & dPhaseFraction_dGlobalCompFraction,
+                                          arraySlice1d<real64> const & phaseDensity,
+                                          arraySlice1d<real64> const & dPhaseDensity_dPressure,
+                                          arraySlice1d<real64> const & dPhaseDensity_dTemperature,
+                                          arraySlice2d<real64> const & dPhaseDensity_dGlobalCompFraction,
+                                          arraySlice1d<real64> const & phaseViscosity,
+                                          arraySlice1d<real64> const & dPhaseViscosity_dPressure,
+                                          arraySlice1d<real64> const & dPhaseViscosity_dTemperature,
+                                          arraySlice2d<real64> const & dPhaseViscosity_dGlobalCompFraction,
+                                          arraySlice2d<real64> const & phaseCompFraction,
+                                          arraySlice2d<real64> const & dPhaseCompFraction_dPressure,
+                                          arraySlice2d<real64> const & dPhaseCompFraction_dTemperature,
+                                          arraySlice3d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
+                                          real64 & totalDensity, real64 & dTotalDensity_dPressure,
+                                          real64 & dTotalDensity_dTemperature,
+                                          arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction) const
+{
+  Compute( numFluidComponents(), numFluidPhases(), m_useMass, m_phaseNames, m_componentMolarWeight,
+           pressure, temperature, composition,
+           phaseFraction, dPhaseFraction_dPressure, dPhaseFraction_dTemperature, dPhaseFraction_dGlobalCompFraction,
+           phaseDensity, dPhaseDensity_dPressure, dPhaseDensity_dTemperature, dPhaseDensity_dGlobalCompFraction,
+           phaseViscosity, dPhaseViscosity_dPressure, dPhaseViscosity_dTemperature, dPhaseViscosity_dGlobalCompFraction,
+           phaseCompFraction, dPhaseCompFraction_dPressure, dPhaseCompFraction_dTemperature, dPhaseCompFraction_dGlobalCompFraction,
+           totalDensity, dTotalDensity_dPressure, dTotalDensity_dTemperature, dTotalDensity_dGlobalCompFraction,
+           m_fluid );
+}
+
 } //namespace constitutive
 
 } //namespace geosx

@@ -85,10 +85,6 @@ class MultiFluidBase : public ConstitutiveBase
 {
 public:
 
-  // define a limit on number of components
-  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
-  static constexpr localIndex MAX_NUM_PHASES = 4;
-
   MultiFluidBase( std::string const & name, ManagedGroup * const parent );
 
   virtual ~MultiFluidBase() override;
@@ -99,6 +95,20 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** MultiFluid-specific interface
+
+  /**
+   * @brief Maximum supported number of fluid components (species)
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
+
+  /**
+   * @brief Maximum supported number of fluid phases
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  static constexpr localIndex MAX_NUM_PHASES = 4;
 
   /**
    * @brief Perform a single point constitutive update.
@@ -126,17 +136,96 @@ public:
                             arrayView1d<real64 const> const & temperature,
                             arrayView2d<real64 const> const & composition ) = 0;
 
+  /**
+   * @brief Compute constitutive values at a single point.
+   * @param[in]  pressure target pressure value
+   * @param[in]  temperature target temperature value
+   * @param[in]  composition target fluid composition array
+   * @param[out] phaseFraction phase fractions
+   * @param[out] dPhaseFraction_dPressure derivatives of phase fractions w.r.t. pressure
+   * @param[out] dPhaseFraction_dTemperature derivatives of phase fractions w.r.t. temperature
+   * @param[out] dPhaseFraction_dGlobalCompFraction derivatives of phase fractions w.r.t. composition
+   * @param[out] phaseDensity phase densitites
+   * @param[out] dPhaseDensity_dPressure derivatives of phase densitites w.r.t. pressure
+   * @param[out] dPhaseDensity_dTemperature derivatives of phase densitites w.r.t. temperature
+   * @param[out] dPhaseDensity_dGlobalCompFraction derivatives of phase densitites w.r.t. composition
+   * @param[out] phaseViscosity phase viscosities
+   * @param[out] dPhaseViscosity_dPressure derivatives of phase viscosities w.r.t. pressure
+   * @param[out] dPhaseViscosity_dTemperature derivatives of phase viscosities w.r.t. temperature
+   * @param[out] dPhaseViscosity_dGlobalCompFraction derivatives of phase viscosities w.r.t. composition
+   * @param[out] phaseCompFraction phase compositions
+   * @param[out] dPhaseCompFraction_dPressure derivatives of phase compositions w.r.t. pressure
+   * @param[out] dPhaseCompFraction_dTemperature derivatives of phase compositions w.r.t. temperature
+   * @param[out] dPhaseCompFraction_dGlobalCompFraction derivatives of phase compositions w.r.t. composition
+   * @param[out] totalDensity total fluid mixture density
+   * @param[out] dTotalDensity_dPressure derivatives of total density w.r.t. pressure
+   * @param[out] dTotalDensity_dTemperature derivatives of total density w.r.t. temperature
+   * @param[out] dTotalDensity_dGlobalCompFraction derivatives of total density w.r.t. composition
+   *
+   * @note This function should only be called in extremely rare cases, when constitutive state
+   * needs to be evaluated at a point where constitutive model does not have storage allocated.
+   * It should not be called from kernels since it is virtual.
+   */
+  virtual void Compute( real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d<real64 const> const & composition,
+                        arraySlice1d<real64> const & phaseFraction,
+                        arraySlice1d<real64> const & dPhaseFraction_dPressure,
+                        arraySlice1d<real64> const & dPhaseFraction_dTemperature,
+                        arraySlice2d<real64> const & dPhaseFraction_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseDensity,
+                        arraySlice1d<real64> const & dPhaseDensity_dPressure,
+                        arraySlice1d<real64> const & dPhaseDensity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseDensity_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseViscosity,
+                        arraySlice1d<real64> const & dPhaseViscosity_dPressure,
+                        arraySlice1d<real64> const & dPhaseViscosity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseViscosity_dGlobalCompFraction,
+                        arraySlice2d<real64> const & phaseCompFraction,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dPressure,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dTemperature,
+                        arraySlice3d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
+                        real64 & totalDensity,
+                        real64 & dTotalDensity_dPressure,
+                        real64 & dTotalDensity_dTemperature,
+                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction ) const = 0;
+
+  /**
+   * @return number of fluid components (species) in the model
+   */
   localIndex numFluidComponents() const;
 
+  /**
+   * @param ic component index
+   * @return name of ic-th fluid component
+   */
   string const & componentName( localIndex ic ) const;
 
+  /**
+   * @return number of fluid phases in the model
+   */
   localIndex numFluidPhases() const;
 
+  /**
+   * @param ip phase index
+   * @return name of ip-th fluid phase
+   */
   string const & phaseName( localIndex ip ) const;
 
+  /**
+   * @brief Get the mass flag.
+   * @return boolean value indicating whether the model is using mass-based quantities (as opposed to mole-based)
+   */
   bool getMassFlag() const;
 
-  void setMassFlag(bool flag);
+  /**
+   * @brief Set the mass flag.
+   * @param flag boolean value indicating whether the model should use mass-based quantities (as opposed to mole-based)
+   *
+   * @note This affects both input (compositions) and output quantities. The flag should be set prior to calling
+   * any compute or state update methods.
+   */
+  void setMassFlag( bool flag );
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
