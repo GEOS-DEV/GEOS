@@ -26,7 +26,6 @@
 #include <vector>
 #include <math.h>
 
-#include "../../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/defines.hpp"
 
@@ -36,10 +35,10 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
-//#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
+#include "managers/NumericalMethodsManager.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"

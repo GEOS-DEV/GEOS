@@ -25,14 +25,13 @@
 
 #include "ElementRegion.hpp"
 
-#include "../finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "CellBlockManager.hpp"
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
-
+#include "managers/NumericalMethodsManager.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
