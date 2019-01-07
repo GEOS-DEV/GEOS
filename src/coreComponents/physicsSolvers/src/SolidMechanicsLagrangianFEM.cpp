@@ -381,7 +381,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementDiscretizationManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
@@ -448,7 +448,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -462,7 +462,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-      localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
+      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
       GEOSX_MARK_BEGIN(externalElemsLoop);
 
@@ -507,7 +507,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
 
-    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -521,7 +521,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-      localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
+      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
       GEOSX_MARK_BEGIN(internalElemsLoop);
 
@@ -1106,7 +1106,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementDiscretizationManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
@@ -1151,7 +1151,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
 
-    FiniteElementDiscretization const * feSpace = feSpaceManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -1224,7 +1224,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
             referenceStress.PlusIdentity( - biotCoefficient[er][esr][0] * (fluidPres[er][esr][k] + dPres[er][esr][k]));
           }
           real64 maxElemForce = CalculateElementResidualAndDerivative( density[er][esr][0],
-                                                                       feSpace->m_finiteElement,
+                                                                       feDiscretization->m_finiteElement,
                                                                        dNdX[k],
                                                                        detJ[k],
                                                                        &referenceStress,

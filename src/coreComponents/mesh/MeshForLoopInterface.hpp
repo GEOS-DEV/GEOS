@@ -185,7 +185,7 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems_by_constitutive( MeshLevel const * const mesh,
                                constitutive::ConstitutiveManager * const constitutiveManager,
-                               FiniteElementSpaceManager const * const feSpaceManager,
+                               FiniteElementSpaceManager const * const feDiscretizationManager,
                                LAMBDA && body )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -196,7 +196,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
   {
     dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
     auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
-    FiniteElementSpace const * const feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+    FiniteElementSpace const * const feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     dataRepository::ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
@@ -243,7 +243,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
           {body(index,
                 numNodesPerElement,
                 elemsToNodes,
-                feSpace->m_finiteElement->n_quadrature_points(),
+                feDiscretization->m_finiteElement->n_quadrature_points(),
                 dNdX,
                 constitutiveMapView,
                 detJ,
@@ -261,10 +261,10 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
   }
 }
 
-#define FOR_ELEMS_FOR_CONSTITUTIVE( mesh, constitutiveManager, feSpaceManager)\
+#define FOR_ELEMS_FOR_CONSTITUTIVE( mesh, constitutiveManager, feDiscretizationManager)\
     for_elems_by_constitutive( mesh,\
     constitutiveManager,\
-    feSpaceManager,\
+    feDiscretizationManager,\
     GEOSX_LAMBDA( localIndex const k,\
     localIndex const numNodesPerElement,\
     arrayView2d<localIndex> const elemsToNodes,\
