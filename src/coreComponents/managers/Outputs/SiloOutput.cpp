@@ -24,8 +24,6 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
-
 
 namespace geosx
 {

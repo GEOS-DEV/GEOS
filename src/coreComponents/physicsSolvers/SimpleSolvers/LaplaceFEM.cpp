@@ -39,7 +39,7 @@
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 #include "managers/NumericalMethodsManager.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/Fields/FieldManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
@@ -483,7 +483,7 @@ void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldManager * bcManager = FieldManager::get();
 
   ApplyDirichletBC_implicit( time_n + dt, *domain, *blockSystem );
 
@@ -509,7 +509,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             EpetraBlockSystem & blockSystem )
 {
 
-  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+  FieldManager const * const bcManager = FieldManager::get();
 
   bcManager->ApplyBoundaryCondition( time,
                                      &domain,

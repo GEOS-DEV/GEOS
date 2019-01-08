@@ -17,7 +17,7 @@
  */
 
 /**
- * @file BoundaryConditionBase.hpp
+ * @file FieldBase.hpp
  */
 
 #ifndef BOUNDARYCONDITIONBASE_H

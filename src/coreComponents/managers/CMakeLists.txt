@@ -23,9 +23,9 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
-    BoundaryConditions/BoundaryConditionBase.hpp
-    BoundaryConditions/BoundaryConditionManager.hpp
-    BoundaryConditions/DirichletBoundaryCondition.hpp)
+    Fields/FieldBase.hpp
+    Fields/FieldManager.hpp
+    Fields/DirichletBoundaryCondition.hpp)
 
 
 #
@@ -52,9 +52,9 @@ set(managers_sources
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp
-    BoundaryConditions/BoundaryConditionBase.cpp
-    BoundaryConditions/BoundaryConditionManager.cpp
-    BoundaryConditions/DirichletBoundaryCondition.cpp)
+    Fields/FieldBase.cpp
+    Fields/FieldManager.cpp
+    Fields/DirichletBoundaryCondition.cpp)
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )

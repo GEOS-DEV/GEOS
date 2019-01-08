@@ -23,7 +23,7 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/Fields/FieldManager.hpp"
 
 namespace geosx
 {
@@ -66,7 +66,7 @@ void FluxApproximationBase::compute(DomainPartition * domain)
 {
   computeMainStencil(domain, getStencil());
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldManager * bcManager = FieldManager::get();
 
   bcManager->ApplyBoundaryCondition( 0.0,
                                      domain,
