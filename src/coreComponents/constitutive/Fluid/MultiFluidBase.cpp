@@ -35,6 +35,8 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   : ConstitutiveBase( name, parent ),
     m_useMass( false )
 {
+  ConstitutiveBase::PostProcessInput();
+
   RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of component names");
@@ -116,9 +118,9 @@ MultiFluidBase::~MultiFluidBase()
 
 }
 
-void MultiFluidBase::ProcessInputFile_PostProcess()
+void MultiFluidBase::PostProcessInput()
 {
-  ConstitutiveBase::ProcessInputFile_PostProcess();
+  ConstitutiveBase::PostProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();

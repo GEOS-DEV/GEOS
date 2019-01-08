@@ -41,8 +41,6 @@ public:
 
   // *** ManagedGroup interface
 
-  virtual void ProcessInputFile_PostProcess() override;
-
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -113,6 +111,8 @@ public:
   } viewKeysSingleFluidBase;
 
 protected:
+
+  virtual void PostProcessInput() override;
 
   /**
    * @brief Function to batch process constitutive updates via a kernel launch.

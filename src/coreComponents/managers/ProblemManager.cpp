@@ -39,6 +39,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
@@ -179,8 +180,32 @@ ProblemManager::~ProblemManager()
 ManagedGroup * ProblemManager::CreateChild( string const & childKey, string const & childName )
 { return nullptr; }
 
+
+void ProblemManager::ProblemSetup()
+{
+  PostProcessInputRecursive();
+
+  GenerateMesh();
+
+  ApplyNumericalMethods();
+
+  RegisterDataOnMeshRecursive( nullptr );
+
+  GEOSX_MARK_BEGIN("problemManager.Initialize");
+  Initialize( this );
+  GEOSX_MARK_END("problemManager.Initialize");
+
+  ApplyInitialConditions();
+
+  GEOSX_MARK_BEGIN("problemManager.InitializePostInitialConditions");
+  InitializePostInitialConditions( this );
+  GEOSX_MARK_END("problemManager.InitializePostInitialConditions");
+}
+
+
 void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
 {
+  GEOSX_MARK_FUNCTION;
   ManagedGroup::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 }
 
@@ -530,21 +555,20 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
 
   ProcessInputFileRecursive( xmlProblemNode );
-  ProcessInputFileRecursive_PostProcess();
 
 
   // The function manager is handled separately
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
     m_functionManager->ProcessInputFileRecursive( topLevelNode );
-    m_functionManager->ProcessInputFileRecursive_PostProcess(  );
+    m_functionManager->PostProcessInputRecursive(  );
   }
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
     BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
     bcManager->ProcessInputFileRecursive( topLevelNode );
-    bcManager->ProcessInputFileRecursive_PostProcess();
+    bcManager->PostProcessInputRecursive();
 
   }
 
@@ -553,17 +577,16 @@ void ProblemManager::ParseInputFile()
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
-    constitutiveManager->ProcessInputFileRecursive_PostProcess();
+    constitutiveManager->PostProcessInputRecursive();
 
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
-//    meshManager->ProcessInputFileRecursive()
     meshManager->GenerateMeshLevels(domain);
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     elementManager->ProcessInputFileRecursive( topLevelNode );
-    elementManager->ProcessInputFileRecursive_PostProcess();
+    elementManager->PostProcessInputRecursive();
   }
 
   // Documentation output
@@ -572,6 +595,42 @@ void ProblemManager::ParseInputFile()
   {
     integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
 //    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
+  }
+}
+
+
+void ProblemManager::PostProcessInput()
+{
+  DomainPartition * domain  = getDomainPartition();
+
+  ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
+  integer const & yparCL = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
+  integer const & zparCL = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
+
+  PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
+  bool repartition = false;
+  integer xpar = 1;
+  integer ypar = 1;
+  integer zpar = 1;
+  if( xparCL != 0 )
+  {
+    repartition = true;
+    xpar = xparCL;
+  }
+  if( yparCL != 0 )
+  {
+    repartition = true;
+    ypar = yparCL;
+  }
+  if( zparCL != 0 )
+  {
+    repartition = true;
+    zpar = zparCL;
+  }
+  if( repartition )
+  {
+    partition.setPartitions( xpar,  ypar, zpar );
   }
 }
 
@@ -606,54 +665,126 @@ void ProblemManager::InitializationOrder( string_array & order )
 }
 
 
-
-void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
+void ProblemManager::GenerateMesh()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
-
-  ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
-  integer const & yparCL = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
-  integer const & zparCL = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
-
-  PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
-  bool repartition = false;
-  integer xpar = 1;
-  integer ypar = 1;
-  integer zpar = 1;
-  if( xparCL != 0 )
-  {
-    repartition = true;
-    xpar = xparCL;
-  }
-  if( yparCL != 0 )
-  {
-    repartition = true;
-    ypar = yparCL;
-  }
-  if( zparCL != 0 )
-  {
-    repartition = true;
-    zpar = zparCL;
-  }
-  if( repartition )
-  {
-    partition.setPartitions( xpar,  ypar, zpar );
-  }
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
+  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+
+  ManagedGroup * const meshBodies = domain->getMeshBodies();
+
+  for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
   {
-    NodeManager * const nodeManager = (*mesh.second).group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
+    MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
+    for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
+    {
+      MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
 
-    GeometricObjectManager * geometricObjects = this->GetGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
+      NodeManager * const nodeManager = meshLevel->getNodeManager();
+      EdgeManager * edgeManager = meshLevel->getEdgeManager();
+      FaceManager * const faceManager = meshLevel->getFaceManager();
+      ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-    MeshUtilities::GenerateNodesets( geometricObjects,
-                                     nodeManager );
-    nodeManager->ConstructGlobalToLocalMap();
+      GeometricObjectManager * geometricObjects = this->GetGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
 
+      MeshUtilities::GenerateNodesets( geometricObjects,
+                                       nodeManager );
+      nodeManager->ConstructGlobalToLocalMap();
+
+      elemManager->GenerateMesh( cellBlockManager );
+
+      faceManager->BuildFaces( nodeManager, elemManager );
+
+      edgeManager->BuildEdges(faceManager, nodeManager );
+
+      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
+      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
+      nodeManager->SetElementMaps( meshLevel->getElemManager() );
+
+
+      domain->GenerateSets();
+
+      elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
+      {
+        subRegion->nodeList().SetRelatedObject(nodeManager);
+        subRegion->faceList().SetRelatedObject(faceManager);
+        subRegion->CalculateCellVolumes( array1d<localIndex>() );
+      });
+
+    }
+  }
+}
+
+void ProblemManager::ApplyNumericalMethods()
+{
+  GEOSX_MARK_FUNCTION;
+  NumericalMethodsManager const * const
+  numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  DomainPartition * domain  = getDomainPartition();
+
+  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+  meshManager->GenerateMeshes(domain);
+  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
+
+  ManagedGroup * const meshBodies = domain->getMeshBodies();
+
+
+
+  for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
+  {
+    SolverBase const * const solver = m_physicsSolverManager->GetGroup<SolverBase>(solverIndex);
+    string const numericalMethodName = solver->getDiscretization();
+    string_array const & targetRegions = solver->getTargetRegions();
+
+    FiniteElementDiscretizationManager const *
+    feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+
+
+
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(numericalMethodName);
+
+    for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
+    {
+      MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
+      for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
+      {
+        MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
+        NodeManager * const nodeManager = meshLevel->getNodeManager();
+        ElementRegionManager * const elemManager = meshLevel->getElemManager();
+        arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
+
+        for( auto const & regionName : targetRegions )
+        {
+          ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+          if( elemRegion != nullptr )
+          {
+            string_array const & materialList = elemRegion->getMaterialList();
+            localIndex quadratureSize = 1;
+
+            elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )->void
+            {
+              if( feDiscretization != nullptr )
+              {
+                feDiscretization->ApplySpaceToTargetCells(subRegion);
+                feDiscretization->CalculateShapeFunctionGradients( X, subRegion);
+                quadratureSize = feDiscretization->getNumberOfQuadraturePoints();
+              }
+              for( auto & materialName : materialList )
+              {
+                constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
+              }
+            });
+          }
+        }
+      }
+    }
   }
 }
 
@@ -661,31 +792,19 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
 
-  ObjectManagerBase::InitializePostSubGroups(nullptr);
-
+//  ObjectManagerBase::InitializePostSubGroups(nullptr);
+//
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
-
-  ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-
-  NodeManager * nodeManager = meshLevel->getNodeManager();
-  faceManager->BuildFaces( nodeManager, elementManager );
-
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
-  edgeManager->BuildEdges(faceManager, nodeManager );
 
-  nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
-  nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
-  nodeManager->SetElementMaps( meshLevel->getElemManager() );
-
-  domain->GenerateSets();
   domain->SetupCommunications();
-
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
 
@@ -696,11 +815,6 @@ void ProblemManager::RunSimulation()
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run(domain);
 }
-
-
-void ProblemManager::ApplySchedulerEvent()
-{}
-
 
 DomainPartition * ProblemManager::getDomainPartition()
 {

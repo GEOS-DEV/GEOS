@@ -8,6 +8,8 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="0"
+                                  discretization="FE1"
+                                  targetRegions="Region2"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               useMLPrecond="1"
@@ -23,12 +25,12 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 0.25"
-                  yCoords="0, 0.25"
-                  zCoords="0, 0.25"
-                  nx="25"
-                  ny="25"
-                  nz="25"
+                  xCoords="0, 0.10"
+                  yCoords="0, 0.10"
+                  zCoords="0, 0.10"
+                  nx="10"
+                  ny="10"
+                  nz="10"
                   cellBlockNames="cb1"/>
   </Mesh>
 
@@ -43,10 +45,10 @@
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
+    <!--PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput" /-->
 
     <PeriodicEvent name="restarts"
                    timeFrequency="5"
@@ -72,7 +74,7 @@
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
@@ -95,7 +97,6 @@
     <Dirichlet name="xnegconstraint" 
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="0" 
                scale="0.0" 
                setNames="xneg xpos"/>
@@ -103,7 +104,6 @@
     <Dirichlet name="yconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="1" 
                scale="0.0" 
                setNames="ypos"/>
@@ -111,7 +111,6 @@
     <Dirichlet name="zconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="2" 
                scale="0.0" 
                setNames="zneg zpos"/>
@@ -119,7 +118,6 @@
     <Dirichlet name="xposconstraint" 
                objectPath="nodeManager" 
                fieldName="Force" 
-               dataType="Vector" 
                component="1" 
                scale="1.0e6" 
                functionName="timeFunction"
@@ -130,7 +128,6 @@
   <Functions>
     <TableFunction name="timeFunction"
                    inputVarNames="time"
-                   inputVarTypes="real64"
                    coordinates="0.0 10.0"
                    values="0.0 10.0" />
   </Functions>
@@ -141,19 +138,15 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0" />
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" />
     <Restart name="sidreRestart"/>
   </Outputs>
   
   <Geometry>
     <Box name="source"
-         type="0"
          xMin="  -1.0, -1.0e-6, -1.0"
          xMax="  0.041,  1.0e-6,  0.041"/>
   </Geometry>
 
-
-
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
 
 </Problem>

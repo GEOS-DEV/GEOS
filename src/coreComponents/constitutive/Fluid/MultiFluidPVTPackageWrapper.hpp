@@ -52,9 +52,7 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override final {}
 
-  virtual void ProcessInputFile_PostProcess() override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
   virtual void PointUpdate( real64 const & pressure,
                             real64 const & temperature,
@@ -119,6 +117,9 @@ public:
                         arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction ) const override;
 
 protected:
+  virtual void PostProcessInput() override;
+
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
   // function that populates m_fluid ptr; to be overriden by derived classes
   virtual void createFluid() = 0;

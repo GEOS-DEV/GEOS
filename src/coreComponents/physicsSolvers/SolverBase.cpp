@@ -63,6 +63,18 @@ SolverBase::SolverBase( std::string const & name,
     setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
           "Values should be in the interval (0,1] ");
 
+  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+    setApplyDefaultValue("none")->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of discretization object to use for this solver.");
+
+  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Allowable regions that the solver may be applied to. Note that this does not indicate that "
+                   "the solver will be applied to these regions, only that allocation will occur such that the "
+                   "solver may be applied to these regions. The decision about what regions this solver will be"
+                   "applied to rests in the EventManager.");
+
 }
 
 SolverBase::~SolverBase()
@@ -91,7 +103,7 @@ ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & 
 }
 
 
-void SolverBase::ProcessInputFile_PostProcess()
+void SolverBase::PostProcessInput()
 {
   if( this->globalGravityVector() != nullptr )
   {

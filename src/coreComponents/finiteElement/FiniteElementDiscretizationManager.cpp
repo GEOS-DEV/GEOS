@@ -23,24 +23,25 @@
  *      Author: sherman
  */
 
-#include "FiniteElementSpaceManager.hpp"
-#include "FiniteElementSpace.hpp"
+#include "FiniteElementDiscretizationManager.hpp"
+
+#include "FiniteElementDiscretization.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-FiniteElementSpaceManager::FiniteElementSpaceManager( string const & name, ManagedGroup * const parent ):
+FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {}
 
-FiniteElementSpaceManager::~FiniteElementSpaceManager()
+FiniteElementDiscretizationManager::~FiniteElementDiscretizationManager()
 {
   // TODO Auto-generated destructor stub
 }
 
 
-ManagedGroup * FiniteElementSpaceManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * FiniteElementDiscretizationManager::CreateChild( string const & childKey, string const & childName )
 {
   // These objects should probably not be registered on managed group...
   std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( childKey, childName, this );

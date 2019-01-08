@@ -55,8 +55,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void ProcessInputFile_PostProcess() override;
-
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -96,6 +94,8 @@ public:
 
   } viewKeysCompressibleSinglePhaseFluid;
 
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 

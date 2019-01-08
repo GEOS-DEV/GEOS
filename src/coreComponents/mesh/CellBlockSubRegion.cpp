@@ -43,11 +43,6 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 
   RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
 
-//  RegisterViewWrapper( viewKeyStruct::constitutiveRelationIndexString,
-//                       &m_constitutiveRelationIndex, 0);
-//
-//  RegisterViewWrapper( viewKeyStruct::constitutivePointIndexString,
-//                       &m_constitutivePointIndex, 0);
 
   RegisterViewWrapper( viewKeyStruct::constitutivePointVolumeFraction,
                        &m_constitutivePointVolumeFraction, 0);
@@ -61,27 +56,6 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 CellBlockSubRegion::~CellBlockSubRegion()
 {
   // TODO Auto-generated destructor stub
-}
-
-
-void CellBlockSubRegion::ProcessInputFile_PostProcess()
-{
-//  integer & numNodesPerElem = numNodesPerElement();
-//  numNodesPerElem = 8;
-
-}
-
-void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
-{
-//  auto const & elementRegion = static_cast<ElementRegion const&>(
-// *(this->getParent()) );
-//  auto const & numMethod = elementRegion.getNumericalMethod();
-
-}
-
-void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
-{
-  ObjectManagerBase::InitializePostSubGroups(nullptr);
 }
 
 void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )

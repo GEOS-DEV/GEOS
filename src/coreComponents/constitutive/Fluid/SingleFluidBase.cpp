@@ -42,9 +42,9 @@ SingleFluidBase::SingleFluidBase( std::string const & name, ManagedGroup * const
 
 SingleFluidBase::~SingleFluidBase() = default;
 
-void SingleFluidBase::ProcessInputFile_PostProcess()
+void SingleFluidBase::PostProcessInput()
 {
-  ConstitutiveBase::ProcessInputFile_PostProcess();
+  ConstitutiveBase::PostProcessInput();
 }
 
 void SingleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,

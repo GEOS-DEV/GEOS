@@ -93,8 +93,10 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
   return std::move(newConstitutiveRelation);
 }
 
-void CompressibleSinglePhaseFluid::ProcessInputFile_PostProcess()
+void CompressibleSinglePhaseFluid::PostProcessInput()
 {
+  SingleFluidBase::PostProcessInput();
+
   GEOS_ERROR_IF( m_compressibility < 0.0, "An invalid value of fluid compressibility ("
                                           << m_compressibility << ") is specified" );
 

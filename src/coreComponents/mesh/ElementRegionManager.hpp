@@ -95,8 +95,7 @@ public:
 
 //  void Initialize(  ){}
 
-  void InitializePreSubGroups( ManagedGroup * const ) override final;
-  void InitializePostSubGroups( ManagedGroup * const ) override final;
+  void GenerateMesh( ManagedGroup const * const cellBlockManager );
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;

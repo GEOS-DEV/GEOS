@@ -48,7 +48,7 @@ DummySolver::~DummySolver()
 }
 
 
-void DummySolver::Initialize( ManagedGroup * const problemManager )
+void DummySolver::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
   integer rank = 0;
   #if USE_MPI
