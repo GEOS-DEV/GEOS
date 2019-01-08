@@ -36,7 +36,7 @@
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/Fields/FieldManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
@@ -384,7 +384,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldManager * bcManager = FieldManager::get();
   localIndex const numNodes = nodes->size();
 
   arrayView1d<R1Tensor> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
@@ -712,7 +712,7 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                                                  EpetraBlockSystem & blockSystem )
 {
 
-  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+  FieldManager const * const bcManager = FieldManager::get();
 
   bcManager->ApplyBoundaryCondition( time,
                                      &domain,
@@ -740,7 +740,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
                                                     real64 const time,
                                                     systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
-  BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+  FieldManager * const bcManager = FieldManager::get();
   NewFunctionManager * const functionManager = NewFunctionManager::Instance();
 
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
@@ -1278,7 +1278,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   FaceManager * const faceManager = mesh->getFaceManager();
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldManager * bcManager = FieldManager::get();
 //  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
 //                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
 

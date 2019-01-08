@@ -23,9 +23,9 @@
  *      Author: rrsettgast
  */
 
-#include "BoundaryConditionManager.hpp"
+#include "FieldManager.hpp"
 
-#include "BoundaryConditionBase.hpp"
+#include "FieldBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "mesh/MeshBody.hpp"
@@ -41,24 +41,24 @@ namespace geosx
 {
 using namespace dataRepository;
 using namespace constitutive;
-BoundaryConditionManager::BoundaryConditionManager( string const & name, ManagedGroup * const parent ):
+FieldManager::FieldManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {}
 
 
-BoundaryConditionManager * BoundaryConditionManager::get()
+FieldManager * FieldManager::get()
 {
-  static BoundaryConditionManager bcman( "bcMan", nullptr );
+  static FieldManager bcman( "bcMan", nullptr );
   return &bcman;
 }
 
 
-BoundaryConditionManager::~BoundaryConditionManager()
+FieldManager::~FieldManager()
 {
   // TODO Auto-generated destructor stub
 }
 
-ManagedGroup * BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * FieldManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup( childName, std::move( bc ) );
@@ -66,7 +66,7 @@ ManagedGroup * BoundaryConditionManager::CreateChild( string const & childKey, s
 
 
 
-void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const
+void FieldManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {
 
   ApplyBoundaryCondition( 0.0, domain, "", "",

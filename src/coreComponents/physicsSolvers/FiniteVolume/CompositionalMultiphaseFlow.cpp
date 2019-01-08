@@ -31,7 +31,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/Fields/FieldManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -1576,7 +1576,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                                         real64 const time_n, real64 const dt,
                                                         EpetraBlockSystem * const blockSystem )
 {
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldManager * bcManager = FieldManager::get();
 
   unordered_map<string, array1d<bool>> bcStatusMap; // map to check consistent application of BC
 

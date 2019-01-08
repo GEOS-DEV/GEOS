@@ -26,7 +26,7 @@
 #include "common/TimingMacros.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "BoundaryConditionBase.hpp"
+#include "FieldBase.hpp"
 
 namespace geosx
 {
@@ -43,7 +43,7 @@ string const boundaryConditionMananger( "BoundaryConditionMananger" );
  * This class contains the boundary condition objects and provides an interface for administering
  * the boundary conditions. The class is a singleton.
  */
-class BoundaryConditionManager : public dataRepository::ManagedGroup
+class FieldManager : public dataRepository::ManagedGroup
 {
 public:
 
@@ -53,7 +53,7 @@ public:
    *        BoundaryConditionManager.
    * @return a pointer to the singleton BoundaryConditionManager
    */
-  static BoundaryConditionManager * get();
+  static FieldManager * get();
 
   /**
    * @brief create a new BoundaryConditionBase object as a child of this group.
@@ -224,14 +224,14 @@ private:
    * @param name The name of the BoundaryConditionManager in the data repository.
    * @param parent The parent of BoundaryConditionManager in the data repository.
    */
-  BoundaryConditionManager( string const & name, dataRepository::ManagedGroup * const parent );
-  virtual ~BoundaryConditionManager() override;
+  FieldManager( string const & name, dataRepository::ManagedGroup * const parent );
+  virtual ~FieldManager() override;
 
 };
 
 template< typename LAMBDA >
 void
-BoundaryConditionManager::
+FieldManager::
 ApplyBoundaryConditionToField( real64 const time,
                                dataRepository::ManagedGroup * domain,
                                string const & fieldPath,

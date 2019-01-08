@@ -40,7 +40,7 @@
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/Fields/FieldManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -566,9 +566,9 @@ void ProblemManager::ParseInputFile()
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
-    BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
-    bcManager->ProcessInputFileRecursive( topLevelNode );
-    bcManager->PostProcessInputRecursive();
+    FieldManager * const fieldManager = FieldManager::get();
+    fieldManager->ProcessInputFileRecursive( topLevelNode );
+    fieldManager->PostProcessInputRecursive();
 
   }
 
@@ -831,7 +831,7 @@ void ProblemManager::ApplyInitialConditions()
   GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
 
-  BoundaryConditionManager const * boundaryConditionManager = BoundaryConditionManager::get();
+  FieldManager const * boundaryConditionManager = FieldManager::get();
 
   boundaryConditionManager->ApplyInitialConditions( domain );
 
@@ -842,11 +842,11 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 #ifdef GEOSX_USE_ATK
   this->prepareToRead();
   m_functionManager->prepareToRead();
-  BoundaryConditionManager::get()->prepareToRead();
+  FieldManager::get()->prepareToRead();
   SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
   this->finishReading();
   m_functionManager->finishReading();
-  BoundaryConditionManager::get()->finishReading();
+  FieldManager::get()->finishReading();
 #endif
 }
 

@@ -28,7 +28,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/Fields/FieldManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -780,7 +780,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                  real64 const time_n, real64 const dt,
                                                  EpetraBlockSystem * const blockSystem )
 {
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldManager * bcManager = FieldManager::get();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
@@ -824,7 +824,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                                     real64 const time_n, real64 const dt,
                                                     EpetraBlockSystem * const blockSystem)
 {
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldManager * bcManager = FieldManager::get();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager * const faceManager = mesh->getFaceManager();
