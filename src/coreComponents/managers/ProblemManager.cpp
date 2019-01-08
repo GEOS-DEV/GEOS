@@ -727,8 +727,6 @@ void ProblemManager::ApplyNumericalMethods()
 
   DomainPartition * domain  = getDomainPartition();
 
-  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
-  meshManager->GenerateMeshes(domain);
   ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
