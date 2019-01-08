@@ -111,17 +111,20 @@ void BrooksCoreyCapillaryPressure::ProcessInputFile_PostProcess()
   m_satScale = 1.0;
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
+    GEOS_ERROR_IF( (m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0),
                    "BrooksCoreyCapillaryPressure: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
     m_satScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOS_ERROR_IF( m_phaseCapPressureExponentInv[ip] < 1.0,
+    GEOS_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 1.0)
+		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid exponent inverse value: " << m_phaseCapPressureExponentInv[ip] );
 
-    GEOS_ERROR_IF( m_phaseEntryPressure[ip] < 0.0,
+    GEOS_ERROR_IF(    (m_phaseEntryPressure[ip] < 0.0)
+		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid entry pressure: " << m_phaseEntryPressure[ip] );
 
-    GEOS_ERROR_IF( m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2,
+    GEOS_ERROR_IF(    (m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2)
+		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon );
 
   }
@@ -154,13 +157,14 @@ void BrooksCoreyCapillaryPressure::PointUpdate( arraySlice1d<real64 const> const
   arraySlice1d<real64> const capPressure           = m_phaseCapPressure[k][q];
   arraySlice2d<real64> const dCapPressure_dVolFrac = m_dPhaseCapPressure_dPhaseVolFrac[k][q];
 
+  
   localIndex const NP = numFluidPhases();
 
   Compute( NP,
-	   m_phaseTypes,
            phaseVolFraction,
            capPressure,
            dCapPressure_dVolFrac,
+	   m_phaseTypes,
            m_phaseMinVolumeFraction,
            m_phaseCapPressureExponentInv,
            m_phaseEntryPressure,

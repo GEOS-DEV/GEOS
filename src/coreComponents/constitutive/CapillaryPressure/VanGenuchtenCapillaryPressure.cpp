@@ -114,13 +114,16 @@ void VanGenuchtenCapillaryPressure::ProcessInputFile_PostProcess()
                    "VanGenuchtenCapillaryPressure: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
     m_satScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOS_ERROR_IF( m_phaseCapPressureExponentInv[ip] < 0 || m_phaseCapPressureExponentInv[ip] > 1.0,
+    GEOS_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 0 || m_phaseCapPressureExponentInv[ip] > 1.0)
+		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "VanGenuchtenCapillaryPressure: invalid exponent inverse value: " << m_phaseCapPressureExponentInv[ip] );
 
-    GEOS_ERROR_IF( m_phaseCapPressureMultiplier[ip] < 0.0,
+    GEOS_ERROR_IF(    (m_phaseCapPressureMultiplier[ip] < 0.0)
+		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "VanGenuchtenCapillaryPressure: invalid entry pressure: " << m_phaseCapPressureMultiplier[ip] );
 
-    GEOS_ERROR_IF( m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2,
+    GEOS_ERROR_IF(    (m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2)
+		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon );
 
   }
@@ -156,10 +159,10 @@ void VanGenuchtenCapillaryPressure::PointUpdate( arraySlice1d<real64 const> cons
   localIndex const NP = numFluidPhases();
 
   Compute( NP,
-	   m_phaseTypes,
            phaseVolFraction,
            capPressure,
            dCapPressure_dVolFrac,
+	   m_phaseTypes,
            m_phaseMinVolumeFraction,
            m_phaseCapPressureExponentInv,
            m_phaseCapPressureMultiplier,

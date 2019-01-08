@@ -42,14 +42,14 @@ namespace constitutive
 class BrooksCoreyCapillaryPressure : public CapillaryPressureBase
 {
 public:
-
+  
   BrooksCoreyCapillaryPressure( std::string const & name,
 				dataRepository::ManagedGroup * const parent );
 
   virtual ~BrooksCoreyCapillaryPressure() override;
 
   std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                   ManagedGroup * const parent ) const override;
+                                                  ManagedGroup * const parent ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::brooksCoreyCapillaryPressure; }
 
@@ -66,13 +66,13 @@ public:
                             localIndex const q ) override;
 
   inline static void Compute( localIndex const NP,
-			      arraySlice1d<integer const> const & phaseTypes,
-                              arraySlice1d<real64 const> const & phaseVolFraction,
+                              arraySlice1d<real64  const> const & phaseVolFraction,
                               arraySlice1d<real64> const & phaseCapPressure,
                               arraySlice2d<real64> const & dPhaseCapPressure_dPhaseVolFrac,
-                              arraySlice1d<real64 const> const & phaseMinVolumeFraction,
-                              arraySlice1d<real64 const> const & phaseCapPressureExponentInv,
-                              arraySlice1d<real64 const> const & phaseEntryPressure,
+			      arraySlice1d<integer const> const & phaseTypes,
+                              arraySlice1d<real64  const> const & phaseMinVolumeFraction,
+                              arraySlice1d<real64  const> const & phaseCapPressureExponentInv,
+                              arraySlice1d<real64  const> const & phaseEntryPressure,
 			      real64 const & capPressureEpsilon,
                               real64 const & satScale );
 
@@ -101,17 +101,17 @@ protected:
   real64 m_capPressureEpsilon;
   real64 m_satScale;
 };
-
-
+  
 inline void
 BrooksCoreyCapillaryPressure::Compute( localIndex const NP,
-				       arraySlice1d<integer const> const & phaseTypes,
-                                       arraySlice1d<real64 const> const & phaseVolFraction,
+
+                                       arraySlice1d<real64  const> const & phaseVolFraction,
                                        arraySlice1d<real64> const & capPressure,
                                        arraySlice2d<real64> const & dCapPressure_dVolFrac,
-                                       arraySlice1d<real64 const> const & phaseMinVolumeFraction,
-                                       arraySlice1d<real64 const> const & phaseCapPressureExponentInv,
-                                       arraySlice1d<real64 const> const & phaseEntryPressure,
+				       arraySlice1d<integer const> const & phaseTypes,
+                                       arraySlice1d<real64  const> const & phaseMinVolumeFraction,
+                                       arraySlice1d<real64  const> const & phaseCapPressureExponentInv,
+                                       arraySlice1d<real64  const> const & phaseEntryPressure,
 				       real64 const & capPressureEpsilon, 
                                        real64 const & satScale )
 {
@@ -142,25 +142,25 @@ BrooksCoreyCapillaryPressure::Compute( localIndex const NP,
       // compute first water-oil capillary pressure as a function of water-phase vol fraction
       case CapillaryPressureBase::PhaseType::WATER:
       {
-	// TODO: put this in a separate function
+	// TODO: put this in a separate function that can deal with WATER and GAS phases
         if (satScaled >= eps && satScaled < 1.0)
         {
           // intermediate value
           real64 const  val = entryPressure / std::pow( satScaled, exponent + 1);
 
-          capPressure[ip] = val * satScaled;
+          capPressure[ip] = val * satScaled; // entryPressure * (S_w)^( - 1 / exponentInv )
           dCapPressure_dVolFrac[ip][ip] = - val * exponent * satScaleInv;
         }
-        else
+        else // enforce a constant and bounded capillary pressure
         {
           capPressure[ip] = (satScaled < eps)
-	                  ? entryPressure / std::pow( eps, exponent ) 
+	                  ? entryPressure / std::pow( eps, exponent ) // div by 0 taken care of by initialization check
 	                  : entryPressure;
         }
         break;
       }
 
-      // no capillary pressure for the oil phase
+      // no capillary pressure for the oil phase as it is the reference phase
       case CapillaryPressureBase::PhaseType::OIL:
       {
 	capPressure[ip] = 0;
@@ -170,19 +170,19 @@ BrooksCoreyCapillaryPressure::Compute( localIndex const NP,
       // then compute the oil-gas capillary pressure as a function of gas-phase vol fraction
       case CapillaryPressureBase::PhaseType::GAS:
       {
-	// TODO: put this in a separate function
+	// TODO: put this in a separate function that can deal with WATER and GAS phases
 	if (satScaled > 0.0 && satScaled <= 1-eps)
         {
           // intermediate value
           real64 const  val = entryPressure / std::pow( 1-satScaled, exponent + 1);
 
-          capPressure[ip] = val * (1-satScaled);
+          capPressure[ip] = val * (1-satScaled); // entryPressure * S_g^( - 1 / exponentInv )
           dCapPressure_dVolFrac[ip][ip] = val * exponent * satScaleInv;
         }	
-        else
+        else // enforce a constant and bounded capillary pressure
         {
           capPressure[ip] = (satScaled > 1-eps)
-	                  ? entryPressure / std::pow( eps, exponent ) 
+	                  ? entryPressure / std::pow( eps, exponent ) // div by 0 taken care of by initialization check
 	                  : entryPressure;
         }
 	

@@ -170,7 +170,7 @@ void testNumericalDerivatives( CapillaryPressureBase * capPressure,
 
   auto const & phases = capPressure->getReference<string_array>( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
 
-  // create a clone of the rel perm to run updates on
+  // create a clone of the capillary pressure to run updates on
   auto capPressureCopyPtr = capPressure->DeliverClone( "fluidCopy", nullptr );
   auto capPressureCopy = capPressureCopyPtr->group_cast<CapillaryPressureBase *>();
 
@@ -204,6 +204,7 @@ void testNumericalDerivatives( CapillaryPressureBase * capPressure,
     checkDerivative( phaseCapPressureCopy, phaseCapPressure, dPhaseCapPressure_dS[jp], dS, relTol, "phaseCapPressure", var, phases );
   }
 }
+
 
 CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name, ManagedGroup * parent )
 {
@@ -246,11 +247,11 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & nam
 
   auto & phaseCapPressureExpInv = capPressure->getReference<array1d<real64>>( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
   phaseCapPressureExpInv.resize( 3 );
-  phaseCapPressureExpInv[0] = 2; phaseCapPressureExpInv[1] = 3; phaseCapPressureExpInv[2] = 2.5;
+  phaseCapPressureExpInv[0] = 2; phaseCapPressureExpInv[1] = -3; phaseCapPressureExpInv[2] = 2.5;
 
   auto & phaseEntryPressure = capPressure->getReference<array1d<real64>>( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString );
   phaseEntryPressure.resize( 3 );
-  phaseEntryPressure[0] = 1; phaseEntryPressure[1] = 1; phaseEntryPressure[2] = 2;
+  phaseEntryPressure[0] = 1; phaseEntryPressure[1] = -1; phaseEntryPressure[2] = 2;
 
   auto & capPressureEpsilon = capPressure->getReference<real64>( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-7;

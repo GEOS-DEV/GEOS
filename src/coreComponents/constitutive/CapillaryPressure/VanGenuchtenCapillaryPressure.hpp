@@ -44,12 +44,12 @@ class VanGenuchtenCapillaryPressure : public CapillaryPressureBase
 public:
 
   VanGenuchtenCapillaryPressure( std::string const & name,
-				dataRepository::ManagedGroup * const parent );
+   				 dataRepository::ManagedGroup * const parent );
 
   virtual ~VanGenuchtenCapillaryPressure() override;
 
   std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                   ManagedGroup * const parent ) const override;
+                                                  ManagedGroup * const parent ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::vanGenuchtenCapillaryPressure; }
 
@@ -66,13 +66,13 @@ public:
                             localIndex const q ) override;
 
   inline static void Compute( localIndex const NP,
-			      arraySlice1d<integer const> const & phaseTypes,
-                              arraySlice1d<real64 const> const & phaseVolFraction,
+                              arraySlice1d<real64  const> const & phaseVolFraction,
                               arraySlice1d<real64> const & phaseCapPressure,
                               arraySlice2d<real64> const & dPhaseCapPressure_dPhaseVolFrac,
-                              arraySlice1d<real64 const> const &  phaseMinVolumeFraction,
-                              arraySlice1d<real64 const> const & phaseCapPressureExponentInv,
-                              arraySlice1d<real64 const> const & phaseCapPressureMultiplier,
+			      arraySlice1d<integer const> const & phaseTypes,
+                              arraySlice1d<real64  const> const & phaseMinVolumeFraction,
+                              arraySlice1d<real64  const> const & phaseCapPressureExponentInv,
+                              arraySlice1d<real64  const> const & phaseCapPressureMultiplier,
 			      real64 const & capPressureEpsilon,
                               real64 const & satScale );
 
@@ -105,13 +105,13 @@ protected:
 
 inline void
 VanGenuchtenCapillaryPressure::Compute( localIndex const NP,
-					arraySlice1d<integer const> const & phaseTypes,
-                                        arraySlice1d<real64 const> const & phaseVolFraction,
+                                        arraySlice1d<real64  const> const & phaseVolFraction,
                                         arraySlice1d<real64> const & capPressure,
                                         arraySlice2d<real64> const & dCapPressure_dVolFrac,
-                                        arraySlice1d<real64 const> const & phaseMinVolumeFraction,
-                                        arraySlice1d<real64 const> const & phaseCapPressureExponentInv,
-                                        arraySlice1d<real64 const> const & phaseCapPressureMultiplier,
+					arraySlice1d<integer const> const & phaseTypes,
+                                        arraySlice1d<real64  const> const & phaseMinVolumeFraction,
+                                        arraySlice1d<real64  const> const & phaseCapPressureExponentInv,
+                                        arraySlice1d<real64  const> const & phaseCapPressureMultiplier,
 					real64 const & capPressureEpsilon,
                                         real64 const & satScale )
 { 
@@ -147,15 +147,15 @@ VanGenuchtenCapillaryPressure::Compute( localIndex const NP,
         if (satScaled >= eps && satScaled < 1.0-eps)
         {
 	  // intermediate value
-	  real64 const a = 1 / std::pow( satScaled, exponent+1 ); // S_c^(-1/m-1)
+	  real64 const a = 1 / std::pow( satScaled, exponent+1 ); 
 	  real64 const b = multiplier * std::pow( a * satScaled - 1, 0.5*(1-exponentInv)-1 );
 
-	  capPressure[ip] = b * ( a * satScaled - 1 );
+	  capPressure[ip] = b * ( a * satScaled - 1 ); // multiplier * ( S_w^(-1/m) - 1 )^( (1-m)/2 )
 	  dCapPressure_dVolFrac[ip][ip] = - 0.5 * exponent * ( 1 - exponentInv ) * satScaleInv * a * b; 
         }
-	else
+	else // enforce a constant and bounded capillary pressure
 	{
-	  capPressure[ip] = (satScaled < eps)
+	  capPressure[ip] = (satScaled < eps) // div by 0 taken care of by initialization check
 	                  ? multiplier * std::pow( 1 / std::pow( eps,   exponent ) - 1, 0.5*(1-exponentInv) )
 	                  : multiplier * std::pow( 1 / std::pow( 1-eps, exponent ) - 1, 0.5*(1-exponentInv) );
 	}    
@@ -176,15 +176,15 @@ VanGenuchtenCapillaryPressure::Compute( localIndex const NP,
         if (satScaled > eps && satScaled <= 1.0-eps)
         {
 	  // intermediate value
-	  real64 const a = 1 / std::pow( 1-satScaled, exponent+1 ); // S_c^(-1/m-1)
+	  real64 const a = 1 / std::pow( 1-satScaled, exponent+1 ); 
 	  real64 const b = multiplier * std::pow( a * (1-satScaled) - 1, 0.5*(1-exponentInv)-1 );
 
-	  capPressure[ip] = b * ( a * (1-satScaled) - 1 );
+	  capPressure[ip] = b * ( a * (1-satScaled) - 1 ); // multiplier * ( S_g^(-1/m) - 1 )^( (1-m)/2 )
 	  dCapPressure_dVolFrac[ip][ip] = 0.5 * exponent * ( 1 - exponentInv ) * satScaleInv * a * b; 
         }
-	else
+	else // enforce a constant and bounded capillary pressure
 	{
-	  capPressure[ip] = (satScaled <= eps)
+	  capPressure[ip] = (satScaled <= eps) // div by 0 taken care of by initialization check
 	                  ? multiplier * std::pow( 1 / std::pow( 1-eps, exponent ) - 1, 0.5*(1-exponentInv) )
 	                  : multiplier * std::pow( 1 / std::pow( eps,   exponent ) - 1, 0.5*(1-exponentInv) );
 	}

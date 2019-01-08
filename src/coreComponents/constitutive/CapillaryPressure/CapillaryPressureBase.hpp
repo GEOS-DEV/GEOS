@@ -42,28 +42,37 @@ public:
     static constexpr integer WATER          = 2;
     static constexpr integer MAX_NUM_PHASES = 3;
   };
+
+  // choose the reference pressure to be the oil pressure for all models
+  static constexpr integer REFERENCE_PHASE = PhaseType::OIL; 
   
   CapillaryPressureBase( std::string const & name,
 			 dataRepository::ManagedGroup * const parent );
   
   virtual ~CapillaryPressureBase() override;
+
+  // *** ManagedGroup interface
   
   virtual void ProcessInputFile_PostProcess() override;
   
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
+
+  // *** CapillaryPressure-specific interface
   
+  /**
+   * @brief Perform a batch constitutive update (all points).
+   * @param[in] phaseVolFraction input phase volume fraction
+   */
   virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
 
   /**
-   * @brief Function to update state of a single material point.
+   * @brief Perform a single point constitutive update.
    * @param[in] phaseVolFraction input phase volume fraction
-   * @param[in] k the first index of the storage arrays (elem index)
-   * @param[in] q the secound index of the storage arrays (quadrature index)
+   * @param[in] k first constitutive index (e.g. elem index)
+   * @param[in] q second constitutive index (e.g. quadrature index)
    *
-   * @note This function performs a point update, but should not be called
-   *       within a kernel since it is virtual, and the required data is not
-   *       guaranteed to be in the target memory space.
+   * @note This function should generally not be called from a kernel, use BatchUpdate instead
    */
   virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
                             localIndex const k,
@@ -95,16 +104,12 @@ public:
 
 protected:
 
-    /**
+  /**
    * @brief Function to batch process constitutive updates via a kernel launch.
-   * @tparam LEAFCLASS The derived class that provides the functions for use
-   *                   in the kernel
-   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for
-   *              the function parameter list
-   * @param phaseVolumeFraction array containing the phase volume fraction,
-   *                            which is input to the update.
-   * @param args arbitrary number of arbitrary types that are passed to the
-   *             kernel
+   * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
+   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
+   * @param phaseVolumeFraction array containing the phase volume fraction, which is input to the update.
+   * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
   template< typename LEAFCLASS, typename ... ARGS >
   void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
@@ -147,10 +152,10 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
     for( localIndex q=0 ; q<numQ ; ++q )
     {
       LEAFCLASS::Compute( NP,
-			  phaseTypes,
 			  phaseVolumeFraction[k],
 			  phaseCapPressure[k][q],
 			  dPhaseCapPressure_dPhaseVolFrac[k][q],
+			  phaseTypes,
 			  args...);
     }
   });
