@@ -54,7 +54,7 @@ BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( std::string const & 
     setDescription("Entry pressure value for each phase");
 
   RegisterViewWrapper( viewKeyStruct::capPressureEpsilonString,   &m_capPressureEpsilon,   false )->
-    setApplyDefaultValue(1e-7)->
+    setApplyDefaultValue(1e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero");
 
@@ -80,7 +80,7 @@ BrooksCoreyCapillaryPressure::DeliverClone(string const & name,
   clone->m_phaseEntryPressure          = this->m_phaseEntryPressure;
 
   clone->m_capPressureEpsilon = this->m_capPressureEpsilon;
-  clone->m_satScale           = this->m_satScale;
+  clone->m_volFracScale       = this->m_volFracScale;
 
   std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
   return rval;
@@ -108,12 +108,12 @@ void BrooksCoreyCapillaryPressure::ProcessInputFile_PostProcess()
 
 #undef COREY_CHECK_INPUT_LENGTH
 
-  m_satScale = 1.0;
+  m_volFracScale = 1.0;
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     GEOS_ERROR_IF( (m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0),
                    "BrooksCoreyCapillaryPressure: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
-    m_satScale -= m_phaseMinVolumeFraction[ip];
+    m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
     GEOS_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 1.0)
 		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
@@ -129,7 +129,7 @@ void BrooksCoreyCapillaryPressure::ProcessInputFile_PostProcess()
 
   }
 
-  GEOS_ERROR_IF( m_satScale < 0.0, "BrooksCoreyCapillaryPressure: sum of min volume fractions exceeds 1.0" );
+  GEOS_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyCapillaryPressure: sum of min volume fractions exceeds 1.0" );
 }
 
 
@@ -146,7 +146,7 @@ void BrooksCoreyCapillaryPressure::BatchUpdate( arrayView2d<real64 const> const 
                                                                           phaseCapPressureExponentInv,
                                                                           phaseEntryPressure,
 									  capPressureEpsilon,
-                                                                          m_satScale );
+                                                                          m_volFracScale );
 }
 
 
@@ -169,7 +169,7 @@ void BrooksCoreyCapillaryPressure::PointUpdate( arraySlice1d<real64 const> const
            m_phaseCapPressureExponentInv,
            m_phaseEntryPressure,
 	   m_capPressureEpsilon,
-           m_satScale );
+           m_volFracScale );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, std::string const &, ManagedGroup * const )

@@ -137,11 +137,11 @@ protected:
 
 template< typename LEAFCLASS, typename ... ARGS >
 void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                                                  ARGS&& ... args)
+                                               ARGS&& ... args)
 {
   localIndex const numElem = m_phaseCapPressure.size(0);
-  localIndex const numQ = m_phaseCapPressure.size(1);
-  localIndex const NP = numFluidPhases();
+  localIndex const numQ    = m_phaseCapPressure.size(1);
+  localIndex const NP      = numFluidPhases();
 
   arrayView3d<real64> const & phaseCapPressure = m_phaseCapPressure;
   arrayView4d<real64> const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;

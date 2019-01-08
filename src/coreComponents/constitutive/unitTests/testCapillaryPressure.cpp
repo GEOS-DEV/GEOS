@@ -184,7 +184,7 @@ void testNumericalDerivatives( CapillaryPressureBase * capPressure,
 
   // set the fluid state to current
   capPressure->PointUpdate(saturation, 0, 0);
-
+  
   // update saturation and check derivatives
   auto dPhaseCapPressure_dS = invertLayout( dPhaseCapPressure_dSat, NP, NP );
 
@@ -200,7 +200,7 @@ void testNumericalDerivatives( CapillaryPressureBase * capPressure,
 
     capPressureCopy->PointUpdate( satNew, 0, 0 );
     string var = "phaseVolFrac[" + phases[jp] + "]";
-
+    
     checkDerivative( phaseCapPressureCopy, phaseCapPressure, dPhaseCapPressure_dS[jp], dS, relTol, "phaseCapPressure", var, phases );
   }
 }
@@ -212,26 +212,27 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name,
 
   auto & phaseNames = capPressure->getReference<string_array>( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
-  phaseNames[0] = "oil"; phaseNames[1] = "gas";
+  phaseNames[0] = "water"; phaseNames[1] = "oil";
 
   auto & phaseMinSat = capPressure->getReference<array1d<real64>>( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString );
   phaseMinSat.resize( 2 );
-  phaseMinSat[0] = 0.1; phaseMinSat[1] = 0.15;
+  phaseMinSat[0] = 0.1; phaseMinSat[1] = 0.05;
 
   auto & phaseCapPressureExpInv = capPressure->getReference<array1d<real64>>( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
   phaseCapPressureExpInv.resize( 2 );
-  phaseCapPressureExpInv[0] = 2; phaseCapPressureExpInv[1] = 3;
+  phaseCapPressureExpInv[0] = 2; phaseCapPressureExpInv[1] = 4;
 
   auto & phaseEntryPressure = capPressure->getReference<array1d<real64>>( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString );
   phaseEntryPressure.resize( 2 );
   phaseEntryPressure[0] = 1; phaseEntryPressure[1] = 1;
 
   auto & capPressureEpsilon = capPressure->getReference<real64>( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
-  capPressureEpsilon = 1e-7;
+  capPressureEpsilon = 1e-4;
   
   capPressure->ProcessInputFile_PostProcess();
   return capPressure;
 }
+
 
 CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & name, ManagedGroup * parent )
 {
@@ -275,14 +276,14 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name
 
   auto & phaseCapPressureExpInv = capPressure->getReference<array1d<real64>>( VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
   phaseCapPressureExpInv.resize( 2 );
-  phaseCapPressureExpInv[0] = 0.33; phaseCapPressureExpInv[1] = 0.4;
+  phaseCapPressureExpInv[0] = 0.5; phaseCapPressureExpInv[1] = 0.4;
 
   auto & phaseCapPressureMultiplier = capPressure->getReference<array1d<real64>>( VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureMultiplierString );
   phaseCapPressureMultiplier.resize( 2 );
   phaseCapPressureMultiplier[0] = 0.5; phaseCapPressureMultiplier[1] = 1;
 
   auto & capPressureEpsilon = capPressure->getReference<real64>( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
-  capPressureEpsilon = 1e-3; 
+  capPressureEpsilon = 1e-4; 
 
   capPressure->ProcessInputFile_PostProcess();
   return capPressure;
@@ -309,7 +310,7 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & na
   phaseCapPressureMultiplier[0] = 0.5; phaseCapPressureMultiplier[1] = 1; phaseCapPressureMultiplier[2] = 0.2;
 
   auto & capPressureEpsilon = capPressure->getReference<real64>( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
-  capPressureEpsilon = 1e-3; 
+  capPressureEpsilon = 1e-4; 
 
   capPressure->ProcessInputFile_PostProcess();
   return capPressure;
@@ -329,7 +330,7 @@ TEST(testCapPressure, numericalDerivatives_brooksCoreyCapPressureTwoPhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.2;
+  real64 const start_sat = 0.2; 
   real64 const end_sat   = 0.8;
   real64 const dS = 1e-4;
   array1d<real64> sat(2);
@@ -397,6 +398,7 @@ TEST(testCapPressure, numericalDerivatives_vanGenuchtenCapPressureTwoPhase)
   }
      
 }
+
 
 TEST(testCapPressure, numericalDerivatives_vanGenuchtenCapPressureThreePhase)
 {
