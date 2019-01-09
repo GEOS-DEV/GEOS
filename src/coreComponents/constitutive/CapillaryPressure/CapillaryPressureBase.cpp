@@ -85,7 +85,6 @@ void CapillaryPressureBase::ProcessInputFile_PostProcess()
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
   m_phaseOrder = -1;
 
-  bool refPhaseFound = false;
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
@@ -96,11 +95,9 @@ void CapillaryPressureBase::ProcessInputFile_PostProcess()
     m_phaseTypes[ip] = phaseIndex;
     m_phaseOrder[phaseIndex] = integer_conversion<integer>(ip);
 
-    if (phaseIndex == CapillaryPressureBase::REFERENCE_PHASE)
-      refPhaseFound = true;
   }
 
-  GEOS_ERROR_IF(!refPhaseFound, "CapillaryPressureBase: reference oil phase has not been defined and should be included in model" );
+  GEOS_ERROR_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0 , "CapillaryPressureBase: reference oil phase has not been defined and should be included in model" );
   
   // call to correctly set member array tertiary sizes on the 'main' material object
   ResizeFields( 0, 0 );
