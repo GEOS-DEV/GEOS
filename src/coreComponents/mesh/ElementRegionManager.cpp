@@ -41,6 +41,7 @@ using namespace dataRepository;
 ElementRegionManager::ElementRegionManager(  string const & name, ManagedGroup * const parent ):
   ObjectManagerBase(name,parent)
 {
+  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
   this->RegisterGroup<ManagedGroup>(keys::elementRegions);
 }
 

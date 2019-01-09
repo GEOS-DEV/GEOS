@@ -64,6 +64,8 @@ public:
 //  virtual void FillDocumentationNode() override final;
 //  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
   virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
   virtual void ProcessInputFile_PostProcess() override final;

@@ -29,14 +29,14 @@
 #include "DocumentationNode.hpp"
 #include "common/DataTypes.hpp"
 #include "fileIO/xmlWrapper.hpp"
+#include "fileIO/schema/SchemaFlags.hpp"
+#include "dataRepository/InputFlags.hpp"
 namespace geosx
 {
 
-
-void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead, integer verbosityLevel);
+void ConvertDocumentationToSchema(std::string const & fname, dataRepository::ManagedGroup * const group);
 void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
-void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot,
-                        integer verbosityLevel);
+void SchemaConstruction(dataRepository::ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent);
 
 }
 

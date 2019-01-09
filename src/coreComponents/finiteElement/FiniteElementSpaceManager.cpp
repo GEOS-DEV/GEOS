@@ -32,7 +32,9 @@ using namespace dataRepository;
 
 FiniteElementSpaceManager::FiniteElementSpaceManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+}
 
 FiniteElementSpaceManager::~FiniteElementSpaceManager()
 {

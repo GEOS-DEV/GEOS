@@ -68,8 +68,9 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
   SolverBase( name, parent )
 {
 //  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
-  getLinearSystemRepository()->
-    SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
+  // To generate the schema, multiple solvers of that use this command are constructed
+  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
+  // getLinearSystemRepository()->SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
 
   RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
     setInputFlag(InputFlags::REQUIRED)->
@@ -133,7 +134,7 @@ void LaplaceFEM::ProcessInputFile_PostProcess()
 
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-
+  getLinearSystemRepository()->SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
 }
 
 

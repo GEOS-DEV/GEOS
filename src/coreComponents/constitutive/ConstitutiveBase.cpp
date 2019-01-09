@@ -32,7 +32,9 @@ namespace constitutive
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+}
 
 ConstitutiveBase::~ConstitutiveBase()
 {}

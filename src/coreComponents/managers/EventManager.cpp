@@ -43,6 +43,8 @@ EventManager::EventManager( std::string const & name,
   m_currentSubEvent(),
   m_currentMaxDt()
 {
+  setSchemaFlags(SchemaFlags::REQUIRED_UNIQUE_NODE);
+  
   RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -57,7 +59,6 @@ EventManager::EventManager( std::string const & name,
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation time.");
-
 
   RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
@@ -78,7 +79,6 @@ EventManager::EventManager( std::string const & name,
   RegisterViewWrapper(viewKeyStruct::currentMaxDtString, &m_currentMaxDt, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Maximum dt request for event loop.");
-
 
 }
 
