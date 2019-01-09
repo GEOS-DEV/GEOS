@@ -39,6 +39,8 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
   m_gravityVector( R1Tensor(0.0) ),
   m_blockSystemRepository()
 {
+  setSchemaFlags(SchemaFlags::REQUIRED_UNIQUE_NODE);
+
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
     setApplyDefaultValue({0,0,0})->
     setInputFlag(InputFlags::OPTIONAL);

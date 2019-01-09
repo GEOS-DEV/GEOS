@@ -140,7 +140,6 @@ public:
     dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
     dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
     dataRepository::ViewKey schemaFileName           = {"schemaFileName"};
-    dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
   } viewKeys;

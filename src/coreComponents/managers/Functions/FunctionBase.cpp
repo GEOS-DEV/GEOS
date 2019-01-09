@@ -35,6 +35,8 @@ FunctionBase::FunctionBase( const std::string& name,
   ManagedGroup( name, parent ),
   m_inputVarNames()
 {
+  setSchemaFlags(SchemaFlags::NODE);
+
   RegisterViewWrapper( keys::inputVarNames, &m_inputVarNames, 0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setSizedFromParent(0)->

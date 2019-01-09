@@ -34,7 +34,9 @@ namespace geosx
 SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
                                                       ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setSchemaFlags(SchemaFlags::NODE);
+}
 
 
 SimpleGeometricObjectBase::~SimpleGeometricObjectBase()

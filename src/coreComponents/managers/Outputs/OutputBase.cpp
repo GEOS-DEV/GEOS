@@ -35,6 +35,8 @@ OutputBase::OutputBase( std::string const & name,
   m_slaveDirectory(),
   m_parallelThreads(1)
 {
+  setSchemaFlags(SchemaFlags::NODE);
+
   RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("slave directory path");

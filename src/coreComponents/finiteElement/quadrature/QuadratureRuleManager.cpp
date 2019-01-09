@@ -25,7 +25,9 @@ using namespace dataRepository;
 
 QuadratureRuleManager::QuadratureRuleManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+}
 
 QuadratureRuleManager::~QuadratureRuleManager()
 {

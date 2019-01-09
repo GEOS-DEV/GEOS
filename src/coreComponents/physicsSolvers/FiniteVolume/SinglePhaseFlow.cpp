@@ -55,7 +55,9 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
   m_numDofPerCell = 1;
 
   // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
+  // To generate the schema, multiple solvers of that use this command are constructed
+  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
+  // getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }
 
 void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
@@ -89,6 +91,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
 
 void SinglePhaseFlow::InitializePreSubGroups(ManagedGroup * const rootGroup)
 {
+  getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
   FlowSolverBase::InitializePreSubGroups(rootGroup);
 }
 

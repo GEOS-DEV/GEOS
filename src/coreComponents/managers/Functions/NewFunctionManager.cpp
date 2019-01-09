@@ -37,7 +37,9 @@ using namespace dataRepository;
 NewFunctionManager::NewFunctionManager( const std::string& name,
                                         ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+}
 
 NewFunctionManager::~NewFunctionManager()
 {

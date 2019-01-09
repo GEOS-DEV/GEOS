@@ -26,7 +26,9 @@
 namespace geosx
 {
 
-void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead, integer verbosityLevel)
+// using namespace dataRepository;
+
+void ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * const group)
 {
   std::string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
@@ -43,8 +45,8 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Docu
   // Build the simple schema types
   BuildSimpleSchemaTypes(schemaRoot);
 
-  // Recursively build the schema from the documentation string
-  SchemaConstruction(inputDocumentationHead, schemaRoot, schemaRoot, verbosityLevel);
+  // Recursively build the schema from the data structure skeleton
+  SchemaConstruction(group, schemaRoot, schemaRoot);
 
   // Write the schema to file
   schemaTree.save_file(fname.c_str());
@@ -77,73 +79,75 @@ void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 }
 
 
-void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot,
-                        integer verbosityLevel)
+void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent)
 {
-  if( docNode.getVerbosity() > verbosityLevel )
+  // Get schema details
+  SchemaFlags schemaType = group->getSchemaFlags();
+  string targetName = group->getName();
+  string typeName = targetName + "Type";
+
+  // Insert the schema node if not present, then iterate over children
+  if( schemaParent.find_child_by_attribute("xsd:element", "name", targetName.c_str()).empty())
   {
-    // Do nothing
-  }
-  else if( docNode.getSchemaType().find("Node") != std::string::npos )
-  {
-    // Special case for root nodes:
-    xmlWrapper::xmlNode targetNode = schemaRoot;
-    if( docNode.getSchemaType().find("Root") == std::string::npos )
+    // Add the entries to the current and root nodes
+    xmlWrapper::xmlNode targetIncludeNode = schemaParent.append_child("xsd:element");
+    targetIncludeNode.append_attribute("name") = targetName.c_str();
+    targetIncludeNode.append_attribute("type") = typeName.c_str();
+
+    // Occurence conditions
+    if((schemaType == SchemaFlags::REQUIRED_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
     {
-      targetNode = schemaNode.child("xsd:choice");
-      if( targetNode.empty() )
-      {
-        targetNode = schemaNode.prepend_child("xsd:choice");
-        targetNode.append_attribute("maxOccurs") = "unbounded";
-      }
+      targetIncludeNode.append_attribute("minOccurs") = "1";
+    }
+    if((schemaType == SchemaFlags::UNIQUE_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
+    {
+      targetIncludeNode.append_attribute("maxOccurs") = "1";
     }
 
-    // Insert the schema node if not present, then iterate over children
-    if( targetNode.find_child_by_attribute("xsd:element", "name", docNode.m_name.c_str()).empty())
+    // Insert a new type into the root node if not present
+    xmlWrapper::xmlNode targetTypeDefNode = schemaRoot.find_child_by_attribute("xsd:complexType", "name", typeName.c_str());
+    if( targetTypeDefNode.empty())
     {
-      // Add the entries to the current and root nodes
-      xmlWrapper::xmlNode newNode = targetNode.append_child("xsd:element");
-      newNode.append_attribute("name") = docNode.m_name.c_str();
-      newNode.append_attribute("type") = (docNode.m_name+"Type").c_str();
+      targetTypeDefNode = schemaRoot.append_child("xsd:complexType");
+      targetTypeDefNode.append_attribute("name") = typeName.c_str();
 
-      // Set the occurance limits
-      if( docNode.getSchemaType().find("Required") != std::string::npos )
+      if (group->numSubGroups() > 0)
       {
-        newNode.append_attribute("minOccurs") = "1";
-      }
-      if( docNode.getSchemaType().find("Unique") != std::string::npos )
-      {
-        newNode.append_attribute("maxOccurs") = "1";
-      }
+        xmlWrapper::xmlNode targetChoiceNode = schemaRoot.child("xsd:choice");
+        if( targetChoiceNode.empty() )
+        {
+          targetChoiceNode = schemaRoot.prepend_child("xsd:choice");
 
-      // Insert a new type into the root node if not present
-      newNode = schemaRoot.find_child_by_attribute("xsd:complexType", "name", (docNode.m_name+"Type").c_str());
-      if( newNode.empty())
-      {
-        newNode = schemaRoot.append_child("xsd:complexType");
-        newNode.append_attribute("name") = (docNode.m_name+"Type").c_str();
+          // Add children
+          group->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
+          {
+            SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
+          });
+        }
       }
 
-      // Set the type characteristics
-      for( auto const & subDocNode : docNode.m_child )
-      {
-        SchemaConstruction(subDocNode.second, newNode, schemaRoot, verbosityLevel);
-      }
-    }
-  }
-  else if( docNode.getSchemaType().empty() == 0 )
-  {
-    // Insert a new attribute if not present
-    if( schemaNode.find_child_by_attribute("xsd:attribute", "name", docNode.m_name.c_str()).empty())
-    {
-      xmlWrapper::xmlNode newNode = schemaNode.append_child("xsd:attribute");
-      newNode.append_attribute("name") = docNode.m_name.c_str();
-      newNode.append_attribute("type") = (docNode.getSchemaType()).c_str();
+      
 
-      if( !strcmp(docNode.getDefault().c_str(), "REQUIRED"))
-      {
-        newNode.append_attribute("use") = "required";
-      }
+      // // Add attributes
+      // group->forViewWrappers<ViewWrapperBase>([&]( ViewWrapper * view ) -> void
+      // {
+      //   InputFlags flag = view->getInputFlag();
+        
+      //   if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
+      //   {
+      //     xmlWrapper::xmlNode attributeNode = targetNode.append_child("xsd:attribute");
+      //     attributeNode.append_attribute("name") = view->getName().c_str();
+      //     attributeNode.append_attribute("type") = (rtTypes::typeNames(view->get_typeid()).c_str());
+
+      //     // TODO: Description
+
+      //     if ( flag == InputFlags::OPTIONAL )
+      //     {
+      //       // TODO: Set default flag appropriately
+      //       attributeNode.append_attribute("default") = "0";
+      //     }
+      //   }
+      // });
     }
   }
 }

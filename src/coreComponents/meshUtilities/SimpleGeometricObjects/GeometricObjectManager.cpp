@@ -36,7 +36,9 @@ using namespace cxx_utilities;
 GeometricObjectManager::GeometricObjectManager( std::string const & name,
                                                 ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{}
+{
+  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+}
 
 GeometricObjectManager::~GeometricObjectManager()
 {}

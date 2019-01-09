@@ -106,6 +106,8 @@ ProblemManager::ProblemManager( const std::string& name,
   ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
 
+  setSchemaFlags(SchemaFlags::ROOT);
+
   // Mandatory groups that read from the xml
   //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
@@ -164,11 +166,6 @@ ProblemManager::ProblemManager( const std::string& name,
   commandLine->RegisterViewWrapper<string>( viewKeys.schemaFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the output schema");
-
-  commandLine->RegisterViewWrapper<integer>( viewKeys.schemaLevel.Key() )->
-    setApplyDefaultValue(0)->
-    setRestartFlags(RestartFlags::WRITE)->
-    setDescription("Schema verbosity level (0=default, 1=development, 2=all)");
 }
 
 
@@ -195,9 +192,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   integer& yPartitionsOverride = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
   integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
   integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
-  std::string&  schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
-  integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-  schemaLevel = 0;
+  std::string& schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
   std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
   std::string& outputDirectory = commandLine->getReference<std::string>(viewKeys.outputDirectory);
   outputDirectory = ".";
@@ -205,7 +200,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -216,7 +211,6 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -286,9 +280,6 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     case SCHEMA:
       schemaName = opt.arg;
       break;
-    case SCHEMALEVEL:
-      schemaLevel = std::stoi(opt.arg);
-      break;
     case PROBLEMNAME:
       problemName = opt.arg;
       break;
@@ -333,7 +324,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFileName )
 {
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -344,7 +335,6 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {SCHEMALEVEL, 0, "l", "schema_level", Arg::NonEmpty, "\t-l, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -403,8 +393,6 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
       case ZPAR:
         break;
       case SCHEMA:
-        break;
-      case SCHEMALEVEL:
         break;
       case PROBLEMNAME:
         break;
@@ -500,7 +488,10 @@ void ProblemManager::GenerateDocumentation()
   
   if (schemaName.empty() == 0)
   {
+    // Generate an extensive data structure
     GenerateDataStructureSkeleton(0);
+
+    ConvertDocumentationToSchema(schemaName.c_str(), this);
   }
 }
 
@@ -588,14 +579,6 @@ void ProblemManager::ParseInputFile()
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->ProcessInputFileRecursive_PostProcess();
   }
-
-  // Documentation output
-  // std::string const & schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
-  // if (schemaName.empty() == 0)
-  // {
-  //   integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-  //   ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
-  // }
 }
 
 

@@ -37,7 +37,9 @@ namespace constitutive
 ConstitutiveManager::ConstitutiveManager( string const & name,
                                           ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+}
 
 ConstitutiveManager::~ConstitutiveManager()
 {}
@@ -53,8 +55,6 @@ ManagedGroup * ConstitutiveManager::CreateChild( string const & childKey, string
 void ConstitutiveManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ConstitutiveBase here
-  // cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >& catalog = ConstitutiveBase::GetCatalog();
-
   for (auto& catalogIter: ConstitutiveBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
