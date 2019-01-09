@@ -145,7 +145,7 @@ void BrooksCoreyCapillaryPressure::BatchUpdate( arrayView2d<real64 const> const 
                                                                           phaseMinVolumeFraction,
                                                                           phaseCapPressureExponentInv,
                                                                           phaseEntryPressure,
-									  capPressureEpsilon,
+                                                                          capPressureEpsilon,
                                                                           m_volFracScale );
 }
 
@@ -164,11 +164,11 @@ void BrooksCoreyCapillaryPressure::PointUpdate( arraySlice1d<real64 const> const
            phaseVolFraction,
            capPressure,
            dCapPressure_dVolFrac,
-	   m_phaseTypes,
+           m_phaseOrder,
            m_phaseMinVolumeFraction,
            m_phaseCapPressureExponentInv,
            m_phaseEntryPressure,
-	   m_capPressureEpsilon,
+           m_capPressureEpsilon,
            m_volFracScale );
 }
 

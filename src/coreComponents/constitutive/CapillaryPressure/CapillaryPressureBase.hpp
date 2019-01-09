@@ -137,7 +137,7 @@ protected:
 
 template< typename LEAFCLASS, typename ... ARGS >
 void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                                               ARGS&& ... args)
+                                               ARGS&& ... args )
 {
   localIndex const numElem = m_phaseCapPressure.size(0);
   localIndex const numQ    = m_phaseCapPressure.size(1);
@@ -145,7 +145,7 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
 
   arrayView3d<real64> const & phaseCapPressure = m_phaseCapPressure;
   arrayView4d<real64> const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
-  arrayView1d<integer const> const & phaseTypes = m_phaseTypes;
+  arrayView1d<integer const> const & phaseOrder = m_phaseOrder;
   
   forall_in_range( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
   {
@@ -155,8 +155,8 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
 			  phaseVolumeFraction[k],
 			  phaseCapPressure[k][q],
 			  dPhaseCapPressure_dPhaseVolFrac[k][q],
-			  phaseTypes,
-			  args...);
+			  phaseOrder,
+			  args... );
     }
   });
 }

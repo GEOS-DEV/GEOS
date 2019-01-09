@@ -162,7 +162,7 @@ void VanGenuchtenCapillaryPressure::PointUpdate( arraySlice1d<real64 const> cons
            phaseVolFraction,
            capPressure,
            dCapPressure_dVolFrac,
-	   m_phaseTypes,
+	   m_phaseOrder,
            m_phaseMinVolumeFraction,
            m_phaseCapPressureExponentInv,
            m_phaseCapPressureMultiplier,
