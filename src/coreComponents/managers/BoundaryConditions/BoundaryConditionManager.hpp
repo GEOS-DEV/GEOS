@@ -34,7 +34,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const boundaryConditionMananger( "BoundaryConditionMananger" );
+string const boundaryConditionManager( "BoundaryConditionManager" );
 }
 }
 
