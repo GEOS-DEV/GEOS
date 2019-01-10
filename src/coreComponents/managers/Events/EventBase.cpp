@@ -54,6 +54,8 @@ EventBase::EventBase( const std::string& name,
   m_lastCycle(0),
   m_target(nullptr)
 {
+  setSchemaFlags(SchemaFlags::NODE);
+  
   RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("event target");
