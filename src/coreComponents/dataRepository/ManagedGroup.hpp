@@ -34,7 +34,7 @@
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
-#include "fileIO/schema/SchemaFlags.hpp"
+#include "dataRepository/SchemaFlags.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
 /// macro definition to specify whether or not to use dynamic_cast

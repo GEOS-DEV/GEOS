@@ -26,7 +26,7 @@
 namespace geosx
 {
 
-// using namespace dataRepository;
+using namespace dataRepository;
 
 void ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * const group)
 {

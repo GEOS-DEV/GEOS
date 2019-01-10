@@ -9,7 +9,6 @@ set(fileIO_headers
   silo/SiloFile.hpp
   vtm/VtmFile.hpp
   blueprint/Blueprint.hpp
-  schema/SchemaFlags.hpp
   schema/SchemaUtilities.hpp
   coupling/ChomboCoupler.hpp
   utils/utils.hpp )
