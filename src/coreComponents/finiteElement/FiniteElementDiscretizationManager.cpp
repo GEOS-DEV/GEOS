@@ -51,7 +51,7 @@ ManagedGroup * FiniteElementDiscretizationManager::CreateChild( string const & c
 }
 
 
-void FiniteElementSpaceManager::ExpandObjectCatalogs()
+void FiniteElementDiscretizationManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ManagedGroup here
   for (auto& catalogIter: ManagedGroup::GetCatalog())
