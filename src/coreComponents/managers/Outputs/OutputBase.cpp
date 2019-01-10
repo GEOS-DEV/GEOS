@@ -58,7 +58,7 @@ OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
 }
 
 
-void OutputBase::Initialize( ManagedGroup * const group )
+void OutputBase::InitializePreSubGroups( ManagedGroup * const group )
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();

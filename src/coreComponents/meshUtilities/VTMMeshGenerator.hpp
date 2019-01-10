@@ -77,10 +77,13 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ProcessInputFile_PostProcess() override final;
 //  int m_delayMeshDeformation;
 
+protected:
+  void PostProcessInput() override final;
+
 private:
+
   /// Contains the path to the VTM file
   string m_fileName;
 

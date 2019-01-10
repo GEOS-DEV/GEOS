@@ -53,9 +53,6 @@ public:
   OutputBase& operator=( OutputBase const & ) = default;
   OutputBase& operator=( OutputBase&& ) = default;
 
-  /// Output initialization
-  virtual void Initialize( ManagedGroup * const group ) override;
-
   /// Method for setting up output directories
   virtual void SetupDirectoryStructure();
 
@@ -71,6 +68,9 @@ public:
 
   string slaveDirectory() const { return m_slaveDirectory; }
   integer parallelThreads() const { return m_parallelThreads; }
+
+protected:
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 
 private:
   string m_slaveDirectory;

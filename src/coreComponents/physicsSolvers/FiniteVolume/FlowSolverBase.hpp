@@ -78,10 +78,6 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
-
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
-
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
   localIndex fluidIndex() const { return m_fluidIndex; }
@@ -101,7 +97,6 @@ public:
     static constexpr auto gravityDepthString = "gravityDepth";
 
     // misc inputs
-    static constexpr auto discretizationString = "discretization";
     static constexpr auto fluidNameString      = "fluidName";
     static constexpr auto solidNameString      = "solidName";
     static constexpr auto fluidIndexString     = "fluidIndex";
@@ -140,6 +135,11 @@ private:
 
 protected:
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+
+
   /**
    * @brief Setup stored views into domain data for the current step
    */
@@ -147,9 +147,6 @@ protected:
 
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;
-
-  /// name of the FV discretization object in the data repository
-  string m_discretizationName;
 
   /// name of the fluid constitutive model
   string m_fluidName;

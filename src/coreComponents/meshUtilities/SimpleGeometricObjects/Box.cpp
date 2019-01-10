@@ -62,7 +62,7 @@ Box::~Box()
 
 
 
-void Box::ProcessInputFile_PostProcess()
+void Box::PostProcessInput()
 {
   m_boxCenter = m_min;
   m_boxCenter += m_max;

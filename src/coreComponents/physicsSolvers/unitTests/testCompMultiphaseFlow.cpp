@@ -606,11 +606,7 @@ protected:
     problemManager.ParseCommandLineInput( argc, argv );
     problemManager.ParseInputFile();
 
-    problemManager.Initialize( &problemManager );
-    problemManager.RegisterDataOnMeshRecursive( nullptr );
-    problemManager.IntermediateInitializationRecursive( &problemManager );
-    problemManager.ApplyInitialConditions();
-    problemManager.FinalInitializationRecursive( &problemManager );
+    problemManager.ProblemSetup();
 
     solver = problemManager.GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
   }

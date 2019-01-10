@@ -87,6 +87,8 @@ int main( int argc, char *argv[] )
   {
     problemManager.ParseInputFile();
 
+    problemManager.ProblemSetup();
+
     GEOSX_MARK_BEGIN("problemManager.Initialize");
     problemManager.Initialize( &problemManager );
     GEOSX_MARK_END("problemManager.Initialize");

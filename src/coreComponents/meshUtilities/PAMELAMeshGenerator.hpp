@@ -74,9 +74,11 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ProcessInputFile_PostProcess() override final;
+protected:
+  void PostProcessInput() override final;
 
 private:
+
   /// Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
 

@@ -79,12 +79,12 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
   return std::move( clone );
 }
 
-void BlackOilFluid::ProcessInputFile_PostProcess()
+void BlackOilFluid::PostProcessInput()
 {
   // TODO maybe use different names?
   m_componentNames = m_phaseNames;
 
-  MultiFluidPVTPackageWrapper::ProcessInputFile_PostProcess();
+  MultiFluidPVTPackageWrapper::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 

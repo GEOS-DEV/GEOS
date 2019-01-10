@@ -61,10 +61,6 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
-  virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
-
-  virtual void ProcessInputFile_PostProcess() override final;
-
   /**
    * @defgroup Solver Interface Functions
    *
@@ -169,6 +165,9 @@ public:
 
 
 
+
+protected:
+  virtual void PostProcessInput() override final;
 
 private:
   string m_fieldName;
