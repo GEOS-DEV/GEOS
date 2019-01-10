@@ -92,7 +92,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
 void SinglePhaseFlow::InitializePreSubGroups(ManagedGroup * const rootGroup)
 {
   getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
-  FlowSolverBase::InitializePreSubGroups(rootGroup);
 }
 
 void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
