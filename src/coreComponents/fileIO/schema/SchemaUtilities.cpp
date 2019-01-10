@@ -109,7 +109,7 @@ void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRo
       targetIncludeNode.append_attribute("name") = targetName.c_str();
       targetIncludeNode.append_attribute("type") = typeName.c_str();
 
-      // Occurence conditions
+      // Add occurence conditions
       if((schemaType == SchemaFlags::REQUIRED_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
       {
         targetIncludeNode.append_attribute("minOccurs") = "1";
@@ -126,6 +126,7 @@ void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRo
         targetTypeDefNode = schemaRoot.append_child("xsd:complexType");
         targetTypeDefNode.append_attribute("name") = typeName.c_str();
 
+        // Add subgroups
         if (group->numSubGroups() > 0)
         {
           xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.child("xsd:choice");
@@ -141,26 +142,29 @@ void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRo
           }
         }
 
-        // // Add attributes
-        // group->forViewWrappers<ViewWrapperBase>([&]( ViewWrapper * view ) -> void
-        // {
-        //   InputFlags flag = view->getInputFlag();
+        // Add attributes
+        group->forViewWrappers([&]( auto const & view ) -> void
+        {
+          InputFlags flag = view.getInputFlag();
           
-        //   if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
-        //   {
-        //     xmlWrapper::xmlNode attributeNode = targetNode.append_child("xsd:attribute");
-        //     attributeNode.append_attribute("name") = view->getName().c_str();
-        //     attributeNode.append_attribute("type") = (rtTypes::typeNames(view->get_typeid()).c_str());
+          if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
+          {
+            xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
+            attributeNode.append_attribute("name") = view.getName().c_str();
+            attributeNode.append_attribute("type") = (rtTypes::typeNames(view.get_typeid()).c_str());
 
-        //     // TODO: Description
+            if ( flag == InputFlags::OPTIONAL )
+            {
+              attributeNode.append_attribute("default") = view.getDefaultValueString().c_str();
+            }
 
-        //     if ( flag == InputFlags::OPTIONAL )
-        //     {
-        //       // TODO: Set default flag appropriately
-        //       attributeNode.append_attribute("default") = "0";
-        //     }
-        //   }
-        // });
+            string description = view.getDescription();
+            if (!description.empty())
+            {
+              attributeNode.append_attribute("description") = description.c_str();
+            }
+          }
+        });
       }
     }
   }
