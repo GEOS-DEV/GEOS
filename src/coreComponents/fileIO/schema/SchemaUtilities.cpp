@@ -95,73 +95,76 @@ void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRo
 {
   // Get schema details
   SchemaFlags schemaType = group->getSchemaFlags();
-  string targetName = group->getName();
-  string typeName = targetName + "Type";
-
-  // Insert the schema node if not present, then iterate over children
-  if( schemaParent.find_child_by_attribute("xsd:element", "name", targetName.c_str()).empty())
+  
+  if (schemaType != SchemaFlags::IGNORE)
   {
-    // Add the entries to the current and root nodes
-    xmlWrapper::xmlNode targetIncludeNode = schemaParent.append_child("xsd:element");
-    targetIncludeNode.append_attribute("name") = targetName.c_str();
-    targetIncludeNode.append_attribute("type") = typeName.c_str();
+    string targetName = group->getName();
+    string typeName = targetName + "Type";
 
-    // Occurence conditions
-    if((schemaType == SchemaFlags::REQUIRED_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
+    // Insert the schema node if not present, then iterate over children
+    if( schemaParent.find_child_by_attribute("xsd:element", "name", targetName.c_str()).empty())
     {
-      targetIncludeNode.append_attribute("minOccurs") = "1";
-    }
-    if((schemaType == SchemaFlags::UNIQUE_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
-    {
-      targetIncludeNode.append_attribute("maxOccurs") = "1";
-    }
+      // Add the entries to the current and root nodes
+      xmlWrapper::xmlNode targetIncludeNode = schemaParent.append_child("xsd:element");
+      targetIncludeNode.append_attribute("name") = targetName.c_str();
+      targetIncludeNode.append_attribute("type") = typeName.c_str();
 
-    // Insert a new type into the root node if not present
-    xmlWrapper::xmlNode targetTypeDefNode = schemaRoot.find_child_by_attribute("xsd:complexType", "name", typeName.c_str());
-    if( targetTypeDefNode.empty())
-    {
-      targetTypeDefNode = schemaRoot.append_child("xsd:complexType");
-      targetTypeDefNode.append_attribute("name") = typeName.c_str();
-
-      if (group->numSubGroups() > 0)
+      // Occurence conditions
+      if((schemaType == SchemaFlags::REQUIRED_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
       {
-        xmlWrapper::xmlNode targetChoiceNode = schemaRoot.child("xsd:choice");
-        if( targetChoiceNode.empty() )
-        {
-          targetChoiceNode = schemaRoot.prepend_child("xsd:choice");
-
-          // Add children
-          group->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
-          {
-            SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
-          });
-        }
+        targetIncludeNode.append_attribute("minOccurs") = "1";
+      }
+      if((schemaType == SchemaFlags::UNIQUE_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
+      {
+        targetIncludeNode.append_attribute("maxOccurs") = "1";
       }
 
-      
+      // Insert a new type into the root node if not present
+      xmlWrapper::xmlNode targetTypeDefNode = schemaRoot.find_child_by_attribute("xsd:complexType", "name", typeName.c_str());
+      if( targetTypeDefNode.empty())
+      {
+        targetTypeDefNode = schemaRoot.append_child("xsd:complexType");
+        targetTypeDefNode.append_attribute("name") = typeName.c_str();
 
-      // // Add attributes
-      // group->forViewWrappers<ViewWrapperBase>([&]( ViewWrapper * view ) -> void
-      // {
-      //   InputFlags flag = view->getInputFlag();
-        
-      //   if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
-      //   {
-      //     xmlWrapper::xmlNode attributeNode = targetNode.append_child("xsd:attribute");
-      //     attributeNode.append_attribute("name") = view->getName().c_str();
-      //     attributeNode.append_attribute("type") = (rtTypes::typeNames(view->get_typeid()).c_str());
+        if (group->numSubGroups() > 0)
+        {
+          xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.child("xsd:choice");
+          if( targetChoiceNode.empty() )
+          {
+            targetChoiceNode = targetTypeDefNode.prepend_child("xsd:choice");
 
-      //     // TODO: Description
+            // Add children
+            group->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
+            {
+              SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
+            });
+          }
+        }
 
-      //     if ( flag == InputFlags::OPTIONAL )
-      //     {
-      //       // TODO: Set default flag appropriately
-      //       attributeNode.append_attribute("default") = "0";
-      //     }
-      //   }
-      // });
+        // // Add attributes
+        // group->forViewWrappers<ViewWrapperBase>([&]( ViewWrapper * view ) -> void
+        // {
+        //   InputFlags flag = view->getInputFlag();
+          
+        //   if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
+        //   {
+        //     xmlWrapper::xmlNode attributeNode = targetNode.append_child("xsd:attribute");
+        //     attributeNode.append_attribute("name") = view->getName().c_str();
+        //     attributeNode.append_attribute("type") = (rtTypes::typeNames(view->get_typeid()).c_str());
+
+        //     // TODO: Description
+
+        //     if ( flag == InputFlags::OPTIONAL )
+        //     {
+        //       // TODO: Set default flag appropriately
+        //       attributeNode.append_attribute("default") = "0";
+        //     }
+        //   }
+        // });
+      }
     }
   }
+  
 }
 
 }
