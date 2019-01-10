@@ -49,9 +49,6 @@ public:
   /// Destructor
   virtual ~EventManager() override;
 
-  /// XML post processing
-  virtual void ProcessInputFile_PostProcess() override;
-
   /// A method to add child events
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -94,7 +91,11 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
+protected:
+  virtual void PostProcessInput() override;
+
 private:
+
   real64 m_maxTime;
   integer m_maxCycle;
   integer m_verbosity;

@@ -40,7 +40,6 @@ public:
   FiniteVolumeManager(string const & name, ManagedGroup * const parent);
   virtual ~FiniteVolumeManager() override;
 
-  void IntermediateInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
   virtual ManagedGroup * CreateChild(string const & childKey, string const & childName) override;
 
@@ -51,7 +50,6 @@ public:
 
 private:
 
-  void precomputeFiniteVolumeData(DomainPartition * const domain);
 
 };
 

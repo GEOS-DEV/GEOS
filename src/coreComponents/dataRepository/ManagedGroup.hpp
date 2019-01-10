@@ -574,26 +574,12 @@ public:
     }
   }
 
-  virtual void Initialize( ManagedGroup * const group );
+  void Initialize( ManagedGroup * const group );
 
   virtual void InitializationOrder( string_array & order );
 
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
-
-  virtual void IntermediateInitializationRecursive( ManagedGroup * const group );
-
-  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const group ) {}
-
-  virtual void IntermediateInitializationPostSubGroups( ManagedGroup * const group ) {}
-
-  virtual void FinalInitializationRecursive( ManagedGroup * const group );
-
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const group ) {}
-
-  virtual void FinalInitializationPostSubGroups( ManagedGroup * const group ) {}
-
+  void InitializePostInitialConditions( ManagedGroup * const group );
 
   template< typename T, typename TBASE=T >
   ViewWrapper<TBASE> *
@@ -633,18 +619,18 @@ public:
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName );
 
+  /**
+   * @brief Recursively read values using ProcessInputFile() from the input
+   *        file and put them into the wrapped values for this group.
+   * @param[in] targetNode the XML node that to extract input values from.
+   */
   void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
 
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
-
-
-  void ProcessInputFileRecursive_PostProcess();
-
   /**
-   * This function provides a mechanism by which to post process any values that were read into the
-   * xml file prior to initialization.
+   * @brief Recursively call PostProcessInput() to apply post processing after
+   * reading input values.
    */
-  virtual void ProcessInputFile_PostProcess() {}
+  void PostProcessInputRecursive();
 
   /**
    * This function is used to build a complete datastructure for schema generation
@@ -923,7 +909,28 @@ public:
 
   void finishReading();
 
+protected:
+  /**
+   * @brief Post processing of the input values.
+   */
+  virtual void PostProcessInput() {}
+
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const group ) {}
+
+  virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const group ) {}
+
+
 private:  
+  /**
+   * @brief Read values from the input file and put them into the
+   *        wrapped values for this group.
+   * @param[in] targetNode the XML node that to extract input values from.
+   */
+  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
   /// the parent of this group
   ManagedGroup* m_parent = nullptr;

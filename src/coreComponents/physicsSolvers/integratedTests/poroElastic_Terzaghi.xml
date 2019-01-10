@@ -11,6 +11,8 @@
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
                  verboseLevel="1"
+                 discretization="FE1"
+                 targetRegions="Region2"
                  >
       <SystemSolverParameters name="SystemSolverParameters"
                               maxIterNewton="40"
@@ -21,6 +23,8 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="1"
+                                  discretization="FE1"
+                                  targetRegions="Region2"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -33,6 +37,7 @@
                      verboseLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
+                     targetRegions="Region2"
                      fluidName="water"
                      solidName="shale">
       <SystemSolverParameters name="SystemSolverParameters"
@@ -55,8 +60,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="boundaryBot" type="0" xMin="-0.1, -0.01, -0.01" xMax="2.1, 1.01, 1.01"/>
-    <Box name="boundaryTop" type="0" xMin="39.9, -0.01, -0.01" xMax="42.1, 1.01, 1.01"/>
+    <Box name="boundaryBot" xMin="-0.1, -0.01, -0.01" xMax="2.1, 1.01, 1.01"/>
+    <Box name="boundaryTop" xMin="39.9, -0.01, -0.01" xMax="42.1, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -112,7 +117,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" materialList="shale water" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="shale water" />
   </ElementRegions>
 
   <Constitutive>
@@ -147,7 +152,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <Dirichlet name="permy"
@@ -156,7 +160,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <Dirichlet name="permz"
@@ -165,7 +168,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <Dirichlet name="referencePorosity"
@@ -173,7 +175,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.3"/>
 
     <Dirichlet name="initialPressure"
@@ -181,13 +182,11 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"/>
   
     <Dirichlet name="xnegconstraint" 
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="0" 
                scale="0.0" 
                setNames="xneg"/>
@@ -195,7 +194,6 @@
     <Dirichlet name="yconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="1" 
                scale="0.0" 
                setNames="yneg ypos"/>
@@ -203,7 +201,6 @@
     <Dirichlet name="zconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               dataType="Vector" 
                component="2" 
                scale="0.0" 
                setNames="zneg zpos"/>
@@ -211,7 +208,6 @@
     <Dirichlet name="xposconstraint" 
                objectPath="faceManager" 
                fieldName="Traction" 
-               dataType="Vector" 
                component="0" 
                scale="-2.125e6" 
                setNames="xpos"
@@ -220,14 +216,13 @@
     <Dirichlet name="boundaryPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"
                setNames="boundaryBot boundaryTop"/>  
 
   </BoundaryConditions>
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
+    <TableFunction     name="timeFunction"         inputVarNames="time"  coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
     <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>

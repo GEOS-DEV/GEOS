@@ -53,7 +53,6 @@ public:
                                      real64 const& dt,
                                      DomainPartition * const domain) override final;
 
-  virtual void FinalInitializationPreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
@@ -112,7 +111,6 @@ public:
 //                                     real64 const & dt,
 //                                     DomainPartition * const domain );
 
-  virtual void ProcessInputFile_PostProcess() override final;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
@@ -143,9 +141,14 @@ public:
   } poroElasticSolverViewKeys;
 
 
+protected:
+  virtual void PostProcessInput() override final;
+
+  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
 
 
 private:
+
   string m_solidSolverName;
   string m_flowSolverName;
   string m_couplingTypeOptionString;

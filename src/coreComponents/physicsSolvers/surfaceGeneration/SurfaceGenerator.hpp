@@ -68,9 +68,6 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const problemManager ) override final;
-
-
   /**
    * @defgroup Solver Interface Functions
    *
@@ -123,6 +120,9 @@ public:
                         int const numTileColors,
                         const bool prefrac,
                         const realT time );
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
 
 private:
 

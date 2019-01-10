@@ -56,9 +56,6 @@ public:
   void SetDomain( DomainPartition * domain );
 
 
-  virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
-
-
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
                                    const int numDistPartition ) = 0;
@@ -128,6 +125,9 @@ public:
 protected:
   PartitionBase();
   PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
+
+  virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
+
 //
   array1d<NeighborCommunicator> m_neighbors;
 

@@ -38,12 +38,12 @@ namespace keys
 }
 
 
-class FiniteElementSpaceManager : public dataRepository::ManagedGroup
+class FiniteElementDiscretizationManager : public dataRepository::ManagedGroup
 {
 public:
-  FiniteElementSpaceManager() = delete;
-  FiniteElementSpaceManager(string const & name, ManagedGroup * const parent);
-  virtual ~FiniteElementSpaceManager() override;
+  FiniteElementDiscretizationManager() = delete;
+  FiniteElementDiscretizationManager(string const & name, ManagedGroup * const parent);
+  virtual ~FiniteElementDiscretizationManager() override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 

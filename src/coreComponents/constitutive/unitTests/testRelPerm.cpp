@@ -226,7 +226,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 
-  relPerm->ProcessInputFile_PostProcess();
+  relPerm->PostProcessInputRecursive();
   return relPerm;
 }
 
@@ -238,7 +238,7 @@ TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
   RelativePermeabilityBase * fluid = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->FinalInitializationRecursive( parent.get() );
+  parent->InitializePostInitialConditions( parent.get() );
 
   // TODO test over a range of values
   array1d<real64> sat(4);

@@ -123,9 +123,9 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
 }
 
 
-void SinglePhaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
+void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
-  FlowSolverBase::FinalInitializationPreSubGroups( rootGroup );
+  FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
