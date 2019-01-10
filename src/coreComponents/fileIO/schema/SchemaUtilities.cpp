@@ -22,6 +22,11 @@
  */
 
 #include "SchemaUtilities.hpp"
+#include "common/DataTypes.hpp"
+#include "dataRepository/ViewWrapper.hpp"
+#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/SchemaFlags.hpp"
+#include "dataRepository/InputFlags.hpp"
 
 namespace geosx
 {
@@ -30,6 +35,8 @@ using namespace dataRepository;
 
 void ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * const group)
 {
+  std::cout << "\nGenerating XML Schema..." << std::endl;
+
   std::string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
   <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
@@ -43,13 +50,18 @@ void ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * cons
   xmlWrapper::xmlNode schemaRoot = schemaTree.child("xsd:schema");
 
   // Build the simple schema types
+  std::cout << "  Basic datatypes" << std::endl;
   BuildSimpleSchemaTypes(schemaRoot);
 
   // Recursively build the schema from the data structure skeleton
+  std::cout << "  Data structure layout" << std::endl;
   SchemaConstruction(group, schemaRoot, schemaRoot);
 
   // Write the schema to file
+  std::cout << "  Saving file"<< std::endl;
   schemaTree.save_file(fname.c_str());
+
+  std::cout << "  Done!" << std::endl;
 }
 
 
