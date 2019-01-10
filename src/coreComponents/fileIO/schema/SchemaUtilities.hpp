@@ -26,10 +26,8 @@
 #ifndef SCHEMAUTILITIES_HPP_
 #define SCHEMAUTILITIES_HPP_
 
-#include "common/DataTypes.hpp"
 #include "fileIO/xmlWrapper.hpp"
-#include "dataRepository/SchemaFlags.hpp"
-#include "dataRepository/InputFlags.hpp"
+
 namespace geosx
 {
 
