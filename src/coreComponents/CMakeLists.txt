@@ -31,21 +31,21 @@ foreach( lib ${subdirs} )
 endforeach()
 
 # Python config
-set( extraComponentsListLink "")
+set( extraComponentsLinkList "" )
 #if( ENABLE_PYTHON )
-#  set( extraComponentsListLink ${extraComponentsListLink} python_interp )
+#  set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
 #endif()
 
-if( ENABLE_OPENMP)
-  set( extraComponentsListLink ${extraComponentsListLink} openmp )
+if( ENABLE_OPENMP )
+  set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
 endif()
 
 if( ENABLE_MPI )
-  set( extraComponentsListLink ${extraComponentsListLink} mpi )
+  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
 if( GEOSX_USE_ATK )
-  set( extraComponentsListLink ${extraComponentsListLink} )
+  set( extraComponentsLinkList ${extraComponentsLinkList} )
 endif()
 
 blt_combine_static_libraries( NAME          geosx_core
