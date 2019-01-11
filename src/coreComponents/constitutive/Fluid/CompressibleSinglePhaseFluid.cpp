@@ -79,11 +79,6 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference fluid viscosity");
 
-  RegisterViewWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity, false )->
-    setApplyDefaultValue(0.001)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Reference fluid viscosity");
-
   RegisterViewWrapper( viewKeyStruct::densityModelString, &m_densityModelString, false )->
     setApplyDefaultValue("linear")->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -97,8 +92,8 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
 
-void CompressibleSinglePhaseFluid::AllocateConstitutiveData(dataRepository::ManagedGroup * const parent,
-                                                            localIndex const numConstitutivePointsPerParentIndex)
+void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   SingleFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
 
