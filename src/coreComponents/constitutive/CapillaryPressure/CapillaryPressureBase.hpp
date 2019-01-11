@@ -53,8 +53,6 @@ public:
 
   // *** ManagedGroup interface
   
-  virtual void ProcessInputFile_PostProcess() override;
-  
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -103,7 +101,8 @@ public:
   } viewKeysCapillaryPressureBase;
 
 protected:
-
+  virtual void PostProcessInput() override;
+  
   /**
    * @brief Function to batch process constitutive updates via a kernel launch.
    * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel

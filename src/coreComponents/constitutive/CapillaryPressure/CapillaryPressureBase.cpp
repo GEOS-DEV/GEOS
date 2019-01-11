@@ -70,9 +70,9 @@ CapillaryPressureBase::~CapillaryPressureBase()
 }
 
 
-void CapillaryPressureBase::ProcessInputFile_PostProcess()
+void CapillaryPressureBase::PostProcessInput()
 {
-  ConstitutiveBase::ProcessInputFile_PostProcess();
+  ConstitutiveBase::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 

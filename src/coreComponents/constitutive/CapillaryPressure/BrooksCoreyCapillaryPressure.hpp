@@ -55,8 +55,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void ProcessInputFile_PostProcess() override;
-
   // CapillaryPressure-specific interface
 
   virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) override;
@@ -93,7 +91,8 @@ public:
   } viewKeysBrooksCoreyCapillaryPressure;
 
 protected:
-
+  virtual void PostProcessInput() override;
+  
   inline static void EvaluateBrooksCoreyFunction( real64 const & scaledWettingVolFrac,
                                                   real64 const & dScaledWettingPhaseVolFrac_dVolFrac,
                                                   real64 & capPressure,

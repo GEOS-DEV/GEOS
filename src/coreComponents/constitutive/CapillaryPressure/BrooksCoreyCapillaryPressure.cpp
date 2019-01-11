@@ -87,9 +87,9 @@ BrooksCoreyCapillaryPressure::DeliverClone(string const & name,
 }
 
 
-void BrooksCoreyCapillaryPressure::ProcessInputFile_PostProcess()
+void BrooksCoreyCapillaryPressure::PostProcessInput()
 {
-  CapillaryPressureBase::ProcessInputFile_PostProcess();
+  CapillaryPressureBase::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 
