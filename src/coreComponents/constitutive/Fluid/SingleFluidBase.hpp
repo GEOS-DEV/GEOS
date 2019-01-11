@@ -39,7 +39,7 @@ public:
 
   virtual ~SingleFluidBase() override;
 
-  // *** ManagedGroup interface
+  // *** ConstitutiveBase interface
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -92,6 +92,8 @@ public:
   array2d<real64> const & dViscosity_dDensity() const { return m_dViscosity_dPressure; }
   array2d<real64>       & dViscosity_dDensity()       { return m_dViscosity_dPressure; }
 
+  // *** Data repository keys
+
   struct viewKeyStruct
   {
     static constexpr auto densityString      = "density";
@@ -115,15 +117,55 @@ protected:
   virtual void PostProcessInput() override;
 
   /**
+   * Function to take care of launching the kernel over all constitutive points
+   * @tparam POLICY execution policy to use for the launch
+   * @tparam LAMBDA type the target function
+   * @param lambda the kernel function
+   */
+  template< typename POLICY=elemPolicy, typename LAMBDA >
+  void LaunchKernel( LAMBDA && lambda );
+
+  /**
    * @brief Function to batch process constitutive updates via a kernel launch.
-   * @tparam LEAFCLASS The derived class that provides the functions for usein the kernel
+   * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
+   * @tparam POLICY Kernel launch policy (defaults to element policy, but can be chosen by the implementation)
    * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
    * @param pressure array containing the pressure values,  which is input to the update.
    * @param args arbitrary number of arbitrary types that are passed to the kernel
+   *
+   * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
   template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
                           ARGS && ... args );
+
+  /**
+   * @brief Function to batch process density updates via a kernel launch.
+   * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
+   * @tparam POLICY Kernel launch policy (defaults to element policy, but can be chosen by the implementation)
+   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
+   * @param pressure array containing the pressure values,  which is input to the update.
+   * @param args arbitrary number of arbitrary types that are passed to the kernel
+   *
+   * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
+   */
+  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  void BatchDensityUpdateKernel( arrayView1d<real64 const> const & pressure,
+                                 ARGS && ... args );
+
+  /**
+   * @brief Function to batch process viscosity updates via a kernel launch.
+   * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
+   * @tparam POLICY Kernel launch policy (defaults to element policy, but can be chosen by the implementation)
+   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
+   * @param pressure array containing the pressure values,  which is input to the update.
+   * @param args arbitrary number of arbitrary types that are passed to the kernel
+   *
+   * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
+   */
+  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  void BatchViscosityUpdateKernel( arrayView1d<real64 const> const & pressure,
+                                   ARGS && ... args );
 
   array2d<real64> m_density;
   array2d<real64> m_dDensity_dPressure;
@@ -134,31 +176,71 @@ protected:
 };
 
 
-template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void SingleFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
-                                         ARGS && ... args)
+template< typename POLICY, typename LAMBDA >
+void SingleFluidBase::LaunchKernel( LAMBDA && lambda )
 {
   localIndex const numElem = m_density.size(0);
-  localIndex const numQ    = m_density.size(1);
-
-  arrayView2d<real64> const & density = m_density;
-  arrayView2d<real64> const & dDensity_dPressure = m_dDensity_dPressure;
-
-  arrayView2d<real64> const & viscosity = m_viscosity;
-  arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
+  localIndex const numQuad = m_density.size(1);
 
   forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
   {
-    for (localIndex q = 0; q < numQ; ++q)
+    for (localIndex q = 0; q < numQuad; ++q)
     {
-      LEAFCLASS::Compute( pressure[k],
-                          density[k][q],
-                          dDensity_dPressure[k][q],
-                          viscosity[k][q],
-                          dViscosity_dPressure[k][q],
-                          args... );
+      lambda( k, q );
     }
-  });
+  } );
+}
+
+template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
+void SingleFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
+                                         ARGS && ... args )
+{
+  arrayView2d<real64> const & density = m_density;
+  arrayView2d<real64> const & dDensity_dPressure = m_dDensity_dPressure;
+  arrayView2d<real64> const & viscosity = m_viscosity;
+  arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
+
+  LaunchKernel<POLICY>( GEOSX_LAMBDA ( localIndex const k, localIndex const q )
+  {
+    LEAFCLASS::Compute( pressure[k],
+                        density[k][q],
+                        dDensity_dPressure[k][q],
+                        viscosity[k][q],
+                        dViscosity_dPressure[k][q],
+                        args... );
+  } );
+}
+
+template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
+void SingleFluidBase::BatchDensityUpdateKernel( arrayView1d<real64 const> const & pressure,
+                                                ARGS && ... args )
+{
+  arrayView2d<real64> const & density = m_density;
+  arrayView2d<real64> const & dDensity_dPressure = m_dDensity_dPressure;
+
+  LaunchKernel<POLICY>( GEOSX_LAMBDA ( localIndex const k, localIndex const q )
+  {
+    LEAFCLASS::Compute( pressure[k],
+                        density[k][q],
+                        dDensity_dPressure[k][q],
+                        args... );
+  } );
+}
+
+template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
+void SingleFluidBase::BatchViscosityUpdateKernel( arrayView1d<real64 const> const & pressure,
+                                                  ARGS && ... args )
+{
+  arrayView2d<real64> const & viscosity = m_viscosity;
+  arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
+
+  LaunchKernel<POLICY>( GEOSX_LAMBDA ( localIndex const k, localIndex const q )
+  {
+    LEAFCLASS::Compute( pressure[k],
+                        viscosity[k][q],
+                        dViscosity_dPressure[k][q],
+                        args... );
+  } );
 }
 
 } //namespace constitutive
