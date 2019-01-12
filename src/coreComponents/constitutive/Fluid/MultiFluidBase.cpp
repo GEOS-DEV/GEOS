@@ -35,6 +35,8 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   : ConstitutiveBase( name, parent ),
     m_useMass( false )
 {
+  ConstitutiveBase::PostProcessInput();
+
   RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of component names");
@@ -42,7 +44,6 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Component molar weights");
-
 
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
