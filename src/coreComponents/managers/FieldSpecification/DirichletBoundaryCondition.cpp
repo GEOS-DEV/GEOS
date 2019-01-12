@@ -30,7 +30,7 @@ namespace geosx
 using namespace dataRepository;
 
 DirichletBoundaryCondition::DirichletBoundaryCondition( string const & name, ManagedGroup *const parent ):
-  BoundaryConditionBase( name, parent )
+  FieldSpecificationBase( name, parent )
 {
   // TODO Auto-generated constructor stub
 
@@ -43,6 +43,6 @@ DirichletBoundaryCondition::~DirichletBoundaryCondition()
 
 
 
-REGISTER_CATALOG_ENTRY( BoundaryConditionBase, DirichletBoundaryCondition, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationBase, DirichletBoundaryCondition, string const &, ManagedGroup * const )
 
 } /* namespace geosx */
