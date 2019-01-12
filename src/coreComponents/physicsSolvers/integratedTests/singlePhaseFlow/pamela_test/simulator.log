@@ -1,0 +1,13 @@
+[2019-1-8-11:6:7] DEBUG:   $MeshFormat is ignored
+[2019-1-8-11:6:7] DEBUG:   2.2 0 8 is ignored
+[2019-1-8-11:6:7] DEBUG:   $EndMeshFormat is ignored
+[2019-1-8-11:6:7] DEBUG:    is ignored
+[2019-1-8-11:6:7] DEBUG:   $EndNodes is ignored
+[2019-1-8-11:6:7] DEBUG:    is ignored
+[2019-1-8-11:6:7] DEBUG:   $EndElements is ignored
+[2019-1-8-11:6:7] DEBUG:    is ignored
+[2019-1-8-11:6:8] WARNING: The CSR matrix has a zero dimension
+[2019-1-8-11:6:8] WARNING: The CSR matrix has a zero dimension
+[2019-1-8-11:6:8] WARNING: The CSR matrix has a zero dimension
+[2019-1-8-11:6:8] WARNING: The CSR matrix has a zero dimension
+[2019-1-8-11:6:8] WARNING: The CSR matrix has a zero dimension

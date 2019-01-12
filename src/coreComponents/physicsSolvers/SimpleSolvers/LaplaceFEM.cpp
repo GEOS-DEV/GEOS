@@ -26,6 +26,7 @@
 #include <vector>
 #include <math.h>
 
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/defines.hpp"
 
@@ -39,8 +40,6 @@
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 #include "managers/NumericalMethodsManager.hpp"
-#include "managers/Fields/FieldManager.hpp"
-
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
@@ -483,7 +482,7 @@ void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
-  FieldManager * bcManager = FieldManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
   ApplyDirichletBC_implicit( time_n + dt, *domain, *blockSystem );
 
@@ -509,19 +508,19 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             EpetraBlockSystem & blockSystem )
 {
 
-  FieldManager const * const bcManager = FieldManager::get();
+  FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
 
-  bcManager->ApplyBoundaryCondition( time,
+  fsManager->ApplyField( time,
                                      &domain,
                                      "nodeManager",
                                      "Temperature",
-                                     [&]( BoundaryConditionBase const * const bc,
+                                     [&]( FieldSpecificationBase const * const bc,
                                          string const &,
                                          set<localIndex> const & targetSet,
                                          ManagedGroup * const targetGroup,
                                          string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
                                                         time,
                                                         targetGroup,
                                                         "Temperature",

@@ -22,6 +22,7 @@
 
 #include "CompositionalMultiphaseFlow.hpp"
 
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -31,7 +32,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/Fields/FieldManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -1576,16 +1576,16 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                                         real64 const time_n, real64 const dt,
                                                         EpetraBlockSystem * const blockSystem )
 {
-  FieldManager * bcManager = FieldManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
   unordered_map<string, array1d<bool>> bcStatusMap; // map to check consistent application of BC
 
   // 1. apply pressure Dirichlet BCs
-  bcManager->ApplyBoundaryCondition( time_n + dt,
+  fsManager->ApplyField( time_n + dt,
                                      domain,
                                      "ElementRegions",
                                      viewKeyStruct::pressureString,
-                                     [&]( BoundaryConditionBase const * const bc,
+                                     [&]( FieldSpecificationBase const * const fs,
                                           string const & setName,
                                           set<localIndex> const & targetSet,
                                           ManagedGroup * subRegion,
@@ -1597,31 +1597,31 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
     bcStatusMap[setName] = false;
 
     // 1.1. Apply BC to set the field values
-    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
+    fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
                                                 time_n + dt,
                                                 subRegion,
                                                 viewKeyStruct::bcPressureString );
   });
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
-  bcManager->ApplyBoundaryCondition( time_n + dt,
+  fsManager->ApplyField( time_n + dt,
                                      domain,
                                      "ElementRegions",
                                      viewKeyStruct::globalCompFractionString,
-                                     [&] ( BoundaryConditionBase const * const bc,
+                                     [&] ( FieldSpecificationBase const * const fs,
                                            string const & setName,
                                            set<localIndex> const & targetSet,
                                            ManagedGroup * subRegion,
                                            string const & )
   {
     // 2.0. Check pressure and record composition bc application
-    localIndex const comp = bc->GetComponent();
+    localIndex const comp = fs->GetComponent();
     GEOS_ERROR_IF( bcStatusMap.count( setName ) == 0, "Pressure boundary condition not prescribed on set '" << setName << "'" );
     GEOS_ERROR_IF( bcStatusMap[setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
     bcStatusMap[setName][comp] = true;
 
     // 2.1. Apply BC to set the field values
-    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
+    fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
                                                 time_n + dt,
                                                 subRegion,
                                                 viewKeyStruct::globalCompFractionString );
@@ -1641,11 +1641,11 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
-  bcManager->ApplyBoundaryCondition( time_n + dt,
+  fsManager->ApplyField( time_n + dt,
                                      domain,
                                      "ElementRegions",
                                      viewKeyStruct::pressureString,
-                                     [&] ( BoundaryConditionBase const * const bc,
+                                     [&] ( FieldSpecificationBase const * const bc,
                                            string const & setName,
                                            set<localIndex> const & targetSet,
                                            ManagedGroup * subRegion,
@@ -1679,7 +1679,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
       dof[counter] = offset;
 
       // 4.1. Apply pressure to the matrix
-      BcEqual::ApplyBcValue( dof[counter],
+      FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
                              blockSystem,
                              BlockIDs::compositionalBlock,
                              rhsContribution[counter],
@@ -1694,7 +1694,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
         dof[counter] = offset + ic + 1;
         real64 const targetCompDens = totalDens[a][0] * compFrac[a][ic];
 
-        BcEqual::ApplyBcValue( dof[counter],
+        FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
                                blockSystem,
                                BlockIDs::compositionalBlock,
                                rhsContribution[counter],
@@ -1705,7 +1705,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
       }
 
       // 4.3. Apply accumulated rhs values
-      BcEqual::ReplaceGlobalValues( rhs,
+      FieldSpecificationEqual::ReplaceGlobalValues( rhs,
                                     counter,
                                     dof.data(),
                                     rhsContribution.data() );

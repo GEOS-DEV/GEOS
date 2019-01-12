@@ -26,12 +26,12 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
 
-#include "FieldBase.hpp"
+#include "FieldSpecificationBase.hpp"
 
 namespace geosx
 {
 
-class DirichletBoundaryCondition : public BoundaryConditionBase
+class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
   DirichletBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );

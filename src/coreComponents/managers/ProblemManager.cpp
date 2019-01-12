@@ -40,7 +40,6 @@
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "managers/Fields/FieldManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -49,6 +48,7 @@
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
 #include "common/TimingMacros.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {
@@ -566,7 +566,7 @@ void ProblemManager::ParseInputFile()
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
-    FieldManager * const fieldManager = FieldManager::get();
+    FieldSpecificationManager * const fieldManager = FieldSpecificationManager::get();
     fieldManager->ProcessInputFileRecursive( topLevelNode );
     fieldManager->PostProcessInputRecursive();
 
@@ -831,7 +831,7 @@ void ProblemManager::ApplyInitialConditions()
   GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
 
-  FieldManager const * boundaryConditionManager = FieldManager::get();
+  FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
 
   boundaryConditionManager->ApplyInitialConditions( domain );
 
@@ -842,11 +842,11 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 #ifdef GEOSX_USE_ATK
   this->prepareToRead();
   m_functionManager->prepareToRead();
-  FieldManager::get()->prepareToRead();
+  FieldSpecificationManager::get()->prepareToRead();
   SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
   this->finishReading();
   m_functionManager->finishReading();
-  FieldManager::get()->finishReading();
+  FieldSpecificationManager::get()->finishReading();
 #endif
 }
 

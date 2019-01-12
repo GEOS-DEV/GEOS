@@ -44,7 +44,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
