@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -34,7 +34,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const boundaryConditionMananger( "BoundaryConditionMananger" );
+string const boundaryConditionManager( "BoundaryConditionManager" );
 }
 }
 

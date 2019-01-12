@@ -11,8 +11,8 @@
 #
 # This file is part of the GEOSX Simulation Framework.
 #
-# GEOSX is a free software; you can redistrubute it and/or modify it under the
-# terms of the GNU Lesser General Public Liscense (as published by the FREE 
+# GEOSX is a free software; you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License (as published by the FREE 
 # Software Foundation) version 2.1 dated February 1999.
 ###############################################################################
 
@@ -30,6 +30,27 @@ import argparse
 copyright_str = \
 """/*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+"""
+
+old_copyright_str = \
+"""/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
@@ -40,25 +61,12 @@ copyright_str = \
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-"""
-
-old_copyright_str = \
-"""// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 """
 
 copyright_str_arr = copyright_str.split("\n")[:-1]
@@ -140,12 +148,12 @@ def fileNameGenerator(rootDir, validExtensions, isRecursive=False):
     """
 
     if isRecursive:
-        for path,dirlist,filelist in os.walk(rootDir):
+        for path, dirlist, filelist in os.walk(rootDir):
             for f in (f for f in filelist if f.lower().endswith(validExtensions) ):
                 yield os.path.join(path, f)
     else:
         for f in os.listdir(rootDir):
-            if f.lower().endswith( validExtensions):
+            if f.lower().endswith(validExtensions):
                 yield os.path.join(rootDir, f)
 
 if __name__ == "__main__":

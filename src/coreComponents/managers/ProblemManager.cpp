@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -727,8 +727,6 @@ void ProblemManager::ApplyNumericalMethods()
 
   DomainPartition * domain  = getDomainPartition();
 
-  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
-  meshManager->GenerateMeshes(domain);
   ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
