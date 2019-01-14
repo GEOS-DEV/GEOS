@@ -510,24 +510,24 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
 
   FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
 
-  fsManager->ApplyField( time,
-                                     &domain,
-                                     "nodeManager",
-                                     "Temperature",
-                                     [&]( FieldSpecificationBase const * const bc,
-                                         string const &,
-                                         set<localIndex> const & targetSet,
-                                         ManagedGroup * const targetGroup,
-                                         string const fieldName )->void
+  fsManager->Apply( time,
+                    &domain,
+                    "nodeManager",
+                    "Temperature",
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
-                                                        time,
-                                                        targetGroup,
-                                                        "Temperature",
-                                                        laplaceFEMViewKeys.blockLocalDofNumber.Key(),
-                                                        1,
-                                                        &blockSystem,
-                                                        BlockIDs::dummyScalarBlock );
+                                                                 time,
+                                                                 targetGroup,
+                                                                 "Temperature",
+                                                                 laplaceFEMViewKeys.blockLocalDofNumber.Key(),
+                                                                 1,
+                                                                 &blockSystem,
+                                                                 BlockIDs::dummyScalarBlock );
   });
 }
 

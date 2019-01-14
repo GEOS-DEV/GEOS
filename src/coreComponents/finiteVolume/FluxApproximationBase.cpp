@@ -68,15 +68,15 @@ void FluxApproximationBase::compute(DomainPartition * domain)
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
-  fsManager->ApplyField( 0.0,
-                                     domain,
-                                     "faceManager",
-                                     m_boundaryFieldName,
-                                     [&] ( FieldSpecificationBase const * bc,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * targetGroup,
-                                           string const & targetName) -> void
+  fsManager->Apply( 0.0,
+                    domain,
+                    "faceManager",
+                    m_boundaryFieldName,
+                    [&] ( FieldSpecificationBase const * bc,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * targetGroup,
+                    string const & targetName) -> void
   {
     ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
     stencil->setRestartFlags(RestartFlags::NO_WRITE);

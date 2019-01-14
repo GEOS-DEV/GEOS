@@ -1577,15 +1577,15 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   unordered_map<string, array1d<bool>> bcStatusMap; // map to check consistent application of BC
 
   // 1. apply pressure Dirichlet BCs
-  fsManager->ApplyField( time_n + dt,
-                                     domain,
-                                     "ElementRegions",
-                                     viewKeyStruct::pressureString,
-                                     [&]( FieldSpecificationBase const * const fs,
-                                          string const & setName,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * subRegion,
-                                          string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "ElementRegions",
+                    viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * subRegion,
+                    string const & )
   {
     // 1.0. Check whether pressure has already been applied to this set
     GEOS_ERROR_IF( bcStatusMap.count( setName ) > 0, "Conflicting pressure boundary conditions on set " << setName );
@@ -1594,21 +1594,21 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     // 1.1. Apply BC to set the field values
     fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
-                                                time_n + dt,
-                                                subRegion,
-                                                viewKeyStruct::bcPressureString );
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::bcPressureString );
   });
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
-  fsManager->ApplyField( time_n + dt,
-                                     domain,
-                                     "ElementRegions",
-                                     viewKeyStruct::globalCompFractionString,
-                                     [&] ( FieldSpecificationBase const * const fs,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * subRegion,
-                                           string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "ElementRegions",
+                    viewKeyStruct::globalCompFractionString,
+                    [&] ( FieldSpecificationBase const * const fs,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * subRegion,
+                    string const & )
   {
     // 2.0. Check pressure and record composition bc application
     localIndex const comp = fs->GetComponent();
@@ -1618,9 +1618,9 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     // 2.1. Apply BC to set the field values
     fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
-                                                time_n + dt,
-                                                subRegion,
-                                                viewKeyStruct::globalCompFractionString );
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::globalCompFractionString );
   });
 
   // 2.3 Check consistency between composition BC applied to sets
@@ -1637,15 +1637,15 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
-  fsManager->ApplyField( time_n + dt,
-                                     domain,
-                                     "ElementRegions",
-                                     viewKeyStruct::pressureString,
-                                     [&] ( FieldSpecificationBase const * const bc,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * subRegion,
-                                           string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "ElementRegions",
+                    viewKeyStruct::pressureString,
+                    [&] ( FieldSpecificationBase const * const bc,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * subRegion,
+                    string const & )
   {
     MultiFluidBase * const fluid = GetFluidModel(subRegion );
 
@@ -1676,11 +1676,11 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
       // 4.1. Apply pressure to the matrix
       FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
-                             blockSystem,
-                             BlockIDs::compositionalBlock,
-                             rhsContribution[counter],
-                             bcPres[a],
-                             pres[a] + dPres[a] );
+                                                  blockSystem,
+                                                  BlockIDs::compositionalBlock,
+                                                  rhsContribution[counter],
+                                                  bcPres[a],
+                                                  pres[a] + dPres[a] );
 
       ++counter;
 
@@ -1691,20 +1691,20 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
         real64 const targetCompDens = totalDens[a][0] * compFrac[a][ic];
 
         FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
-                               blockSystem,
-                               BlockIDs::compositionalBlock,
-                               rhsContribution[counter],
-                               targetCompDens,
-                               compDens[a][ic] + dCompDens[a][ic] );
+                                                    blockSystem,
+                                                    BlockIDs::compositionalBlock,
+                                                    rhsContribution[counter],
+                                                    targetCompDens,
+                                                    compDens[a][ic] + dCompDens[a][ic] );
 
         ++counter;
       }
 
       // 4.3. Apply accumulated rhs values
       FieldSpecificationEqual::ReplaceGlobalValues( rhs,
-                                    counter,
-                                    dof.data(),
-                                    rhsContribution.data() );
+                                                    counter,
+                                                    dof.data(),
+                                                    rhsContribution.data() );
     }
   });
 
