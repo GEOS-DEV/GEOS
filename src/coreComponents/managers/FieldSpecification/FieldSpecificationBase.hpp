@@ -313,9 +313,9 @@ struct FieldSpecificationAdd
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -337,9 +337,9 @@ struct FieldSpecificationAdd
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {

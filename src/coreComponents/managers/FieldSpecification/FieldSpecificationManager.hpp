@@ -165,11 +165,11 @@ public:
    * FieldSpecificationManager and decides on whether or not to call the user defined lambda.
    */
   template< typename LAMBDA >
-  void ApplyField( real64 const time,
-                   dataRepository::ManagedGroup * domain,
-                   string const & fieldPath,
-                   string const & fieldName,
-                   LAMBDA && lambda ) const
+  void Apply( real64 const time,
+              dataRepository::ManagedGroup * domain,
+              string const & fieldPath,
+              string const & fieldName,
+              LAMBDA && lambda ) const
   {
     GEOSX_MARK_FUNCTION;
     for( auto & subGroup : this->GetSubGroups() )
@@ -240,12 +240,12 @@ ApplyFieldValue( real64 const time,
 {
   FieldSpecificationBase const * fsBase = nullptr;
   set<localIndex> const * targetSetCopy = nullptr;
-  ApplyField( time, domain, fieldPath, fieldName,
-                          [&]( FieldSpecificationBase const * const fs,
-                               string const &,
-                               set<localIndex> const & targetSet,
-                               ManagedGroup * const targetGroup,
-                               string const & targetField )
+  Apply( time, domain, fieldPath, fieldName,
+        [&]( FieldSpecificationBase const * const fs,
+        string const &,
+        set<localIndex> const & targetSet,
+        ManagedGroup * const targetGroup,
+        string const & targetField )
     {
       fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
       lambda( fs, targetSet );

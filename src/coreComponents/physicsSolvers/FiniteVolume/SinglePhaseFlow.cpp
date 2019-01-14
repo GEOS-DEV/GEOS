@@ -772,7 +772,7 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                                   BlockIDs::fluidPressureBlock );
     Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-    GEOS_LOG_RANK( "After SinglePhaseFlow::ApplyField" );
+    GEOS_LOG_RANK( "After SinglePhaseFlow::ApplyBoundaryConditions" );
     GEOS_LOG_RANK( "\nJacobian\n" << *jacobian );
     GEOS_LOG_RANK( "\nResidual\n" << *residual );
   }
@@ -787,12 +787,12 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
 
   // call the BoundaryConditionManager::ApplyField function that will check to see
   // if the boundary condition should be applied to this subregion
-  fsManager->ApplyField( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-                                     [&]( FieldSpecificationBase const * const fs,
-                                          string const &,
-                                          set<localIndex> const & lset,
-                                          ManagedGroup * subRegion,
-                                          string const & ) -> void
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    ManagedGroup * subRegion,
+                    string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
@@ -869,30 +869,30 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   // first, evaluate BC to get primary field values (pressure)
 //  fsManager->ApplyField(faceManager, viewKeyStruct::facePressure, time + dt);
-  fsManager->ApplyField( time_n + dt,
-                                     domain,
-                                     "faceManager",
-                                     viewKeyStruct::facePressureString,
-                                     [&] ( FieldSpecificationBase const * const fs,
-                                           string const &,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * const targetGroup,
-                                           string const fieldName )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "faceManager",
+                    viewKeyStruct::facePressureString,
+                    [&] ( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName )
   {
     fs->ApplyFieldValue<FieldSpecificationEqual>(targetSet,time_n + dt, targetGroup, fieldName);
   });
 
 
   // call constitutive models to get dependent quantities needed for flux (density, viscosity)
-  fsManager->ApplyField(time_n + dt,
-                                    domain,
-                                    "faceManager",
-                                    viewKeyStruct::facePressureString,
-                                    [&] ( FieldSpecificationBase const * bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const,
-                                          string const & ) -> void
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "faceManager",
+                    viewKeyStruct::facePressureString,
+                    [&] ( FieldSpecificationBase const * bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const,
+                    string const & ) -> void
   {
     for (auto kf : targetSet)
     {
@@ -918,15 +918,15 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   real64 densWeight[numElems] = { 0.5, 0.5 };
 
-  fsManager->ApplyField( time_n + dt,
-                                     domain,
-                                     "faceManager",
-                                     viewKeyStruct::facePressureString,
-                                     [&]( FieldSpecificationBase const * bc,
-                                         string const & setName,
-                                         set<localIndex> const &,
-                                         ManagedGroup * const,
-                                         string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "faceManager",
+                    viewKeyStruct::facePressureString,
+                    [&]( FieldSpecificationBase const * bc,
+                    string const & setName,
+                    set<localIndex> const &,
+                    ManagedGroup * const,
+                    string const & )
   {
     if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
       return;
