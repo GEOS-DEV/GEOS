@@ -656,7 +656,8 @@ public:
    * This function is used to inform the schema generator of any
    * deviations between the xml and GEOS data structures.
    */
-  virtual void GetSchemaDeviations() {}
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent) {}
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 

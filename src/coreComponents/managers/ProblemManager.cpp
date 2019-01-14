@@ -521,6 +521,31 @@ void ProblemManager::GenerateDocumentation()
 }
 
 
+void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                         xmlWrapper::xmlNode schemaParent)
+{
+  // These objects are handled differently during the xml read step,
+  // so we need to explicitly add them into the schema structure
+  DomainPartition * domain  = getDomainPartition();
+
+  m_functionManager->GenerateDataStructureSkeleton(0);
+  SchemaConstruction(m_functionManager, schemaRoot, schemaParent);
+
+  BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+  bcManager->GenerateDataStructureSkeleton(0);
+  SchemaConstruction(bcManager, schemaRoot, schemaParent);
+
+  ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  SchemaConstruction(constitutiveManager, schemaRoot, schemaParent);
+
+  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+  meshManager->GenerateMeshLevels(domain);
+  ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+  elementManager->GenerateDataStructureSkeleton(0);
+  SchemaConstruction(elementManager, schemaRoot, schemaParent);
+}
+
+
 void ProblemManager::ParseInputFile()
 {
   GEOSX_MARK_FUNCTION;

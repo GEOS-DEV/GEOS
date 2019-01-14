@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 
 TEST(testXML,testXML)
 {
-  ProblemManager problemManager("ProblemManager",nullptr);
+  ProblemManager problemManager("Problem",nullptr);
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( global_argc, global_argv );

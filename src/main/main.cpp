@@ -74,7 +74,7 @@ int main( int argc, char *argv[] )
     dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_GEOSX );
   }
 
-  ProblemManager problemManager( "ProblemManager", nullptr );
+  ProblemManager problemManager( "Problem", nullptr );
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
