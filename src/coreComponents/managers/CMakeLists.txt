@@ -99,5 +99,3 @@ target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 
 geosx_add_code_checks( PREFIX managers )
-
-#add_subdirectory( unitTests/xmlTests )

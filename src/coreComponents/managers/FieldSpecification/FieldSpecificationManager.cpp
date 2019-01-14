@@ -69,12 +69,12 @@ ManagedGroup * FieldSpecificationManager::CreateChild( string const & childKey, 
 void FieldSpecificationManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {
 
-  ApplyField( 0.0, domain, "", "",
-                          [&]( FieldSpecificationBase const * const bc,
-                               string const &,
-                               set<localIndex> const & targetSet,
-                               ManagedGroup * const targetGroup,
-                               string const fieldName )
+  Apply( 0.0, domain, "", "",
+         [&]( FieldSpecificationBase const * const bc,
+         string const &,
+         set<localIndex> const & targetSet,
+         ManagedGroup * const targetGroup,
+         string const fieldName )
     {
       bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldName );
     } );

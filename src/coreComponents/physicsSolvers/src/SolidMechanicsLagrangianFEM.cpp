@@ -713,15 +713,15 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
 
   FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
 
-  fsManager->ApplyField( time,
-                                     &domain,
-                                     "nodeManager",
-                                     keys::TotalDisplacement,
-                                     [&]( FieldSpecificationBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
-                                          string const fieldName )->void
+  fsManager->Apply( time,
+                     &domain,
+                     "nodeManager",
+                     keys::TotalDisplacement,
+                     [&]( FieldSpecificationBase const * const bc,
+                     string const &,
+                     set<localIndex> const & targetSet,
+                     ManagedGroup * const targetGroup,
+                     string const fieldName )->void
     {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
                                                  time,
@@ -753,15 +753,15 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
 
   Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
 
-  fsManager->ApplyField( time,
-                                     domain,
-                                     "faceManager",
-                                     string("Traction"),
-                                     [&]( FieldSpecificationBase const * const bc,
-                                         string const &,
-                                         set<localIndex> const & targetSet,
-                                         ManagedGroup * const targetGroup,
-                                         string const fieldName ) -> void
+  fsManager->Apply( time,
+                    domain,
+                    "faceManager",
+                    string("Traction"),
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName ) -> void
   {
     string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
 
@@ -1281,24 +1281,24 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 //  fsManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
 //                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
 
-  fsManager->ApplyField( time_n+dt,
-                                     domain,
-                                     "nodeManager",
-                                     keys::Force,
-                                     [&]( FieldSpecificationBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
-                                          string const fieldName )->void
+  fsManager->Apply( time_n+dt,
+                    domain,
+                    "nodeManager",
+                    keys::Force,
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
-                                               time_n+dt,
-                                               targetGroup,
-                                               keys::TotalDisplacement, // TODO fix use of dummy name for
-                                               viewKeyStruct::trilinosIndexString,
-                                               3,
-                                               blockSystem,
-                                               BlockIDs::displacementBlock );
+                                                               time_n+dt,
+                                                               targetGroup,
+                                                               keys::TotalDisplacement, // TODO fix use of dummy name for
+                                                               viewKeyStruct::trilinosIndexString,
+                                                               3,
+                                                               blockSystem,
+                                                               BlockIDs::displacementBlock );
   });
 
   ApplyTractionBC( domain,
