@@ -110,7 +110,7 @@ protected:
    * @param phaseVolumeFraction array containing the phase volume fraction, which is input to the update.
    * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
-  template< typename LEAFCLASS, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                           ARGS&& ... args );
 
@@ -134,7 +134,7 @@ protected:
   
 };
 
-template< typename LEAFCLASS, typename ... ARGS >
+template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
 void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                                                ARGS&& ... args )
 {
@@ -146,7 +146,7 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
   arrayView4d<real64> const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
   arrayView1d<integer const> const & phaseOrder = m_phaseOrder;
   
-  forall_in_range( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
   {
     for( localIndex q=0 ; q<numQ ; ++q )
     {
