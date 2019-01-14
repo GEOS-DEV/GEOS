@@ -394,16 +394,6 @@ public:
   }
 
 
-  /**
-    * This is a place-holder for a function that will be used 
-    * to grab the default values as a string for the schema
-    */
-  string getDefaultValueString() const
-  {
-    string tmp = "default";
-    return tmp;
-  }
-
 
 private:
 

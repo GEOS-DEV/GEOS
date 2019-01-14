@@ -50,7 +50,7 @@ BoundaryConditionManager::BoundaryConditionManager( string const & name, Managed
 
 BoundaryConditionManager * BoundaryConditionManager::get()
 {
-  static BoundaryConditionManager bcman( "bcMan", nullptr );
+  static BoundaryConditionManager bcman( "BoundaryConditions", nullptr );
   return &bcman;
 }
 

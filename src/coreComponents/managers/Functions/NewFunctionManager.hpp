@@ -43,7 +43,7 @@ public:
 
   static NewFunctionManager * Instance()
   {
-    static NewFunctionManager theFunctionManager("LastFunctionManagerOnEarth", nullptr);
+    static NewFunctionManager theFunctionManager("Functions", nullptr);
 
     return &theFunctionManager;
   }

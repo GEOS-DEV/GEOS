@@ -134,11 +134,14 @@ void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRo
           {
             targetChoiceNode = targetTypeDefNode.prepend_child("xsd:choice");
 
-            // Add children
+            // Add children of the group
             group->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
             {
               SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
             });
+
+            // Add schema deviations
+            group->SetSchemaDeviations(schemaRoot, targetChoiceNode);
           }
         }
 
@@ -155,7 +158,8 @@ void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRo
 
             if ( flag == InputFlags::OPTIONAL )
             {
-              attributeNode.append_attribute("default") = view.getDefaultValueString().c_str();
+              // attributeNode.append_attribute("default") = view.getDefaultValueString().c_str();
+              attributeNode.append_attribute("default") = "default";
             }
 
             string description = view.getDescription();
