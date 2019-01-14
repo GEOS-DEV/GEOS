@@ -74,7 +74,7 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   m_biotCoefficient(),
   m_poreVolumeMultiplier(),
   m_dPVMult_dPressure(),
-  m_poreVolumeRelation( ExponentApproximationType::Linear )
+  m_poreVolumeRelation()
 {
   RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 )->
     setInputFlag(InputFlags::REQUIRED)->

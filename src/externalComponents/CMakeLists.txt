@@ -23,16 +23,14 @@ set(externalComponentsList "${externalComponents}" CACHE STRING "" FORCE)
 
 set( externalComponentsLinkList "" )
 
-if( ${BUILD_SHARED_LIBS} )
+#if( ${BUILD_SHARED_LIBS} )
   set( externalComponentsLinkList ${externalComponentsList} )
-else()
-  foreach(component ${externalComponentsList})
-    set( externalComponentsLinkList ${externalComponentsLinkList} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
-  endforeach()
-endif()
+#else()
+#  foreach(component ${externalComponentsList})
+#    set( externalComponentsLinkList ${externalComponentsLinkList} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} )
+#  endforeach()
+#endif()
 
 set( externalComponentsLinkList ${externalComponentsLinkList} PARENT_SCOPE )
-
-
 
 message( "Leaving /src/externalComponents/CMakeLists.txt" )

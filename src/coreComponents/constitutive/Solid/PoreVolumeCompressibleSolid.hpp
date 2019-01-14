@@ -59,11 +59,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override final {}
-
   virtual void StateUpdatePointPressure(real64 const & pres,
                                         localIndex const k,
                                         localIndex const q) override final;
@@ -88,7 +83,7 @@ private:
   array2d<real64> m_poreVolumeMultiplier;
   array2d<real64> m_dPVMult_dPressure;
 
-  ExponentialRelation<localIndex, real64> m_poreVolumeRelation;
+  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
 inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const & pres,

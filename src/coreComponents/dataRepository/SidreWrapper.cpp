@@ -47,8 +47,10 @@ SidreWrapper::~SidreWrapper()
 #ifdef GEOSX_USE_ATK
 DataStore& SidreWrapper::dataStore()
 {
-  static DataStore * datastore = new DataStore();
-  return *datastore;
+//  static DataStore * datastore = new DataStore();
+//  return *datastore;
+  static DataStore datastore;
+  return datastore;
 }
 #endif
 

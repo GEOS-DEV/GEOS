@@ -27,11 +27,11 @@ set(dataRepository_sources
     
 
 
-set( extraComponentsListLink "")
+set( extraComponentsLinkList "")
 
 
 if( ENABLE_MPI )
-  set( extraComponentsListLink ${extraComponentsListLink} mpi )
+  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
 

@@ -454,11 +454,12 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
   arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
   arrayView2d<real64 const> const & compFrac = dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
 
-  // currently not thread-safe, force sequential policy
+  // TODO replace with batch update (need up-to-date pressure and temperature fields)
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
-    fluid->StateUpdatePointMultiFluid(pres[a] + dPres[a], m_temperature, compFrac[a], a, 0);
+    fluid->PointUpdate( pres[a] + dPres[a], m_temperature, compFrac[a], a, 0 );
   });
+  //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
 void CompositionalMultiphaseFlow::UpdateFluidModelAll( DomainPartition * const domain )
@@ -496,11 +497,6 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
 
   arrayView2d<real64> const & phaseVolFrac =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
-
-//  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-//  {
-//    relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
-//  });
 
   relPerm->BatchUpdate( phaseVolFrac );
 }
@@ -1673,7 +1669,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     for (localIndex a : targetSet)
     {
-      fluid->StateUpdatePointMultiFluid(bcPres[a], m_temperature, compFrac[a], a, 0);
+      fluid->PointUpdate( bcPres[a], m_temperature, compFrac[a], a, 0 );
 
       globalIndex const offset = m_numDofPerCell * dofNumber[a];
       dof[counter] = offset;

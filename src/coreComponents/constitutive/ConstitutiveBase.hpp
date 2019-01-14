@@ -90,16 +90,6 @@ public:
                                         localIndex const q,
                                         integer const systemAssembleFlag ) { return R2SymTensor(); }
 
-  virtual void FluidDensityCompute( real64 const & pres,
-                                    localIndex const i,
-                                    real64 & dens,
-                                    real64 & dDens_dPres ) {}
-
-  virtual void FluidViscosityCompute( real64 const & pres,
-                                      localIndex const i,
-                                      real64 & visc,
-                                      real64 & dVisc_dPres ) {}
-
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) {}
@@ -119,12 +109,6 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto densityString  = "density";
-    static constexpr auto dDens_dPresString  = "dPressure_dDensity";
-
-    static constexpr auto viscosityString  = "viscosity";
-    static constexpr auto dVisc_dPresString  = "dViscosity_dDensity";
-
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
 

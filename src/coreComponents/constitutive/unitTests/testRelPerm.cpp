@@ -182,7 +182,7 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
   arraySlice1d<real64> phaseRelPermCopy = relPermCopy->getReference<array3d<real64>>( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString )[0][0];
 
   // set the fluid state to current
-  relPerm->StateUpdatePointRelPerm(saturation, 0, 0);
+  relPerm->PointUpdate( saturation, 0, 0 );
 
   // update saturation and check derivatives
   auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat, NP, NP );
@@ -197,7 +197,7 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
     }
     satNew[jp] += dS;
 
-    relPermCopy->StateUpdatePointRelPerm( satNew, 0, 0 );
+    relPermCopy->PointUpdate( satNew, 0, 0 );
     string var = "phaseVolFrac[" + phases[jp] + "]";
 
     checkDerivative( phaseRelPermCopy, phaseRelPerm, dPhaseRelPerm_dS[jp], dS, relTol, "phaseRelPerm", var, phases );

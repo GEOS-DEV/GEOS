@@ -4,6 +4,7 @@
 
 set( gtest_geosx_tests
      testRelPerm.cpp
+     testCapillaryPressure.cpp 
    )
 
 set( dependencyList geosx_core gtest )
