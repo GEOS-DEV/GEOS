@@ -516,7 +516,7 @@ void ProblemManager::GenerateDocumentation()
     // Generate an extensive data structure
     GenerateDataStructureSkeleton(0);
 
-    ConvertDocumentationToSchema(schemaName.c_str(), this);
+    SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this);
   }
 }
 
@@ -529,20 +529,20 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   DomainPartition * domain  = getDomainPartition();
 
   m_functionManager->GenerateDataStructureSkeleton(0);
-  SchemaConstruction(m_functionManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, schemaParent);
 
   BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
   bcManager->GenerateDataStructureSkeleton(0);
-  SchemaConstruction(bcManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, schemaParent);
 
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-  SchemaConstruction(constitutiveManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, schemaParent);
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshLevels(domain);
   ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
   elementManager->GenerateDataStructureSkeleton(0);
-  SchemaConstruction(elementManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, schemaParent);
 }
 
 
