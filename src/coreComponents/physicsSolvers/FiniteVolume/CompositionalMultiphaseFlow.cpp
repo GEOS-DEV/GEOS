@@ -54,7 +54,8 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
-  m_numComponents( 0 )
+  m_numComponents( 0 ),
+  m_capPressureFlag( 0 )
 {
   // set the blockID for the block system interface
   getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
@@ -75,11 +76,11 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
 
   this->RegisterViewWrapper( viewKeyStruct::capPressureNameString,  &m_capPressureName,  false )->
-    setInputFlag(InputFlags::REQUIRED)->
+    setApplyDefaultValue(zeroCapillaryPressureString)->
+    setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the capillary pressure constitutive model to use");
 
   this->RegisterViewWrapper( viewKeyStruct::capPressureIndexString, &m_capPressureIndex, false );
-
 }
 
 localIndex CompositionalMultiphaseFlow::numFluidComponents() const
@@ -130,9 +131,11 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseDensityOldString);
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseViscosityString);
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString);
-    faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString);	
     faceManager->RegisterViewWrapper<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString);
-
+    if (m_capPressureFlag)
+    {
+      faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString);	
+    }
   }
 }
 
@@ -153,27 +156,41 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
   m_relPermIndex = relPerm->getIndexInParent();
 
   CapillaryPressureBase const * capPressure = cm->GetConstitituveRelation<CapillaryPressureBase>( m_capPressureName );
-  GEOS_ERROR_IF( capPressure == nullptr, "Capillary pressure model " + m_capPressureName + " not found" );
-  m_capPressureIndex = capPressure->getIndexInParent();
-  
+  if ( m_capPressureName.compare( zeroCapillaryPressureString ) )
+  {
+    GEOS_ERROR_IF( capPressure == nullptr, "Capillary pressure model " + m_capPressureName + " not found" );
+    m_capPressureIndex = capPressure->getIndexInParent();
+    m_capPressureFlag = 1;
+  }
+  else
+  {
+    m_capPressureFlag = 0;
+  }
+    
   // Consistency check between the models
   GEOS_ERROR_IF( fluid->numFluidPhases() != relPerm->numFluidPhases(),
                  "Number of fluid phases differs between fluid model '" << m_fluidName
                  << "' and relperm model '" << m_relPermName << "'" );
-  GEOS_ERROR_IF( fluid->numFluidPhases() != capPressure->numFluidPhases(),
-                 "Number of fluid phases differs between fluid model '" << m_fluidName
-                 << "' and capillary pressure model '" << m_capPressureName << "'" );
+  if (m_capPressureFlag)
+  {
+    GEOS_ERROR_IF( fluid->numFluidPhases() != capPressure->numFluidPhases(),
+                   "Number of fluid phases differs between fluid model '" << m_fluidName
+                   << "' and capillary pressure model '" << m_capPressureName << "'" );
+  }
   
   for (localIndex ip = 0; ip < m_numPhases; ++ip)
   {
     string const & phase_fl = fluid->phaseName( ip );
     string const & phase_rp = relPerm->phaseName( ip );
-    string const & phase_pc = capPressure->phaseName( ip );
     GEOS_ERROR_IF( phase_fl != phase_rp, "Phase '" << phase_fl << "' in fluid model '" << m_fluidName
                    << "' does not match phase '" << phase_rp << "' in relperm model '" << m_relPermName << "'" );
 
-    GEOS_ERROR_IF( phase_fl != phase_pc, "Phase '" << phase_fl << "' in fluid model '" << m_fluidName
-                   << "' does not match phase '" << phase_pc << "' in cap pressure model '" << m_capPressureName << "'" );
+    if (m_capPressureFlag)
+    {
+      string const & phase_pc = capPressure->phaseName( ip );
+      GEOS_ERROR_IF( phase_fl != phase_pc, "Phase '" << phase_fl << "' in fluid model '" << m_fluidName
+                     << "' does not match phase '" << phase_pc << "' in cap pressure model '" << m_capPressureName << "'" );
+    }
   }
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
@@ -213,8 +230,11 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
     faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
     faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseViscosityString).resizeDimension<1>(NP);
     faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString).resizeDimension<1>(NP);
-    faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString).resizeDimension<1>(NP);
     faceManager->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);;
+    if (m_capPressureFlag)
+    {
+      faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString).resizeDimension<1>(NP);
+    }
   }
 }
 
@@ -287,24 +307,38 @@ RelativePermeabilityBase const * CompositionalMultiphaseFlow::GetRelPermModel( M
 
 CapillaryPressureBase * CompositionalMultiphaseFlow::GetCapPressureModel( ManagedGroup * dataGroup ) const
 {
-  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  if (m_capPressureFlag)
+  {
+    ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+    GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  CapillaryPressureBase * const capPressure = constitutiveModels->GetGroup<CapillaryPressureBase>( m_capPressureName );
-  GEOS_ERROR_IF( capPressure == nullptr, "Target group does not contain this capillary pressure model" );
+    CapillaryPressureBase * const capPressure = constitutiveModels->GetGroup<CapillaryPressureBase>( m_capPressureName );
+    GEOS_ERROR_IF( capPressure == nullptr, "Target group does not contain this capillary pressure model" );
 
-  return capPressure;
+    return capPressure;
+  }
+  else
+  {
+    return nullptr;
+  }
 }
 
 CapillaryPressureBase const * CompositionalMultiphaseFlow::GetCapPressureModel( ManagedGroup const * dataGroup ) const
 {
-  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  if (m_capPressureFlag)
+  {
+    ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+    GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  CapillaryPressureBase const * const capPressure = constitutiveModels->GetGroup<CapillaryPressureBase>( m_capPressureName );
-  GEOS_ERROR_IF( capPressure == nullptr, "Target group does not contain this capillary pressure model" );
+    CapillaryPressureBase const * const capPressure = constitutiveModels->GetGroup<CapillaryPressureBase>( m_capPressureName );
+    GEOS_ERROR_IF( capPressure == nullptr, "Target group does not contain this capillary pressure model" );
 
-  return capPressure;
+    return capPressure;
+  }
+  else
+  {
+    return nullptr;
+  }
 }
 
 namespace
@@ -553,20 +587,26 @@ void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const
 
 void CompositionalMultiphaseFlow::UpdateCapPressureModel( ManagedGroup * dataGroup )
 {
-  CapillaryPressureBase * const capPressure = GetCapPressureModel( dataGroup );
+  if (m_capPressureFlag)
+  {  
+    CapillaryPressureBase * const capPressure = GetCapPressureModel( dataGroup );
 
-  arrayView2d<real64> const & phaseVolFrac =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+    arrayView2d<real64> const & phaseVolFrac =
+      dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
 
-  capPressure->BatchUpdate( phaseVolFrac );
+    capPressure->BatchUpdate( phaseVolFrac );
+  }
 }
 
 void CompositionalMultiphaseFlow::UpdateCapPressureModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
-  {
-    UpdateCapPressureModel( subRegion );
-  });
+  if (m_capPressureFlag)
+  {  
+    applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+    {
+      UpdateCapPressureModel( subRegion );
+    });
+  }
 }
 
 
@@ -1205,7 +1245,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> const & dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp;
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & phaseRelPerm                = m_phaseRelPerm;
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & phaseCapPressure            = m_phaseCapPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & phaseCapPressure                = m_phaseCapPressure;
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
 
   localIndex constexpr numElems   = StencilCollection<CellDescriptor, real64>::NUM_POINT_IN_FLUX;
@@ -1370,19 +1410,24 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
         }
 
         //capillary pressure
-        real64 const capPressure = phaseCapPressure[er][esr][m_capPressureIndex][ei][0][ip];
-        real64 dCapPressure_dP = 0.0;
-        dCapPressure_dC = 0.0;
-        for (localIndex jp = 0; jp < NP; ++jp)
-        {
-          real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][m_relPermIndex][ei][0][ip][jp];
-          dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
+	real64 capPressure     = 0.0;
+	real64 dCapPressure_dP = 0.0;
+	dCapPressure_dC = 0.0;
 
-          for (localIndex jc = 0; jc < NC; ++jc)
+	if (m_capPressureFlag)
+	{
+          capPressure = phaseCapPressure[er][esr][m_capPressureIndex][ei][0][ip];
+          for (localIndex jp = 0; jp < NP; ++jp)
           {
-            dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
+            real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][m_relPermIndex][ei][0][ip][jp];
+            dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
+
+            for (localIndex jc = 0; jc < NC; ++jc)
+            {
+              dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
+            }
           }
-        }
+	}
 	
         presGrad += w * (pres[er][esr][ei] + dPres[er][esr][ei] - capPressure);
         dPresGrad_dP[i] += w * (1 - dCapPressure_dP);
@@ -2122,12 +2167,15 @@ void CompositionalMultiphaseFlow::ResetViews(DomainPartition * const domain)
   m_dPhaseRelPerm_dPhaseVolFrac =
     elemManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString,
                                                                                       constitutiveManager );
-  m_phaseCapPressure =
-    elemManager->ConstructMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( CapillaryPressureBase::viewKeyStruct::phaseCapPressureString,
-                                                                                      constitutiveManager );
-  m_dPhaseCapPressure_dPhaseVolFrac =
-    elemManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString,
-                                                                                      constitutiveManager );
+  if (m_capPressureFlag)
+  {
+    m_phaseCapPressure =
+      elemManager->ConstructMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( CapillaryPressureBase::viewKeyStruct::phaseCapPressureString,
+                                                                                        constitutiveManager );
+    m_dPhaseCapPressure_dPhaseVolFrac =
+      elemManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString,
+                                                                                        constitutiveManager );
+  }
 }
 
 

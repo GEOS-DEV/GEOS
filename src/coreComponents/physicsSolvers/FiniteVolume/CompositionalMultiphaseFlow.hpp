@@ -375,6 +375,8 @@ public:
   } groupKeysCompMultiphaseFlow;
 
 protected:
+  static constexpr auto zeroCapillaryPressureString = "zeroCapPressure";
+  
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
@@ -538,6 +540,9 @@ private:
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
 
+  /// flag to determine whether or not to apply capillary pressure
+  integer m_capPressureFlag;
+  
   /// name of the cap pressure constitutive model
   string m_capPressureName;
 
