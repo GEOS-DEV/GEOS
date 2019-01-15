@@ -28,39 +28,36 @@
 
 #include "fileIO/xmlWrapper.hpp"
 #include "common/DataTypes.hpp"
+#include "dataRepository/DefaultValue.hpp"
 #include <iostream>
 #include <string>
 
 namespace geosx
 {
 
-void ConvertDocumentationToSchema(std::string const & fname, dataRepository::ManagedGroup * const group);
-void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
-void SchemaConstruction(dataRepository::ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent);
+class SchemaUtilities
+{
+public:
+
+SchemaUtilities();
+virtual ~SchemaUtilities();
+
+static void ConvertDocumentationToSchema(std::string const & fname, dataRepository::ManagedGroup * const group);
+static void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
+static void SchemaConstruction(dataRepository::ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent);
 
 
 /*
 /// These functions are used to convert default values into strings for the schema
 template< typename T >
-static string DefaultValueToString( T& target );
-
-template< typename T >
-static string DefaultValueToString( array1d<T> & target );
-
-template< typename T >
-static string DefaultValueToString( array2d<T> & target );
-
-
-
-template< typename T >
-string DefaultValueToString( T& target )
+static string DefaultValueToString( T& target )
 {
   return std::to_string(target);
 }
 
 
 template< typename T >
-string DefaultValueToString( array1d<T> & target )
+static string DefaultValueToString( array1d<T> & target )
 {
   string csvstr = std::to_string(target[0]);
   for (integer ii=1; ii<target.size(); ++ii)
@@ -73,7 +70,7 @@ string DefaultValueToString( array1d<T> & target )
 
 
 template< typename T >
-string DefaultValueToString( array2d<T> & target )
+static string DefaultValueToString( array2d<T> & target )
 {
   string csvstr = "{{" + DefaultValueToString< array1d<T> >( target[0] ) + "}";
 
@@ -86,6 +83,17 @@ string DefaultValueToString( array2d<T> & target )
   return csvstr;
 }
 */
+
+
+template< typename T >
+static typename std::enable_if_t<dataRepository::DefaultValue<T>::has_default_value>
+GetDefaultValueString( dataRepository::DefaultValue<T> const & defVal )
+{
+  std::cout << rtTypes::typeNames(typeid(defVal.value)) << ", " << defVal.value << std::endl;
+}
+
+
+};
 
 
 }

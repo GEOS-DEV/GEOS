@@ -33,7 +33,20 @@ namespace geosx
 
 using namespace dataRepository;
 
-void ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * const group)
+
+SchemaUtilities::SchemaUtilities()
+{
+  // TODO Auto-generated constructor stub
+
+}
+
+SchemaUtilities::~SchemaUtilities()
+{
+  // TODO Auto-generated destructor stub
+}
+
+
+void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * const group)
 {
   std::cout << "\nGenerating XML Schema..." << std::endl;
 
@@ -65,7 +78,7 @@ void ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * cons
 }
 
 
-void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
+void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 {
   rtTypes::typeRegex typeRegex;
 
@@ -91,7 +104,7 @@ void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 }
 
 
-void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent)
+void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent)
 {
   // Get schema details
   SchemaFlags schemaType = group->getSchemaFlags();
@@ -146,33 +159,50 @@ void SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRo
         }
 
         // Add attributes
-        group->forViewWrappers([&]( auto const & view ) -> void
+        for ( auto wrapperPair : group->wrappers() )
         {
-          InputFlags flag = view.getInputFlag();
+          ViewWrapperBase * const wrapper = wrapperPair.second;
+          InputFlags flag = wrapper->getInputFlag();
           
           if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
           {
+            // Basic attributes
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
-            attributeNode.append_attribute("name") = view.getName().c_str();
-            attributeNode.append_attribute("type") = (rtTypes::typeNames(view.get_typeid()).c_str());
+            attributeNode.append_attribute("name") = wrapper->getName().c_str();
+            attributeNode.append_attribute("type") = (rtTypes::typeNames(wrapper->get_typeid()).c_str());
 
-            if ( flag == InputFlags::OPTIONAL )
-            {
-              // attributeNode.append_attribute("default") = view.getDefaultValueString().c_str();
-              attributeNode.append_attribute("default") = "default";
-            }
-
-            string description = view.getDescription();
+            // (Optional) Description
+            string description = wrapper->getDescription();
             if (!description.empty())
             {
               attributeNode.append_attribute("description") = description.c_str();
             }
+
+            // (Optional) Default Value
+            if ( flag == InputFlags::OPTIONAL )
+            {
+              rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
+              rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
+                                                  [&]( auto a, auto b ) -> void
+              {
+                using COMPOSITE_TYPE = decltype(a);
+                ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
+                dataRepository::DefaultValue<COMPOSITE_TYPE> tmp = typedWrapper.getDefaultValueStruct();
+
+                if( typedWrapper.getDefaultValueStruct().has_default_value )
+                {
+                  // string stringVal = std::to_string(typedWrapper.getDefaultValue());
+                  attributeNode.append_attribute("default") = "default";
+
+                  GetDefaultValueString( typedWrapper.getDefaultValueStruct() );
+                }
+              });
+            }
           }
-        });
+        }
       }
     }
   }
-  
 }
 
 }
