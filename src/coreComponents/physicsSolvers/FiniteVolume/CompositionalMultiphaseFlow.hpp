@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
 #include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
+#include <constitutive/CapillaryPressure/CapillaryPressureBase.hpp>
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "../../mesh/ElementRegionManager.hpp"
 
@@ -206,6 +207,19 @@ public:
   void UpdateRelPermModelAll( DomainPartition * domain );
 
   /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
+   */
+  void UpdateCapPressureModel( ManagedGroup * dataGroup );
+
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdateCapPressureModelAll( DomainPartition * domain );
+
+  
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
@@ -278,7 +292,9 @@ public:
 
     static constexpr auto relPermNameString  = "relPermName";
     static constexpr auto relPermIndexString = "relPermIndex";
-
+    static constexpr auto capPressureNameString  = "capPressureName";
+    static constexpr auto capPressureIndexString = "capPressureIndex"; 
+    
     static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
     // primary solution field
@@ -308,7 +324,8 @@ public:
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
-
+    static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
+    
     using ViewKey = dataRepository::ViewKey;
 
     // inputs
@@ -317,6 +334,8 @@ public:
 
     ViewKey relPermName  = { relPermNameString };
     ViewKey relPermIndex = { relPermIndexString };
+    ViewKey capPressureName  = { capPressureNameString };
+    ViewKey capPressureIndex = { capPressureIndexString };
 
     ViewKey blockLocalDofNumber    = { blockLocalDofNumberString };
 
@@ -347,6 +366,7 @@ public:
     // these are allocated on faces for BC application until we can get constitutive models on faces
     ViewKey phaseViscosity             = { phaseViscosityString };
     ViewKey phaseRelativePermeability  = { phaseRelativePermeabilityString };
+    ViewKey phaseCapillaryPressure     = { phaseCapillaryPressureString };
 
   } viewKeysCompMultiphaseFlow;
 
@@ -404,6 +424,21 @@ private:
    */
   constitutive::RelativePermeabilityBase const * GetRelPermModel( ManagedGroup const * const dataGroup ) const;
 
+  /**
+   * @brief Extract the capillary pressure model used by this solver from a group
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::CapillaryPressureBase * GetCapPressureModel( ManagedGroup * const dataGroup ) const;
+
+  /**
+   * @brief Extract the relative permeability model used by this solver from a group (const version)
+   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @return
+   */
+  constitutive::CapillaryPressureBase const * GetCapPressureModel( ManagedGroup const * const dataGroup ) const;
+
+  
   /**
    * @brief Resize the allocated multidimensional fields
    * @param domain the domain containing the mesh and fields
@@ -503,6 +538,12 @@ private:
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
 
+  /// name of the cap pressure constitutive model
+  string m_capPressureName;
+
+  /// index of the cap pressure constitutive model
+  localIndex m_capPressureIndex;
+
 
   /// views into primary variable fields
 
@@ -555,6 +596,10 @@ private:
 
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseRelPerm;
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseRelPerm_dPhaseVolFrac;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseCapPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCapPressure_dPhaseVolFrac;
+
 };
 
 } // namespace geosx
