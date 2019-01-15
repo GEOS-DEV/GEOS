@@ -44,7 +44,7 @@ class VanGenuchtenCapillaryPressure : public CapillaryPressureBase
 public:
 
   VanGenuchtenCapillaryPressure( std::string const & name,
-   				 dataRepository::ManagedGroup * const parent );
+                                 dataRepository::ManagedGroup * const parent );
 
   virtual ~VanGenuchtenCapillaryPressure() override;
 
@@ -211,8 +211,8 @@ VanGenuchtenCapillaryPressure::EvaluateVanGenuchtenFunction( real64 const & scal
   else // enforce a constant and bounded capillary pressure
   {
     phaseCapPressure = (scaledWettingVolFrac < eps) // div by 0 taken care of by initialization check
-                ? multiplier * std::pow( 1 / std::pow( eps,   exponent ) - 1, 0.5*(1-exponentInv) )
-                : multiplier * std::pow( 1 / std::pow( 1-eps, exponent ) - 1, 0.5*(1-exponentInv) );
+                     ? multiplier * std::pow( 1 / std::pow( eps,   exponent ) - 1, 0.5*(1-exponentInv) )
+                     : multiplier * std::pow( 1 / std::pow( 1-eps, exponent ) - 1, 0.5*(1-exponentInv) );
   }    
 }
 
