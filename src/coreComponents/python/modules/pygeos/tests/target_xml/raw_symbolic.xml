@@ -46,7 +46,7 @@
   <Contact active="1" penetrationTol="1e-06" ImplicitActive="1" ThreeDTrue="1" PenaltyNormal="1.0e10" PenaltyTau1="1.0e10" PenaltyTau2="1.0e10" NitscheFlag="0" slidingLaw="2" FrictionCoefficient="0.6" TractionCutoff="1e06">
     <PenaltyCoulomb stressYield="100 GPa" normalApproachYield="4.99e-3" aperture="5e-3"/>
   </Contact>
-  <BoundaryConditions>
+  <FieldSpecifications>
     <BoundaryCondition component="0" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="xneg xpos"/>
     <BoundaryCondition component="1" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="yneg ypos"/>
     <BoundaryCondition component="2" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="zneg zpos"/>
@@ -55,7 +55,7 @@
     <BoundaryCondition component="2" fieldname="Velocity" fieldtype="Vector" object="Node" scale="0.0" setnames="zneg zpos"/>
     <BoundaryConditionFunction endTime="100" fieldname="Pressure" function="Pf_Table" object="Face" setnames="perf frac_A frac_B" variableTypes="Vector" variables="FaceCenter"/>
     <BoundaryCondition startTime="100" fieldname="Pressure" object="Face" scale="1" setnames="source" timetable="pressurizationRamp"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
   <InitialConstitutiveValues>
     <InitialConstitutiveValue object="FiniteElement_ElementRegion" propertytype="Density" tablename="rhoTable" toregion="Region"/>
     <InitialConstitutiveValue object="FiniteElement_ElementRegion" propertytype="ShearModulus" tablename="muTable" toregion="Region"/>

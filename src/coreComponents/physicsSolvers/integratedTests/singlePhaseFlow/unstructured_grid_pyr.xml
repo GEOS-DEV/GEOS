@@ -71,7 +71,7 @@
   <InitialConditions>
     
   </InitialConditions>
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="permx"
                component="0"
                initialCondition="1"  
@@ -116,7 +116,7 @@
                dataType="Scalar"
                scale="1.1e3"
                setNames="left"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
   <Functions>
   </Functions>
   <Partition>

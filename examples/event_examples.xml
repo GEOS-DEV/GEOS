@@ -122,7 +122,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="source"  
                initialCondition="1"  
                elementRegionName="Region2" 
@@ -136,7 +136,7 @@
     <Dirichlet name="xconstraint" component="0" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
     <Dirichlet name="yconstraint" component="1" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
     <Dirichlet name="zconstraint" component="2" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>

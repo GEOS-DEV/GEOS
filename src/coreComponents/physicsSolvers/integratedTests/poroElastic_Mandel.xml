@@ -145,7 +145,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="permx"
                component="0"
                initialCondition="1"  
@@ -238,7 +238,7 @@
                scale="2.125e6"
                setNames="rigEle"/>  
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.01, 0.02, 1e7" values="1.0, 2.0, 2.0" />

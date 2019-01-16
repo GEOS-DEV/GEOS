@@ -78,7 +78,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="sourceTerm" 
                fieldName="Temperature" 
                dataType="Scalar" 
@@ -92,7 +92,7 @@
                objectPath="nodeManager" 
                scale="0.0"    
                setNames="sink"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>

@@ -92,7 +92,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
 
     <Dirichlet name="xnegconstraint" 
                objectPath="nodeManager" 
@@ -124,7 +124,7 @@
                setNames="xpos"/>
 
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>

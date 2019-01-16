@@ -87,7 +87,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="TopPermx"
                component="0"
                initialCondition="1"  
@@ -173,7 +173,7 @@
                fieldName="pressure"
                dataType="real64"
                scale="1e5"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
 

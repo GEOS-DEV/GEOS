@@ -117,7 +117,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="permx"
                component="0"
                initialCondition="1"  
@@ -269,7 +269,7 @@
                component="3"
                scale="0.001"/>
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
     <SymbolicFunction name="initialPressureFunc"

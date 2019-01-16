@@ -92,7 +92,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="frac"
                initialCondition="1"
                setNames="fracPlane"
@@ -129,7 +129,7 @@
                scale="0.1" 
                setNames="ypos"/>
                
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>

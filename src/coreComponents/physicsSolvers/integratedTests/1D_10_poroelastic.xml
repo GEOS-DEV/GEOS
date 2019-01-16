@@ -134,7 +134,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="permx"
                component="0"
                initialCondition="1"  
@@ -218,7 +218,7 @@
                scale="2.125e6"
                setNames="boundaryBot boundaryTop"/>  
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />

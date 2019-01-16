@@ -35,11 +35,11 @@
       </ElementRegion>
   </ElementRegions>
 
-	<BoundaryConditions>
+	<FieldSpecifications>
     <!-- Explicit BC's -->
     <BoundaryCondition  object="Node" fieldname="Velocity" setnames="xneg xpos" component="0" scale="0.0" fieldtype="Vector" />
     
-	</BoundaryConditions>
+	</FieldSpecifications>
 	
   
   <Tables>

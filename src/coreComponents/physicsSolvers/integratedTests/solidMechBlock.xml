@@ -93,7 +93,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="xnegconstraint" 
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
@@ -122,7 +122,7 @@
                scale="1.0e6" 
                functionName="timeFunction"
                setNames="source"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>
