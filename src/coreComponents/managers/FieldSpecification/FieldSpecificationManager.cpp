@@ -16,16 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * BoundaryConditionManager.cpp
- *
- *  Created on: May 26, 2017
- *      Author: rrsettgast
- */
+#include "FieldSpecificationManager.hpp"
 
-#include "BoundaryConditionManager.hpp"
-
-#include "BoundaryConditionBase.hpp"
+#include "FieldSpecificationBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "mesh/MeshBody.hpp"
@@ -41,42 +34,42 @@ namespace geosx
 {
 using namespace dataRepository;
 using namespace constitutive;
-BoundaryConditionManager::BoundaryConditionManager( string const & name, ManagedGroup * const parent ):
+FieldSpecificationManager::FieldSpecificationManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {}
 
 
-BoundaryConditionManager * BoundaryConditionManager::get()
+FieldSpecificationManager * FieldSpecificationManager::get()
 {
-  static BoundaryConditionManager bcman( "bcMan", nullptr );
+  static FieldSpecificationManager bcman( "bcMan", nullptr );
   return &bcman;
 }
 
 
-BoundaryConditionManager::~BoundaryConditionManager()
+FieldSpecificationManager::~FieldSpecificationManager()
 {
   // TODO Auto-generated destructor stub
 }
 
-ManagedGroup * BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * FieldSpecificationManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( childKey, childName, this );
+  std::unique_ptr<FieldSpecificationBase> bc = FieldSpecificationBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup( childName, std::move( bc ) );
 }
 
 
 
-void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const
+void FieldSpecificationManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {
 
-  ApplyBoundaryCondition( 0.0, domain, "", "",
-                          [&]( BoundaryConditionBase const * const bc,
-                               string const &,
-                               set<localIndex> const & targetSet,
-                               ManagedGroup * const targetGroup,
-                               string const fieldName )
+  Apply( 0.0, domain, "", "",
+         [&]( FieldSpecificationBase const * const bc,
+         string const &,
+         set<localIndex> const & targetSet,
+         ManagedGroup * const targetGroup,
+         string const fieldName )
     {
-      bc->ApplyBoundaryConditionToField<BcEqual>( targetSet, 0.0, targetGroup, fieldName );
+      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldName );
     } );
 }
 
