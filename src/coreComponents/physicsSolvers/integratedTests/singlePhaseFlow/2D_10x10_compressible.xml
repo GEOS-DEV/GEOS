@@ -86,7 +86,7 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="permx"
+    <FieldSpecification name="permx"
                component="0"
                initialCondition="1"
                setNames="all"
@@ -95,7 +95,7 @@
                dataType="R1Tensor"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permy"
+    <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
                setNames="all"
@@ -104,7 +104,7 @@
                dataType="R1Tensor"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permz"
+    <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
                setNames="all"
@@ -113,7 +113,7 @@
                dataType="R1Tensor"
                scale="2.0e-16"/>
 
-    <Dirichlet name="referencePorosity"
+    <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -121,7 +121,7 @@
                dataType="real64"
                scale="0.05"/>
 
-    <Dirichlet name="initialPressure"
+    <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -129,14 +129,14 @@
                dataType="real64"
                scale="5e6"/>
 
-    <Dirichlet name="sourceTerm"
+    <FieldSpecification name="sourceTerm"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="Scalar"
                scale="1e7"
                setNames="source"/>
 
-    <Dirichlet name="sinkTerm"
+    <FieldSpecification name="sinkTerm"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                dataType="Scalar"

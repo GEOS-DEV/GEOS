@@ -106,7 +106,7 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="permx"
+    <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
                setNames="all"
@@ -114,7 +114,7 @@
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permy"
+    <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
                setNames="all"
@@ -122,7 +122,7 @@
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permz"
+    <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
                setNames="all"
@@ -130,7 +130,7 @@
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <Dirichlet name="referencePorosity"
+    <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -139,7 +139,7 @@
 
     <!-- Initial pressure: ~5 bar -->
 
-    <Dirichlet name="initialPressure"
+    <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -148,7 +148,7 @@
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
 
-    <Dirichlet name="initialComposition_N2"
+    <FieldSpecification name="initialComposition_N2"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -156,7 +156,7 @@
                component="0"
                scale="0.099"/>
 
-    <Dirichlet name="initialComposition_C10"
+    <FieldSpecification name="initialComposition_C10"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -164,7 +164,7 @@
                component="1"
                scale="0.3"/>
 
-    <Dirichlet name="initialComposition_C20"
+    <FieldSpecification name="initialComposition_C20"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -172,7 +172,7 @@
                component="2"
                scale="0.6"/>
 
-    <Dirichlet name="initialComposition_H20"
+    <FieldSpecification name="initialComposition_H20"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -182,7 +182,7 @@
 
     <!-- Injection pressure: ~10 bar -->
 
-    <Dirichlet name="sourceTermPressure"
+    <FieldSpecification name="sourceTermPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                scale="1e7"
@@ -190,28 +190,28 @@
 
     <!-- Injection stream: mostly water -->
 
-    <Dirichlet name="sourceTermComposition_N2"
+    <FieldSpecification name="sourceTermComposition_N2"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_C10"
+    <FieldSpecification name="sourceTermComposition_C10"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_C20"
+    <FieldSpecification name="sourceTermComposition_C20"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_H20"
+    <FieldSpecification name="sourceTermComposition_H20"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
@@ -220,7 +220,7 @@
 
     <!-- Production pressure: ~1 bar, close to stock tank conditions -->
 
-    <Dirichlet name="sinkTerm"
+    <FieldSpecification name="sinkTerm"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                scale="1e5"
@@ -228,28 +228,28 @@
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
 
-    <Dirichlet name="sinkTermComposition_N2"
+    <FieldSpecification name="sinkTermComposition_N2"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.099"/>
 
-    <Dirichlet name="sinkTermComposition_C10"
+    <FieldSpecification name="sinkTermComposition_C10"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.3"/>
 
-    <Dirichlet name="sinkTermComposition_C20"
+    <FieldSpecification name="sinkTermComposition_C20"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.6"/>
 
-    <Dirichlet name="sinkTermComposition_H20"
+    <FieldSpecification name="sinkTermComposition_H20"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"

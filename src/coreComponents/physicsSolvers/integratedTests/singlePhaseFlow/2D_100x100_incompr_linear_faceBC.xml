@@ -95,7 +95,7 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="permx"
+    <FieldSpecification name="permx"
                component="0"
                initialCondition="1"
                setNames="all"
@@ -103,7 +103,7 @@
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permy"
+    <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
                setNames="all"
@@ -111,7 +111,7 @@
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permz"
+    <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
                setNames="all"
@@ -119,21 +119,21 @@
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <Dirichlet name="referencePorosity"
+    <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
-    <Dirichlet name="initialPressure"
+    <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
                scale="0.0"/>
 
-    <Dirichlet name="boundaryPressure"
+    <FieldSpecification name="boundaryPressure"
                objectPath="faceManager"
                fieldName="facePressure"
                functionName="boundaryPressureFunc"

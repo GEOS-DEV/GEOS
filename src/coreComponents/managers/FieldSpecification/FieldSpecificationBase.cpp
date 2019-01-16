@@ -104,5 +104,6 @@ void FieldSpecificationBase::PostProcessInput()
 {}
 
 
+REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, ManagedGroup * const )
 
 }

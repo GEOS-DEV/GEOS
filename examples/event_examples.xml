@@ -123,7 +123,7 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="source"  
+    <FieldSpecification name="source"  
                initialCondition="1"  
                elementRegionName="Region2" 
                setNames="source"
@@ -132,10 +132,10 @@
                scale="-1.0e6"
                function="spaceFunction"/>
 
-    <!--Dirichlet name="v0"          component="0" fieldName="Velocity"          dataType="Vector" functionName="timeFunction" object="Node" scale="1.0" setNames="xneg"/-->
-    <Dirichlet name="xconstraint" component="0" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
-    <Dirichlet name="yconstraint" component="1" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
-    <Dirichlet name="zconstraint" component="2" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
+    <!--FieldSpecification name="v0"          component="0" fieldName="Velocity"          dataType="Vector" functionName="timeFunction" object="Node" scale="1.0" setNames="xneg"/-->
+    <FieldSpecification name="xconstraint" component="0" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
+    <FieldSpecification name="yconstraint" component="1" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
+    <FieldSpecification name="zconstraint" component="2" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
   </FieldSpecifications>
 
 
