@@ -191,10 +191,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
 
                 if( typedWrapper.getDefaultValueStruct().has_default_value )
                 {
-                  // string stringVal = std::to_string(typedWrapper.getDefaultValue());
-                  attributeNode.append_attribute("default") = "default";
-
-                  GetDefaultValueString( typedWrapper.getDefaultValueStruct() );
+                  SetDefaultValueString( typedWrapper.getDefaultValueStruct(), attributeNode );
                 }
               });
             }

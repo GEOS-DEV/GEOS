@@ -30,6 +30,7 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
 #include <iostream>
+#include <sstream>
 #include <string>
 
 namespace geosx
@@ -47,22 +48,24 @@ static void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
 static void SchemaConstruction(dataRepository::ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent);
 
 
-/*
+
 /// These functions are used to convert default values into strings for the schema
 template< typename T >
 static string DefaultValueToString( T& target )
 {
-  return std::to_string(target);
+  std::stringstream ss;
+  ss << target;
+  return ss.str();
 }
 
 
 template< typename T >
 static string DefaultValueToString( array1d<T> & target )
 {
-  string csvstr = std::to_string(target[0]);
+  string csvstr = DefaultValueToString(target[0]);
   for (integer ii=1; ii<target.size(); ++ii)
   {
-    csvstr += ", " + std::to_string(target[ii]);
+    csvstr += ", " + DefaultValueToString(target[ii]);
   }
 
   return csvstr;
@@ -82,14 +85,14 @@ static string DefaultValueToString( array2d<T> & target )
 
   return csvstr;
 }
-*/
+
 
 
 template< typename T >
 static typename std::enable_if_t<dataRepository::DefaultValue<T>::has_default_value>
-GetDefaultValueString( dataRepository::DefaultValue<T> const & defVal )
+SetDefaultValueString( dataRepository::DefaultValue<T> const & defVal, xmlWrapper::xmlNode attributeNode )
 {
-  std::cout << rtTypes::typeNames(typeid(defVal.value)) << ", " << defVal.value << std::endl;
+  attributeNode.append_attribute("default") = DefaultValueToString(defVal.value).c_str();
 }
 
 
