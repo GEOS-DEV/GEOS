@@ -82,7 +82,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="source"  
                initialCondition="1"  
                setNames="source"
@@ -125,7 +125,7 @@
                scale="0.0" 
                setNames="zneg zpos"/>
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>

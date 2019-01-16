@@ -103,7 +103,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="permx"
                component="0"
                initialCondition="1"  
@@ -248,7 +248,7 @@
                dataType="real64"
                scale="0.1"/>
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
 
