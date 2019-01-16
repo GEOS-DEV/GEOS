@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ProblemManager.cpp
- *
- *  Created on: Jul 21, 2016
- *      Author: rrsettgast
- */
 
 #include "ProblemManager.hpp"
 
@@ -102,13 +96,16 @@ ProblemManager::ProblemManager( const std::string& name,
   m_functionManager(nullptr)
 {
   // Groups that do not read from the xml
-  // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
   RegisterGroup<DomainPartition>(groupKeys.domain);
   ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
 
   // Mandatory groups that read from the xml
-  //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
+  RegisterGroup<FieldSpecificationManager>( groupKeys.fieldSpecificationManager.Key(),
+                                            FieldSpecificationManager::get(),
+                                            false );//->setRestartFlags(RestartFlags::NO_WRITE);
+
+
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
@@ -120,6 +117,10 @@ ProblemManager::ProblemManager( const std::string& name,
 
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();
+  // Mandatory groups that read from the xml
+  RegisterGroup<NewFunctionManager>( groupKeys.functionManager.Key(),
+                                     m_functionManager,
+                                     false );
 
 
   commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
@@ -556,22 +557,6 @@ void ProblemManager::ParseInputFile()
 
   ProcessInputFileRecursive( xmlProblemNode );
 
-
-  // The function manager is handled separately
-  {
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
-    m_functionManager->ProcessInputFileRecursive( topLevelNode );
-    m_functionManager->PostProcessInputRecursive(  );
-  }
-
-  {
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
-    FieldSpecificationManager * const fieldManager = FieldSpecificationManager::get();
-    fieldManager->ProcessInputFileRecursive( topLevelNode );
-    fieldManager->PostProcessInputRecursive();
-
-  }
-
   // The objects in domain are handled separately for now
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
@@ -839,12 +824,8 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
 #ifdef GEOSX_USE_ATK
   this->prepareToRead();
-  m_functionManager->prepareToRead();
-  FieldSpecificationManager::get()->prepareToRead();
   SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
   this->finishReading();
-  m_functionManager->finishReading();
-  FieldSpecificationManager::get()->finishReading();
 #endif
 }
 

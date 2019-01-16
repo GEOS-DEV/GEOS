@@ -145,17 +145,18 @@ public:
 
   struct groupKeysStruct
   {
-    dataRepository::GroupKey domain    = { "domain" };
     dataRepository::GroupKey commandLine    = { "commandLine" };
-    dataRepository::GroupKey boundaryConditionManager = { "BoundaryConditions" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
+    dataRepository::GroupKey domain    = { "domain" };
     dataRepository::GroupKey elementRegionManager = { "ElementRegions" };
     dataRepository::GroupKey eventManager = { "Events" };
-    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
+    dataRepository::GroupKey fieldSpecificationManager = { "BoundaryConditions" };
+    dataRepository::GroupKey functionManager = { "Functions" };
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };
+    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
     dataRepository::GroupKey outputManager = { "Outputs" };
+    dataRepository::GroupKey physicsSolverManager = { "Solvers" };
   } groupKeys;
 
   PhysicsSolverManager & GetPhysicsSolverManager()

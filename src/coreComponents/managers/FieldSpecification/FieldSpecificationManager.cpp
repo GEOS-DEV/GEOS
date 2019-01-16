@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * BoundaryConditionManager.cpp
- *
- *  Created on: May 26, 2017
- *      Author: rrsettgast
- */
-
 #include "FieldSpecificationManager.hpp"
 
 #include "FieldSpecificationBase.hpp"
