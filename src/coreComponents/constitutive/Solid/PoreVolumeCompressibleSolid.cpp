@@ -33,8 +33,7 @@ namespace constitutive
 
 
 PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, ManagedGroup * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_poreVolumeRelation( ExponentApproximationType::Linear )
+  ConstitutiveBase( name, parent )
 {
   RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
     setInputFlag(InputFlags::REQUIRED)->
