@@ -21,6 +21,7 @@
 #include <cmath>
 #include <iostream>
 #include <sys/time.h>
+#include "SetFPE.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
@@ -63,6 +64,8 @@ int main( int argc, char *argv[] )
 #endif
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  cxx_utilities::SetFPE();
+
 
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
@@ -72,26 +75,12 @@ int main( int argc, char *argv[] )
   }
 
   ProblemManager problemManager( "ProblemManager", nullptr );
-  problemManager.SetDocumentationNodes();
-  problemManager.RegisterDocumentationNodes();  
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
-
-
   problemManager.ParseInputFile();
 
-  GEOSX_MARK_BEGIN("problemManager.Initialize");
-  problemManager.Initialize( &problemManager );
-  GEOSX_MARK_END("problemManager.Initialize");
-
-  problemManager.IntermediateInitializationRecursive( &problemManager );
-
-  problemManager.ApplyInitialConditions();
-
-  GEOSX_MARK_BEGIN("problemManager.FinalInitializationRecursive");
-  problemManager.FinalInitializationRecursive( &problemManager );
-  GEOSX_MARK_END("problemManager.FinalInitializationRecursive");
+  problemManager.ProblemSetup();
 
   if (restart) {
     problemManager.ReadRestartOverwrite( restartFileName );

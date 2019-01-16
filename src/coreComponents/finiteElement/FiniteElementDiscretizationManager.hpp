@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -38,15 +38,14 @@ namespace keys
 }
 
 
-class FiniteElementSpaceManager : public dataRepository::ManagedGroup
+class FiniteElementDiscretizationManager : public dataRepository::ManagedGroup
 {
 public:
-  FiniteElementSpaceManager() = delete;
-  FiniteElementSpaceManager(string const & name, ManagedGroup * const parent);
-  virtual ~FiniteElementSpaceManager() override;
+  FiniteElementDiscretizationManager() = delete;
+  FiniteElementDiscretizationManager(string const & name, ManagedGroup * const parent);
+  virtual ~FiniteElementDiscretizationManager() override;
 
-  virtual void FillDocumentationNode() override;
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
 
 };

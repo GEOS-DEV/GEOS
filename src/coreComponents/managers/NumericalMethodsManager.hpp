@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -26,8 +26,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_
 
+#include "../finiteElement/FiniteElementDiscretization.hpp"
 #include "dataRepository/ManagedGroup.hpp"
-#include "finiteElement/FiniteElementSpace.hpp"
 
 namespace geosx
 {
@@ -38,7 +38,7 @@ namespace keys
 string const numericalMethodsManager = "NumericalMethods";
 string const basisFunctions = "BasisFunctions";
 string const quadratureRules = "QuadratureRules";
-string const finiteElementSpaces = "FiniteElements";
+string const finiteElementDiscretizations = "FiniteElements";
 string const finiteVolumeManager = "FiniteVolume";
 }
 }
@@ -51,8 +51,9 @@ public:
   NumericalMethodsManager(string const & name, ManagedGroup * const parent);
   virtual ~NumericalMethodsManager() override;
 
-  virtual void FillDocumentationNode() override;
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+
+  dataRepository::ManagedGroup const * FindNumericalMethodByName(string const & name) const;
 
 
 };

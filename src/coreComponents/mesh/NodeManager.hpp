@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -84,7 +84,7 @@ public:
   { return NodeManager::CatalogName(); }
 
 
-  void FillDocumentationNode() override final;
+//  void FillDocumentationNode() override final;
 
 
   void SetEdgeMaps( EdgeManager const * const edgeManager );
@@ -105,7 +105,7 @@ public:
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList ) override;
 
-  virtual void FixUpDownMaps() override final;
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {

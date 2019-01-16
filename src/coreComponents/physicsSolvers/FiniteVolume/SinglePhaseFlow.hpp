@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -34,7 +34,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -81,14 +81,7 @@ public:
    */
   static string CatalogName() { return "SinglePhaseFlow"; }
 
-
-  virtual void FillDocumentationNode() override;
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
-
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
-
-  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -225,6 +218,9 @@ public:
 
   groupKeyStruct & groupKeys() { return groupKeysSinglePhaseFlow; }
   groupKeyStruct const & groupKeys() const { return groupKeysSinglePhaseFlow; }
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 private:
 

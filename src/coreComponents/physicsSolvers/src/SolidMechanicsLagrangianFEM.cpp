@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -30,21 +30,21 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include <common/DataTypes.hpp>
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-//#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
-
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
+
 
 //#define verbose 0 //Need to move this somewhere else
 
@@ -174,13 +174,67 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
                                                             ManagedGroup * const parent ):
-  SolverBase( name, parent )
+  SolverBase( name, parent ),
+  m_newmarkGamma(0.5),
+  m_newmarkBeta(0.25),
+  m_massDamping(0.0),
+  m_stiffnessDamping(0.0),
+  m_timeIntegrationOptionString(),
+  m_timeIntegrationOption(timeIntegrationOption::ExplicitDynamic),
+  m_useVelocityEstimateForQS(0),
+  m_maxForce(0.0),
+  m_elemsAttachedToSendOrReceiveNodes(),
+  m_elemsNotAttachedToSendOrReceiveNodes(),
+  m_sendOrRecieveNodes(),
+  m_nonSendOrRecieveNodes(),
+  m_icomm()
 {
-  getLinearSystemRepository()->
-    SetBlockID( BlockIDs::displacementBlock, this->getName() );
+  getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
+
+
+  RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Value of \\gamma in the Newmark Method for time integration");
+
+  RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
+    setApplyDefaultValue(0.25)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Value of \\beta in the Newmark Method for time integration. "
+          "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
+
+  RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Value of mass based damping coefficient in equations of motion. ");
+
+  RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Value of stiffness based damping coefficient in equations of motion. ");
+
+  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
+    setInputFlag(InputFlags::FALSE)->
+    setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+
+  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+
+  RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Flag to indicate the use of the incremental displacement from the previous step as an "
+          "initial estimate for the incremental displacement of the current step.");
 }
 
-
+void SolidMechanics_LagrangianFEM::PostProcessInput()
+{
+  if( !m_timeIntegrationOptionString.empty() )
+  {
+    SetTimeIntegrationOption( m_timeIntegrationOptionString );
+  }
+}
 
 SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 {
@@ -188,257 +242,27 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 }
 
 
-void SolidMechanics_LagrangianFEM::FillDocumentationNode()
+void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example solid mechanics solver");
-
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.newmarkGamma.Key(),
-                              solidMechanicsViewKeys.newmarkGamma.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Gamma",
-                              "newmark method Gamma",
-                              "0.5",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  // correct default for this value is pow(newmarkGamma+0.5,2.0)/4.0
-  docNode->AllocateChildNode( solidMechanicsViewKeys.newmarkBeta.Key(),
-                              solidMechanicsViewKeys.newmarkBeta.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Beta",
-                              "newmark method Beta",
-                              "0.25",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.massDamping.Key(),
-                              solidMechanicsViewKeys.massDamping.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Beta",
-                              "newmark method Beta",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.stiffnessDamping.Key(),
-                              solidMechanicsViewKeys.stiffnessDamping.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "newmark method Beta",
-                              "newmark method Beta",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.timeIntegrationOption.Key(),
-                              solidMechanicsViewKeys.timeIntegrationOption.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "option for default time integration method",
-                              "option for default time integration method",
-                              "ExplicitDynamic",
-                              "",
-                              0,
-                              1,
-                              1 );
-
-  docNode->AllocateChildNode( solidMechanicsViewKeys.useVelocityEstimateForQS.Key(),
-                              solidMechanicsViewKeys.useVelocityEstimateForQS.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "option to use quasi-static deformation rate as a velocity in estimate of next solution",
-                              "option to use quasi-static deformation rate as a velocity in estimate of next solution",
-                              "ExplicitDynamic",
-                              "",
-                              0,
-                              1,
-                              1 );
-}
-
-
-
-void SolidMechanics_LagrangianFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-    cxx_utilities::DocumentationNode * docNode = nodes->getDocumentationNode();
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString );
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString );
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->setPlotLevel(PlotLevel::LEVEL_2);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1);
+    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::trilinosIndexString )->setPlotLevel(PlotLevel::LEVEL_1);
 
-    docNode->AllocateChildNode( solidMechanicsViewKeys.vTilde.Key(),
-                                solidMechanicsViewKeys.vTilde.Key(),
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "intermediate velocity",
-                                "intermediate velocity",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-    docNode->AllocateChildNode( solidMechanicsViewKeys.uhatTilde.Key(),
-                                solidMechanicsViewKeys.uhatTilde.Key(),
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "intermediate incremental displacement",
-                                "intermediate incremental displacement",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-    docNode->AllocateChildNode( keys::TotalDisplacement,
-                                keys::TotalDisplacement,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Total Displacement",
-                                "Total Displacement",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                0 );
-
-    docNode->AllocateChildNode( keys::IncrementalDisplacement,
-                                keys::IncrementalDisplacement,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Incremental Displacement",
-                                "Incremental Displacement",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                2 );
-
-    docNode->AllocateChildNode( keys::Velocity,
-                                keys::Velocity,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Velocity",
-                                "Velocity",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                0 );
-
-    docNode->AllocateChildNode( keys::Acceleration,
-                                keys::Acceleration,
-                                -1,
-                                "r1_array",
-                                "r1_array",
-                                "Acceleration",
-                                "Acceleration",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                2 );
-
-    docNode->AllocateChildNode( keys::Mass,
-                                keys::Mass,
-                                -1,
-                                "real64_array",
-                                "real64_array",
-                                "Acceleration",
-                                "Acceleration",
-                                "0.0",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-    docNode->AllocateChildNode( solidMechanicsViewKeys.trilinosIndex.Key(),
-                                solidMechanicsViewKeys.trilinosIndex.Key(),
-                                -1,
-                                "globalIndex_array",
-                                "globalIndex_array",
-                                "Acceleration",
-                                "Acceleration",
-                                "-1",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-
-
-
-
-    FaceManager * const faces = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getFaceManager();
-    docNode = faces->getDocumentationNode();
-
-    docNode->AllocateChildNode( "junk",
-                                "junk",
-                                -1,
-                                "integer_array",
-                                "integer_array",
-                                "junk",
-                                "junk",
-                                "-1",
-                                NodeManager::CatalogName(),
-                                1,
-                                0,
-                                1 );
-  }
-
-}
-
-void SolidMechanics_LagrangianFEM::ReadXML_PostProcess()
-{
-  string const& tiOption = this->getReference<string>(solidMechanicsViewKeys.timeIntegrationOption);
-
-  if( tiOption == "ExplicitDynamic" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
-  }
-  else if( tiOption == "ImplicitDynamic" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
-  }
-  else if ( tiOption == "QuasiStatic" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
-  }
-  else
-  {
-    GEOS_ERROR("invalid time integration option: " << tiOption);
   }
 }
 
-void SolidMechanics_LagrangianFEM::FinalInitializationPreSubGroups( ManagedGroup * const problemManager )
+
+
+
+void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -547,14 +371,19 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 {
   GEOSX_MARK_FUNCTION;
 
+  static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
+  static real64 maxTimes[10] = {0.0};
+
+  GEOSX_GET_TIME( t0 );
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
   localIndex const numNodes = nodes->size();
 
   arrayView1d<R1Tensor> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
@@ -571,7 +400,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_icomm );
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Acceleration );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Acceleration );
 
   GEOSX_MARK_BEGIN(firstVelocityUpdate);
 
@@ -579,14 +408,14 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
   GEOSX_MARK_END(firstVelocityUpdate);
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
 
 
-  bcManager->ApplyBoundaryConditionToField( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
-    [&]( BoundaryConditionBase const * const bc, set<localIndex> const & targetSet )->void
+  fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
+    [&]( FieldSpecificationBase const * const bc, set<localIndex> const & targetSet )->void
     {
       integer const component = bc->GetComponent();
       for( auto const a : targetSet )
@@ -597,7 +426,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  forall_in_range(0, numNodes, GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_range(0, numNodes, GEOSX_LAMBDA (localIndex a) mutable
   {
     acc[a] = 0;
   });
@@ -611,14 +440,14 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
+  GEOSX_GET_TIME( t1 );
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -632,7 +461,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-      localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
+      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
       GEOSX_MARK_BEGIN(externalElemsLoop);
 
@@ -659,7 +488,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   } //Element Manager
 
   //Compute Force : Point-wise computations
-  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a) mutable
   {
     acc[a] /=mass[a];
   });
@@ -667,15 +496,17 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size() );
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
+  GEOSX_GET_TIME( t2 );
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_icomm );
+  GEOSX_GET_TIME( t3 );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -689,7 +520,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-      localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
+      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
       GEOSX_MARK_BEGIN(internalElemsLoop);
 
@@ -715,8 +546,10 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   } //Element Manager
 
+  GEOSX_GET_TIME( t4 );
+
   //Compute Force : Point-wise computations
-  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (globalIndex a)
+  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a)
   {
     acc[a] /=mass[a];
   });
@@ -724,9 +557,32 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size());
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_icomm );
+
+
+  GEOSX_GET_TIME( tf );
+
+#ifdef GEOSX_USE_TIMERS
+  GEOSX_MARK_BEGIN("MPI_Barrier");
+  MPI_Barrier(MPI_COMM_GEOSX);
+  GEOSX_MARK_END("MPI_Barrier");
+
+  minTimes[0] = std::min( minTimes[0], t2-t1 );
+  minTimes[1] = std::min( minTimes[1], t4-t3 );
+  minTimes[2] = std::min( minTimes[2], tf-t0 );
+
+
+  maxTimes[0] = std::max( maxTimes[0], t2-t1 );
+  maxTimes[1] = std::max( maxTimes[1], t4-t3 );
+  maxTimes[2] = std::max( maxTimes[2], tf-t0 );
+
+
+  GEOS_LOG_RANK( "     outer loop: "<< (t2-t1)<<", "<<minTimes[0]<<", "<<maxTimes[0] );
+  GEOS_LOG_RANK( "     inner loop: "<< (t4-t3)<<", "<<minTimes[1]<<", "<<maxTimes[1] );
+  GEOS_LOG_RANK( "     total time: "<< (tf-t0)<<", "<<minTimes[2]<<", "<<maxTimes[2] );
+#endif
 
   return dt;
 }
@@ -855,23 +711,23 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                                                  EpetraBlockSystem & blockSystem )
 {
 
-  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
 
-  bcManager->ApplyBoundaryCondition( time,
-                                     &domain,
-                                     "nodeManager",
-                                     keys::TotalDisplacement,
-                                     [&]( BoundaryConditionBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
-                                          string const fieldName )->void
+  fsManager->Apply( time,
+                     &domain,
+                     "nodeManager",
+                     keys::TotalDisplacement,
+                     [&]( FieldSpecificationBase const * const bc,
+                     string const &,
+                     set<localIndex> const & targetSet,
+                     ManagedGroup * const targetGroup,
+                     string const fieldName )->void
     {
-    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
                                                  time,
                                                  targetGroup,
                                                  fieldName,
-                                                 solidMechanicsViewKeys.trilinosIndex.Key(),
+                                                 viewKeyStruct::trilinosIndexString,
                                                  3,
                                                  &blockSystem,
                                                  BlockIDs::displacementBlock );
@@ -883,7 +739,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
                                                     real64 const time,
                                                     systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
-  BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
   NewFunctionManager * const functionManager = NewFunctionManager::Instance();
 
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
@@ -897,17 +753,17 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
 
   Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
 
-  bcManager->ApplyBoundaryCondition( time,
-                                     domain,
-                                     "faceManager",
-                                     string("Traction"),
-                                     [&]( BoundaryConditionBase const * const bc,
-                                         string const &,
-                                         set<localIndex> const & targetSet,
-                                         ManagedGroup * const targetGroup,
-                                         string const fieldName ) -> void
+  fsManager->Apply( time,
+                    domain,
+                    "faceManager",
+                    string("Traction"),
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName ) -> void
   {
-    string const & functionName = bc->getReference<string>( BoundaryConditionBase::viewKeyStruct::functionNameString);
+    string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
 
     globalIndex_array nodeDOF;
     real64_array nodeRHS;
@@ -1119,7 +975,7 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
   // create trilinos dof indexing
 
   globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
-  integer_array& is_ghost       = nodeManager->getReference<integer_array>(solidMechanicsViewKeys.ghostRank);
+  integer_array& is_ghost       = nodeManager->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
   trilinos_index = -1;
 
@@ -1159,7 +1015,7 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
   SetNumRowsAndTrilinosIndices( nodeManager, n_local_rows, n_global_rows, displacementIndices, 0 );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back(solidMechanicsViewKeys.trilinosIndex.Key());
+  fieldNames["node"].push_back(viewKeyStruct::trilinosIndexString);
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
@@ -1205,7 +1061,6 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion(er);
-    string const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
@@ -1250,7 +1105,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
@@ -1294,15 +1149,15 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
-    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
     {
       CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
 
-      LvArray::Array<R1Tensor, 3> const &
-      dNdX = cellBlock->getReference< LvArray::Array<R1Tensor, 3> >(keys::dNdX);
+      array3d<R1Tensor> const &
+      dNdX = cellBlock->getReference< array3d<R1Tensor> >(keys::dNdX);
 
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
@@ -1368,7 +1223,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
             referenceStress.PlusIdentity( - biotCoefficient[er][esr][0] * (fluidPres[er][esr][k] + dPres[er][esr][k]));
           }
           real64 maxElemForce = CalculateElementResidualAndDerivative( density[er][esr][0],
-                                                                       feSpace->m_finiteElement,
+                                                                       feDiscretization->m_finiteElement,
                                                                        dNdX[k],
                                                                        detJ[k],
                                                                        &referenceStress,
@@ -1422,28 +1277,28 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   FaceManager * const faceManager = mesh->getFaceManager();
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-//  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+//  fsManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
 //                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
 
-  bcManager->ApplyBoundaryCondition( time_n+dt,
-                                     domain,
-                                     "nodeManager",
-                                     keys::Force,
-                                     [&]( BoundaryConditionBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
-                                          string const fieldName )->void
+  fsManager->Apply( time_n+dt,
+                    domain,
+                    "nodeManager",
+                    keys::Force,
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToSystem<BcAdd>( targetSet,
-                                               time_n+dt,
-                                               targetGroup,
-                                               keys::TotalDisplacement, // TODO fix use of dummy name for
-                                               solidMechanicsViewKeys.trilinosIndex.Key(),
-                                               3,
-                                               blockSystem,
-                                               BlockIDs::displacementBlock );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
+                                                               time_n+dt,
+                                                               targetGroup,
+                                                               keys::TotalDisplacement, // TODO fix use of dummy name for
+                                                               viewKeyStruct::trilinosIndexString,
+                                                               3,
+                                                               blockSystem,
+                                                               BlockIDs::displacementBlock );
   });
 
   ApplyTractionBC( domain,
@@ -1451,7 +1306,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                    *blockSystem );
 
   ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
-//  bcManager->ApplyBoundaryCondition( this, &,
+//  fsgerManager->ApplyBoundaryCondition( this, &,
 //                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
@@ -1817,7 +1672,7 @@ void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition 
   r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   // TODO need to finish this rewind
-  forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (globalIndex a) mutable
+  forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (localIndex a) mutable
   {
     incdisp[a] = 0.0;
   });

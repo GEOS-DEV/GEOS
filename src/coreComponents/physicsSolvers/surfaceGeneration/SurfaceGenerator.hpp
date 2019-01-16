@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -22,6 +22,7 @@
 #ifndef SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 #define SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
+#include "MPI_Communications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/DomainPartition.hpp"
 
@@ -65,13 +66,7 @@ public:
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void
-  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
-
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const problemManager ) override final;
-
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -125,6 +120,9 @@ public:
                         int const numTileColors,
                         const bool prefrac,
                         const realT time );
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
 
 private:
 

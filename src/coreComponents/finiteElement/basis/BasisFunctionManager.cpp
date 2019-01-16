@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -14,13 +14,6 @@
  * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-
-/*
- * BasisFunctionManager.cpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
  */
 
 #include "BasisFunctionManager.hpp"
@@ -40,21 +33,16 @@ BasisFunctionManager::~BasisFunctionManager()
   // TODO Auto-generated destructor stub
 }
 
-void BasisFunctionManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("BasisFunctions");
-  docNode->setSchemaType("UniqueNode");
-}
 
-void BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
   this->RegisterViewWrapper( childName, std::move(basis) )->setRestartFlags(RestartFlags::NO_WRITE);
+  return nullptr;
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
@@ -67,6 +55,7 @@ void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
     }
   }
 }
+
 
 
 } /* namespace geosx */

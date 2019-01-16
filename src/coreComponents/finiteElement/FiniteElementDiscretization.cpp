@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,7 +23,8 @@
  *      Author: rrsettgast
  */
 
-#include "FiniteElementSpace.hpp"
+#include "FiniteElementDiscretization.hpp"
+
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
@@ -42,54 +43,24 @@ using namespace dataRepository;
 
 
 
-FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup * const parent ):
+FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
+  RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
+}
 
-FiniteElementSpace::~FiniteElementSpace()
+FiniteElementDiscretization::~FiniteElementDiscretization()
 {
   delete m_finiteElement;
 }
 
-
-void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
-{}
-
-void FiniteElementSpace::FillDocumentationNode()
+localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-
-  docNode->AllocateChildNode( keys::basis,
-                              keys::basis,
-                              -1,
-                              "string",
-                              "string",
-                              "name of basis function object.",
-                              "name of the basis function object.",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-  docNode->AllocateChildNode( keys::quadrature,
-                              keys::quadrature,
-                              -1,
-                              "string",
-                              "string",
-                              "name of basis function object.",
-                              "name of the basis function object.",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-
+  return m_quadrature->size();
 }
 
-void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
+void FiniteElementDiscretization::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
 {
 
   // TODO THis crap needs to get cleaned up and worked out in the data structure
@@ -110,7 +81,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   detJ.resize(cellBlock->size(), m_quadrature->size() );
 }
 
-void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
+void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
   arrayView3d<R1Tensor> & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
@@ -136,7 +107,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> 
   }
 }
 
-void FiniteElementSpace::ReadXML_PostProcess()
+void FiniteElementDiscretization::PostProcessInput()
 {
   auto const & basisName = this->getReference<string>(keys::basis);
   auto const & quadratureName = this->getReference<string>(keys::quadrature);
@@ -153,22 +124,8 @@ void FiniteElementSpace::ReadXML_PostProcess()
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 }
 
-void FiniteElementSpace::InitializePreSubGroups( ManagedGroup * const group )
-{
-//  auto const & basisName = this->getData<string>(keys::basis) ;
-//  auto const & quadratureName = this->getData<string>(keys::quadrature) ;
-//
-//  // TODO find a better way to do this that doesn't involve getParent(). We
-// shouldn't really use that unless there is no
-//  // other choice.
-//  m_basis =
-// this->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
-//  m_quadrature =
-// this->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
-//  m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
-}
 
 
-REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementSpace, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementDiscretization, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */

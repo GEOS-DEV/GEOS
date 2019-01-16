@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -65,6 +65,67 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
      }
    */
   m_dim = 3;
+
+  RegisterViewWrapper(keys::xCoords, &(m_vertices[0]), false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("x-coordinates of each mesh block vertex");
+
+  RegisterViewWrapper(keys::yCoords, &(m_vertices[1]), false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("y-coordinates of each mesh block vertex");
+
+  RegisterViewWrapper(keys::zCoords, &(m_vertices[2]), false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("z-coordinates of each mesh block vertex");
+
+  RegisterViewWrapper(keys::xElems, &(m_nElems[0]), false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("number of elements in the x-direction within each mesh block");
+
+  RegisterViewWrapper(keys::yElems, &(m_nElems[1]), false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("number of elements in the y-direction within each mesh block");
+
+  RegisterViewWrapper(keys::zElems, &(m_nElems[2]), false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("number of elements in the z-direction within each mesh block");
+
+  RegisterViewWrapper(keys::xBias, &(m_nElemBias[0]), false )->
+    setApplyDefaultValue(1.0)->
+    setSizedFromParent(0)->
+    setInputFlag(InputFlags::OPTIONAL);
+
+  RegisterViewWrapper(keys::yBias, &(m_nElemBias[1]), false )->
+    setApplyDefaultValue(1.0)->
+    setSizedFromParent(0)->
+    setInputFlag(InputFlags::OPTIONAL);
+
+  RegisterViewWrapper(keys::zBias, &(m_nElemBias[2]), false )->
+    setApplyDefaultValue(1.0)->
+    setSizedFromParent(0)->
+    setInputFlag(InputFlags::OPTIONAL);
+
+  RegisterViewWrapper(keys::cellBlockNames, &m_regionNames, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("names of each mesh block");
+
+  RegisterViewWrapper(keys::elementTypes, &m_elementType, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("element types of each mesh block");
+
+  RegisterViewWrapper(keys::trianglePattern, &m_trianglePattern, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");;
+
 }
 
 InternalMeshGenerator::~InternalMeshGenerator()
@@ -72,195 +133,7 @@ InternalMeshGenerator::~InternalMeshGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void InternalMeshGenerator::FillDocumentationNode()
-{
-  //MeshLevel * const mesh =
-  // domain->group_cast<DomainPartition*>()->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  //NodeManager * const nodes    = mesh->getNodeManager();
-  // CellBlockManager * elems =
-  // domain->GetGroup<CellBlockManager>(keys::cellManager);
 
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( "InternalMesh" );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "a mesh generator" );
-
-
-//  nodes->getDocumentationNode()->AllocateChildNode( keys::ReferencePosition,
-//                                                   keys::ReferencePosition,
-//                                                   -1,
-//                                                   "r1_array",
-//                                                   "r1_array",
-//                                                   "Reference position of mesh
-// vertex points",
-//                                                   "Reference position of mesh
-// vertex points",
-//                                                   "1",
-//                                                   "",
-//                                                   1,
-//                                                   0,
-//                                                   0 );
-
-  docNode->AllocateChildNode( keys::xCoords,
-                              keys::xCoords,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "x-coordinates of mesh vertex points",
-                              "x-coordinates of mesh vertex points",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::yCoords,
-                              keys::yCoords,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "y-coordinates of mesh vertex points",
-                              "y-coordinates of mesh vertex points",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::zCoords,
-                              keys::zCoords,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "z-coordinates of mesh vertex points",
-                              "z-coordinates of mesh vertex points",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::xElems,
-                              keys::xElems,
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "number of elements in x-direction",
-                              "number of elements in x-direction",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::yElems,
-                              keys::yElems,
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "number of elements in y-direction",
-                              "number of elements in y-direction",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::zElems,
-                              keys::zElems,
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "number of elements in z-direction",
-                              "number of elements in z-direction",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::xBias,
-                              keys::xBias,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "spacing bias in x-direction",
-                              "spacing bias in x-direction",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::yBias,
-                              keys::yBias,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "spacing bias in y-direction",
-                              "spacing bias in y-direction",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::zBias,
-                              keys::zBias,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "spacing bias in z-direction",
-                              "spacing bias in z-direction",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::cellBlockNames,
-                              keys::cellBlockNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "names of the regions",
-                              "names of the regions",
-                              "Region",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::elementTypes,
-                              keys::elementTypes,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "topology of discrete volumes",
-                              "topology of discrete volumes",
-                              "C3D8",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::trianglePattern,
-                              keys::trianglePattern,
-                              -1,
-                              "integer",
-                              "integer",
-                              "",
-                              "",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-}
-
-//}
 /**
  * @author settgast
  * @param domain
@@ -279,34 +152,8 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 }
 
-void InternalMeshGenerator::ReadXML_PostProcess()
+void InternalMeshGenerator::PostProcessInput()
 {
-
-  real64_array const &  xCoords = this->getReference<real64_array>(keys::xCoords);
-  real64_array const &  yCoords = this->getReference<real64_array>(keys::yCoords);
-  real64_array const &  zCoords = this->getReference<real64_array>(keys::zCoords);
-  m_vertices[0] = xCoords;
-  m_vertices[1] = yCoords;
-  m_vertices[2] = zCoords;
-
-  integer_array const &  xElems = this->getReference<integer_array>(keys::xElems);
-  integer_array const &  yElems = this->getReference<integer_array>(keys::yElems);
-  integer_array const &  zElems = this->getReference<integer_array>(keys::zElems);
-  m_nElems[0] = xElems;
-  m_nElems[1] = yElems;
-  m_nElems[2] = zElems;
-
-  real64_array const &  xBias = this->getReference<real64_array>(keys::xBias);
-  real64_array const &  yBias = this->getReference<real64_array>(keys::yBias);
-  real64_array const &  zBias = this->getReference<real64_array>(keys::zBias);
-  m_nElemBias[0] = xBias;
-  m_nElemBias[1] = yBias;
-  m_nElemBias[2] = zBias;
-
-  m_regionNames = this->getReference<string_array>(keys::cellBlockNames);
-  m_elementType = this->getReference<string_array>(keys::elementTypes);
-  m_trianglePattern = this->getReference<integer>(keys::trianglePattern);
-
 
 
   if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")
@@ -454,8 +301,9 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 
 
-void InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
+  return nullptr;
 }
 
 
@@ -479,10 +327,9 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   NodeManager * nodeManager = meshLevel0->getNodeManager();
 
   // Make sure that the node manager fields are initialized
-  nodeManager->SetDocumentationNodes();
 
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
-  ManagedGroup * nodeSets = nodeManager->GetGroup( std::string( "Sets" ) );
+  ManagedGroup * nodeSets = nodeManager->sets();
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
 
@@ -493,9 +340,6 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock->SetDocumentationNodes();
-    cellBlock->RegisterDocumentationNodes();
-    cellBlock->ReadXML_PostProcess();
     cellBlock->SetElementType("C3D8");
   }
 

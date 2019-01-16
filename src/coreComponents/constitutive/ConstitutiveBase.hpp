@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,7 +25,6 @@
 
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
-//#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
@@ -82,7 +81,7 @@ public:
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const = 0;
+                            integer const systemAssembleFlag ) const {}
 
 
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
@@ -91,21 +90,9 @@ public:
                                         localIndex const q,
                                         integer const systemAssembleFlag ) { return R2SymTensor(); }
 
-  virtual void FluidDensityCompute( real64 const & pres,
-                                    localIndex const i,
-                                    real64 & dens,
-                                    real64 & dDens_dPres ) {}
-
-  virtual void FluidViscosityCompute( real64 const & pres,
-                                      localIndex const i,
-                                      real64 & visc,
-                                      real64 & dVisc_dPres ) {}
-
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) {}
-
-  virtual void FillDocumentationNode() override = 0;
 
   virtual void resize( localIndex ) override;
 
@@ -122,12 +109,6 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto densityString  = "density";
-    static constexpr auto dDens_dPresString  = "dPressure_dDensity";
-
-    static constexpr auto viscosityString  = "viscosity";
-    static constexpr auto dVisc_dPresString  = "dViscosity_dDensity";
-
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
 

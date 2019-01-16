@@ -4,6 +4,8 @@
 #
 set(dataRepository_headers
     BufferOps_inline.hpp
+    BufferOps.hpp
+    InputFlags.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
     ExecutableGroup.hpp
@@ -12,7 +14,6 @@ set(dataRepository_headers
     SidreWrapper.hpp
     ViewWrapper.hpp
     ViewWrapperBase.hpp
-    Buffer.hpp
     RestartFlags.hpp )
 
 #
@@ -26,11 +27,11 @@ set(dataRepository_sources
     
 
 
-set( extraComponentsListLink "")
+set( extraComponentsLinkList "")
 
 
 if( ENABLE_MPI )
-  set( extraComponentsListLink ${extraComponentsListLink} mpi )
+  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
 

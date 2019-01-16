@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -49,89 +49,45 @@ CompositeFunction::CompositeFunction( const std::string& name,
   parserExpression(),
   m_numSubFunctions(),
   m_subFunctions()
-{}
+{
+  RegisterViewWrapper( keys::functionNames, &m_functionNames, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of source functions. The order must match the variableNames argument.");
+
+  RegisterViewWrapper( keys::variableNames, &m_variableNames, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of variables in expression");
+
+  RegisterViewWrapper( keys::expression, &m_expression, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Composite math expression");
+}
 
 
 CompositeFunction::~CompositeFunction()
 {}
 
 
-void CompositeFunction::FillDocumentationNode()
-{
-  FunctionBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Composite function");
-
-  docNode->AllocateChildNode( keys::functionNames,
-                              keys::functionNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of source functions",
-                              "List of source functions.  The order must match the variableNames argment.",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::variableNames,
-                              keys::variableNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of variables in expression",
-                              "List of variables in expression",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::expression,
-                              keys::expression,
-                              -1,
-                              "string",
-                              "string",
-                              "Composite math expression",
-                              "Composite math expression",
-                              "default",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->getChildNode(keys::inputVarNames)->setDefault("");
-
-}
-
-
 void CompositeFunction::InitializeFunction()
 {
   // Register variables
-  string_array const & variables = getReference<string_array>(keys::variableNames);
-  for (localIndex ii=0 ; ii<variables.size() ; ++ii)
+  for (localIndex ii=0 ; ii<m_variableNames.size() ; ++ii)
   {
-    parserContext.addVariable(variables[ii].c_str(), static_cast<int>(ii * sizeof(double)));
+    parserContext.addVariable(m_variableNames[ii].c_str(), static_cast<int>(ii * sizeof(double)));
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
   parserContext.addBuiltIns();
-  std::string const& expression = getReference<std::string>(keys::expression);
-  mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
+  mathpresso::Error err = parserExpression.compile(parserContext, m_expression.c_str(), mathpresso::kNoOptions);
   GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
 
   // Grab pointers to sub functions
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
-  string_array const & functionNames = getReference<string_array>(keys::functionNames);
-  m_numSubFunctions = integer_conversion<localIndex>(functionNames.size());
+  m_numSubFunctions = integer_conversion<localIndex>(m_functionNames.size());
   for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
-    m_subFunctions.push_back(functionManager->GetGroup<FunctionBase>(functionNames[ii]));
+    m_subFunctions.push_back(functionManager->GetGroup<FunctionBase>(m_functionNames[ii]));
   }
 }
 

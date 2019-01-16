@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -17,7 +17,7 @@
  */
 
 /**
- * @file BoundaryConditionBase.hpp
+ * @file FieldBase.hpp
  */
 
 #ifndef BOUNDARYCONDITIONBASE_H
@@ -36,67 +36,67 @@ class Function;
 
 
 /**
- * @struct BcEqual
+ * @struct FieldSpecificationEqual
  * this struct a collection of static functions which adhere to an assumed interface for overwriting
- * a value for a boundary condition.
+ * a value for a field.
  */
-struct BcEqual
+struct FieldSpecificationEqual
 {
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field
    * @tparam T The type of the array1d field variable specified in @p field.
    * @param[in] field The array1d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component not used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index] = value.
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView1d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+  SpecifyFieldValue( arrayView1d<T> & field,
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     field[index] = static_cast<T>(value);
   }
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of value to a field variable.
    * @tparam T The type of the array1d field variable specified in @p field.
    * @param[in] field The array1d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index][component] = value.
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView1d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+  SpecifyFieldValue( arrayView1d<T> & field,
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     field[index].Data()[component] = value;
   }
 
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The index along second dimension of 2d array.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index][component] = value.
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -115,19 +115,19 @@ struct BcEqual
   }
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index][component] = value for all values of field[index].
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -149,18 +149,18 @@ struct BcEqual
   }
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component not used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index] = value for all values of field[index].
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView3d<T> & field,
+  SpecifyFieldValue( arrayView3d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -175,19 +175,19 @@ struct BcEqual
   }
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index][component] = value for all values of field[index].
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView3d<T> & field,
+  SpecifyFieldValue( arrayView3d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -215,7 +215,7 @@ struct BcEqual
    * appropriate scaled value, and sets \p rhs to the product of the scaled value of the diagonal and
    * the difference between \p bcValue and \p fieldValue.
    */
-  static inline void ApplyBcValue( globalIndex const dof,
+  static inline void SpecifyFieldValue( globalIndex const dof,
                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             systemSolverInterface::BlockIDs const blockID,
                             real64 & rhs,
@@ -253,25 +253,25 @@ struct BcEqual
 };
 
 /**
- * @struct BcAdd
+ * @struct FieldSpecificationAdd
  * this struct a collection of static functions which adhere to an assumed interface for adding
- * a value for a boundary condition.
+ * a value for a field.
  */
-struct BcAdd
+struct FieldSpecificationAdd
 {
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array1d field variable specified in @p field.
    * @param[in] field The array1d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component not used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index] += value.
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -280,19 +280,19 @@ struct BcAdd
   }
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array1d field variable specified in @p field.
    * @param[in] field The array1d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index][component] += value.
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
                 real64 const & value )
@@ -301,21 +301,21 @@ struct BcAdd
   }
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component not used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index] += value for all values of field[index].
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+  SpecifyFieldValue( arrayView2d<T> & field,
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -324,22 +324,22 @@ struct BcAdd
   }
 
   /**
-   * @brief Pointwise application of a boundary condition to a field variable.
+   * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
-   * @param[in] value The value of the boundary condition to apply to @p field.
+   * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index][component] += value for all values of field[index].
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( arrayView2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+  SpecifyFieldValue( arrayView2d<T> & field,
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -348,7 +348,7 @@ struct BcAdd
   }
 
   /**
-   * @brief Function to apply a boundary condition to a vector for a single dof.
+   * @brief Function to apply a value to a vector field for a single dof.
    * @param[in] dof The degree of freedom that is to be modified.
    * @param[in] blockSystem A pointer to the block system object.
    * @param[in] blockID The value of the blockID that contains the specific \p dof being modified.
@@ -357,12 +357,12 @@ struct BcAdd
    * @param[in] fieldValue unused.
    *
    */
-  static inline void ApplyBcValue( globalIndex const dof,
-                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            systemSolverInterface::BlockIDs const blockID,
-                            real64 & rhs,
-                            real64 const & bcValue,
-                            real64 const fieldValue )
+  static inline void SpecifyFieldValue( globalIndex const dof,
+                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                              systemSolverInterface::BlockIDs const blockID,
+                                              real64 & rhs,
+                                              real64 const & bcValue,
+                                              real64 const fieldValue )
   {
     if( true )//node_is_ghost[*nd] < 0 )
     {
@@ -390,10 +390,10 @@ struct BcAdd
 
 
 /**
- * @class BoundaryConditionBase
+ * @class FieldSpecificationBase
  * A class to hold values for and administer a single boundary condition
  */
-class BoundaryConditionBase : public dataRepository::ManagedGroup
+class FieldSpecificationBase : public dataRepository::ManagedGroup
 {
 public:
 
@@ -405,7 +405,7 @@ public:
   /**
    * alias to define the catalog type for this base type
    */
-  using CatalogInterface = cxx_utilities::CatalogInterface< BoundaryConditionBase,
+  using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
                                                             dataRepository::ManagedGroup * const >;
 
@@ -415,6 +415,8 @@ public:
    */
   static CatalogInterface::CatalogType& GetCatalog();
 
+  static string CatalogName() { return "FieldSpecification"; }
+
   /**
    * @}
    */
@@ -422,34 +424,29 @@ public:
 
   /**
    * @brief constructor
-   * @param name the name of the BoundaryConditionBase in the data repository
+   * @param name the name of the FieldSpecificationBase in the data repository
    * @param parent the parent group of this group.
    */
-  BoundaryConditionBase( string const & name, dataRepository::ManagedGroup * parent );
+  FieldSpecificationBase( string const & name, dataRepository::ManagedGroup * parent );
 
   /**
    * destructor
    */
-  virtual ~BoundaryConditionBase() override;
-
-
-  void FillDocumentationNode() override;
-
-  void ReadXML_PostProcess() override final;
+  virtual ~FieldSpecificationBase() override;
 
   /**
-   * @tparam BC_OP type that contains static functions to apply the boundary condition to the field
-   * @param[in] targetSet the set of indices which the boundary condition will be applied.
+   * @tparam FIELD_OP type that contains static functions to apply the value to the field
+   * @param[in] targetSet the set of indices which the value will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
-   *             application of the boundary condition.
-   * @param[in] dataGroup the ManagedGroup that contains the field to apply the boundary condition to.
-   * @param[in] fieldname the name of the field to apply the boundary condition to.
+   *             application of the value.
+   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] fieldname the name of the field to apply the value to.
    *
-   * This function applies the boundary condition to a field variable. This function is typically
-   * called from within the lambda to a call to BoundaryConditionManager::ApplyBoundaryCondition().
+   * This function applies the value to a field variable. This function is typically
+   * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
    */
-  template< typename BC_OP >
-  void ApplyBoundaryConditionToField( set<localIndex> const & targetSet,
+  template< typename FIELD_OP >
+  void ApplyFieldValue( set<localIndex> const & targetSet,
                                       real64 const time,
                                       dataRepository::ManagedGroup * dataGroup,
                                       string const & fieldname ) const;
@@ -481,7 +478,7 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename BC_OP >
+  template< typename FIELD_OP >
   void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                        real64 const time,
                                        dataRepository::ManagedGroup * dataGroup,
@@ -494,7 +491,7 @@ public:
 
   /**
    * @brief Function to apply a boundary condition to a system of equations
-   * @tparam BC_OP A wrapper struct to define how the boundary condition operates on the variables.
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
    *               Either \ref BcEqual or \ref BcAdd.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
@@ -510,18 +507,18 @@ public:
    * @param[in] blockID The blockID in the linear system where the global rows of the global degrees
    *                    of freedom are stored.
    * @param[in] lambda A lambda function which defines how the value that is passed into the functions
-   *                provided by the BC_OP templated type.
+   *                provided by the FIELD_OP templated type.
    *
    * This function applies the boundary condition to a linear system of equations. This function is
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename BC_OP, typename LAMBDA >
+  template< typename FIELD_OP, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   real64 const time,
                                   dataRepository::ManagedGroup * dataGroup,
-                                  arrayView1d<globalIndex> const & dofMap,
+                                  arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                   systemSolverInterface::BlockIDs const blockID,
@@ -602,7 +599,12 @@ public:
   real64 GetScale() const
   { return m_scale; }
 
+
+protected:
+  void PostProcessInput() override final;
+
 private:
+
 
   /// the names of the sets that the boundary condition is applied to
   string_array m_setNames;
@@ -646,8 +648,8 @@ private:
 
 
 
-template< typename BC_OP >
-void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const & targetSet,
+template< typename FIELD_OP >
+void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
                                                            real64 const time,
                                                            ManagedGroup * dataGroup,
                                                            string const & fieldName ) const
@@ -660,7 +662,9 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( vw->get_typeid());
 
-  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ), [&]( auto type, auto baseType ) -> void
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                  false,
+                                  [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
@@ -669,7 +673,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
       {
         for( auto a : targetSet )
         {
-          BC_OP::ApplyBcValue( field, a, component, m_scale );
+          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
         }
       }
       else
@@ -683,7 +687,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
           real64 value = m_scale * function->Evaluate( &time );
           for( auto a : targetSet )
           {
-            BC_OP::ApplyBcValue( field, a, component, value );
+            FIELD_OP::SpecifyFieldValue( field, a, component, value );
           }
         }
         else
@@ -693,7 +697,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
           integer count=0;
           for( auto a : targetSet )
           {
-            BC_OP::ApplyBcValue( field, a, component, m_scale*result[count] );
+            FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*result[count] );
             ++count;
           }
         }
@@ -703,8 +707,8 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
 
 
 
-template< typename BC_OP >
-void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+template< typename FIELD_OP >
+void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                             real64 const time,
                                                             dataRepository::ManagedGroup * dataGroup,
                                                             string const & fieldName,
@@ -725,7 +729,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
       dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
       fieldType & field = view.reference();
 
-      this->ApplyBoundaryConditionToSystem<BC_OP>( targetSet, time, dataGroup, dofMap, dofDim, blockSystem, blockID,
+      this->ApplyBoundaryConditionToSystem<FIELD_OP>( targetSet, time, dataGroup, dofMap, dofDim, blockSystem, blockID,
         [&]( localIndex const a )->real64
         {
           return static_cast<real64>(rtTypes::value( field[a], component ));
@@ -735,13 +739,13 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
   );
 }
 
-template< typename BC_OP, typename LAMBDA >
+template< typename FIELD_OP, typename LAMBDA >
 void
-BoundaryConditionBase::
+FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const time,
                                 dataRepository::ManagedGroup * dataGroup,
-                                arrayView1d<globalIndex> const & dofMap,
+                                arrayView1d<globalIndex const> const & dofMap,
                                 integer const & dofDim,
                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                 systemSolverInterface::BlockIDs const blockID,
@@ -764,7 +768,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
     for( auto a : targetSet )
     {
       dof( counter ) = dofDim*dofMap[a]+component;
-      BC_OP::ApplyBcValue( dof( counter ),
+      FIELD_OP::SpecifyFieldValue( dof( counter ),
                            blockSystem,
                            blockID,
                            rhsContribution( counter ),
@@ -772,7 +776,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                            lambda( a ) );
       ++counter;
     }
-    BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+    FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
   }
   else
   {
@@ -787,7 +791,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       for( auto a : targetSet )
       {
         dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-        BC_OP::ApplyBcValue( dof( counter ),
+        FIELD_OP::SpecifyFieldValue( dof( counter ),
                              blockSystem,
                              blockID,
                              rhsContribution( counter ),
@@ -795,7 +799,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                              lambda( a ) );
         ++counter;
       }
-      BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
     }
     else
     {
@@ -806,7 +810,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       for( auto a : targetSet )
       {
         dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-        BC_OP::ApplyBcValue( dof( counter ),
+        FIELD_OP::SpecifyFieldValue( dof( counter ),
                              blockSystem,
                              blockID,
                              rhsContribution( counter ),
@@ -814,7 +818,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                              lambda( a ) );
         ++counter;
       }
-      BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
     }
   }
 }

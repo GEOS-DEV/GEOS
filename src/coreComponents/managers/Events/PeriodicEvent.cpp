@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -21,7 +21,6 @@
   */
 
 #include "PeriodicEvent.hpp"
-#include "DocumentationNode.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 
 namespace geosx
@@ -33,128 +32,60 @@ using namespace dataRepository;
 PeriodicEvent::PeriodicEvent( const std::string& name,
                               ManagedGroup * const parent ):
   EventBase(name,parent),
-  m_functionTarget(nullptr)
-{}
+  m_functionTarget(nullptr),
+  m_timeFrequency(),
+  m_cycleFrequency(),
+  m_targetExactTimestep(),
+  m_functionName(),
+  m_functionInputObject(),
+  m_functionInputSetname(),
+  m_functionStatOption(),
+  m_eventThreshold()
+{
+  RegisterViewWrapper(viewKeyStruct::timeFrequencyString, &m_timeFrequency, false )->
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("event frequency (time)");
+
+  RegisterViewWrapper(viewKeyStruct::cycleFrequencyString, &m_cycleFrequency, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("event frequency (cycle, Default)");
+
+  RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows timesteps to be truncated to match time frequency perfectly");
+
+  RegisterViewWrapper(viewKeyStruct::functionNameString, &m_functionName, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of the symbolic math function");
+
+  RegisterViewWrapper(viewKeyStruct::functionInputObjectString, &m_functionInputObject, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Path of the function input object (directory format)");
+
+  RegisterViewWrapper(viewKeyStruct::functionInputSetnameString, &m_functionInputSetname, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Setname of the input object (if empty, default to everything)");
+
+  RegisterViewWrapper(viewKeyStruct::functionStatOptionString, &m_functionStatOption, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Selection of the min/avg/max for functions that target vectors");
+
+  RegisterViewWrapper(viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
+    setApplyDefaultValue(10000000000.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("event threshold");
+
+}
 
 
 PeriodicEvent::~PeriodicEvent()
 {}
 
 
-void PeriodicEvent::FillDocumentationNode()
-{
-  EventBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName("PeriodicEvent");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Describes the timing of the solver application");
-
-  docNode->AllocateChildNode( periodicEventViewKeys.timeFrequency.Key(),
-                              periodicEventViewKeys.timeFrequency.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "event frequency (time)",
-                              "event frequency (time)",
-                              "-1.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( periodicEventViewKeys.cycleFrequency.Key(),
-                              periodicEventViewKeys.cycleFrequency.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "event frequency (cycle, Default)",
-                              "event frequency (cycle, Default)",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( periodicEventViewKeys.targetExactTimestep.Key(),
-                              periodicEventViewKeys.targetExactTimestep.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "allows timesteps to be truncated to match time frequency perfectly",
-                              "allows timesteps to be truncated to match time frequency perfectly",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  // Function oriented options
-  docNode->AllocateChildNode( periodicEventViewKeys.functionName.Key(),
-                              periodicEventViewKeys.functionName.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "Name of the symbolic math function",
-                              "Name of the symbolic math function",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( periodicEventViewKeys.functionInputObject.Key(),
-                              periodicEventViewKeys.functionInputObject.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "Path of the function input object",
-                              "Path of the function input object (directory format)",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( periodicEventViewKeys.functionInputSetname.Key(),
-                              periodicEventViewKeys.functionInputSetname.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "Setname of the input object",
-                              "Setname of the input object (if empty, default to everything)",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( periodicEventViewKeys.functionStatOption.Key(),
-                              periodicEventViewKeys.functionStatOption.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "Selection of the min/avg/max for functions that target vectors",
-                              "Selection of the min/avg/max for functions that target vectors",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( periodicEventViewKeys.eventThreshold.Key(),
-                              periodicEventViewKeys.eventThreshold.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "event threshold",
-                              "event threshold",
-                              "1e10",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
 
 
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -27,208 +27,149 @@
 
 namespace geosx
 {
-
+using namespace dataRepository;
 SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup(name,parent),
+  m_verbose(0),
+  m_solverType("Klu"),
+  m_krylovTol(),
+  m_numKrylovIter(),
+  m_kspace(),
+  m_ilut_fill(3.0),
+  m_ilut_drop(),
+  m_useMLPrecond(),
+  m_useInnerSolver(),
+  m_scalingOption(),
+  m_useBicgstab(),
+  m_useDirectSolver(),
+  m_KrylovResidualInit(),
+  m_KrylovResidualFinal(),
+  m_useNewtonSolve(),
+  m_newtonTol(),
+  m_maxIterNewton(),
+  m_numNewtonIterations()
 {
+  setRestartFlags(RestartFlags::NO_WRITE);
+  RegisterViewWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("verbosity level");
+
+  RegisterViewWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::krylovTolString, &m_krylovTol, false )->
+    setApplyDefaultValue(1.0e-6)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Allowable tolerance for krylov solve");
+
+  RegisterViewWrapper(viewKeysStruct::numKrylovIterString, &m_numKrylovIter, false )->
+    setApplyDefaultValue(100)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum number of Krylov Iterations");
+
+  RegisterViewWrapper(viewKeysStruct::kspaceString, &m_kspace, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::ilut_fillString, &m_ilut_fill, false )->
+    setApplyDefaultValue(3.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::ilut_dropString, &m_ilut_drop, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::useMLPrecondString, &m_useMLPrecond, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::useInnerSolverString, &m_useInnerSolver, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::scalingOptionString, &m_scalingOption, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::useBicgstabString, &m_useBicgstab, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::useDirectSolverString, &m_useDirectSolver, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::useNewtonSolveString, &m_useNewtonSolve, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::newtonTolString, &m_newtonTol, false )->
+    setApplyDefaultValue(1.0e-6)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::maxIterNewtonString, &m_maxIterNewton, false )->
+    setApplyDefaultValue(5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum number of Newton iterations");
+
+
+  RegisterViewWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
+    setApplyDefaultValue(2)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Max number of time step cuts");
+
+  RegisterViewWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Time step cut factor");
+
+  RegisterViewWrapper( viewKeysStruct::maxLineSearchCutsString, &m_maxLineSearchCuts, false )->
+    setApplyDefaultValue(4)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Max number of line search cuts");
+
+  RegisterViewWrapper( viewKeysStruct::lineSearchCutFactorString, &m_lineSearchCutFactor, false )->
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Line search cut factor");
+
+  RegisterViewWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Allow non-converged solution to be accepted");
+
+
+  RegisterViewWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
+    setApplyDefaultValue(0)->
+    setDescription("verbosity level");
+
+  RegisterViewWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
+    setApplyDefaultValue(0)->
+    setDescription("verbosity level");
+
+  RegisterViewWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
+    setApplyDefaultValue(0)->
+    setDescription("verbosity level");
+
+
 }
 
-void SystemSolverParameters::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName("SystemSolverParameters");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Parameters for linear/non-linear system solver");
-
-
-  docNode->AllocateChildNode( viewKeys.verbosity.Key(),
-                              viewKeys.verbosity.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.solverType.Key(),
-                              viewKeys.solverType.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "verbosity level",
-                              "verbosity level",
-                              "Klu",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( viewKeys.krylovTol.Key(),
-                              viewKeys.krylovTol.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "verbosity level",
-                              "verbosity level",
-                              "1.0e-6",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.numKrylovIter.Key(),
-                              viewKeys.numKrylovIter.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "100",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.ilut_drop.Key(),
-                              viewKeys.ilut_drop.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "verbosity level",
-                              "verbosity level",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.ilut_fill.Key(),
-                              viewKeys.ilut_fill.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "verbosity level",
-                              "verbosity level",
-                              "3.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( viewKeys.useNewtonSolve.Key(),
-                              viewKeys.useNewtonSolve.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.newtonTol.Key(),
-                              viewKeys.newtonTol.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "verbosity level",
-                              "verbosity level",
-                              "1.0e-6",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.numNewtonIterations.Key(),
-                              viewKeys.numNewtonIterations.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "5",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.maxIterNewton.Key(),
-                              viewKeys.maxIterNewton.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "5",
-                              "",
-                              0,
-                              1,
-                              0 );
-  docNode->AllocateChildNode( viewKeys.scalingOption.Key(),
-                              viewKeys.scalingOption.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "",
-                              "",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.useMLPrecond.Key(),
-                              viewKeys.useMLPrecond.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "",
-                              "",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.useDirectSolver.Key(),
-                              viewKeys.useDirectSolver.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "",
-                              "",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-//  real64 m_krylovTol;          // Solver convergence criteria
-//  integer  m_numKrylovIter;
-//  integer  m_kspace;             // Number of krylov vectors before GMRES
-// restart
-//  real64 m_ilut_fill;          // Fill factor for ILUT preconditioner
-//  real64 m_ilut_drop;          // Drop tolerance for ILUT preconditioner
-//  bool   m_useMLPrecond;       // Use ML preconditioner
-//  bool   m_useInnerSolver;     // Use row scaling
-//  integer  m_scalingOption;      // Use row scaling
-//  bool   m_useBicgstab;        // Use bicgstab instead of gmres
-//  bool   m_useDirectSolver;    // Use Direct solver
-//  real64 m_KrylovResidualInit;
-//  real64 m_KrylovResidualFinal;
-//
-//  bool   m_useNewtonSolve;    // Use Newton-Raphson iterations
-//  real64 m_newtonTol;
-//  integer  m_maxIterNewton;     // Maximum number of Newton-Raphson iterations
-}
+REGISTER_CATALOG_ENTRY( ManagedGroup, SystemSolverParameters, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */
+
+

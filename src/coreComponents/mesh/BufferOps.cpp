@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -18,7 +18,7 @@
 
 
 #include "BufferOps.hpp"
-#include "dataRepository/BufferOps_inline.hpp"
+#include "dataRepository/BufferOps.hpp"
 #include "ToElementRelation.hpp"
 #include "ElementRegionManager.hpp"
 #include "codingUtilities/Utilities.hpp"

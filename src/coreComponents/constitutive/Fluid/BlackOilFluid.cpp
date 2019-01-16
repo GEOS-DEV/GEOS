@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,6 +23,8 @@
 #include "BlackOilFluid.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "managers/ProblemManager.hpp"
+#include "fileIO/utils/utils.hpp"
 
 // PVTPackage includes
 #include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
@@ -42,8 +44,13 @@ namespace constitutive
 BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false );
-  RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false );
+  RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of surface densities for each phase");
+
+  RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of filenames with input PVT tables");
 }
 
 BlackOilFluid::~BlackOilFluid()
@@ -72,46 +79,12 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
   return std::move( clone );
 }
 
-void BlackOilFluid::FillDocumentationNode()
+void BlackOilFluid::PostProcessInput()
 {
-  MultiFluidPVTPackageWrapper::FillDocumentationNode();
+  MultiFluidPVTPackageWrapper::PostProcessInput();
 
-  DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setShortDescription( "Black-oil fluid model based on PVTPackage" );
-
-  docNode->AllocateChildNode( viewKeyStruct::surfaceDensitiesString,
-                              viewKeyStruct::surfaceDensitiesString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "List of surface densities for each phase",
-                              "List of surface densities for each phase",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::tableFilesString,
-                              viewKeyStruct::tableFilesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of filenames with input PVT tables",
-                              "List of filenames with input PVT tables",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
-void BlackOilFluid::ReadXML_PostProcess()
-{
   // TODO maybe use different names?
   m_componentNames = m_phaseNames;
-
-  MultiFluidPVTPackageWrapper::ReadXML_PostProcess();
 
   localIndex const NP = numFluidPhases();
 
@@ -136,6 +109,29 @@ void BlackOilFluid::createFluid()
   std::vector<std::string> tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector<double> densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector<double> molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
+
+  // if table file names are not absolute paths, convert them to such, based on path to main input/restart file
+  ProblemManager const * const problemManager = this->GetGroupByPath<ProblemManager>("/");
+  if (problemManager != nullptr)
+  {
+    // hopefully at least one of input or restart file names is provided, otherwise '.' will be used
+    string inputFileName = problemManager->getInputFileName();
+    if (inputFileName.empty())
+    {
+      inputFileName = problemManager->getRestartFileName();
+    }
+    string inputFileDir;
+    splitPath( inputFileName, inputFileDir, inputFileName );
+
+    // if table file names are not full paths, convert them to such
+    for (std::string & filename : tableFiles)
+    {
+      if (!isAbsolutePath(filename))
+      {
+        getAbsolutePath( inputFileDir + '/' + filename, filename );
+      }
+    }
+  }
 
   m_fluid = new BlackOilMultiphaseSystem( phases, tableFiles, densities, molarWeights );
 }

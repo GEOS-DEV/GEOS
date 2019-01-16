@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -545,6 +545,20 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
   {
     neighbor.RebuildSyncLists( meshLevel, commID );
   }
+
+  meshLevel->getNodeManager()->FixUpDownMaps(true);
+  meshLevel->getEdgeManager()->FixUpDownMaps(true);
+  meshLevel->getFaceManager()->FixUpDownMaps(true);
+  for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
+  {
+    ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
+      subRegion->FixUpDownMaps(true);
+    }
+  }
+
 
   CommunicationTools::releaseCommID( commID );
 }

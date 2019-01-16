@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -45,50 +45,19 @@ SymbolicFunction::SymbolicFunction( const std::string& name,
   FunctionBase( name, parent ),
   parserContext(),
   parserExpression()
-{}
+{
+  RegisterViewWrapper<string_array>(keys::variableNames)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of variables in expression.  The order must match the evaluate argument");
+
+  RegisterViewWrapper<string>(keys::expression)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Symbolic math expression");
+}
 
 
 SymbolicFunction::~SymbolicFunction()
 {}
-
-
-void SymbolicFunction::FillDocumentationNode()
-{
-  FunctionBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("JIT function");
-
-  docNode->AllocateChildNode( keys::variableNames,
-                              keys::variableNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of variables in expression",
-                              "List of variables in expression.  The order must match the evaluate argment.",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::expression,
-                              keys::expression,
-                              -1,
-                              "string",
-                              "string",
-                              "Symbolic math expression",
-                              "Symbolic math expression",
-                              "default",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-}
-
 
 void SymbolicFunction::InitializeFunction()
 {

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -58,9 +58,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
@@ -73,6 +70,9 @@ public:
     ViewKey tableFiles       = { tableFilesString };
 
   } viewKeysBlackOilFluid;
+
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 

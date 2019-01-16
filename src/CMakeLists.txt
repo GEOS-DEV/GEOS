@@ -58,21 +58,17 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
 
 ################################
 # Create header of configuration options
-################################s
+################################
 include(cmake/GeosxConfig.cmake)
 
 
-
-
-
-
-
-
-
-set( extraComponentsListLink "")
+################################
+# Add main
+################################
+set( extraComponentsLinkList "")
 if( ENABLE_PYTHON )
   if( PYTHON_DIR )
-    set( extraComponentsListLink ${extraComponentsListLink} python_interp )
+    set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
 #    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=1)
     blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
   else()
@@ -83,7 +79,7 @@ else()
 endif()
 
 if( ENABLE_OPENMP)
-  set( extraComponentsListLink ${extraComponentsListLink} openmp )
+  set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
 endif()
 
 blt_add_executable(NAME geosx

@@ -14,6 +14,7 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/RestartOutput.hpp
     Outputs/BlueprintOutput.hpp
+    Outputs/ChomboIO.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -22,9 +23,9 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
-    BoundaryConditions/BoundaryConditionBase.hpp
-    BoundaryConditions/BoundaryConditionManager.hpp
-    BoundaryConditions/DirichletBoundaryCondition.hpp)
+    FieldSpecification/FieldSpecificationBase.hpp
+    FieldSpecification/FieldSpecificationManager.hpp
+    FieldSpecification/DirichletBoundaryCondition.hpp)
 
 
 #
@@ -42,6 +43,7 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/RestartOutput.cpp
     Outputs/BlueprintOutput.cpp
+    Outputs/ChomboIO.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -50,9 +52,9 @@ set(managers_sources
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp
-    BoundaryConditions/BoundaryConditionBase.cpp
-    BoundaryConditions/BoundaryConditionManager.cpp
-    BoundaryConditions/DirichletBoundaryCondition.cpp)
+    FieldSpecification/FieldSpecificationBase.cpp
+    FieldSpecification/FieldSpecificationManager.cpp
+    FieldSpecification/DirichletBoundaryCondition.cpp)
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )
@@ -97,5 +99,3 @@ target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 
 geosx_add_code_checks( PREFIX managers )
-
-#add_subdirectory( unitTests/xmlTests )
