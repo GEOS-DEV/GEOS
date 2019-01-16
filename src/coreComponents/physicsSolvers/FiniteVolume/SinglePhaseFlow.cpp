@@ -26,6 +26,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
@@ -112,10 +113,12 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
     arrayView1d<real64 const> const & pres  = m_pressure[er][esr];
     arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
 
+    SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
+
     for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
     {
       real64 const presNew = pres[ei] + dPres[ei];
-      constitutiveRelations[er][esr][m_fluidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // fluid
+      fluid->PointUpdate( presNew, ei, 0 ); // fluid
       constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // solid
     } );
   } );
@@ -788,9 +791,6 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                  EpetraBlockSystem * const blockSystem )
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
 
   // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
   // if the boundary condition should be applied to this subregion
@@ -800,31 +800,29 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                           set<localIndex> const & lset,
                                           ManagedGroup * subRegion,
                                           string const & ) -> void
-        {
-          arrayView1d<globalIndex const> const &
-          dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
-          arrayView1d<real64 const> const &
-          pres = subRegion->getReference<array1d<real64> >( viewKeyStruct::pressureString );
+    arrayView1d<real64 const> const &
+    pres = subRegion->getReference<array1d<real64> >( viewKeyStruct::pressureString );
 
-          arrayView1d<real64 const> const &
-          dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
+    arrayView1d<real64 const> const &
+    dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
 
-          // call the application of the boundary condition to alter the matrix and rhs
-          bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
-                                                       time_n + dt,
-                                                       subRegion,
-                                                       dofNumber,
-                                                       1,
-                                                       blockSystem,
-                                                       BlockIDs::fluidPressureBlock,
-            [&] (localIndex const a) -> real64
-            {
-              return pres[a] + dPres[a];
-            }
-          );
-        }
-      );
+    // call the application of the boundary condition to alter the matrix and rhs
+    bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
+                                                 time_n + dt,
+                                                 subRegion,
+                                                 dofNumber,
+                                                 1,
+                                                 blockSystem,
+                                                 BlockIDs::fluidPressureBlock,
+    [&] (localIndex const a) -> real64
+    {
+      return pres[a] + dPres[a];
+    });
+  } );
 }
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
@@ -838,7 +836,6 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   arrayView2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   arrayView2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  arrayView2d<localIndex> const & elemList           = faceManager->elementList();
 
   arrayView1d<integer> const & faceGhostRank =
     faceManager->getReference<array1d<integer>>(ObjectManagerBase::viewKeyStruct::ghostRankString);
@@ -913,11 +910,11 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       integer const ke = (elemRegionList[kf][0] >= 0) ? 0 : 1;
       localIndex const er  = elemRegionList[kf][ke];
       localIndex const esr = elemSubRegionList[kf][ke];
-      localIndex const ei  = elemList[kf][ke];
 
       real64 dummy; // don't need derivatives on faces
-      constitutiveRelations[er][esr][m_fluidIndex]->FluidDensityCompute(presFace[kf], ei, densFace[kf], dummy);
-      constitutiveRelations[er][esr][m_fluidIndex]->FluidViscosityCompute(presFace[kf], ei, viscFace[kf], dummy);
+
+      SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
+      fluid->Compute( presFace[kf], densFace[kf], dummy, viscFace[kf], dummy );
     }
   });
 
@@ -1250,16 +1247,16 @@ void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::porosityString );
 
   m_density =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::densityString,
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::densityString,
                                                                                       constitutiveManager );
   m_dDens_dPres =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::dDens_dPresString,
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString,
                                                                                       constitutiveManager );
   m_viscosity =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::viscosityString,
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::viscosityString,
                                                                                       constitutiveManager );
   m_dVisc_dPres =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::dVisc_dPresString,
+    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
                                                                                       constitutiveManager );
 
   if (m_poroElasticFlag)
