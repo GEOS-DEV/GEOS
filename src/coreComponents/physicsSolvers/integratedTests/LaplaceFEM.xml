@@ -79,14 +79,14 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="sourceTerm" 
+    <FieldSpecification name="sourceTerm" 
                fieldName="Temperature" 
                dataType="Scalar" 
                objectPath="nodeManager" 
                scale="1000.0" 
                setNames="source"/>
                
-    <Dirichlet name="sinkTerm"   
+    <FieldSpecification name="sinkTerm"   
                fieldName="Temperature" 
                dataType="Scalar" 
                objectPath="nodeManager" 

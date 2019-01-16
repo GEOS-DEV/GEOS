@@ -89,7 +89,7 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="source"  
+    <FieldSpecification name="source"  
                initialCondition="1"  
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -97,21 +97,21 @@
                component="-1"
                scale="-1.0e6"/>
 
-    <Dirichlet name="xconstraint" 
+    <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                component="0"  
                scale="0.0" 
                setNames="xneg"/>
                
-    <Dirichlet name="yconstraint" 
+    <FieldSpecification name="yconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                component="1"  
                scale="0.0" 
                setNames="yneg"/>
                
-    <Dirichlet name="zconstraint" 
+    <FieldSpecification name="zconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                component="2"  
