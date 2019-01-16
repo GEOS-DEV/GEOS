@@ -87,8 +87,8 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
-    <Dirichlet name="source"  
+  <FieldSpecifications>
+    <FieldSpecification name="source"  
                initialCondition="1"  
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
@@ -97,7 +97,7 @@
                scale="-1.0e6"
                function="spaceFunction"/>
                
-    <!--Dirichlet name="xpos"  
+    <!--FieldSpecification name="xpos"  
                initialCondition="1"  
                setNames="xpos"
                objectPath="nodeManager"
@@ -106,7 +106,7 @@
                component="1"
                scale="1.0"/-->
 
-    <Dirichlet name="xconstraint" 
+    <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                dataType="Vector"
@@ -114,7 +114,7 @@
                scale="0.0" 
                setNames="xneg"/>
                
-    <Dirichlet name="yconstraint" 
+    <FieldSpecification name="yconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                dataType="Vector"
@@ -122,7 +122,7 @@
                scale="0.0" 
                setNames="yneg"/>
                
-    <Dirichlet name="zconstraint" 
+    <FieldSpecification name="zconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                dataType="Vector"
@@ -130,7 +130,7 @@
                scale="0.0" 
                setNames="zneg"/>
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>

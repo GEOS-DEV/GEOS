@@ -25,7 +25,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "managers/ProblemManager.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 
 namespace geosx
@@ -62,13 +62,13 @@ void RestartOutput::Execute(real64 const& time_n,
 
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
-  BoundaryConditionManager::get()->prepareToWrite();
+  FieldSpecificationManager::get()->prepareToWrite();
   int numFiles;
   MPI_Comm_size( MPI_COMM_GEOSX, &numFiles );
   SidreWrapper::writeTree( numFiles, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
   problemManager->finishWriting();
   NewFunctionManager::Instance()->finishWriting();
-  BoundaryConditionManager::get()->finishWriting();
+  FieldSpecificationManager::get()->finishWriting();
 #endif
 }
 

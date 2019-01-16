@@ -17,37 +17,32 @@
  */
 
 /*
- * DirichletBoundaryCondition.hpp
+ * DirichletBoundaryCondition.cpp
  *
  *  Created on: Jun 2, 2017
  *      Author: rrsettgast
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
-
-#include "BoundaryConditionBase.hpp"
+#include "DirichletBoundaryCondition.hpp"
 
 namespace geosx
 {
+using namespace dataRepository;
 
-class DirichletBoundaryCondition : public BoundaryConditionBase
+DirichletBoundaryCondition::DirichletBoundaryCondition( string const & name, ManagedGroup *const parent ):
+  FieldSpecificationBase( name, parent )
 {
-public:
-  DirichletBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );
-  DirichletBoundaryCondition() = delete;
-  virtual ~DirichletBoundaryCondition();
+  // TODO Auto-generated constructor stub
 
-  static string CatalogName() { return "Dirichlet"; }
+}
 
-
-
-};
+DirichletBoundaryCondition::~DirichletBoundaryCondition()
+{
+  // TODO Auto-generated destructor stub
+}
 
 
+
+REGISTER_CATALOG_ENTRY( FieldSpecificationBase, DirichletBoundaryCondition, string const &, ManagedGroup * const )
 
 } /* namespace geosx */
-
-#endif /*
-          SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
-        */
