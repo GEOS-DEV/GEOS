@@ -41,7 +41,7 @@ namespace keys
 string const compositionalMultiphaseFlow = "CompositionalMultiphaseFlow";
 }
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 

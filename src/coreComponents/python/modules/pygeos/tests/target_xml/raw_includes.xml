@@ -28,13 +28,13 @@
       <LinearElasticMaterial ShearModulus="4.16667e9" Density="200000" BulkModulus="5.5556e9"/>
     </ElementRegion>
   </ElementRegions>
-  <BoundaryConditions>
+  <FieldSpecifications>
     <BoundaryCondition object="Node" fieldname="Velocity" setnames="yneg ypos" component="1" scale="0.0" fieldtype="Vector"/>
     <BoundaryCondition object="Node" fieldname="Velocity" setnames="zneg zpos" component="2" scale="0.0" fieldtype="Vector"/>
     <BoundaryCondition object="Face" fieldname="combinedFlowRate" setnames="source" scale="1.0"/>
     <BoundaryCondition object="Face" fieldname="ProppantVolumeFraction" setnames="source" scale="1e-9" timetable="ttable2"/>
     <BoundaryCondition object="Node" fieldname="Velocity" setnames="xneg xpos" component="0" scale="0.0" fieldtype="Vector"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
   <Tables>
     <Table1D name="ttable2" coord="0, 1.0, 1.000001, 1e6" value="0.0, 0.0, 1.0, 1.0"/>
   </Tables>

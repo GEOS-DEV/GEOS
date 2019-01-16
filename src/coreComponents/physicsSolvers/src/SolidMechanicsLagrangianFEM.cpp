@@ -30,14 +30,13 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include <common/DataTypes.hpp>
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
-
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
@@ -384,7 +383,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
   localIndex const numNodes = nodes->size();
 
   arrayView1d<R1Tensor> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
@@ -401,7 +400,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_icomm );
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Acceleration );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Acceleration );
 
   GEOSX_MARK_BEGIN(firstVelocityUpdate);
 
@@ -409,14 +408,14 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
   GEOSX_MARK_END(firstVelocityUpdate);
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
 
 
-  bcManager->ApplyBoundaryConditionToField( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
-    [&]( BoundaryConditionBase const * const bc, set<localIndex> const & targetSet )->void
+  fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
+    [&]( FieldSpecificationBase const * const bc, set<localIndex> const & targetSet )->void
     {
       integer const component = bc->GetComponent();
       for( auto const a : targetSet )
@@ -497,7 +496,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size() );
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
   GEOSX_GET_TIME( t2 );
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_icomm );
@@ -558,7 +557,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size());
 
-  bcManager->ApplyBoundaryConditionToField( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_icomm );
 
@@ -712,19 +711,19 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                                                  EpetraBlockSystem & blockSystem )
 {
 
-  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
 
-  bcManager->ApplyBoundaryCondition( time,
-                                     &domain,
-                                     "nodeManager",
-                                     keys::TotalDisplacement,
-                                     [&]( BoundaryConditionBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
-                                          string const fieldName )->void
+  fsManager->Apply( time,
+                     &domain,
+                     "nodeManager",
+                     keys::TotalDisplacement,
+                     [&]( FieldSpecificationBase const * const bc,
+                     string const &,
+                     set<localIndex> const & targetSet,
+                     ManagedGroup * const targetGroup,
+                     string const fieldName )->void
     {
-    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
                                                  time,
                                                  targetGroup,
                                                  fieldName,
@@ -740,7 +739,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
                                                     real64 const time,
                                                     systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
-  BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
   NewFunctionManager * const functionManager = NewFunctionManager::Instance();
 
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
@@ -754,17 +753,17 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
 
   Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
 
-  bcManager->ApplyBoundaryCondition( time,
-                                     domain,
-                                     "faceManager",
-                                     string("Traction"),
-                                     [&]( BoundaryConditionBase const * const bc,
-                                         string const &,
-                                         set<localIndex> const & targetSet,
-                                         ManagedGroup * const targetGroup,
-                                         string const fieldName ) -> void
+  fsManager->Apply( time,
+                    domain,
+                    "faceManager",
+                    string("Traction"),
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName ) -> void
   {
-    string const & functionName = bc->getReference<string>( BoundaryConditionBase::viewKeyStruct::functionNameString);
+    string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
 
     globalIndex_array nodeDOF;
     real64_array nodeRHS;
@@ -1278,28 +1277,28 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   FaceManager * const faceManager = mesh->getFaceManager();
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-//  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+//  fsManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
 //                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
 
-  bcManager->ApplyBoundaryCondition( time_n+dt,
-                                     domain,
-                                     "nodeManager",
-                                     keys::Force,
-                                     [&]( BoundaryConditionBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
-                                          string const fieldName )->void
+  fsManager->Apply( time_n+dt,
+                    domain,
+                    "nodeManager",
+                    keys::Force,
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToSystem<BcAdd>( targetSet,
-                                               time_n+dt,
-                                               targetGroup,
-                                               keys::TotalDisplacement, // TODO fix use of dummy name for
-                                               viewKeyStruct::trilinosIndexString,
-                                               3,
-                                               blockSystem,
-                                               BlockIDs::displacementBlock );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
+                                                               time_n+dt,
+                                                               targetGroup,
+                                                               keys::TotalDisplacement, // TODO fix use of dummy name for
+                                                               viewKeyStruct::trilinosIndexString,
+                                                               3,
+                                                               blockSystem,
+                                                               BlockIDs::displacementBlock );
   });
 
   ApplyTractionBC( domain,
@@ -1307,7 +1306,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                    *blockSystem );
 
   ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
-//  bcManager->ApplyBoundaryCondition( this, &,
+//  fsgerManager->ApplyBoundaryCondition( this, &,
 //                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,

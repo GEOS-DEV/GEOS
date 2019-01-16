@@ -41,7 +41,7 @@
     <InitialConstitutiveValue object="FiniteElement_ElementRegion" propertytype="Lame" tablename="lameTable" toregion="Region"/>
   </InitialConstitutiveValues>
   <!--                        -->
-  <BoundaryConditions>
+  <FieldSpecifications>
     <BoundaryCondition component="0" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="xneg xpos"/>
     <BoundaryCondition component="1" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="yneg ypos"/>
     <BoundaryCondition component="2" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="zneg zpos"/>
@@ -50,7 +50,7 @@
     <BoundaryCondition component="2" fieldname="Velocity" fieldtype="Vector" object="Node" scale="0.0" setnames="zneg zpos"/>
     <BoundaryConditionFunction endTime="100" fieldname="Pressure" function="Pf_Table" object="Face" setnames="perf frac_A frac_B" variableTypes="Vector" variables="FaceCenter"/>
     <BoundaryCondition startTime="100" fieldname="Pressure" object="Face" scale="1" setnames="source" timetable="pressurizationRamp"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
   <!--                        -->
   <Tables>
     <Table3D name="sxxTable" x_file="../modelFiles/tables/stress_r/x.txt" y_file="../modelFiles/tables/stress_r/y.txt" z_file="../modelFiles/tables/stress_r/z.txt" voxel_file="../modelFiles/tables/stress_r/sxx.txt"/>
