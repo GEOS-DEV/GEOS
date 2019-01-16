@@ -64,7 +64,7 @@
   </Constitutive>
 
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="v0"          
                component="0" 
                fieldName="Velocity"
@@ -93,7 +93,7 @@
                component="2"  
                scale="0.0" 
                setNames="zneg zpos"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>

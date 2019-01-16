@@ -86,7 +86,7 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <Dirichlet name="permx"
                component="0"
                initialCondition="1"
@@ -143,7 +143,7 @@
                dataType="Scalar"
                scale="0.0"
                setNames="sink"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
 

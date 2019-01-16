@@ -150,7 +150,7 @@ public:
     dataRepository::GroupKey domain    = { "domain" };
     dataRepository::GroupKey elementRegionManager = { "ElementRegions" };
     dataRepository::GroupKey eventManager = { "Events" };
-    dataRepository::GroupKey fieldSpecificationManager = { "BoundaryConditions" };
+    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
     dataRepository::GroupKey functionManager = { "Functions" };
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
