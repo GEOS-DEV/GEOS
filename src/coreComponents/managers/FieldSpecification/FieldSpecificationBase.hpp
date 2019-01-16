@@ -415,6 +415,8 @@ public:
    */
   static CatalogInterface::CatalogType& GetCatalog();
 
+  static string CatalogName() { return "FieldSpecification"; }
+
   /**
    * @}
    */

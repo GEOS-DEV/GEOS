@@ -118,7 +118,7 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="boundaryPressure"
+    <FieldSpecification name="boundaryPressure"
                objectPath="faceManager"
                fieldName="facePressure"
                scale="1.1e3"

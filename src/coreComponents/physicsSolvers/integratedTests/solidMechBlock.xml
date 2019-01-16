@@ -94,28 +94,28 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <Dirichlet name="xnegconstraint" 
+    <FieldSpecification name="xnegconstraint" 
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
                component="0" 
                scale="0.0" 
                setNames="xneg xpos"/>
 
-    <Dirichlet name="yconstraint"    
+    <FieldSpecification name="yconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
                component="1" 
                scale="0.0" 
                setNames="ypos"/>
                
-    <Dirichlet name="zconstraint"    
+    <FieldSpecification name="zconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
                component="2" 
                scale="0.0" 
                setNames="zneg zpos"/>
                
-    <Dirichlet name="xposconstraint" 
+    <FieldSpecification name="xposconstraint" 
                objectPath="nodeManager" 
                fieldName="Force" 
                component="1" 
