@@ -9,7 +9,8 @@ i<?xml version="1.0" ?>
                           gravityFlag="1"
                           fluidName="water"
                           solidName="rock"
-                          discretization="singlePhaseTPFA">
+                          discretization="singlePhaseTPFA"
+                          targetRegions="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -22,8 +23,8 @@ i<?xml version="1.0" ?>
           file="../cube_hex.vtm"/>
   </Mesh>
   <Geometry>
-    <Box name="all"    type="0" xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
-    <Box name="left" type="0" xMin="-1, -1, -1" xMax=" 0.9, 11, 11"/>
+    <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
+    <Box name="left" xMin="-1, -1, -1" xMax=" 0.9, 11, 11"/>
   </Geometry>
   <Events maxTime="100">
     <!-- This event is applied every cycle, and overrides the
@@ -55,7 +56,7 @@ i<?xml version="1.0" ?>
     </FiniteVolume>
   </NumericalMethods>
   <ElementRegions>
-    <ElementRegion name="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1" cellBlocks="HEX" material="water" materialList="water rock"/>
+    <ElementRegion name="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1" cellBlocks="HEX" materialList="water rock"/>
   </ElementRegions>
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
@@ -78,7 +79,6 @@ i<?xml version="1.0" ?>
                setNames="all"
                objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/HEX"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-14"/>
     <FieldSpecification name="permy"
                component="1"
@@ -86,7 +86,6 @@ i<?xml version="1.0" ?>
                setNames="all"
                objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/HEX"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-14"/>
     <FieldSpecification name="permz"
                component="2"
@@ -94,26 +93,22 @@ i<?xml version="1.0" ?>
                setNames="all"
                objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/HEX"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-14"/>
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/HEX"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.05"/>
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1/cellBlockSubRegions/HEX"
                fieldName="pressure"
-               dataType="real64"
                scale="1e3"/>
     <FieldSpecification name="boundaryPressure"
                objectPath="faceManager"
                fieldName="facePressure"
-               dataType="Scalar"
                scale="1.1e3"
                setNames="left"/>
   </FieldSpecifications>

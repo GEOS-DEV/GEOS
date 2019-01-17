@@ -6,7 +6,8 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  courant="0.25"/>
+                                  courant="0.25"
+                                  targetRegions="Region2"/>
   </Solvers>
 
   
@@ -62,7 +63,7 @@
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
@@ -92,8 +93,7 @@
                initialCondition="1"  
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="shale_MeanStress"
-               dataType="real64" 
+               fieldName="shale_MeanStress" 
                scale="-1.0e6"
                function="spaceFunction"/>
                
@@ -101,15 +101,13 @@
                initialCondition="1"  
                setNames="xpos"
                objectPath="nodeManager"
-               fieldName="Velocity"
-               dataType="r1Tensor" 
+               fieldName="Velocity" 
                component="1"
                scale="1.0"/-->
 
     <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="0"  
                scale="0.0" 
                setNames="xneg"/>
@@ -117,7 +115,6 @@
     <FieldSpecification name="yconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="1"  
                scale="0.0" 
                setNames="yneg"/>
@@ -125,7 +122,6 @@
     <FieldSpecification name="zconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="2"  
                scale="0.0" 
                setNames="zneg"/>
@@ -150,7 +146,7 @@
   </Outputs>
 
   <Geometry>
-    <Box name="source" type="0" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
+    <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
 
 

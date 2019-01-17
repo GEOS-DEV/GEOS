@@ -11,7 +11,7 @@
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
                  verboseLevel="1"
-                 >
+                 targetRegions="Region2">
       <SystemSolverParameters name="SystemSolverParameters"
                               maxIterNewton="40"
                               verbosityFlag="2"/>
@@ -55,7 +55,7 @@
   </Mesh>
 
   <Geometry>
-        <Box name="rigEle"  type="0" xMin="18.9, -0.1,  -0.1" xMax="21,   1.1,  20.1"/>
+        <Box name="rigEle"  xMin="18.9, -0.1,  -0.1" xMax="21,   1.1,  20.1"/>
   </Geometry>
 
 
@@ -117,7 +117,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" materialList="shale water" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" materialList="shale water" />
   </ElementRegions>
 
   <Constitutive>
@@ -152,7 +152,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <FieldSpecification name="permy"
@@ -161,7 +160,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <FieldSpecification name="permz"
@@ -170,7 +168,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <FieldSpecification name="referencePorosity"
@@ -178,7 +175,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.3"/>
 
     <FieldSpecification name="initialPressure"
@@ -186,37 +182,32 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"/>
   
     <FieldSpecification name="xnegconstraint" 
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="0" 
                scale="0.0" 
                setNames="xneg"/>
 
     <FieldSpecification name="yconstraint"    
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="1" 
                scale="0.0" 
                setNames="yneg ypos"/>
                
     <FieldSpecification name="zconstraint"    
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="2" 
                scale="0.0" 
                setNames="zneg"/>
                
     <FieldSpecification name="zposconstraint" 
                objectPath="faceManager" 
-               fieldName="Traction" 
-               dataType="Vector" 
+               fieldName="Traction"  
                component="2" 
                scale="-2.125e6" 
                setNames="zpos"
@@ -224,8 +215,7 @@
 
     <FieldSpecification name="xposconstraint" 
                objectPath="faceManager" 
-               fieldName="Traction" 
-               dataType="Vector" 
+               fieldName="Traction"  
                component="0" 
                scale="-2.125e6" 
                setNames="xpos"
@@ -234,7 +224,6 @@
     <FieldSpecification name="boundaryPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"
                setNames="rigEle"/>  
 
