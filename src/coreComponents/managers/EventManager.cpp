@@ -140,8 +140,10 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   // Setup MPI communication
   integer rank = 0;
   integer comm_size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+  #ifdef GEOSX_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+  #endif
   real64 send_buffer[2];
   array1d<real64> receive_buffer(2 * comm_size);
 

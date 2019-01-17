@@ -51,7 +51,9 @@ DummySolver::~DummySolver()
 void DummySolver::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
   integer rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  #ifdef GEOSX_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  #endif
   std::srand(rank * 12345);
 }
 
