@@ -76,11 +76,12 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
 
   this->RegisterViewWrapper( viewKeyStruct::capPressureNameString,  &m_capPressureName,  false )->
-    setApplyDefaultValue(zeroCapillaryPressureString)->
+    setApplyDefaultValue(zeroCapillaryPressureName)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the capillary pressure constitutive model to use");
 
   this->RegisterViewWrapper( viewKeyStruct::capPressureIndexString, &m_capPressureIndex, false );
+
 }
 
 localIndex CompositionalMultiphaseFlow::numFluidComponents() const
@@ -132,10 +133,8 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseViscosityString);
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString);
     faceManager->RegisterViewWrapper<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString);
-    if (m_capPressureFlag)
-    {
-      faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString);	
-    }
+    faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString);
+
   }
 }
 
@@ -156,15 +155,11 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
   m_relPermIndex = relPerm->getIndexInParent();
 
   CapillaryPressureBase const * capPressure = cm->GetConstitituveRelation<CapillaryPressureBase>( m_capPressureName );
-  if ( m_capPressureName.compare( zeroCapillaryPressureString ) )
+  if ( m_capPressureName.compare( zeroCapillaryPressureName ) )
   {
     GEOS_ERROR_IF( capPressure == nullptr, "Capillary pressure model " + m_capPressureName + " not found" );
     m_capPressureIndex = capPressure->getIndexInParent();
     m_capPressureFlag = 1;
-  }
-  else
-  {
-    m_capPressureFlag = 0;
   }
     
   // Consistency check between the models
@@ -231,13 +226,13 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
     faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseViscosityString).resizeDimension<1>(NP);
     faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString).resizeDimension<1>(NP);
     faceManager->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);;
+
     if (m_capPressureFlag)
     {
       faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString).resizeDimension<1>(NP);
     }
   }
 }
-
 
 MultiFluidBase * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup * dataGroup ) const
 {
@@ -1419,7 +1414,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
           capPressure = phaseCapPressure[er][esr][m_capPressureIndex][ei][0][ip];
           for (localIndex jp = 0; jp < NP; ++jp)
           {
-            real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][m_relPermIndex][ei][0][ip][jp];
+            real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][m_capPressureIndex][ei][0][ip][jp];
             dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
 
             for (localIndex jc = 0; jc < NC; ++jc)
@@ -1428,14 +1423,14 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
             }
           }
 	}
-	
+
         presGrad += w * (pres[er][esr][ei] + dPres[er][esr][ei] - capPressure);
         dPresGrad_dP[i] += w * (1 - dCapPressure_dP);
         for (localIndex jc = 0; jc < NC; ++jc)
         {
 	  dPresGrad_dC[i][jc] += - w * dCapPressure_dC[jc];
 	}
-			      
+
         if (m_gravityFlag)
         {
           real64 const gravD = w * gravDepth[er][esr][ei];
@@ -1475,6 +1470,11 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       for (localIndex ke = 0; ke < stencilSize; ++ke)
       {
         dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
+        for (localIndex jc = 0; jc < NC; ++jc)
+        {
+          dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
+        }
+
       }
 
       // gravitational head depends only on the two cells connected (same as mean density)

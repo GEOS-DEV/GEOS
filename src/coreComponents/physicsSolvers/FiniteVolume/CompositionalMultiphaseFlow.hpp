@@ -375,7 +375,7 @@ public:
   } groupKeysCompMultiphaseFlow;
 
 protected:
-  static constexpr auto zeroCapillaryPressureString = "zeroCapPressure";
+  static constexpr auto zeroCapillaryPressureName = "zeroCapPressure";
   
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
