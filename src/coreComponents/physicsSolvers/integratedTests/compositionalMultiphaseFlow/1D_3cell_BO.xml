@@ -14,7 +14,8 @@
                                  solidName="rock"
                                  relPermName="relperm"
                                  temperature="300"
-                                 useMass="0">
+                                 useMass="0"
+                                 targetRegions="Region2">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-10"
@@ -40,8 +41,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
+    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
+    <Box name="sink"   xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -66,7 +67,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" material="fluid1" materialList="fluid1 rock relperm" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="fluid1 rock relperm" />
   </ElementRegions>
 
   <Constitutive>
@@ -98,7 +99,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <FieldSpecification name="permy"
@@ -107,7 +107,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <FieldSpecification name="permz"
@@ -116,7 +115,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
@@ -124,7 +122,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.05"/>
 
     <!-- Initial pressure: ~5 bar -->
@@ -134,7 +131,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="5e6"/>
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
@@ -145,7 +141,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
-               dataType="real64"
                scale="0.6"/>
 
     <FieldSpecification name="initialComposition_gas"
@@ -154,7 +149,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               dataType="real64"
                scale="0.3"/>
 
     <FieldSpecification name="initialComposition_water"
@@ -163,7 +157,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               dataType="real64"
                scale="0.1"/>
 
     <!-- Injection pressure: ~10 bar -->
@@ -171,7 +164,6 @@
     <FieldSpecification name="sourceTermPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="Scalar"
                scale="1e7"
                setNames="source"/>
 
@@ -182,7 +174,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
-               dataType="real64"
                scale="0.1"/>
 
     <FieldSpecification name="sourceTermComposition_gas"
@@ -190,7 +181,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               dataType="real64"
                scale="0.1"/>
 
     <FieldSpecification name="sourceTermComposition_water"
@@ -198,7 +188,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               dataType="real64"
                scale="0.8"/>
 
     <!-- Production pressure: ~2 bar, -->
@@ -206,7 +195,6 @@
     <FieldSpecification name="sinkTerm"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="Scalar"
                scale="2e5"
                setNames="sink"/>
 
@@ -217,7 +205,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
-               dataType="real64"
                scale="0.6"/>
 
     <FieldSpecification name="sinkTermComposition_gas"
@@ -225,7 +212,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               dataType="real64"
                scale="0.3"/>
 
     <FieldSpecification name="sinkTermComposition_water"
@@ -233,7 +219,6 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               dataType="real64"
                scale="0.1"/>
 
   </FieldSpecifications>

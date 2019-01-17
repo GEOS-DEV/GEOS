@@ -11,7 +11,8 @@
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
-                     solidName="rock">
+                     solidName="rock"
+                     targetRegions="Region2">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-12"
                               newtonTol="1.0e-8"
@@ -32,10 +33,10 @@
   </Mesh>
 
   <Geometry>
-    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 10.01, 1.01"/>
-    <Box name="right"  type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
-    <Box name="top"    type="0" xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="left"   xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 10.01, 1.01"/>
+    <Box name="right"  xMin=" 8.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
+    <Box name="top"    xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
   </Geometry>
 
 
@@ -95,7 +96,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <FieldSpecification name="permy"
@@ -104,7 +104,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <FieldSpecification name="permz"
@@ -113,7 +112,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
@@ -121,7 +119,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
@@ -129,13 +126,11 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="0.0"/>
 
     <FieldSpecification name="boundaryPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="Scalar"
                functionName="boundaryPressureFunc"
                scale="1.0e7"
                setNames="left right"/>

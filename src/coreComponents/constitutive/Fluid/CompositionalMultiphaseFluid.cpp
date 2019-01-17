@@ -53,6 +53,10 @@ std::unordered_map<string, EOS_TYPE> const PVTPackage_eosDict =
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
+  getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
+
   RegisterViewWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of equation of state types for each phase");
