@@ -142,6 +142,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
         // Add subgroups
         if (group->numSubGroups() > 0)
         {
+          // Children are defined in a choice node
           xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.child("xsd:choice");
           if( targetChoiceNode.empty() )
           {
@@ -152,11 +153,11 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
             {
               SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
             });
-
-            // Add schema deviations
-            group->SetSchemaDeviations(schemaRoot, targetChoiceNode);
           }
         }
+
+        // Add schema deviations
+        group->SetSchemaDeviations(schemaRoot, targetTypeDefNode);
 
         // Add attributes
         for ( auto wrapperPair : group->wrappers() )
