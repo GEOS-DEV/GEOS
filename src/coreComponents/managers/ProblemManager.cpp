@@ -524,25 +524,31 @@ void ProblemManager::GenerateDocumentation()
 void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
                                          xmlWrapper::xmlNode schemaParent)
 {
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  if( targetChoiceNode.empty() )
+  {
+    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+  }
+
   // These objects are handled differently during the xml read step,
   // so we need to explicitly add them into the schema structure
   DomainPartition * domain  = getDomainPartition();
 
   m_functionManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode);
 
   BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
   bcManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode);
 
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode);
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshLevels(domain);
   ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
   elementManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, schemaParent);
+  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode);
 }
 
 
