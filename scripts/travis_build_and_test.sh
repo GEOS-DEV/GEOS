@@ -37,7 +37,7 @@ echo $(ls)
 if [[ "$DO_BUILD" == "yes" ]] ; then
     or_die cmake \
            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
-           -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_EXEC=mpirun \
+           -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPIEXEC_EXECUTABLE=${MPIEXEC} \
            -DGEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release \
            -DENABLE_SPHINX=OFF \
            -DENABLE_PVTPackage=ON \
