@@ -89,12 +89,6 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
-  int nbRanks = 1;
-  int thisRank;
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_size( MPI_COMM_GEOSX, &nbRanks );
-  MPI_Comm_rank( MPI_COMM_GEOSX, &thisRank );
-#endif
   ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
