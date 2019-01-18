@@ -615,7 +615,18 @@ void ProblemManager::PostProcessInput()
   }
   if( repartition )
   {
-    partition.setPartitions( xpar,  ypar, zpar );
+    if( xpar == 1 && ypar == 1 && zpar == 1)
+    {
+#ifdef GEOSX_USE_MPI
+      int nbRanks;
+      MPI_Comm_size( MPI_COMM_GEOSX, &nbRanks );
+      partition.setPartitions( 1,  1, nbRanks );
+#endif
+    }
+    else
+    {
+      partition.setPartitions( xpar, ypar, zpar );
+    }
   }
 }
 
