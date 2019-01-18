@@ -98,6 +98,8 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlockManager );
 
+  void GenerateFractureMesh( FaceManager const * const faceManager );
+
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
@@ -182,7 +184,7 @@ public:
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      ManagedGroup * cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
       for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
       {
         CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -198,7 +200,7 @@ public:
 
     for( auto const & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
       for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
       {
         CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);

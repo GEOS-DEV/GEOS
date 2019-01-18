@@ -304,7 +304,7 @@ void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups(
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
       arrayView2d<localIndex> const & elemsToNodes =
-        cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+        cellBlock->nodeList();
 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
@@ -466,7 +466,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -525,7 +525,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -1076,7 +1076,7 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
 
       CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(esr);
       localIndex const numElems = cellBlock->size();
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);

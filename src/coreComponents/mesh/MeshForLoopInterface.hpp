@@ -57,7 +57,7 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
     for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -76,7 +76,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);

@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CellBlockSubRegion.cpp
- *
- *  Created on: May 11, 2017
- *      Author: rrsettgast
- */
 
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -67,6 +61,16 @@ void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
+}
+
+void CellBlockSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
+                                                        string const & setName )
+{
+  set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
+  m_toFacesRelation.resize(0,2);
+  this->resize( targetSet.size() );
+
+
 }
 
 void CellBlockSubRegion::MaterialPassThru( string const & matName,

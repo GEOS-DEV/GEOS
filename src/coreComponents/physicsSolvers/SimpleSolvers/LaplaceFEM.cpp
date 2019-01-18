@@ -322,7 +322,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
       {
         CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();
-        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
@@ -380,7 +380,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
+    for( auto & cellBlock : elementRegion->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions)->GetSubGroups() )
     {
       CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second );
 
@@ -388,7 +388,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
       array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      array2d<localIndex> const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
+      array2d<localIndex> const & elemsToNodes = cellBlockSubRegion->nodeList();
       const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
       Epetra_LongLongSerialDenseVector  element_index   (numNodesPerElement);
