@@ -32,16 +32,10 @@ using namespace dataRepository;
 
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_CellBlockViewKeys(),
-  m_numNodesPerElement(),
-  m_numEdgesPerElement(),
-  m_numFacesPerElement(),
+  CellBase( name, parent ),
   m_toNodesRelation(),
   m_toEdgesRelation(),
-  m_toFacesRelation(),
-  m_elementCenter(),
-  m_elementVolume()
+  m_toFacesRelation()
 {
   RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
   RegisterViewWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
@@ -318,74 +312,22 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 
 }
 
-R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
+R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
+                                                    const NodeManager& nodeManager,
+                                                    const bool ) const
 {
 
   r1_array const & X = nodeManager.referencePosition();
-  R1Tensor elementCenter(0.0);
+  m_elementCenter[k] = 0;
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
   {
     const localIndex b = m_toNodesRelation[k][a];
-    elementCenter += X[b];
-    if(!useReferencePos)
-      elementCenter += X[b];
+    m_elementCenter[k] += X[b];
   }
-  elementCenter /= numNodesPerElement();
+  m_elementCenter[k] /= numNodesPerElement();
 
-  return elementCenter;
+  return m_elementCenter[k];
 }
-
-
-void CellBlock::CalculateCellVolumes( array1d<localIndex> const & indices ) const
-{
-  R1Tensor Xlocal[100];
-
-  array1d<R1Tensor> const &
-  X = m_toNodesRelation.RelatedObject()->
-      getReference<array1d<R1Tensor> >(NodeManager::viewKeyStruct::referencePositionString);
-
-
-  if( indices.empty() )
-  {
-    for( localIndex k=0 ; k<size() ; ++k  )
-    {
-      R1Tensor & center = m_elementCenter[k];
-      center = 0.0;
-
-      // TODO different center options
-      for (localIndex a = 0; a < m_numNodesPerElement; ++a)
-      {
-        Xlocal[a] = X[m_toNodesRelation[k][a]];
-        center += Xlocal[a];
-      }
-      center /= m_numNodesPerElement;
-
-      if( m_numNodesPerElement == 8 )
-      {
-        m_elementVolume[k] = computationalGeometry::HexVolume(Xlocal);
-      }
-      else if( m_numNodesPerElement == 4)
-      {
-        m_elementVolume[k] = computationalGeometry::TetVolume(Xlocal);
-      }
-      else if( m_numNodesPerElement == 6)
-      {
-        m_elementVolume[k] = computationalGeometry::WedgeVolume(Xlocal);
-      }
-      else if ( m_numNodesPerElement == 5)
-      {
-        m_elementVolume[k] = computationalGeometry::PyramidVolume(Xlocal);
-      }
-      else
-      {
-          GEOS_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
-      }
-    }
-  }
-
-}
-
-
 
 void CellBlock::SetElementType( string const & elementType)
 {

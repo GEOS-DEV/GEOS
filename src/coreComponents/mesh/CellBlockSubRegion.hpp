@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CellBlockSubRegion.hpp
- *
- *  Created on: May 11, 2017
- *      Author: rrsettgast
- */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_CELLBLOCKSUBREGION_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_CELLBLOCKSUBREGION_HPP_
@@ -38,6 +32,9 @@ public:
   virtual ~CellBlockSubRegion() override;
 
   void CopyFromCellBlock( CellBlock const * source );
+
+  void ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
+                                      string const & setName );
 
   template< typename LAMBDA >
   void forMaterials( LAMBDA lambda )

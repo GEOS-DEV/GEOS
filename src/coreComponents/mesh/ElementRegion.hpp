@@ -39,8 +39,6 @@ namespace dataRepository
 {
 namespace keys
 {
-string const cellBlockSubRegions = "cellBlockSubRegions";
-string const cellBlockSubRegionNames = "cellBlocks";
 }
 }
 
@@ -81,44 +79,46 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlocks );
 
+  void GenerateFractureMesh( FaceManager const * const faceManager );
+
   subGroupMap & GetSubRegions()
   {
-    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups();
   }
 
   subGroupMap const & GetSubRegions() const
   {
-    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups();
   }
 
   CellBlockSubRegion const * GetSubRegion( string const & regionName ) const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
   }
   CellBlockSubRegion * GetSubRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
   }
 
   CellBlockSubRegion const * GetSubRegion( localIndex const & index ) const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
   }
   CellBlockSubRegion * GetSubRegion( localIndex const & index )
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
   }
 
   localIndex numSubRegions() const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups().size();
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups().size();
   }
 
 
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {
-    ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    ManagedGroup * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
 
     cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion * subRegion ) -> void
       {
@@ -130,7 +130,7 @@ public:
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda ) const
   {
-    ManagedGroup const * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    ManagedGroup const * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
 
     cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion const * subRegion ) -> void
       {
@@ -162,7 +162,9 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
-    static constexpr auto numericalMethodString = "numericalMethod";
+    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr auto cellBlockSubRegions = "cellBlockSubRegions";
+    static constexpr auto cellBlockSubRegionNames = "cellBlocks";
 
   } m_regionViewKeys;
 
@@ -175,6 +177,9 @@ protected:
 private:
 
   ElementRegion& operator=(const ElementRegion& rhs);
+
+  string_array m_cellBlockNames;
+  string_array m_fractureSetNames;
   string_array m_materialList;
   string m_numericalMethod;
 

@@ -27,17 +27,17 @@
 
 #include "CellBlockManager.hpp"
 #include "CellBlockSubRegion.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "finiteElement/basis/BasisBase.hpp"
-#include "finiteElement/quadrature/QuadratureBase.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/DomainPartition.hpp"
+//#include "constitutive/ConstitutiveManager.hpp"
+//#include "finiteElement/FiniteElementDiscretizationManager.hpp"
+//#include "finiteElement/basis/BasisBase.hpp"
+//#include "finiteElement/quadrature/QuadratureBase.hpp"
+//#include "managers/NumericalMethodsManager.hpp"
+//#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
-using namespace constitutive;
+//using namespace constitutive;
 
 
 ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
@@ -48,20 +48,21 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 {
 //  m_toNodesRelation.resize2(0,8);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
+
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  this->RegisterGroup(keys::cellBlockSubRegions);
+  this->RegisterGroup(viewKeyStruct::cellBlockSubRegions);
 
   RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of materials present in this region");
 
-  RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->
-    setInputFlag(InputFlags::REQUIRED);
+  RegisterViewWrapper( viewKeyStruct::cellBlockSubRegionNames, &m_cellBlockNames, false )->
+    setInputFlag(InputFlags::OPTIONAL);
 
-  RegisterViewWrapper( viewKeyStruct::numericalMethodString, &m_numericalMethod, 0 )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Name of numerical method applied to the region");
+  RegisterViewWrapper( viewKeyStruct::fractureSetString, &m_fractureSetNames, false )->
+    setInputFlag(InputFlags::OPTIONAL);
+
 }
 
 
@@ -70,8 +71,6 @@ ElementRegion::~ElementRegion()
 
 void ElementRegion::PostProcessInput()
 {
-//  integer & numNodesPerElem = *(getData<integer>(keys::numNodesPerElement));
-//  numNodesPerElem = 8;
 }
 
 /**
@@ -180,17 +179,28 @@ void ElementRegion::PostProcessInput()
 
 void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
 {
-  ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+  ManagedGroup * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
 
-  for( string const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
+  for( string const & cellBlockName : this->m_cellBlockNames )
   {
     CellBlockSubRegion * subRegion = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
     CellBlock const * source = cellBlocks->GetGroup<CellBlock>( subRegion->getName() );
     GEOS_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
     subRegion->CopyFromCellBlock( source );
   }
-
 }
+
+ void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )
+ {
+   ManagedGroup * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
+   for( string const & setName : this->m_fractureSetNames )
+   {
+     CellBlockSubRegion * subRegion = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(setName);
+     set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
+     subRegion->resize( targetSet.size() );
+
+   }
+ }
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )

@@ -120,6 +120,7 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
 
     for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
     {
+      std::cout<<"er, esr = "<<er<<", "<<esr<<std::endl;
       real64 const presNew = pres[ei] + dPres[ei];
       fluid->PointUpdate( presNew, ei, 0 ); // fluid
       constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // solid
