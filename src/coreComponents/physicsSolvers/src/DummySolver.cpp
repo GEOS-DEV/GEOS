@@ -51,9 +51,9 @@ DummySolver::~DummySolver()
 void DummySolver::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
   integer rank = 0;
-  #if USE_MPI
+#ifdef GEOSX_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  #endif
+#endif
   std::srand(rank * 12345);
 }
 
@@ -71,9 +71,9 @@ real64 DummySolver::SolverStep( real64 const& time_n,
 real64 DummySolver::GetTimestepRequest(real64 const time)
 {
   integer rank = 0;
-  #if USE_MPI
+#ifdef GEOSX_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  #endif
+#endif
 
   real64 const rand_scale = this->getReference<real64>(dummyViewKeys.rand_scale);
   real64 dt_request = std::rand() * rand_scale;
