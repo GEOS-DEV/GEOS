@@ -44,6 +44,9 @@ namespace constitutive
 BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
+  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
+
   RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of surface densities for each phase");
@@ -81,10 +84,10 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
 
 void BlackOilFluid::PostProcessInput()
 {
-  MultiFluidPVTPackageWrapper::PostProcessInput();
-
   // TODO maybe use different names?
   m_componentNames = m_phaseNames;
+
+  MultiFluidPVTPackageWrapper::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 

@@ -55,8 +55,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="boundaryBot" type="0" xMin="-0.1, -0.01, -0.01" xMax="2.1, 1.01, 1.01"/>
-    <Box name="boundaryTop" type="0" xMin="39.9, -0.01, -0.01" xMax="42.1, 1.01, 1.01"/>
+    <Box name="boundaryBot" xMin="-0.1, -0.01, -0.01" xMax="2.1, 1.01, 1.01"/>
+    <Box name="boundaryTop" xMin="39.9, -0.01, -0.01" xMax="42.1, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -106,7 +106,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" materialList="shale water" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" materialList="shale water" />
   </ElementRegions>
 
   <Constitutive>
@@ -141,7 +141,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <FieldSpecification name="permy"
@@ -150,7 +149,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <FieldSpecification name="permz"
@@ -159,7 +157,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
     <FieldSpecification name="referencePorosity"
@@ -167,7 +164,6 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.3"/>
 
     <FieldSpecification name="initialPressure"
@@ -175,37 +171,32 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"/>
   
     <FieldSpecification name="xnegconstraint" 
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="0" 
                scale="0.0" 
                setNames="xneg"/>
 
     <FieldSpecification name="yconstraint"    
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="1" 
                scale="0.0" 
                setNames="yneg ypos"/>
                
     <FieldSpecification name="zconstraint"    
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="2" 
                scale="0.0" 
                setNames="zneg zpos"/>
                
     <FieldSpecification name="xposconstraint" 
                objectPath="faceManager" 
-               fieldName="Traction" 
-               dataType="Vector" 
+               fieldName="Traction"  
                component="0" 
                scale="-2.125e6" 
                setNames="xpos"
@@ -214,7 +205,6 @@
     <FieldSpecification name="boundaryPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"
                setNames="boundaryBot boundaryTop"/>  
 
