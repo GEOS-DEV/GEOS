@@ -1788,7 +1788,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       {
         CellBlockSubRegion const * cellBlock = region->GetSubRegion(esr);
 
-        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
 
         elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
 

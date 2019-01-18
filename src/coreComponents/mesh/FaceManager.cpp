@@ -365,7 +365,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   {
     ElementRegion const * const elemRegion     = elemManager->GetRegion( elemRegionList[kf][0] );
     CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( elemSubRegionList[kf][0] );
-    R1Tensor const elementCenter = subRegion->GetElementCenter( elemList[kf][0], *nodeManager );
+    R1Tensor const elementCenter = subRegion->calculateElementCenter( elemList[kf][0], *nodeManager );
     
     const localIndex numFaceNodes = nodeList()[kf].size();
     arrayView1d<localIndex> & faceNodes = nodeList()[kf];

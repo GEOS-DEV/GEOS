@@ -742,6 +742,8 @@ void ProblemManager::GenerateMesh()
 
       faceManager->BuildFaces( nodeManager, elemManager );
 
+      elemManager->GenerateFractureMesh( faceManager );
+
       edgeManager->BuildEdges(faceManager, nodeManager );
 
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
@@ -755,7 +757,8 @@ void ProblemManager::GenerateMesh()
       {
         subRegion->nodeList().SetRelatedObject(nodeManager);
         subRegion->faceList().SetRelatedObject(faceManager);
-        subRegion->CalculateCellVolumes( array1d<localIndex>() );
+        subRegion->CalculateCellVolumes( array1d<localIndex>(),
+                                         nodeManager->referencePosition() );
       });
 
     }

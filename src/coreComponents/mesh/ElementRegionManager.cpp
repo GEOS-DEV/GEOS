@@ -150,6 +150,13 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
   });
 }
 
+void ElementRegionManager::GenerateFractureMesh( FaceManager const * const faceManager )
+{
+  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  {
+    elemRegion->GenerateFractureMesh( faceManager );
+  });
+}
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const

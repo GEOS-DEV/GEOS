@@ -149,7 +149,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     {
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
 
-      FixedOneToManyRelation const & elemsToNodes = subRegion->getReference<FixedOneToManyRelation>(subRegion->viewKeys().nodeList);
+      FixedOneToManyRelation const & elemsToNodes = subRegion->nodeList();
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
