@@ -104,7 +104,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   // Vertices are written first
   r1_array const & X = nodeManager->referencePosition();
   nodeManager->resize(m_pamelaMesh->get_PointCollection()->size_all());
-  localIndex nbVertices = m_pamelaMesh->get_PointCollection()->size_all();
   for( auto verticesIterator : *m_pamelaMesh->get_PointCollection()) {
     localIndex vertexLocalIndex = verticesIterator->get_localIndex();
     globalIndex vertexGlobalIndex = verticesIterator->get_globalIndex();
