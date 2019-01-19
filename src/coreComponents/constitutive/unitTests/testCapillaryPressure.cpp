@@ -416,8 +416,10 @@ TEST(testCapPressure, numericalDerivatives_vanGenuchtenCapPressureThreePhase)
   real64 const start_sat = 0.2;
   real64 const end_sat   = 0.8;
   real64 const dS        = 1e-4;
-  array1d<real64> sat(2);
-  sat[0] = start_sat; sat[1] = 0.5*(1-sat[0]); sat[2] = 1.0-sat[0]-sat[1]; 
+  array1d<real64> sat(3);
+  sat[0] = start_sat;
+  sat[1] = 0.5*(1-sat[0]);
+  sat[2] = 1.0-sat[0]-sat[1];
   while (sat[0] <= end_sat)
   {
     testNumericalDerivatives( fluid, sat, eps, tol );
