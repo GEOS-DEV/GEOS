@@ -80,8 +80,10 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the capillary pressure constitutive model to use");
 
-  this->RegisterViewWrapper( viewKeyStruct::capPressureIndexString, &m_capPressureIndex, false );
-
+  if ( m_capPressureName.compare( zeroCapillaryPressureName ) )
+  {
+    this->RegisterViewWrapper( viewKeyStruct::capPressureIndexString, &m_capPressureIndex, false );
+  }
 }
 
 localIndex CompositionalMultiphaseFlow::numFluidComponents() const
@@ -133,8 +135,11 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseViscosityString);
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString);
     faceManager->RegisterViewWrapper<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString);
-    faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString);
 
+    if ( m_capPressureName.compare( zeroCapillaryPressureName ) )
+    {
+      faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString);
+    }
   }
 }
 
@@ -660,7 +665,7 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   // 5. Initialize rel perm state
   UpdateRelPermModelAll( domain );
 
-  // 6. Initialize rel perm state
+  // 6. Initialize cap pressure state
   UpdateCapPressureModelAll( domain );
 
 }
