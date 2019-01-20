@@ -12,6 +12,7 @@ set( constitutive_headers
      Solid/PoreVolumeCompressibleSolid.hpp
      RelPerm/RelativePermeabilityBase.hpp
      RelPerm/BrooksCoreyRelativePermeability.hpp
+     RelPerm/ThreePhaseBakerRelativePermeability.hpp
      CapillaryPressure/CapillaryPressureBase.hpp
      CapillaryPressure/BrooksCoreyCapillaryPressure.hpp
      CapillaryPressure/VanGenuchtenCapillaryPressure.hpp
@@ -29,6 +30,7 @@ set( constitutive_sources
      Solid/PoreVolumeCompressibleSolid.cpp
      RelPerm/RelativePermeabilityBase.cpp
      RelPerm/BrooksCoreyRelativePermeability.cpp
+     RelPerm/ThreePhaseBakerRelativePermeability.cpp
      CapillaryPressure/CapillaryPressureBase.cpp
      CapillaryPressure/BrooksCoreyCapillaryPressure.cpp
      CapillaryPressure/VanGenuchtenCapillaryPressure.cpp
