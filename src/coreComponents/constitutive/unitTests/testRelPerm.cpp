@@ -44,6 +44,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp"
+#include "constitutive/RelPerm/ThreePhaseBakerRelativePermeability.hpp"
 
 using namespace geosx;
 using namespace geosx::constitutive;
@@ -230,6 +231,41 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
   return relPerm;
 }
 
+RelativePermeabilityBase * makeThreePhaseBakerRelPerm( string const & name, ManagedGroup * parent )
+{
+  auto relPerm = parent->RegisterGroup<ThreePhaseBakerRelativePermeability>( name );
+
+  // TODO we should actually create a fake XML node with data, but this seemed easier...
+
+  auto & phaseNames = relPerm->getReference<string_array>( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
+
+  auto & phaseMinSat = relPerm->getReference<array1d<real64>>( ThreePhaseBakerRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString );
+  phaseMinSat.resize( 3 );
+  phaseMinSat[0] = 0.03; phaseMinSat[1] = 0.01; phaseMinSat[2] = 0.025;
+
+  auto & waterOilRelPermExp = relPerm->getReference<array1d<real64>>( ThreePhaseBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentString );
+  waterOilRelPermExp.resize( 2 );
+  waterOilRelPermExp[0] = 2.4; waterOilRelPermExp[1] = 2.5;
+
+  auto & waterOilRelPermMaxVal = relPerm->getReference<array1d<real64>>( ThreePhaseBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString );
+  waterOilRelPermMaxVal.resize( 2 );
+  waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.95;
+
+  auto & gasOilRelPermExp = relPerm->getReference<array1d<real64>>( ThreePhaseBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentString );
+  gasOilRelPermExp.resize( 2 );
+  gasOilRelPermExp[0] = 1.9; gasOilRelPermExp[1] = 3.95;
+
+  auto & gasOilRelPermMaxVal = relPerm->getReference<array1d<real64>>( ThreePhaseBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString );
+  gasOilRelPermMaxVal.resize( 2 );
+  gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
+
+  relPerm->PostProcessInputRecursive();
+  return relPerm;
+}
+
+
 TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
 {
   auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
@@ -249,6 +285,36 @@ TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
 
   testNumericalDerivatives( fluid, sat, eps, tol );
 }
+
+TEST(testRelPerm, numericalDerivatives_threePhaseBakerRelPerm)
+{
+  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  parent->resize( 1 );
+
+  RelativePermeabilityBase * fluid = makeThreePhaseBakerRelPerm( "relPerm", parent.get() );
+
+  parent->Initialize( parent.get() );
+  parent->InitializePostInitialConditions( parent.get() );
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const tol = 1e-4;
+
+  // TODO test over a range of values
+  real64 const start_sat = 0.3;
+  real64 const end_sat   = 0.7;
+  real64 const dS = 1e-4;
+  real64 const alpha = 0.4;
+  array1d<real64> sat(3);
+  sat[0] = start_sat; sat[1] = alpha*(1.0-sat[0]); sat[2] = (1-alpha)*(1.0-sat[0]);
+  while (sat[0] <= end_sat)
+  {
+    testNumericalDerivatives( fluid, sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = 0.5 *(1-sat[0]);
+    sat[2] = 0.5 *(1-sat[0]);
+  }
+}
+
 
 int main(int argc, char** argv)
 {
