@@ -45,8 +45,7 @@ namespace constitutive
 namespace
 {
 
-BlackOilFluid::FluidType stringToFluidType(string
-const & str)
+BlackOilFluid::FluidType stringToFluidType(string const & str)
 {
   if (str == "LiveOil")
   {
