@@ -47,6 +47,13 @@ class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
+  enum class FluidType
+  {
+    DeadOil,
+    LiveOil
+  };
+
+
   BlackOilFluid( std::string const & name, ManagedGroup * const parent );
 
   virtual ~BlackOilFluid() override;
@@ -63,11 +70,13 @@ public:
   {
     static constexpr auto surfaceDensitiesString = "surfaceDensities";
     static constexpr auto tableFilesString = "tableFiles";
+    static constexpr auto fluidTypeString = "fluidType";
     
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey surfaceDensities = { surfaceDensitiesString };
     ViewKey tableFiles       = { tableFilesString };
+    ViewKey fluidType        = { fluidTypeString };
 
   } viewKeysBlackOilFluid;
 
@@ -83,6 +92,12 @@ private:
 
   // Black-oil table filenames
   string_array m_tableFiles;
+
+  // Input string for type of black-oil fluid (live/dead)
+  string m_fluidTypeString;
+
+  // Type of black-oil fluid (live/dead)
+  FluidType m_fluidType;
 
 };
 
