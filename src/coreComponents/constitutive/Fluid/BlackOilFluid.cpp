@@ -28,6 +28,7 @@
 
 // PVTPackage includes
 #include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
+#include "MultiphaseSystem/DeadOilMultiphaseSystem.hpp"
 
 
 using namespace PVTPackage;
@@ -40,6 +41,29 @@ using namespace cxx_utilities;
 
 namespace constitutive
 {
+
+namespace
+{
+
+BlackOilFluid::FluidType stringToFluidType(string
+const & str)
+{
+  if (str == "LiveOil")
+  {
+    return BlackOilFluid::FluidType::LiveOil;
+  }
+  else if (str == "DeadOil")
+  {
+    return BlackOilFluid::FluidType::DeadOil;
+  }
+  else
+  {
+    GEOS_ERROR("Unrecognized black-oil fluid type: " << str);
+  }
+  return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
+}
+
+}
 
 BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
@@ -54,6 +78,10 @@ BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const par
   RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of filenames with input PVT tables");
+
+  RegisterViewWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Type of black-oil fluid (LiveOil/DeadOil)");
 }
 
 BlackOilFluid::~BlackOilFluid()
@@ -76,6 +104,9 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
 
   clone->m_surfaceDensities = this->m_surfaceDensities;
   clone->m_tableFiles       = this->m_tableFiles;
+
+  clone->m_fluidTypeString = this->m_fluidTypeString;
+  clone->m_fluidType       = this->m_fluidType;
 
   clone->createFluid();
 
@@ -104,6 +135,8 @@ void BlackOilFluid::PostProcessInput()
   BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString )
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
+
+  m_fluidType = stringToFluidType(m_fluidTypeString);
 }
 
 void BlackOilFluid::createFluid()
@@ -136,7 +169,15 @@ void BlackOilFluid::createFluid()
     }
   }
 
-  m_fluid = new BlackOilMultiphaseSystem( phases, tableFiles, densities, molarWeights );
+  switch (m_fluidType)
+  {
+    case FluidType::LiveOil:
+      m_fluid = new BlackOilMultiphaseSystem(phases, tableFiles, densities, molarWeights);
+      break;
+    case FluidType::DeadOil:
+      m_fluid = new DeadOilMultiphaseSystem(phases, tableFiles, densities, molarWeights);
+      break;
+  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, ManagedGroup * const )
