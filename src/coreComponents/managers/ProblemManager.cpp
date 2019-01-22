@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ProblemManager.cpp
- *
- *  Created on: Jul 21, 2016
- *      Author: rrsettgast
- */
 
 #include "ProblemManager.hpp"
 
@@ -40,7 +34,6 @@
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -49,6 +42,7 @@
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
 #include "common/TimingMacros.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {
@@ -102,7 +96,6 @@ ProblemManager::ProblemManager( const std::string& name,
   m_functionManager(nullptr)
 {
   // Groups that do not read from the xml
-  // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
   RegisterGroup<DomainPartition>(groupKeys.domain);
   ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
@@ -110,7 +103,11 @@ ProblemManager::ProblemManager( const std::string& name,
   setInputFlags(InputFlags::REQUIRED);
 
   // Mandatory groups that read from the xml
-  //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
+  RegisterGroup<FieldSpecificationManager>( groupKeys.fieldSpecificationManager.Key(),
+                                            FieldSpecificationManager::get(),
+                                            false );//->setRestartFlags(RestartFlags::NO_WRITE);
+
+
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
@@ -122,6 +119,10 @@ ProblemManager::ProblemManager( const std::string& name,
 
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();
+  // Mandatory groups that read from the xml
+  RegisterGroup<NewFunctionManager>( groupKeys.functionManager.Key(),
+                                     m_functionManager,
+                                     false );
 
 
   commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
@@ -601,22 +602,6 @@ void ProblemManager::ParseInputFile()
 
   ProcessInputFileRecursive( xmlProblemNode );
 
-
-  // The function manager is handled separately
-  {
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
-    m_functionManager->ProcessInputFileRecursive( topLevelNode );
-    m_functionManager->PostProcessInputRecursive(  );
-  }
-
-  {
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
-    BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
-    bcManager->ProcessInputFileRecursive( topLevelNode );
-    bcManager->PostProcessInputRecursive();
-
-  }
-
   // The objects in domain are handled separately for now
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
@@ -866,7 +851,7 @@ void ProblemManager::ApplyInitialConditions()
   GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
 
-  BoundaryConditionManager const * boundaryConditionManager = BoundaryConditionManager::get();
+  FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
 
   boundaryConditionManager->ApplyInitialConditions( domain );
 
@@ -876,12 +861,8 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
 #ifdef GEOSX_USE_ATK
   this->prepareToRead();
-  m_functionManager->prepareToRead();
-  BoundaryConditionManager::get()->prepareToRead();
   SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
   this->finishReading();
-  m_functionManager->finishReading();
-  BoundaryConditionManager::get()->finishReading();
 #endif
 }
 

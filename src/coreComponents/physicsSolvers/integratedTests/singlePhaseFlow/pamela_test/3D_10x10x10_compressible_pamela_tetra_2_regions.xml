@@ -87,8 +87,8 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
-    <Dirichlet name="TopPermx"
+  <FieldSpecifications>
+    <FieldSpecification name="TopPermx"
                component="0"
                initialCondition="1"  
                setNames="all"
@@ -97,7 +97,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="TopPermy"
+    <FieldSpecification name="TopPermy"
                component="1"
                initialCondition="1"
                setNames="all"
@@ -106,7 +106,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="TopPermz"
+    <FieldSpecification name="TopPermz"
                component="2"
                initialCondition="1"
                setNames="all"
@@ -115,7 +115,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="TopReferencePorosity"
+    <FieldSpecification name="TopReferencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
@@ -123,7 +123,7 @@
                dataType="real64"
                scale="0.05"/>
 
-    <Dirichlet name="TopInitialPressure"
+    <FieldSpecification name="TopInitialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
@@ -131,7 +131,7 @@
                dataType="real64"
                scale="2e5"/>
 
-    <Dirichlet name="BotPermx"
+    <FieldSpecification name="BotPermx"
                component="0"
                initialCondition="1"  
                setNames="all"
@@ -140,7 +140,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="BotPermy"
+    <FieldSpecification name="BotPermy"
                component="1"
                initialCondition="1"
                setNames="all"
@@ -149,7 +149,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="BotPermz"
+    <FieldSpecification name="BotPermz"
                component="2"
                initialCondition="1"
                setNames="all"
@@ -158,7 +158,7 @@
                dataType="R1Tensor"
                scale="2.0e-14"/>
 
-    <Dirichlet name="BotReferencePorosity"
+    <FieldSpecification name="BotReferencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
@@ -166,14 +166,14 @@
                dataType="real64"
                scale="0.05"/>
 
-    <Dirichlet name="BotInitialPressure"
+    <FieldSpecification name="BotInitialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
                fieldName="pressure"
                dataType="real64"
                scale="1e5"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
 

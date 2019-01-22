@@ -40,7 +40,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -192,7 +192,7 @@ public:
                                      systemSolverInterface::EpetraBlockSystem & blockSystem  );
 
   void ForceBC( dataRepository::ManagedGroup * const object,
-                BoundaryConditionBase const* const bc,
+                FieldSpecificationBase const* const bc,
                 set<localIndex> const & set,
                 real64 time,
                 systemSolverInterface::EpetraBlockSystem & blockSystem );
