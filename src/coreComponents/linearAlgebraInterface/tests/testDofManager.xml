@@ -4,19 +4,20 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
   
   <Mesh>
-    <InternalMesh name="mesh"
+    <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 1"
+                  xCoords="0, 1, 2"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="8"
-                  ny="8"
-                  nz="8"
-                  cellBlockNames="block"/>
+                  nx="4 4"
+                  ny="4"
+                  nz="4"
+                  cellBlockNames="block1 block2"/>
   </Mesh>
 
   <ElementRegions>
-    <ElementRegion name="region" cellBlocks="block" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="region1" cellBlocks="block1" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="region2" cellBlocks="block2" numericalMethod="FE1" material="shale" materialList="shale" />
   </ElementRegions>
 
   <!-- TODO: revisit input requirements -->

@@ -43,14 +43,14 @@ using namespace geosx;
 
 namespace
 {
-int global_argc;
-char** global_argv;
+  int global_argc;
+  char** global_argv;
 }
 
 
 class DofManagerTest : public ::testing::Test
 {
-protected:
+  protected:
 
   static void SetUpTestCase()
   {
@@ -69,37 +69,41 @@ protected:
   static ProblemManager problemManager;
 };
 
+
 ProblemManager DofManagerTest::problemManager("ProblemManager", nullptr);
 
 
 TEST_F(DofManagerTest, TestOne)
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  DofManager dofManager(*mesh);
 
-  GEOS_LOG_RANK_0("DofManager Test > Add()");
+  DofManager dofManager;
+             dofManager.setMesh(domain,0,0);
 
-  dofManager.add("displacement",DofManager::Location::Node, DofManager::Connectivity::Elem, 3);
-  dofManager.add("pressure",    DofManager::Location::Elem, DofManager::Connectivity::Face, 1);
-  dofManager.add("temperature", DofManager::Location::Elem, DofManager::Connectivity::Node, 1);
- 
-  GEOS_LOG_RANK_0("DofManager Test > Close()");
+  string_array oneRegion;
+               oneRegion.push_back("region2");
 
-  dofManager.close();     
+  string_array twoRegion;
+               twoRegion.push_back("region1");
+               twoRegion.push_back("region2");
+               
+  dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
+  dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
+  dofManager.addField("displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3, twoRegion);
+  dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
 }
 
 
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
-#ifdef GEOSX_USE_MPI
+  #ifdef GEOSX_USE_MPI
   MPI_Init(&argc,&argv);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
+  #else
   logger::InitializeLogger():
-#endif
+  #endif
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
   global_argc = argc;
@@ -113,10 +117,10 @@ int main(int argc, char** argv)
 
   delete[] global_argv;
   logger::FinalizeLogger();
-#ifdef GEOSX_USE_MPI
+  #ifdef GEOSX_USE_MPI
   MPI_Comm_free( &MPI_COMM_GEOSX );
   MPI_Finalize();
-#endif
+  #endif
 
   return result;
 }
