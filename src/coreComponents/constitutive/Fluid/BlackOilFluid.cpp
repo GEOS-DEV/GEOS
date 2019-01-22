@@ -42,10 +42,7 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
-namespace
-{
-
-BlackOilFluid::FluidType stringToFluidType(string const & str)
+BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
 {
   if (str == "LiveOil")
   {
@@ -60,8 +57,6 @@ BlackOilFluid::FluidType stringToFluidType(string const & str)
     GEOS_ERROR("Unrecognized black-oil fluid type: " << str);
   }
   return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
-}
-
 }
 
 BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
@@ -171,10 +166,10 @@ void BlackOilFluid::createFluid()
   switch (m_fluidType)
   {
     case FluidType::LiveOil:
-      m_fluid = new BlackOilMultiphaseSystem(phases, tableFiles, densities, molarWeights);
+      m_fluid = std::make_unique<BlackOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
       break;
     case FluidType::DeadOil:
-      m_fluid = new DeadOilMultiphaseSystem(phases, tableFiles, densities, molarWeights);
+      m_fluid = std::make_unique<DeadOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
       break;
   }
 }
