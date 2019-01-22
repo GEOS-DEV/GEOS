@@ -53,6 +53,7 @@ public:
     LiveOil
   };
 
+  static FluidType stringToFluidType( string const & str );
 
   BlackOilFluid( std::string const & name, ManagedGroup * const parent );
 

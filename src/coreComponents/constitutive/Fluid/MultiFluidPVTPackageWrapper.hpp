@@ -28,6 +28,8 @@
 // PVTPackage includes
 #include "MultiphaseSystem/PVTEnums.hpp"
 
+#include <memory>
+
 namespace PVTPackage
 {
 class MultiphaseSystem;
@@ -128,7 +130,7 @@ protected:
   array1d<PVTPackage::PHASE_TYPE> m_pvtPackagePhaseTypes;
 
   // PVTPackage fluid object
-  PVTPackage::MultiphaseSystem * m_fluid;
+  std::unique_ptr<PVTPackage::MultiphaseSystem> m_fluid;
 
 };
 
