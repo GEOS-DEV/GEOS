@@ -43,7 +43,7 @@ EventManager::EventManager( std::string const & name,
   m_currentSubEvent(),
   m_currentMaxDt()
 {
-  setSchemaFlags(SchemaFlags::REQUIRED_UNIQUE_NODE);
+  setInputFlags(InputFlags::REQUIRED);
   
   RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(-1.0)->

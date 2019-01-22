@@ -37,7 +37,7 @@ SolverBase::SolverBase( std::string const & name,
   m_cflFactor(),
   m_maxStableDt{1e99}
 {
-  setSchemaFlags(SchemaFlags::NODE);
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );

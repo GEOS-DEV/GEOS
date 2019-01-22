@@ -37,7 +37,7 @@ using namespace dataRepository;
 FiniteVolumeManager::FiniteVolumeManager(string const &name, ManagedGroup *const parent)
   : ManagedGroup(name, parent)
 {
-  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+  setInputFlags(InputFlags::OPTIONAL);
 }
 
 FiniteVolumeManager::~FiniteVolumeManager()

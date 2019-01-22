@@ -34,7 +34,7 @@
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
-#include "dataRepository/SchemaFlags.hpp"
+#include "dataRepository/InputFlags.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
 /// macro definition to specify whether or not to use dynamic_cast
@@ -898,9 +898,9 @@ public:
 
   void setRestartFlags( RestartFlags flags ) { m_restart_flags = flags; } 
 
-  SchemaFlags getSchemaFlags() const { return m_schema_flags; }
+  InputFlags getInputFlags() const { return m_input_flags; }
 
-  void setSchemaFlags( SchemaFlags flags ) { m_schema_flags = flags; }
+  void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
 
   void prepareToWrite() const;
 
@@ -951,7 +951,7 @@ private:
   indexType m_capacity;         ///< The capacity for wrappers in this group
   RestartFlags m_restart_flags; ///< Restart flag for this group...and
                                 ///< subsequently all wrappers in this group
-  SchemaFlags m_schema_flags;   ///< Schema flag for this group
+  InputFlags m_input_flags;     ///< Input flag for this group
   string m_name;                ///< the repository name of this group. This
                                 ///< is the key in the parent group.
 

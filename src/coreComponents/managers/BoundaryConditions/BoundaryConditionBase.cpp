@@ -36,7 +36,7 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
 //  m_endTime(1e9),
 //  m_bcApplicationFunctionName()
 {
-  setSchemaFlags(SchemaFlags::NODE);
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 )->
     setInputFlag(InputFlags::REQUIRED)->

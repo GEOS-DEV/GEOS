@@ -35,7 +35,7 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
                                                       ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setSchemaFlags(dataRepository::SchemaFlags::NODE);
+  setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
 }
 
 

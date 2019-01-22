@@ -47,7 +47,7 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 {
 //  m_toNodesRelation.resize2(0,8);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
-  setSchemaFlags(SchemaFlags::NODE);
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   this->RegisterGroup(keys::cellBlockSubRegions);
 

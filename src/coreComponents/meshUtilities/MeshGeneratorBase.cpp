@@ -33,7 +33,7 @@ using namespace dataRepository;
 MeshGeneratorBase::MeshGeneratorBase( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setSchemaFlags(SchemaFlags::NODE);
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
 
 MeshGeneratorBase::~MeshGeneratorBase()

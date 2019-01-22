@@ -37,7 +37,9 @@ enum class InputFlags : int
   INVALID,
   FALSE,
   OPTIONAL,
+  OPTIONAL_NONUNIQUE,
   REQUIRED,
+  REQUIRED_NONUNIQUE,
 };
 
 inline InputFlags IntToInputFlag( int const val )

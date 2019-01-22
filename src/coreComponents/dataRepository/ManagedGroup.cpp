@@ -75,7 +75,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_size(0),
   m_capacity(0),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
-  m_schema_flags(SchemaFlags::IGNORE),
+  m_input_flags(InputFlags::INVALID),
   m_name(name)
 {}
 
