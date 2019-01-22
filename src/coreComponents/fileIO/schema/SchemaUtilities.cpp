@@ -25,7 +25,6 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
-#include "dataRepository/SchemaFlags.hpp"
 #include "dataRepository/InputFlags.hpp"
 
 namespace geosx
@@ -109,7 +108,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
   // Get schema details
   SchemaFlags schemaType = group->getSchemaFlags();
   
-  if (schemaType != SchemaFlags::IGNORE)
+  if (schemaType != InputFlags::INVALID)
   {
     string targetName = group->getName();
     string typeName = targetName + "Type";
@@ -123,11 +122,11 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
       targetIncludeNode.append_attribute("type") = typeName.c_str();
 
       // Add occurence conditions
-      if((schemaType == SchemaFlags::REQUIRED_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
+      if((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::REQUIRED))
       {
         targetIncludeNode.append_attribute("minOccurs") = "1";
       }
-      if((schemaType == SchemaFlags::UNIQUE_NODE) || (schemaType == SchemaFlags::REQUIRED_UNIQUE_NODE))
+      if((schemaType == InputFlags::OPTIONAL) || (schemaType == InputFlags::REQUIRED))
       {
         targetIncludeNode.append_attribute("maxOccurs") = "1";
       }

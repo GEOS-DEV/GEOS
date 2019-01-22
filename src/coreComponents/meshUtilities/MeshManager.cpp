@@ -32,7 +32,7 @@ MeshManager::MeshManager( std::string const & name,
                           ManagedGroup * const parent ):
   ManagedGroup( name, parent)
 {
-  setSchemaFlags(SchemaFlags::REQUIRED_UNIQUE_NODE);
+  setInputFlags(InputFlags::REQUIRED);
 }
 
 MeshManager::~MeshManager()

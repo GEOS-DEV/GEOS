@@ -44,7 +44,7 @@ using namespace constitutive;
 BoundaryConditionManager::BoundaryConditionManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+  setInputFlags(InputFlags::OPTIONAL);
 }
 
 

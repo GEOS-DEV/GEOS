@@ -35,7 +35,7 @@ OutputBase::OutputBase( std::string const & name,
   m_slaveDirectory(),
   m_parallelThreads(1)
 {
-  setSchemaFlags(SchemaFlags::NODE);
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
     setInputFlag(InputFlags::OPTIONAL)->

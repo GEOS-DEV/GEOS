@@ -38,7 +38,7 @@ NewFunctionManager::NewFunctionManager( const std::string& name,
                                         ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setSchemaFlags(SchemaFlags::UNIQUE_NODE);
+  setInputFlags(InputFlags::OPTIONAL);
 }
 
 NewFunctionManager::~NewFunctionManager()
