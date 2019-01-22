@@ -92,6 +92,37 @@ static const char * pvto_str = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\
 static const char * pvtw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
                                "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
+/// Dead-oil tables written into temporary files during testing
+
+static const char * pvdg_str = "# Pg(Pa)\tBg(m3/sm3)\tVisc(Pa.s)\n"
+                               "\n"
+                               "3000000\t\t0.04234\t\t0.00001344\n"
+                               "6000000\t\t0.02046\t\t0.0000142\n"
+                               "9000000\t\t0.01328\t\t0.00001526\n"
+                               "12000000\t0.00977\t\t0.0000166\n"
+                               "15000000\t0.00773\t\t0.00001818\n"
+                               "18000000\t0.006426\t0.00001994\n"
+                               "21000000\t0.005541\t0.00002181\n"
+                               "24000000\t0.004919\t0.0000237\n"
+                               "27000000\t0.004471\t0.00002559\n"
+                               "29500000\t0.004194\t0.00002714\n"
+                               "31000000\t0.004031\t0.00002806\n"
+                               "33000000\t0.00391\t\t0.00002832\n"
+                               "53000000\t0.003868\t0.00002935";
+
+static const char * pvdo_str = "#P[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
+                               "\n"
+                               "2000000\t\t1.02\t0.000975\n"
+                               "5000000\t\t1.03\t0.00091\n"
+                               "10000000\t1.04\t0.00083\n"
+                               "20000000\t1.05\t0.000695\n"
+                               "30000000\t1.07\t0.000594\n"
+                               "40000000\t1.08\t0.00051\n"
+                               "50000000.7\t1.09\t0.000449";
+
+static const char * pvdw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
+                               "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
+
 template<typename T>
 ::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
                                                      T v1, T v2, T relTol, T absTol )
@@ -431,7 +462,7 @@ TEST_F(CompositionalFluidTest, numericalDerivativesMass)
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-MultiFluidBase * makeBlackOilFluid( string const & name, ManagedGroup * parent )
+MultiFluidBase * makeLiveOilFluid(string const & name, ManagedGroup * parent)
 {
   auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
 
@@ -457,6 +488,42 @@ MultiFluidBase * makeBlackOilFluid( string const & name, ManagedGroup * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
+  auto & fluidType = fluid->getReference<string>( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  fluidType = "LiveOil";
+
+  fluid->PostProcessInputRecursive();
+  return fluid;
+}
+
+MultiFluidBase * makeDeadOilFluid( string const & name, ManagedGroup * parent )
+{
+  auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
+
+  // TODO we should actually create a fake XML node with data, but this seemed easier...
+
+  auto & compNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
+  compNames.resize( 3 );
+  compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
+
+  auto & molarWgt = fluid->getReference<array1d<real64>>( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  molarWgt.resize( 3 );
+  molarWgt[0] = 114e-3; molarWgt[1] = 16e-3; molarWgt[2] = 18e-3;
+
+  auto & phaseNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
+
+  auto & surfaceDens = fluid->getReference<array1d<real64>>( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
+  surfaceDens.resize( 3 );
+  surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
+
+  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  tableNames.resize( 3 );
+  tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvdw.txt";
+
+  auto & fluidType = fluid->getReference<string>( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  fluidType = "DeadOil";
+
   fluid->PostProcessInputRecursive();
   return fluid;
 }
@@ -475,7 +542,7 @@ void removeFile( std::string const & filename )
   ASSERT_TRUE( ret == 0 );
 }
 
-class BlackOilFluidTest : public ::testing::Test
+class LiveOilFluidTest : public ::testing::Test
 {
 protected:
 
@@ -487,7 +554,7 @@ protected:
 
     parent = std::make_unique<ManagedGroup>( "parent", nullptr );
     parent->resize( 1 );
-    fluid = makeBlackOilFluid( "fluid", parent.get() );
+    fluid = makeLiveOilFluid("fluid", parent.get());
 
     parent->Initialize( parent.get() );
     parent->InitializePostInitialConditions( parent.get() );
@@ -504,10 +571,10 @@ protected:
   static MultiFluidBase * fluid;
 };
 
-std::unique_ptr<ManagedGroup> BlackOilFluidTest::parent( nullptr );
-MultiFluidBase * BlackOilFluidTest::fluid( nullptr );
+std::unique_ptr<ManagedGroup> LiveOilFluidTest::parent( nullptr );
+MultiFluidBase * LiveOilFluidTest::fluid( nullptr );
 
-TEST_F(BlackOilFluidTest, numericalDerivativesMolar)
+TEST_F(LiveOilFluidTest, numericalDerivativesMolar)
 {
   fluid->setMassFlag( false );
 
@@ -523,7 +590,72 @@ TEST_F(BlackOilFluidTest, numericalDerivativesMolar)
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-TEST_F(BlackOilFluidTest, numericalDerivativesMass)
+TEST_F(LiveOilFluidTest, numericalDerivativesMass)
+{
+  fluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P = 5e6;
+  real64 const T = 297.15;
+  array1d<real64> comp(3);
+  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const relTol = 1e-2;
+  real64 const absTol = 1e-14;
+
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol, absTol );
+}
+
+class DeadOilFluidTest : public ::testing::Test
+{
+protected:
+
+  static void SetUpTestCase()
+  {
+    writeTableToFile( "pvdo.txt", pvdo_str );
+    writeTableToFile( "pvdg.txt", pvdg_str );
+    writeTableToFile( "pvdw.txt", pvdw_str );
+
+    parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+    parent->resize( 1 );
+    fluid = makeDeadOilFluid("fluid", parent.get());
+
+    parent->Initialize( parent.get() );
+    parent->InitializePostInitialConditions( parent.get() );
+  }
+
+  static void TearDownTestCase()
+  {
+    removeFile( "pvdo.txt" );
+    removeFile( "pvdg.txt" );
+    removeFile( "pvdw.txt" );
+  }
+
+  static std::unique_ptr<ManagedGroup> parent;
+  static MultiFluidBase * fluid;
+};
+
+std::unique_ptr<ManagedGroup> DeadOilFluidTest::parent( nullptr );
+MultiFluidBase * DeadOilFluidTest::fluid( nullptr );
+
+TEST_F(DeadOilFluidTest, numericalDerivativesMolar)
+{
+  fluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P = 5e6;
+  real64 const T = 297.15;
+  array1d<real64> comp(3);
+  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const relTol = 1e-4;
+
+  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+}
+
+TEST_F(DeadOilFluidTest, numericalDerivativesMass)
 {
   fluid->setMassFlag( true );
 
@@ -569,6 +701,3 @@ int main(int argc, char** argv)
   return result;
 }
 
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif

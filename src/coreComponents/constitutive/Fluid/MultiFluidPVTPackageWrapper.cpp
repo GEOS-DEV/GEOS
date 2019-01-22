@@ -56,7 +56,7 @@ MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( std::string const & na
 
 MultiFluidPVTPackageWrapper::~MultiFluidPVTPackageWrapper()
 {
-  delete m_fluid;
+
 }
 
 void MultiFluidPVTPackageWrapper::PostProcessInput()
@@ -116,7 +116,7 @@ void MultiFluidPVTPackageWrapper::PointUpdate( real64 const & pressure,
            m_dTotalDensity_dPressure[k][q],
            m_dTotalDensity_dTemperature[k][q],
            m_dTotalDensity_dGlobalCompFraction[k][q],
-           m_fluid );
+           m_fluid.get() );
 }
 
 void MultiFluidPVTPackageWrapper::BatchUpdate( arrayView1d<real64 const> const & pressure,
@@ -127,7 +127,7 @@ void MultiFluidPVTPackageWrapper::BatchUpdate( arrayView1d<real64 const> const &
   MultiFluidBase::BatchUpdateKernel<MultiFluidPVTPackageWrapper, RAJA::seq_exec>( pressure,
                                                                                   temperature,
                                                                                   composition,
-                                                                                  m_fluid );
+                                                                                  m_fluid.get() );
 }
 
 void MultiFluidPVTPackageWrapper::Compute( localIndex const NC, localIndex const NP, bool const useMass,
@@ -233,6 +233,8 @@ void MultiFluidPVTPackageWrapper::Compute( localIndex const NC, localIndex const
       compMoleFrac[ic] = composition[ic];
     }
   }
+
+  GEOS_ERROR_IF( fluid == nullptr, "PVTPackage fluid object has not been created" );
 
   // 2. Trigger PVTPackage compute and get back phase split
   fluid->Update( pressure, temperature, compMoleFrac );
@@ -437,7 +439,7 @@ void MultiFluidPVTPackageWrapper::Compute(real64 const & pressure, real64 const 
            phaseViscosity, dPhaseViscosity_dPressure, dPhaseViscosity_dTemperature, dPhaseViscosity_dGlobalCompFraction,
            phaseCompFraction, dPhaseCompFraction_dPressure, dPhaseCompFraction_dTemperature, dPhaseCompFraction_dGlobalCompFraction,
            totalDensity, dTotalDensity_dPressure, dTotalDensity_dTemperature, dTotalDensity_dGlobalCompFraction,
-           m_fluid );
+           m_fluid.get() );
 }
 
 } //namespace constitutive
