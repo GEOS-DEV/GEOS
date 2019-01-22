@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,14 +24,14 @@
  */
 
 #include "ElementRegion.hpp"
+
 #include "CellBlockManager.hpp"
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
-
+#include "managers/NumericalMethodsManager.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -49,16 +49,9 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
   this->RegisterGroup(keys::cellBlockSubRegions);
 
-  RegisterViewWrapper( keys::defaultMaterial, &m_defaultMaterial, 0 )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default Material Name");
-
   RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of materials present in this region");
-
-  RegisterViewWrapper<string>( keys::numericalMethod )->
-    setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->
     setInputFlag(InputFlags::REQUIRED);
@@ -70,7 +63,7 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 ElementRegion::~ElementRegion()
 {}
 
-void ElementRegion::ProcessInputFile_PostProcess()
+void ElementRegion::PostProcessInput()
 {
 //  integer & numNodesPerElem = *(getData<integer>(keys::numNodesPerElement));
 //  numNodesPerElem = 8;
@@ -117,9 +110,9 @@ void ElementRegion::ProcessInputFile_PostProcess()
 //
 //  auto const & numMethodName = this->getData<string>(keys::numericalMethod);
 //  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-//  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
-//  FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
-//  auto const & quadratureName = feSpace->getData<string>(keys::quadrature);
+//  FiniteElementSpaceManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+//  FiniteElementSpace const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
+//  auto const & quadratureName = feDiscretization->getData<string>(keys::quadrature);
 //  QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 //
 //
@@ -156,67 +149,44 @@ void ElementRegion::ProcessInputFile_PostProcess()
 ////  return counts;
 //}
 
-void ElementRegion::HangConstitutiveRelations( ManagedGroup const * problemManager )
+//void ElementRegion::HangConstitutiveRelations( ManagedGroup const * problemManager )
+//{
+//  string const & numMethodName = this->getReference<string>(keys::numericalMethod);
+//  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+//  int quadratureSize = 1;
+//  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
+//  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+//  FiniteElementSpaceManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementDiscretizations);
+//    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(numMethodName);
+//  if( feDiscretization)
+//  {
+//    string const & quadratureName = feDiscretization->getReference<string>(keys::quadrature);
+//    QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
+//    quadratureSize = quadrature.size() ;
+//  }
+//  forCellBlocksIndex( [&] ( localIndex const esr, CellBlockSubRegion * subRegion ) -> void
+//      {
+//      for( auto & materialName : m_materialList )
+//      {
+//        constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
+//      }
+//      });
+//}
+
+void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
 {
-  string const & numMethodName = this->getReference<string>(keys::numericalMethod);
-  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  int quadratureSize = 1;
-  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
-  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
-  if( feSpace)
-  {
-    string const & quadratureName = feSpace->getReference<string>(keys::quadrature);
-    QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
-    quadratureSize = quadrature.size() ;
-  }
-  forCellBlocksIndex( [&] ( localIndex const esr, CellBlockSubRegion * subRegion ) -> void
-      {
-      for( auto & materialName : m_materialList )
-      {
-        constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
-      }
-      });
-}
-
-void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
-{
-
-  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
-  ManagedGroup const * cellBlockManager = domain->GetGroup(keys::cellManager);
-
   ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
 
   for( string const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
   {
-    CellBlockSubRegion * cellBlock = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
+    CellBlockSubRegion * subRegion = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
+    CellBlock const * source = cellBlocks->GetGroup<CellBlock>( subRegion->getName() );
+    GEOS_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
+    subRegion->CopyFromCellBlock( source );
   }
 
-  forCellBlocks([&]( CellBlockSubRegion * subRegion )
-    {
-      ManagedGroup const * cellBlocks = cellBlockManager->GetGroup(keys::cellBlocks);
-      subRegion->CopyFromCellBlock( cellBlocks->GetGroup<CellBlock>( subRegion->getName() ) );
-    });
-  
-  // TODO For the moment, there is a special behavior for the fe. It should be done elsewhere, or
-  // generalized here for the other numerical methods
-  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  string const & numMethodName = this->getReference<string>(keys::numericalMethod); 
-
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
-  if( feSpace)
-  {
-    MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-    arrayView1d<R1Tensor> const & X = mesh->getNodeManager()->getReference<array1d<R1Tensor>>(keys::referencePositionString);
-  forCellBlocks([&]( CellBlockSubRegion * subRegion )
-    {
-      feSpace->ApplySpaceToTargetCells(subRegion);
-      feSpace->CalculateShapeFunctionGradients( X, subRegion);
-    });
-  }
 }
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
 

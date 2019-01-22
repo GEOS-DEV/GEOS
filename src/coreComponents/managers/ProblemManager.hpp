@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -89,20 +89,24 @@ public:
 
   void ParseInputFile();
 
+  void GenerateMesh();
+
+  void ApplyNumericalMethods();
+
   void InitializationOrder( string_array & order ) override final;
 
-  void InitializePreSubGroups( ManagedGroup * const group ) override final;
+  /**
+   * Function to setup the problem once the input has been read in, or the values
+   * of the objects in the hierarchy have been sufficently set to generate a
+   * mesh, etc.
+   */
+  void ProblemSetup();
 
-  void InitializePostSubGroups( ManagedGroup * const group ) override final;
-
+  /**
+   * Run the events in the scheduler.
+   */
   void RunSimulation();
 
-  void ApplySchedulerEvent();
-
-  void WriteSilo( integer const cycleNumber, real64 const problemTime );
-
-  // function to create and dump the restart file
-  void WriteRestart( integer const cycleNumber );
 
   void ReadRestartOverwrite( const std::string& restartFileName );
 
@@ -141,17 +145,18 @@ public:
 
   struct groupKeysStruct
   {
-    dataRepository::GroupKey domain    = { "domain" };
     dataRepository::GroupKey commandLine    = { "commandLine" };
-    dataRepository::GroupKey boundaryConditionManager = { "BoundaryConditions" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
+    dataRepository::GroupKey domain    = { "domain" };
     dataRepository::GroupKey elementRegionManager = { "ElementRegions" };
     dataRepository::GroupKey eventManager = { "Events" };
-    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
+    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
+    dataRepository::GroupKey functionManager = { "Functions" };
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };
+    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
     dataRepository::GroupKey outputManager = { "Outputs" };
+    dataRepository::GroupKey physicsSolverManager = { "Solvers" };
   } groupKeys;
 
   PhysicsSolverManager & GetPhysicsSolverManager()
@@ -164,9 +169,14 @@ public:
     return *m_physicsSolverManager;
   }
 
+protected:
+  virtual void PostProcessInput() override final;
+
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) override final;
+
 private:
+
   PhysicsSolverManager * m_physicsSolverManager;
-  //SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
 };

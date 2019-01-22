@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -73,7 +73,6 @@ public:
                                  localIndex const q,
                                  integer const systemAssembleFlag ) override;
 
-  virtual void ProcessInputFile_PostProcess() override;
 
   void GetStiffness( realT c[6][6] ) const override;
 
@@ -143,9 +142,12 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const parent) override final;
+protected:
+  virtual void PostProcessInput() override;
 
 private:
+
+
   real64 m_bulkModulus0;
   real64 m_shearModulus0;
   real64 m_density0;
@@ -167,7 +169,7 @@ private:
   array2d<real64> m_poreVolumeMultiplier;
   array2d<real64> m_dPVMult_dPressure;
 
-  ExponentialRelation<localIndex, real64> m_poreVolumeRelation;
+  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
 inline void LinearElasticIsotropic::StateUpdatePointPressure( real64 const & pres,

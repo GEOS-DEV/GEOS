@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -51,6 +51,7 @@ public:
   using xmlDocument = pugi::xml_document;
   using xmlResult = pugi::xml_parse_result;
   using xmlNode = pugi::xml_node;
+  using xmlAttribute = pugi::xml_attribute;
 
   xmlWrapper();
   virtual ~xmlWrapper();

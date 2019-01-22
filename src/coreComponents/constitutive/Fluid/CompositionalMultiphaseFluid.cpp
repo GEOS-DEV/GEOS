@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -53,6 +53,10 @@ std::unordered_map<string, EOS_TYPE> const PVTPackage_eosDict =
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
+  getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
+
   RegisterViewWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of equation of state types for each phase");
@@ -108,9 +112,9 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name, ManagedGroup * 
   return std::move(clone);
 }
 
-void CompositionalMultiphaseFluid::ProcessInputFile_PostProcess()
+void CompositionalMultiphaseFluid::PostProcessInput()
 {
-  MultiFluidPVTPackageWrapper::ProcessInputFile_PostProcess();
+  MultiFluidPVTPackageWrapper::PostProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
@@ -137,7 +141,7 @@ void CompositionalMultiphaseFluid::ProcessInputFile_PostProcess()
 
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString )
 
-  //if (m_componentBinaryCoeff.empty()) TODO
+  //if (m_componentBinaryCoeff.empty()) TODO needs reading of 2D arrays
   {
     m_componentBinaryCoeff.resize( NC, NC );
     m_componentBinaryCoeff = 0.0;
@@ -162,16 +166,18 @@ void CompositionalMultiphaseFluid::createFluid()
     eos[ip] = it->second;
   }
 
-  std::vector<PHASE_TYPE> phases( m_pvtPackagePhaseTypes.begin(), m_pvtPackagePhaseTypes.end() );
-  std::vector<std::string> components( m_componentNames.begin(), m_componentNames.end() );
-  std::vector<double> Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
-  std::vector<double> Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
-  std::vector<double> Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
-  std::vector<double> Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
+  std::vector<PHASE_TYPE> const phases( m_pvtPackagePhaseTypes.begin(), m_pvtPackagePhaseTypes.end() );
+  std::vector<std::string> const components( m_componentNames.begin(), m_componentNames.end() );
+  std::vector<double> const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
+  std::vector<double> const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
+  std::vector<double> const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
+  std::vector<double> const Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
 
-  const ComponentProperties CompProps( NC, components, Mw, Tc, Pc, Omega );
-  // TODO choose flash type
-  m_fluid = new CompositionalMultiphaseSystem( phases, eos, COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, CompProps );
+  ComponentProperties const compProps( NC, components, Mw, Tc, Pc, Omega );
+
+  m_fluid = std::make_unique<CompositionalMultiphaseSystem>( phases, eos,
+                                                             COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS,
+                                                             compProps );
 
 }
 

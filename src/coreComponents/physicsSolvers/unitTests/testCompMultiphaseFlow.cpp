@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -606,11 +606,7 @@ protected:
     problemManager.ParseCommandLineInput( argc, argv );
     problemManager.ParseInputFile();
 
-    problemManager.Initialize( &problemManager );
-    problemManager.RegisterDataOnMeshRecursive( nullptr );
-    problemManager.IntermediateInitializationRecursive( &problemManager );
-    problemManager.ApplyInitialConditions();
-    problemManager.FinalInitializationRecursive( &problemManager );
+    problemManager.ProblemSetup();
 
     solver = problemManager.GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
   }

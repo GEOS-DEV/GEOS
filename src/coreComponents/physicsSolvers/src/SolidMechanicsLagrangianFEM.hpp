@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -40,7 +40,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -60,15 +60,6 @@ public:
   virtual ~SolidMechanics_LagrangianFEM() override;
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
-
-//  virtual void FillDocumentationNode() override final;
-//  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
-
-  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
-
-  virtual void ProcessInputFile_PostProcess() override final;
-
-//  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
@@ -199,7 +190,7 @@ public:
                                      systemSolverInterface::EpetraBlockSystem & blockSystem  );
 
   void ForceBC( dataRepository::ManagedGroup * const object,
-                BoundaryConditionBase const* const bc,
+                FieldSpecificationBase const* const bc,
                 set<localIndex> const & set,
                 real64 time,
                 systemSolverInterface::EpetraBlockSystem & blockSystem );
@@ -268,7 +259,14 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
+protected:
+  virtual void PostProcessInput() override final;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+
+
 private:
+
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;

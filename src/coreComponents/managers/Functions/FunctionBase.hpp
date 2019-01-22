@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -55,9 +55,6 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "FunctionBase"; }
 
-  /// After reading the xml, call the function initialization
-  virtual void ProcessInputFile_PostProcess() override { InitializeFunction(); }
-
   /// Function initialization
   virtual void InitializeFunction(){}
 
@@ -109,6 +106,8 @@ protected:
                   real64 const time,
                   set<localIndex> const & set,
                   real64_array & result ) const;
+
+  virtual void PostProcessInput() override { InitializeFunction(); }
 
 };
 

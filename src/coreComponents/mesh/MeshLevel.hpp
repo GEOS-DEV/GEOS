@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -41,8 +41,6 @@ public:
   MeshLevel( string const & name,
              ManagedGroup * const parent );
   virtual ~MeshLevel() override;
-
-  void InitializePostSubGroups( ManagedGroup * const ) override;
 
   void GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                localIndex_array & nodeAdjacencyList,

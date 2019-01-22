@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -41,6 +41,7 @@ public:
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+private:
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
 };

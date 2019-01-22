@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -44,7 +44,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -60,10 +60,6 @@ public:
   static string CatalogName() { return "LaplaceFEM"; }
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
-
-  virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
-
-  virtual void ProcessInputFile_PostProcess() override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -169,6 +165,9 @@ public:
 
 
 
+
+protected:
+  virtual void PostProcessInput() override final;
 
 private:
   string m_fieldName;

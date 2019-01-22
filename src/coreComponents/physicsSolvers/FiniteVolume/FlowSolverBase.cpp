@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -36,7 +36,6 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
                                 ManagedGroup * const parent )
   : SolverBase( name, parent ),
     m_gravityFlag(1),
-    m_discretizationName(),
     m_fluidName(),
     m_solidName(),
     m_fluidIndex(),
@@ -108,9 +107,9 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   m_solidIndex = solid->getIndexInParent();
 }
 
-void FlowSolverBase::FinalInitializationPreSubGroups(ManagedGroup * const rootGroup)
+void FlowSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
 {
-  SolverBase::FinalInitializationPreSubGroups(rootGroup);
+  SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 

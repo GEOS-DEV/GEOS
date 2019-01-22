@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -41,7 +41,7 @@ namespace keys
 string const compositionalMultiphaseFlow = "CompositionalMultiphaseFlow";
 }
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -94,12 +94,6 @@ public:
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
   virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
-
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
-
-  virtual void IntermediateInitializationPreSubGroups( ManagedGroup * const rootGroup ) override;
-
-  virtual void FinalInitializationPreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -360,6 +354,11 @@ public:
   {
   } groupKeysCompMultiphaseFlow;
 
+protected:
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+
 
 private:
 
@@ -412,7 +411,7 @@ private:
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  void ResizeFields( DomainPartition * const domain );
+  void ResizeFields( MeshLevel * const meshLevel );
 
   /**
    * @brief Initialize all variables from initial conditions

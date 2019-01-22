@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -81,9 +81,9 @@ BrooksCoreyRelativePermeability::DeliverClone(string const & name, ManagedGroup 
 }
 
 
-void BrooksCoreyRelativePermeability::ProcessInputFile_PostProcess()
+void BrooksCoreyRelativePermeability::PostProcessInput()
 {
-  RelativePermeabilityBase::ProcessInputFile_PostProcess();
+  RelativePermeabilityBase::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 
@@ -119,43 +119,40 @@ void BrooksCoreyRelativePermeability::ProcessInputFile_PostProcess()
   GEOS_ERROR_IF( m_satScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
 }
 
-void BrooksCoreyRelativePermeability::StateUpdatePointRelPerm( arraySlice1d<real64 const> const & phaseVolFraction,
-                                                               localIndex const k,
-                                                               localIndex const q )
+
+void BrooksCoreyRelativePermeability::BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction )
 {
-  arraySlice1d<real64> relPerm           = m_phaseRelPerm[k][q];
-  arraySlice2d<real64> dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
+
+  arrayView1d<real64 const> const &  phaseMinVolumeFraction = m_phaseMinVolumeFraction;
+  arrayView1d<real64 const> const & phaseRelPermExponent = m_phaseRelPermExponent;
+  arrayView1d<real64 const> const & phaseRelPermMaxValue = m_phaseRelPermMaxValue;
+
+
+  RelativePermeabilityBase::BatchUpdateKernel<BrooksCoreyRelativePermeability>( phaseVolumeFraction,
+                                                                                phaseMinVolumeFraction,
+                                                                                phaseRelPermExponent,
+                                                                                phaseRelPermMaxValue,
+                                                                                m_satScale );
+}
+
+
+void BrooksCoreyRelativePermeability::PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+                                                   localIndex const k,
+                                                   localIndex const q )
+{
+  arraySlice1d<real64> const relPerm           = m_phaseRelPerm[k][q];
+  arraySlice2d<real64> const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
 
   localIndex const NP = numFluidPhases();
 
-  for (localIndex ip = 0; ip < NP; ++ip)
-  {
-    for (localIndex jp = 0; jp < NP; ++jp)
-    {
-      dRelPerm_dVolFrac[ip][jp] = 0.0;
-    }
-  }
-  real64 const satScaleInv = 1.0 / m_satScale;
-
-  for (localIndex ip = 0; ip < NP; ++ip)
-  {
-    real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
-    real64 const exponent  = m_phaseRelPermExponent[ip];
-    real64 const scale     = m_phaseRelPermMaxValue[ip];
-
-    if (satScaled > 0.0 && satScaled < 1.0)
-    {
-      // intermediate value
-      real64 const v = scale * std::pow( satScaled, exponent - 1.0 );
-
-      relPerm[ip] = v * satScaled;
-      dRelPerm_dVolFrac[ip][ip] = v * exponent * satScaleInv;
-    }
-    else
-    {
-      relPerm[ip] = (satScaled < 0.0) ? 0.0 : scale;
-    }
-  }
+  Compute( NP,
+           phaseVolFraction,
+           relPerm,
+           dRelPerm_dVolFrac,
+           m_phaseMinVolumeFraction,
+           m_phaseRelPermExponent,
+           m_phaseRelPermMaxValue,
+           m_satScale );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, ManagedGroup * const )

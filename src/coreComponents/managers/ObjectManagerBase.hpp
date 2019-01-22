@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -61,8 +61,6 @@ public:
   ///@}
 
 //  virtual void FillDocumentationNode() override;
-
-  virtual void InitializePostSubGroups( ManagedGroup * const ) override;
 
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;

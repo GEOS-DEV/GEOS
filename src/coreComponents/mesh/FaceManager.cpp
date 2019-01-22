@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -76,59 +76,6 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
 FaceManager::~FaceManager()
 {}
 
-
-
-//void FaceManager::FillDocumentationNode()
-//{
-//  ObjectManagerBase::FillDocumentationNode();
-//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-//
-//  docNode->setName( "InternalMesh" );
-//  docNode->setSchemaType( "Node" );
-//  docNode->setShortDescription( "a mesh generator" );
-//
-//
-//  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
-//                              viewKeyStruct::faceAreaString,
-//                              -1,
-//                              "real64_array",
-//                              "real64_array",
-//                              "Face surface area",
-//                              "Face surface area",
-//                              "",
-//                              this->getName(),
-//                              1,
-//                              0,
-//                              1 );
-//
-//  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
-//                              viewKeyStruct::faceCenterString,
-//                              -1,
-//                              "r1_array",
-//                              "r1_array",
-//                              "Face centroid coordinates",
-//                              "Face centroid coordinates",
-//                              "",
-//                              this->getName(),
-//                              1,
-//                              0,
-//                              1 );
-//
-//  docNode->AllocateChildNode( viewKeyStruct::faceNormalString,
-//                              viewKeyStruct::faceNormalString,
-//                              -1,
-//                              "r1_array",
-//                              "r1_array",
-//                              "Face normal ",
-//                              "Face normal",
-//                              "",
-//                              this->getName(),
-//                              1,
-//                              0,
-//                              1 );
-//
-//
-//}
 
 void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
 {

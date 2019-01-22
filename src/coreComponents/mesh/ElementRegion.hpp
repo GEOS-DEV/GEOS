@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -39,11 +39,6 @@ namespace dataRepository
 {
 namespace keys
 {
-string const defaultMaterial = "material";
-//string const numNodesPerElement = "numNodesPerElement";
-//string const nodeList = "nodeList";
-//string const constitutiveMap = "constitutiveMap";
-string const numericalMethod = "numericalMethod";
 string const cellBlockSubRegions = "cellBlockSubRegions";
 string const cellBlockSubRegionNames = "cellBlocks";
 }
@@ -81,21 +76,10 @@ public:
 
 
   ElementRegion(const ElementRegion& init);
-//  ElementRegion( ElementRegion&& init);
-
-  virtual void ProcessInputFile_PostProcess() override;
-
-//  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
-//                           map<string,localIndex> & counts );
-
-  void HangConstitutiveRelations( ManagedGroup const * problemManager );
 
   virtual ~ElementRegion() override;
 
-//  array2d<integer> & m_toNodesRelation;
-
-
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
+  void GenerateMesh( ManagedGroup const * const cellBlocks );
 
   subGroupMap & GetSubRegions()
   {
@@ -175,12 +159,6 @@ public:
   }
 
 
-  string const & getNumericalMethod() const
-  {
-    return this->getReference<string>(dataRepository::keys::numericalMethod);
-  }
-
-
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
@@ -190,11 +168,13 @@ public:
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
 
-  private:
+protected:
+  virtual void PostProcessInput() override;
+
+private:
+
   ElementRegion& operator=(const ElementRegion& rhs);
-  string m_defaultMaterial;
   string_array m_materialList;
-//  string & m_elementType;
 
 };
 

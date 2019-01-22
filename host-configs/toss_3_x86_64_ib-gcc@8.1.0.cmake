@@ -1,14 +1,11 @@
 
 
-set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@8.1.0" CACHE PATH "") 
+set(CONFIG_NAME "toss_3_x86_64_ib-gcc@8.1.0" CACHE PATH "") 
 
-#set(TPL_DIR "/usr/gapps/GEOS/geosx/2018_05_17_08_46_08" CACHE PATH "" )
-#include("${TPL_DIR}/${CONFIG_NAME}.cmake")
-
-#set(ATK_DIR "/usr/gapps/GEOS/geosx/axom/toss_3_x86_64_ib-gcc@7.1.0-release" CACHE PATH "")
 
 set(CMAKE_C_COMPILER "/usr/tce/packages/gcc/gcc-8.1.0/bin/gcc" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/tce/packages/gcc/gcc-8.1.0/bin/g++" CACHE PATH "")
+set(CMAKE_Fortran_COMPILER "/usr/tce/packages/gcc/gcc-8.1.0/bin/gfortran" CACHE PATH "")
 
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE BOOL "" FORCE)
@@ -21,15 +18,14 @@ set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpifort" CACHE PATH "")
 set(MPIEXEC              "/usr/bin/srun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
-
 set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
-set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
+set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release" CACHE PATH "" )
 
-#set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
+set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
+set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
 set(DOXYGEN_EXECUTABLE "${GEOSX_TPL_ROOT_DIR}/doxygen/bin/doxygen" CACHE PATH "" FORCE )
 
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
-
 
 set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
 set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)

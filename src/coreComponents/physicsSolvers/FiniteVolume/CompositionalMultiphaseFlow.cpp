@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -22,6 +22,7 @@
 
 #include "CompositionalMultiphaseFlow.hpp"
 
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -31,7 +32,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -132,8 +132,8 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition     const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  ConstitutiveManager const * cm     = domain->getConstitutiveManager();
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
   MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
   m_numPhases     = fluid->numFluidPhases();
@@ -156,54 +156,48 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
     GEOS_ERROR_IF( phase_fl != phase_rp, "Phase '" << phase_fl << "' in fluid model '" << m_fluidName
                    << "' does not match phase '" << phase_rp << "' in relperm model '" << m_relPermName << "'" );
   }
+
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    ResizeFields( meshLevel );
+  }
 }
 
-void CompositionalMultiphaseFlow::ResizeFields( DomainPartition * domain )
+void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
 {
   localIndex const NC = m_numComponents;
   localIndex const NP = m_numPhases;
 
-  for (auto & mesh : domain->getMeshBodies()->GetSubGroups())
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
+    subRegion->getReference<array2d<real64>>(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
 
-    elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion )
-    {
-      subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
-      subRegion->getReference<array2d<real64>>(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
+    subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompFractionString).resizeDimension<1>(NC);
+    subRegion->getReference<array3d<real64>>(viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString).resizeDimension<1,2>(NC, NC);
 
-      subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompFractionString).resizeDimension<1>(NC);
-      subRegion->getReference<array3d<real64>>(viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString).resizeDimension<1,2>(NC, NC);
+    subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionString).resizeDimension<1>(NP);
+    subRegion->getReference<array2d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dPressureString).resizeDimension<1>(NP);
+    subRegion->getReference<array3d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString).resizeDimension<1,2>(NP, NC);
 
-      subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionString).resizeDimension<1>(NP);
-      subRegion->getReference<array2d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dPressureString).resizeDimension<1>(NP);
-      subRegion->getReference<array3d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString).resizeDimension<1,2>(NP, NC);
+    subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionOldString).resizeDimension<1>(NP);
+    subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
+    subRegion->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);
+  });
 
-      subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionOldString).resizeDimension<1>(NP);
-      subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
-      subRegion->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);
-    });
+  {
+    FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    {
-      FaceManager * const faceManager = meshLevel->getFaceManager();
-
-      faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
-      faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseViscosityString).resizeDimension<1>(NP);
-      faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString).resizeDimension<1>(NP);
-      faceManager->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);;
-    }
+    faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
+    faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseViscosityString).resizeDimension<1>(NP);
+    faceManager->getReference<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString).resizeDimension<1>(NP);
+    faceManager->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);;
   }
 }
 
-void CompositionalMultiphaseFlow::IntermediateInitializationPreSubGroups( ManagedGroup * const rootGroup )
-{
-  FlowSolverBase::IntermediateInitializationPreSubGroups( rootGroup );
-
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  ResizeFields( domain );
-}
 
 MultiFluidBase * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup * dataGroup ) const
 {
@@ -460,11 +454,12 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
   arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
   arrayView2d<real64 const> const & compFrac = dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
 
-  // currently not thread-safe, force sequential policy
+  // TODO replace with batch update (need up-to-date pressure and temperature fields)
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
-    fluid->StateUpdatePointMultiFluid(pres[a] + dPres[a], m_temperature, compFrac[a], a, 0);
+    fluid->PointUpdate( pres[a] + dPres[a], m_temperature, compFrac[a], a, 0 );
   });
+  //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
 void CompositionalMultiphaseFlow::UpdateFluidModelAll( DomainPartition * const domain )
@@ -503,10 +498,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
   arrayView2d<real64> const & phaseVolFrac =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-    relPerm->StateUpdatePointRelPerm( phaseVolFrac[a], a, 0 );
-  });
+  relPerm->BatchUpdate( phaseVolFrac );
 }
 
 void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const domain )
@@ -571,9 +563,9 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   UpdateRelPermModelAll( domain );
 }
 
-void CompositionalMultiphaseFlow::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
-  FlowSolverBase::FinalInitializationPreSubGroups( rootGroup );
+  FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
@@ -1580,20 +1572,20 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                                         real64 const time_n, real64 const dt,
                                                         EpetraBlockSystem * const blockSystem )
 {
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
   unordered_map<string, array1d<bool>> bcStatusMap; // map to check consistent application of BC
 
   // 1. apply pressure Dirichlet BCs
-  bcManager->ApplyBoundaryCondition( time_n + dt,
-                                     domain,
-                                     "ElementRegions",
-                                     viewKeyStruct::pressureString,
-                                     [&]( BoundaryConditionBase const * const bc,
-                                          string const & setName,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * subRegion,
-                                          string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "ElementRegions",
+                    viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * subRegion,
+                    string const & )
   {
     // 1.0. Check whether pressure has already been applied to this set
     GEOS_ERROR_IF( bcStatusMap.count( setName ) > 0, "Conflicting pressure boundary conditions on set " << setName );
@@ -1601,34 +1593,34 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
     bcStatusMap[setName] = false;
 
     // 1.1. Apply BC to set the field values
-    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
-                                                time_n + dt,
-                                                subRegion,
-                                                viewKeyStruct::bcPressureString );
+    fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::bcPressureString );
   });
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
-  bcManager->ApplyBoundaryCondition( time_n + dt,
-                                     domain,
-                                     "ElementRegions",
-                                     viewKeyStruct::globalCompFractionString,
-                                     [&] ( BoundaryConditionBase const * const bc,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * subRegion,
-                                           string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "ElementRegions",
+                    viewKeyStruct::globalCompFractionString,
+                    [&] ( FieldSpecificationBase const * const fs,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * subRegion,
+                    string const & )
   {
     // 2.0. Check pressure and record composition bc application
-    localIndex const comp = bc->GetComponent();
+    localIndex const comp = fs->GetComponent();
     GEOS_ERROR_IF( bcStatusMap.count( setName ) == 0, "Pressure boundary condition not prescribed on set '" << setName << "'" );
     GEOS_ERROR_IF( bcStatusMap[setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
     bcStatusMap[setName][comp] = true;
 
     // 2.1. Apply BC to set the field values
-    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet,
-                                                time_n + dt,
-                                                subRegion,
-                                                viewKeyStruct::globalCompFractionString );
+    fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::globalCompFractionString );
   });
 
   // 2.3 Check consistency between composition BC applied to sets
@@ -1645,15 +1637,15 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
-  bcManager->ApplyBoundaryCondition( time_n + dt,
-                                     domain,
-                                     "ElementRegions",
-                                     viewKeyStruct::pressureString,
-                                     [&] ( BoundaryConditionBase const * const bc,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * subRegion,
-                                           string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "ElementRegions",
+                    viewKeyStruct::pressureString,
+                    [&] ( FieldSpecificationBase const * const bc,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * subRegion,
+                    string const & )
   {
     MultiFluidBase * const fluid = GetFluidModel(subRegion );
 
@@ -1677,18 +1669,18 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     for (localIndex a : targetSet)
     {
-      fluid->StateUpdatePointMultiFluid(bcPres[a], m_temperature, compFrac[a], a, 0);
+      fluid->PointUpdate( bcPres[a], m_temperature, compFrac[a], a, 0 );
 
       globalIndex const offset = m_numDofPerCell * dofNumber[a];
       dof[counter] = offset;
 
       // 4.1. Apply pressure to the matrix
-      BcEqual::ApplyBcValue( dof[counter],
-                             blockSystem,
-                             BlockIDs::compositionalBlock,
-                             rhsContribution[counter],
-                             bcPres[a],
-                             pres[a] + dPres[a] );
+      FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
+                                                  blockSystem,
+                                                  BlockIDs::compositionalBlock,
+                                                  rhsContribution[counter],
+                                                  bcPres[a],
+                                                  pres[a] + dPres[a] );
 
       ++counter;
 
@@ -1698,21 +1690,21 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
         dof[counter] = offset + ic + 1;
         real64 const targetCompDens = totalDens[a][0] * compFrac[a][ic];
 
-        BcEqual::ApplyBcValue( dof[counter],
-                               blockSystem,
-                               BlockIDs::compositionalBlock,
-                               rhsContribution[counter],
-                               targetCompDens,
-                               compDens[a][ic] + dCompDens[a][ic] );
+        FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
+                                                    blockSystem,
+                                                    BlockIDs::compositionalBlock,
+                                                    rhsContribution[counter],
+                                                    targetCompDens,
+                                                    compDens[a][ic] + dCompDens[a][ic] );
 
         ++counter;
       }
 
       // 4.3. Apply accumulated rhs values
-      BcEqual::ReplaceGlobalValues( rhs,
-                                    counter,
-                                    dof.data(),
-                                    rhsContribution.data() );
+      FieldSpecificationEqual::ReplaceGlobalValues( rhs,
+                                                    counter,
+                                                    dof.data(),
+                                                    rhsContribution.data() );
     }
   });
 

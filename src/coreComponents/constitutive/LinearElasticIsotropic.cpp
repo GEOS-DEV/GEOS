@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -74,7 +74,7 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   m_biotCoefficient(),
   m_poreVolumeMultiplier(),
   m_dPVMult_dPressure(),
-  m_poreVolumeRelation( ExponentApproximationType::Linear )
+  m_poreVolumeRelation()
 {
   RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -207,7 +207,7 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
 
 }
 
-void LinearElasticIsotropic::ProcessInputFile_PostProcess()
+void LinearElasticIsotropic::PostProcessInput()
 {
   real64 & nu = getReference<real64>( viewKeys().poissonRatio );
   real64 & E  = getReference<real64>( viewKeys().youngsModulus );
@@ -256,10 +256,6 @@ void LinearElasticIsotropic::ProcessInputFile_PostProcess()
     string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
     GEOS_ERROR( message );
   }
-}
-
-void LinearElasticIsotropic::FinalInitializationPreSubGroups(ManagedGroup * const parent)
-{
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
 

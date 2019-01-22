@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -40,7 +40,6 @@ public:
   FiniteVolumeManager(string const & name, ManagedGroup * const parent);
   virtual ~FiniteVolumeManager() override;
 
-  void IntermediateInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
 
   virtual ManagedGroup * CreateChild(string const & childKey, string const & childName) override;
 
@@ -48,7 +47,6 @@ public:
 
 private:
 
-  void precomputeFiniteVolumeData(DomainPartition * const domain);
 
 };
 

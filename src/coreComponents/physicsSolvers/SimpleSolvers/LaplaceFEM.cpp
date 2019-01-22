@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -26,6 +26,7 @@
 #include <vector>
 #include <math.h>
 
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/defines.hpp"
 
@@ -35,13 +36,10 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
-//#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
-
+#include "managers/NumericalMethodsManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
@@ -108,7 +106,7 @@ void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 }
 
 
-void LaplaceFEM::ProcessInputFile_PostProcess()
+void LaplaceFEM::PostProcessInput()
 {
   string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 
@@ -128,12 +126,6 @@ void LaplaceFEM::ProcessInputFile_PostProcess()
   {
     GEOS_ERROR("invalid time integration option");
   }
-}
-
-
-void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
-{
-
 }
 
 
@@ -314,7 +306,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
-      auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
+      auto const & numMethodName = m_discretizationName;
 
       for( localIndex subRegionIndex=0 ; subRegionIndex<elementRegion->numSubRegions() ; ++subRegionIndex )
       {
@@ -362,7 +354,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::dummyScalarBlock,
@@ -375,8 +367,8 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
     ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second);
-    auto const & numMethodName = elementRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
@@ -395,7 +387,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
                                                     numNodesPerElement);
 
       array1d<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
-      const int n_q_points = feSpace->m_finiteElement->n_quadrature_points();
+      const int n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
       for( localIndex k=0 ; k<cellBlockSubRegion->size() ; ++k )
@@ -490,7 +482,7 @@ void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
   ApplyDirichletBC_implicit( time_n + dt, *domain, *blockSystem );
 
@@ -516,26 +508,26 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             EpetraBlockSystem & blockSystem )
 {
 
-  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
 
-  bcManager->ApplyBoundaryCondition( time,
-                                     &domain,
-                                     "nodeManager",
-                                     "Temperature",
-                                     [&]( BoundaryConditionBase const * const bc,
-                                         string const &,
-                                         set<localIndex> const & targetSet,
-                                         ManagedGroup * const targetGroup,
-                                         string const fieldName )->void
+  fsManager->Apply( time,
+                    &domain,
+                    "nodeManager",
+                    "Temperature",
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
-                                                        time,
-                                                        targetGroup,
-                                                        "Temperature",
-                                                        laplaceFEMViewKeys.blockLocalDofNumber.Key(),
-                                                        1,
-                                                        &blockSystem,
-                                                        BlockIDs::dummyScalarBlock );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
+                                                                 time,
+                                                                 targetGroup,
+                                                                 "Temperature",
+                                                                 laplaceFEMViewKeys.blockLocalDofNumber.Key(),
+                                                                 1,
+                                                                 &blockSystem,
+                                                                 BlockIDs::dummyScalarBlock );
   });
 }
 

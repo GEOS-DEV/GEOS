@@ -50,7 +50,7 @@
 	      />
 	      
 
-	<BoundaryConditions>
+	<FieldSpecifications>
     <BoundaryCondition  object="Node" fieldname="Velocity" setnames="yneg ypos" component="1" scale="0.0" fieldtype="Vector" />
     <BoundaryCondition  object="Node" fieldname="Velocity" setnames="zneg zpos" component="2" scale="0.0" fieldtype="Vector" />
   	
@@ -58,7 +58,7 @@
     <BoundaryCondition object="Face" fieldname="combinedFlowRate" setnames="source" scale="1.0"/>
     <!-- <BoundaryCondition object="Face" fieldname="ProppantVolumeFraction" setnames="source" scale="0.001" timetable="ttable2"/> -->
     <BoundaryCondition object="Face" fieldname="ProppantVolumeFraction" setnames="source" scale="1e-9" timetable="ttable2"/>
-	</BoundaryConditions>
+	</FieldSpecifications>
 	
 
 </Problem>

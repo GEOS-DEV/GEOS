@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -59,18 +59,9 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override final {}
-
   virtual void StateUpdatePointPressure(real64 const & pres,
                                         localIndex const k,
                                         localIndex const q) override final;
-
-  virtual void ProcessInputFile_PostProcess() override;
-
-  virtual void FinalInitializationPreSubGroups( ManagedGroup * const parent ) override final;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -78,6 +69,8 @@ public:
     dataRepository::ViewKey referencePressure = { "referencePressure" };
   } viewKeys;
 
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 
@@ -90,7 +83,7 @@ private:
   array2d<real64> m_poreVolumeMultiplier;
   array2d<real64> m_dPVMult_dPressure;
 
-  ExponentialRelation<localIndex, real64> m_poreVolumeRelation;
+  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
 inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const & pres,

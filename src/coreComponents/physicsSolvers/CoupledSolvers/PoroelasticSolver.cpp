@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -113,7 +113,7 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
 {
 }
 
-void PoroelasticSolver::ProcessInputFile_PostProcess()
+void PoroelasticSolver::PostProcessInput()
 {
   string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
 
@@ -132,7 +132,7 @@ void PoroelasticSolver::ProcessInputFile_PostProcess()
 
 }
 
-void PoroelasticSolver::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
+void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
 {
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
@@ -178,8 +178,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   NumericalMethodsManager const * const numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteElementSpaceManager const * const feSpaceManager =
-    numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * const feDiscretizationManager =
+    numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -230,8 +230,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
 
-    string const & numMethodName = elemRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
@@ -248,7 +247,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
         CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
 
         real64 volumetricStrain = 0.0;
-        localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points() ;
+        localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points() ;
         for( localIndex q=0 ; q<numQuadraturePoints; ++q )
         {
           R2Tensor dUdX;

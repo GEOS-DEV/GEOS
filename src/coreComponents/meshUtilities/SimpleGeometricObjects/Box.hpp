@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -41,10 +41,13 @@ public:
 
   static string CatalogName() { return "Box"; }
 
-  virtual void ProcessInputFile_PostProcess() override final;
-
   bool IsCoordInObject( const R1Tensor& coord ) const override final;
+
+protected:
+  virtual void PostProcessInput() override final;
+
 private:
+
   R1Tensor m_min;
   R1Tensor m_max;
   realT m_strikeAngle=0.0;

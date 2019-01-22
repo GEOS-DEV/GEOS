@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -62,7 +62,7 @@ Box::~Box()
 
 
 
-void Box::ProcessInputFile_PostProcess()
+void Box::PostProcessInput()
 {
   m_boxCenter = m_min;
   m_boxCenter += m_max;

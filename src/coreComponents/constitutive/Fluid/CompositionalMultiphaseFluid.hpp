@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -58,7 +58,6 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void ProcessInputFile_PostProcess() override;
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
@@ -81,6 +80,9 @@ public:
     ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
 
   } viewKeysCompositionalMultiphaseFluid;
+
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 

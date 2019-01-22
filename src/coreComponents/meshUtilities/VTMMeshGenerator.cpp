@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -91,7 +91,7 @@ void VTMMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 }
 
-void VTMMeshGenerator::ProcessInputFile_PostProcess()
+void VTMMeshGenerator::PostProcessInput()
 {
   m_fileName = this->getReference<string>(keys::filePath);
   m_vtmFile.Load(m_fileName, true, false);

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -182,7 +182,7 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
   arraySlice1d<real64> phaseRelPermCopy = relPermCopy->getReference<array3d<real64>>( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString )[0][0];
 
   // set the fluid state to current
-  relPerm->StateUpdatePointRelPerm(saturation, 0, 0);
+  relPerm->PointUpdate( saturation, 0, 0 );
 
   // update saturation and check derivatives
   auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat, NP, NP );
@@ -197,7 +197,7 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
     }
     satNew[jp] += dS;
 
-    relPermCopy->StateUpdatePointRelPerm( satNew, 0, 0 );
+    relPermCopy->PointUpdate( satNew, 0, 0 );
     string var = "phaseVolFrac[" + phases[jp] + "]";
 
     checkDerivative( phaseRelPermCopy, phaseRelPerm, dPhaseRelPerm_dS[jp], dS, relTol, "phaseRelPerm", var, phases );
@@ -226,7 +226,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 
-  relPerm->ProcessInputFile_PostProcess();
+  relPerm->PostProcessInputRecursive();
   return relPerm;
 }
 
@@ -238,7 +238,7 @@ TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
   RelativePermeabilityBase * fluid = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->FinalInitializationRecursive( parent.get() );
+  parent->InitializePostInitialConditions( parent.get() );
 
   // TODO test over a range of values
   array1d<real64> sat(4);

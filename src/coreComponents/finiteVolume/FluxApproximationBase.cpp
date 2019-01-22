@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,7 +23,7 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -66,17 +66,17 @@ void FluxApproximationBase::compute(DomainPartition * domain)
 {
   computeMainStencil(domain, getStencil());
 
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
-  bcManager->ApplyBoundaryCondition( 0.0,
-                                     domain,
-                                     "faceManager",
-                                     m_boundaryFieldName,
-                                     [&] ( BoundaryConditionBase const * bc,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * targetGroup,
-                                           string const & targetName) -> void
+  fsManager->Apply( 0.0,
+                    domain,
+                    "faceManager",
+                    m_boundaryFieldName,
+                    [&] ( FieldSpecificationBase const * bc,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * targetGroup,
+                    string const & targetName) -> void
   {
     ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
@@ -113,7 +113,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
   return this->hasView(setName);
 }
 
-void FluxApproximationBase::FinalInitializationPreSubGroups(ManagedGroup * const rootGroup)
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
 {
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   compute(domain);
