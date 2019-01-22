@@ -64,8 +64,8 @@
   </Constitutive>
 
 
-  <BoundaryConditions>
-    <Dirichlet name="v0"          
+  <FieldSpecifications>
+    <FieldSpecification name="v0"          
                component="0" 
                fieldName="Velocity"
                functionName="timeFunction"
@@ -73,27 +73,27 @@
                scale="1.0" 
                setNames="xneg"/>
                
-    <Dirichlet name="xconstraint" 
+    <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                component="0"  
                scale="0.0" 
                setNames="xpos"/>
                
-    <Dirichlet name="yconstraint" 
+    <FieldSpecification name="yconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                component="1"  
                scale="0.0" 
                setNames="yneg ypos"/>
                
-    <Dirichlet name="zconstraint" 
+    <FieldSpecification name="zconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
                component="2"  
                scale="0.0" 
                setNames="zneg zpos"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>
