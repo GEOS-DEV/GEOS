@@ -45,7 +45,7 @@ public:
   virtual void ExpandObjectCatalogs() override;
 
 private:
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
+  // virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
 
 };
 
