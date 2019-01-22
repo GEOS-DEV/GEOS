@@ -538,7 +538,7 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   m_functionManager->GenerateDataStructureSkeleton(0);
   SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode);
 
-  BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * bcManager = FieldSpecificationManager::get();
   bcManager->GenerateDataStructureSkeleton(0);
   SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode);
 
