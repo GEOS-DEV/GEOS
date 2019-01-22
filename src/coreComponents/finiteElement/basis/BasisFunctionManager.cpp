@@ -38,9 +38,8 @@ BasisFunctionManager::~BasisFunctionManager()
 
 ManagedGroup * BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
-  this->RegisterViewWrapper( childName, std::move(basis) )->setRestartFlags(RestartFlags::NO_WRITE);
-  return nullptr;
+  std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup<BasisBase>( childName, std::move(basis) );
 }
 
 
@@ -54,6 +53,7 @@ void BasisFunctionManager::ExpandObjectCatalogs()
 }
 
 
+/*
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:
 void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
@@ -68,7 +68,7 @@ void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetN
     }
   }
 }
-
+*/
 
 
 } /* namespace geosx */

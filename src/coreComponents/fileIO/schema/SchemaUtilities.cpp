@@ -106,7 +106,7 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent)
 {
   // Get schema details
-  SchemaFlags schemaType = group->getSchemaFlags();
+  InputFlags schemaType = group->getInputFlags();
   
   if (schemaType != InputFlags::INVALID)
   {

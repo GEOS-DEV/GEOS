@@ -21,6 +21,14 @@
 namespace geosx
 {
 
+
+BasisBase::BasisBase( std::string const & name,
+                      ManagedGroup * const parent ):
+  ManagedGroup(name, parent)
+{
+}
+
+
 BasisBase::~BasisBase()
 {
 

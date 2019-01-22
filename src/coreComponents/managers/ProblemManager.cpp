@@ -107,7 +107,7 @@ ProblemManager::ProblemManager( const std::string& name,
   ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
 
-  setInputFlags(SchemaFlags::REQUIRED);
+  setInputFlags(InputFlags::REQUIRED);
 
   // Mandatory groups that read from the xml
   //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
