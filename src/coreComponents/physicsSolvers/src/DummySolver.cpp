@@ -19,6 +19,7 @@
 
 #include "DummySolver.hpp"
 #include "dataRepository/ManagedGroup.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 #include <thread>
 #include <chrono>
 
@@ -50,10 +51,7 @@ DummySolver::~DummySolver()
 
 void DummySolver::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  integer rank = 0;
-  #ifdef GEOSX_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  #endif
+  integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
   std::srand(rank * 12345);
 }
 
@@ -70,8 +68,7 @@ real64 DummySolver::SolverStep( real64 const& time_n,
 
 real64 DummySolver::GetTimestepRequest(real64 const time)
 {
-  integer rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
 
   real64 const rand_scale = this->getReference<real64>(dummyViewKeys.rand_scale);
   real64 dt_request = std::rand() * rand_scale;

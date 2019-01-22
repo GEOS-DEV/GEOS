@@ -22,6 +22,7 @@
 
 #include "SinglePhaseFlow.hpp"
 
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -29,7 +30,6 @@
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -779,7 +779,7 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                                   BlockIDs::fluidPressureBlock );
     Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-    GEOS_LOG_RANK( "After SinglePhaseFlow::ApplyBoundaryCondition" );
+    GEOS_LOG_RANK( "After SinglePhaseFlow::ApplyBoundaryConditions" );
     GEOS_LOG_RANK( "\nJacobian\n" << *jacobian );
     GEOS_LOG_RANK( "\nResidual\n" << *residual );
   }
@@ -790,16 +790,16 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                  real64 const time_n, real64 const dt,
                                                  EpetraBlockSystem * const blockSystem )
 {
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
-  // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
+  // call the BoundaryConditionManager::ApplyField function that will check to see
   // if the boundary condition should be applied to this subregion
-  bcManager->ApplyBoundaryCondition( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-                                     [&]( BoundaryConditionBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & lset,
-                                          ManagedGroup * subRegion,
-                                          string const & ) -> void
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    ManagedGroup * subRegion,
+                    string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
@@ -811,13 +811,13 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
     dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
 
     // call the application of the boundary condition to alter the matrix and rhs
-    bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
-                                                 time_n + dt,
-                                                 subRegion,
-                                                 dofNumber,
-                                                 1,
-                                                 blockSystem,
-                                                 BlockIDs::fluidPressureBlock,
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( lset,
+                                                                 time_n + dt,
+                                                                 subRegion,
+                                                                 dofNumber,
+                                                                 1,
+                                                                 blockSystem,
+                                                                 BlockIDs::fluidPressureBlock,
     [&] (localIndex const a) -> real64
     {
       return pres[a] + dPres[a];
@@ -829,7 +829,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                                     real64 const time_n, real64 const dt,
                                                     EpetraBlockSystem * const blockSystem)
 {
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager * const faceManager = mesh->getFaceManager();
@@ -875,31 +875,31 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   dataRepository::ManagedGroup const * sets = faceManager->sets();
 
   // first, evaluate BC to get primary field values (pressure)
-//  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::facePressure, time + dt);
-  bcManager->ApplyBoundaryCondition( time_n + dt,
-                                     domain,
-                                     "faceManager",
-                                     viewKeyStruct::facePressureString,
-                                     [&] ( BoundaryConditionBase const * const bc,
-                                           string const &,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * const targetGroup,
-                                           string const fieldName )
+//  fsManager->ApplyField(faceManager, viewKeyStruct::facePressure, time + dt);
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "faceManager",
+                    viewKeyStruct::facePressureString,
+                    [&] ( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const targetGroup,
+                    string const fieldName )
   {
-    bc->ApplyBoundaryConditionToField<BcEqual>(targetSet,time_n + dt, targetGroup, fieldName);
+    fs->ApplyFieldValue<FieldSpecificationEqual>(targetSet,time_n + dt, targetGroup, fieldName);
   });
 
 
   // call constitutive models to get dependent quantities needed for flux (density, viscosity)
-  bcManager->ApplyBoundaryCondition(time_n + dt,
-                                    domain,
-                                    "faceManager",
-                                    viewKeyStruct::facePressureString,
-                                    [&] ( BoundaryConditionBase const * bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          ManagedGroup * const,
-                                          string const & ) -> void
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "faceManager",
+                    viewKeyStruct::facePressureString,
+                    [&] ( FieldSpecificationBase const * bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * const,
+                    string const & ) -> void
   {
     for (auto kf : targetSet)
     {
@@ -925,15 +925,15 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   real64 densWeight[numElems] = { 0.5, 0.5 };
 
-  bcManager->ApplyBoundaryCondition( time_n + dt,
-                                     domain,
-                                     "faceManager",
-                                     viewKeyStruct::facePressureString,
-                                     [&]( BoundaryConditionBase const * bc,
-                                         string const & setName,
-                                         set<localIndex> const &,
-                                         ManagedGroup * const,
-                                         string const & )
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "faceManager",
+                    viewKeyStruct::facePressureString,
+                    [&]( FieldSpecificationBase const * bc,
+                    string const & setName,
+                    set<localIndex> const &,
+                    ManagedGroup * const,
+                    string const & )
   {
     if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
       return;

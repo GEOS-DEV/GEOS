@@ -22,7 +22,40 @@
   
   <Mesh>
       <PAMELAMeshGenerator name="CubeHex"
-          file="cube_10x10x10_hex.msh"/>
+        file="cube_10x10x10_hex.msh">
+        <Property name="permx"                
+                  path="all"                        
+                  component="0"
+                  fieldName="permeability" 
+                  source="XML"
+                  value="2.0e-16"/>
+
+        <Property name="permy"
+                  path="all"                        
+                  component="1"
+                  fieldName="permeability" 
+                  source="XML"
+                  value="2.0e-16"/>
+
+        <Property name="permz"
+                  path="all"                        
+                  component="2"
+                  fieldName="permeability" 
+                  source="XML"
+                  value="2.0e-16"/>
+
+        <Property name="poro"
+                  path="all"                        
+                  fieldName="referencePorosity" 
+                  source="PAMELA"
+                  nameInPAMELA="poro"/>
+
+        <Property name="initialPressure"
+                  path="all"                        
+                  fieldName="pressure" 
+                  source="TXT"
+                  filePath="allPressures.txt"/>
+      </PAMELAMeshGenerator>
   </Mesh>
 
   <Geometry>
@@ -84,50 +117,13 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
-    <Dirichlet name="permx"
-               component="0"
-               initialCondition="1"  
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_HEX"
-               fieldName="permeability"
-               scale="2.0e-14"/>
-
-    <Dirichlet name="permy"
-               component="1"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_HEX"
-               fieldName="permeability"
-               scale="2.0e-14"/>
-
-    <Dirichlet name="permz"
-               component="2"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_HEX"
-               fieldName="permeability"
-               scale="2.0e-14"/>
-
-    <Dirichlet name="referencePorosity"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_HEX"
-               fieldName="referencePorosity"
-               scale="0.05"/>
-
-    <Dirichlet name="initialPressure"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_HEX"
-               fieldName="pressure"
-               scale="1e3"/>
-    <Dirichlet name="boundaryPressure"
+  <FieldSpecifications>
+    <FieldSpecification name="boundaryPressure"
                objectPath="faceManager"
                fieldName="facePressure"
                scale="1.1e3"
                setNames="left"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
 

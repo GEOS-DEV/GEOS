@@ -35,18 +35,19 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   : ConstitutiveBase( name, parent ),
     m_useMass( false )
 {
-  ConstitutiveBase::PostProcessInput();
+  // We make base inputs optional here, since derived classes may want to predefine/hardcode
+  // components/phases. Models that do need these inputs should change input flags accordingly.
 
   RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
-    setInputFlag(InputFlags::REQUIRED)->
+    setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of component names");
 
   RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false )->
-    setInputFlag(InputFlags::REQUIRED)->
+    setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Component molar weights");
 
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
-    setInputFlag(InputFlags::REQUIRED)->
+    setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of fluid phases");
 
   RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);

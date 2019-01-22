@@ -16,13 +16,13 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "BoundaryConditionBase.hpp"
+#include "FieldSpecificationBase.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup * parent ):
+FieldSpecificationBase::FieldSpecificationBase( string const & name, ManagedGroup * parent ):
   ManagedGroup( name, parent )
 //  m_setNames(),
 //  m_objectPath(),
@@ -92,19 +92,20 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
 }
 
 
-BoundaryConditionBase::~BoundaryConditionBase()
+FieldSpecificationBase::~FieldSpecificationBase()
 {}
 
-BoundaryConditionBase::CatalogInterface::CatalogType&
-BoundaryConditionBase::GetCatalog()
+FieldSpecificationBase::CatalogInterface::CatalogType&
+FieldSpecificationBase::GetCatalog()
 {
-  static BoundaryConditionBase::CatalogInterface::CatalogType catalog;
+  static FieldSpecificationBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-void BoundaryConditionBase::PostProcessInput()
+void FieldSpecificationBase::PostProcessInput()
 {}
 
 
+REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, ManagedGroup * const )
 
 }

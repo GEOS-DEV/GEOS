@@ -72,11 +72,11 @@
 
   <Constitutive>
     <BlackOilFluid name="fluid1"
-                   fluidType="LiveOil"
+                   fluidType="DeadOil"
                    phaseNames="oil gas water"
                    surfaceDensities="800.0 0.9907 1022.0"
                    componentMolarWeight="114e-3 16e-3 18e-3"
-                   tableFiles="pvto.txt pvtg.txt pvtw.txt"/>
+                   tableFiles="pvdo.txt pvdg.txt pvtw.txt"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"

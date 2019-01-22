@@ -141,7 +141,7 @@
     <PenaltyCoulomb stressYield="100 GPa" normalApproachYield="4.99e-3" aperture="5e-3" />
   </Contact>
 
-  <BoundaryConditions>
+  <FieldSpecifications>
     <BoundaryCondition component="0" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="xneg xpos"/>
     <BoundaryCondition component="1" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="yneg ypos"/>
     <BoundaryCondition component="2" fieldname="Displacement" fieldtype="Vector" object="Node" scale="0.0" setnames="zneg zpos"/>
@@ -153,7 +153,7 @@
     <BoundaryConditionFunction endTime="$:waitTime" fieldname="Pressure" function="Pf_Table" object="Face" setnames="perf frac_A frac_B" variableTypes="Vector" variables="FaceCenter"/>
     <!-- <BoundaryCondition startTime="$:waitTime" fieldname="combinedFlowRate" object="Face" scale="$:Q" setnames="source" timetable="injectionRate"/> -->
     <BoundaryCondition startTime="$:waitTime" fieldname="Pressure" object="Face" scale="1" setnames="source" timetable="pressurizationRamp"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <InitialConstitutiveValues>
     <InitialConstitutiveValue object="FiniteElement_ElementRegion" propertytype="Density" tablename="rhoTable" toregion="Region"/>
