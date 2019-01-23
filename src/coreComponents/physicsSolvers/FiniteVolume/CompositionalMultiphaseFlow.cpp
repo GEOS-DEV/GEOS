@@ -76,14 +76,11 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
 
   this->RegisterViewWrapper( viewKeyStruct::capPressureNameString,  &m_capPressureName,  false )->
-    setApplyDefaultValue(zeroCapillaryPressureName)->
+    setApplyDefaultValue("")->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the capillary pressure constitutive model to use");
 
-  if ( m_capPressureName.compare( zeroCapillaryPressureName ) )
-  {
-    this->RegisterViewWrapper( viewKeyStruct::capPressureIndexString, &m_capPressureIndex, false );
-  }
+  this->RegisterViewWrapper( viewKeyStruct::capPressureIndexString, &m_capPressureIndex, false );
 }
 
 localIndex CompositionalMultiphaseFlow::numFluidComponents() const
@@ -96,6 +93,16 @@ localIndex CompositionalMultiphaseFlow::numFluidPhases() const
   return m_numPhases;
 }
 
+void CompositionalMultiphaseFlow::PostProcessInput()
+{
+  FlowSolverBase::PostProcessInput();
+
+  if (!m_capPressureName.empty())
+  {
+    m_capPressureFlag = 1;
+  }
+}
+  
 void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
 {
   FlowSolverBase::RegisterDataOnMesh(MeshBodies);
@@ -136,7 +143,7 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
     faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseRelativePermeabilityString);
     faceManager->RegisterViewWrapper<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString);
 
-    if ( m_capPressureName.compare( zeroCapillaryPressureName ) )
+    if (m_capPressureFlag)
     {
       faceManager->RegisterViewWrapper<array2d<real64>>(viewKeyStruct::phaseCapillaryPressureString);
     }
@@ -160,11 +167,10 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
   m_relPermIndex = relPerm->getIndexInParent();
 
   CapillaryPressureBase const * capPressure = cm->GetConstitituveRelation<CapillaryPressureBase>( m_capPressureName );
-  if ( m_capPressureName.compare( zeroCapillaryPressureName ) )
+  if (m_capPressureFlag)
   {
     GEOS_ERROR_IF( capPressure == nullptr, "Capillary pressure model " + m_capPressureName + " not found" );
     m_capPressureIndex = capPressure->getIndexInParent();
-    m_capPressureFlag = 1;
   }
     
   // Consistency check between the models
