@@ -44,9 +44,6 @@ public:
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 
-private:
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
-
 };
 
 } /* namespace geosx */

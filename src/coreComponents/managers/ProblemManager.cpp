@@ -598,14 +598,14 @@ void ProblemManager::ParseInputFile()
     GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
-  xmlProblemNode = xmlDocument.child("Problem");
+  xmlProblemNode = xmlDocument.child(this->getName().c_str());
 
   ProcessInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
   {
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child(constitutiveManager->getName().c_str());
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
     constitutiveManager->PostProcessInputRecursive();
 
@@ -613,8 +613,8 @@ void ProblemManager::ParseInputFile()
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
     meshManager->GenerateMeshLevels(domain);
 
-    topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+    topLevelNode = xmlProblemNode.child(elementManager->getName().c_str());
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
   }
