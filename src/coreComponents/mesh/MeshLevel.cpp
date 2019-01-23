@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -60,22 +60,7 @@ MeshLevel::MeshLevel( string const & name,
 }
 
 MeshLevel::~MeshLevel()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
-
-void MeshLevel::InitializePostSubGroups( ManagedGroup * const )
-{
-
-  m_elementManager.forCellBlocks([&]( CellBlockSubRegion * subRegion ) -> void
-  {
-    subRegion->nodeList().SetRelatedObject(&m_nodeManager);
-    subRegion->faceList().SetRelatedObject(&m_faceManager);
-  });
-
-}
+{}
 
 
 void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,

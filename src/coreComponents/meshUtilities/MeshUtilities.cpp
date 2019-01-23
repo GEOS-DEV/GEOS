@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -49,11 +49,11 @@ MeshUtilities::~MeshUtilities()
 
 
 void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geometries,
-                                      dataRepository::ManagedGroup * nodeManager )
+                                      ObjectManagerBase * const nodeManager )
 {
 
   array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
-  ManagedGroup * sets = nodeManager->GetGroup(keys::sets);
+  ManagedGroup * sets = nodeManager->sets();
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
   {

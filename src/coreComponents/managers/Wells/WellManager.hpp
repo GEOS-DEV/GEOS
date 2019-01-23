@@ -50,7 +50,7 @@ public:
   WellManager( WellManager const &) = delete;
   WellManager( WellManager && ) = delete;
 
-  void CreateChild( string const & childKey, string const & childName ) override;
+  dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   WellBase * getWell( string const & name );
 

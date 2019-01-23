@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -94,10 +94,6 @@ public:
   using FaceStencil = StencilCollection<PointDescriptor, real64>;
   using WellStencil = StencilCollection<PointDescriptor, real64>;
 
-  void FillDocumentationNode() override;
-
-  void FinalInitializationPreSubGroups(ManagedGroup * const rootGroup) override;
-
   FluxApproximationBase() = delete;
 
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
@@ -157,6 +153,10 @@ public:
     dataRepository::ViewKey wellStencils = { wellStencilsString };
 
   } groupKeysFABase;
+
+protected:
+
+  void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeCellStencil(DomainPartition const * domain,

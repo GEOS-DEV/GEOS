@@ -14,7 +14,8 @@
                                  solidName="rock"
                                  relPermName="relperm"
                                  temperature="297.15"
-                                 useMass="0">
+                                 useMass="0"
+                                 targetRegions="Region2">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -39,21 +40,17 @@
   </Mesh>
 
   <Geometry>
-    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
+    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
+    <Box name="sink"   xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
   </Geometry>
 
 
   <Events maxTime="1e7">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
+
     <PeriodicEvent name="solverApplications"
                    forceDt="1e5"
                    target="/Solvers/compflow" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    timeFrequency="1e5"
                    targetExactTimestep="1"
@@ -61,18 +58,6 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3 name="linearBasis"  degree = "1"  />
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3 name="gaussian"   degree="2"  />
-    </QuadratureRules>
-
-    <FiniteElements>
-      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
-    </FiniteElements>
-
     <FiniteVolume>
       <TwoPointFluxApproximation name="fluidTPFA"
                                  fieldName="pressure"
@@ -81,7 +66,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="fluid1" materialList="fluid1 rock relperm" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="fluid1 rock relperm" />
   </ElementRegions>
 
   <Constitutive>
@@ -114,177 +99,158 @@
     
   </InitialConditions>
 
-  <BoundaryConditions>
-    <Dirichlet name="permx"
+  <FieldSpecifications>
+    <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permy"
+    <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
-    <Dirichlet name="permz"
+    <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="2.0e-16"/>
 
-    <Dirichlet name="referencePorosity"
+    <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.05"/>
 
     <!-- Initial pressure: ~5 bar -->
 
-    <Dirichlet name="initialPressure"
+    <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="5e6"/>
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
 
-    <Dirichlet name="initialComposition_N2"
+    <FieldSpecification name="initialComposition_N2"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
-               dataType="real64"
                scale="0.099"/>
 
-    <Dirichlet name="initialComposition_C10"
+    <FieldSpecification name="initialComposition_C10"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               dataType="real64"
                scale="0.3"/>
 
-    <Dirichlet name="initialComposition_C20"
+    <FieldSpecification name="initialComposition_C20"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               dataType="real64"
                scale="0.6"/>
 
-    <Dirichlet name="initialComposition_H20"
+    <FieldSpecification name="initialComposition_H20"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="3"
-               dataType="real64"
                scale="0.001"/>
 
     <!-- Injection pressure: ~10 bar -->
 
-    <Dirichlet name="sourceTermPressure"
+    <FieldSpecification name="sourceTermPressure"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="Scalar"
                scale="1e7"
                setNames="source"/>
 
     <!-- Injection stream: mostly water -->
 
-    <Dirichlet name="sourceTermComposition_N2"
+    <FieldSpecification name="sourceTermComposition_N2"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
-               dataType="real64"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_C10"
+    <FieldSpecification name="sourceTermComposition_C10"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               dataType="real64"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_C20"
+    <FieldSpecification name="sourceTermComposition_C20"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               dataType="real64"
                scale="0.1"/>
 
-    <Dirichlet name="sourceTermComposition_H20"
+    <FieldSpecification name="sourceTermComposition_H20"
                setNames="source"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="3"
-               dataType="real64"
                scale="0.7"/>
 
     <!-- Production pressure: ~1 bar, close to stock tank conditions -->
 
-    <Dirichlet name="sinkTerm"
+    <FieldSpecification name="sinkTerm"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="pressure"
-               dataType="Scalar"
                scale="1e5"
                setNames="sink"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
 
-    <Dirichlet name="sinkTermComposition_N2"
+    <FieldSpecification name="sinkTermComposition_N2"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
-               dataType="real64"
                scale="0.099"/>
 
-    <Dirichlet name="sinkTermComposition_C10"
+    <FieldSpecification name="sinkTermComposition_C10"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               dataType="real64"
                scale="0.3"/>
 
-    <Dirichlet name="sinkTermComposition_C20"
+    <FieldSpecification name="sinkTermComposition_C20"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               dataType="real64"
                scale="0.6"/>
 
-    <Dirichlet name="sinkTermComposition_H20"
+    <FieldSpecification name="sinkTermComposition_H20"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="globalCompFraction"
                component="3"
-               dataType="real64"
                scale="0.001"/>
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
 

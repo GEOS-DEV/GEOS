@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -37,14 +37,6 @@ public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~CellBlockSubRegion() override;
 
-  void FillDocumentationNode() override final;
-
-  void ReadXML_PostProcess() override;
-
-  void InitializePreSubGroups( ManagedGroup * const ) override final;
-
-  void InitializePostSubGroups( ManagedGroup * const ) override final;
-
   void CopyFromCellBlock( CellBlock const * source );
 
   template< typename LAMBDA >
@@ -73,7 +65,7 @@ public:
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList ) override;
 
-  virtual void FixUpDownMaps() override final;
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
@@ -113,7 +105,7 @@ public:
   // TODO this needs to be stored by the FiniteElementManager!!
   std::pair< array2d< localIndex >, array2d< localIndex > > m_constitutiveMapView;
 
-  LvArray::Array< R1Tensor, 3 > m_dNdX;
+  array3d< R1Tensor > m_dNdX;
 
   dataRepository::ManagedGroup const * GetConstitutiveModels() const
   { return &m_constitutiveModels; }

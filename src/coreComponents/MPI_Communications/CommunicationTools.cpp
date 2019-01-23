@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -50,15 +50,19 @@ CommunicationTools::~CommunicationTools()
 
 int CommunicationTools::MPI_Size( MPI_Comm const & comm )
 {
-  int size;
+  int size = 1;
+#ifdef GEOSX_USE_MPI
   MPI_Comm_size( comm, &size );
+#endif
   return size;
 }
 
 int CommunicationTools::MPI_Rank( MPI_Comm const & comm )
 {
-  int rank;
+  int rank = 1;
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank( comm, &rank );
+#endif
   return rank;
 }
 
@@ -545,6 +549,20 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
   {
     neighbor.RebuildSyncLists( meshLevel, commID );
   }
+
+  meshLevel->getNodeManager()->FixUpDownMaps(true);
+  meshLevel->getEdgeManager()->FixUpDownMaps(true);
+  meshLevel->getFaceManager()->FixUpDownMaps(true);
+  for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
+  {
+    ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
+      subRegion->FixUpDownMaps(true);
+    }
+  }
+
 
   CommunicationTools::releaseCommID( commID );
 }

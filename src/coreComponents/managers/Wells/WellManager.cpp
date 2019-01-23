@@ -42,11 +42,11 @@ WellManager::~WellManager()
 
 }
 
-void WellManager::CreateChild(string const & childKey, string const & childName)
+ManagedGroup * WellManager::CreateChild(string const & childKey, string const & childName)
 {
   std::cout << "Adding Well: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<WellBase> well = WellBase::CatalogInterface::Factory( childKey, childName, this );
-  WellBase * newWell = this->RegisterGroup<WellBase>( childName, std::move( well ) );
+  return RegisterGroup<WellBase>( childName, std::move( well ) );
 }
 
 WellBase * WellManager::getWell(string const & name)

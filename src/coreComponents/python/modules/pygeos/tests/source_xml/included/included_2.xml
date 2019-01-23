@@ -40,8 +40,8 @@
 	      />
 
 
-	<BoundaryConditions>
-	</BoundaryConditions>
+	<FieldSpecifications>
+	</FieldSpecifications>
 	
 
 </Problem>

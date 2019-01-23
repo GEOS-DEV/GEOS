@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -18,9 +18,6 @@
 
 /**
  * @file EpetraVector.hpp
- *  Created on: Jul 24, 2018
- *  Author: Matthias Cremon
- *
  */
 
 #ifndef LAI_EPETRAVECTOR_HPP_

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -85,45 +85,145 @@ class MultiFluidBase : public ConstitutiveBase
 {
 public:
 
-  // define a limit on number of components
-  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
-  static constexpr localIndex MAX_NUM_PHASES = 4;
-
   MultiFluidBase( std::string const & name, ManagedGroup * const parent );
 
   virtual ~MultiFluidBase() override;
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
-
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override {}
+  // *** MultiFluid-specific interface
 
-  // *** MultiphaseFluid-specific interface
+  /**
+   * @brief Maximum supported number of fluid components (species)
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
 
-  virtual void StateUpdatePointMultiFluid( real64 const & pres,
-                                           real64 const & temp,
-                                           arraySlice1d<real64 const> const & composition,
-                                           localIndex const k,
-                                           localIndex const q ) {}
+  /**
+   * @brief Maximum supported number of fluid phases
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  static constexpr localIndex MAX_NUM_PHASES = 4;
 
+  /**
+   * @brief Perform a single point constitutive update.
+   * @param[in] pressure target pressure value
+   * @param[in] temperature target temperature value
+   * @param[in] composition target fluid composition array
+   * @param[in] k first constitutive index (e.g. elem index)
+   * @param[in] q second constitutive index (e.g. quadrature index)
+   *
+   * @note This function should generally not be called from a kernel, use BatchUpdate instead
+   */
+  virtual void PointUpdate( real64 const & pressure,
+                            real64 const & temperature,
+                            arraySlice1d<real64 const> const & composition,
+                            localIndex const k,
+                            localIndex const q ) = 0;
+
+  /**
+   * @brief Perform a batch constitutive update (all points).
+   * @param[in] pressure array containing target pressure values
+   * @param[in] temperature array containing target temperature values
+   * @param[in] composition 2D array containing target fluid composition values
+   */
+  virtual void BatchUpdate( arrayView1d<real64 const> const & pressure,
+                            arrayView1d<real64 const> const & temperature,
+                            arrayView2d<real64 const> const & composition ) = 0;
+
+  /**
+   * @brief Compute constitutive values at a single point.
+   * @param[in]  pressure target pressure value
+   * @param[in]  temperature target temperature value
+   * @param[in]  composition target fluid composition array
+   * @param[out] phaseFraction phase fractions
+   * @param[out] dPhaseFraction_dPressure derivatives of phase fractions w.r.t. pressure
+   * @param[out] dPhaseFraction_dTemperature derivatives of phase fractions w.r.t. temperature
+   * @param[out] dPhaseFraction_dGlobalCompFraction derivatives of phase fractions w.r.t. composition
+   * @param[out] phaseDensity phase densitites
+   * @param[out] dPhaseDensity_dPressure derivatives of phase densitites w.r.t. pressure
+   * @param[out] dPhaseDensity_dTemperature derivatives of phase densitites w.r.t. temperature
+   * @param[out] dPhaseDensity_dGlobalCompFraction derivatives of phase densitites w.r.t. composition
+   * @param[out] phaseViscosity phase viscosities
+   * @param[out] dPhaseViscosity_dPressure derivatives of phase viscosities w.r.t. pressure
+   * @param[out] dPhaseViscosity_dTemperature derivatives of phase viscosities w.r.t. temperature
+   * @param[out] dPhaseViscosity_dGlobalCompFraction derivatives of phase viscosities w.r.t. composition
+   * @param[out] phaseCompFraction phase compositions
+   * @param[out] dPhaseCompFraction_dPressure derivatives of phase compositions w.r.t. pressure
+   * @param[out] dPhaseCompFraction_dTemperature derivatives of phase compositions w.r.t. temperature
+   * @param[out] dPhaseCompFraction_dGlobalCompFraction derivatives of phase compositions w.r.t. composition
+   * @param[out] totalDensity total fluid mixture density
+   * @param[out] dTotalDensity_dPressure derivatives of total density w.r.t. pressure
+   * @param[out] dTotalDensity_dTemperature derivatives of total density w.r.t. temperature
+   * @param[out] dTotalDensity_dGlobalCompFraction derivatives of total density w.r.t. composition
+   *
+   * @note This function should only be called in extremely rare cases, when constitutive state
+   * needs to be evaluated at a point where constitutive model does not have storage allocated.
+   * It should not be called from kernels since it is virtual.
+   */
+  virtual void Compute( real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d<real64 const> const & composition,
+                        arraySlice1d<real64> const & phaseFraction,
+                        arraySlice1d<real64> const & dPhaseFraction_dPressure,
+                        arraySlice1d<real64> const & dPhaseFraction_dTemperature,
+                        arraySlice2d<real64> const & dPhaseFraction_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseDensity,
+                        arraySlice1d<real64> const & dPhaseDensity_dPressure,
+                        arraySlice1d<real64> const & dPhaseDensity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseDensity_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseViscosity,
+                        arraySlice1d<real64> const & dPhaseViscosity_dPressure,
+                        arraySlice1d<real64> const & dPhaseViscosity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseViscosity_dGlobalCompFraction,
+                        arraySlice2d<real64> const & phaseCompFraction,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dPressure,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dTemperature,
+                        arraySlice3d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
+                        real64 & totalDensity,
+                        real64 & dTotalDensity_dPressure,
+                        real64 & dTotalDensity_dTemperature,
+                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction ) const = 0;
+
+  /**
+   * @return number of fluid components (species) in the model
+   */
   localIndex numFluidComponents() const;
 
+  /**
+   * @param ic component index
+   * @return name of ic-th fluid component
+   */
   string const & componentName( localIndex ic ) const;
 
+  /**
+   * @return number of fluid phases in the model
+   */
   localIndex numFluidPhases() const;
 
+  /**
+   * @param ip phase index
+   * @return name of ip-th fluid phase
+   */
   string const & phaseName( localIndex ip ) const;
 
+  /**
+   * @brief Get the mass flag.
+   * @return boolean value indicating whether the model is using mass-based quantities (as opposed to mole-based)
+   */
   bool getMassFlag() const;
 
-  void setMassFlag(bool flag);
+  /**
+   * @brief Set the mass flag.
+   * @param flag boolean value indicating whether the model should use mass-based quantities (as opposed to mole-based)
+   *
+   * @note This affects both input (compositions) and output quantities. The flag should be set prior to calling
+   * any compute or state update methods.
+   */
+  void setMassFlag( bool flag );
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -192,6 +292,29 @@ public:
   } viewKeysMultiFluidBase;
 
 protected:
+  virtual void PostProcessInput() override;
+
+  /**
+   * @brief Function to batch process constitutive updates via a kernel launch.
+   * @tparam LEAFCLASS The derived class that provides the functions for usein the kernel
+   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
+   * @param pressure array containing the pressure values
+   * @param temperature array containing the temperature values
+   * @param composition array containing the fluid composition
+   * @param args arbitrary number of arbitrary types that are passed to the kernel
+   */
+  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  void BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
+                          arrayView1d<real64 const> const & temperature,
+                          arrayView2d<real64 const> const & composition,
+                          ARGS && ... args );
+
+  /**
+   * @brief Function called internally to resize member arrays
+   * @param size primary dimension (e.g. number of cells)
+   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   */
+  void ResizeFields( localIndex const size, localIndex const numPts );
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   bool m_useMass;
@@ -228,6 +351,82 @@ protected:
   array3d<real64> m_dTotalDensity_dGlobalCompFraction;
 
 };
+
+template<typename LEAFCLASS, typename POLICY, typename ... ARGS>
+void MultiFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
+                                        arrayView1d<real64 const> const & temperature,
+                                        arrayView2d<real64 const> const & composition,
+                                        ARGS && ... args )
+{
+  localIndex const numElem = m_phaseDensity.size(0);
+  localIndex const numQ    = m_phaseDensity.size(1);
+
+  localIndex const NC = numFluidComponents();
+  localIndex const NP = numFluidPhases();
+  bool const useMass = m_useMass;
+
+  arrayView1d<string const> const & phaseNames = m_phaseNames;
+  arrayView1d<real64 const> const & componentMolarWeight = m_componentMolarWeight;
+
+  arrayView3d<real64> const & phaseFraction = m_phaseFraction;
+  arrayView3d<real64> const & dPhaseFraction_dPressure = m_dPhaseFraction_dPressure;
+  arrayView3d<real64> const & dPhaseFraction_dTemperature = m_dPhaseFraction_dTemperature;
+  arrayView4d<real64> const & dPhaseFraction_dGlobalCompFraction = m_dPhaseFraction_dGlobalCompFraction;
+
+  arrayView3d<real64> const & phaseDensity = m_phaseDensity;
+  arrayView3d<real64> const & dPhaseDensity_dPressure = m_dPhaseDensity_dPressure;
+  arrayView3d<real64> const & dPhaseDensity_dTemperature = m_dPhaseDensity_dTemperature;
+  arrayView4d<real64> const & dPhaseDensity_dGlobalCompFraction = m_dPhaseDensity_dGlobalCompFraction;
+
+  arrayView3d<real64> const & phaseViscosity = m_phaseViscosity;
+  arrayView3d<real64> const & dPhaseViscosity_dPressure = m_dPhaseViscosity_dPressure;
+  arrayView3d<real64> const & dPhaseViscosity_dTemperature = m_dPhaseViscosity_dTemperature;
+  arrayView4d<real64> const & dPhaseViscosity_dGlobalCompFraction = m_dPhaseViscosity_dGlobalCompFraction;
+
+  arrayView4d<real64> const & phaseCompFraction = m_phaseCompFraction;
+  arrayView4d<real64> const & dPhaseCompFraction_dPressure = m_dPhaseCompFraction_dPressure;
+  arrayView4d<real64> const & dPhaseCompFraction_dTemperature = m_dPhaseCompFraction_dTemperature;
+  arrayView5d<real64> const & dPhaseCompFraction_dGlobalCompFraction = m_dPhaseCompFraction_dGlobalCompFraction;
+
+  arrayView2d<real64> const & totalDensity = m_totalDensity;
+  arrayView2d<real64> const & dTotalDensity_dPressure = m_dTotalDensity_dPressure;
+  arrayView2d<real64> const & dTotalDensity_dTemperature = m_dTotalDensity_dTemperature;
+  arrayView3d<real64> const & dTotalDensity_dGlobalCompFraction = m_dTotalDensity_dGlobalCompFraction;
+
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  {
+    for (localIndex q = 0; q < numQ; ++q)
+    {
+      LEAFCLASS::Compute( NC, NP, useMass,
+                          phaseNames,
+                          componentMolarWeight,
+                          pressure[k],
+                          temperature[k],
+                          composition[k],
+                          phaseFraction[k][q],
+                          dPhaseFraction_dPressure[k][q],
+                          dPhaseFraction_dTemperature[k][q],
+                          dPhaseFraction_dGlobalCompFraction[k][q],
+                          phaseDensity[k][q],
+                          dPhaseDensity_dPressure[k][q],
+                          dPhaseDensity_dTemperature[k][q],
+                          dPhaseDensity_dGlobalCompFraction[k][q],
+                          phaseViscosity[k][q],
+                          dPhaseViscosity_dPressure[k][q],
+                          dPhaseViscosity_dTemperature[k][q],
+                          dPhaseViscosity_dGlobalCompFraction[k][q],
+                          phaseCompFraction[k][q],
+                          dPhaseCompFraction_dPressure[k][q],
+                          dPhaseCompFraction_dTemperature[k][q],
+                          dPhaseCompFraction_dGlobalCompFraction[k][q],
+                          totalDensity[k][q],
+                          dTotalDensity_dPressure[k][q],
+                          dTotalDensity_dTemperature[k][q],
+                          dTotalDensity_dGlobalCompFraction[k][q],
+                          args... );
+    }
+  });
+}
 
 } //namespace constitutive
 

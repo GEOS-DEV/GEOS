@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -21,7 +21,6 @@
   */
 
 #include "SoloEvent.hpp"
-#include "DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -32,62 +31,24 @@ using namespace dataRepository;
 SoloEvent::SoloEvent( const std::string& name,
                               ManagedGroup * const parent ):
   EventBase(name,parent)
-{}
+{
+  RegisterViewWrapper<real64>(SoloEventViewKeys.targetTime.Key())->
+    setApplyDefaultValue(-1)->
+    setDescription("Event time");
+
+  RegisterViewWrapper<integer>(SoloEventViewKeys.targetCycle.Key())->
+    setApplyDefaultValue(-1)->
+    setDescription("event cycle");
+
+  RegisterViewWrapper<integer>(SoloEventViewKeys.targetExactTimestep.Key())->
+    setApplyDefaultValue(-1)->
+    setDescription("allows timesteps to be truncated to match time frequency perfectly");
+
+}
 
 
 SoloEvent::~SoloEvent()
 {}
-
-
-void SoloEvent::FillDocumentationNode()
-{
-  EventBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("SoloEvent");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Describes the timing of the solver application");
-
-  docNode->AllocateChildNode( SoloEventViewKeys.targetTime.Key(),
-                              SoloEventViewKeys.targetTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "event time",
-                              "event time",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( SoloEventViewKeys.targetCycle.Key(),
-                              SoloEventViewKeys.targetCycle.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "event cycle",
-                              "event cycle",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( SoloEventViewKeys.targetExactTimestep.Key(),
-                              SoloEventViewKeys.targetExactTimestep.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "allows timesteps to be truncated to match time frequency perfectly",
-                              "allows timesteps to be truncated to match time frequency perfectly",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
 
 
 void SoloEvent::EstimateEventTiming(real64 const time,

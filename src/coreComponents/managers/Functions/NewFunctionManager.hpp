@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -49,8 +49,7 @@ public:
   }
 
   static string CatalogName() { return "NewFunctionManager"; }
-  virtual void FillDocumentationNode() override;
-  virtual void CreateChild( string const & functionCatalogKey, string const & functionName ) override;
+  virtual ManagedGroup * CreateChild( string const & functionCatalogKey, string const & functionName ) override;
 };
 
 

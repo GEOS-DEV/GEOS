@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,7 +23,6 @@
  *      Author: rrsettgast
  */
 #include "SidreWrapper.hpp"
-#include "dataRepository/Buffer.hpp"
 
 #include <string>
 #include <cstdio>
@@ -48,8 +47,10 @@ SidreWrapper::~SidreWrapper()
 #ifdef GEOSX_USE_ATK
 DataStore& SidreWrapper::dataStore()
 {
-  static DataStore * datastore = new DataStore();
-  return *datastore;
+//  static DataStore * datastore = new DataStore();
+//  return *datastore;
+  static DataStore datastore;
+  return datastore;
 }
 #endif
 

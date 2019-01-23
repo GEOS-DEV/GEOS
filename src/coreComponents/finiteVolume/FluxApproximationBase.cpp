@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,7 +23,7 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -31,16 +31,28 @@ namespace geosx
 using namespace dataRepository;
 
 FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *const parent)
-  : ManagedGroup(name, parent)
+  : ManagedGroup(name, parent),
+    m_fieldName(),
+    m_boundaryFieldName(),
+    m_coeffName()
 {
   this->RegisterGroup( groupKeysFABase.faceStencils );
   this->RegisterGroup( groupKeysFABase.wellStencils );
 
-  this->RegisterViewWrapper( viewKeysFABase.fieldName.Key(), &m_fieldName, false );
-  this->RegisterViewWrapper( viewKeysFABase.boundaryFieldName.Key(), &m_boundaryFieldName, false );
-  this->RegisterViewWrapper( viewKeysFABase.coeffName.Key(), &m_coeffName, false );
+  RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of primary solution field");
 
-  this->RegisterViewWrapper<CellStencil>( viewKeysFABase.cellStencil )->setRestartFlags( RestartFlags::NO_WRITE );
+  RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of boundary (face) field");
+
+  RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of coefficient field");
+
+  RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -50,66 +62,22 @@ FluxApproximationBase::GetCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode(viewKeyStruct::fieldNameString,
-                             viewKeyStruct::fieldNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of primary solution field",
-                             "Name of primary solution field",
-                             "REQUIRED",
-                             "",
-                             0,
-                             1,
-                             0 );
-
-  docNode->AllocateChildNode(viewKeyStruct::boundaryFieldNameString,
-                             viewKeyStruct::boundaryFieldNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of boundary (face) field",
-                             "Name of boundary (face) field",
-                             "",
-                             "",
-                             0,
-                             1,
-                             0 );
-
-  docNode->AllocateChildNode(viewKeyStruct::coeffNameString,
-                             viewKeyStruct::coeffNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of coefficient field",
-                             "Name of coefficient field",
-                             "REQUIRED",
-                             "",
-                             0,
-                             1,
-                             0 );
-}
-
-void FluxApproximationBase::compute( DomainPartition * domain )
+void FluxApproximationBase::compute(DomainPartition * domain)
 {
   // compute cell-cell stencil in the domain
   computeCellStencil( domain, getCellStencil() );
 
-  // compute face-cell stencils for boundary conditions
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-  bcManager->ApplyBoundaryCondition( 0.0,
-                                     domain,
-                                     "faceManager",
-                                     m_boundaryFieldName,
-                                     [&] ( BoundaryConditionBase const * bc,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * targetGroup,
-                                           string const & targetName) -> void
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+
+  fsManager->Apply( 0.0,
+                    domain,
+                    "faceManager",
+                    m_boundaryFieldName,
+                    [&] ( FieldSpecificationBase const * bc,
+                          string const & setName,
+                          set<localIndex> const & targetSet,
+                          ManagedGroup * targetGroup,
+                          string const & targetName) -> void
   {
     ManagedGroup * faceStencils = this->GetGroup( groupKeysFABase.faceStencils );
     ViewWrapper<FaceStencil> * stencil = faceStencils->RegisterViewWrapper<FaceStencil>( setName );
@@ -118,7 +86,7 @@ void FluxApproximationBase::compute( DomainPartition * domain )
   });
 }
 
-void FluxApproximationBase::FinalInitializationPreSubGroups( ManagedGroup * const rootGroup )
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   compute( domain );

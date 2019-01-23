@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -787,7 +787,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
       const auto & mesh = meshBlock.mesh();
       if( mesh.NumPolygons() == 0 ) {
           NodeManager * const nodeManager = meshLevel->getNodeManager();
-          ElementRegionManager * const elemRegMananger = meshLevel->getElemManager();
+          ElementRegionManager * const elemRegManager = meshLevel->getElemManager();
 
 
           nodeManager->resize(mesh.NumVertices());
@@ -804,16 +804,16 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
           }
 
 
-          for( int i = 0 ; i < elemRegMananger->GetRegions().size() ; i++) {
+          for( int i = 0 ; i < elemRegManager->GetRegions().size() ; i++) {
               std::cout<< "REGION DBUT : " << i << std::endl;
-              std::cout << elemRegMananger->GetRegion(i)->getName() << std::endl;;
+              std::cout << elemRegManager->GetRegion(i)->getName() << std::endl;;
               std::cout<< "REGION FIN : " << i << std::endl;
           }
-          CellBlockSubRegion * const subRegion = elemRegMananger->GetRegion( "Region2" )->RegisterGroup<CellBlockSubRegion>("cb1");
+          CellBlockSubRegion * const subRegion = elemRegManager->GetRegion( "Region2" )->RegisterGroup<CellBlockSubRegion>("cb1");
           CellBlockSubRegion * const cellBlock =
-              elemRegMananger->GetRegion( "Region2" )->GetSubRegion("HEX");
+              elemRegManager->GetRegion( "Region2" )->GetSubRegion("HEX");
           std::cout << "HA" << std::endl;
-          for(int i = 0 ; i < elemRegMananger->GetRegion( "Region2" )->GetSubRegions().size();i++){
+          for(int i = 0 ; i < elemRegManager->GetRegion( "Region2" )->GetSubRegions().size();i++){
               std::cout << "SUBREGION : " << i << std::endl;
           }
           std::cout << "BE" << std::endl;
