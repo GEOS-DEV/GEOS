@@ -26,6 +26,7 @@ BasisBase::BasisBase( std::string const & name,
                       ManagedGroup * const parent ):
   ManagedGroup(name, parent)
 {
+  setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
 }
 
 

@@ -31,9 +31,25 @@
 namespace geosx
 {
 
-template<int dim>
+using namespace dataRepository;
+
+template <int dim>
+GaussQuadrature<dim>::GaussQuadrature(std::string const & name, ManagedGroup * const parent)
+  :
+  QuadratureBase(name, parent),
+  m_degree(0),
+  m_n_gauss_points(0)
+{
+  RegisterViewWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Quadrature degree");
+}
+
+
+template <int dim>
 GaussQuadrature<dim>::~GaussQuadrature()
 {}
+
 
 /*
  * Get number of integration points.
@@ -80,9 +96,8 @@ double GaussQuadrature<dim>::integration_weight( const int index ) const
 }
 
 template<int dim>
-void GaussQuadrature<dim>::ReadXML( xmlWrapper::xmlNode const & xmlNode )
+void GaussQuadrature<dim>::PostProcessInput()
 {
-  m_degree = xmlNode.attribute( "degree" ).as_int( 1 );
   m_n_gauss_points = StructuredGrid::dimpower<dim>( m_degree );
 
   assert( m_degree > 0 );
@@ -133,9 +148,9 @@ void GaussQuadrature<dim>::ReadXML( xmlWrapper::xmlNode const & xmlNode )
 
 namespace
 {
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1> > catEntry_GaussQuadrature1;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2> > catEntry_GaussQuadrature2;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3> > catEntry_GaussQuadrature3;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature1;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature2;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature3;
 }
 
 }
