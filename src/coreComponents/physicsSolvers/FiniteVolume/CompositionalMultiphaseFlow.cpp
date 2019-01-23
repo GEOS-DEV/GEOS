@@ -101,6 +101,10 @@ void CompositionalMultiphaseFlow::PostProcessInput()
   {
     m_capPressureFlag = 1;
   }
+  else
+  {
+    m_capPressureIndex = -1;
+  }  
 }
   
 void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
