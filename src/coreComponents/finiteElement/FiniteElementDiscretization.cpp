@@ -46,6 +46,8 @@ using namespace dataRepository;
 FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
   RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
   RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
 }

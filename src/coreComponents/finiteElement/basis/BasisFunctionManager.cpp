@@ -53,22 +53,4 @@ void BasisFunctionManager::ExpandObjectCatalogs()
 }
 
 
-/*
-// Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-{
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    std::string childName = childNode.attribute("name").value();
-    BasisBase * basis = this->getPointer<BasisBase>(childName);
-
-    if (basis != nullptr)
-    {
-      basis->ReadXML(childNode);
-    }
-  }
-}
-*/
-
-
 } /* namespace geosx */

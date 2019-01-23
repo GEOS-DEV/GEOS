@@ -103,6 +103,27 @@ ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, strin
  }
 
 
+void ElementRegionManager::ExpandObjectCatalogs()
+{
+  // Create an empty region for schema generation
+  // Are there going to be more types in the future?
+  CreateChild( "ElementRegion", "ElementRegion" );
+}
+
+
+void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                               xmlWrapper::xmlNode schemaParent)
+{
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  if( targetChoiceNode.empty() )
+  {
+    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+  }
+
+  ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
+  SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode);
+}
+
 //void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 //{
 //  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
