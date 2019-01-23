@@ -41,10 +41,12 @@ class WellConnectionManager
 PerforationManager::PerforationManager(string const & name, ManagedGroup * const parent)
   : ObjectManagerBase(name, parent)
 {
-  RegisterViewWrapper( viewKeysPerfManager.connectionElementRegion.Key(), &m_connectionElementRegion, false );
-  RegisterViewWrapper( viewKeysPerfManager.connectionElementSubregion.Key(), &m_connectionElementSubregion, false );
-  RegisterViewWrapper( viewKeysPerfManager.connectionElementIndex.Key(), &m_connectionElementIndex, false );
-  RegisterViewWrapper( viewKeysPerfManager.connectionPerforationIndex.Key(), &m_connectionPerforationIndex, false );
+  RegisterViewWrapper( viewKeyStruct::connectionElementRegionString, &m_connectionElementRegion, false );
+  RegisterViewWrapper( viewKeyStruct::connectionElementSubregionString, &m_connectionElementSubregion, false );
+  RegisterViewWrapper( viewKeyStruct::connectionElementIndexString, &m_connectionElementIndex, false );
+  RegisterViewWrapper( viewKeyStruct::connectionPerforationIndexString, &m_connectionPerforationIndex, false );
+
+  RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
 }
 
 PerforationManager::~PerforationManager()
@@ -52,39 +54,18 @@ PerforationManager::~PerforationManager()
 
 }
 
-void PerforationManager::FillDocumentationNode()
-{
-  ObjectManagerBase::FillDocumentationNode();
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( keys::perforations );
-  docNode->setSchemaType( "UniqueNode" );
-
-  docNode->AllocateChildNode( viewKeysPerfManager.gravityDepth.Key(),
-                              viewKeysPerfManager.gravityDepth.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Connection gravity-depth product",
-                              "Connection gravity-depth product",
-                              "",
-                              "",
-                              1,
-                              0,
-                              1 );
-}
-
-void PerforationManager::CreateChild(string const & childKey, string const & childName)
+ManagedGroup * PerforationManager::CreateChild(string const & childKey, string const & childName)
 {
   if ( childKey == groupKeyStruct::perforationString )
   {
-    this->RegisterGroup<Perforation>( childName );
     m_allPerfList.push_back( childName );
+    return RegisterGroup<Perforation>( childName );
   }
   else
   {
-    GEOS_ERROR("Unrecognized node: " << childKey);
+    GEOS_ERROR( "Unrecognized node: " << childKey );
   }
+  return nullptr;
 }
 
 const string PerforationManager::getCatalogName() const
@@ -92,30 +73,32 @@ const string PerforationManager::getCatalogName() const
   return keys::perforations;
 }
 
-void PerforationManager::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
+void PerforationManager::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
+  MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  // initially allocate enough memory for all (global) perforations
-  resize( numConnectionsGlobal() );
-  ConnectToCells( domain );
-  resize( numConnectionsLocal() );
+  ConnectToCells( mesh );
 
   // generate the "all" set to enable application of BC
-  ManagedGroup * sets = GetGroup( keys::sets );
-  set<localIndex> & setAll = sets->RegisterViewWrapper<set<localIndex>>("all")->reference();
+  set<localIndex> & setAll = this->sets()->RegisterViewWrapper<set<localIndex>>("all")->reference();
   for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
   {
     setAll.insert( iconn );
   }
-
-  PrecomputeData( domain );
 }
 
-void PerforationManager::PrecomputeData(DomainPartition const * domain)
+void PerforationManager::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+{
+  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
+  MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  PrecomputeData( mesh );
+}
+
+void PerforationManager::PrecomputeData( MeshLevel const * mesh )
 {
   R1Tensor const & gravity = getParent()->group_cast<WellBase *>()->getGravityVector();
-  array1d<real64> & gravDepth = getReference<array1d<real64>>(viewKeysPerfManager.gravityDepth);
+  arrayView1d<real64> & gravDepth = getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
   for (localIndex iconn = 0; iconn < size(); ++iconn)
   {
@@ -125,20 +108,22 @@ void PerforationManager::PrecomputeData(DomainPartition const * domain)
   }
 }
 
-void PerforationManager::ConnectToCells(DomainPartition const * domain)
+void PerforationManager::ConnectToCells( MeshLevel const * mesh )
 {
-  MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager const * elemManager = mesh->getElemManager();
 
-  auto elemCenter = elemManager->ConstructViewAccessor<array1d<R1Tensor>>( CellBlockSubRegion::
-                                                                           viewKeyStruct::
-                                                                           elementCenterString );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> elemCenter =
+    elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( CellBlockSubRegion::
+                                                                                        viewKeyStruct::
+                                                                                        elementCenterString );
+
+  // initially allocate enough memory for all (global) perforations
+  resize( numConnectionsGlobal() );
 
   // TODO Until we can properly trace perforations to cells,
   // just connect to the nearest cell center (this is NOT correct in general)
-
-  localIndex iconn_local = 0;
-  localIndex iconn_global = 0;
+  localIndex num_conn_local = 0;
+  localIndex num_conn_global = 0;
   for ( string const & perfName : m_allPerfList )
   {
     Perforation const * perf = GetGroup<Perforation>( perfName );
@@ -153,23 +138,25 @@ void PerforationManager::ConnectToCells(DomainPartition const * domain)
       return v.L2_Norm();
     });
 
-    m_connectionElementRegion[iconn_local]    = std::get<0>(ret.second);
-    m_connectionElementSubregion[iconn_local] = std::get<1>(ret.second);
-    m_connectionElementIndex[iconn_local]     = std::get<2>(ret.second);
-    m_connectionPerforationIndex[iconn_local] = iconn_global++;
+    m_connectionElementRegion[num_conn_local]    = std::get<0>(ret.second);
+    m_connectionElementSubregion[num_conn_local] = std::get<1>(ret.second);
+    m_connectionElementIndex[num_conn_local]     = std::get<2>(ret.second);
+    m_connectionPerforationIndex[num_conn_local] = num_conn_global++;
 
     // This will not be correct in parallel until we can actually check that
     // the perforation belongs to local mesh partition
-    ++iconn_local;
+    ++num_conn_local;
   }
+
+  resize( num_conn_local );
 }
 
-Perforation const * PerforationManager::getPerforation(localIndex iperf) const
+Perforation const * PerforationManager::getPerforation( localIndex iperf ) const
 {
   return this->GetGroup<Perforation>( m_allPerfList[iperf] );
 }
 
-Perforation * PerforationManager::getPerforation(localIndex iperf)
+Perforation * PerforationManager::getPerforation( localIndex iperf )
 {
   return this->GetGroup<Perforation>( m_allPerfList[iperf] );
 }

@@ -52,11 +52,7 @@ public:
   /// Catalog name interface
   static string CatalogName() { return dataRepository::keys::simpleWell; }
 
-  void FillDocumentationNode() override;
-
-  virtual void InitializationOrder(string_array & order) override;
-
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const group) override;
+  virtual void InitializePostSubGroups( ManagedGroup * const rootGroup ) override;
 
   // update each connection pressure from bhp and hydrostatic head
   void StateUpdate( DomainPartition const * domain, localIndex fluidIndex );

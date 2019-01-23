@@ -38,10 +38,16 @@ WellBase::WellBase(string const & name, dataRepository::ManagedGroup * const par
     m_typeString( "producer" ),
     m_type( Type::PRODUCER )
 {
-  RegisterViewWrapper( viewKeysWellBase.referenceDepth.Key(), &m_referenceDepth, false );
-  RegisterViewWrapper( viewKeysWellBase.type.Key(), &m_typeString, false );
+  RegisterViewWrapper( viewKeyStruct::referenceDepthString, &m_referenceDepth, false )->
+    setDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Reference depth for well bottom hole pressure");
 
-  RegisterGroup( groupKeysWellBase.perforations.Key(), &m_perfManager, false );
+  RegisterViewWrapper( viewKeyStruct::typeString, &m_typeString, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Well type (producer/injector)");
+
+  RegisterGroup( groupKeyStruct::perforationsString, &m_perfManager, false );
 }
 
 WellBase::~WellBase()
@@ -49,39 +55,10 @@ WellBase::~WellBase()
 
 }
 
-void WellBase::FillDocumentationNode()
+dataRepository::ManagedGroup * WellBase::CreateChild(string const & childKey, string const & childName)
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( viewKeysWellBase.referenceDepth.Key(),
-                              viewKeysWellBase.referenceDepth.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Reference bottom hole depth",
-                              "Reference bottom hole depth",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeysWellBase.type.Key(),
-                              viewKeysWellBase.type.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "Well type (producer/injector)",
-                              "Well type (producer/injector)",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
-void WellBase::CreateChild(string const & childKey, string const & childName)
-{
+  // child groups will be registered explicitly, rather than via input file
+  return nullptr;
 }
 
 R1Tensor const & WellBase::getGravityVector() const
@@ -89,15 +66,7 @@ R1Tensor const & WellBase::getGravityVector() const
   return getParent()->group_cast<WellManager const *>()->getGravityVector();
 }
 
-void WellBase::FinalInitializationPreSubGroups(dataRepository::ManagedGroup * const problemManager)
-{
-  ObjectManagerBase::FinalInitializationPreSubGroups( problemManager );
-
-  // We want to make sure Perforations are connected to cells before all other stuff
-  m_perfManager.FinalInitializationPreSubGroups(problemManager);
-}
-
-void WellBase::ReadXML_PostProcess()
+void WellBase::PostProcessInput()
 {
   if (m_typeString == "producer")
   {
@@ -111,11 +80,6 @@ void WellBase::ReadXML_PostProcess()
   {
     GEOS_ERROR("Invalid well type: " << m_typeString);
   }
-}
-
-const string WellBase::getCatalogName() const
-{
-  return CatalogName();
 }
 
 

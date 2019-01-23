@@ -40,8 +40,6 @@ public:
   Perforation( Perforation const &) = delete;
   Perforation( Perforation && ) = delete;
 
-  virtual void FillDocumentationNode() override;
-
   R1Tensor const & getLocation() const     { return m_location; }
   void setLocation(R1Tensor const & loc)   { m_location = loc;  }
 

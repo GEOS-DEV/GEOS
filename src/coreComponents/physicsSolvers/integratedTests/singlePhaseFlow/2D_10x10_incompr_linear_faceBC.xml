@@ -69,7 +69,6 @@
   <ElementRegions>
     <ElementRegion name="Region2"
                    cellBlocks="cb1"
-                   material="water"
                    materialList="water rock"/>
   </ElementRegions>
 

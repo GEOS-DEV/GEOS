@@ -47,21 +47,18 @@ public:
   static string CatalogName() { return "WellBase"; }
 
   using CatalogInterface = cxx_utilities::CatalogInterface< WellBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog()
+
+  static CatalogInterface::CatalogType & GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
   }
 
-  virtual const string getCatalogName() const override;
+  virtual const string getCatalogName() const override { return CatalogName(); }
 
-  virtual void FillDocumentationNode() override;
+  virtual dataRepository::ManagedGroup * CreateChild(string const & childKey, string const & childName) override;
 
-  virtual void CreateChild(string const & childKey, string const & childName) override;
-
-  virtual void ReadXML_PostProcess() override;
-
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const problemManager) override;
+  virtual void PostProcessInput() override;
 
   localIndex numConnectionsGlobal() const { return m_perfManager.numConnectionsGlobal(); }
   localIndex numConnectionsLocal()  const { return m_perfManager.numConnectionsLocal();  }
@@ -78,7 +75,7 @@ public:
   {
 
     static constexpr auto referenceDepthString = "referenceDepth";
-    static constexpr auto typeString = "type";
+    static constexpr auto typeString           = "type";
 
     dataRepository::ViewKey referenceDepth             = { referenceDepthString };
     dataRepository::ViewKey type                       = { typeString };

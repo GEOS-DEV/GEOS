@@ -54,6 +54,7 @@ MeshLevel::MeshLevel( string const & name,
 
   RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
 
+  // TODO this is probably wrong. Should belong to Domain or ProblemManager.
   RegisterGroup<WellManager>( groupStructKeys::wellManagerString, &m_wellManager, false );
 
   RegisterViewWrapper<integer>( viewKeys.meshLevel );

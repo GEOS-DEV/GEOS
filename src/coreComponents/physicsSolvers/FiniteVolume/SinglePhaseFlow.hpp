@@ -81,7 +81,7 @@ public:
    */
   static string CatalogName() { return "SinglePhaseFlow"; }
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -212,7 +212,7 @@ public:
   viewKeyStruct & viewKeys() { return viewKeysSinglePhaseFlow; }
   viewKeyStruct const & viewKeys() const { return viewKeysSinglePhaseFlow; }
 
-  struct groupKeyStruct : SolverBase::groupKeyStruct
+  struct groupKeyStruct : FlowSolverBase::groupKeyStruct
   {
   } groupKeysSinglePhaseFlow;
 
@@ -220,6 +220,9 @@ public:
   groupKeyStruct const & groupKeys() const { return groupKeysSinglePhaseFlow; }
 
 protected:
+
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 private:

@@ -154,10 +154,6 @@ public:
 
   } groupKeysFABase;
 
-protected:
-
-  void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
-
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeCellStencil(DomainPartition const * domain,
                                   CellStencil & stencil) const = 0;
@@ -173,6 +169,8 @@ protected:
                                    WellStencil & stencil ) const = 0;
 
 protected:
+
+  void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
   /// name of the primary solution field
   string m_fieldName;

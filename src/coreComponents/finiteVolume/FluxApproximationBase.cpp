@@ -24,6 +24,8 @@
 #include "FluxApproximationBase.hpp"
 
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/Wells/WellManager.hpp"
+#include "managers/Wells/WellBase.hpp"
 
 namespace geosx
 {
@@ -62,12 +64,13 @@ FluxApproximationBase::GetCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::compute(DomainPartition * domain)
+void FluxApproximationBase::compute( DomainPartition * domain )
 {
   // compute cell-cell stencil in the domain
   computeCellStencil( domain, getCellStencil() );
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  ManagedGroup * faceStencils = this->GetGroup( groupKeyStruct::faceStencilsString );
 
   fsManager->Apply( 0.0,
                     domain,
@@ -79,11 +82,20 @@ void FluxApproximationBase::compute(DomainPartition * domain)
                           ManagedGroup * targetGroup,
                           string const & targetName) -> void
   {
-    ManagedGroup * faceStencils = this->GetGroup( groupKeysFABase.faceStencils );
-    ViewWrapper<FaceStencil> * stencil = faceStencils->RegisterViewWrapper<FaceStencil>( setName );
-    stencil->setRestartFlags( RestartFlags::NO_WRITE );
-    computeFaceStencil( domain, targetSet, stencil->reference() );
+    FaceStencil & stencil = faceStencils->RegisterViewWrapper<FaceStencil>( setName )->
+                            setRestartFlags( RestartFlags::NO_WRITE )->reference();
+    computeFaceStencil( domain, targetSet, stencil );
   });
+
+  WellManager * wellManager = domain->getMeshBody(0)->getMeshLevel(0)->getWellManager();
+  ManagedGroup * wellStencils = GetGroup( groupKeyStruct::wellStencilsString );
+
+  wellManager->forSubGroups<WellBase>( [&] ( WellBase * well )
+  {
+    WellStencil & stencil = wellStencils->RegisterViewWrapper<WellStencil>( well->getName() )->
+                            setRestartFlags( RestartFlags::NO_WRITE )->reference();
+    computeWellStencil( domain, well, stencil );
+  } );
 }
 
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
@@ -107,33 +119,33 @@ FluxApproximationBase::getCellStencil()
 FluxApproximationBase::FaceStencil const &
 FluxApproximationBase::getFaceStencil( string const & setName ) const
 {
-  return this->GetGroup( groupKeysFABase.faceStencils )->getReference<FaceStencil>( setName );
+  return this->GetGroup( groupKeyStruct::faceStencilsString )->getReference<FaceStencil>( setName );
 }
 
 FluxApproximationBase::FaceStencil &
 FluxApproximationBase::getFaceStencil( string const & setName )
 {
-  return this->GetGroup( groupKeysFABase.faceStencils )->getReference<FaceStencil>( setName );
+  return this->GetGroup( groupKeyStruct::faceStencilsString )->getReference<FaceStencil>( setName );
 }
 
 bool FluxApproximationBase::hasFaceStencil( string const & setName ) const
 {
-  return this->GetGroup( groupKeysFABase.faceStencils )->hasView( setName );
+  return this->GetGroup( groupKeyStruct::faceStencilsString )->hasView( setName );
 }
 
 const FluxApproximationBase::WellStencil & FluxApproximationBase::getWellStencil( string const & wellName ) const
 {
-  return this->GetGroup( groupKeysFABase.wellStencils )->getReference<WellStencil>( wellName );
+  return this->GetGroup( groupKeyStruct::wellStencilsString )->getReference<WellStencil>( wellName );
 }
 
 FluxApproximationBase::WellStencil & FluxApproximationBase::getWellStencil( string const & wellName )
 {
-  return this->GetGroup( groupKeysFABase.wellStencils )->getReference<WellStencil>( wellName );
+  return this->GetGroup( groupKeyStruct::wellStencilsString )->getReference<WellStencil>( wellName );
 }
 
 bool FluxApproximationBase::hasWellStencil( string const & wellName ) const
 {
-  return this->GetGroup( groupKeysFABase.wellStencils )->hasView( wellName );
+  return this->GetGroup( groupKeyStruct::wellStencilsString )->hasView( wellName );
 }
 
 } //namespace geosx

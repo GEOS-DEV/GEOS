@@ -25,6 +25,7 @@
 #include "Perforation.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
@@ -41,7 +42,13 @@ SimpleWell::SimpleWell(string const & name, dataRepository::ManagedGroup * const
   : WellBase( name, parent ),
     m_bhp()
 {
-  RegisterViewWrapper( viewKeysSimpleWell.bhp.Key(), &m_bhp, false );
+  RegisterViewWrapper( viewKeyStruct::bhpString, &m_bhp, false );
+
+  // Most perforations-based fields are registered by specific well models, rather than
+  // PerforationManager itself, which is physics-agnostic
+  PerforationManager * perfManager = GetGroup<PerforationManager>( groupKeyStruct::perforationsString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
 }
 
 SimpleWell::~SimpleWell()
@@ -49,79 +56,16 @@ SimpleWell::~SimpleWell()
 
 }
 
-void SimpleWell::FillDocumentationNode()
+void SimpleWell::InitializePostSubGroups( ManagedGroup * const rootGroup )
 {
-  WellBase::FillDocumentationNode();
+  WellBase::InitializePostSubGroups( rootGroup );
 
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("SimpleWell");
-  docNode->setSchemaType("Node");
-
-  cxx_utilities::DocumentationNode * const perfDocNode = m_perfManager.getDocumentationNode();
-
-  perfDocNode->AllocateChildNode( viewKeysSimpleWell.pressure.Key(),
-                                  viewKeysSimpleWell.pressure.Key(),
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Connection pressure",
-                                  "Connection pressure",
-                                  "",
-                                  getName(),
-                                  1,
-                                  0,
-                                  1 );
-
-  perfDocNode->AllocateChildNode( viewKeysSimpleWell.flowRate.Key(),
-                                  viewKeysSimpleWell.flowRate.Key(),
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Connection flow rate",
-                                  "Connection flow rate",
-                                  "",
-                                  getName(),
-                                  1,
-                                  0,
-                                  1 );
-
-}
-
-void SimpleWell::InitializationOrder(string_array & order)
-{
-  // Skip initializing PerforationManager, call it manually from FinalInitialization()
-}
-
-void SimpleWell::FinalInitializationPreSubGroups(ManagedGroup * const problemManager)
-{
-  WellBase::FinalInitializationPreSubGroups(problemManager);
-
-  // fields owned by the well itself are scalar, but must be arrays for BC, so resize to 1
+  // vars owned by the well itself are scalar, but must be stored as arrays for BC, so resize to 1
   resize(1);
 
   // generate the "all" set to enable application of BC
-  ManagedGroup * sets = GetGroup( keys::sets );
-  set<localIndex> & setAll = sets->RegisterViewWrapper<set<localIndex>>("all")->reference();
+  set<localIndex> & setAll = this->sets()->RegisterViewWrapper<set<localIndex>>("all")->reference();
   setAll.insert(0);
-
-  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
-
-  NumericalMethodsManager * numericalMethodManager =
-    problemManager->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
-
-  FiniteVolumeManager * fvManager =
-    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
-
-  FluxApproximationBase * fluxApprox = fvManager->GetGroup<FluxApproximationBase>(0); // TODO HACK!
-
-  auto vw = fluxApprox->GetGroup( fluxApprox->groupKeysFABase.wellStencils )
-    ->RegisterViewWrapper<FluxApproximationBase::WellStencil>( getName() );
-
-  vw->setRestartFlags( RestartFlags::NO_WRITE );
-  FluxApproximationBase::WellStencil & stencil = vw->reference();
-  stencil.reserve( numConnectionsLocal(), 2 );
-
-  fluxApprox->computeWellStencil( domain, this, stencil );
 }
 
 void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIndex )
@@ -131,17 +75,22 @@ void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIn
   MeshLevel const * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * elemManager = mesh->getElemManager();
 
-  ConstitutiveManager const * constitutiveManager =
-    domain->GetGroup<ConstitutiveManager>( keys::ConstitutiveManager );
+  ConstitutiveManager const * constitutiveManager = domain->getConstitutiveManager();
 
-  auto & pres      = m_perfManager.getReference<array1d<real64>>( viewKeysSimpleWell.pressure );
-  auto & gravDepth = m_perfManager.getReference<array1d<real64>>( m_perfManager.viewKeysPerfManager.gravityDepth );
+  arrayView1d<real64> const & pres =
+    m_perfManager.getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-  auto & elemRegion    = m_perfManager.getReference<array1d<localIndex>>( m_perfManager.viewKeysPerfManager.connectionElementRegion );
-  auto & elemSubregion = m_perfManager.getReference<array1d<localIndex>>( m_perfManager.viewKeysPerfManager.connectionElementSubregion );
-  auto & elemIndex     = m_perfManager.getReference<array1d<localIndex>>( m_perfManager.viewKeysPerfManager.connectionElementIndex );
+  arrayView1d<real64 const> const & gravDepth =
+    m_perfManager.getReference<array1d<real64>>( PerforationManager::viewKeyStruct::gravityDepthString );
 
-  auto constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase const>( constitutiveManager );
+  arrayView1d<localIndex const> const & elemRegion =
+    m_perfManager.getReference<array1d<localIndex>>( PerforationManager::viewKeyStruct::connectionElementRegionString );
+
+  arrayView1d<localIndex const> const & elemSubregion =
+    m_perfManager.getReference<array1d<localIndex>>( PerforationManager::viewKeyStruct::connectionElementSubregionString );
+
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase const> constitutiveRelations =
+    elemManager->ConstructConstitutiveAccessor<ConstitutiveBase const>( constitutiveManager );
 
   R1Tensor const & gravity = getGravityVector();
   R1Tensor const & refDepth = { 0, 0, m_referenceDepth };
@@ -151,17 +100,20 @@ void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIn
   real64 dens, dummy;
   for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
   {
-    constitutiveRelations[elemRegion[iconn]][elemSubregion[iconn]][fluidIndex]->FluidDensityCompute( pres[iconn],
-                                                                                                     elemIndex[iconn],
-                                                                                                     dens, dummy );
+    localIndex const er  = elemRegion[iconn];
+    localIndex const esr = elemSubregion[iconn];
 
-    pres[iconn] = pres[iconn] = m_bhp[0] + (isGravityOn ? dens * (gravDepth[iconn] - refGravDepth) : 0.0);
+    SingleFluidBase const * fluid = constitutiveRelations[er][esr][fluidIndex]->group_cast<SingleFluidBase const *>();
+    fluid->Compute( m_bhp[0], dens, dummy, dummy, dummy );
+
+    pres[iconn] = m_bhp[0] + (isGravityOn ? dens * (gravDepth[iconn] - refGravDepth) : 0.0);
   }
 }
 
 real64 SimpleWell::GetTotalFlowRate()
 {
-  auto const & flowRate = m_perfManager.getReference<array1d<real64>>( viewKeysSimpleWell.flowRate );
+  arrayView1d<real64 const> const & flowRate =
+    m_perfManager.getReference<array1d<real64>>( viewKeyStruct::flowRateString );
 
   real64 totalRate = 0.0;
   for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)

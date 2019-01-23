@@ -23,67 +23,35 @@
 
 #include "Perforation.hpp"
 
+#include "dataRepository/InputFlags.hpp"
+
 namespace geosx
 {
 
+using namespace dataRepository;
 
-Perforation::Perforation(string const & name, dataRepository::ManagedGroup * const parent)
+Perforation::Perforation(string const & name, ManagedGroup * const parent)
   : ManagedGroup(name, parent),
     m_location(),
     m_transmissibility()
 {
-  RegisterViewWrapper( viewKeysPerforation.location.Key(), &m_location, false );
-  RegisterViewWrapper( viewKeysPerforation.transmissibility.Key(), &m_transmissibility, false );
-  RegisterViewWrapper( viewKeysPerforation.segmentName.Key(), &m_segmentName, false );
+  RegisterViewWrapper( viewKeysPerforation.location.Key(), &m_location, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Perforation physical coordinates");
+
+  RegisterViewWrapper( viewKeysPerforation.transmissibility.Key(), &m_transmissibility, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Connection transmissibility");
+
+  RegisterViewWrapper( viewKeysPerforation.segmentName.Key(), &m_segmentName, false )->
+    setDefaultValue("0")->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Well segment name (can be omitted for single-segment wells");
 }
 
 Perforation::~Perforation()
 {
 
-}
-
-void Perforation::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( viewKeysPerforation.location.Key(),
-                              viewKeysPerforation.location.Key(),
-                              -1,
-                              "R1Tensor",
-                              "R1Tensor",
-                              "Perforation physical coordinates",
-                              "Perforation physical coordinates",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeysPerforation.transmissibility.Key(),
-                              viewKeysPerforation.transmissibility.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Connection transmissibility",
-                              "Connection transmissibility",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeysPerforation.segmentName.Key(),
-                              viewKeysPerforation.segmentName.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "Well segment name",
-                              "Well segment name",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
 }
 
 

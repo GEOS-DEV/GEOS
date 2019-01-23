@@ -30,6 +30,8 @@
 namespace geosx
 {
 
+class MeshLevel;
+
 namespace dataRepository
 {
 namespace keys
@@ -52,10 +54,7 @@ public:
   PerforationManager( PerforationManager const &) = delete;
   PerforationManager( PerforationManager && ) = delete;
 
-  virtual void FillDocumentationNode() override;
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
-
-  virtual void FinalInitializationPreSubGroups(ManagedGroup * const problemManager) override;
+  dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual const string getCatalogName() const override;
 
@@ -84,7 +83,7 @@ public:
 
   } viewKeysPerfManager;
 
-struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
+  struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
     static constexpr auto perforationString = "Perforation";
 
@@ -92,15 +91,23 @@ struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
 
   } groupKeysPerfManager;
 
+protected:
+
+  virtual void InitializePreSubGroups( ManagedGroup * const problemManager ) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override;
+
 private:
 
-  void ConnectToCells( DomainPartition const * domain );
-  void PrecomputeData( DomainPartition const * domain );
+  void ConnectToCells( MeshLevel const * domain );
+  void PrecomputeData( MeshLevel const * domain );
 
   array1d<localIndex> m_connectionElementRegion;
   array1d<localIndex> m_connectionElementSubregion;
   array1d<localIndex> m_connectionElementIndex;
   array1d<localIndex> m_connectionPerforationIndex;
+
+  array1d<real64> m_gravityDepth;
 
   string_array m_allPerfList;
 
