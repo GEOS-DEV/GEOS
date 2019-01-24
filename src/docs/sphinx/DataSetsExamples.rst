@@ -29,10 +29,10 @@ Looking at the XML file
 ------------------------------------
 
 We are going to inspect blocks in the following XML file:
-``CoreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_hex_gravity.xml``
+``src\CoreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_hex_gravity.xml``
 
 The file contains a number of XML blocks.
-We will describe the most important blocks.
+We will describe the most important of them.
 
 
 Solver specification
@@ -76,9 +76,21 @@ an existing file called ``cube_10x10x10_hex.msh``.
           file="cube_10x10x10_hex.msh"/>
   </Mesh>
 
+The mesh looks like this:
+
+.. image:: img/cube_10x10x10_hex_blue.png
+   :width: 250px
+
 
 Events specification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this code block, we control the time stepping mechanisms used by the different
+elements of the solver.
+Three controls are in place:
+ - a solver time step of 1 second, even if the solver could converge with longer time-steps,
+ - an output time step of 1 second: a new pressure field is written out every second,
+ - a restart file with an infinite frequency (ie. no restart is requested)
 
 .. code-block:: xml
 
@@ -108,6 +120,7 @@ Events specification
 Numerical methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
 .. code-block:: xml
 
   <NumericalMethods>
@@ -124,6 +137,10 @@ Numerical methods
 Element Regions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+This block defines regions.
+Here, the entire field is one region called ``Domain``,
+and contains ``water`` and ``rock`` only.
+
 .. code-block:: xml
 
   <ElementRegions>
@@ -134,7 +151,11 @@ Element Regions
 Constitutive model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The physical properties of the two elements that exist in our field
+(water and rock) are specified here.
+
 .. code-block:: xml
+
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
                                   referencePressure="0.0"
@@ -153,7 +174,7 @@ Field Specifications
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We specify the following properties all throughout the model (homogeneous):
-  - permeability in the x-direction: ``permx``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
+  - permeability in the x-direction: ``permx``, constant value of 2.0e-14 m\ :sup:`2` (20 mD), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
   - permeability in the y-direction: ``permy``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
   - permeability in the z-direction: ``permz``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
   - porosity: ``referencePorosity``, constant value of 0.05,
