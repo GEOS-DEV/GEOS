@@ -829,6 +829,20 @@ public:
     return m_name;
   }
 
+
+  /**
+   * By default, if no explicit name flag is specified in the xml, then
+   * the element type is used.  For non-unique inputs, the name should be
+   * mandatory.  This funciton sets the appropriate flags to acheive this.
+   */
+  void requireInputName()
+  {
+    this->RegisterViewWrapper("name", &m_name, 0)->setInputFlag(InputFlags::REQUIRED);
+    // RegisterViewWrapper("name")->setInputFlag(InputFlags::REQUIRED);
+    // this->getWrapperBase("name")->setInputFlag(InputFlags::REQUIRED);
+  }
+
+
   virtual void resize( localIndex const newsize );
 
   virtual void reserve( indexType const newsize );
