@@ -1,8 +1,33 @@
 ###############################################################################
-Degrees of freedom (DOF) Manager
+DOF Manager
 ###############################################################################
 
 This will contains a description of the DOF manager in GEOSX.
+
+Brief description
+========================
+
+The main aim of the Degrees of freedom (DoF) Manager class is to handle all  degrees of freedom associated to elements, faces and nodes. Moreover, it creates an unique map between local and global DoFs.
+
+Key concepts are locations and connectors. Locations, that can be elements, faces or nodes, represent where the DoF is assigned. For example, a DoF for pressure in a two-point flux approximation will be on a cell (i.e. element), while a displacement DoF for structural equations will be on a node. The counterparts of locations are connectors, that are the geometrical entities that link together different DoFs are create the sparsity pattern. Connectors can be elements, faces, node or none. Using the same example as before, connectors will be faces and cells, respectively. The case of a mass matrix, where every element is linked only to itself, is an example when there are no connectors, i.e. these have to be set to none.
+
+DoFs are handled through sparse matrices (see CSR description ...). CSR matrices contain information about the sparsity pattern only, thus binary matrices are used.
+
+Methods
+========================
+
+Main methods are:
+
+* ``setMesh``: sets which portion of the mesh this DoF manager instance is referring to;
+* ``addField``: creates a new set of DoF, labeled field, with a specific location and connectivity;
+* ``addCoupling``: creates a coupling between two fields according to a given connectivity.
+
+Minor methods are:
+
+* ``numGlobalDofs``: returns the total number of DoFs across all processors;
+* ``numLocalDofs``: returns the number of DoFs on this process;
+* ``getSparsityPattern``: gets the sparsity pattern (default case is the complete sparsity pattern, for all DoFs);
+* ``getIndices``: gets global indices for DoFs linked by a given connector.
 
 .. The goal of the GEOSX event manager is to be flexible with regards to event type, application order, and method of triggering.  The event manager is configured via the ``Event`` block in an input .xml file, i.e.:
    
