@@ -40,6 +40,7 @@ enum class InputFlags : int
   OPTIONAL_NONUNIQUE,
   REQUIRED,
   REQUIRED_NONUNIQUE,
+  PROBLEM_ROOT,
 };
 
 inline InputFlags IntToInputFlag( int const val )

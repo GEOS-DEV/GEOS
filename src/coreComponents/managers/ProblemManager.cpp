@@ -100,7 +100,7 @@ ProblemManager::ProblemManager( const std::string& name,
   ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
 
-  setInputFlags(InputFlags::REQUIRED);
+  setInputFlags(InputFlags::PROBLEM_ROOT);
 
   // Mandatory groups that read from the xml
   RegisterGroup<FieldSpecificationManager>( groupKeys.fieldSpecificationManager.Key(),
