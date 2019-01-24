@@ -1,6 +1,7 @@
 Functions Block
 ===============================================================================
 GEOSX functions are specified in the ``Functions`` block in the input xml file.
+
 .. code-block:: xml
 
   <Functions>
@@ -56,6 +57,8 @@ This function type is used to compute an arbitrary-dimensional function based up
                    values="-10 10" />
   </Functions>
 
+Examples of Table File Formatting
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 SymbolicFunction
 -------------------------------------------------------------------------------

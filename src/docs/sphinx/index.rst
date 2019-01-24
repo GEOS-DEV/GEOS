@@ -7,7 +7,6 @@ GEOSX is a simulation platform focused on providing streamlined development of H
 
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
 
    getting_started
