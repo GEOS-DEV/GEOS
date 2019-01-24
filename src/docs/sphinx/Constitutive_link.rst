@@ -1,0 +1,1 @@
+.. include:: ../../../src/coreComponents/constitutive/docs/Constitutive.rst
