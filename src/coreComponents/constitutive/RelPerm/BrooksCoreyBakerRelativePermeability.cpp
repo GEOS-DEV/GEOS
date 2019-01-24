@@ -17,10 +17,10 @@
  */
 
 /**
-  * @file ThreePhaseBakerRelativePermeability.cpp
+  * @file BrooksCoreyBakerRelativePermeability.cpp
   */
 
-#include "ThreePhaseBakerRelativePermeability.hpp"
+#include "BrooksCoreyBakerRelativePermeability.hpp"
 
 #include <cmath>
 
@@ -34,8 +34,8 @@ namespace constitutive
 {
 
 
-ThreePhaseBakerRelativePermeability::ThreePhaseBakerRelativePermeability( std::string const & name,
-                                                                          ManagedGroup * const parent )
+BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std::string const & name,
+                                                                            ManagedGroup * const parent )
   : RelativePermeabilityBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
@@ -67,15 +67,15 @@ ThreePhaseBakerRelativePermeability::ThreePhaseBakerRelativePermeability( std::s
 
 }
 
-ThreePhaseBakerRelativePermeability::~ThreePhaseBakerRelativePermeability()
+BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 {
 
 }
 
 std::unique_ptr<ConstitutiveBase>
-ThreePhaseBakerRelativePermeability::DeliverClone(string const & name, ManagedGroup * const parent) const
+BrooksCoreyBakerRelativePermeability::DeliverClone(string const & name, ManagedGroup * const parent) const
 {
-  std::unique_ptr< ThreePhaseBakerRelativePermeability > clone = std::make_unique<ThreePhaseBakerRelativePermeability>( name, parent );
+  std::unique_ptr< BrooksCoreyBakerRelativePermeability > clone = std::make_unique<BrooksCoreyBakerRelativePermeability>( name, parent );
 
   clone->m_phaseNames = this->m_phaseNames;
   clone->m_phaseTypes = this->m_phaseTypes;
@@ -96,28 +96,36 @@ ThreePhaseBakerRelativePermeability::DeliverClone(string const & name, ManagedGr
 }
 
 
-void ThreePhaseBakerRelativePermeability::PostProcessInput()
+void BrooksCoreyBakerRelativePermeability::PostProcessInput()
 {
   RelativePermeabilityBase::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 
+  GEOS_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0 , "BrooksCoreyBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
+
 #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR( "ThreePhaseBakerRelativePermeability: invalid number of entries in " \
+    GEOS_ERROR( "BrooksCoreyBakerRelativePermeability: invalid number of entries in " \
                 << (attr) << " attribute (" \
                 << (data).size() << " given, " \
                 << (expected) << " expected)"); \
   }
 
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction,  NP,   viewKeyStruct::phaseMinVolumeFractionString );
-    
-  COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, NP-1, viewKeyStruct::waterOilRelPermExponentString );
-  COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, NP-1, viewKeyStruct::waterOilRelPermMaxValueString );
-  
-  COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent,   NP-1, viewKeyStruct::gasOilRelPermExponentString );
-  COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   NP-1, viewKeyStruct::gasOilRelPermMaxValueString );
+
+  if (m_phaseOrder[RelativePermeabilityBase::PhaseType::WATER] > 0)
+    {
+      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString );
+      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString );
+    }
+
+  if (m_phaseOrder[RelativePermeabilityBase::PhaseType::GAS] > 0)
+    {
+      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent,   2, viewKeyStruct::gasOilRelPermExponentString );
+      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   2, viewKeyStruct::gasOilRelPermMaxValueString );
+    }
 
 #undef COREY_CHECK_INPUT_LENGTH
 
@@ -125,29 +133,34 @@ void ThreePhaseBakerRelativePermeability::PostProcessInput()
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
-                   "ThreePhaseBakerRelativePermeability: invalid phase min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
+                   "BrooksCoreyBakerRelativePermeability: invalid phase min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
   }
-  GEOS_ERROR_IF( m_volFracScale < 0.0, "ThreePhaseBakerRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  GEOS_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyBakerRelativePermeability: sum of min volume fractions exceeds 1.0" );
 
   
-  for (localIndex ip = 0; ip < NP-1; ++ip)
+  for (localIndex ip = 0; ip < 2; ++ip)
   {
-    GEOS_ERROR_IF( m_waterOilRelPermExponent[ip] < 0.0,
-	  	   "ThreePhaseBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip] );
-    GEOS_ERROR_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
-  		   "ThreePhaseBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
+    if (m_phaseOrder[RelativePermeabilityBase::PhaseType::WATER] > 0)
+      {
+        GEOS_ERROR_IF( m_waterOilRelPermExponent[ip] < 0.0,
+	     	     "BrooksCoreyBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip] );
+        GEOS_ERROR_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
+  		     "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
+      }
 
-    GEOS_ERROR_IF( m_gasOilRelPermExponent[ip] < 0.0,
-	  	   "ThreePhaseBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip] );
-    GEOS_ERROR_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
-  		   "ThreePhaseBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
+    if (m_phaseOrder[RelativePermeabilityBase::PhaseType::GAS] > 0)
+      {
+        GEOS_ERROR_IF( m_gasOilRelPermExponent[ip] < 0.0,
+	  	     "BrooksCoreyBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip] );
+        GEOS_ERROR_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
+  		     "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
+      }
   }
-
 }
 
 
-void ThreePhaseBakerRelativePermeability::BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction )
+void BrooksCoreyBakerRelativePermeability::BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction )
 {
 
   arrayView1d<real64 const> const & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
@@ -158,20 +171,20 @@ void ThreePhaseBakerRelativePermeability::BatchUpdate( arrayView2d<real64 const>
   arrayView1d<real64 const> const & gasOilRelPermExponent   = m_gasOilRelPermExponent;
   arrayView1d<real64 const> const & gasOilRelPermMaxValue   = m_gasOilRelPermMaxValue;
 
-  RelativePermeabilityBase::BatchUpdateKernel<ThreePhaseBakerRelativePermeability>( phaseVolumeFraction,
-										    m_phaseOrder,
-                                                                                    phaseMinVolumeFraction,
-                                                                                    waterOilRelPermExponent,
-										    waterOilRelPermMaxValue,
-										    gasOilRelPermExponent,
-										    gasOilRelPermMaxValue,
-                                                                                    m_volFracScale);
+  RelativePermeabilityBase::BatchUpdateKernel<BrooksCoreyBakerRelativePermeability>( phaseVolumeFraction,
+										     m_phaseOrder,
+                                                                                     phaseMinVolumeFraction,
+                                                                                     waterOilRelPermExponent,
+										     waterOilRelPermMaxValue,
+										     gasOilRelPermExponent,
+										     gasOilRelPermMaxValue,
+                                                                                     m_volFracScale );
 }
 
 
-void ThreePhaseBakerRelativePermeability::PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
-                                                       localIndex const k,
-                                                       localIndex const q )
+void BrooksCoreyBakerRelativePermeability::PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+                                                        localIndex const k,
+                                                        localIndex const q )
 {
   arraySlice1d<real64> const relPerm           = m_phaseRelPerm[k][q];
   arraySlice2d<real64> const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
@@ -191,7 +204,7 @@ void ThreePhaseBakerRelativePermeability::PointUpdate( arraySlice1d<real64 const
            m_volFracScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ThreePhaseBakerRelativePermeability, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyBakerRelativePermeability, std::string const &, ManagedGroup * const )
 } // namespace constitutive
 
 } // namespace geosx
