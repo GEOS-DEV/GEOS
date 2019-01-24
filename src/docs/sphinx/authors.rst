@@ -9,6 +9,10 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
    :widths: 10 30
    :header-rows: 1
 
+.. list-table:: 
+   :widths: 10 30
+   :header-rows: 1
+
    * - Author Name
      - Affiliation
    * - Nicola Castelletto
@@ -25,7 +29,7 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
      - *Total E&P*
    * - Jixiang Huang
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
-    * - Sergey Klevtsov
+   * - Sergey Klevtsov
      - *Department of Energy Resources Engineering, Stanford University*
    * - Antoine Mazuyer
      - *Department of Energy Resources Engineering, Stanford University*
@@ -39,5 +43,6 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Christopher White 
      - *Applications, Simulations, and Quality Division, Lawrence Livermore National Laboratory*
+
 
 
