@@ -50,43 +50,19 @@ node.
 Besides ``name``, the model also requires the specification
 of five parameters:
 
-``phaseNames``
----------------
-Defines the list of phases.
-The number of phases can be either 2 or 3.
-Thia capillary model assumes that oil is always present.
-Example: "oil water gas".
+   * ``phaseNames`` - The list of phases. The number of phases can be either 2 or 3. The capillary model assumes that oil is always present. Example: "oil water gas".
 
-``phaseMinVolFraction``
-------------------------
-Defines the mimimum volume fraction :math:`S_{\ell,min}`
-for each phase specified in ``phaseNames``, in the same order.
-Below this volume fraction, the phase is assumed to be immobile.
-Default for each phase: 0.0.
+   * ``phaseMinVolFraction`` - The mimimum volume fraction :math:`S_{\ell,min}` for each phase specified in ``phaseNames``, in the same order. Below this volume fraction, the phase is assumed to be immobile. Default value for each phase: 0.0.
 
-``phaseCapPressureExponentInv``
--------------------------------
-Defines the parameter :math:`m_{\ell}` for each phase specified
-in ``phaseNames``, in the same order.
-The parameter corresponding to the oil phase is not used.
-Default for each phase: 0.5.
+   * ``phaseCapPressureExponentInv`` - The parameter :math:`m_{\ell}` for each phase specified in ``phaseNames``, in the same order. The parameter corresponding to the oil phase is not used. Default value for each phase: 0.5.
 
-``phaseCapPressureMultiplier``
-------------------------------
-Defines the parameter :math:`\alpha_{\ell}` for each phase specified
-in ``phaseNames``, in the same order.
-The parameter corresponding to the oil phase is not used.
-Default for each phase: 1.
+   * ``phaseCapPressureMultiplier`` - The parameter :math:`\alpha_{\ell}` for each phase specified in ``phaseNames``, in the same order. The parameter corresponding to the oil phase is not used. Default value for each phase: 1.
 
-``capPressureEpsilon``
-----------------------
-Defines the parameter :math:`\epsilon`.
-This parameter is used for both the water-phase and gas-phase
-capillary pressure.
-Default: 0.0
+   * ``capPressureEpsilon`` - The parameter :math:`\epsilon`. This parameter is used for both the water-phase and gas-phase capillary pressure. To avoid extremely large, or infinite, capillary pressure values, we set :math:`P_{c,w}(S_w) := P_{c,w}(\epsilon)` whenever :math:`S_w < \epsilon`. The gas-phase capillary pressure is treated analogously. Default value: 0.0
 
-Input example:
-**************************************************************
+**************
+Input example
+**************
 
 .. code-block:: xml
 

@@ -34,36 +34,20 @@ node.
 Besides ``name``, this model requires the specification of four
 types of parameters:
 
-``phaseNames``
----------------
-Defines the list of phases.
-The number of phases can be either 2 or 3.
-Example: "oil water gas".
+   * ``phaseNames`` - The list of phases. The number of phases can be either 2 or 3. Example: "oil water gas".
 
-``phaseMinVolFraction``
--------------------------
-Defines the minimum volume fraction :math:`S_{m,min}` for each
-phase specified in ``phaseNames``, in the same order.
-Below this volume fraction, the phase is assumed to be immobile.
-Default for each phase: 0.0.
+   * ``phaseMinVolFraction`` - The minimum volume fraction :math:`S_{m,min}` for each phase specified in ``phaseNames``, in the same order. Below this volume fraction, the phase is assumed to be immobile. Default value for each phase: 0.0.
 
-``phaseRelPermExponent``
-----------------------------------
-Defines the parameter :math:`\lambda_{m}` for each phase specified
-in ``phaseNames``, in the same order.
-Default for each phase: 1.0.
+   * ``phaseRelPermExponent`` - The parameter :math:`\lambda_{m}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 1.0.
 
-``phaseMaxValue``
------------------------------
-Defines the parameter :math:`k_{\textit{rm,max}}` for each phase specified
-in ``phaseNames``, in the same order.
-Default for each phase: 0.0.
+   * ``phaseMaxValue`` - The parameter :math:`k_{\textit{rm,max}}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 0.0.
 
 
-Input example:
-***************************************************
+**************
+Input example
+**************
 
-.. code-block::XML
+.. code-block:: xml
 
    <Constitutive>
       ...
