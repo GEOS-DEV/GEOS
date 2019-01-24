@@ -167,8 +167,35 @@ Click ``OK`` to close all Settings windows.
 
 - Install packages needed for compiling GEOSX
 
-.. code-block:: sh
+  .. code-block:: sh
 
-  sudo apt install git gcc g++ gfortran python cmake zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
+   sudo apt install git gcc g++ gfortran python cmake zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
+
 
 - Follow instructions provided at the `Getting Started with GEOSX <https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst>`__ page.
+
+4. Generate Sphinx documentation files
+================================================================================
+
+- To generate the documentation files, you will need to install Sphinx using
+
+  .. code-block:: sh
+
+   sudo apt install pyhton-sphinx
+
+  Then you can generate the documentation files with the following commands 
+
+ .. code-block:: sh
+
+  cd GEOSX
+  python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
+  cd your-platform.cmake 
+  make geosx_docs
+
+- That will create a new folder 
+ 
+  .. code-block:: sh
+
+   GEOSX/src/docs/sphinx
+ which contains all the html files generated.
+
