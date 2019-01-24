@@ -11,9 +11,9 @@ Welcome to the GEOSX user guide.
    InputXML
 
 
-
+****************************************************
 Examples
-==================
+****************************************************
 
 Single-phase flow solver
 

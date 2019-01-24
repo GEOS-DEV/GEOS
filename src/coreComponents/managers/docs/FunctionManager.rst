@@ -1,9 +1,6 @@
-###############################################################################
-Function Manager
-###############################################################################
-
-GEOSX functions are specified in the ``Functions`` block in the input xml file.  There are three types of tables: ``TableFunction``, ``SymbolicFunction``, and ``CompositeFunction``.  For example:
-
+Functions Block
+===============================================================================
+GEOSX functions are specified in the ``Functions`` block in the input xml file.
 .. code-block:: xml
 
   <Functions>
@@ -22,19 +19,15 @@ GEOSX functions are specified in the ``Functions`` block in the input xml file. 
                        functionNames="f_a f_b"
                        variableNames="a b"
                        expression="a+b"/>
-  </Events>
+  </Functions>
 
-
-
-
+There are three types of tables: ``TableFunction``, ``SymbolicFunction``, and ``CompositeFunction``.
 
 FunctionBase
-========================
-
+-------------------------------------------------------------------------------
 Each function type derived from FunctionBase requires the following input attribute:
 
 * ``inputVarName`` - Specifies the names of input parameters to the function.  These can be either the name of an array, such as ``Pressure``, or the special keyword, ``time``.
-
 
 A function can be used in one of three ways:
 
@@ -44,11 +37,8 @@ A function can be used in one of three ways:
 
 3. Statistics mode - This method behaves in the same manner as the object mode, except that instead of returning an array with the function results, it will return a structure containing the minmumum, average, and maximum values of the results.
 
-
-
 TableFunction
-========================
-
+-------------------------------------------------------------------------------
 This function type is used to compute an arbitrary-dimensional function based upon table data.  The table axes can be tied to spatial dimensions, or any other set of parameters, such as a phase diagram.  The available xml attributes for this function are:
 
 * ``coordinates`` - The coordinates for the table (1D function only)
@@ -57,21 +47,35 @@ This function type is used to compute an arbitrary-dimensional function based up
 * ``voxelFile`` - A comma-delimited file that contains the table values.  For multi-dimensional tables, the values should be given in Fortran order (where the first index changes fastest).
 * ``interpolation`` - This defines the interpolation method for the function (only linear interpolation is currently implemented).
 
+.. code-block:: xml
+
+  <Functions>
+    <TableFunction name="f_a"
+                   inputVarNames="time"
+                   coordinates="-10 10"
+                   values="-10 10" />
+  </Functions>
 
 
 SymbolicFunction
-=========================
-
+-------------------------------------------------------------------------------
 This function type is used to compute a symbolic function from a user-defined string.  It uses a just-in-time compiler to construct the function, so is is nearly as fast as natively compiled C++ code.  The available xml attributes for this function are:
 
 * ``variableNames`` - This is a list of short-hand names for the inputs to the symbolic function.  Each name should map to a single alphabetic character.  There should be a definition for each scalar input and for each component of a vector input.  For example if ``inputVarName="time, ReferencePosition"``, then ``variableNames="t, x, y, z"``
 * ``expression`` = This is the definition of the symbolic function.  For the most part, this follows a python-esque format.  However, the function string cannot contain any spaces, and uses the ``pow(x, 3)`` to represent power instead of the ``**`` operator.
 
+.. code-block:: xml
+
+  <Functions>
+    <SymbolicFunction name="f_b"
+                      inputVarNames="ReferencePosition time"
+                      variableNames="x y z t"
+                      expression="x+y*z"/>
+  </Functions>
 
 
 CompositeFunction
-==============================
-
+-------------------------------------------------------------------------------
 This function is derived from the symbolic function.  However, instead of using the time or object as inputs, it is used to combine the outputs of other functions using a symbolic expression.  The available xml attribures are:
 
 * ``functionNames`` - This is a list of the input function names to use
