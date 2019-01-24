@@ -17,14 +17,16 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
      - *Applications, Simulations, and Quality Division, Lawrence Livermore National Laboratory*
    * - Matthias Cremon
      - *Department of Energy Resources Engineering, Stanford University*
-   * - Sergey Klevtsov
-     - *Department of Energy Resources Engineering, Stanford University*
+   * - Pengcheng Fu
+     - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Hervé Gross 
      - *Advanced Resources and Risk Technology, LLC*
    * - François Hamon
      - *Total E&P*
    * - Jixiang Huang
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
+    * - Sergey Klevtsov
+     - *Department of Energy Resources Engineering, Stanford University*
    * - Antoine Mazuyer
      - *Department of Energy Resources Engineering, Stanford University*
    * - Randolph Settgast
