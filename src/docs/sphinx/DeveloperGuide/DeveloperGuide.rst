@@ -10,16 +10,16 @@ Here we describe the process for development in the GEOSX framework.
    :maxdepth: 1
 
    DeveloperGuidelines
+   
+   GitWorkflow
+   
+   UnitTests
+   
+   IntegratedTests
       
-   ../caliper_link
-
-   ../problem_link
-
-   ../event_link
-
-   ../dofmanager_link
-
-..   ../function_link
+   caliper_link
+   
+   problem_link
 
 GIT workflow
 Unit and integrated tests
@@ -33,4 +33,3 @@ Physics Solvers
 Constitutive Models
 Linear Algebra Interface
 Portable Programming: RAJA and CHAI
->>>>>>> Updated DoF manager doc
