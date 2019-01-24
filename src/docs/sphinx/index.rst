@@ -14,6 +14,8 @@ GEOSX is a simulation platform focused on providing streamlined development of H
    UserGuide/UserGuide
 
    DeveloperGuide/DeveloperGuide
+   
+   authors
 
 
 Indices and tables

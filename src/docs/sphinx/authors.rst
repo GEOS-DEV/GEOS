@@ -9,10 +9,6 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
    :widths: 10 30
    :header-rows: 1
 
-.. list-table:: 
-   :widths: 10 30
-   :header-rows: 1
-
    * - Author Name
      - Affiliation
    * - Nicola Castelletto

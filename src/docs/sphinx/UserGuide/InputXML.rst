@@ -24,7 +24,6 @@ Boundary Conditions
 ===============================================================================
 
 
-Event Manager
-===============================================================================
+.. include:: ../../../../src/coreComponents/managers/docs/EventManager.rst
 
 .. include:: ../../../../src/coreComponents/managers/docs/FunctionManager.rst
