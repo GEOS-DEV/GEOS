@@ -91,3 +91,6 @@ To execute a serial run enter the following command from a working directory:
 .. code-block:: sh
 
     path-to-geosx-bin/geosx -i path-to-xml/LaplaceFEM.xml
+
+
+.. include:: ubuntu_instructions
