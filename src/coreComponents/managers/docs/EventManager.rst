@@ -1,6 +1,5 @@
-###############################################################################
 Event Management
-###############################################################################
+===============================================================================
 
 The goal of the GEOSX event manager is to be flexible with regards to event type, application order, and method of triggering.  The event manager is configured via the ``Event`` block in an input .xml file, i.e.:
 
@@ -17,10 +16,10 @@ The goal of the GEOSX event manager is to be flexible with regards to event type
 
 
 Event Manager Configuration
-=====================================
+----------------------------
 
 Event
-----------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The Event block includes two attributes (by default, they are set to their max values):
 
 * ``maxTime`` - Sets the maximum time for the global event loop (real64, optional)
@@ -28,7 +27,7 @@ The Event block includes two attributes (by default, they are set to their max v
 
 
 EventBase
------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Event candidates are indicated by appending children to the Event block.  These children must point to an object of the type ``EventBase``.  The common attributes for all events are:
 
 * ``name`` - A unique identifier for the event (string)
@@ -43,7 +42,7 @@ Event candidates are indicated by appending children to the Event block.  These 
 
 
 PeriodicEvent
---------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The primary type of event used in GEOSX is of type ``PeriodicEvent``.  As its name suggests, it will execute periodically during a simulation.  It can be triggered based upon a cycleFrequency, timeFrequency, a time-function, or a function applied to an object.  The unique attributes for this event are:
 
 * ``cycleFrequency`` - This will instruct the event to execute every N cycles.  A value of "1" (default) will cause the event to trigger every cycle, a value of "2" will trigger every other cycle, and so on. (integer, optional)
@@ -57,14 +56,14 @@ The primary type of event used in GEOSX is of type ``PeriodicEvent``.  As its na
 
 
 HaltEvent
------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The second event type used in GEOSX is of the type ``HaltEvent``.  This event will track the wall clock, and if it is executed it will set a flag that instructs the manager to exit.  The unique attribute for this object is:
 
 * ``maxRunTime`` - The event will trigger once (wallTime > maxRunTime) (real64)
 
 
 SoloEvent
------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The third event type used in GEOSX is of the type ``SoloEvent``.  This event will execute once once the conditions are met (Note: if targetCycle or targetTime are not specified, the event will trigger on the first cycle).  The unique attribute for this object is:
 
 * ``targetCycle`` - The event will trigger once (cycle = targetCycle). (integer)
@@ -73,7 +72,7 @@ The third event type used in GEOSX is of the type ``SoloEvent``.  This event wil
 
 
 Basic Event Execution Rules
-=====================================
+---------------------------------------------
 
 During a simulation, the event manager will loop through the list of the events **in the order they are defined in the xml**.  The simulation ``cycle`` denotes the number of times this loop has completed, and ``dt`` denotes the timestep.  During each loop, each event will do the following:
 
@@ -87,7 +86,7 @@ To initialize the simulation, the value of ``dt`` for the first ``cycle`` is set
 
 
 Event Progress Indicator
-=====================================
+---------------------------------------------
 Because the event manager allows the user to specify the order of events, it could introduce ambiguity into the timestamps of output files.  To resolve this, we pass the *progress*, which is defined as the percent completion of the main loop, to the event targets.  Currently, this value is included in the headers of plot files.
 
 The event manager will also test to see if a given target is expected to execute **after all** calls to objects of type ``SolverBase``.  If this is the case, then the event will be executed with ``time = time + dt``.  Otherwise, the event will be executed with ``time = time``.  This is useful for automatically aligning the timestamps for output files.
@@ -95,7 +94,7 @@ The event manager will also test to see if a given target is expected to execute
 
 
 Event Sub/Super Stepping Behavior
-=============================================
+---------------------------------------------
 
 If the ``allowSuperstep`` attribute of an event is set, when its criteria are met, it will execute its target with ``time = lastTime`` and ``dt = dt + time - lastTime`` instead of their typical values.
 
@@ -103,7 +102,7 @@ If the ``allowSubstep`` attribute of an event is set, when its criteria are met,
 
 
 Event Forecast Calculation
-=====================================
+---------------------------------------------
 Again, the ``forecast`` is defined as the expected number of cycles until the event will execute.  If ``(time < beginTime)`` or ``(time >= endTime)``, this value will be equal to its max value.  Otherwise, it is calculated by the specific event types:
 
 * cycle-driven ``PeriodicEvent`` - ``forecast = cycleFrequency - (cycle - lastCycle)``
@@ -112,7 +111,7 @@ Again, the ``forecast`` is defined as the expected number of cycles until the ev
 
 
 Nested Events
-=====================================
+---------------------------------------------
 The event manager allows its child events to be nested.  If this feature is used, then the manager follows the basic execution rules, with the following exception:  When its criteria are met, an event will first execute its (optional) target.  It will then estimate the forecast for its own sub-events, and execute them following the same rules as in the main loop.  For example:
 
 .. code-block:: xml

@@ -23,12 +23,12 @@ Here we describe the process for development in the GEOSX framework.
 
 GIT workflow
 Unit and integrated tests
+
 Overview of the code structure
 Managed Groups
 Arrays
 Data Repository
 Mesh Infrastructure
-Event Manager
 Physics Solvers
 Constitutive Models
 Linear Algebra Interface
