@@ -50,9 +50,9 @@ Summary
 
 The following table summarizes the available input parameters for the linear solver.
 
-================================================================================
+================================= ====== ========= =============================
 Parameter                         Type   Default   Definition
----------------------------       ------ --------- -----------------------------
+--------------------------------- ------ --------- -----------------------------
 ``linearSolver.type``             string ``gmres`` Linear solver type.  Valid values  of this parameter are:
 
                                                    - ``direct``: Direct solver
@@ -68,5 +68,4 @@ Parameter                         Type   Default   Definition
 ``linearSolver.maxIterations``    int    300       Maximum number of linear iterations of the iterative method when using ``cg``, ``gmres``, or ``bicgstab``.
 
 ``linearSolver.gmres.maxRestart`` int    300       Restart basis after ``maxRestart`` iterations of the iterative method when using ``gmres``
-
-================================================================================
+================================= ====== ========= =============================
