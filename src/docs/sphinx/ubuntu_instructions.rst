@@ -140,7 +140,7 @@ The following instructions are taken from `Matthew Palmer's blog <https://matthe
   .. image:: UbuntuVM_on_OSX_Hosts/VM_settings_04c.png
     :width: 400
 
-    Click ``OK`` to close all Settings windows.
+Click ``OK`` to close all Settings windows.
 
   5. Start the virtual machine and log in
 
