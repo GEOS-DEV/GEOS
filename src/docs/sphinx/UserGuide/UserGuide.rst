@@ -10,6 +10,8 @@ Welcome to the GEOSX user guide.
 
    InputXML
 
+   ExternalMesh
+
 
 ****************************************************
 Examples
