@@ -166,20 +166,33 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
           
           if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
           {
-            // Basic attributes
-            xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
-            attributeNode.append_attribute("name") = wrapper->getName().c_str();
-            attributeNode.append_attribute("type") = (rtTypes::typeNames(wrapper->get_typeid()).c_str());
+            string attributeName = wrapper->getName();
 
-            // (Optional) Description
+            // Attribute Description
+            // There isn't an available attribute for this, so include it in a comment
             string description = wrapper->getDescription();
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
             if (!description.empty())
             {
-              attributeNode.append_attribute("description") = description.c_str();
+              commentNode.set_value((attributeName + " = " + description).c_str());
+            }
+            else
+            {
+              commentNode.set_value((attributeName + " = (no description available)").c_str());
             }
 
+            // Basic attributes
+            xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
+            attributeNode.append_attribute("name") = attributeName.c_str();
+            attributeNode.append_attribute("type") = (rtTypes::typeNames(wrapper->get_typeid()).c_str());
+
             // (Optional) Default Value
-            if ( flag == InputFlags::OPTIONAL )
+            if ( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
+            {
+              std::cout << attributeName << " has an invalid input flag" << std::cout;
+              GEOS_ERROR("SchemaUtilities::SchemaConstruction: duplicate xml attributes are not allowed");
+            }
+            else if ( flag == InputFlags::OPTIONAL )
             {
               rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
               rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
@@ -195,6 +208,12 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
                 }
               });
             }
+            else
+            {
+              attributeNode.append_attribute("use") = "required";
+            }
+
+
           }
         }
       }
