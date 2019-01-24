@@ -19,9 +19,9 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
      - *Department of Energy Resources Engineering, Stanford University*
    * - Sergey Klevtsov
      - *Department of Energy Resources Engineering, Stanford University*
-   * - Herve Gross 
+   * - Hervé Gross 
      - *Advanced Resources and Risk Technology, LLC*
-   * - Francois Hamon
+   * - François Hamon
      - *Total E&P*
    * - Jixiang Huang
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
