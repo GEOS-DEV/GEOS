@@ -23,6 +23,7 @@
 #include "EventManager.hpp"
 #include "managers/Events/EventBase.hpp"
 #include "common/TimingMacros.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -128,12 +129,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   integer exitFlag = 0;
 
   // Setup MPI communication
-  integer rank = 0;
-  integer comm_size = 1;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-  #endif
+  integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
+  integer const comm_size = CommunicationTools::MPI_Size(MPI_COMM_GEOSX );;
+
   real64 send_buffer[2];
   array1d<real64> receive_buffer(2 * comm_size);
 
