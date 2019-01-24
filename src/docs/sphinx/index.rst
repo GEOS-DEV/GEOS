@@ -1,4 +1,4 @@
-GEOSX
+GEOSX Documentation
 =================================
 
 GEOSX is a simulation platform focused on providing streamlined development of HPC physics simulators.
@@ -9,19 +9,13 @@ GEOSX is a simulation platform focused on providing streamlined development of H
 .. toctree::
    :numbered:
    :maxdepth: 2
-   :caption: Contents:
 
    getting_started
 
-   developer_guidelines
+   userGuide
 
-   caliper_link
+   developerGuide
 
-   problem_link
-
-   event_link
-
-   function_link
 
 Indices and tables
 ==================
