@@ -17,6 +17,11 @@ For example, in a classical linear elastostatics problem :math:`\mathsf{A}` is t
 
 This solution stage represents the most computationally expensive portion of a typical simulation.
 Solution algorithms generally belong to two families of methods: direct methods and iterative methods.
+In GEOSX both options are made available wrapping around well-established open-source linear algebra libraries, namely
+`HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__,
+`PETSC <https://www.mcs.anl.gov/petsc/>`__,
+`SuperLU <http://crd-legacy.lbl.gov/~xiaoye/SuperLU/>`__, and
+`Trilinos <https://trilinos.github.io/>`__.
 
 **************
 Direct methods
@@ -39,14 +44,10 @@ Iterative  methods
 Iterative methods are the method of choice for large, three‐dimensional applications.
 However, an appropriate preconditioner is essential for enabling the solution and achieving competitive performance.
 
-In the GEOSX framework both options are made available wrapping around well-established open-source linear algebra libraries, namely
-`HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__,
-`PETSC <https://www.mcs.anl.gov/petsc/>`__,
-`SuperLU <http://crd-legacy.lbl.gov/~xiaoye/SuperLU/>`__, and
-`Trilinos <https://trilinos.github.io/>`__.
-
+*******
 Summary
-=======
+*******
+
 The following table summarizes the available input parameters for the linear solver.
 
 ================================================================================
