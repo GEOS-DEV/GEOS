@@ -146,6 +146,8 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
           if( targetChoiceNode.empty() )
           {
             targetChoiceNode = targetTypeDefNode.prepend_child("xsd:choice");
+            targetChoiceNode.append_attribute("minOccurs") = "0";
+            targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
 
             // Add children of the group
             group->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
@@ -215,6 +217,15 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
 
 
           }
+        }
+
+        // Elements that are nonunique require the use of the name attribute
+        if((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE))
+        {
+          xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
+          attributeNode.append_attribute("name") = "name";
+          attributeNode.append_attribute("type") = "string";
+          attributeNode.append_attribute("use") = "required";
         }
       }
     }

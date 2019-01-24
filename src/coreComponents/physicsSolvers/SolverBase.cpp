@@ -39,7 +39,6 @@ SolverBase::SolverBase( std::string const & name,
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  requireInputName();
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
 //  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );

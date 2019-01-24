@@ -51,7 +51,7 @@ ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
 
 ConstitutiveBase::~ConstitutiveBase()

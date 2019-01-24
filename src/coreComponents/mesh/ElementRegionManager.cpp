@@ -118,6 +118,8 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   if( targetChoiceNode.empty() )
   {
     targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+    targetChoiceNode.append_attribute("minOccurs") = "0";
+    targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
   }
 
   ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
