@@ -11,11 +11,26 @@ Here we describe the process for development in the GEOSX framework.
 
    DeveloperGuidelines
       
-   caliper_link
+   ../caliper_link
 
-   problem_link
+   ../problem_link
 
-   event_link
+   ../event_link
 
-   function_link
+   ../dofmanager_link
 
+..   ../function_link
+
+GIT workflow
+Unit and integrated tests
+Overview of the code structure
+Managed Groups
+Arrays
+Data Repository
+Mesh Infrastructure
+Event Manager
+Physics Solvers
+Constitutive Models
+Linear Algebra Interface
+Portable Programming: RAJA and CHAI
+>>>>>>> Updated DoF manager doc
