@@ -21,6 +21,7 @@ Naming Conventions
 
 File Names
 ----------------
+- File names will be `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__ 
 - C++ header files are always named with a file extion of  \*.hpp.
 - C++ header implementation files, which contain templated or inline function definitions, are always named \*_impl.hpp.
 - C++ source files are always named with a file extion of  \*.cpp.
@@ -35,26 +36,23 @@ defined in "Foo_impl.hpp, with the source implmenetaion contained in Foo.cpp.
 
 Function Names
 --------------
-Function and member function names should be `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__ 
-or `snake_case <https://en.wikipedia.org/wiki/Snake_case>`__.
-Please be consistent with your choice within your files.
+Function and member function names should be `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__.
 
 Variable Names
 --------------
-Variables should be either `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__, or 
-`snake_case <https://en.wikipedia.org/wiki/Snake_case>`__."
-Whatever you choose, please be consistent with your choice in the functional scope you are working in.
+Variables should be `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__.
 
+Member Names
+--------------
 Member data should be `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__ prefix with 'm\_' (i.e. double m_dataVariable;)
 
-Type Names
---------------
+Class/Struct Names
+------------------
 Please use `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__ for typenames (i.e. classes)
 
    .. code-block:: c
    
       class MyClass;
-
 
 
    .. code-block:: c
@@ -64,6 +62,11 @@ Please use `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__ for typenam
         double m_doubleDataMember;
         int m_integerDataMember;
       }
+
+Alias/typedef Names
+-------------------
+Alias and typedefs should be the case of the underlying type that they alias. If no clear format is apperent, 
+as is the case with `double`, then use `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__
 
 Namespace Names
 ----------------
@@ -147,10 +150,11 @@ In cases where uncrusitfy is unable to enforce code style, it will ignore format
 In these cases it is acceptible to proceed with pull requests, as there is no logical recourse.
 
 Const Correctness and Placing Const Keyword
-=================================
+===========================================
 #. All functions and accessors should be declared as "const" functions unless modification to the class is required.
 #. In the case of accessors, both a "const" and "non-const" version should be provided.
 #. The const keyword should be placed in the location read by the compiler, which is right to left.
+
 The following examples are provided:
 
    .. code-block:: c

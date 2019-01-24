@@ -11,8 +11,8 @@ Here we describe the process for development in the GEOSX framework.
 .. toctree::
    :maxdepth: 1
 
-   developer_guidelines
-   
+   DeveloperGuidelines
+      
    caliper_link
 
    problem_link
@@ -21,4 +21,3 @@ Here we describe the process for development in the GEOSX framework.
 
    function_link
 
-   dofmanager_link
