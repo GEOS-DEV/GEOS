@@ -16,6 +16,7 @@ Physics Solver Block
 Boundary Conditions
 ===============================================================================
 
+.. include:: ../../../../src/coreComponents/constitutive/docs/Constitutive.rst
 
 .. include:: ../../../../src/coreComponents/managers/docs/EventManager.rst
 
