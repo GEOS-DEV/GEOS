@@ -44,7 +44,8 @@ Input an external mesh into GEOSX
 =================================
 
 Several blocks are involved to import an external mesh into GEOSX, defined in the XML input file.
-For more information on the organization of the XML input files, please see the related documentation page.
+For more information on the organization of the XML input files, please see the related documentation page here :
+:doc:`InputXML`.
 
 The Mesh block
 --------------
@@ -94,8 +95,8 @@ The keywords for the element types are :
 - PYR
 - HEX
 
-
-To specify a field to a ``CellBlock``, you have to specify the path to it as described in.
+To specify a field to a ``CellBlock``, you have to specify the path to it as described in
+this page : :doc:`InputXML`.
 
 .. _PAMELA: https://github.com/GEOSX/PAMELA
 .. _GMSH: http://gmsh.info
