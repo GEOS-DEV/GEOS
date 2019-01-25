@@ -1,6 +1,4 @@
 
-Element: Events
-===============
 
 ============= ======= ======= === ========================= 
 Name          Type    Default Use Description               
