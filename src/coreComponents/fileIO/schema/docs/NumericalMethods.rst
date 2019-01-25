@@ -1,14 +1,12 @@
 
-Element: NumericalMethods
-=========================
 
-=============== ==== ======= ====== =========================== 
-Name            Type Default Use    Description                 
-=============== ==== ======= ====== =========================== 
-BasisFunctions  node         unique `Element: BasisFunctions`_  
-QuadratureRules node         unique `Element: QuadratureRules`_ 
-FiniteElements  node         unique `Element: FiniteElements`_  
-FiniteVolume    node         unique `Element: FiniteVolume`_    
-=============== ==== ======= ====== =========================== 
+=============== ==== ======= ====== ====================== 
+Name            Type Default Use    Description            
+=============== ==== ======= ====== ====================== 
+BasisFunctions  node         unique `XML_BasisFunctions`_  
+QuadratureRules node         unique `XML_QuadratureRules`_ 
+FiniteElements  node         unique `XML_FiniteElements`_  
+FiniteVolume    node         unique `XML_FiniteVolume`_    
+=============== ==== ======= ====== ====================== 
 
 

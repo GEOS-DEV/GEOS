@@ -1,6 +1,4 @@
 
-Element: GaussQuadrature3
-=========================
 
 ====== ======= ======= ======== ================= 
 Name   Type    Default Use      Description       

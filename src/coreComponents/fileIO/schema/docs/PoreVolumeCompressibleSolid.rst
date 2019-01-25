@@ -1,6 +1,4 @@
 
-Element: PoreVolumeCompressibleSolid
-====================================
 
 ================= ====== ======= ======== ============================================ 
 Name              Type   Default Use      Description                                  
