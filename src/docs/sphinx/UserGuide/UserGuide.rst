@@ -11,6 +11,7 @@ Welcome to the GEOSX user guide.
    InputXML
 
    ExternalMesh
+   LinearSolver
 
 
 ****************************************************
