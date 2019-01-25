@@ -183,19 +183,19 @@ Click ``OK`` to close all Settings windows.
 
    sudo apt install pyhton-sphinx
 
-  Then you can generate the documentation files with the following commands 
+  Then you can generate the documentation files with the following command 
 
  .. code-block:: sh
 
   cd GEOSX
   python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
-  cd your-platform.cmake 
+  cd build-your-platform-release
   make geosx_docs
 
 - That will create a new folder 
  
   .. code-block:: sh
 
-   GEOSX/src/docs/sphinx
+   GEOSX/build-your-platform-release/docs/sphinx
  which contains all the html files generated.
 
