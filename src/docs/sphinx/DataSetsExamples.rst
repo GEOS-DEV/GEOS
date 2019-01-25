@@ -119,6 +119,7 @@ Three controls are in place:
 
 Numerical methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+We are going to use a two-point flux approximation scheme for our grid.
 
 
 .. code-block:: xml
@@ -226,3 +227,18 @@ We specify the following properties all throughout the model (homogeneous):
                scale="1.1e3"
                setNames="left"/>
   </FieldSpecifications>
+
+
+
+Running GEOSX
+------------------------------------
+
+The command to run GEOSX is
+
+``path/to/geosx -i path/to/this/xml_file.xml``
+
+The console should display initialization messages,
+and then step into the simulation with the specified time-step increments.
+
+All results are written in a format compatible with `VisIt
+<https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
