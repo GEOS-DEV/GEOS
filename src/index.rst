@@ -9,13 +9,13 @@ GEOSX is a simulation platform focused on providing streamlined development of H
 .. toctree::
    :maxdepth: 2
 
-   getting_started
+   docs/sphinx/getting_started
 
-   UserGuide/UserGuide
+   docs/sphinx/UserGuide/UserGuide
 
-   DeveloperGuide/DeveloperGuide
+   docs/sphinx/DeveloperGuide/DeveloperGuide
    
-   authors
+   docs/sphinx/authors
 
 
 Indices and tables
