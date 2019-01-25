@@ -5,7 +5,7 @@ GEOSX Authors
 The following is a list of contributors to the GEOSX code in alphabetical order (last updated January 2019):
 
 
-.. list-table:: 
+.. list-table::
    :widths: 10 30
    :header-rows: 1
 
@@ -19,8 +19,8 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
      - *Department of Energy Resources Engineering, Stanford University*
    * - Pengcheng Fu
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
-   * - Hervé Gross 
-     - *Advanced Resources and Risk Technology, LLC*
+   * - Hervé Gross
+     - *Total E&P*
    * - François Hamon
      - *Total E&P*
    * - Jixiang Huang
@@ -37,8 +37,5 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
      - *Applications, Simulations, and Quality Division, Lawrence Livermore National Laboratory*
    * - Joshua A. White
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
-   * - Christopher White 
+   * - Christopher White
      - *Applications, Simulations, and Quality Division, Lawrence Livermore National Laboratory*
-
-
-
