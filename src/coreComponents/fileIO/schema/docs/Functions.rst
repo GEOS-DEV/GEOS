@@ -1,13 +1,11 @@
 
-Element: Functions
-==================
 
-================= ==== ======= === ============================= 
-Name              Type Default Use Description                   
-================= ==== ======= === ============================= 
-CompositeFunction node             `Element: CompositeFunction`_ 
-TableFunction     node             `Element: TableFunction`_     
-SymbolicFunction  node             `Element: SymbolicFunction`_  
-================= ==== ======= === ============================= 
+================= ==== ======= === ======================== 
+Name              Type Default Use Description              
+================= ==== ======= === ======================== 
+CompositeFunction node             `XML_CompositeFunction`_ 
+TableFunction     node             `XML_TableFunction`_     
+SymbolicFunction  node             `XML_SymbolicFunction`_  
+================= ==== ======= === ======================== 
 
 

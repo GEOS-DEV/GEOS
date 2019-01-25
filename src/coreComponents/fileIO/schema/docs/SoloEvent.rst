@@ -1,6 +1,4 @@
 
-Element: SoloEvent
-==================
 
 ==================== ======= ======= ======== ====================================================================== 
 Name                 Type    Default Use      Description                                                            
@@ -14,9 +12,9 @@ allowSubstep         integer 0                allows event sub-stepping
 substepFactor        integer 1                integer substep factor (dt_sub=dt/f)                                   
 targetExactStartStop integer 0                allows timesteps to be truncated to match the start/stop times exactly 
 name                 string          required                                                                        
-HaltEvent            node                     `Element: HaltEvent`_                                                  
-SoloEvent            node                     `Element: SoloEvent`_                                                  
-PeriodicEvent        node                     `Element: PeriodicEvent`_                                              
+HaltEvent            node                     `XML_HaltEvent`_                                                       
+SoloEvent            node                     `XML_SoloEvent`_                                                       
+PeriodicEvent        node                     `XML_PeriodicEvent`_                                                   
 ==================== ======= ======= ======== ====================================================================== 
 
 

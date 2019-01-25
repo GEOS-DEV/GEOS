@@ -1,6 +1,4 @@
 
-Element: ChomboIO
-=================
 
 =============== ======= ======= ======== ===================== 
 Name            Type    Default Use      Description           

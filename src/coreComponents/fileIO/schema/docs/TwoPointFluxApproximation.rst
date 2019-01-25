@@ -1,6 +1,4 @@
 
-Element: TwoPointFluxApproximation
-==================================
 
 ================= ====== ======= ======== ============================== 
 Name              Type   Default Use      Description                    

@@ -1,6 +1,4 @@
 
-Element: FiniteElementSpace
-===========================
 
 ========== ====== ======= ======== ========================== 
 Name       Type   Default Use      Description                

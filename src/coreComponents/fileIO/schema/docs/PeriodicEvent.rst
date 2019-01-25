@@ -1,6 +1,4 @@
 
-Element: PeriodicEvent
-======================
 
 ==================== ======= ======= ======== ====================================================================== 
 Name                 Type    Default Use      Description                                                            
@@ -22,9 +20,9 @@ set                  string                   Setname of the input object (if em
 stat                 integer 0                Selection of the min/avg/max for functions that target vectors         
 threshold            real64  1e+10            event threshold                                                        
 name                 string          required                                                                        
-HaltEvent            node                     `Element: HaltEvent`_                                                  
-SoloEvent            node                     `Element: SoloEvent`_                                                  
-PeriodicEvent        node                     `Element: PeriodicEvent`_                                              
+HaltEvent            node                     `XML_HaltEvent`_                                                       
+SoloEvent            node                     `XML_SoloEvent`_                                                       
+PeriodicEvent        node                     `XML_PeriodicEvent`_                                                   
 ==================== ======= ======= ======== ====================================================================== 
 
 

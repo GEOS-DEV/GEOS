@@ -1,11 +1,9 @@
 
-Element: Geometry
-=================
 
-==== ==== ======= === =============== 
-Name Type Default Use Description     
-==== ==== ======= === =============== 
-Box  node             `Element: Box`_ 
-==== ==== ======= === =============== 
+==== ==== ======= === =========== 
+Name Type Default Use Description 
+==== ==== ======= === =========== 
+Box  node             `XML_Box`_  
+==== ==== ======= === =========== 
 
 

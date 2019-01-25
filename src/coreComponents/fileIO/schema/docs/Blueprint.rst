@@ -1,6 +1,4 @@
 
-Element: Blueprint
-==================
 
 =============== ======= ======= ======== ===================== 
 Name            Type    Default Use      Description           
