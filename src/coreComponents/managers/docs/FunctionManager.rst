@@ -1,3 +1,5 @@
+.. _FunctionManager:
+
 Functions Block
 ===============================================================================
 GEOSX functions are specified in the ``Functions`` block in the input xml file.

@@ -19,7 +19,7 @@ Here we describe the process for development in the GEOSX framework.
       
    caliper_link
    
-   problem_link
+   ../problem_link
 
 GIT workflow
 Unit and integrated tests

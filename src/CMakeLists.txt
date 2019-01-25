@@ -91,5 +91,6 @@ blt_add_executable(NAME geosx
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
+blt_add_sphinx_target( geosx_docs )
 
 message( "Exiting /src/CMakeLists.txt")
