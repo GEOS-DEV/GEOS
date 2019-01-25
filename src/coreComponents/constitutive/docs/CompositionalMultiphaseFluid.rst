@@ -42,7 +42,7 @@ PR    Peng-Robinson EOS
 SRK   Soave-Redlich-Kwong EOS
 ===== =======================
 
-Example
+Input example
 =========================
 
 .. code-block:: xml
