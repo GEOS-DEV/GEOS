@@ -1,6 +1,4 @@
 
-Element: LagrangeBasis3
-=======================
 
 ====== ======= ======= ======== ============ 
 Name   Type    Default Use      Description  

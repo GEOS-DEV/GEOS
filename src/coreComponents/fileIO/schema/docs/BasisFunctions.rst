@@ -1,13 +1,11 @@
 
-Element: BasisFunctions
-=======================
 
-============== ==== ======= === ========================== 
-Name           Type Default Use Description                
-============== ==== ======= === ========================== 
-LagrangeBasis3 node             `Element: LagrangeBasis3`_ 
-LagrangeBasis2 node             `Element: LagrangeBasis2`_ 
-LagrangeBasis1 node             `Element: LagrangeBasis1`_ 
-============== ==== ======= === ========================== 
+============== ==== ======= === ===================== 
+Name           Type Default Use Description           
+============== ==== ======= === ===================== 
+LagrangeBasis3 node             `XML_LagrangeBasis3`_ 
+LagrangeBasis2 node             `XML_LagrangeBasis2`_ 
+LagrangeBasis1 node             `XML_LagrangeBasis1`_ 
+============== ==== ======= === ===================== 
 
 

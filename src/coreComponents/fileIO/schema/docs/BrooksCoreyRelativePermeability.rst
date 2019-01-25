@@ -1,6 +1,4 @@
 
-Element: BrooksCoreyRelativePermeability
-========================================
 
 ====================== ============ ======= ======== ================================================= 
 Name                   Type         Default Use      Description                                       

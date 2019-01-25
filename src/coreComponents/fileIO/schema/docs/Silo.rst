@@ -1,6 +1,4 @@
 
-Element: Silo
-=============
 
 =============== ======= ======= ======== ========================== 
 Name            Type    Default Use      Description                

@@ -56,12 +56,16 @@ The primary type of event used in GEOSX is of type ``PeriodicEvent``.  As its na
 * ``set`` - If the target of a function is an object, then this may be used to limit the sets within the object to apply the function to.  Otherwise, it will be applied to the entire object. (string, optional)
 * ``stat`` - If the target of a function is an object, then this will select which property of the output to compare against the threshold. 0=min, 1=mean, 2=max.  (integer, optional)
 
+.. include:: ../../../coreComponents/fileIO/schema/docs/PeriodicEvent.rst
+
 
 HaltEvent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The second event type used in GEOSX is of the type ``HaltEvent``.  This event will track the wall clock, and if it is executed it will set a flag that instructs the manager to exit.  The unique attribute for this object is:
 
 * ``maxRunTime`` - The event will trigger once (wallTime > maxRunTime) (real64)
+
+.. include:: ../../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
 SoloEvent
@@ -71,6 +75,8 @@ The third event type used in GEOSX is of the type ``SoloEvent``.  This event wil
 * ``targetCycle`` - The event will trigger once (cycle = targetCycle). (integer)
 * ``targetTime`` - The event will trigger once (time >= targetTime) (real64)
 * ``targetExactTimestep`` - If this is set, will allow the event to limit its timestep requests in an attempt to execute on integer multiples of timeFrequency. (bool, optional)
+
+.. include:: ../../../coreComponents/fileIO/schema/docs/SoloEvent.rst
 
 
 Basic Event Execution Rules

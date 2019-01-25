@@ -1,13 +1,11 @@
 
-Element: Mesh
-=============
 
-=================== ==== ======= === =============================== 
-Name                Type Default Use Description                     
-=================== ==== ======= === =============================== 
-PAMELAMeshGenerator node             `Element: PAMELAMeshGenerator`_ 
-MeshFile            node             `Element: MeshFile`_            
-InternalMesh        node             `Element: InternalMesh`_        
-=================== ==== ======= === =============================== 
+=================== ==== ======= === ========================== 
+Name                Type Default Use Description                
+=================== ==== ======= === ========================== 
+PAMELAMeshGenerator node             `XML_PAMELAMeshGenerator`_ 
+MeshFile            node             `XML_MeshFile`_            
+InternalMesh        node             `XML_InternalMesh`_        
+=================== ==== ======= === ========================== 
 
 

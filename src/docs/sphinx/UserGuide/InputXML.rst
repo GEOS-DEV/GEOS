@@ -21,3 +21,6 @@ Boundary Conditions
 .. include:: ../../../../src/coreComponents/managers/docs/EventManager.rst
 
 .. include:: ../../../../src/coreComponents/managers/docs/FunctionManager.rst
+
+.. include:: ../../../../src/coreComponents/fileIO/schema/docs/CompleteXMLSchema.rst
+

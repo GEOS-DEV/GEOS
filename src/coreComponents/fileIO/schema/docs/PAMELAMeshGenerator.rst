@@ -1,6 +1,4 @@
 
-Element: PAMELAMeshGenerator
-============================
 
 ==== ====== ======= ======== ===================== 
 Name Type   Default Use      Description           

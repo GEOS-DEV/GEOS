@@ -1,6 +1,4 @@
 
-Element: MeshFile
-=================
 
 ==== ====== ======= ======== ==================== 
 Name Type   Default Use      Description          

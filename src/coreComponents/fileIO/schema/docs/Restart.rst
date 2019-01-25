@@ -1,6 +1,4 @@
 
-Element: Restart
-================
 
 =============== ======= ======= ======== ===================== 
 Name            Type    Default Use      Description           
