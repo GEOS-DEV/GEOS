@@ -69,3 +69,4 @@ Parameter                         Type   Default   Definition
 
 ``linearSolver.gmres.maxRestart`` int    300       Restart basis after ``maxRestart`` iterations of the iterative method when using ``gmres``
 ================================= ====== ========= =============================
+
