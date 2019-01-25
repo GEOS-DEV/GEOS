@@ -7,17 +7,10 @@ Problem Block
 ===============================================================================
 This is the problem block
 
-Mesh Block
-===============================================================================
-This is the mesh block
-
 Physics Solver Block
 ===============================================================================
 
-
-
-
-
+.. include:: ../../../../src/coreComponents/mesh/docs/MeshBlock.rst
 
 
 Boundary Conditions

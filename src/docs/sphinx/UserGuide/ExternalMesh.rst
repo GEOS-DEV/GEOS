@@ -60,19 +60,19 @@ The mesh block has the following syntax.
 
 We strongly recommand to use absolute path to the mesh file.
 
-Defining *ElementRegions*
-------------------------
+Defining ``ElementRegions``
+---------------------------
 
-GEOSX uses *ElementRegions* to support different physics, or to define different constitutive properties.
-An *ElementRegion* is defined as a set of *CellBlocks*.
-A *CellBlock* is an ensemble of elements with the same element geometry.
+GEOSX uses ``ElementRegions`` to support different physics, or to define different constitutive properties.
+An ``ElementRegion`` is defined as a set of ``CellBlocks``.
+A ``CellBlock`` is an ensemble of elements with the same element geometry.
 
 .. image:: mesh.svg
 
 In the example presented above, the mesh is is composed of two regions (*Region 0* and *Region 1*).
-Each region contains 3 *CellBlocks*.
+Each region contains 3 ``CellBlocks``.
 
-The *ElementRegions* are defined as below :
+The ``ElementRegions`` are defined as below :
 
 .. code-block:: xml
 
@@ -81,9 +81,9 @@ The *ElementRegions* are defined as below :
     <ElementRegion name="Bot" cellBlocks="1_HEX 1_WEDGE 1_TETRA" materialList="water rock"/>
   </ElementRegions>
 
-You have to use the following syntax to declare your *CellBlocks* :
+You have to use the following syntax to declare your ``CellBlocks`` :
 
-.. code-block:: txt
+.. code-block::
 
   indexOfTheRegionWithinTheMesh_typeOfTheElement
 
@@ -95,7 +95,7 @@ The keywords for the element types are :
 - HEX
 
 
-To specify a field to a *CellBlock*, you have to specify the path to it as described in.
+To specify a field to a ``CellBlock``, you have to specify the path to it as described in.
 
 .. _PAMELA: https://github.com/GEOSX/PAMELA
 .. _GMSH: http://gmsh.info
