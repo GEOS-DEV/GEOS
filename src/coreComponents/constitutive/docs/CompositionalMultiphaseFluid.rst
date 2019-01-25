@@ -25,9 +25,13 @@ The following attributes are supported:
 
 Supported phase names are:
 
-* oil
-* gas
-* water
+===== ===========
+Value Comment
+===== ===========
+oil   Oil phase
+gas   Gas phase
+water Water phase
+===== ===========
 
 Supported Equation of State types:
 
