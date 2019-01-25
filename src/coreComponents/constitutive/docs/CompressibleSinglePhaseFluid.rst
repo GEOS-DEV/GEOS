@@ -36,7 +36,7 @@ The following attributes are supported:
 
 .. include:: /coreComponents/fileIO/schema/docs/CompressibleSinglePhaseFluid.rst
 
-Example
+Input example
 =========================
 
 .. code-block:: xml

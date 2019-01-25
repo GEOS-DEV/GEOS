@@ -1,6 +1,9 @@
-#########################
+##########################
+Coupled poroelastic solver
+##########################
+
 Poroelasticity model
-#########################
+===========================================
 
 This section describes the use of the poroelasticity models implemented in GEOSX.
 
@@ -34,25 +37,27 @@ where :math:`K_{s}` is the bulk modulus of the solid grain and :math:`\epsilon_v
 For more details, refer to `Kim(2010)
 <https://pangea.stanford.edu/ERE/pdf/pereports/PhD/Kim10.pdf>`_.
 
-#########################
 Model parameters
-#########################
+===========================================
 
 The poroelasticity model is implemented as a main solver listed in
 ``<Solvers>`` block of the input XML file that calls both SolidMechanics_LagrangianFEM and SinglePhaseFlow solvers. 
-In the main solver, it requires the specification of solidSolverName, fluidSolverName, and couplingTypeOption. 
+In the main solver, it requires the specification of solidSolverName, fluidSolverName, and couplingTypeOption.
+
+The following attributes are supported:
+
+.. include:: /coreComponents/fileIO/schema/docs/Poroelastic.rst
 
 * ``couplingTypeOption``: defines the coupling scheme. Currently, only "FixedStress" is implemented.
 
 For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
 
-Input Example:
-***************************************************
+Input example
+===========================================
 
-.. code-block::XML
+.. code-block:: xml
 
   <Solvers
-      ...
     gravityVector="0.0,0.0,-9.81">
 
     <Poroelastic name="poroSolve" 
@@ -88,5 +93,5 @@ Input Example:
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-      ...
     </SinglePhaseFlow>
+  </Solvers>

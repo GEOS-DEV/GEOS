@@ -31,7 +31,7 @@ Supported phase names are:
 * gas
 * water
 
-Example
+Input example
 =========================
 
 .. code-block:: xml

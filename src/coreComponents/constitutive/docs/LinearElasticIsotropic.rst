@@ -14,7 +14,7 @@ The following attributes are supported:
 
 .. include:: /coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
 
-Example
+Input example
 =========================
 
 .. code-block:: xml
