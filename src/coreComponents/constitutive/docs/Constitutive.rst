@@ -16,46 +16,34 @@ Model hierarchy
 There are several types of constitutive models that differ in purpose, input and output variables.
 Currently supported constitutive models are:
 
-.. toctree::
-   :maxdepth: 2
-
-   LinearElasticIsotropic
-   CompressibleSinglePhaseFluid
-   /../coreComponents/constitutive/docs/BlackOilFluid
-   CompositionalMultiphaseFluid
-   CO2-EOS
-   BrooksCoreyRelativePermeability
-   BrooksCoreyCapillaryPressure
-   VanGenuchtenCapillaryPressure
-
 * Solids
 
   * Solid mechanics
 
-    * :doc:`LinearElasticIsotropic`
+    * :doc:`/coreComponents/constitutive/docs/LinearElasticIsotropic`
 
 * Fluids
 
   * Single phase fluids
 
-    * :doc:`CompressibleSinglePhaseFluid`
+    * :doc:`/coreComponents/constitutive/docs/CompressibleSinglePhaseFluid`
 
   * Multiphase fluids
 
-    * :doc:`BlackOilFluid.rst`
-    * :doc:`CompositionalMultiphaseFluid`
-    * :doc:`CO2-EOS`
+    * :doc:`/coreComponents/constitutive/docs/BlackOilFluid`
+    * :doc:`/coreComponents/constitutive/docs/CompositionalMultiphaseFluid`
+    * :doc:`/coreComponents/constitutive/docs/CO2-EOS`
 
 * Solid-fluid interaction
 
   * Relative permeability
 
-    * :doc:`BrooksCoreyRelativePermeability`
+    * :doc:`/coreComponents/constitutive/docs/BrooksCoreyRelativePermeability`
 
   * Capillary pressure
 
-    * :doc:`BrooksCoreyCapillaryPressure`
-    * :doc:`VanGenuchtenCapillaryPressure`
+    * :doc:`/coreComponents/constitutive/docs/BrooksCoreyCapillaryPressure`
+    * :doc:`/coreComponents/constitutive/docs/VanGenuchtenCapillaryPressure`
 
 Input example
 ------------------------------------
@@ -84,7 +72,7 @@ Input example
     <ElementRegions>
       <ElementRegion name="Region2"
                      cellBlocks="cb1"
-                     materialList="water rock"/>
+                     materialList="water shale"/>
     </ElementRegions>
     ...
   </Problem>
