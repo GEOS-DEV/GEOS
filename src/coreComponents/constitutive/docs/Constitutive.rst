@@ -7,7 +7,7 @@ In a physics simulation they are used to model the response or state of material
 
 In GEOSX constitutive models are listed in ``<Constitutive>`` block of the input XML file.
 Each type of model has its own XML tag and each model must be assigned a unique name via ``name`` attribute.
-Names are used to assign models to regions of the physical domain via a ``materialList`` attribute of the ``<ElementRegion>`` node, see :ref:`ElementRegion`.
+Names are used to assign models to regions of the physical domain via a ``materialList`` attribute of the ``<ElementRegion>`` node, see :ref:`XML_ElementRegion`.
 In some cases, physics solvers must also be assigned specific constitutive models to use, see :ref:`PhysicsSolvers`.
 
 Model hierarchy
