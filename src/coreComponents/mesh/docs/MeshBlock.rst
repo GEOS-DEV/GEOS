@@ -1,7 +1,7 @@
 Mesh Block
 ===============================================================================
 
-The Mesh Block let you define the way the a mesh body is built.
+The Mesh Block let you define the way a mesh body is built.
 There are two options :
 
 Using the Internal Mesh Generator
@@ -44,3 +44,10 @@ The previous sample of XML file will generate a vertical beam with two ``CellBlo
 (one in red and one in blue in the following picture)
 
 .. image:: ../../../coreComponents/mesh/docs/beam.png
+
+Using the PAMELA Mesh Generator
+-------------------------------
+
+GEOSX also support the import of unstructured grids from external files.
+See the page : :doc:`ExternalMesh` for more information.
+
