@@ -213,3 +213,6 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+
+# Added to allow figure numbering
+numfig = True
