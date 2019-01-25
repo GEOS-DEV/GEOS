@@ -7,8 +7,7 @@ Problem Block
 ===============================================================================
 This is the problem block
 
-Physics Solver Block
-===============================================================================
+.. include:: ../../../../src/coreComponents/physicsSolvers/docs/Solvers.rst
 
 .. include:: ../../../../src/coreComponents/mesh/docs/MeshBlock.rst
 
