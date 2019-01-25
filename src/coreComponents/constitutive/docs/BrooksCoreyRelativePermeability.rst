@@ -8,12 +8,12 @@ Overview
 
 The following paragraphs explain how the Brooks-Corey
 model is used to compute the phase relative permeabilities as a function
-of saturation with the expression:
+of volume fraction with the expression:
 
 .. math::
     k_{r, m} = k_{\textit{rm,max}} S_{c,m}^{\lambda_{m}}
 
-where the scaled saturation of phase $\ell$ is computed as:
+where the scaled volume fraction of phase :math:`\ell` is computed as:
 
 .. math::
 
@@ -34,13 +34,13 @@ node.
 Besides ``name``, this model requires the specification of four
 types of parameters:
 
-   * ``phaseNames`` - The list of phases. The number of phases can be either 2 or 3. Example: "oil water gas".
+* ``phaseNames`` - The list of phase names. The number of phases can be either 2 or 3. Example: "oil water gas".
 
-   * ``phaseMinVolFraction`` - The minimum volume fraction :math:`S_{m,min}` for each phase specified in ``phaseNames``, in the same order. Below this volume fraction, the phase is assumed to be immobile. Default value for each phase: 0.0.
+* ``phaseMinVolFraction`` - The list of minimum volume fractions :math:`S_{m,min}` for each phase specified in ``phaseNames``, in the same order. Below this volume fraction, the phase is assumed to be immobile. Default value for each phase: 0.0.
 
-   * ``phaseRelPermExponent`` - The parameter :math:`\lambda_{m}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 1.0.
+* ``phaseRelPermExponent`` - The list of exponents :math:`\lambda_{m}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 1.0.
 
-   * ``phaseMaxValue`` - The parameter :math:`k_{\textit{rm,max}}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 0.0.
+* ``phaseMaxValue`` - The list of maximum values :math:`k_{\textit{rm,max}}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 0.0.
 
 
 **************
