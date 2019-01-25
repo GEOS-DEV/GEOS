@@ -25,6 +25,8 @@ The Event block includes two attributes (by default, they are set to their max v
 * ``maxTime`` - Sets the maximum time for the global event loop (real64, optional)
 * ``maxCycle`` - Sets the maximum number of cycles for the global event loop (integer, optional)
 
+.. include:: ../../../coreComponents/fileIO/schema/docs/Events.rst
+
 
 EventBase
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
