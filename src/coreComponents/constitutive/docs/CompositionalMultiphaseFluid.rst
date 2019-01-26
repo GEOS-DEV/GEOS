@@ -1,3 +1,5 @@
+.. _CompositionalMultiphaseFluid:
+
 ############################################
 Compositional multiphase fluid model
 ############################################
