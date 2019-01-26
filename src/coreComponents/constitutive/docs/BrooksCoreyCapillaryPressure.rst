@@ -1,3 +1,5 @@
+.. _BrooksCoreyCapillaryPressure:
+
 #####################################
 Brooks-Corey capillary pressure model
 #####################################

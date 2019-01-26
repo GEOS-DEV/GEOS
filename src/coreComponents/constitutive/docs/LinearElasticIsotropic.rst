@@ -1,3 +1,5 @@
+.. _LinearElasticIsotropic:
+
 ############################################
 Linear elastic isotropic solid model
 ############################################

@@ -1,3 +1,5 @@
+.. _SolidMechanicsLagrangianFEM:
+
 #####################################
 Lagrangian solid mechanics FEM solver
 #####################################

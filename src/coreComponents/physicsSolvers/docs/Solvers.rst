@@ -1,7 +1,10 @@
+.. _Solvers:
 
 Physics solvers
 ============================================
 
+This section of the input file specifies one or several solvers to be
+included in the simulation.
 
 Available solvers
 --------------------------
