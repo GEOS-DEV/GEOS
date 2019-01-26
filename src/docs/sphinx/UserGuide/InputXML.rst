@@ -17,6 +17,8 @@ Boundary Conditions
 
 .. include:: /coreComponents/constitutive/docs/Constitutive.rst
 
+.. include:: /coreComponents/managers/docs/NumericalMethodsManager.rst
+
 .. include:: /coreComponents/managers/docs/EventManager.rst
 
 .. include:: /coreComponents/managers/docs/FunctionManager.rst

@@ -1,3 +1,5 @@
+.. _CompositionalMultiphaseFlow:
+
 #######################################
 Compositional multiphase flow FV solver
 #######################################

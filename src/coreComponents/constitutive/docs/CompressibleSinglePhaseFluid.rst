@@ -1,3 +1,5 @@
+.. _CompressibleSinglePhaseFluid:
+
 ############################################
 Compressible single phase fluid model
 ############################################

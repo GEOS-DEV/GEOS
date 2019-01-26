@@ -1,3 +1,5 @@
+.. _BrooksCoreyRelativePermeability:
+
 ############################################
 Brooks-Corey relative permeability model
 ############################################

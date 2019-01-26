@@ -1,3 +1,5 @@
+.. _PoroelasticSolver:
+
 ##########################
 Coupled poroelastic solver
 ##########################

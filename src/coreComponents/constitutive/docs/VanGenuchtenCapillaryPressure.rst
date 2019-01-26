@@ -1,3 +1,6 @@
+.. _VanGenuchtenCapillaryPressure:
+
+######################################
 Van Genuchten capillary pressure model
 ######################################
 
