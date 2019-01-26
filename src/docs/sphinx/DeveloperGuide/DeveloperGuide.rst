@@ -19,10 +19,9 @@ Here we describe the process for development in the GEOSX framework.
       
    caliper_link
    
-   ../problem_link
-
-GIT workflow
-Unit and integrated tests
+   /coreComponents/managers/docs/ProblemManager.rst
+   
+   /coreComponents/linearAlgebraInterface/docs/DofManager.rst
 
 Overview of the code structure
 Managed Groups

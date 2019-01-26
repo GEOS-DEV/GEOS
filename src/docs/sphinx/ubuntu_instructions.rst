@@ -197,4 +197,5 @@ Click ``OK`` to close all Settings windows.
   .. code-block:: sh
 
    GEOSX/build-your-platform-release/docs/sphinx
- which contains all the html files generated.
+
+which contains all the html files generated.

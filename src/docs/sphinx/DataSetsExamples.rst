@@ -88,9 +88,9 @@ Events specification
 In this code block, we control the time stepping mechanisms used by the different
 elements of the solver.
 Three controls are in place:
- - a solver time step of 1 second, even if the solver could converge with longer time-steps,
- - an output time step of 1 second: a new pressure field is written out every second,
- - a restart file with an infinite frequency (ie. no restart is requested)
+* a solver time step of 1 second, even if the solver could converge with longer time-steps,
+* an output time step of 1 second: a new pressure field is written out every second,
+* a restart file with an infinite frequency (ie. no restart is requested)
 
 .. code-block:: xml
 

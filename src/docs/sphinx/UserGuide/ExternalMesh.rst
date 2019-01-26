@@ -84,7 +84,7 @@ The ``ElementRegions`` are defined as below :
 
 You have to use the following syntax to declare your ``CellBlocks`` :
 
-.. code-block::
+.. code-block:: none
 
   indexOfTheRegionWithinTheMesh_typeOfTheElement
 
