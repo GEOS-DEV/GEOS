@@ -30,7 +30,7 @@ Direct methods
 
 The major advantages are their reliability, robustness, and ease of implementation.
 However, they have large memory requirements and exhibit poor scalability.  Direct methods should be used in a prototyping stage, for example when developing a new formulation or algorithm, when the dimension of the problem, namely the size of matrix :math:`\mathsf{A}`, is small.
-Irrespective of the selected direct solver implementation, the stages can be idenitified:
+Irrespective of the selected direct solver implementation, three stages can be idenitified:
 
 (1) **Setup Stage**: the matrix is first analyzed and then factorized
 (#) **Solve Stage**: the solution to the linear systems involving the factorized matrix is computed
@@ -42,8 +42,21 @@ The default option in GEOSX relies on `SuperLU <http://crd-legacy.lbl.gov/~xiaoy
 Iterative  methods
 ******************
 
-Iterative methods are the method of choice for large, three‐dimensional applications.
-However, an appropriate preconditioner is essential for enabling the solution and achieving competitive performance.
+As the problem size (number of computational cells) increases, global iterative solution strategies are the method of choice---typically nonsymmetric Krylov solvers.
+Because of the possible poor conditioning of :math:`\mathsf{A}`, preconditioning is essential to solve such systems efficiently.
+*''Preconditioning is simply a means of transforming the original linear system into one which has the same solution, but which is likely to be easier to solve with an iterative solver''* [Saad (2003)].
+
+The design of a robust and efficient preconditioner is based on a trade-off between two competing objectives:
+
+* **Robustness**: reducing the number of iterations needed by the preconditioned solver to achieve convergence;
+* **Efficiency**: limiting the time required to construct and apply the preconditioner.
+
+Assuming a preconditioning matrix :math:`\mathsf{M}` is available, three standard approaches are used to apply the preconditioner:
+
+(1) **Left preconditioning**: the preconditioned system is :math:`\mathsf{M}^{-1} \mathsf{A} \mathsf{x} = \mathsf{M}^{-1} \mathsf{b}`
+(#) **Right preconditioning**: the preconditioned system is :math:`\mathsf{A} \mathsf{M}^{-1} \mathsf{y} = \mathsf{b}`, with :math:`\mathsf{x} = \mathsf{M}^{-1} \mathsf{y}`
+(#) **Split preconditioning**: the preconditioned system is :math:`\mathsf{M}^{-1}_L \mathsf{A} \mathsf{M}^{-1}_R \mathsf{y} = \mathsf{M}^{-1}_L \mathsf{b}`, with :math:`\mathsf{x} = \mathsf{M}^{-1}_R \mathsf{y}`
+
 
 *******
 Summary
@@ -68,6 +81,11 @@ The following table summarizes the available input parameters for the linear sol
 |                          |          |           |                                                |
 |                          |          |           | * ``gmres``:                                   |
 |                          |          |           |   Generalized minimum residual method.         |
+|                          |          |           |   The coefficient matrix :math:`\mathsf{A}`    |
+|                          |          |           |   can be indefinite or nonsymmetric            |
+|                          |          |           |                                                |
+|                          |          |           | * ``bicgstab``:                                |
+|                          |          |           |   Biconjugate gradient stabilized method.      |
 |                          |          |           |   The coefficient matrix :math:`\mathsf{A}`    |
 |                          |          |           |   can be indefinite or nonsymmetric            |
 |                          |          |           |                                                |
