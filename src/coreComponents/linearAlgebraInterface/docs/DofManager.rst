@@ -131,8 +131,8 @@ Unknowns are pressure, located on the element center, and displacements (*x*
 and *y* components), located on the nodes.
 For fluxes, a two-point flux approximation (TPFA) is used.
 The representation of the sparsity pattern of the :math:`\mathsf{C_L}` matrix
-(connectors/locations) for the simple mesh, shown in :numref:`mesh`, is
-reported in :numref:`CL`.
+(connectors/locations) for the simple mesh, shown in :numref:`meshFig`, is
+reported in :numref:`CLFig`.
 It can be notices that the two unknowns for the displacements *x* and *y* are
 grouped together.
 Elements are the connectivity for DoF on nodes (Finite Element Method for
@@ -141,8 +141,8 @@ Faces are the connectivity for DoF on elements (Finite Volume Method for
 pressure), being the flux computation based on the pressure on the two adjacent
 elements.
 
-.. _mesh:
-.. figure:: ../../coreComponents/linearAlgebraInterface/docs/images/mesh.svg
+.. _meshFig:
+.. figure:: /coreComponents/linearAlgebraInterface/docs/images/mesh.svg
    :align: center
    :width: 250
    :figclass: align-center
@@ -151,20 +151,20 @@ elements.
    Nodes are label with black numbers, elements with light gray numbers and
    faces with italic dark gray numbers.
 
-.. _CL:
-.. figure:: ../../coreComponents/linearAlgebraInterface/docs/images/CL.svg
+.. _CLFig:
+.. figure:: /coreComponents/linearAlgebraInterface/docs/images/CL.svg
    :align: center
    :width: 500
    :figclass: align-center
 
    Sparsity pattern of the binary matrix connections/locations.
 
-The global sparsity pattern, shown in :numref:`pattern`, is obtained through
+The global sparsity pattern, shown in :numref:`patternFig`, is obtained through
 the symbolic multiplication of the transpose of the matrix :math:`\mathsf{C_L}`
 and the matrix itself, i.e. :math:`\mathsf{P = C_L^T C_L}`.
 
-.. _pattern:
-.. figure:: ../../coreComponents/linearAlgebraInterface/docs/images/pattern.svg
+.. _patternFig:
+.. figure:: /coreComponents/linearAlgebraInterface/docs/images/pattern.svg
    :align: center
    :width: 400
    :figclass: align-center
