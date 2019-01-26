@@ -19,6 +19,9 @@ GEOSX is a simulation platform focused on providing streamlined development of H
 
    docs/sphinx/authors
 
+   docs/sphinx/publications
+   
+   docs/sphinx/acknowledgements
 
 Indices and tables
 ==================
