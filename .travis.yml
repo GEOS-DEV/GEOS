@@ -12,6 +12,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc7-ubuntu18
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - compiler: gcc8-ubuntu18
     sudo: required
@@ -19,6 +20,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc8-ubuntu18
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - compiler: clang6-LC-toss3
     sudo: required
@@ -26,6 +28,7 @@ matrix:
     dist: trusty
     env:
     - IMG=clang6-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - compiler: clang7-LC-toss3
     sudo: required
@@ -33,15 +36,33 @@ matrix:
     dist: trusty
     env:
     - IMG=clang7-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - os: osx
     osx_image: xcode10
+    env:
+    - CC=clang
+    - CXX=clang++
+    - FC=gfortran
+    - MPICC=mpicc
+    - MPICXX=mpicxx
+    - MPIFC=mpifort
+    - MPIEXEC=mpirun
+    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      ls;
+      pwd;
+      brew install openmpi;
+      cd ..;
+      mkdir thirdPartyLibs;
+      cd thirdPartyLibs;
+      wget https://www.dropbox.com/s/dd7hvw2hfmws5ax/tpl-osx-clang10.tar.gz;
+      tar -xf tpl-osx-clang10.tar.gz;
+      cd ../GEOSX;
+      bash ${TRAVIS_BUILD_DIR}/scripts/travis_build_and_test.sh;
     else
       docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
-      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
+      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
     fi
 
 #- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
