@@ -47,7 +47,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
