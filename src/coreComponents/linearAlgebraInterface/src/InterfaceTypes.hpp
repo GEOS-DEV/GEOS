@@ -43,7 +43,7 @@ using lid = int;
 
 namespace petscTypes
 {
-using gid = long long;
+using gid = int;
 using lid = int;
 }
 
