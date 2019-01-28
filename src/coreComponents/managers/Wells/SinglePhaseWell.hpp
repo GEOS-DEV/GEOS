@@ -71,14 +71,14 @@ public:
 
   // Apply well solution after the linear solve
   void ApplySolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-		      real64 const scalingFactor,
-		      DomainPartition * const domain );
+                      real64 const scalingFactor,
+                      DomainPartition * const domain );
 
   // Compute the rate for all the perforations and form the control equation
   void AssembleWellTerms( DomainPartition * const domain,
                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
                           real64 const time_n,
-		          real64 const dt );
+                          real64 const dt );
 
   // Check if the well control needs to be switched
   void CheckControlSwitch();
@@ -92,14 +92,42 @@ public:
   struct viewKeyStruct : public WellBase::viewKeyStruct
   {
 
-    static constexpr auto pressureString = "pressure";
+    static constexpr auto pressureString      = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    
     static constexpr auto flowRateString = "flowRate";
     static constexpr auto bhpString      = "bhp";
 
-    dataRepository::ViewKey pressure = { pressureString };
-    dataRepository::ViewKey flowRate = { flowRateString };
-    dataRepository::ViewKey bhp      = { bhpString };
+    static constexpr auto avgDensityString = "avgDensity";
 
+    static constexpr auto densityString          = "density";
+    static constexpr auto dDensity_dPresString   = "dDensity_dPres";
+    static constexpr auto viscosityString        = "viscosity";
+    static constexpr auto dViscosity_dPresString = "dViscosity_dPres";
+    static constexpr auto mobilityString         = "mobility";
+    static constexpr auto dMobility_dPresString  = "dMobility_dPres";
+    
+    using ViewKey = dataRepository::ViewKey;
+
+    // primary solution field
+    ViewKey pressure      = { pressureString };
+    ViewKey deltaPressure = { deltaPressureString };
+
+    // well controls
+    ViewKey flowRate = { flowRateString };
+    ViewKey bhp      = { bhpString };
+
+    // average density to compute hydrostatic head
+    ViewKey avgDensity = { avgDensityString };
+
+    // intermediate values used to compute perforation rates (+ derivatives w.r.t. well and res vars)
+    ViewKey density          = { densityString };
+    ViewKey dDensity_dPres   = { dDensity_dPresString };
+    ViewKey viscosity        = { viscosityString };
+    ViewKey dViscosity_dPres = { dViscosity_dPresString };
+    ViewKey mobility         = { mobilityString };
+    ViewKey dMobility_dPres  = { dMobility_dPresString };
+    
   } viewKeysSinglePhaseWell;
 
   struct groupKeyStruct : public WellBase::groupKeyStruct
@@ -113,11 +141,11 @@ private:
   void StateUpdate( DomainPartition const * domain, localIndex fluidIndex );
 
   // form the well control equation based on the type of well
-  void FormControlEquation(  DomainPartition const * const domain,
-			     Epetra_FECrsMatrix * const jacobian,
-			     Epetra_FEVector * const residual,
-			     real64 const time_n,
-			     real64 const dt );
+  void FormControlEquation( DomainPartition const * const domain,
+                            Epetra_FECrsMatrix * const jacobian,
+                            Epetra_FEVector * const residual,
+                            real64 const time_n,
+                            real64 const dt );
   
   array1d<real64> m_bhp;
 

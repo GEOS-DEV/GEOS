@@ -116,8 +116,8 @@ public:
                         DomainPartition *const domain) override;
 
   virtual real64
-  CalculateWellResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-			    DomainPartition *const domain);
+  CalculateWellResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                             DomainPartition *const domain);
   
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;

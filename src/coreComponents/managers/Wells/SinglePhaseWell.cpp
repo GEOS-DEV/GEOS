@@ -50,8 +50,19 @@ SinglePhaseWell::SinglePhaseWell(string const & name, dataRepository::ManagedGro
   // Most perforations-based fields are registered by specific well models, rather than
   // PerforationManager itself, which is physics-agnostic
   PerforationManager * perfManager = GetGroup<PerforationManager>( groupKeyStruct::perforationsString );
+  
   perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
   perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
+
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::avgDensityString );
+  
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::densityString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dDensity_dPresString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::viscosityString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dViscosity_dPresString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mobilityString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dMobility_dPresString );
 }
 
 SinglePhaseWell::~SinglePhaseWell()
@@ -79,8 +90,8 @@ void SinglePhaseWell::InitializeState( DomainPartition * const domain )
   
 // Apply well solution after the linear solve
 void SinglePhaseWell::ApplySolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-			             real64 const scalingFactor,
-			             DomainPartition * const domain )
+                                     real64 const scalingFactor,
+                                     DomainPartition * const domain )
 {
 
 }
@@ -89,7 +100,7 @@ void SinglePhaseWell::ApplySolution( systemSolverInterface::EpetraBlockSystem co
 void SinglePhaseWell::AssembleWellTerms( DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem,
                                          real64 const time_n,
-			                 real64 const dt )
+                                         real64 const dt )
 {
   
 }

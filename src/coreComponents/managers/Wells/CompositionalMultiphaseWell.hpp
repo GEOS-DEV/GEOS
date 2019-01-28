@@ -70,14 +70,14 @@ public:
 
   // Apply well solution after the linear solve
   void ApplySolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-		      real64 const scalingFactor,
-		      DomainPartition * const domain );
+                      real64 const scalingFactor,
+                      DomainPartition * const domain );
   
   // Compute the rate for all the perforations and form the control equation
   void AssembleWellTerms( DomainPartition * const domain,
                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
                           real64 const time_n,
-			  real64 const dt );
+                          real64 const dt );
 
   // Check if the well control needs to be switched
   void CheckControlSwitch();
@@ -91,14 +91,54 @@ public:
   struct viewKeyStruct : public WellBase::viewKeyStruct
   {
 
-    static constexpr auto pressureString = "pressure";
+    static constexpr auto pressureString      = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    
     static constexpr auto flowRateString = "flowRate";
     static constexpr auto bhpString      = "bhp";
 
-    dataRepository::ViewKey pressure = { pressureString };
-    dataRepository::ViewKey flowRate = { flowRateString };
-    dataRepository::ViewKey bhp      = { bhpString };
+    static constexpr auto avgDensityString = "avgDensity";
 
+    static constexpr auto phaseComponentFracString        = "phaseComponentFraction";
+    static constexpr auto dPhaseComponentFrac_dPresString = "dPhaseComponentFraction_dPres";
+    static constexpr auto dPhaseComponentFrac_dCompString = "dPhaseComponentFraction_dComp";
+    static constexpr auto phaseDensityString              = "phaseDensity";
+    static constexpr auto dPhaseDensity_dPresString       = "dPhaseDensity_dPres";
+    static constexpr auto dPhaseDensity_dCompString       = "dPhaseDensity_dComp";
+    static constexpr auto phaseViscosityString            = "phaseViscosity";
+    static constexpr auto dPhaseViscosity_dPresString     = "dPhaseViscosity_dPres";
+    static constexpr auto dPhaseViscosity_dCompString     = "dPhaseViscosity_dComp";
+    static constexpr auto phaseMobilityString             = "phaseMobility";
+    static constexpr auto dPhaseMobility_dPresString      = "dPhaseMobility_dPres";
+    static constexpr auto dPhaseMobility_dCompString      = "dPhaseMobility_dComp";
+
+    using ViewKey = dataRepository::ViewKey;
+    
+    // primary solution field
+    ViewKey pressure      = { pressureString };
+    ViewKey deltaPressure = { deltaPressureString };
+
+    // well controls
+    ViewKey flowRate = { flowRateString };
+    ViewKey bhp      = { bhpString };
+
+    // average density to compute hydrostatic head
+    ViewKey avgDensity = { avgDensityString };
+
+    // intermediate values used to compute perforation rates (+ derivatives w.r.t well and res vars)
+    ViewKey phaseComponentFrac        = { phaseComponentFracString };
+    ViewKey dPhaseComponentFrac_dPres = { dPhaseComponentFrac_dPresString };
+    ViewKey dPhaseComponentFrac_dComp = { dPhaseComponentFrac_dCompString };
+    ViewKey phaseDensity              = { phaseDensityString };
+    ViewKey dPhaseDensity_dPres       = { dPhaseDensity_dPresString };
+    ViewKey dPhaseDensity_dComp       = { dPhaseDensity_dCompString };
+    ViewKey phaseViscosity            = { phaseViscosityString };
+    ViewKey dPhaseViscosity_dPres     = { dPhaseViscosity_dPresString };
+    ViewKey dPhaseViscosity_dComp     = { dPhaseViscosity_dCompString };
+    ViewKey phaseMobility             = { phaseMobilityString };
+    ViewKey dPhaseMobility_dPres      = { dPhaseMobility_dPresString };
+    ViewKey dPhaseMobility_dComp      = { dPhaseMobility_dCompString };
+    
   } viewKeysCompositionalMultiphaseWell;
 
   struct groupKeyStruct : public WellBase::groupKeyStruct
@@ -112,11 +152,11 @@ private:
   void StateUpdate( DomainPartition const * domain, localIndex fluidIndex );
 
   // form the well control equation based on the type of well
-  void FormControlEquation(  DomainPartition const * const domain,
-			     Epetra_FECrsMatrix * const jacobian,
-			     Epetra_FEVector * const residual,
-			     real64 const time_n,
-			     real64 const dt );
+  void FormControlEquation( DomainPartition const * const domain,
+                            Epetra_FECrsMatrix * const jacobian,
+                            Epetra_FEVector * const residual,
+                            real64 const time_n,
+                            real64 const dt );
   
   array1d<real64> m_bhp;
 

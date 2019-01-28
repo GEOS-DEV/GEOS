@@ -53,6 +53,22 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell(string const & name, da
   PerforationManager * perfManager = GetGroup<PerforationManager>( groupKeyStruct::perforationsString );
   perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
   perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
+
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::avgDensityString );
+
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::phaseComponentFracString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseComponentFrac_dPresString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseComponentFrac_dCompString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::phaseDensityString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseDensity_dPresString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseDensity_dCompString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::phaseViscosityString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseViscosity_dPresString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseViscosity_dCompString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::phaseMobilityString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseMobility_dPresString );
+  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPhaseMobility_dCompString );
+
 }
 
 CompositionalMultiphaseWell::~CompositionalMultiphaseWell()
@@ -80,8 +96,8 @@ void CompositionalMultiphaseWell::InitializeState( DomainPartition * const domai
   
 // Apply well solution after the linear solve
 void CompositionalMultiphaseWell::ApplySolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-			                         real64 const scalingFactor,
-			                         DomainPartition * const domain )
+                                                 real64 const scalingFactor,
+                                                 DomainPartition * const domain )
 {
 
 }
@@ -90,7 +106,7 @@ void CompositionalMultiphaseWell::ApplySolution( systemSolverInterface::EpetraBl
 void CompositionalMultiphaseWell::AssembleWellTerms( DomainPartition * const domain,
                                                      EpetraBlockSystem * const blockSystem,
                                                      real64 const time_n,
-			                             real64 const dt )
+                                                     real64 const dt )
 {
   
 }
@@ -123,11 +139,11 @@ real64 CompositionalMultiphaseWell::GetTotalFlowRate()
 }
 
 // form the well control equation based on the type of well
-void CompositionalMultiphaseWell::FormControlEquation(  DomainPartition const * const domain,
-			                    Epetra_FECrsMatrix * const jacobian,
-			                    Epetra_FEVector * const residual,
-			                    real64 const time_n,
-			                    real64 const dt )
+void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * const domain,
+                                                       Epetra_FECrsMatrix * const jacobian,
+                                                       Epetra_FEVector * const residual,
+                                                       real64 const time_n,
+                                                       real64 const dt )
 {
   
 }
