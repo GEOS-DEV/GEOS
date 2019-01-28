@@ -4,40 +4,9 @@ env:
   - OMP_NUM_THREADS=3
   - DO_BUILD=yes
   - DO_TEST=yes
+  - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
 matrix:
   include:
-  - compiler: gcc7-ubuntu18
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=gcc7-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - compiler: gcc8-ubuntu18
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - compiler: clang6-LC-toss3
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=clang6-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - compiler: clang7-LC-toss3
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - os: osx
     osx_image: xcode10
     env:
@@ -47,12 +16,40 @@ matrix:
     - MPICC=mpicc
     - MPICXX=mpicxx
     - MPIFC=mpifort
-    - MPIEXEC=mpirun
+    - MPIEXEC=/usr/local/bin/mpirun
     - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+  - compiler: clang6-LC-toss3
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=clang6-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+  - compiler: clang7-LC-toss3
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=clang7-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+  - compiler: gcc7-ubuntu18
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=gcc7-ubuntu18
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+  - compiler: gcc8-ubuntu18
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=gcc8-ubuntu18
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       pwd;
-      brew install openmpi;
+      brew install openmpi > /dev/null 2>&1;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
