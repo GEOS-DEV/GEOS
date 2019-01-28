@@ -27,8 +27,10 @@ set(managers_headers
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
     Wells/WellManager.hpp
-    Wells/WellBase.cpp
+    Wells/WellBase.hpp
     Wells/SimpleWell.hpp
+    Wells/SinglePhaseWell.hpp
+    Wells/CompositionalMultiphaseWell.hpp
     Wells/Perforation.hpp
     Wells/PerforationManager.hpp
     )
@@ -64,6 +66,8 @@ set(managers_sources
     Wells/WellManager.cpp
     Wells/WellBase.cpp
     Wells/SimpleWell.cpp
+    Wells/SinglePhaseWell.cpp
+    Wells/CompositionalMultiphaseWell.cpp
     Wells/Perforation.cpp
     Wells/PerforationManager.cpp
     )
