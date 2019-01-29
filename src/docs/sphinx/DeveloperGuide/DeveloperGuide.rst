@@ -23,6 +23,8 @@ Here we describe the process for development in the GEOSX framework.
    
    /coreComponents/linearAlgebraInterface/docs/DofManager.rst
 
+
+
 Overview of the code structure
 Managed Groups
 Arrays
