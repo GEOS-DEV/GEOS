@@ -1,0 +1,853 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:annotation>
+		<xsd:documentation xml:lang="en">New schema for GEOS</xsd:documentation>
+	</xsd:annotation>
+	<xsd:simpleType name="string">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([a-zA-Z0-9_,\(\)+-/\*]*,? )*)?[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r1_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([a-zA-Z0-9_,\(\)+-/\*]*,? )*)?[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2Sym_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2Sym_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r1_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2SymTensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2Tensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:element name="Problem" type="ProblemType" />
+	<xsd:complexType name="ProblemType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="FieldSpecifications" type="FieldSpecificationsType" maxOccurs="1" />
+			<xsd:element name="Events" type="EventsType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="NumericalMethods" type="NumericalMethodsType" maxOccurs="1" />
+			<xsd:element name="Geometry" type="GeometryType" maxOccurs="1" />
+			<xsd:element name="Mesh" type="MeshType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="Outputs" type="OutputsType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1" />
+			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
+			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="FieldSpecificationsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Dirichlet" type="DirichletType" />
+			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="DirichletType">
+		<!--setNames = Name of sets that boundary condition is applied to.-->
+		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--objectPath = Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" default="" />
+		<!--fieldName = Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" default="" />
+		<!--component = Component of field (if tensor) to apply boundary condition to-->
+		<xsd:attribute name="component" type="integer" default="0" />
+		<!--direction = Direction to apply boundary condition to-->
+		<xsd:attribute name="direction" type="R1Tensor" default="0 0 0" />
+		<!--functionName = Name of function that specifies variation of the BC-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--bcApplicationTableName = Name of table that specifies the on/off application of the bc.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--scale = Scale factor for value of BC.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--initialCondition = BC is applied as an initial condition.-->
+		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--beginTime = time at which BC will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--endTime = time at which bc will stop being applied-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="FieldSpecificationType">
+		<!--setNames = Name of sets that boundary condition is applied to.-->
+		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--objectPath = Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" default="" />
+		<!--fieldName = Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" default="" />
+		<!--component = Component of field (if tensor) to apply boundary condition to-->
+		<xsd:attribute name="component" type="integer" default="0" />
+		<!--direction = Direction to apply boundary condition to-->
+		<xsd:attribute name="direction" type="R1Tensor" default="0 0 0" />
+		<!--functionName = Name of function that specifies variation of the BC-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--bcApplicationTableName = Name of table that specifies the on/off application of the bc.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--scale = Scale factor for value of BC.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--initialCondition = BC is applied as an initial condition.-->
+		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--beginTime = time at which BC will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--endTime = time at which bc will stop being applied-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EventsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HaltEvent" type="HaltEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
+			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+		</xsd:choice>
+		<!--maxTime = Maximum simulation time.-->
+		<xsd:attribute name="maxTime" type="real64" default="-1" />
+		<!--maxCycle = Maximum simulation cycle.-->
+		<xsd:attribute name="maxCycle" type="integer" default="-1" />
+		<!--verbosity = Maximum simulation time.-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:complexType name="HaltEventType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HaltEvent" type="HaltEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
+			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+		</xsd:choice>
+		<!--target = event target-->
+		<xsd:attribute name="target" type="string" use="required" />
+		<!--beginTime = Start time of this event-->
+		<xsd:attribute name="beginTime" type="real64" default="0" />
+		<!--endTime = End time of this event-->
+		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--forceDt = Forced timestep for this event-->
+		<xsd:attribute name="forceDt" type="real64" default="-1" />
+		<!--allowSuperstep = allows event super-stepping (dt_super=dt+t-t_last)-->
+		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
+		<!--allowSubstep = allows event sub-stepping-->
+		<xsd:attribute name="allowSubstep" type="integer" default="0" />
+		<!--substepFactor = integer substep factor (dt_sub=dt/f)-->
+		<xsd:attribute name="substepFactor" type="integer" default="1" />
+		<!--targetExactStartStop = allows timesteps to be truncated to match the start/stop times exactly-->
+		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<!--maxRuntime = max runtime-->
+		<xsd:attribute name="maxRuntime" type="real64" default="0" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SoloEventType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HaltEvent" type="HaltEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
+			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+		</xsd:choice>
+		<!--target = event target-->
+		<xsd:attribute name="target" type="string" use="required" />
+		<!--beginTime = Start time of this event-->
+		<xsd:attribute name="beginTime" type="real64" default="0" />
+		<!--endTime = End time of this event-->
+		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--forceDt = Forced timestep for this event-->
+		<xsd:attribute name="forceDt" type="real64" default="-1" />
+		<!--allowSuperstep = allows event super-stepping (dt_super=dt+t-t_last)-->
+		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
+		<!--allowSubstep = allows event sub-stepping-->
+		<xsd:attribute name="allowSubstep" type="integer" default="0" />
+		<!--substepFactor = integer substep factor (dt_sub=dt/f)-->
+		<xsd:attribute name="substepFactor" type="integer" default="1" />
+		<!--targetExactStartStop = allows timesteps to be truncated to match the start/stop times exactly-->
+		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PeriodicEventType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HaltEvent" type="HaltEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
+			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+		</xsd:choice>
+		<!--target = event target-->
+		<xsd:attribute name="target" type="string" use="required" />
+		<!--beginTime = Start time of this event-->
+		<xsd:attribute name="beginTime" type="real64" default="0" />
+		<!--endTime = End time of this event-->
+		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--forceDt = Forced timestep for this event-->
+		<xsd:attribute name="forceDt" type="real64" default="-1" />
+		<!--allowSuperstep = allows event super-stepping (dt_super=dt+t-t_last)-->
+		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
+		<!--allowSubstep = allows event sub-stepping-->
+		<xsd:attribute name="allowSubstep" type="integer" default="0" />
+		<!--substepFactor = integer substep factor (dt_sub=dt/f)-->
+		<xsd:attribute name="substepFactor" type="integer" default="1" />
+		<!--targetExactStartStop = allows timesteps to be truncated to match the start/stop times exactly-->
+		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<!--timeFrequency = event frequency (time)-->
+		<xsd:attribute name="timeFrequency" type="real64" default="-1" />
+		<!--cycleFrequency = event frequency (cycle, Default)-->
+		<xsd:attribute name="cycleFrequency" type="integer" default="1" />
+		<!--targetExactTimestep = allows timesteps to be truncated to match time frequency perfectly-->
+		<xsd:attribute name="targetExactTimestep" type="integer" default="-1" />
+		<!--function = Name of the symbolic math function-->
+		<xsd:attribute name="function" type="string" default="" />
+		<!--object = Path of the function input object (directory format)-->
+		<xsd:attribute name="object" type="string" default="" />
+		<!--set = Setname of the input object (if empty, default to everything)-->
+		<xsd:attribute name="set" type="string" default="" />
+		<!--stat = Selection of the min/avg/max for functions that target vectors-->
+		<xsd:attribute name="stat" type="integer" default="0" />
+		<!--threshold = event threshold-->
+		<xsd:attribute name="threshold" type="real64" default="1e+10" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="NumericalMethodsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BasisFunctions" type="BasisFunctionsType" maxOccurs="1" />
+			<xsd:element name="QuadratureRules" type="QuadratureRulesType" maxOccurs="1" />
+			<xsd:element name="FiniteElements" type="FiniteElementsType" maxOccurs="1" />
+			<xsd:element name="FiniteVolume" type="FiniteVolumeType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BasisFunctionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LagrangeBasis3" type="LagrangeBasis3Type" />
+			<xsd:element name="LagrangeBasis2" type="LagrangeBasis2Type" />
+			<xsd:element name="LagrangeBasis1" type="LagrangeBasis1Type" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="LagrangeBasis3Type">
+		<!--degree = Basis degree-->
+		<xsd:attribute name="degree" type="integer" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LagrangeBasis2Type">
+		<!--degree = Basis degree-->
+		<xsd:attribute name="degree" type="integer" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LagrangeBasis1Type">
+		<!--degree = Basis degree-->
+		<xsd:attribute name="degree" type="integer" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="QuadratureRulesType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="GaussQuadrature3" type="GaussQuadrature3Type" />
+			<xsd:element name="GaussQuadrature2" type="GaussQuadrature2Type" />
+			<xsd:element name="GaussQuadrature1" type="GaussQuadrature1Type" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="GaussQuadrature3Type">
+		<!--degree = Quadrature degree-->
+		<xsd:attribute name="degree" type="integer" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="GaussQuadrature2Type">
+		<!--degree = Quadrature degree-->
+		<xsd:attribute name="degree" type="integer" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="GaussQuadrature1Type">
+		<!--degree = Quadrature degree-->
+		<xsd:attribute name="degree" type="integer" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="FiniteElementsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="FiniteElementSpaceType">
+		<!--basis = (no description available)-->
+		<xsd:attribute name="basis" type="string" use="required" />
+		<!--quadrature = (no description available)-->
+		<xsd:attribute name="quadrature" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="FiniteVolumeType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="TwoPointFluxApproximationType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--fieldName = Name of primary solution field-->
+		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--boundaryFieldName = Name of boundary (face) field-->
+		<xsd:attribute name="boundaryFieldName" type="string" default="" />
+		<!--coefficientName = Name of coefficient field-->
+		<xsd:attribute name="coefficientName" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="GeometryType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Box" type="BoxType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BoxType">
+		<!--xMin = Minimum (x,y,z) coordinates of the box-->
+		<xsd:attribute name="xMin" type="R1Tensor" use="required" />
+		<!--xMax = Maximum (x,y,z) coordinates of the box-->
+		<xsd:attribute name="xMax" type="R1Tensor" use="required" />
+		<!--strike = The strike angle of the box-->
+		<xsd:attribute name="strike" type="real64" default="-90" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MeshType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
+			<xsd:element name="MeshFile" type="MeshFileType" />
+			<xsd:element name="InternalMesh" type="InternalMeshType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="PAMELAMeshGeneratorType">
+		<!--file = path to the mesh file-->
+		<xsd:attribute name="file" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MeshFileType">
+		<!--file = path to the vtm file-->
+		<xsd:attribute name="file" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="InternalMeshType">
+		<!--xCoords = x-coordinates of each mesh block vertex-->
+		<xsd:attribute name="xCoords" type="real64_array" use="required" />
+		<!--yCoords = y-coordinates of each mesh block vertex-->
+		<xsd:attribute name="yCoords" type="real64_array" use="required" />
+		<!--zCoords = z-coordinates of each mesh block vertex-->
+		<xsd:attribute name="zCoords" type="real64_array" use="required" />
+		<!--nx = number of elements in the x-direction within each mesh block-->
+		<xsd:attribute name="nx" type="integer_array" use="required" />
+		<!--ny = number of elements in the y-direction within each mesh block-->
+		<xsd:attribute name="ny" type="integer_array" use="required" />
+		<!--nz = number of elements in the z-direction within each mesh block-->
+		<xsd:attribute name="nz" type="integer_array" use="required" />
+		<!--xbias = (no description available)-->
+		<xsd:attribute name="xbias" type="real64_array" default="1" />
+		<!--ybias = (no description available)-->
+		<xsd:attribute name="ybias" type="real64_array" default="1" />
+		<!--zbias = (no description available)-->
+		<xsd:attribute name="zbias" type="real64_array" default="1" />
+		<!--cellBlockNames = names of each mesh block-->
+		<xsd:attribute name="cellBlockNames" type="string_array" use="required" />
+		<!--elementTypes = element types of each mesh block-->
+		<xsd:attribute name="elementTypes" type="string_array" use="required" />
+		<!--trianglePattern = pattern by which to decompose the hex mesh into prisms (more explanation required)-->
+		<xsd:attribute name="trianglePattern" type="integer" default="0" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="OutputsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ChomboIO" type="ChomboIOType" />
+			<xsd:element name="Blueprint" type="BlueprintType" />
+			<xsd:element name="Restart" type="RestartType" />
+			<xsd:element name="Silo" type="SiloType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ChomboIOType">
+		<!--slaveDirectory = slave directory path-->
+		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--parallelThreads = Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BlueprintType">
+		<!--slaveDirectory = slave directory path-->
+		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--parallelThreads = Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="RestartType">
+		<!--slaveDirectory = slave directory path-->
+		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--parallelThreads = Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SiloType">
+		<!--slaveDirectory = slave directory path-->
+		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--parallelThreads = Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--plotFileRoot = (no description available)-->
+		<xsd:attribute name="plotFileRoot" type="string" default="" />
+		<!--writeFEMFaces = (no description available)-->
+		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
+		<!--plotLevel = (no description available)-->
+		<xsd:attribute name="plotLevel" type="integer" default="1" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolversType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="DummySolver" type="DummySolverType" />
+			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
+			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
+			<xsd:element name="SinglePhaseFlow" type="SinglePhaseFlowType" />
+			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
+			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
+			<xsd:element name="Poroelastic" type="PoroelasticType" />
+		</xsd:choice>
+		<!--gravityVector = (no description available)-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" default="0 0 0" />
+	</xsd:complexType>
+	<xsd:complexType name="DummySolverType">
+		<!--verboseLevel = Verbosity level-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--maxStableDt = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
+		<!--discretization = Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--rand_scale = Scale for modifying requested dt-->
+		<xsd:attribute name="rand_scale" type="real64" default="1e-09" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
+		<!--verboseLevel = Verbosity level-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--maxStableDt = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
+		<!--discretization = Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--newmarkGamma = Value of \gamma in the Newmark Method for time integration-->
+		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
+		<!--newmarkBeta = Value of \beta in the Newmark Method for time integration. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
+		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
+		<!--massDamping = Value of mass based damping coefficient in equations of motion. -->
+		<xsd:attribute name="massDamping" type="real64" default="0" />
+		<!--stiffnessDamping = Value of stiffness based damping coefficient in equations of motion. -->
+		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
+		<!--timeIntegrationOption = Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic-->
+		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
+		<!--useVelocityEstimateForQuasiStatic = Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
+		<xsd:attribute name="useVelocityEstimateForQuasiStatic" type="integer" default="0" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseFlowType">
+		<!--verboseLevel = Verbosity level-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--maxStableDt = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
+		<!--discretization = Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--gravityFlag = Flag that enables/disables gravity-->
+		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--fluidName = Name of fluid constitutive object to use for this solver.-->
+		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--solidName = Name of solid constitutive object to use for this solver-->
+		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--temperature = Temperature-->
+		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--useMass = Use mass formulation instead of molar-->
+		<xsd:attribute name="useMass" type="integer" default="0" />
+		<!--relPermName = Name of the relative permeability constitutive model to use-->
+		<xsd:attribute name="relPermName" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseFlowType">
+		<!--verboseLevel = Verbosity level-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--maxStableDt = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
+		<!--discretization = Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--gravityFlag = Flag that enables/disables gravity-->
+		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--fluidName = Name of fluid constitutive object to use for this solver.-->
+		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--solidName = Name of solid constitutive object to use for this solver-->
+		<xsd:attribute name="solidName" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LaplaceFEMType">
+		<!--verboseLevel = Verbosity level-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--maxStableDt = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
+		<!--discretization = Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption = option for default time integration method-->
+		<xsd:attribute name="timeIntegrationOption" type="string" use="required" />
+		<!--fieldName = name of field variable-->
+		<xsd:attribute name="fieldName" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SurfaceGeneratorType">
+		<!--verboseLevel = Verbosity level-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--maxStableDt = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
+		<!--discretization = Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroelasticType">
+		<!--verboseLevel = Verbosity level-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--maxStableDt = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
+		<!--discretization = Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--solidSolverName = Name of the solid mechanics solver to use in the poroelastic solver-->
+		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--fluidSolverName = Name of the fluid mechanics solver to use in the poroelastic solver-->
+		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--couplingTypeOption = Coupling option: (FixedStress, TightlyCoupled)-->
+		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="FunctionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
+			<xsd:element name="TableFunction" type="TableFunctionType" />
+			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CompositeFunctionType">
+		<!--inputVarNames = Name of fields are input to function.-->
+		<xsd:attribute name="inputVarNames" type="string_array" default="" />
+		<!--functionNames = List of source functions. The order must match the variableNames argument.-->
+		<xsd:attribute name="functionNames" type="string_array" default="" />
+		<!--variableNames = List of variables in expression-->
+		<xsd:attribute name="variableNames" type="string_array" default="" />
+		<!--expression = Composite math expression-->
+		<xsd:attribute name="expression" type="string" default="" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="TableFunctionType">
+		<!--inputVarNames = Name of fields are input to function.-->
+		<xsd:attribute name="inputVarNames" type="string_array" default="" />
+		<!--coordinates = Table coordinates inputs for 1D tables-->
+		<xsd:attribute name="coordinates" type="real64_array" use="required" />
+		<!--values = Table Values for 1D tables-->
+		<xsd:attribute name="values" type="real64_array" use="required" />
+		<!--coordinateFiles = List of coordinate file names-->
+		<xsd:attribute name="coordinateFiles" type="string_array" default="" />
+		<!--voxelFile = Voxel file name-->
+		<xsd:attribute name="voxelFile" type="string" default="" />
+		<!--interpolation = Value Type-->
+		<xsd:attribute name="interpolation" type="string" default="" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SymbolicFunctionType">
+		<!--inputVarNames = Name of fields are input to function.-->
+		<xsd:attribute name="inputVarNames" type="string_array" default="" />
+		<!--variableNames = List of variables in expression.  The order must match the evaluate argument-->
+		<xsd:attribute name="variableNames" type="string_array" use="required" />
+		<!--expression = Symbolic math expression-->
+		<xsd:attribute name="expression" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ConstitutiveType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
+			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
+			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
+			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
+			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
+			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
+		<!--phaseNames = List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--phaseMinVolumeFraction = Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="0" />
+		<!--phaseCapPressureExponentInv = Inverse of capillary power law exponent for each phase-->
+		<xsd:attribute name="phaseCapPressureExponentInv" type="real64_array" default="0.5" />
+		<!--phaseCapPressureMultiplier = Entry pressure value for each phase-->
+		<xsd:attribute name="phaseCapPressureMultiplier" type="real64_array" default="1" />
+		<!--capPressureEpsilon = Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1-->
+		<xsd:attribute name="capPressureEpsilon" type="real64" default="1e-06" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BlackOilFluidType">
+		<!--componentNames = List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<!--componentMolarWeight = Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--phaseNames = List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--surfaceDensities = List of surface densities for each phase-->
+		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
+		<!--tableFiles = List of filenames with input PVT tables-->
+		<xsd:attribute name="tableFiles" type="string_array" use="required" />
+		<!--fluidType = Type of black-oil fluid (LiveOil/DeadOil)-->
+		<xsd:attribute name="fluidType" type="string" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
+		<!--phaseNames = List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--phaseMinVolumeFraction = Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="0" />
+		<!--phaseCapPressureExponentInv = Inverse of capillary power law exponent for each phase-->
+		<xsd:attribute name="phaseCapPressureExponentInv" type="real64_array" default="2" />
+		<!--phaseEntryPressure = Entry pressure value for each phase-->
+		<xsd:attribute name="phaseEntryPressure" type="real64_array" default="1" />
+		<!--capPressureEpsilon = Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero-->
+		<xsd:attribute name="capPressureEpsilon" type="real64" default="1e-06" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
+		<!--phaseNames = List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--phaseMinVolumeFraction = Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="0" />
+		<!--phaseRelPermExponent = MinimumRel perm power law exponent for each phase-->
+		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="1" />
+		<!--phaseRelPermMaxValue = Maximum rel perm value for each phase-->
+		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="0" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseFluidType">
+		<!--componentNames = List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentMolarWeight = Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--phaseNames = List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--equationsOfState = List of equation of state types for each phase-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--componentCriticalPressure = Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature = Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentAcentricFactor = Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentVolumeShift = Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="0" />
+		<!--componentBinaryCoeff = Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="0" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoreVolumeCompressibleSolidType">
+		<!--compressibility = Solid compressibility-->
+		<xsd:attribute name="compressibility" type="real64" use="required" />
+		<!--referencePressure = Reference pressure for fluid compressibility-->
+		<xsd:attribute name="referencePressure" type="real64" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompressibleSinglePhaseFluidType">
+		<!--compressibility = Fluid compressibility-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--viscosibility = Fluid viscosity exponential coefficient-->
+		<xsd:attribute name="viscosibility" type="real64" default="0" />
+		<!--referencePressure = Reference pressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--referenceDensity = Reference fluid density-->
+		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
+		<!--referenceViscosity = Reference fluid viscosity-->
+		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--densityModel = Type of density model (linear, quadratic, exponential)-->
+		<xsd:attribute name="densityModel" type="string" default="linear" />
+		<!--viscosityModel = Type of viscosity model (linear, quadratic, exponential)-->
+		<xsd:attribute name="viscosityModel" type="string" default="linear" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticIsotropicType">
+		<!--density0 = Reference Material Density-->
+		<xsd:attribute name="density0" type="real64" use="required" />
+		<!--BulkModulus0 = Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="BulkModulus0" type="real64" default="-1" />
+		<!--ShearModulus0 = Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="ShearModulus0" type="real64" default="-1" />
+		<!--YoungsModulus = Elastic Young's Modulus.-->
+		<xsd:attribute name="YoungsModulus" type="real64" default="-1" />
+		<!--PoissonRatio = Poisson's ratio-->
+		<xsd:attribute name="PoissonRatio" type="real64" default="-1" />
+		<!--BiotCoefficient = Young's Elastic Modulus-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility = Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<!--referencePressure = ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ElementRegionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ElementRegion" type="ElementRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--materialList = List of materials present in this region-->
+		<xsd:attribute name="materialList" type="string_array" use="required" />
+		<!--cellBlocks = (no description available)-->
+		<xsd:attribute name="cellBlocks" type="string_array" use="required" />
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+</xsd:schema>
