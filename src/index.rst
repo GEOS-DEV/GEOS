@@ -15,6 +15,8 @@ GEOSX is a simulation platform focused on providing streamlined development of H
 
    docs/sphinx/DeveloperGuide/DeveloperGuide
    
+   docs/sphinx/MiniApps/MiniApps
+   
    docs/sphinx/CompleteXMLSchema
 
    docs/sphinx/authors
