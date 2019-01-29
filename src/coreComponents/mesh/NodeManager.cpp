@@ -71,26 +71,6 @@ NodeManager::NodeManager( std::string const & name,
 
 
 // *********************************************************************************************************************
-/**
- * @author R.R. Settgast
- * @return
- */
-/*
-   NodeManagerT::NodeManagerT( const NodeManagerT& init ):
-   ObjectDataStructureBaseT(init),
-   DataLengths()(this->m_DataLengths),
-   m_refposition(NULL),
-   m_displacement(NULL),
-   m_incrementalDisplacement(NULL),
-   m_velocity(NULL),
-   m_acceleration(NULL),
-   m_force(NULL),
-   m_mass(NULL),
-   m_toElementsRelation(init.m_toElementsRelation),
-   m_nodeToFaceMap(m_UnorderedVariableOneToManyMaps["nodeToFaceMap"]),
-   m_nodeToEdgeMap(m_UnorderedVariableOneToManyMaps["nodeToEdgeMap"])
-   {}
- */
 
 // *********************************************************************************************************************
 /**
@@ -100,38 +80,6 @@ NodeManager::NodeManager( std::string const & name,
 NodeManager::~NodeManager()
 {}
 
-
-//void NodeManager::Initialize()
-//{
-//  this->AddKeyedDataField<FieldInfo::referencePosition>();
-//
-//}
-
-
-
-//void NodeManager::FillDocumentationNode()
-//{
-//  ObjectManagerBase::FillDocumentationNode();
-//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-//
-//  docNode->setName( this->getCatalogName() );
-//  docNode->setSchemaType( "Node" );
-//  docNode->setShortDescription( "a node manager" );
-//
-//
-//  docNode->AllocateChildNode( keys::referencePositionString,
-//                              keys::referencePositionString,
-//                              -1,
-//                              "r1_array",
-//                              "r1_array",
-//                              "reference position of nodes",
-//                              "reference position of nodes",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              1 );
-//}
 
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
