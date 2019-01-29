@@ -1,1 +1,0 @@
-.. include:: ../../../src/coreComponents/managers/docs/FunctionManager.rst
