@@ -47,7 +47,7 @@ SchemaUtilities::~SchemaUtilities()
 
 void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * const group)
 {
-  std::cout << "\nGenerating XML Schema..." << std::endl;
+  GEOS_LOG_RANK_0("Generating XML Schema...");
 
   std::string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
@@ -62,18 +62,18 @@ void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname, Ma
   xmlWrapper::xmlNode schemaRoot = schemaTree.child("xsd:schema");
 
   // Build the simple schema types
-  std::cout << "  Basic datatypes" << std::endl;
+  GEOS_LOG_RANK_0("  Basic datatypes");
   BuildSimpleSchemaTypes(schemaRoot);
 
   // Recursively build the schema from the data structure skeleton
-  std::cout << "  Data structure layout" << std::endl;
+  GEOS_LOG_RANK_0("  Data structure layout");
   SchemaConstruction(group, schemaRoot, schemaRoot);
 
   // Write the schema to file
-  std::cout << "  Saving file"<< std::endl;
+  GEOS_LOG_RANK_0("  Saving file");
   schemaTree.save_file(fname.c_str());
 
-  std::cout << "  Done!" << std::endl;
+  GEOS_LOG_RANK_0("  Done!");
 }
 
 
@@ -191,7 +191,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
             // (Optional) Default Value
             if ( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
             {
-              std::cout << attributeName << " has an invalid input flag" << std::cout;
+              GEOS_LOG_RANK_0(attributeName << " has an invalid input flag");
               GEOS_ERROR("SchemaUtilities::SchemaConstruction: duplicate xml attributes are not allowed");
             }
             else if ( flag == InputFlags::OPTIONAL )
