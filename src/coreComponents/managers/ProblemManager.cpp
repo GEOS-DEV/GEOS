@@ -580,7 +580,6 @@ void ProblemManager::ParseInputFile()
   if (schemaName.empty() == 0)
   {
     integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-//    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
   }
 }
 
