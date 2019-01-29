@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,9 +24,10 @@
  */
 
 #include "NumericalMethodsManager.hpp"
+
 #include "finiteElement/basis/BasisFunctionManager.hpp"
 #include "finiteElement/quadrature/QuadratureRuleManager.hpp"
-#include "finiteElement/FiniteElementSpaceManager.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 
 namespace geosx
@@ -38,7 +39,7 @@ NumericalMethodsManager::NumericalMethodsManager( string const & name, ManagedGr
 {
   this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
   this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
-  this->RegisterGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  this->RegisterGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
   this->RegisterGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 }
 
@@ -47,15 +48,9 @@ NumericalMethodsManager::~NumericalMethodsManager()
   // TODO Auto-generated destructor stub
 }
 
-void NumericalMethodsManager::FillDocumentationNode()
+ManagedGroup * NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("NumericalMethods");
-  docNode->setSchemaType("Node");
-}
-
-void NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
-{
+  return nullptr;
 }
 
 dataRepository::ManagedGroup const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const

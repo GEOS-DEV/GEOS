@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -47,6 +47,14 @@ class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
+  enum class FluidType
+  {
+    DeadOil,
+    LiveOil
+  };
+
+  static FluidType stringToFluidType( string const & str );
+
   BlackOilFluid( std::string const & name, ManagedGroup * const parent );
 
   virtual ~BlackOilFluid() override;
@@ -58,21 +66,23 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
     static constexpr auto surfaceDensitiesString = "surfaceDensities";
     static constexpr auto tableFilesString = "tableFiles";
+    static constexpr auto fluidTypeString = "fluidType";
     
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey surfaceDensities = { surfaceDensitiesString };
     ViewKey tableFiles       = { tableFilesString };
+    ViewKey fluidType        = { fluidTypeString };
 
   } viewKeysBlackOilFluid;
+
+protected:
+  virtual void PostProcessInput() override;
 
 private:
 
@@ -83,6 +93,12 @@ private:
 
   // Black-oil table filenames
   string_array m_tableFiles;
+
+  // Input string for type of black-oil fluid (live/dead)
+  string m_fluidTypeString;
+
+  // Type of black-oil fluid (live/dead)
+  FluidType m_fluidType;
 
 };
 

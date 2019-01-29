@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -36,18 +36,13 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
   m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this)
 {
   RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
-      setSizedFromParent(0);
+    setSizedFromParent(0);
 
   RegisterViewWrapper( viewKeyStruct::constitutiveMapString,
                        &m_constitutiveMapView, 0);
 
   RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
 
-//  RegisterViewWrapper( viewKeyStruct::constitutiveRelationIndexString,
-//                       &m_constitutiveRelationIndex, 0);
-//
-//  RegisterViewWrapper( viewKeyStruct::constitutivePointIndexString,
-//                       &m_constitutivePointIndex, 0);
 
   RegisterViewWrapper( viewKeyStruct::constitutivePointVolumeFraction,
                        &m_constitutivePointVolumeFraction, 0);
@@ -61,98 +56,6 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 CellBlockSubRegion::~CellBlockSubRegion()
 {
   // TODO Auto-generated destructor stub
-}
-
-
-
-void CellBlockSubRegion::FillDocumentationNode()
-{
-  CellBlock::FillDocumentationNode();
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->getCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "an element region" );
-
-  CellBlock::FillDocumentationNode();
-
-//  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
-//                              viewKeys.numNodesPerElement.Key(),
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-//  docNode->AllocateChildNode( keys::numNodesPerElement,
-//                              keys::numNodesPerElement,
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-
-
-//  docNode->AllocateChildNode( keys::constitutiveMap,
-//                              keys::constitutiveMap,
-//                              -1,
-//                              "mapPair_array",
-//                              "mapPair_array",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-//  docNode->AllocateChildNode( keys::constitutiveMap,
-//                              keys::constitutiveMap,
-//                              -1,
-//                              "mapPair_array",
-//                              "mapPair_array",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-
-
-}
-
-void CellBlockSubRegion::ReadXML_PostProcess()
-{
-//  integer & numNodesPerElem = numNodesPerElement();
-//  numNodesPerElem = 8;
-
-}
-
-void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
-{
-//  auto const & elementRegion = static_cast<ElementRegion const&>(
-// *(this->getParent()) );
-//  auto const & numMethod = elementRegion.getNumericalMethod();
-
-}
-
-void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
-{
-  ObjectManagerBase::InitializePostSubGroups(nullptr);
 }
 
 void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )

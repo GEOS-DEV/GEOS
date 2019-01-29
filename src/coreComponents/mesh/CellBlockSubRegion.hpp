@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -36,14 +36,6 @@ class CellBlockSubRegion : public CellBlock
 public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~CellBlockSubRegion() override;
-
-  void FillDocumentationNode() override final;
-
-  void ReadXML_PostProcess() override;
-
-  void InitializePreSubGroups( ManagedGroup * const ) override final;
-
-  void InitializePostSubGroups( ManagedGroup * const ) override final;
 
   void CopyFromCellBlock( CellBlock const * source );
 

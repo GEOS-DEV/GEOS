@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,7 +24,6 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -44,10 +43,6 @@ public:
   explicit ObjectManagerBase( std::string const & name,
                               dataRepository::ManagedGroup * const parent );
 
-//  explicit ObjectManagerBase( std::string const & name,
-//                              dataRepository::ManagedGroup * const parent,
-//                              cxx_utilities::DocumentationNode * docNode );
-
   ~ObjectManagerBase() override;
 
   /**
@@ -60,10 +55,6 @@ public:
 
   virtual const string getCatalogName() const = 0;
   ///@}
-
-  virtual void FillDocumentationNode() override;
-
-  virtual void InitializePostSubGroups( ManagedGroup * const ) override;
 
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;

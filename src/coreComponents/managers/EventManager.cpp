@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,8 +23,7 @@
 #include "EventManager.hpp"
 #include "managers/Events/EventBase.hpp"
 #include "common/TimingMacros.hpp"
-
-#include "DocumentationNode.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -35,133 +34,63 @@ using namespace cxx_utilities;
 
 EventManager::EventManager( std::string const & name,
                             ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
-{}
+  ManagedGroup( name, parent),
+  m_maxTime(),
+  m_maxCycle(),
+  m_verbosity(),
+  m_time(),
+  m_dt(),
+  m_cycle(),
+  m_currentSubEvent(),
+  m_currentMaxDt()
+{
+  RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum simulation time.");
+
+  RegisterViewWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum simulation cycle.");
+
+  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum simulation time.");
+
+
+  RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
+    setRestartFlags(RestartFlags::WRITE_AND_READ)->
+    setDescription("Current simulation time.");
+
+  RegisterViewWrapper(viewKeyStruct::dtString, &m_dt, false )->
+    setRestartFlags(RestartFlags::WRITE_AND_READ)->
+    setDescription("Current simulation timestep.");
+
+  RegisterViewWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
+    setRestartFlags(RestartFlags::WRITE_AND_READ)->
+    setDescription("Current simulation cycle number.");
+
+  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+    setRestartFlags(RestartFlags::WRITE_AND_READ)->
+    setDescription("index of the current subevent.");
+
+  RegisterViewWrapper(viewKeyStruct::currentMaxDtString, &m_currentMaxDt, false )->
+    setRestartFlags(RestartFlags::WRITE_AND_READ)->
+    setDescription("Maximum dt request for event loop.");
+
+
+}
 
 
 EventManager::~EventManager()
 {}
 
 
-void EventManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  // Set the name to SolverApplications for now
-  docNode->setName("Events");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Contains the set of solver applications");
-
-  docNode->AllocateChildNode( viewKeys.time.Key(),
-                              viewKeys.time.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "simulation time",
-                              "simulation time",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.dt.Key(),
-                              viewKeys.dt.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "simulation dt",
-                              "simulation dt",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.cycle.Key(),
-                              viewKeys.cycle.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "simulation cycle",
-                              "simulation cycle",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.currentSubEvent.Key(),
-                              viewKeys.currentSubEvent.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "index of the current subevent",
-                              "index of the current subevent",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.currentMaxDt.Key(),
-                              viewKeys.currentMaxDt.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Maximum dt request for event loop",
-                              "Maximum dt request for event loop",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.maxTime.Key(),
-                              viewKeys.maxTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "simulation maxTime",
-                              "simulation maxTime",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0,
-                              RestartFlags::WRITE );
-
-  docNode->AllocateChildNode( viewKeys.maxCycle.Key(),
-                              viewKeys.maxCycle.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "simulation maxCycle",
-                              "simulation maxCycle",
-                              "-1",
-                              "",
-                              0,
-                              1,
-                              0,
-                              RestartFlags::WRITE );
-
-  docNode->AllocateChildNode( viewKeys.verbosity.Key(),
-                              viewKeys.verbosity.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "event manager verbosity",
-                              "event manager verbosity",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0,
-                              RestartFlags::WRITE );
-}
 
 
-void EventManager::ReadXML_PostProcess()
+void EventManager::PostProcessInput()
 {
   real64 & maxTime = this->getReference<real64>(viewKeys.maxTime);
   integer & maxCycle = this->getReference<integer>(viewKeys.maxCycle);
@@ -178,11 +107,11 @@ void EventManager::ReadXML_PostProcess()
 }
 
 
-void EventManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * EventManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<EventBase>( childName, std::move(event) );
+  return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
 
 
@@ -200,12 +129,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   integer exitFlag = 0;
 
   // Setup MPI communication
-  integer rank = 0;
-  integer comm_size = 1;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-  #endif
+  integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
+  integer const comm_size = CommunicationTools::MPI_Size(MPI_COMM_GEOSX );;
+
   real64 send_buffer[2];
   array1d<real64> receive_buffer(2 * comm_size);
 

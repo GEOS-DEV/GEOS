@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -35,10 +35,20 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   : ConstitutiveBase( name, parent ),
     m_useMass( false )
 {
-  RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false );
-  RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false );
+  // We make base inputs optional here, since derived classes may want to predefine/hardcode
+  // components/phases. Models that do need these inputs should change input flags accordingly.
 
-  RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false );
+  RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of component names");
+
+  RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Component molar weights");
+
+  RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of fluid phases");
 
   RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dPressureString, &m_dPhaseFraction_dPressure, false );
@@ -109,57 +119,9 @@ MultiFluidBase::~MultiFluidBase()
 
 }
 
-void MultiFluidBase::FillDocumentationNode()
+void MultiFluidBase::PostProcessInput()
 {
-  DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->GetCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Multi-component multiphase fluid model" );
-
-  docNode->AllocateChildNode( viewKeyStruct::phaseNamesString,
-                              viewKeyStruct::phaseNamesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of fluid phases",
-                              "List of fluid phases",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentNamesString,
-                              viewKeyStruct::componentNamesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of component names",
-                              "List of component names",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::componentMolarWeightString,
-                              viewKeyStruct::componentMolarWeightString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Component molar weights",
-                              "Component molar weights",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
-void MultiFluidBase::ReadXML_PostProcess()
-{
-  ConstitutiveBase::ReadXML_PostProcess();
+  ConstitutiveBase::PostProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();

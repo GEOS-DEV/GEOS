@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -54,11 +54,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::FillDocumentationNode()
+void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Domain");
-  docNode->setSchemaType("UniqueNode");
+  ManagedGroup::RegisterDataOnMeshRecursive( getMeshBodies() );
 }
 
 
@@ -192,6 +190,7 @@ void DomainPartition::SetupCommunications()
   {
     int reorder = 0;
     MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+    GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
   }
   int rank = -1;
   int nsdof = 3;

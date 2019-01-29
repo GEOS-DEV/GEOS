@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -106,7 +106,6 @@ public:
 
 //  void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
-  void InitializePostSubGroups( dataRepository::ManagedGroup * const );
   virtual void InitializeMetis();
   void AddNeighborsMetis( set<globalIndex>& neighborList );
   virtual bool IsCoordInPartition( const realT& coord, const int dir );
@@ -188,6 +187,10 @@ public:
   realT xMax( const int i ) const {
     return m_max[i];
   }
+
+
+protected:
+  void InitializePostSubGroups( dataRepository::ManagedGroup * const );
 
 public:
   array1d<int> m_Partitions; // number of partitions

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -18,8 +18,6 @@
 
 /**
  * @file ViewWrapper.hpp
- *
- * @date Created on: Jun 8, 2016
  * @authors settgast
  */
 
@@ -75,7 +73,12 @@ public:
     ViewWrapperBase(name, parent),
     m_ownsData( true ),
     m_data( new T() )
-  {}
+  {
+    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    {
+      this->setSizedFromParent(0);
+    }
+  }
 
   /**
    * @param name name of the object
@@ -88,12 +91,18 @@ public:
     ViewWrapperBase(name, parent),
   m_ownsData( true ),
   m_data( object.release() )
-  {}
+  {
+    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    {
+      this->setSizedFromParent(0);
+    }
+  }
 
   /**
    * @param name name of the object
    * @param parent parent group that owns the ViewWrapper
    * @param object object that is being wrapped by the ViewWrapper
+   * @param takeOwnership to indicate whether or not to take ownership of \p object
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
@@ -102,7 +111,12 @@ public:
     ViewWrapperBase(name,parent),
     m_ownsData( takeOwnership ),
     m_data( object )
-  {}
+  {
+    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    {
+      this->setSizedFromParent(0);
+    }
+  }
 
   /**
    * default destructor
@@ -182,11 +196,6 @@ public:
     return clonedWrapper;
   }
 
-  /**
-   * Virtual function to return the typeid of T. Not so sure this does what we
-   * want?? TODO
-   * @return typeid(T)
-   */
   virtual const std::type_info& get_typeid() const noexcept override final
   {
     return typeid(T);
@@ -206,6 +215,11 @@ public:
     return static_cast< ViewWrapper<T>& >(base);
   }
 
+  /**
+   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * @param base
+   * @return casted reference to const ViewWrapper<T>
+   */
   static ViewWrapper<T> const & cast( ViewWrapperBase const & base )
   {
     if( base.get_typeid() != typeid(T) )
@@ -215,124 +229,20 @@ public:
     return static_cast< ViewWrapper<T> const & >(base);
   }
 
-//  template< bool DO_PACKING >
-//  struct pack_wrapper
-//  {
-//
-////    template<typename TT >
-////      struct has_square_bracket_operator
-////      {
-////    private:
-////        template<typename U> static constexpr auto test(int)->decltype( std::is_member_function_pointer<decltype(&U::operator[])>::value, bool() )
-////        {
-////          return std::is_member_function_pointer<decltype(&U::operator[])>::value;
-////        }
-////        template<typename U> static constexpr auto test(...)->bool
-////        {
-////          return false;
-////        }
-////    public:
-////        static constexpr bool value = test<TT>(0);
-////      };
-//
-//
-//
-//    HAS_ALIAS(pointer)
-//    HAS_ALIAS(iterator)
-//    HAS_MEMBER_FUNCTION(begin,typename U::iterator,,,)
-//    HAS_MEMBER_FUNCTION(end,typename U::iterator,,,)
-//
-//
-//    template<class U = T>
-//    static typename std::enable_if< CommBufferOps::is_packable<U>::value, localIndex >::type
-//    PackT( char *& buffer, U const & m_data )
-//    {
-//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value, localIndex >::type
-//    PackT( char *& buffer, U const & m_data )
-//    {
-//      return 0;
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if< CommBufferOps::is_packable<U>::value, localIndex >::type
-//    UnpackT( char const *& buffer, U & m_data )
-//    {
-//      return CommBufferOps::Unpack( buffer, m_data );
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value, localIndex >::type
-//    UnpackT( char const *& buffer, U & m_data )
-//    {
-//      return 0;
-//    }
-//
-//
-//
-//
-//
-//    template<class U = T>
-//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
-//                                    !std::is_same<U,string>::value, localIndex >::type
-//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-//    {
-//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data, packList );
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
-//                                    std::is_same<U,string>::value, localIndex >::type
-//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-//    {
-//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value , localIndex >::type
-//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-//    {
-//      return 0;
-//    }
-//
-//
-//
-//
-//
-//    template<class U = T>
-//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
-//                                    !std::is_same<U,string>::value, localIndex >::type
-//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
-//    {
-//      return CommBufferOps::Unpack( buffer, m_data, packList );
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
-//                                    std::is_same<U,string>::value, localIndex >::type
-//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
-//    {
-//      return CommBufferOps::Unpack( buffer, m_data );
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value , localIndex >::type
-//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
-//    {
-//      return 0;
-//    }
-//
-//
-//  };
-
+  /**
+   * @brief function to determine if T is packable by the buffer packing functions
+   * @return true if T is packable. false if not.
+   */
   virtual bool isPackable() const override final
   {
     return bufferOps::is_packable<T>::value;
   }
 
+  /**
+   * @brief function to pack T
+   * @param buffer the buffer in which to pack T
+   * @return number of packed bytes.
+   */
   virtual localIndex Pack( char *& buffer ) const override final
   {
     localIndex packedSize = 0;
@@ -343,6 +253,12 @@ public:
     return packedSize;
   }
 
+  /**
+   * @brief function to pack T
+   * @param buffer the buffer in which to pack T
+   * @param packList indices of T to pack
+   * @return number of packed bytes.
+   */
   virtual localIndex Pack( char *& buffer, arrayView1d<localIndex const> const & packList ) const override final
   {
     localIndex packedSize = 0;
@@ -356,6 +272,10 @@ public:
     return packedSize;
   }
 
+  /**
+   * @brief function to pack return the length of packing...without doing the packing.
+   * @return size of packed bytes
+   */
   virtual localIndex PackSize( ) const override final
   {
     char * buffer = nullptr;
@@ -367,6 +287,11 @@ public:
     return packedSize;
   }
 
+  /**
+   * @brief function to get the the packing size
+   * @param packList indices of T to pack
+   * @return number of packed bytes.
+   */
   virtual localIndex PackSize( arrayView1d<localIndex const> const & packList ) const override final
   {
 
@@ -383,6 +308,11 @@ public:
     return packedSize;
   }
 
+  /**
+   * @brief function to unpack a buffer into the object referred to by m_data
+   * @param buffer
+   * @return
+   */
   virtual localIndex Unpack( char const *& buffer ) override final
   {
     localIndex unpackedSize = 0;
@@ -409,7 +339,7 @@ public:
 
 
 
-
+  /// @cond DO_NOT_DOCUMENT
   struct empty_wrapper
   {
     HAS_MEMBER_FUNCTION(empty,bool,const,,)
@@ -425,12 +355,13 @@ public:
     {
       return parent;
     }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual bool empty() const override final
   {
     return empty_wrapper::empty(this);
   }
 
+  /// @cond DO_NOT_DOCUMENT
   struct size_wrapper
   {
     HAS_MEMBER_FUNCTION_VARIANT(size, 0, int, const, , )
@@ -459,13 +390,14 @@ public:
                                       has_memberfunction_v5_size<U>::value), localIndex>::type
     size(ViewWrapper<T> const * parent)
     { return 1; }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual localIndex size() const override final
   {
     return size_wrapper::size(this);
   }
 
 
+  /// @cond DO_NOT_DOCUMENT
   struct num_dimensions_wrapper
   {
     HAS_MEMBER_FUNCTION(numDimensions,int,const,,)
@@ -479,13 +411,13 @@ public:
     static typename std::enable_if<!has_memberfunction_numDimensions<U>::value, int>::type
     numDimensions(ViewWrapper<T> const * parent)
     { return 1; }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual int numDimensions() const override final
   {
     return num_dimensions_wrapper::numDimensions(this);
   }
 
-
+  /// @cond DO_NOT_DOCUMENT
   struct dimension_size_wrapper
   {
     HAS_MEMBER_FUNCTION_VARIANT(size, 0, int, const, VA_LIST(int), VA_LIST(int(1)) )
@@ -521,13 +453,14 @@ public:
       }
       return parent->size(); 
     }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual localIndex size( int const i) const override final
   {
     return dimension_size_wrapper::size(this, i);
   }
 
 
+  /// @cond DO_NOT_DOCUMENT
   struct resize_dimension_wrapper
   {
     HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(int, localIndex const * ),
@@ -549,11 +482,11 @@ public:
       }
       parent->resize( integer_conversion<localIndex>(dims[0]));
     }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual void resize(int num_dims, localIndex const * const dims) override final
   { resize_dimension_wrapper::resize(this, num_dims, dims); }
 
-
+  /// @cond DO_NOT_DOCUMENT
   struct reserve_wrapper
   {
     HAS_MEMBER_FUNCTION(reserve, void, ,VA_LIST(std::size_t),VA_LIST(std::size_t(1)) )
@@ -567,7 +500,7 @@ public:
     {
       return; //parent->m_data;
     }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual void reserve( std::size_t new_cap ) override final
   {
     reserve_wrapper::reserve(this, new_cap);
@@ -589,6 +522,7 @@ public:
   CONDITIONAL_VIRTUAL_FUNCTION0(ViewWrapper<T>,insert,void,)
 
 
+  /// @cond DO_NOT_DOCUMENT
   struct resize_wrapper
   {
     template<typename UU>
@@ -660,13 +594,13 @@ public:
     {
       return;
     }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual void resize( localIndex new_size ) override final
   {
     resize_wrapper::resize(this, new_size);
   }
 
-
+  /// @cond DO_NOT_DOCUMENT
   struct should_resize_wrapper
   {
     HAS_MEMBER_FUNCTION(isSorted,bool,const,,)
@@ -677,12 +611,13 @@ public:
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_isSorted<U>::value, bool>::type shouldResize()
     { return true; }
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual bool shouldResize() const override final
   {
     return should_resize_wrapper::shouldResize();
   }
 
+  /// @cond DO_NOT_DOCUMENT
   struct copy_wrapper
   {
     HAS_ALIAS(isArray)
@@ -700,7 +635,7 @@ public:
     copy( T * const data , localIndex const sourceIndex, localIndex const destIndex )
     {}
 
-  };
+  };/// @endcond DO_NOT_DOCUMENT
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override final
   {
     if( this->sizedFromParent() )
@@ -729,7 +664,10 @@ public:
             bool HASPOINTERTYPE = has_alias_pointer<U>::value >
   struct Get_Type
   {
+    /// pointer type
     typedef U *       pointer;
+
+    /// pointer to const type
     typedef U const * const_pointer;
   };
 
@@ -747,11 +685,17 @@ public:
   template<class U>
   struct Get_Type<U, true>
   {
+    /// pointer type
     typedef typename U::pointer       pointer;
+
+    /// pointer to const type
     typedef typename U::const_pointer const_pointer;
   };
 
+  /// the valid pointer type for T
   using pointer       = typename Get_Type<T>::pointer;
+
+  /// the valid pointer to const type for T
   using const_pointer = typename Get_Type<T>::const_pointer;
   ///@}
 
@@ -760,20 +704,50 @@ public:
   HAS_MEMBER_FUNCTION_VARIANT(data,_const, pointer,const,,)
 
 
-  T& reference()
+  /**
+   * @brief acccessor for m_data
+   * @return reference to T
+   */
+  T & reference()
   { return *m_data; }
 
+  /**
+   * @brief acccessor for m_data
+   * @return reference to const T
+   */
   T const & reference() const
   { return *m_data; }
 
+  /**
+   * @brief acccessor for m_data
+   * @return pointer to T
+   */
   T * getPointer()
   { return m_data; }
 
-  T const * getPointer() const
+  /**
+   * @brief acccessor for m_data
+   * @return pointer to const T
+   */  T const * getPointer() const
   { return m_data; }
 
 
+   /**
+    * @brief accessor for m_default
+    * @return reference to const m_default member
+    */
+  template< typename U=T >
+  DefaultValue<T> const &
+  getDefaultValueStruct() const
+  {
+    return m_default;
+  }
 
+
+  /**
+   * @brief accessor for default value
+   * @return reference to const T
+   */
   template< typename U=T >
   typename std::enable_if<DefaultValue<U>::has_default_value,T const &>::type
   getDefaultValue() const
@@ -781,6 +755,10 @@ public:
     return m_default.value;
   }
 
+  /**
+   * @brief setter for default value
+   * @return pointer to ViewWrapper<T>
+   */
   template< typename U=T >
   typename std::enable_if<DefaultValue<U>::has_default_value, ViewWrapper<T> *>::type
   setDefaultValue( typename DefaultValue<U>::value_type const & defaultVal )
@@ -789,16 +767,23 @@ public:
     return this;
   }
 
+  /**
+   * @brief set and apply for default value
+   * @return pointer to ViewWrapper<T>
+   */
   template< typename U=T >
-  typename std::enable_if<!(DefaultValue<U>::has_default_value), ViewWrapper<T> * >::type
-  setDefaultValue( T const & defaultVal )
+  typename std::enable_if<DefaultValue<U>::has_default_value, ViewWrapper<T> *>::type
+  setApplyDefaultValue( typename DefaultValue<U>::value_type const & defaultVal )
   {
-    return nullptr;
+    m_default.value = defaultVal;
+    *m_data = m_default.value;
+    return this;
   }
 
-
-
-  /// Case for if m_data has a member function called "data()"
+  /**
+   * @brief Case for if m_data has a member function called "data()"
+   * @return pointer type specified by T::pointer
+   */
   template<class U = T>
   typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) &&
                            has_alias_pointer<U>::value && !std::is_same<U,string>::value,typename U::pointer >::type
@@ -807,6 +792,10 @@ public:
     return m_data->data();
   }
 
+  /**
+   * @brief Case for if m_data has a member function called "data()"
+   * @return pointer type specified by T::const_pointer
+   */
   template<class U = T>
   typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) &&
                            has_alias_pointer<U>::value && !std::is_same<U,string>::value,typename U::const_pointer >::type
@@ -816,7 +805,10 @@ public:
   }
 
 
-  /// Case for if m_data is a string"
+  /**
+   * @brief  Case for if m_data is a string"
+   * @return pointer type specified by char *
+   */
   template<class U = T>
   typename std::enable_if< std::is_same<U,string>::value, char* >::type
   dataPtr()
@@ -824,6 +816,10 @@ public:
     return const_cast< char* >(m_data->data());
   }
 
+  /**
+   * @brief  Case for if m_data is a string"
+   * @return pointer type specified by char const *
+   */
   template<class U = T>
   typename std::enable_if< std::is_same<U,string>::value, char const * >::type
   dataPtr() const
@@ -832,7 +828,10 @@ public:
   }
 
 
-  /// case for if m_data does NOT have a member function "data()"
+  /**
+   * @brief  case for if m_data does NOT have a member function "data()"
+   * @return pointer type specified by T *
+   */
   template<class U = T>
   typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&&
                           !std::is_same<U,string>::value, U * >::type
@@ -841,6 +840,10 @@ public:
     return m_data;
   }
 
+  /**
+   * @brief  case for if m_data does NOT have a member function "data()"
+   * @return pointer type specified by T *
+   */
   template<class U = T>
   typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&&
                           !std::is_same<U,string>::value, U const *>::type
@@ -852,6 +855,10 @@ public:
   HAS_ALIAS(value_type)
 
 
+  /**
+   * @brief function to get the size of T
+   * @return size of T
+   */
   template<class U = T>
   typename std::enable_if<has_alias_value_type<U>::value, size_t>::type
   sizeOfValueType() const
@@ -859,6 +866,10 @@ public:
     return sizeof(typename T::value_type);
   }
 
+  /**
+   * @brief function to get the size of T
+   * @return size of T
+   */
   template<class U = T>
   typename std::enable_if<!has_alias_value_type<U>::value, size_t>::type
   sizeOfValueType() const
@@ -872,7 +883,10 @@ public:
   }
 
 
-  /// case for if U::value_type exists. Returns the size of dataPtr
+  /**
+   * @brief case for if U::value_type exists. Returns the size of dataPtr
+   * @return size of T::value_type
+   */
   template<class U = T>
   typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
   byteSize() const
@@ -881,7 +895,10 @@ public:
   }
 
 
-  /// case for if U::value_type doesn't exists. Returns the size of dataPtr
+  /**
+   * @brief case for if U::value_type doesn't exists. Returns the size of dataPtr
+   * @return size of T::value_type
+   */
   template<class U = T>
   typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
   byteSize() const
@@ -890,7 +907,10 @@ public:
   }
 
 
-  /// case for if U::value_type exists. Returns the size of an element of dataPtr
+  /**
+   * @brief case for if U::value_type exists. Returns the size of an element of dataPtr
+   * @return size of T::value_type
+   */
   template<class U = T>
   typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
   elementSize() const
@@ -898,8 +918,10 @@ public:
     return sizeof(typename T::value_type);
   }
 
-
-  /// case for if U::value_type doesn't exists. Returns the size of an element of dataPtr
+  /**
+   * @brief case for if U::value_type doesn't exists. Returns the size of an element of dataPtr
+   * @return size of T::value_type
+   */
   template<class U = T>
   typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
   elementSize() const
@@ -936,7 +958,7 @@ public:
 
 
   /// case for if U::value_type doesn't exists. Returns the number of elements
-  // given a byte size
+  /// given a byte size
   template<class U = T>
   typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
   numElementsFromByteSize(localIndex d_size) const
@@ -944,6 +966,7 @@ public:
     return d_size / sizeof(T);
   }
 
+  /// @cond DO_NOT_DOCUMENT
 
   virtual bool shouldRegisterDataPtr() const override
   {
@@ -1174,6 +1197,10 @@ public:
 #endif
   }
 
+  /**
+   *
+   * @param view
+   */
   void resizeFromSidre(axom::sidre::View* view = nullptr)
   {
 #ifdef GEOSX_USE_ATK
@@ -1218,10 +1245,92 @@ public:
     }
 #endif
   }
+  /// @endcond DO_NOT_DOCUMENT
 
 
+  /** @name overridden setters
+   *  Group of setters that override non-virtual functions in ViewWrapperBase
+   */
+  ///@{
+
+  /**
+   * @brief set whether this wrapper is resized when its parent is resized
+   * @param val an int that is converted into a bool
+   * @return a pointer to this wrapper
+   */
+  ViewWrapper<T> * setSizedFromParent( int val )
+  {
+    ViewWrapperBase::setSizedFromParent(val);
+    return this;
+  }
+
+  /**
+   * @brief set the RestartFlags of the wrapper
+   * @param flags the new RestartFlags value
+   * @return a pointer to this wrapper
+   */
+  ViewWrapper<T> * setRestartFlags( RestartFlags flags)
+  {
+    ViewWrapperBase::setRestartFlags(flags);
+    return this;
+  }
+
+  /**
+   * @brief set the PlotLevel of the wrapper
+   * @param flag the new PlotLevel value
+   * @return a pointer to this wrapper
+   */
+  ViewWrapper<T> * setPlotLevel( PlotLevel const flag )
+  {
+    ViewWrapperBase::setPlotLevel(flag);
+    return this;
+  }
+
+  /**
+   * @brief set the plotLevel of the wrapper
+   * @param flag an integer that specifies the new plotLevel value
+   * @return a pointer to this wrapper
+   */
+  ViewWrapper<T> * setPlotLevel( int const flag )
+  {
+    ViewWrapperBase::setPlotLevel(flag);
+    return this;
+  }
+
+  /**
+   * @brief set the InputFlag of the wrapper
+   * @param input the new InputFlags value
+   * @return a pointer to this wrapper
+   */
+  ViewWrapper<T> * setInputFlag( InputFlags const input )
+  {
+    ViewWrapperBase::setInputFlag(input);
+    return this;
+  }
+
+  /**
+   * @brief set the description string of the wrapper
+   * @param description the description
+   * @return a pointer to this wrapper
+   */
+  ViewWrapper<T> * setDescription( string const & description )
+  {
+    ViewWrapperBase::setDescription( description );
+    return this;
+  }
+
+
+  ///@}
+
+private:
+  /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
+  /// address of m_data
   bool m_ownsData;
+
+  /// the object being wrapped by this wrapper
   T * m_data;
+
+  /// the default value of the object being wrapped
   DefaultValue<T> m_default;
 
 

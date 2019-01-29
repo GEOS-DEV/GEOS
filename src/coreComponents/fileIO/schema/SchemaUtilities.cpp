@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -26,6 +26,7 @@
 namespace geosx
 {
 
+/*
 void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead, integer verbosityLevel)
 {
   std::string schemaBase=
@@ -49,7 +50,7 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Docu
   // Write the schema to file
   schemaTree.save_file(fname.c_str());
 }
-
+*/
 
 void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 {
@@ -76,7 +77,7 @@ void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
   }
 }
 
-
+/*
 void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot,
                         integer verbosityLevel)
 {
@@ -147,5 +148,5 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWra
     }
   }
 }
-
+*/
 }

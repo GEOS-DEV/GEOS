@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -38,32 +38,24 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_globalToLocalMap()
 {
 
+  RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
+  RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
+
   RegisterViewWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false );
+
   RegisterViewWrapper(viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
 
-  RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
-  RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
-  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
-    setPlotLevel(PlotLevel::LEVEL_0);
 
-  this->RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
+  RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
+
+  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+      setApplyDefaultValue(-2)->
+      setPlotLevel(PlotLevel::LEVEL_0);
+
+  RegisterViewWrapper< array1d<integer> >( viewKeyStruct::domainBoundaryIndicatorString );
 
   m_sets.RegisterViewWrapper<set<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
-//ObjectManagerBase::ObjectManagerBase( std::string const & name,
-//                                      ManagedGroup * const parent,
-//                                      cxx_utilities::DocumentationNode *
-// docNode ):
-//    ManagedGroup(name,parent,docNode),
-//    m_localToGlobalMap( RegisterViewWrapper< globalIndex_array
-// >("localToGlobal")->reference() )
-//{
-//
-//
-//  this->RegisterGroup<ManagedGroup>("Sets");
-//  this->RegisterViewWrapper< array1d<integer> >("isExternal");
-//}
-
 
 ObjectManagerBase::~ObjectManagerBase()
 {}
@@ -75,73 +67,6 @@ ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog(
   static ObjectManagerBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
-
-void ObjectManagerBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.ghostRank.Key(),
-                              m_ObjectManagerBaseViewKeys.ghostRank.Key(),
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "Array that indicates whether or not an index is a ghost. ",
-                              "Array that indicates whether or not an index is a ghost. "
-                              "If it is not a ghost the value will be -1. If it "
-                              "is a ghost, then the value will be the owning rank.",
-                              "-1",
-                              "",
-                              1,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
-                              m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "List containing the element regions of the faces",
-                              "List containing the element regions of the faces",
-                              "0",
-                              "",
-                              1,
-                              0,
-                              2 );
-
-//  docNode->AllocateChildNode( viewKeys.globalToLocalMap.Key(),
-//                              viewKeys.globalToLocalMap.Key(),
-//                              -1,
-//                              "localIndex_map",
-//                              "localIndex_map",
-//                              "Map from globalIndex to localIndex. ",
-//                              "Map from globalIndex to localIndex. ",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-//
-//  docNode->AllocateChildNode( viewKeys.localToGlobalMap.Key(),
-//                              viewKeys.localToGlobalMap.Key(),
-//                              -1,
-//                              "globalIndex_array",
-//                              "globalIndex_array",
-//                              "Array that maps from localIndex to globalIndex. ",
-//                              "Array that maps from localIndex to globalIndex. ",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-}
-
-void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
-{
-  m_ghostRank=-2;
-}
-
 
 void ObjectManagerBase::CreateSet( const std::string& newSetName )
 {

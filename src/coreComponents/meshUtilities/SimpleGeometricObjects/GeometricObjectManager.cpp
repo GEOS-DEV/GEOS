@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,7 +25,6 @@
 
 #include "GeometricObjectManager.hpp"
 
-#include "DocumentationNode.hpp"
 #include "SimpleGeometricObjectBase.hpp"
 
 namespace geosx
@@ -42,21 +41,11 @@ GeometricObjectManager::GeometricObjectManager( std::string const & name,
 GeometricObjectManager::~GeometricObjectManager()
 {}
 
-
-void GeometricObjectManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Geometry");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Geometric object manager");
-}
-
-
-void GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Geometric Object: " << childKey << ", " << childName);
   std::unique_ptr<SimpleGeometricObjectBase> geometriObject = SimpleGeometricObjectBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<SimpleGeometricObjectBase>( childName, std::move(geometriObject) );
+  return this->RegisterGroup<SimpleGeometricObjectBase>( childName, std::move(geometriObject) );
 }
 
 

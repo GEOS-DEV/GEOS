@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -33,11 +33,10 @@ SolverBase::SolverBase( std::string const & name,
   m_linearSolverWrapper(),
   m_verboseLevel( 0 ),
   m_gravityVector( R1Tensor( 0.0 ) ),
-  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )//,
-//  m_blockLocalDofNumber()
+  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
+  m_cflFactor(),
+  m_maxStableDt{1e99}
 {
-  // register group with repository. Have Repository own object.
-  this->RegisterGroup( groupKeyStruct::systemSolverParametersString, &m_systemSolverParameters, 0 );
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
@@ -46,7 +45,35 @@ SolverBase::SolverBase( std::string const & name,
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior(1);
 
-//  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
+
+  RegisterViewWrapper(viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Verbosity level");
+
+  RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
+          "Values should be in the interval (0,1] ");
+
+  RegisterViewWrapper(viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
+          "Values should be in the interval (0,1] ");
+
+  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+    setApplyDefaultValue("none")->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of discretization object to use for this solver.");
+
+  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Allowable regions that the solver may be applied to. Note that this does not indicate that "
+                   "the solver will be applied to these regions, only that allocation will occur such that the "
+                   "solver may be applied to these regions. The decision about what regions this solver will be"
+                   "applied to rests in the EventManager.");
 
 }
 
@@ -61,64 +88,22 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
   return catalog;
 }
 
-void SolverBase::FillDocumentationNode()
+ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & childName )
 {
-
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( this->CatalogName());    // If this method lived in Managed
-                                             // groups, this could be done
-                                             // automatically
-  docNode->setSchemaType( "Node" );
-
-  docNode->AllocateChildNode( keys::courant,
-                              keys::courant,
-                              -1,
-                              "real64",
-                              "real64",
-                              "courant Number",
-                              "courant Number",
-                              "0.7",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::maxDt,
-                              keys::maxDt,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Maximum Stable Timestep",
-                              "Maximum Stable Timestep",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::verboseLevelString,
-                              viewKeyStruct::verboseLevelString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-}
-
-void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-
+  ManagedGroup * rval = nullptr;
+  if( childKey==SystemSolverParameters::CatalogName() )
+  {
+    rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
+  }
+  else
+  {
+    GEOS_ERROR(childKey<<" is an invalid key to SolverBase child group.");
+  }
+  return rval;
 }
 
 
-void SolverBase::ReadXML_PostProcess()
+void SolverBase::PostProcessInput()
 {
   if( this->globalGravityVector() != nullptr )
   {
@@ -488,17 +473,6 @@ bool SolverBase::CheckSystemSolution( systemSolverInterface::EpetraBlockSystem c
                                       real64 const scalingFactor, DomainPartition * const domain )
 {
   return true;
-}
-
-void SolverBase::CreateChild( string const & childKey, string const & childName )
-{
-  // recognize SystemSolverParameters, the group is already registered
-  if (childKey == groupKeyStruct::systemSolverParametersString)
-  {
-    return;
-  }
-  // otherwise let base class handle it
-  ManagedGroup::CreateChild( childKey, childName );
 }
 
 

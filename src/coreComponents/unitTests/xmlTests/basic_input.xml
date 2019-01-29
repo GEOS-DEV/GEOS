@@ -6,7 +6,9 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  courant="0.25"/>
+                                  cflFactor="0.25"
+                                  discretization="FE1"
+                                  targetRegions="Region2"/>
   </Solvers>
 
   
@@ -51,7 +53,7 @@
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
@@ -62,45 +64,41 @@
   </Constitutive>
 
 
-  <BoundaryConditions>
-    <Dirichlet name="v0"          
+  <FieldSpecifications>
+    <FieldSpecification name="v0"          
                component="0" 
                fieldName="Velocity"
-               dataType="Vector"
                functionName="timeFunction"
                objectPath="nodeManager"
                scale="1.0" 
                setNames="xneg"/>
                
-    <Dirichlet name="xconstraint" 
+    <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="0"  
                scale="0.0" 
                setNames="xpos"/>
                
-    <Dirichlet name="yconstraint" 
+    <FieldSpecification name="yconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="1"  
                scale="0.0" 
                setNames="yneg ypos"/>
                
-    <Dirichlet name="zconstraint" 
+    <FieldSpecification name="zconstraint" 
                objectPath="nodeManager"
                fieldName="Velocity"
-               dataType="Vector"
                component="2"  
                scale="0.0" 
                setNames="zneg zpos"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time"   coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
+    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition"  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" functionNames="timeFunction spaceFunction" variableNames="t s" expression="t*s"/>
     
   </Functions>
@@ -111,11 +109,11 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="1" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Silo name="siloOutput" parallelThreads="1" plotFileRoot="plot" slaveDirectory="sub" />
   </Outputs>
 
   <Nodesets>
-    <Box name="perf" type="0" xMin="0, 0, 0" xMax="1, 1, 1"/>
+    <Box name="perf" xMin="0, 0, 0" xMax="1, 1, 1"/>
   </Nodesets>
 
 

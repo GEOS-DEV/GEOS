@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,12 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DataObjectBase.cpp
- *
- *  Created on: Jun 17, 2016
- *      Author: rrsettgast
- */
+/** @file */
 
 #include "ViewWrapperBase.hpp"
 
@@ -71,7 +66,7 @@ ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ):
   m_name( std::move(source.m_name) ),
   m_parent( source.m_parent),
   m_sizedFromParent( source.m_sizedFromParent),
-  m_restart_flags(RestartFlags::WRITE_AND_READ)
+  m_restart_flags(source.m_restart_flags)
 #ifdef GEOSX_USE_ATK
   ,m_sidreView( source.m_sidreView )
 #endif

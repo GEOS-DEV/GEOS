@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -73,7 +73,7 @@ public:
 
 //  void Initialize(  ){}
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   using ManagedGroup::resize;
 

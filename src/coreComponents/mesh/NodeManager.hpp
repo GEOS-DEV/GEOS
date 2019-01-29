@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -82,10 +82,6 @@ public:
    */
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
-
-
-  void FillDocumentationNode() override final;
-
 
   void SetEdgeMaps( EdgeManager const * const edgeManager );
 

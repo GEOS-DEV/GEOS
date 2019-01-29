@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -58,10 +58,6 @@ public:
   FaceManager( string const &, ManagedGroup * const parent );
   virtual ~FaceManager() override final;
 
-//  void Initialize(  ){}
-
-  virtual void FillDocumentationNode() override final;
-
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
@@ -116,6 +112,16 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  array1d<real64> &       faceArea()       { return m_faceArea; }
+  array1d<real64> const & faceArea() const { return m_faceArea; }
+
+  array1d<R1Tensor> &       faceCenter()       { return m_faceCenter; }
+  array1d<R1Tensor> const & faceCenter() const { return m_faceCenter; }
+
+  array1d<R1Tensor> &       faceNormal()       { return m_faceNormal; }
+  array1d<R1Tensor> const & faceNormal() const { return m_faceNormal; }
+
+
   OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
   OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
 
@@ -132,6 +138,7 @@ public:
   array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
+
 private:
 
   template<bool DOPACK>
@@ -146,7 +153,9 @@ private:
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
 
+  array1d< real64 > m_faceArea;
   array1d< R1Tensor > m_faceCenter;
+  array1d< R1Tensor > m_faceNormal;
 
   constexpr static int MAX_FACE_NODES = 9;
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -35,8 +35,81 @@ using namespace dataRepository;
 EventBase::EventBase( const std::string& name,
                       ManagedGroup * const parent ):
   ExecutableGroup(name, parent),
+  m_eventTarget(""),
+  m_beginTime(0.0),
+  m_endTime(1e100),
+  m_forceDt(-1.0),
+  m_allowSuperstep(0),
+  m_allowSubstep(0),
+  m_substepFactor(1),
+  m_targetExactStartStop(0),
+  m_currentSubEvent(0),
+  m_isTargetExecuting(0),
+  m_eventForecast(0),
+  m_exitFlag(0),
+  m_eventCount(0),
+  m_timeStepEventCount(0),
+  m_eventProgress(0),
+  m_lastTime(1e100),
+  m_lastCycle(0),
   m_target(nullptr)
-{}
+{
+  RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("event target");
+
+  RegisterViewWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Start time of this event");
+
+  RegisterViewWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
+    setApplyDefaultValue(1e100)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("End time of this event");
+
+  RegisterViewWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Forced timestep for this event");
+
+  RegisterViewWrapper(viewKeyStruct::allowSuperstepString, &m_allowSuperstep, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows event super-stepping (dt_super=dt+t-t_last)");
+
+  RegisterViewWrapper(viewKeyStruct::allowSubstepString, &m_allowSubstep, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows event sub-stepping");
+
+  RegisterViewWrapper(viewKeyStruct::substepFactorString, &m_substepFactor, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("integer substep factor (dt_sub=dt/f)");
+
+  RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows timesteps to be truncated to match the start/stop times exactly");
+
+
+  RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
+    setApplyDefaultValue(-1.0e100)->
+    setDescription("last event occurrence (time)");
+
+  RegisterViewWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
+    setApplyDefaultValue(-1.0e9)->
+    setDescription("last event occurrence (cycle)");
+
+  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+    setDescription("index of the current subevent");
+
+  RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_isTargetExecuting, false )->
+    setDescription("index of the current subevent");
+
+
+}
 
 
 EventBase::~EventBase()
@@ -49,192 +122,15 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
   return catalog;
 }
 
-
-void EventBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("EventBase");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Describes the timing of the solver application");
-
-  docNode->AllocateChildNode( viewKeys.eventTarget.Key(),
-                              viewKeys.eventTarget.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "event target",
-                              "event target",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.beginTime.Key(),
-                              viewKeys.beginTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "start time",
-                              "start time",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.endTime.Key(),
-                              viewKeys.endTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "end time",
-                              "end time",
-                              "1.0e100",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.forceDt.Key(),
-                              viewKeys.forceDt.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "forced application dt",
-                              "forced application dt",
-                              "-1.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.lastTime.Key(),
-                              viewKeys.lastTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "last event occurance (time)",
-                              "last event occurance (time)",
-                              "-1e100",
-                              "",
-                              0,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.lastCycle.Key(),
-                              viewKeys.lastCycle.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "last event occurance (time)",
-                              "last event occurance (time)",
-                              "-1e9",
-                              "",
-                              0,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.allowSuperstep.Key(),
-                              viewKeys.allowSuperstep.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "allows event super-stepping",
-                              "allows event super-stepping (dt_super=dt+t-t_last)",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.allowSubstep.Key(),
-                              viewKeys.allowSubstep.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "allows event sub-stepping",
-                              "allows event sub-stepping",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.substepFactor.Key(),
-                              viewKeys.substepFactor.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "integer substep factor",
-                              "integer substep factor (dt_sub=dt/f)",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.targetExactStartStop.Key(),
-                              viewKeys.targetExactStartStop.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "allows timesteps to be truncated to match the start/stop times exactly",
-                              "allows timesteps to be truncated to match the start/stop times exactly",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.currentSubEvent.Key(),
-                              viewKeys.currentSubEvent.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "index of the current subevent",
-                              "index of the current subevent",
-                              "0",
-                              "",
-                              0,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.isTargetExecuting.Key(),
-                              viewKeys.isTargetExecuting.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "Flag to indicate whether the event target is executing",
-                              "Flag to indicate whether the event target is executing.  This helps to avoid double-executions.",
-                              "0",
-                              "",
-                              0,
-                              0,
-                              0 );
-
-}
-
-
-void EventBase::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * EventBase::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<EventBase>( childName, std::move(event) );
+  return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
 
 
-/*
-void EventBase::InitializePreSubGroups( ManagedGroup * const group )
-{
-  real64& lastTime = this->getReference<real64>(viewKeys.lastTime);
-  integer& lastCycle = this->getReference<integer>(viewKeys.lastCycle);
 
-  lastTime = std::numeric_limits<real64>::min();
-  lastCycle = std::numeric_limits<integer>::min();
-}
-*/
 
 
 void EventBase::GetTargetReferences()

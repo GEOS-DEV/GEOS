@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -59,11 +59,10 @@ public:
 
   static string CatalogName() { return "PAMELAMeshGenerator"; }
 
-  virtual void FillDocumentationNode() override;
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
 
@@ -75,13 +74,15 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ReadXML_PostProcess() override final;
+protected:
+  void PostProcessInput() override final;
 
 private:
+
   /// Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
 
-  const std::unordered_map<PAMELA::ELEMENTS::TYPE, string> ElementToLabel
+  const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =
     {
     { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -28,6 +28,7 @@
 
 // PVTPackage includes
 #include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
+#include "MultiphaseSystem/DeadOilMultiphaseSystem.hpp"
 
 
 using namespace PVTPackage;
@@ -41,11 +42,40 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
+BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
+{
+  if (str == "LiveOil")
+  {
+    return BlackOilFluid::FluidType::LiveOil;
+  }
+  else if (str == "DeadOil")
+  {
+    return BlackOilFluid::FluidType::DeadOil;
+  }
+  else
+  {
+    GEOS_ERROR("Unrecognized black-oil fluid type: " << str);
+  }
+  return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
+}
+
 BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false );
-  RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false );
+  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
+
+  RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of surface densities for each phase");
+
+  RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of filenames with input PVT tables");
+
+  RegisterViewWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Type of black-oil fluid (LiveOil/DeadOil)");
 }
 
 BlackOilFluid::~BlackOilFluid()
@@ -69,51 +99,20 @@ BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) 
   clone->m_surfaceDensities = this->m_surfaceDensities;
   clone->m_tableFiles       = this->m_tableFiles;
 
+  clone->m_fluidTypeString = this->m_fluidTypeString;
+  clone->m_fluidType       = this->m_fluidType;
+
   clone->createFluid();
 
   return std::move( clone );
 }
 
-void BlackOilFluid::FillDocumentationNode()
-{
-  MultiFluidPVTPackageWrapper::FillDocumentationNode();
-
-  DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setShortDescription( "Black-oil fluid model based on PVTPackage" );
-
-  docNode->AllocateChildNode( viewKeyStruct::surfaceDensitiesString,
-                              viewKeyStruct::surfaceDensitiesString,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "List of surface densities for each phase",
-                              "List of surface densities for each phase",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::tableFilesString,
-                              viewKeyStruct::tableFilesString,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of filenames with input PVT tables",
-                              "List of filenames with input PVT tables",
-                              "REQUIRED",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
-void BlackOilFluid::ReadXML_PostProcess()
+void BlackOilFluid::PostProcessInput()
 {
   // TODO maybe use different names?
   m_componentNames = m_phaseNames;
 
-  MultiFluidPVTPackageWrapper::ReadXML_PostProcess();
+  MultiFluidPVTPackageWrapper::PostProcessInput();
 
   localIndex const NP = numFluidPhases();
 
@@ -130,6 +129,8 @@ void BlackOilFluid::ReadXML_PostProcess()
   BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString )
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
+
+  m_fluidType = stringToFluidType(m_fluidTypeString);
 }
 
 void BlackOilFluid::createFluid()
@@ -162,7 +163,15 @@ void BlackOilFluid::createFluid()
     }
   }
 
-  m_fluid = new BlackOilMultiphaseSystem( phases, tableFiles, densities, molarWeights );
+  switch (m_fluidType)
+  {
+    case FluidType::LiveOil:
+      m_fluid = std::make_unique<BlackOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
+      break;
+    case FluidType::DeadOil:
+      m_fluid = std::make_unique<DeadOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
+      break;
+  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, ManagedGroup * const )

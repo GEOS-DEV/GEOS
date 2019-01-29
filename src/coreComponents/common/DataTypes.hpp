@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -1226,6 +1226,32 @@ public:
       return lambda( string_array(1), string("") );
       break;
     }
+    case ( TypeIDs::integer_array2d_id ):
+    {
+      return lambda( integer_array2d(), integer(1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array2d_id ):
+    {
+      return lambda( localIndex_array2d(), localIndex(1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array2d_id ):
+    {
+      return lambda( globalIndex_array2d(), globalIndex() );
+      break;
+    }
+    case ( TypeIDs::real32_array2d_id ):
+    {
+      return lambda( real32_array2d(), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array2d_id ):
+    {
+      return lambda( real64_array2d(), real64(1) );
+      break;
+    }
+
 //    case ( TypeIDs::mapPair_array_id ):
 //    {
 //      return lambda( mapPair_array(1), mapPair({}) );
