@@ -181,6 +181,8 @@
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
+			<xsd:element name="Included" type="xsd:anyType" maxOccurs="1" />
+			<xsd:element name="Parameters" type="xsd:anyType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationsType">
@@ -396,8 +398,51 @@
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="SystemSolverParametersType">
+		<!--verbosityFlag = verbosity level-->
+		<xsd:attribute name="verbosityFlag" type="integer" default="0" />
+		<!--solverType = (no description available)-->
+		<xsd:attribute name="solverType" type="string" default="" />
+		<!--krylovTol = Allowable tolerance for krylov solve-->
+		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
+		<!--numKrylovIter = Maximum number of Krylov Iterations-->
+		<xsd:attribute name="numKrylovIter" type="integer" default="100" />
+		<!--kspace = (no description available)-->
+		<xsd:attribute name="kspace" type="integer" default="0" />
+		<!--ilut_fill = (no description available)-->
+		<xsd:attribute name="ilut_fill" type="real64" default="3" />
+		<!--ilut_drop = (no description available)-->
+		<xsd:attribute name="ilut_drop" type="real64" default="0" />
+		<!--useMLPrecond = (no description available)-->
+		<xsd:attribute name="useMLPrecond" type="integer" default="0" />
+		<!--useInnerSolver = (no description available)-->
+		<xsd:attribute name="useInnerSolver" type="integer" default="0" />
+		<!--scalingOption = (no description available)-->
+		<xsd:attribute name="scalingOption" type="integer" default="0" />
+		<!--useBicgstab = (no description available)-->
+		<xsd:attribute name="useBicgstab" type="integer" default="0" />
+		<!--useDirectSolver = (no description available)-->
+		<xsd:attribute name="useDirectSolver" type="integer" default="0" />
+		<!--useNewtonSolve = (no description available)-->
+		<xsd:attribute name="useNewtonSolve" type="integer" default="0" />
+		<!--newtonTol = (no description available)-->
+		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--maxIterNewton = Maximum number of Newton iterations-->
+		<xsd:attribute name="maxIterNewton" type="integer" default="5" />
+		<!--maxTimeStepCuts = Max number of time step cuts-->
+		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
+		<!--timestepCutFactor = Time step cut factor-->
+		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
+		<!--maxLineSearchCuts = Max number of line search cuts-->
+		<xsd:attribute name="maxLineSearchCuts" type="integer" default="4" />
+		<!--lineSearchCutFactor = Line search cut factor-->
+		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
+		<!--allowNonConverged = Allow non-converged solution to be accepted-->
+		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType">
 		<!--basis = (no description available)-->
@@ -535,6 +580,9 @@
 		<xsd:attribute name="gravityVector" type="R1Tensor" default="0 0 0" />
 	</xsd:complexType>
 	<xsd:complexType name="DummySolverType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
 		<!--verboseLevel = Verbosity level-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -550,6 +598,9 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
 		<!--verboseLevel = Verbosity level-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -575,6 +626,9 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFlowType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
 		<!--verboseLevel = Verbosity level-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -600,6 +654,9 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFlowType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
 		<!--verboseLevel = Verbosity level-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -619,6 +676,9 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
 		<!--verboseLevel = Verbosity level-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -636,6 +696,9 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
 		<!--verboseLevel = Verbosity level-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -649,6 +712,9 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroelasticType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
 		<!--verboseLevel = Verbosity level-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--cflFactor = Factor to apply to the CFL condition when calculating the maximum allowable time step. Values should be in the interval (0,1] -->

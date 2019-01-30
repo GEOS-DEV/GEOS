@@ -103,6 +103,10 @@ ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & 
   return rval;
 }
 
+void SolverBase::ExpandObjectCatalogs()
+{
+  CreateChild( SystemSolverParameters::CatalogName(), SystemSolverParameters::CatalogName() );
+}
 
 void SolverBase::PostProcessInput()
 {
