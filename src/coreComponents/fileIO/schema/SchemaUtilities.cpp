@@ -93,7 +93,7 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
     if( regex->second.empty())
     {
       GEOS_WARNING("schema regex not defined for " << regex->first << "...  Defaulting to limited string");
-      patternNode.append_attribute("value") = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
+      patternNode.append_attribute("value") = "[a-zA-Z0-9_,\\(\\)+-/\\* \n]*";
     }
     else
     {
@@ -222,6 +222,9 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
         // Elements that are nonunique require the use of the name attribute
         if((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE))
         {
+          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+          commentNode.set_value("name = A name is required for any non-unique nodes");
+        
           xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
           attributeNode.append_attribute("name") = "name";
           attributeNode.append_attribute("type") = "string";
