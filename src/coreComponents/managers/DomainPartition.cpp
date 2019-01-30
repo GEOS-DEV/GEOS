@@ -148,8 +148,8 @@ void DomainPartition::GenerateSets(  )
     ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
     for( auto & subRegionIter : elementRegion->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions)->GetSubGroups() )
     {
-      CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
-      array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
+      CellBase * const subRegion = subRegionIter.second->group_cast<CellBase *>();
+//      array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
       dataRepository::ManagedGroup * elementSets = subRegion->sets();
       std::map< string, integer_array > numNodesInSet;
 
@@ -159,15 +159,17 @@ void DomainPartition::GenerateSets(  )
         set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
+          arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
+          localIndex const numNodes = subRegion->numNodesPerElement();
           integer count = 0;
-          for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
+          for( localIndex a = 0 ; a<numNodes ; ++a )
           {
-            if( nodeInSet[setName][elemsToNodes[k][a]] == 1 )
+            if( nodeInSet[setName][elemToNodes[a]] == 1 )
             {
               ++count;
             }
           }
-          if( count == elemsToNodes.size(1) )
+          if( count == numNodes )
           {
             targetSet.insert(k);
           }

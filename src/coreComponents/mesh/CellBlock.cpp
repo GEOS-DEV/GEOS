@@ -22,6 +22,7 @@
  */
 
 #include "CellBlock.hpp"
+#include "MeshLevel.hpp"
 
 #include "NodeManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
@@ -384,6 +385,14 @@ void CellBlock::SetElementType( string const & elementType)
   }
 
 }
+
+void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+{
+  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
+  this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
+  this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
 

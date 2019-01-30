@@ -40,6 +40,10 @@ class CellBlock : public CellBase
 {
 public:
 
+  using ToNodeMap=FixedOneToManyRelation;
+  using ToEdgesMap=FixedOneToManyRelation;
+  using ToFacesMap=FixedOneToManyRelation;
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -148,6 +152,19 @@ public:
     }
   }
 
+
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+
+
+  virtual arraySlice1d<localIndex const> nodeList( localIndex const k ) const override
+  {
+    return m_toNodesRelation[k];
+  }
+
+  virtual arraySlice1d<localIndex> nodeList( localIndex const k ) override
+  {
+    return m_toNodesRelation[k];
+  }
 
 
   /**

@@ -17,6 +17,7 @@
  */
 #include "FaceCellSubRegion.hpp"
 #include "NodeManager.hpp"
+#include "MeshLevel.hpp"
 
 namespace geosx
 {
@@ -72,5 +73,13 @@ R1Tensor const & FaceCellSubRegion::calculateElementCenter( localIndex k,
   return m_elementCenter[k];
 
 }
+
+void FaceCellSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+{
+  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
+  this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
+  this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
+}
+
 
 } /* namespace geosx */

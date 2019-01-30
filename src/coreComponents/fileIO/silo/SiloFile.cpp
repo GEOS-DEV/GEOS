@@ -818,7 +818,7 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
@@ -950,7 +950,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
       if( numMatInRegion > 1 )
       {
         mixlen += subRegion->size() * numMatInRegion;
@@ -983,7 +983,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
 
       if( numMatInRegion == 1 )
       {
@@ -1595,7 +1595,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
     viewPointers[er].resize( elemRegion->numSubRegions() );
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
       numElems += subRegion->size();
 
       for( auto const & wrapperIter : subRegion->wrappers() )
@@ -1786,7 +1786,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
       for( localIndex esr=0 ; esr<region->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion const * cellBlock = region->GetSubRegion(esr);
+        CellBlockSubRegion const * cellBlock = region->GetSubRegion<CellBlockSubRegion>(esr);
 
         array2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
 

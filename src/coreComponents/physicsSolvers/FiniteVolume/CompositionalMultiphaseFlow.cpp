@@ -96,7 +96,7 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
+    elemManager->forCellBlocks([&]( CellBase * const cellBlock) -> void
     {
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
@@ -176,7 +176,7 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
 
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion )
+  elemManager->forCellBlocks( [&] ( ObjectManagerBase * const subRegion )
   {
     subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
     subRegion->getReference<array2d<real64>>(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
@@ -348,7 +348,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
 
 void CompositionalMultiphaseFlow::UpdateComponentFractionAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateComponentFraction( subRegion );
   });
@@ -445,7 +445,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
 
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFractionAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdatePhaseVolumeFraction( subRegion );
   });
@@ -469,7 +469,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
 
 void CompositionalMultiphaseFlow::UpdateFluidModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateFluidModel( subRegion );
   });
@@ -490,7 +490,7 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
 
 void CompositionalMultiphaseFlow::UpdateSolidModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateSolidModel( subRegion );
   });
@@ -508,7 +508,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
 
 void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateRelPermModel( subRegion );
   });
@@ -592,7 +592,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   }
 
   // set mass fraction flag on subregion models
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     MultiFluidBase * fluid = GetFluidModel( subRegion );
     fluid->setMassFlag( static_cast<bool>(m_useMass) );
@@ -883,7 +883,7 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
   globalIndex numGlobalRows = 0;
 
   // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  elementRegionManager->forCellBlocks( [&]( CellBlockSubRegion * const subRegion )
+  elementRegionManager->forCellBlocks( [&]( ObjectManagerBase * const subRegion )
   {
     numLocalRows += subRegion->size() - subRegion->GetNumberOfGhosts();
   });

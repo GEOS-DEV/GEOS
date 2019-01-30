@@ -104,7 +104,7 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      CellBase const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
       forall_in_range<POLICY>(0, cellBlockSubRegion->size(),
                               [=](localIndex index) mutable -> void
@@ -154,7 +154,7 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      CellBase const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
       auto ebody = [=](localIndex index) mutable -> real64
       {

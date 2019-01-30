@@ -28,6 +28,19 @@ namespace geosx
 class FaceCellSubRegion : public CellBase
 {
 public:
+
+  using ToNodeMap=OrderedVariableOneToManyRelation;
+  using ToEdgesMap=OrderedVariableOneToManyRelation;
+  using ToFacesMap=FixedOneToManyRelation;
+
+  static const string CatalogName()
+  { return "FaceCell"; }
+
+  virtual const string getCatalogName() const override
+  {
+    return FaceCellSubRegion::CatalogName();
+  }
+
   FaceCellSubRegion( string const & name,
                      dataRepository::ManagedGroup * const parent );
   virtual ~FaceCellSubRegion() override;
@@ -62,6 +75,18 @@ public:
     static constexpr auto elementCenterString          = "elementCenter";
     static constexpr auto elementVolumeString          = "elementVolume";
   };
+
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+
+  virtual arraySlice1d<localIndex const> nodeList( localIndex const k ) const override
+  {
+    return m_toNodesRelation[k];
+  }
+
+  virtual arraySlice1d<localIndex> nodeList( localIndex const k ) override
+  {
+    return m_toNodesRelation[k];
+  }
 
 private:
 

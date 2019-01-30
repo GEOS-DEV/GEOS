@@ -177,39 +177,35 @@ public:
     elementRegions->forSubGroups<ElementRegion>( lambda );
   }
 
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda )
+  template< typename CELLTYPE1=CellBlockSubRegion,
+            typename CELLTYPE2=FaceCellSubRegion,
+            typename LAMBDA=void >
+  void forCellBlocks( LAMBDA && lambda )
   {
     ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup * cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
-      for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
-      {
-        CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-        lambda( cellBlock );
-      }
+      ElementRegion * const elemRegion = region.second->group_cast<ElementRegion *>();
+      elemRegion->forCellBlocks<CELLTYPE1,CELLTYPE2,LAMBDA>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda ) const
+  template< typename CELLTYPE1=CellBlockSubRegion,
+            typename CELLTYPE2=FaceCellSubRegion,
+            typename LAMBDA=void >
+  void forCellBlocks( LAMBDA && lambda ) const
   {
     ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto const & region : elementRegions->GetSubGroups() )
+    for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
-      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
-      {
-        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-        lambda( cellBlock );
-      }
+      ElementRegion const * const elemRegion = region.second->group_cast<ElementRegion const *>();
+      elemRegion->forCellBlocks<CELLTYPE1,CELLTYPE2,LAMBDA>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename LAMBDA >
+  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
   void forCellBlocksComplete( LAMBDA lambda )
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
@@ -218,13 +214,30 @@ public:
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion * cellBlock = elementRegion->GetSubRegion(esr);
-        lambda( er, esr, elementRegion, cellBlock );
+        CellBase * const subRegion = elementRegion->GetSubRegion(esr);
+
+        bool isNull = true;
+        CELLTYPE1 * const subRegion1 = dynamic_cast<CELLTYPE1 *>( subRegion );
+        if( subRegion1 != nullptr )
+        {
+          lambda( er, esr, elementRegion, subRegion1 );
+          isNull = false;
+        }
+        else
+        {
+          CELLTYPE2 * const subRegion2 = dynamic_cast<CELLTYPE2 *>( subRegion );
+          if( subRegion2 != nullptr )
+          {
+            lambda( er, esr, elementRegion, subRegion2 );
+            isNull = false;
+          }
+        }
+        GEOS_ERROR_IF( isNull, "subRegion "<<subRegion->getName()<<" is not of a valid type.");
       }
     }
   }
 
-  template< typename LAMBDA >
+  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
   void forCellBlocksComplete( LAMBDA lambda ) const
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
@@ -233,8 +246,25 @@ public:
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion const * cellBlock = elementRegion->GetSubRegion(esr);
-        lambda( er, esr, elementRegion, cellBlock );
+        CellBase const * const subRegion = elementRegion->GetSubRegion(esr);
+
+        bool isNull = true;
+        CELLTYPE1 const * const subRegion1 = dynamic_cast<CELLTYPE1  const*>( subRegion );
+        if( subRegion1 != nullptr )
+        {
+          lambda( er, esr, elementRegion, subRegion1 );
+          isNull = false;
+        }
+        else
+        {
+          CELLTYPE2 const * const subRegion2 = dynamic_cast<CELLTYPE2 const *>( subRegion );
+          if( subRegion2 != nullptr )
+          {
+            lambda( er, esr, elementRegion, subRegion2 );
+            isNull = false;
+          }
+        }
+        GEOS_ERROR_IF( isNull, "subRegion "<<subRegion->getName()<<" is not of a valid type.");
       }
     }
   }
@@ -478,7 +508,7 @@ ConstructMaterialViewAccessor( string const & viewName,
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      CellBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       dataRepository::ManagedGroup const * const
       constitutiveGroup = subRegion->GetConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );
@@ -516,7 +546,7 @@ ElementRegionManager::ConstructConstitutiveAccessor( constitutive::ConstitutiveM
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      CellBase * const subRegion = elemRegion->GetSubRegion(kSubReg);
       dataRepository::ManagedGroup * const
       constitutiveGroup = subRegion->GetConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );

@@ -318,11 +318,10 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
       auto const & numMethodName = m_discretizationName;
 
-      for( localIndex subRegionIndex=0 ; subRegionIndex<elementRegion->numSubRegions() ; ++subRegionIndex )
+      elementRegion->forCellBlocks([&]( auto const * const cellBlock )
       {
-        CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();
-        array2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
+        typename std::remove_pointer<decltype(cellBlock)>::type::ToNodeMap const & elemsToNodes = cellBlock->nodeList();
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
@@ -348,7 +347,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
           }
 
         }
-      }
+      });
     }
 }
 

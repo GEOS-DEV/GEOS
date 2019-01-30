@@ -27,23 +27,68 @@
 
 #include "managers/ObjectManagerBase.hpp"
 #include "FaceManager.hpp"
-
-
-
-class StableTimeStep;
+#include "CellBlockSubRegion.hpp"
+#include "FaceCellSubRegion.hpp"
 
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-}
-}
+//template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+//constexpr static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
+//{
+//  bool rval = false;
+//
+//  CELLTYPE * const subRegion = dynamic_cast<CELLTYPE *>( cellSubRegion );
+//  if( subRegion!= nullptr )
+//  {
+//    lambda( subRegion );
+//    rval = true;
+//  }
+//  else
+//  {
+//    rval = applyLambdaToCellBlocks< CELLTYPES..., LAMBDA >( cellSubRegion, std::forward<LAMBDA>(lambda) );
+//  }
+//
+//  return rval;
+//}
+//
+//template< typename CELLTYPE, typename LAMBDA >
+//constexpr static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
+//{
+//  bool rval = false;
+//  CELLTYPE * const subRegion = dynamic_cast<CELLTYPE *>( cellSubRegion );
+//  if( subRegion!= nullptr )
+//  {
+//    lambda( subRegion );
+//    rval=true;
+//  }
+//
+//  return rval;
+//}
+//
+//template< typename... CELLTYPES, typename LAMBDA >
+//void forSomeCellBlocks( LAMBDA && lambda ) const
+//{
+//  ManagedGroup const * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
+//
+//  for( auto const & subGroupIter : cellBlockSubRegions->GetSubGroups() )
+//  {
+//    bool isNull =
+//    !applyLambdaToCellBlocks<CELLTYPES...>( subGroupIter.second, [&]( auto * const subRegion )
+//    {
+//      lambda( subRegion );
+//    });
+//    GEOS_ERROR_IF( isNull, "subRegion "<<subGroupIter.second->getName()<<" is can not be casted to any "
+//                   "types specified in parameter pack.");
+//  }
+//}
 
-class CellBlockSubRegion;
 
+
+
+
+
+class StableTimeStep;
 
 
 /**
@@ -91,22 +136,26 @@ public:
     return GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups();
   }
 
-  CellBlockSubRegion const * GetSubRegion( string const & regionName ) const
+  template< typename CELLTYPE=CellBase >
+  CELLTYPE const * GetSubRegion( string const & regionName ) const
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(regionName);
   }
-  CellBlockSubRegion * GetSubRegion( string const & regionName )
+  template< typename CELLTYPE=CellBase >
+  CELLTYPE * GetSubRegion( string const & regionName )
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(regionName);
   }
 
-  CellBlockSubRegion const * GetSubRegion( localIndex const & index ) const
+  template< typename CELLTYPE=CellBase >
+  CELLTYPE const * GetSubRegion( localIndex const & index ) const
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(index);
   }
-  CellBlockSubRegion * GetSubRegion( localIndex const & index )
+  template< typename CELLTYPE=CellBase >
+  CELLTYPE * GetSubRegion( localIndex const & index )
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(index);
   }
 
   localIndex numSubRegions() const
@@ -115,46 +164,115 @@ public:
   }
 
 
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda )
-  {
-    ManagedGroup * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
-
-    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion * subRegion ) -> void
-      {
-        lambda( subRegion );
-      });
-  }
 
 
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda ) const
+
+  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
+  void forCellBlocks( LAMBDA && lambda ) const
   {
     ManagedGroup const * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
 
-    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion const * subRegion ) -> void
-      {
-        lambda( subRegion );
-      });
-  }
-
-  template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA lambda ) const
-  {
-    for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
+    for( auto const & subGroupIter : cellBlockSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion const * cellBlock = this->GetSubRegion(esr);
-      lambda( esr, cellBlock );
+      bool isNull = true;
+      CELLTYPE1 const * const subRegion1 = dynamic_cast<CELLTYPE1 const *>( subGroupIter.second );
+      if( subRegion1 != nullptr )
+      {
+        lambda( subRegion1 );
+        isNull = false;
+      }
+      else
+      {
+        CELLTYPE2 const * const subRegion2 = dynamic_cast<CELLTYPE2 const *>( subGroupIter.second );
+        if( subRegion2 != nullptr )
+        {
+          lambda( subRegion2 );
+          isNull = false;
+        }
+      }
+      GEOS_ERROR_IF( isNull, "subRegion "<<subGroupIter.second->getName()<<" is not of a valid type.");
     }
   }
 
-  template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA lambda )
+  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
+  void forCellBlocks( LAMBDA && lambda )
+  {
+    ManagedGroup * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
+
+    for( auto & subGroupIter : cellBlockSubRegions->GetSubGroups() )
+    {
+      bool isNull = true;
+      CELLTYPE1 * const subRegion1 = dynamic_cast<CELLTYPE1 *>( subGroupIter.second );
+      if( subRegion1 != nullptr )
+      {
+        lambda( subRegion1 );
+        isNull = false;
+      }
+      else
+      {
+        CELLTYPE2 * const subRegion2 = dynamic_cast<CELLTYPE2 *>( subGroupIter.second );
+        if( subRegion2 != nullptr )
+        {
+          lambda( subRegion2 );
+          isNull = false;
+        }
+      }
+      GEOS_ERROR_IF( isNull, "subRegion "<<subGroupIter.second->getName()<<" is not of a valid type.");
+    }
+  }
+
+
+  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
+  void forCellBlocksIndex( LAMBDA && lambda ) const
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion * cellBlock = this->GetSubRegion(esr);
-      lambda( esr, cellBlock );
+      CellBase const * const subRegion = this->GetSubRegion(esr);
+
+      bool isNull = true;
+      CELLTYPE1 const * const subRegion1 = dynamic_cast<CELLTYPE1  const*>( subRegion );
+      if( subRegion1 != nullptr )
+      {
+        lambda( esr, subRegion1 );
+        isNull = false;
+      }
+      else
+      {
+        CELLTYPE2 const * const subRegion2 = dynamic_cast<CELLTYPE2 const *>( subRegion );
+        if( subRegion2 != nullptr )
+        {
+          lambda( esr, subRegion2 );
+          isNull = false;
+        }
+      }
+      GEOS_ERROR_IF( isNull, "subRegion "<<subRegion->getName()<<" is not of a valid type.");
+    }
+  }
+
+  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
+  void forCellBlocksIndex( LAMBDA && lambda )
+  {
+    for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
+    {
+      CellBase * const subRegion = this->GetSubRegion(esr);
+
+      bool isNull = true;
+      CELLTYPE1 * const subRegion1 = dynamic_cast<CELLTYPE1 *>( subRegion );
+      if( subRegion1 != nullptr )
+      {
+        lambda( esr, subRegion1 );
+        isNull = false;
+      }
+      else
+      {
+        CELLTYPE2 * const subRegion2 = dynamic_cast<CELLTYPE2 *>( subRegion );
+        if( subRegion2 != nullptr )
+        {
+          lambda( esr, subRegion2 );
+          isNull = false;
+        }
+      }
+      GEOS_ERROR_IF( isNull, "subRegion "<<subRegion->getName()<<" is not of a valid type.");
     }
   }
 

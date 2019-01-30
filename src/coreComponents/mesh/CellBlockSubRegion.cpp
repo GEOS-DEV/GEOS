@@ -26,8 +26,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
-  CellBlock( name, parent ),
-  m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this)
+  CellBlock( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
     setSizedFromParent(0);
@@ -43,8 +42,6 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 
   RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
 
-
-  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 );
 }
 
 CellBlockSubRegion::~CellBlockSubRegion()

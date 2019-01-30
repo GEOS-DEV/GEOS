@@ -80,13 +80,6 @@ public:
 
   } m_CellBlockSubRegionViewKeys;
 
-  struct groupKeyStruct : public CellBlock::groupKeyStruct
-  {
-    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
-//    constitutiveModelsString = constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString;
-
-
-  } m_CellBlockSubRegionGroupKeys;
 
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
@@ -104,14 +97,8 @@ public:
 
   array3d< R1Tensor > m_dNdX;
 
-  dataRepository::ManagedGroup const * GetConstitutiveModels() const
-  { return &m_constitutiveModels; }
-
-  dataRepository::ManagedGroup * GetConstitutiveModels()
-  { return &m_constitutiveModels; }
 
 private:
-  dataRepository::ManagedGroup m_constitutiveModels;
 
   map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInNodelist;
   map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInFacelist;
