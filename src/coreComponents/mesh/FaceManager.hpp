@@ -58,10 +58,6 @@ public:
   FaceManager( string const &, ManagedGroup * const parent );
   virtual ~FaceManager() override final;
 
-//  void Initialize(  ){}
-
-//  virtual void FillDocumentationNode() override final;
-
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
