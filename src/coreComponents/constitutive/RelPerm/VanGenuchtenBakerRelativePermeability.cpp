@@ -172,12 +172,12 @@ void VanGenuchtenBakerRelativePermeability::BatchUpdate( arrayView2d<real64 cons
   arrayView1d<real64 const> const & gasOilRelPermMaxValue    = m_gasOilRelPermMaxValue;
 
   RelativePermeabilityBase::BatchUpdateKernel<VanGenuchtenBakerRelativePermeability>( phaseVolumeFraction,
-							  			      m_phaseOrder,
+                                                                                      m_phaseOrder,
                                                                                       phaseMinVolumeFraction,
                                                                                       waterOilRelPermExponentInv,
-										      waterOilRelPermMaxValue,
-										      gasOilRelPermExponentInv,
-										      gasOilRelPermMaxValue,
+                                                                                      waterOilRelPermMaxValue,
+                                                                                      gasOilRelPermExponentInv,
+                                                                                      gasOilRelPermMaxValue,
                                                                                       m_volFracScale );
 }
 
@@ -195,12 +195,12 @@ void VanGenuchtenBakerRelativePermeability::PointUpdate( arraySlice1d<real64 con
            phaseVolFraction,
            relPerm,
            dRelPerm_dVolFrac,
-	   m_phaseOrder,
+           m_phaseOrder,
            m_phaseMinVolumeFraction,
            m_waterOilRelPermExponentInv,
-	   m_waterOilRelPermMaxValue,
-	   m_gasOilRelPermExponentInv,
-	   m_gasOilRelPermMaxValue,
+           m_waterOilRelPermMaxValue,
+           m_gasOilRelPermExponentInv,
+           m_gasOilRelPermMaxValue,
            m_volFracScale );
 }
 

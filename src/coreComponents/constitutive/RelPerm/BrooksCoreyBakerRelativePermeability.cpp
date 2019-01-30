@@ -172,12 +172,12 @@ void BrooksCoreyBakerRelativePermeability::BatchUpdate( arrayView2d<real64 const
   arrayView1d<real64 const> const & gasOilRelPermMaxValue   = m_gasOilRelPermMaxValue;
 
   RelativePermeabilityBase::BatchUpdateKernel<BrooksCoreyBakerRelativePermeability>( phaseVolumeFraction,
-										     m_phaseOrder,
+                                                                                     m_phaseOrder,
                                                                                      phaseMinVolumeFraction,
                                                                                      waterOilRelPermExponent,
-										     waterOilRelPermMaxValue,
-										     gasOilRelPermExponent,
-										     gasOilRelPermMaxValue,
+                                                                                     waterOilRelPermMaxValue,
+                                                                                     gasOilRelPermExponent,
+                                                                                     gasOilRelPermMaxValue,
                                                                                      m_volFracScale );
 }
 
@@ -195,12 +195,12 @@ void BrooksCoreyBakerRelativePermeability::PointUpdate( arraySlice1d<real64 cons
            phaseVolFraction,
            relPerm,
            dRelPerm_dVolFrac,
-	   m_phaseOrder,
+           m_phaseOrder,
            m_phaseMinVolumeFraction,
            m_waterOilRelPermExponent,
-	   m_waterOilRelPermMaxValue,
-	   m_gasOilRelPermExponent,
-	   m_gasOilRelPermMaxValue,
+           m_waterOilRelPermMaxValue,
+           m_gasOilRelPermExponent,
+           m_gasOilRelPermMaxValue,
            m_volFracScale );
 }
 
