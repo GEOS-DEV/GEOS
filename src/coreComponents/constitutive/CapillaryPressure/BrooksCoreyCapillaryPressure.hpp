@@ -167,7 +167,7 @@ BrooksCoreyCapillaryPressure::Compute( localIndex const NP,
   {  
     real64 const volFracScaled = (phaseVolFraction[ip_gas] - phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
     real64 const exponentInv   = phaseCapPressureExponentInv[ip_gas];
-    real64 const entryPressure = phaseEntryPressure[ip_gas];
+    real64 const entryPressure = -phaseEntryPressure[ip_gas]; // for gas capillary pressure, take the opposite of the VG function
 
     real64 const wettingVolFracScaled           = 1-volFracScaled;
     real64 const dWettingVolFracScaled_dVolFrac =  -volFracScaleInv;

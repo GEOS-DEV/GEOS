@@ -170,7 +170,7 @@ VanGenuchtenCapillaryPressure::Compute( localIndex const NP,
   {  
     real64 const volFracScaled = (phaseVolFraction[ip_gas] - phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
     real64 const exponentInv   = phaseCapPressureExponentInv[ip_gas]; // div by 0 taken care of by initialization check
-    real64 const multiplier    = phaseCapPressureMultiplier[ip_gas];
+    real64 const multiplier    = -phaseCapPressureMultiplier[ip_gas]; // for gas capillary pressure, take the opposite of the VG function
 
     real64 const scaledWettingVolFrac                = 1-volFracScaled;
     real64 const dScaledWettingPhaseVolFrac_dVolFrac =  -volFracScaleInv;
@@ -182,6 +182,7 @@ VanGenuchtenCapillaryPressure::Compute( localIndex const NP,
                                   exponentInv,
                                   multiplier,
                                   eps );
+
   }
 }
 
