@@ -27,6 +27,7 @@
 
 #include "CellBlockManager.hpp"
 #include "CellBlockSubRegion.hpp"
+#include "FaceCellSubRegion.hpp"
 //#include "constitutive/ConstitutiveManager.hpp"
 //#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 //#include "finiteElement/basis/BasisBase.hpp"
@@ -195,7 +196,7 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
    ManagedGroup * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
    for( string const & setName : this->m_fractureSetNames )
    {
-     CellBlockSubRegion * subRegion = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(setName);
+     FaceCellSubRegion * subRegion = cellBlockSubRegions->RegisterGroup<FaceCellSubRegion>(setName);
      set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
      subRegion->resize( targetSet.size() );
 
