@@ -43,10 +43,6 @@ public:
   explicit ObjectManagerBase( std::string const & name,
                               dataRepository::ManagedGroup * const parent );
 
-//  explicit ObjectManagerBase( std::string const & name,
-//                              dataRepository::ManagedGroup * const parent,
-//                              cxx_utilities::DocumentationNode * docNode );
-
   ~ObjectManagerBase() override;
 
   /**
@@ -59,8 +55,6 @@ public:
 
   virtual const string getCatalogName() const = 0;
   ///@}
-
-//  virtual void FillDocumentationNode() override;
 
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
