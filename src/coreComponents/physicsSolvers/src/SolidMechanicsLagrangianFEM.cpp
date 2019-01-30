@@ -264,6 +264,9 @@ void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const Mesh
 
 void SolidMechanics_LagrangianFEM::InitializePreSubGroups(ManagedGroup * const rootGroup)
 {
+  SolverBase::InitializePreSubGroups(rootGroup);
+
+  // set the blockID for the block system interface
   getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
 }
 

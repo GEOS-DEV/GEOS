@@ -132,6 +132,9 @@ void LaplaceFEM::PostProcessInput()
 
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
+  SolverBase::InitializePreSubGroups(problemManager);
+
+  // set the blockID for the block system interface
   getLinearSystemRepository()->SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
 }
 
