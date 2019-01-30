@@ -62,6 +62,22 @@ public:
                             localIndex const k,
                             localIndex const q ) override;
 
+  /**
+   * @brief Computes the entire relative permeability curve using the Van Genuchten-Baker method
+   * @param NP phase index
+   * @param[out] phaseRelPerm the computed relative permeability value vector
+   * @param[out] dPhaseRelPerm_dPhaseVolFrac the computed partial derivative of the relative wrt to the volume fraction of the phase
+   * @param[in] phaseOrder vector of phase orders
+   * @param[in] phaseMinVolumeFraction vector of minimum phase volume fractions
+   * @param[in] waterOilRelPermExponentInv vector of exponents used in the computation of the water-oil relative permeability
+   * @param[in] waterOilRelPermMaxValue vector of water-oil permeability curve end-point values 
+   * @param[in] gasOilRelPermExponentInv vector of exponents used in the computation of the gas-oil relative permeability
+   * @param[in] gasOilRelPermMaxValue vector of gas-oil permeability curve end-point values
+   * @param[in] volFracScale scaling factor to apply to the entire relative permeability curve
+   * @return (void)
+   *
+   * This function computes an entire relative permeability curve based on the Van Genuchten-Baker method
+   */
   inline static void Compute( localIndex const NP,
                               arraySlice1d<real64 const> const & phaseVolFraction,
                               arraySlice1d<real64> const & phaseRelPerm,
