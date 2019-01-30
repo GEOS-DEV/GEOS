@@ -553,6 +553,17 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
   elementManager->GenerateDataStructureSkeleton(0);
   SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode);
+
+  // Add entries that are only used in the pre-processor
+  xmlWrapper::xmlNode targetIncludeNode = targetChoiceNode.append_child("xsd:element");
+  targetIncludeNode.append_attribute("name") = "Included";
+  targetIncludeNode.append_attribute("type") = "xsd:anyType";
+  targetIncludeNode.append_attribute("maxOccurs") = "1";
+
+  targetIncludeNode = targetChoiceNode.append_child("xsd:element");
+  targetIncludeNode.append_attribute("name") = "Parameters";
+  targetIncludeNode.append_attribute("type") = "xsd:anyType";
+  targetIncludeNode.append_attribute("maxOccurs") = "1";
 }
 
 
