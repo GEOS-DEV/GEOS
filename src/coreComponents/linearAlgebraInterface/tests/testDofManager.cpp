@@ -84,10 +84,11 @@ TEST_F(DofManagerTest, TestOne)
                twoRegion.push_back("region1");
                twoRegion.push_back("region2");
                
-  dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
-  dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
   dofManager.addField("displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3, twoRegion);
   dofManager.addField("acceleration", DofManager::Location::Node, DofManager::Connectivity::Elem, 3);
+  dofManager.addField("flux", DofManager::Location::Face, DofManager::Connectivity::Elem, 1);
+  dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
+  dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
   dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
 }
 

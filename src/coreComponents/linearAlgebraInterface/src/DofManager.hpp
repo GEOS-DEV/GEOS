@@ -247,19 +247,14 @@ private:
    localIndex fieldIndex(string const & key);
 
    /**
+    * Create index array
+    */
+   void createIndexArray_NodeOrFaceVersion(FieldDescription & field);
+
+   /**
     * Create element index array
     */
-   void createElemIndexArray(FieldDescription & field);
-
-   /**
-    * Create face index array
-    */
-   void createFaceIndexArray(FieldDescription & field);
-
-   /**
-    * Create node index array
-    */
-   void createNodeIndexArray(FieldDescription & field);
+   void createIndexArray_ElemVersion(FieldDescription & field);
 };
 
 

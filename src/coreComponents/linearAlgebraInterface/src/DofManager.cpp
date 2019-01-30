@@ -165,13 +165,13 @@ void DofManager::addField(string const & field,
   switch(location)
   {
     case Location::Elem :
-      createElemIndexArray(last);
+      createIndexArray_ElemVersion(last);
       break;
     case Location::Face :
-      createFaceIndexArray(last);
+      createIndexArray_NodeOrFaceVersion(last);
       break;
     case Location::Node :
-      createNodeIndexArray(last);
+      createIndexArray_NodeOrFaceVersion(last);
       break;
     default:
       GEOS_ERROR("DoF support location is not yet supported");
@@ -201,20 +201,22 @@ void DofManager::addField(string const & field,
 }
 
 
-// .... DOF MANAGER :: CREATE NODE INDEX ARRAY
+// .... DOF MANAGER :: CREATE INDEX ARRAY 
 
-void DofManager::createNodeIndexArray(FieldDescription & field)
+void DofManager::createIndexArray_NodeOrFaceVersion(FieldDescription & field)
 {
   // step 0. register an index array with default = -1
 
-  ObjectManagerBase * const nodeManager = m_meshLevel->getNodeManager();
+  ObjectManagerBase * baseManager =  field.location == Location::Node ?
+                                     static_cast<ObjectManagerBase*>(m_meshLevel->getNodeManager()):
+                                     static_cast<ObjectManagerBase*>(m_meshLevel->getFaceManager());
 
-  nodeManager->RegisterViewWrapper<globalIndex_array>( field.key )->
+  baseManager->RegisterViewWrapper<globalIndex_array>( field.key )->
     setApplyDefaultValue(-1)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
     setDescription(field.docstring);
       
-  globalIndex_array & indexArray = nodeManager->getReference<globalIndex_array>(field.key);
+  globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>(field.key);
 
   // step 1. loop over all active regions 
   //         determine number of local rows
@@ -226,19 +228,21 @@ void DofManager::createNodeIndexArray(FieldDescription & field)
   for(localIndex esr=0; esr<field.regionPtrs[er]->numSubRegions(); esr++)
   {
     CellBlockSubRegion * subRegion = field.regionPtrs[er]->GetSubRegion(esr);
-
     integer_array const & ghostRank = subRegion->m_ghostRank;
-    localIndex_array2d const & nodeMap = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();
 
-    for(localIndex e=0; e<nodeMap.size(0); ++e)
+    localIndex_array2d const & map = (field.location == Location::Node ?
+                                      subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference():
+                                      subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().faceList)->reference());
+
+    for(localIndex e=0; e<map.size(0); ++e)
     if(ghostRank[e] < 0)
     {
-      for(localIndex n=0; n<nodeMap.size(1); ++n)
+      for(localIndex n=0; n<map.size(1); ++n)
       {
-        localIndex node = nodeMap[e][n];
-        if(indexArray[node] == -1)
+        localIndex i = map[e][n];
+        if(indexArray[i] == -1)
         {
-          indexArray[node] = field.numLocalRows;
+          indexArray[i] = field.numLocalRows;
           field.numLocalRows++;
         }
       }
@@ -269,27 +273,27 @@ void DofManager::createNodeIndexArray(FieldDescription & field)
 
   std::map<string,string_array> fieldNames;
 
-  fieldNames["node"].push_back(field.key);
+  if(field.location == Location::Node)
+    fieldNames["node"].push_back(field.key);
+  else
+    fieldNames["face"].push_back(field.key);
 
   CommunicationTools::SynchronizeFields(fieldNames,m_meshLevel,
     m_domain->getReference< array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
 
   // step 5. scale row counts by number of vector components
 
-  if(field.numComponents > 1)
-  {
-    field.numGlobalRows *= field.numComponents;
-    field.numLocalRows  *= field.numComponents;
-    field.firstLocalRow *= field.numComponents;
-  }
+  field.numGlobalRows *= field.numComponents;
+  field.numLocalRows  *= field.numComponents;
+  field.firstLocalRow *= field.numComponents;
 }
 
 
-// .... DOF MANAGER :: CREATE ELEM INDEX ARRAY
+// .... DOF MANAGER :: CREATE INDEX ARRAY :: ELEMENT VERSION
 //      TODO: revise to look more like node version.
 //            may even be able to condense to one function.
 
-void DofManager::createElemIndexArray(FieldDescription & field)
+void DofManager::createIndexArray_ElemVersion(FieldDescription & field)
 {
   // step 1. loop over all active regions 
   //         determine number of local rows
@@ -374,23 +378,6 @@ void DofManager::createElemIndexArray(FieldDescription & field)
   field.firstLocalRow *= field.numComponents;
 }
 
-
-
-
-// .... DOF MANAGER :: CREATE FACE INDEX ARRAY
-
-void DofManager::createFaceIndexArray(FieldDescription & field)
-{
-
-  FaceManager * const faceManager = m_meshLevel->getFaceManager();
-
-  faceManager->RegisterViewWrapper<globalIndex_array>( field.key )->
-    setApplyDefaultValue(-1)->
-    setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-    setDescription(field.docstring);
-
-  // .... to be written ....
-}
 
 
 void DofManager::addCoupling(string const & rowField,
