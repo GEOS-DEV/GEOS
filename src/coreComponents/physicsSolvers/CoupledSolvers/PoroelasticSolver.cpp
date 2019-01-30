@@ -68,11 +68,12 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const
   {
     ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
-    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
+
+    elemManager->forCellBlocks( [&]( auto * const cellBlock ) -> void
       {
-        cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
+        cellBlock->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
           setDescription("Total Mean Stress");
-        cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
+        cellBlock->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
           setDescription("Total Mean Stress");
       });
   }
@@ -234,7 +235,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
 
       arrayView3d<R1Tensor> const & dNdX = cellBlockSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
 

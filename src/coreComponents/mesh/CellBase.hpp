@@ -14,11 +14,12 @@ namespace geosx
 {
 
 class NodeManager;
+class MeshLevel;
 
 class CellBase : public ObjectManagerBase
 {
 public:
-  CellBase( string const & name, ManagedGroup * const parent );
+  CellBase( string const & name, dataRepository::ManagedGroup * const parent );
   ~CellBase();
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
@@ -33,6 +34,8 @@ public:
                              array1d<localIndex> const & indices,
                              array1d<R1Tensor> const & X ) const;
 
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
+
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -46,6 +49,16 @@ public:
     static constexpr auto elementCenterString          = "elementCenter";
     static constexpr auto elementVolumeString          = "elementVolume";
   };
+
+  struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
+  {
+    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
+  };
+
+
+  virtual arraySlice1d<localIndex const> nodeList( localIndex const k ) const = 0;
+  virtual arraySlice1d<localIndex> nodeList( localIndex const k ) = 0;
+
 
   /**
    * @return number of nodes per element
@@ -87,6 +100,15 @@ public:
     return m_elementVolume;
   }
 
+  dataRepository::ManagedGroup const * GetConstitutiveModels() const
+  { return &m_constitutiveModels; }
+
+  dataRepository::ManagedGroup * GetConstitutiveModels()
+  { return &m_constitutiveModels; }
+
+private:
+  dataRepository::ManagedGroup m_constitutiveModels;
+
 protected:
   /// The number of nodes per element in this cell block
   localIndex m_numNodesPerElement;
@@ -115,6 +137,13 @@ void CellBase::CalculateCellVolumes( LEAF & leaf,
                                      array1d<R1Tensor> const & X ) const
 {
   if( indices.empty() )
+  {
+    forall_in_range<elemPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+    {
+      leaf.CalculateCellVolumesKernel( k, X );
+    });
+  }
+  else
   {
     forall_in_set<elemPolicy>( indices.data(), indices.size(), GEOSX_LAMBDA ( localIndex const k )
     {

@@ -988,7 +988,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
       for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
 
         nels += subRegion->size();
 
@@ -1035,7 +1035,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
       for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
 
         if( numMatInRegion == 1 )
         {
