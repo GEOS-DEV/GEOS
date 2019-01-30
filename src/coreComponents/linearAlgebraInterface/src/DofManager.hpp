@@ -202,16 +202,18 @@ private:
    */
   struct FieldDescription
   {
-    string name;               //!< field name
-    array1d<string> regions;   //!< active element regions
-    Location location;         //!< support location
-    localIndex numComponents;  //!< number of vector components
-    string key;                //!< string key for index array
-    string docstring;          //!< documentation string
-    localIndex numLocalRows;   //!< number of local rows
-    globalIndex numGlobalRows; //!< number of ghost rows
-    globalIndex firstLocalRow; //!< first row on this processor (without field offset)
-    globalIndex fieldOffset;   //!< global row offset for multi-field problems
+    string name;                 //!< field name
+    array1d<string> regionNames; //!< active element regions
+    array1d<ElementRegion*> regionPtrs; //!< saved pointers to active regions
+    Location location;           //!< support location
+    localIndex numComponents;    //!< number of vector components
+    string key;                  //!< string key for index array
+    string docstring;            //!< documentation string
+    localIndex numLocalRows;     //!< number of local rows
+    globalIndex numGlobalRows;   //!< number of ghost rows
+    globalIndex firstLocalRow;   //!< first row on this processor (without field offset)
+    globalIndex fieldOffset;     //!< global row offset for multi-field problems
+
   };
 
   /**

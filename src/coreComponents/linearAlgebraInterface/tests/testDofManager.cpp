@@ -57,10 +57,7 @@ class DofManagerTest : public ::testing::Test
     problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput( global_argc, global_argv );
     problemManager.ParseInputFile();
-    problemManager.Initialize( &problemManager );
-    problemManager.IntermediateInitializationRecursive( &problemManager );
-    problemManager.ApplyInitialConditions();
-    problemManager.FinalInitializationRecursive( &problemManager );
+    problemManager.ProblemSetup();
   }
 
   static void TearDownTestCase()
@@ -90,6 +87,7 @@ TEST_F(DofManagerTest, TestOne)
   dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
   dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
   dofManager.addField("displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3, twoRegion);
+  dofManager.addField("acceleration", DofManager::Location::Node, DofManager::Connectivity::Elem, 3);
   dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
 }
 

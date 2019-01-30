@@ -126,7 +126,7 @@ void DofManager::addField(string const & field,
   description.name = field;
   description.location = location;
   description.numComponents = components;
-  description.regions = regions;                        // TODO: if regions is empty, add list of all regions
+  description.regionNames = regions;                        // TODO: if regions is empty, add list of all regions
   description.key = field + "_dof_indices";
   description.docstring = field + " dof indices";
 
@@ -135,22 +135,43 @@ void DofManager::addField(string const & field,
 
   m_fields.push_back(description);
 
-  GEOS_ERROR_IF(m_fields.size() > MAX_NUM_FIELDS, "Limit on DofManager's MAX_NUM_FIELDS exceeded.");
+  localIndex numFields = m_fields.size();
+  GEOS_ERROR_IF(numFields > MAX_NUM_FIELDS, "Limit on DofManager's MAX_NUM_FIELDS exceeded.");
+
+  // temp reference to last field
+
+  FieldDescription & last = m_fields[numFields-1];
+
+  // save pointers to "active" element regions
+
+  ElementRegionManager * const elemManager = m_meshLevel->getElemManager();
+
+  localIndex numTotalRegions = elemManager->numRegions();
+  localIndex numActiveRegions = regions.size() == 0 ? numTotalRegions : regions.size();
+
+  last.regionPtrs.resize(numActiveRegions);
+  for(localIndex er=0; er<numActiveRegions; ++er)
+  {
+    if(numActiveRegions < numTotalRegions)
+      last.regionPtrs[er] = elemManager->GetRegion(last.regionNames[er]); // get by name
+    else
+      last.regionPtrs[er] = elemManager->GetRegion(er); // get by index
+
+    GEOS_ERROR_IF(last.regionPtrs[er] == nullptr,"Specified element region not found");
+  }
 
   // based on location, allocate an index array for this field
-
-  localIndex last = m_fields.size()-1;
 
   switch(location)
   {
     case Location::Elem :
-      createElemIndexArray(m_fields[last]);
+      createElemIndexArray(last);
       break;
     case Location::Face :
-      createFaceIndexArray(m_fields[last]);
+      createFaceIndexArray(last);
       break;
     case Location::Node :
-      createNodeIndexArray(m_fields[last]);
+      createNodeIndexArray(last);
       break;
     default:
       GEOS_ERROR("DoF support location is not yet supported");
@@ -158,20 +179,25 @@ void DofManager::addField(string const & field,
   
   // determine field's global offset
 
-  if(last > 0)
-    m_fields[last].fieldOffset = m_fields[last-1].fieldOffset + m_fields[last-1].numGlobalRows;
+  if(numFields > 1)
+  {
+    FieldDescription & prev = m_fields[numFields-2];
+    last.fieldOffset = prev.fieldOffset + prev.numGlobalRows;
+  }
   else
-    m_fields[last].fieldOffset = 0;
+  {
+    last.fieldOffset = 0;
+  }
 
   // save field's connectivity type (self-to-self) 
 
-  m_connectivity[last][last] = connectivity;
+  m_connectivity[numFields-1][numFields-1] = connectivity;
 
   // log some basic info
   
-  GEOS_LOG_RANK_0("DofManager :: Added field .... " << m_fields[last].docstring);
-  GEOS_LOG_RANK_0("DofManager :: Global dofs .... " << m_fields[last].numGlobalRows); 
-  GEOS_LOG_RANK_0("DofManager :: Field offset ... " << m_fields[last].fieldOffset); 
+  GEOS_LOG_RANK_0("DofManager :: Added field .... " << last.docstring);
+  GEOS_LOG_RANK_0("DofManager :: Global dofs .... " << last.numGlobalRows); 
+  GEOS_LOG_RANK_0("DofManager :: Field offset ... " << last.fieldOffset); 
 }
 
 
@@ -181,7 +207,7 @@ void DofManager::createNodeIndexArray(FieldDescription & field)
 {
   // step 0. register an index array with default = -1
 
-  NodeManager * const nodeManager = m_meshLevel->getNodeManager();
+  ObjectManagerBase * const nodeManager = m_meshLevel->getNodeManager();
 
   nodeManager->RegisterViewWrapper<globalIndex_array>( field.key )->
     setApplyDefaultValue(-1)->
@@ -194,32 +220,26 @@ void DofManager::createNodeIndexArray(FieldDescription & field)
   //         determine number of local rows
   //         and sequentially number objects
 
-  ElementRegionManager * const elemManager = m_meshLevel->getElemManager();
-
   field.numLocalRows = 0;
-  for(localIndex er=0; er<field.regions.size(); ++er)
+
+  for(localIndex er=0; er<field.regionPtrs.size(); ++er)
+  for(localIndex esr=0; esr<field.regionPtrs[er]->numSubRegions(); esr++)
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion(field.regions[er]);
-    GEOS_ERROR_IF(elemRegion == nullptr,"Specified element region not found: " + field.regions[er]);
+    CellBlockSubRegion * subRegion = field.regionPtrs[er]->GetSubRegion(esr);
 
-    for(localIndex esr=0; esr<elemRegion->numSubRegions(); esr++)
+    integer_array const & ghostRank = subRegion->m_ghostRank;
+    localIndex_array2d const & nodeMap = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();
+
+    for(localIndex e=0; e<nodeMap.size(0); ++e)
+    if(ghostRank[e] < 0)
     {
-      CellBlockSubRegion * subRegion = elemRegion->GetSubRegion(esr);
-
-      integer_array const & ghostRank = subRegion->m_ghostRank;
-      localIndex_array2d const & nodeMap = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();
-
-      for(localIndex e=0; e<nodeMap.size(0); ++e)
-      if(ghostRank[e] < 0)
+      for(localIndex n=0; n<nodeMap.size(1); ++n)
       {
-        for(localIndex n=0; n<nodeMap.size(1); ++n)
+        localIndex node = nodeMap[e][n];
+        if(indexArray[node] == -1)
         {
-          localIndex node = nodeMap[e][n];
-          if(indexArray[node] == -1)
-          {
-            indexArray[node] = field.numLocalRows;
-            field.numLocalRows++;
-          }
+          indexArray[node] = field.numLocalRows;
+          field.numLocalRows++;
         }
       }
     }
@@ -241,13 +261,14 @@ void DofManager::createNodeIndexArray(FieldDescription & field)
 
   // step 3. adjust local values to reflect processor offset
 
-  for(localIndex node=0; node < indexArray.size(); ++node)
-  if(indexArray[node] != -1)
-    indexArray[node] += field.firstLocalRow;
+  for(localIndex n=0; n<indexArray.size(); ++n)
+  if(indexArray[n] != -1)
+    indexArray[n] += field.firstLocalRow;
 
   // step 4. synchronize across ranks
 
   std::map<string,string_array> fieldNames;
+
   fieldNames["node"].push_back(field.key);
 
   CommunicationTools::SynchronizeFields(fieldNames,m_meshLevel,
@@ -276,10 +297,10 @@ void DofManager::createElemIndexArray(FieldDescription & field)
   ElementRegionManager * const elemManager = m_meshLevel->getElemManager();
 
   field.numLocalRows = 0;
-  for(localIndex er=0; er<field.regions.size(); ++er)
+  for(localIndex er=0; er<field.regionNames.size(); ++er)
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion( field.regions[er]);
-    GEOS_ERROR_IF(elemRegion == nullptr,"Specified element region not found: " + field.regions[er]);
+    ElementRegion * const elemRegion = elemManager->GetRegion( field.regionNames[er]);
+    GEOS_ERROR_IF(elemRegion == nullptr,"Specified element region not found: " + field.regionNames[er]);
 
     elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )
     {
@@ -309,9 +330,9 @@ void DofManager::createElemIndexArray(FieldDescription & field)
   globalIndex const isUnset = -1;
   globalIndex count = 0;
 
-  for(localIndex er=0; er<field.regions.size(); ++er)
+  for(localIndex er=0; er<field.regionNames.size(); ++er)
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion( field.regions[er]);
+    ElementRegion * const elemRegion = elemManager->GetRegion( field.regionNames[er]);
 
     for(localIndex esr=0; esr < elemRegion->numSubRegions(); esr++)
     {
