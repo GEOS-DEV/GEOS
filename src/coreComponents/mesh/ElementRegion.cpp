@@ -41,7 +41,8 @@ using namespace constitutive;
 
 
 ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
-  ObjectManagerBase( name, parent )  //,
+  ObjectManagerBase( name, parent ),
+  m_numericalMethod()  //,
 //    m_toNodesRelation(this->RegisterViewWrapper< array2d<integer>
 // >(keys::nodeList).reference())
 {
@@ -58,7 +59,9 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
   RegisterViewWrapper<string_array>( keys::cellBlockSubRegionNames )->
     setInputFlag(InputFlags::REQUIRED);
 
-
+  RegisterViewWrapper( viewKeyStruct::numericalMethodString, &m_numericalMethod, 0 )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of numerical method applied to the region");
 }
 
 

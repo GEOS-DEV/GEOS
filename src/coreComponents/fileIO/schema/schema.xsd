@@ -10,22 +10,22 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r2_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair_array">
@@ -35,12 +35,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r1_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
@@ -50,12 +50,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
@@ -65,27 +65,27 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r2Sym_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r2Sym_array">
@@ -214,6 +214,7 @@
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--endTime = time at which bc will stop being applied-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationType">
@@ -239,6 +240,7 @@
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--endTime = time at which bc will stop being applied-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="EventsType">
@@ -278,6 +280,7 @@
 		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
 		<!--maxRuntime = max runtime-->
 		<xsd:attribute name="maxRuntime" type="real64" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SoloEventType">
@@ -302,6 +305,7 @@
 		<xsd:attribute name="substepFactor" type="integer" default="1" />
 		<!--targetExactStartStop = allows timesteps to be truncated to match the start/stop times exactly-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PeriodicEventType">
@@ -342,6 +346,7 @@
 		<xsd:attribute name="stat" type="integer" default="0" />
 		<!--threshold = event threshold-->
 		<xsd:attribute name="threshold" type="real64" default="1e+10" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="NumericalMethodsType">
@@ -362,16 +367,19 @@
 	<xsd:complexType name="LagrangeBasis3Type">
 		<!--degree = Basis degree-->
 		<xsd:attribute name="degree" type="integer" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LagrangeBasis2Type">
 		<!--degree = Basis degree-->
 		<xsd:attribute name="degree" type="integer" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LagrangeBasis1Type">
 		<!--degree = Basis degree-->
 		<xsd:attribute name="degree" type="integer" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="QuadratureRulesType">
@@ -384,16 +392,19 @@
 	<xsd:complexType name="GaussQuadrature3Type">
 		<!--degree = Quadrature degree-->
 		<xsd:attribute name="degree" type="integer" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="GaussQuadrature2Type">
 		<!--degree = Quadrature degree-->
 		<xsd:attribute name="degree" type="integer" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="GaussQuadrature1Type">
 		<!--degree = Quadrature degree-->
 		<xsd:attribute name="degree" type="integer" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementsType">
@@ -449,6 +460,7 @@
 		<xsd:attribute name="basis" type="string" use="required" />
 		<!--quadrature = (no description available)-->
 		<xsd:attribute name="quadrature" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
@@ -464,6 +476,7 @@
 		<xsd:attribute name="boundaryFieldName" type="string" default="" />
 		<!--coefficientName = Name of coefficient field-->
 		<xsd:attribute name="coefficientName" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="GeometryType">
@@ -478,6 +491,7 @@
 		<xsd:attribute name="xMax" type="R1Tensor" use="required" />
 		<!--strike = The strike angle of the box-->
 		<xsd:attribute name="strike" type="real64" default="-90" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshType">
@@ -490,11 +504,13 @@
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<!--file = path to the mesh file-->
 		<xsd:attribute name="file" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshFileType">
 		<!--file = path to the vtm file-->
 		<xsd:attribute name="file" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -522,6 +538,7 @@
 		<xsd:attribute name="elementTypes" type="string_array" use="required" />
 		<!--trianglePattern = pattern by which to decompose the hex mesh into prisms (more explanation required)-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
@@ -537,6 +554,7 @@
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--parallelThreads = Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType">
@@ -544,6 +562,7 @@
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--parallelThreads = Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="RestartType">
@@ -551,6 +570,7 @@
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--parallelThreads = Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SiloType">
@@ -564,6 +584,7 @@
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--plotLevel = (no description available)-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolversType">
@@ -595,6 +616,7 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--rand_scale = Scale for modifying requested dt-->
 		<xsd:attribute name="rand_scale" type="real64" default="1e-09" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
@@ -623,6 +645,7 @@
 		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
 		<!--useVelocityEstimateForQuasiStatic = Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityEstimateForQuasiStatic" type="integer" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFlowType">
@@ -651,6 +674,7 @@
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--relPermName = Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermName" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFlowType">
@@ -673,6 +697,7 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--solidName = Name of solid constitutive object to use for this solver-->
 		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
@@ -693,6 +718,7 @@
 		<xsd:attribute name="timeIntegrationOption" type="string" use="required" />
 		<!--fieldName = name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
@@ -709,6 +735,7 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroelasticType">
@@ -731,6 +758,7 @@
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--couplingTypeOption = Coupling option: (FixedStress, TightlyCoupled)-->
 		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FunctionsType">
@@ -749,6 +777,7 @@
 		<xsd:attribute name="variableNames" type="string_array" default="" />
 		<!--expression = Composite math expression-->
 		<xsd:attribute name="expression" type="string" default="" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableFunctionType">
@@ -764,6 +793,7 @@
 		<xsd:attribute name="voxelFile" type="string" default="" />
 		<!--interpolation = Value Type-->
 		<xsd:attribute name="interpolation" type="string" default="" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SymbolicFunctionType">
@@ -773,6 +803,7 @@
 		<xsd:attribute name="variableNames" type="string_array" use="required" />
 		<!--expression = Symbolic math expression-->
 		<xsd:attribute name="expression" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
@@ -798,6 +829,7 @@
 		<xsd:attribute name="phaseCapPressureMultiplier" type="real64_array" default="1" />
 		<!--capPressureEpsilon = Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1-->
 		<xsd:attribute name="capPressureEpsilon" type="real64" default="1e-06" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
@@ -813,6 +845,7 @@
 		<xsd:attribute name="tableFiles" type="string_array" use="required" />
 		<!--fluidType = Type of black-oil fluid (LiveOil/DeadOil)-->
 		<xsd:attribute name="fluidType" type="string" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
@@ -826,6 +859,7 @@
 		<xsd:attribute name="phaseEntryPressure" type="real64_array" default="1" />
 		<!--capPressureEpsilon = Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero-->
 		<xsd:attribute name="capPressureEpsilon" type="real64" default="1e-06" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
@@ -837,6 +871,7 @@
 		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="1" />
 		<!--phaseRelPermMaxValue = Maximum rel perm value for each phase-->
 		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
@@ -858,6 +893,7 @@
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="0" />
 		<!--componentBinaryCoeff = Table of binary interaction coefficients-->
 		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
@@ -865,6 +901,7 @@
 		<xsd:attribute name="compressibility" type="real64" use="required" />
 		<!--referencePressure = Reference pressure for fluid compressibility-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
@@ -882,6 +919,7 @@
 		<xsd:attribute name="densityModel" type="string" default="linear" />
 		<!--viscosityModel = Type of viscosity model (linear, quadratic, exponential)-->
 		<xsd:attribute name="viscosityModel" type="string" default="linear" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticIsotropicType">
@@ -901,6 +939,7 @@
 		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--referencePressure = ReferencePressure-->
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElementRegionsType">
@@ -914,6 +953,9 @@
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--cellBlocks = (no description available)-->
 		<xsd:attribute name="cellBlocks" type="string_array" use="required" />
+		<!--numericalMethod = Name of numerical method applied to the region-->
+		<xsd:attribute name="numericalMethod" type="string" default="" />
+		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 </xsd:schema>

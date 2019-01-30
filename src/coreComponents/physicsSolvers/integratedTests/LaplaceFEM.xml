@@ -65,19 +65,15 @@
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
       <LinearElasticIsotropic name="shale" 
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                              ShearModulus0="4.16667e9"/>
   </Constitutive>
 
-
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="sourceTerm" 
@@ -95,14 +91,14 @@
 
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
+    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
  
   <Outputs>
@@ -112,7 +108,7 @@
 
   <Geometry>
     <Box name="source" xMin="-1.000, -1.000, -1.000" xMax="0.01, 1.01, 1.01"/>
-    <Box name="sink"   xMin=" 0.999,  -0.999,  -0.999" xMax="1.10, 1.10, 1.10"/>
+    <Box name="sink"   xMin="0.999, -0.999, -0.999" xMax="1.10, 1.10, 1.10"/>
   </Geometry>
 
 </Problem>
