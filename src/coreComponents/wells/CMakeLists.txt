@@ -9,6 +9,8 @@ set( wells_headers
      CompositionalMultiphaseWell.hpp
      Segment.hpp
      SegmentManager.hpp
+     Connection.hpp
+     ConnectionManager.hpp
      Perforation.hpp
      PerforationManager.hpp
    )
@@ -23,6 +25,8 @@ set( wells_sources
      CompositionalMultiphaseWell.cpp
      Segment.cpp
      SegmentManager.cpp
+     Connection.cpp
+     ConnectionManager.cpp
      Perforation.cpp
      PerforationManager.cpp
    )

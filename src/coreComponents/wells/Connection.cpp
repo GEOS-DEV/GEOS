@@ -17,11 +17,11 @@
  */
 
 /*
- * @file Perforation.cpp
+ * @file Connection.cpp
  *
  */
 
-#include "Perforation.hpp"
+#include "Connection.hpp"
 
 #include "dataRepository/InputFlags.hpp"
 
@@ -30,26 +30,16 @@ namespace geosx
 
 using namespace dataRepository;
 
-Perforation::Perforation(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent),
-    m_location(),
-    m_transmissibility()
+Connection::Connection(string const & name, ManagedGroup * const parent)
+  : ManagedGroup(name, parent)
 {
-  RegisterViewWrapper( viewKeysPerforation.location.Key(), &m_location, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Perforation physical coordinates");
-
-  RegisterViewWrapper( viewKeysPerforation.transmissibility.Key(), &m_transmissibility, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Connection transmissibility");
-
-  RegisterViewWrapper( viewKeysPerforation.segmentName.Key(), &m_segmentName, false )->
+  RegisterViewWrapper( viewKeysConnection.connectionName.Key(), &m_connectionName, false )->
     setDefaultValue("0")->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Well segment name (can be omitted for single-segment wells");
+    setDescription("Well connection name (can be omitted for single-segment wells)");
 }
 
-Perforation::~Perforation()
+Connection::~Connection()
 {
 
 }

@@ -17,55 +17,55 @@
  */
 
 /*
- * @file Segment.hpp
+ * @file Connection.hpp
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_SEGMENT_HPP
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_SEGMENT_HPP
+#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTION_HPP
+#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTION_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
 
-class Segment : public dataRepository::ManagedGroup
+class Connection : public dataRepository::ManagedGroup
 {
 public:
 
-  explicit Segment( string const & name, dataRepository::ManagedGroup * const parent );
-  ~Segment() override;
+  explicit Connection( string const & name, dataRepository::ManagedGroup * const parent );
+  ~Connection() override;
 
-  Segment() = delete;
-  Segment( Segment const &) = delete;
-  Segment( Segment && ) = delete;
+  Connection() = delete;
+  Connection( Connection const &) = delete;
+  Connection( Connection && ) = delete;
 
-  string const & getSegmentName() const    { return m_segmentName; }
-  void setSegmentName(string const & name) { m_segmentName = name; }
+  string const & getConnectionName() const    { return m_connectionName; }
+  void setConnectionName(string const & name) { m_connectionName = name; }
 
   struct viewKeyStruct
   {
 
-    static constexpr auto segmentNameString      = "segmentName";
+    static constexpr auto connectionNameString   = "connectionName";
     static constexpr auto nextSegmentIndexString = "nextSegmentIndex";
     static constexpr auto prevSegmentIndexString = "prevSegmentIndex";
 
     using ViewKey = dataRepository::ViewKey;
     
-    ViewKey segmentName      = { segmentNameString };
+    ViewKey connectionName   = { connectionNameString };
     ViewKey nextSegmentIndex = { nextSegmentIndexString };
     ViewKey prevSegmentIndex = { prevSegmentIndexString };
     
-  } viewKeysSegment;
+  } viewKeysConnection;
 
 private:
 
-  string   m_segmentName;
-  localIndex nextSegmentIndex;
-  localIndex prevSegmentIndex;
+  string     m_connectionName;
+  localIndex m_nextSegmentIndex;
+  localIndex m_prevSegmentIndex;
 
 };
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATION_HPP
+#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTION_HPP
