@@ -4,7 +4,7 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
 
     <Poroelastic name="poroSolve" 
                  solidSolverName="lagsolve"
@@ -12,8 +12,7 @@
                  couplingTypeOption="FixedStress"
                  verboseLevel="1"
                  targetRegions="Region2">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              maxIterNewton="40"
+      <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
     </Poroelastic>
 
@@ -21,9 +20,8 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="1"
-                                  >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+                                  targetRegions="Region2">
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-3"
                               maxIterNewton="10"
                               verbosityFlag="2"/>
@@ -34,9 +32,9 @@
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
-                     solidName="shale">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+                     solidName="shale"
+                     targetRegions="Region2">
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
@@ -55,7 +53,7 @@
   </Mesh>
 
   <Geometry>
-        <Box name="rigEle"  xMin="18.9, -0.1,  -0.1" xMax="21,   1.1,  20.1"/>
+        <Box name="rigEle"  xMin="18.9, -0.1, -0.1" xMax="21, 1.1, 20.1"/>
   </Geometry>
 
 
@@ -140,10 +138,6 @@
                                   />
                                   
   </Constitutive>
-
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="permx"
@@ -230,15 +224,15 @@
   </FieldSpecifications>
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.01, 0.02, 1e7" values="1.0, 2.0, 2.0" />
-    <TableFunction     name="timeFunction2"         inputVarNames="time"  inputVarTypes="" coordinates="0.01, 0.02, 1e7" values="1.0, 1.0, 1.0" />
-    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction name="timeFunction"         inputVarNames="time" coordinates="0.01, 0.02, 1e7" values="1.0, 2.0, 2.0" />
+    <TableFunction name="timeFunction2"         inputVarNames="time" coordinates="0.01, 0.02, 1e7" values="1.0, 1.0, 1.0" />
+    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition"  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
   <Outputs>
       <Silo name="siloOutput"/>
