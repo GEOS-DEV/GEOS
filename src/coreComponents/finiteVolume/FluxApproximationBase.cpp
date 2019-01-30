@@ -24,8 +24,8 @@
 #include "FluxApproximationBase.hpp"
 
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/Wells/WellManager.hpp"
-#include "managers/Wells/WellBase.hpp"
+#include "wells/WellManager.hpp"
+#include "wells/WellBase.hpp"
 
 namespace geosx
 {

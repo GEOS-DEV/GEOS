@@ -22,9 +22,9 @@
  */
 #include "TwoPointFluxApproximation.hpp"
 
-#include "managers/Wells/WellBase.hpp"
-#include "managers/Wells/PerforationManager.hpp"
-#include "managers/Wells/Perforation.hpp"
+#include "wells/WellBase.hpp"
+#include "wells/PerforationManager.hpp"
+#include "wells/Perforation.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 namespace geosx
@@ -249,7 +249,7 @@ void TwoPointFluxApproximation::computeWellStencil( DomainPartition const * doma
   array1d<PointDescriptor> points( 2 );
   array1d<real64> weights( 2 );
 
-  for (localIndex iconn = 0; iconn < well->numConnectionsLocal(); ++iconn)
+  for (localIndex iconn = 0; iconn < well->numPerforationsLocal(); ++iconn)
   {
     Perforation const * perf = perfManager->getPerforation( perfIndex[iconn] );
     real64 trans = perf->getTransmissibility();

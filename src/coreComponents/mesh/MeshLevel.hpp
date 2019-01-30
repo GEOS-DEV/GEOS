@@ -26,12 +26,11 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
 
-#include <managers/Wells/WellManager.hpp>
 #include "NodeManager.hpp"
 #include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 #include "ElementRegionManager.hpp"
-#include "managers/Wells/WellManager.hpp"
+#include "wells/WellManager.hpp"
 
 namespace geosx
 {

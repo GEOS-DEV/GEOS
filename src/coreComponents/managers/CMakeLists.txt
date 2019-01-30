@@ -26,13 +26,6 @@ set(managers_headers
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
-    Wells/WellManager.hpp
-    Wells/WellBase.hpp
-    Wells/SimpleWell.hpp
-    Wells/SinglePhaseWell.hpp
-    Wells/CompositionalMultiphaseWell.hpp
-    Wells/Perforation.hpp
-    Wells/PerforationManager.hpp
     )
 
 
@@ -63,13 +56,6 @@ set(managers_sources
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp
-    Wells/WellManager.cpp
-    Wells/WellBase.cpp
-    Wells/SimpleWell.cpp
-    Wells/SinglePhaseWell.cpp
-    Wells/CompositionalMultiphaseWell.cpp
-    Wells/Perforation.cpp
-    Wells/PerforationManager.cpp
     )
 
 #set( dependencyList dataRepository fileIO  )

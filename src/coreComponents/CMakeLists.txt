@@ -13,6 +13,7 @@ set( subdirs
      meshUtilities
      MPI_Communications
      physicsSolvers
+     wells
      python
      systemSolverInterface
      linearAlgebraInterface
