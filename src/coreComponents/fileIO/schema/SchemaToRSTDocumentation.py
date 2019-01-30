@@ -59,7 +59,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
 
   for child_node in include_root.findall(xsd + 'complexType'):
     type_name = child_node.get('name')[:-4]
-    table_values = [['Name', 'Type', 'Default', 'Use', 'Description']]
+    table_values = [['Name', 'Type', 'Default', 'Description']]
 
     # Parse comments
     attribute_comments = {}
@@ -69,7 +69,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
 
     # Parse attributes
     for attribute_node in child_node.findall(xsd + 'attribute'):
-      table_values.append([attribute_node.get(v, default=' ') for v in ['name', 'type', 'default', 'use']])
+      table_values.append([attribute_node.get(v, default=' ') for v in ['name', 'type', 'default']])
       k = table_values[-1][0]
       if k in attribute_comments:
         table_values[-1].append(attribute_comments[k])
@@ -82,16 +82,16 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
         sub_name = sub_node.get('name')
         sub_required = sub_node.get('minOccurs')
         sub_unique = sub_node.get('maxOccurs')
-        use = ''
+        node_use = ''
         if sub_required:
           if sub_unique:
-            use = 'unique, required'
+            node_use = 'unique, required'
           else:
-            use = 'required'
+            node_use = 'required'
         elif (sub_unique):
-          use = 'unique'
+          node_use = 'unique'
 
-        table_values.append([sub_name, 'node', '', use, '`XML_%s`_' % (sub_name)])
+        table_values.append([sub_name, 'node', node_use, '`XML_%s`_' % (sub_name)])
 
     # Write table
     writeTableRST('%s/%s.rst' % (output_folder, type_name), table_values)

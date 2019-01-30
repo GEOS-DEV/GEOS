@@ -133,6 +133,13 @@ Element: FiniteElements
 .. include:: ../../coreComponents/fileIO/schema/docs/FiniteElements.rst
 
 
+.. _XML_SystemSolverParameters:
+
+Element: SystemSolverParameters
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SystemSolverParameters.rst
+
+
 .. _XML_FiniteElementSpace:
 
 Element: FiniteElementSpace
