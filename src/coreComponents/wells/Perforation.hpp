@@ -68,6 +68,9 @@ private:
   real64   m_transmissibility;
   string   m_segmentName;
 
+  // depending on whether we keep the WellStencil class or not,
+  // we may need additional member variables here (i.e., cell id)
+  
 };
 
 } //namespace geosx

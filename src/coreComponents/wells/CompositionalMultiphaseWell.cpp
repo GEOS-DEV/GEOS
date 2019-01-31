@@ -173,7 +173,7 @@ void CompositionalMultiphaseWell::AssembleWellTerms( DomainPartition * const dom
     
     // 2.2- Compute flux term at connection iconn
 
-    // 2.3- Add flux term to residual in segments nextSegment and prevSegment
+    // 2.3- Add flux term to residual and jacobian corresponding to segments nextSegment and prevSegment
   }
     
   // 3- Source/Sink term through perforations
@@ -184,7 +184,7 @@ void CompositionalMultiphaseWell::AssembleWellTerms( DomainPartition * const dom
     
     // 3.2 Compute the rate at perforation iperf using segment data and reservoir data
     
-    // 3.3 Add to residual and jacobian to segment iseg
+    // 3.3 Add to residual and jacobian corresponding to segment iseg
     
   }
   

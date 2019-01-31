@@ -149,7 +149,7 @@ void SinglePhaseWell::AssembleWellTerms( DomainPartition * const domain,
     
     // 2.2- Compute flux term at connection iconn
 
-    // 2.3- Add flux term to residual in segments nextSegment and prevSegment
+    // 2.3- Add flux term to residual and jacobian corresponding to segments nextSegment and prevSegment
   }
     
   // 3- Source/Sink term through perforations
@@ -160,7 +160,7 @@ void SinglePhaseWell::AssembleWellTerms( DomainPartition * const domain,
     
     // 3.2 Compute the rate at perforation iperf using segment data and reservoir data
     
-    // 3.3 Add to residual and jacobian to segment iseg
+    // 3.3 Add to residual and jacobian corresponding to segment iseg
     
   }
   
@@ -178,7 +178,7 @@ void SinglePhaseWell::CheckControlSwitch()
 // Reset the well to its initial state at the beginning of the time step
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  // the pressure and compositions live on segments
+  // the pressure lives on segments
   // the velocity lives on connections
 
   arrayView1d<real64> const & deltaPressure =
@@ -232,7 +232,7 @@ void SinglePhaseWell::StateUpdate( DomainPartition const * domain )
 
     /* it would be nice to do something like:
       
-       MultiFluidBase const * fluid = constitutiveRelations[segmentRegion]->group_cast<MultiFluidBase const *>();
+       SingleFluidBase const * fluid = constitutiveRelations[segmentRegion]->group_cast<SingleFluidBase const *>();
        fluid->PointUpdate( pressure[iseg] );
  
        to update dens[iseg] 
