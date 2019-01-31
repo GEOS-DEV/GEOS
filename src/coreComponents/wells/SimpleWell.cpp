@@ -46,9 +46,9 @@ SimpleWell::SimpleWell(string const & name, dataRepository::ManagedGroup * const
 
   // Most perforations-based fields are registered by specific well models, rather than
   // PerforationManager itself, which is physics-agnostic
-  PerforationManager * perfManager = GetGroup<PerforationManager>( groupKeyStruct::perforationsString );
-  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
-  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
+  PerforationManager * perforationManager = GetGroup<PerforationManager>( groupKeyStruct::perforationsString );
+  perforationManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
+  perforationManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
 }
 
 SimpleWell::~SimpleWell()
@@ -78,16 +78,16 @@ void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIn
   ConstitutiveManager const * constitutiveManager = domain->getConstitutiveManager();
 
   arrayView1d<real64> const & pres =
-    m_perfManager.getReference<array1d<real64>>( viewKeyStruct::pressureString );
+    m_perforationManager.getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
   arrayView1d<real64 const> const & gravDepth =
-    m_perfManager.getReference<array1d<real64>>( PerforationManager::viewKeyStruct::gravityDepthString );
+    m_perforationManager.getReference<array1d<real64>>( PerforationManager::viewKeyStruct::gravityDepthString );
 
   arrayView1d<localIndex const> const & elemRegion =
-    m_perfManager.getReference<array1d<localIndex>>( PerforationManager::viewKeyStruct::connectionElementRegionString );
+    m_perforationManager.getReference<array1d<localIndex>>( PerforationManager::viewKeyStruct::connectionElementRegionString );
 
   arrayView1d<localIndex const> const & elemSubregion =
-    m_perfManager.getReference<array1d<localIndex>>( PerforationManager::viewKeyStruct::connectionElementSubregionString );
+    m_perforationManager.getReference<array1d<localIndex>>( PerforationManager::viewKeyStruct::connectionElementSubregionString );
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase const> constitutiveRelations =
     elemManager->ConstructConstitutiveAccessor<ConstitutiveBase const>( constitutiveManager );
@@ -113,7 +113,7 @@ void SimpleWell::StateUpdate( DomainPartition const * domain, localIndex fluidIn
 real64 SimpleWell::GetTotalFlowRate()
 {
   arrayView1d<real64 const> const & flowRate =
-    m_perfManager.getReference<array1d<real64>>( viewKeyStruct::flowRateString );
+    m_perforationManager.getReference<array1d<real64>>( viewKeyStruct::flowRateString );
 
   real64 totalRate = 0.0;
   for (localIndex iconn = 0; iconn < numPerforationsLocal(); ++iconn)

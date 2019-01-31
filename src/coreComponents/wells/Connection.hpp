@@ -43,6 +43,9 @@ public:
   string const & getConnectionName() const    { return m_connectionName; }
   void setConnectionName(string const & name) { m_connectionName = name; }
 
+  // check if the connection is an exit
+  bool isExitConnection() const { return (m_nextSegmentIndex < 0 || m_prevSegmentIndex < 0); }
+  
   struct viewKeyStruct
   {
 
@@ -51,7 +54,7 @@ public:
     static constexpr auto prevSegmentIndexString = "prevSegmentIndex";
 
     using ViewKey = dataRepository::ViewKey;
-    
+
     ViewKey connectionName   = { connectionNameString };
     ViewKey nextSegmentIndex = { nextSegmentIndexString };
     ViewKey prevSegmentIndex = { prevSegmentIndexString };
@@ -64,6 +67,8 @@ private:
   localIndex m_nextSegmentIndex;
   localIndex m_prevSegmentIndex;
 
+  
+  
 };
 
 } //namespace geosx

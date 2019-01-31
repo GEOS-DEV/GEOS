@@ -36,7 +36,7 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto segments = "Segments";
+static constexpr auto connections = "Connections";
 }
 }
 
@@ -48,7 +48,7 @@ class ConnectionManager : public ObjectManagerBase
 public:
 
   explicit ConnectionManager( string const & name, dataRepository::ManagedGroup * const parent );
-  ~SegmentManager() override;
+  ~ConnectionManager() override;
 
   ConnectionManager() = delete;
   ConnectionManager( ConnectionManager const &) = delete;
@@ -58,26 +58,22 @@ public:
 
   virtual const string getCatalogName() const override;
 
-  localIndex numConnectionsGlobal() const { return integer_conversion<localIndex>(m_connList.size()); }
+  localIndex numConnectionsGlobal() const { return integer_conversion<localIndex>(m_connectionList.size()); }
   localIndex numConnectionsLocal()  const { return integer_conversion<localIndex>(size());         }
 
-  Connection const * getConnection( localIndex iseg ) const;
-  Connection *       getConnection( localIndex iseg );
+  Connection const * getConnection( localIndex iconn ) const;
+  Connection *       getConnection( localIndex iconn );
 
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
 
-    static constexpr auto connIndexString    = "connIndex";
-
-    static constexpr auto gravityDepthString = "gravityDepth";
+    static constexpr auto connIndexString = "connIndex";
 
     using ViewKey = dataRepository::ViewKey;
     
-    ViewKey connIndex    = { connIndexString };
+    ViewKey connIndex = { connIndexString };
 
-    ViewKey gravityDepth = { gravityDepthString };
-
-  } viewKeysPerfManager;
+  } viewKeysConnectionManager;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
@@ -85,7 +81,7 @@ public:
 
     dataRepository::GroupKey connection = { connectionString };
 
-  } groupKeysSegmentManager;
+  } groupKeysConnectionManager;
 
 protected:
 
@@ -98,8 +94,6 @@ private:
   void PrecomputeData( MeshLevel const * domain );
 
   array1d<localIndex> m_connIndex;
-
-  array1d<real64> m_gravityDepth;
 
   string_array m_connectionList;
 

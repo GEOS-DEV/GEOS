@@ -37,8 +37,6 @@ ConnectionManager::ConnectionManager(string const & name, ManagedGroup * const p
   : ObjectManagerBase(name, parent)
 {
   RegisterViewWrapper( viewKeyStruct::connIndexString, &m_connIndex, false );
-
-  RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
 }
 
 ConnectionManager::~ConnectionManager()
@@ -82,14 +80,14 @@ void ConnectionManager::PrecomputeData( MeshLevel const * mesh )
 
 }
 
-Connection const * ConnectionManager::getConnection( localIndex iseg ) const
+Connection const * ConnectionManager::getConnection( localIndex iconn ) const
 {
-  return this->GetGroup<Connection>( m_connectionList[iseg] );
+  return this->GetGroup<Connection>( m_connectionList[iconn] );
 }
 
-Connection * ConnectionManager::getConnection( localIndex iseg )
+Connection * ConnectionManager::getConnection( localIndex iconn )
 {
-  return this->GetGroup<Connection>( m_connectionList[iseg] );
+  return this->GetGroup<Connection>( m_connectionList[iconn] );
 }
 
 

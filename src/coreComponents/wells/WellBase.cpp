@@ -33,8 +33,9 @@ using namespace dataRepository;
 
 WellBase::WellBase(string const & name, dataRepository::ManagedGroup * const parent)
   : ObjectManagerBase( name, parent ),
-    m_segManager( groupKeyStruct::segmentsString, this ),
-    m_perfManager( groupKeyStruct::perforationsString, this ),
+    m_segmentManager( groupKeyStruct::segmentsString, this ),
+    m_connectionManager( groupKeyStruct::perforationsString, this ),
+    m_perforationManager( groupKeyStruct::perforationsString, this ),
     m_referenceDepth( 0.0 ),
     m_typeString( "producer" ),
     m_type( Type::PRODUCER )
@@ -48,9 +49,11 @@ WellBase::WellBase(string const & name, dataRepository::ManagedGroup * const par
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well type (producer/injector)");
 
-  RegisterGroup( groupKeyStruct::segmentsString, &m_segManager, false );
+  RegisterGroup( groupKeyStruct::segmentsString,     &m_segmentManager,  false );
+
+  RegisterGroup( groupKeyStruct::connectionsString,  &m_connectionManager, false );
   
-  RegisterGroup( groupKeyStruct::perforationsString, &m_perfManager, false );
+  RegisterGroup( groupKeyStruct::perforationsString, &m_perforationManager, false );
 }
 
 WellBase::~WellBase()

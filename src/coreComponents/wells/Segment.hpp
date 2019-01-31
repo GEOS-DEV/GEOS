@@ -47,22 +47,39 @@ public:
   {
 
     static constexpr auto segmentNameString      = "segmentName";
-    static constexpr auto nextSegmentIndexString = "nextSegmentIndex";
-    static constexpr auto prevSegmentIndexString = "prevSegmentIndex";
 
     using ViewKey = dataRepository::ViewKey;
     
     ViewKey segmentName      = { segmentNameString };
-    ViewKey nextSegmentIndex = { nextSegmentIndexString };
-    ViewKey prevSegmentIndex = { prevSegmentIndexString };
     
   } viewKeysSegment;
 
 private:
 
+  // name 
   string   m_segmentName;
-  localIndex nextSegmentIndex;
-  localIndex prevSegmentIndex;
+
+  /*
+  
+    Below: the static properties attached to segments in AD-GPRS
+
+    // input data 
+    real64 length;	     // length of the segment
+    real64 depth;	     // depth of the segment (defined at the center)
+    SegmentType type;	     // type (TUBING or ANNULUS) of the segment, needed for DF model, default: TUBING
+    real64 diameter;	     // diameter of the segment (or tubing if annulus exist)
+    real64 roughness;	     // roughness of the segment
+    real64 diameter_annulus; // diameter of the annulus
+    real64 Tformation;	     // temperature of surroundings
+    real64 Uto;		     // heat transfer coefficient
+    
+    // computed properties
+    real64 incl;                // computed inclination of the segment
+    real64 area;                // computed area of the segment
+    real64 frictionCoefficient; // computed friction coefficient of the segment
+    real64 volume;	        // computed volume of the segment
+  
+  */
 
 };
 

@@ -124,7 +124,7 @@ public:
 private:
 
   // update each connection pressure from bhp and hydrostatic head
-  void StateUpdate( DomainPartition const * domain, localIndex fluidIndex );
+  void StateUpdate( DomainPartition const * domain );
 
   // form the well control equation based on the type of well
   void FormControlEquation( DomainPartition const * const domain,
@@ -132,7 +132,7 @@ private:
                             real64 const time_n,
                             real64 const dt );
   
-  array1d<real64> m_bhp;
+  real64 m_bhp;
 
 };
 

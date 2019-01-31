@@ -52,9 +52,9 @@ public:
   struct viewKeyStruct
   {
 
-    static constexpr auto locationString = "location";
+    static constexpr auto locationString         = "location";
     static constexpr auto transmissibilityString = "transmissibility";
-    static constexpr auto segmentNameString = "segmentName";
+    static constexpr auto segmentNameString      = "segmentName";
 
     dataRepository::ViewKey location         = { locationString         };
     dataRepository::ViewKey transmissibility = { transmissibilityString };

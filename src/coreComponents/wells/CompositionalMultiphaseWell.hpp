@@ -98,8 +98,8 @@ public:
     static constexpr auto mixtureVelocityString        = "mixtureVelocity";
     static constexpr auto deltaMixtureVelocityString   = "deltaMixtureVelocity";
 
-    static constexpr auto flowRateString = "flowRate";
-    static constexpr auto bhpString      = "bhp";
+    static constexpr auto phaseFlowRateString = "phaseFlowRate";
+    static constexpr auto bhpString           = "bhp";
 
     static constexpr auto globalComponentFracString        = "globalComponentFraction";
     static constexpr auto dGlobalComponentFrac_dPresString = "dGlobalComponentFraction_dPres";
@@ -117,8 +117,8 @@ public:
     ViewKey deltaMixtureVelovity   = { deltaMixtureVelocityString };
     
     // well controls
-    ViewKey flowRate = { flowRateString };
-    ViewKey bhp      = { bhpString };
+    ViewKey phaseFlowRate = { phaseFlowRateString };
+    ViewKey bhp           = { bhpString };
 
     // global composition to input injection stream
     ViewKey globalComponentFrac        = { globalComponentFracString };
@@ -135,7 +135,7 @@ public:
 private:
 
   // update each connection pressure from bhp and hydrostatic head
-  void StateUpdate( DomainPartition const * domain, localIndex fluidIndex );
+  void StateUpdate( DomainPartition const * domain );
 
   // form the well control equation based on the type of well
   void FormControlEquation( DomainPartition const * const domain,
@@ -143,7 +143,7 @@ private:
                             real64 const time_n,
                             real64 const dt );
   
-  array1d<real64> m_bhp;
+  real64 m_bhp;
 
   /// the max number of fluid phases
   localIndex m_numPhases;

@@ -110,6 +110,8 @@ void PerforationManager::PrecomputeData( MeshLevel const * mesh )
 
 void PerforationManager::ConnectToCells( MeshLevel const * mesh )
 {
+  // will be changed later
+  
   ElementRegionManager const * elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> elemCenter =
