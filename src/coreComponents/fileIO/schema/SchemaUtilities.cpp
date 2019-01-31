@@ -93,7 +93,7 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
     if( regex->second.empty())
     {
       GEOS_WARNING("schema regex not defined for " << regex->first << "...  Defaulting to limited string");
-      patternNode.append_attribute("value") = "[a-zA-Z0-9_,\\(\\)+-/\\* \n]*";
+      patternNode.append_attribute("value") = "[a-zA-Z0-9_,\\(\\)+-/\\* \\n]*";
     }
     else
     {
