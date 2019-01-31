@@ -202,8 +202,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
               {
                 using COMPOSITE_TYPE = decltype(a);
                 ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
-                dataRepository::DefaultValue<COMPOSITE_TYPE> tmp = typedWrapper.getDefaultValueStruct();
-
+                
                 if( typedWrapper.getDefaultValueStruct().has_default_value )
                 {
                   SetDefaultValueString( typedWrapper.getDefaultValueStruct(), attributeNode );
