@@ -56,12 +56,44 @@ public:
 
   // RelPerm-specific interface
 
-  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) override;
-
+  /**
+   * @brief Function to update state of a single material point.
+   * @param[in] phaseVolFraction input phase volume fraction
+   * @param[in] k the first index of the storage arrays (elem index)
+   * @param[in] q the second index of the storage arrays (quadrature index)
+   *
+   * @note This function performs a point update, but should not be called
+   *       within a kernel since it is virtual, and the required data is not
+   *       guaranteed to be in the target memory space.
+   */
   virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
                             localIndex const k,
                             localIndex const q ) override;
 
+  /**
+   * @brief Perform a batch constitutive update (all points).
+   * @param[in] phaseVolFraction input phase volume fraction
+   */  
+  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) override;
+
+  /**
+   * @brief Computes the relative permeabilities using the Brooks-Corey-Baker method
+   * @param NP phase index
+   * @param[in] phaseVolFraction vector of phase volume fractions
+   * @param[out] phaseRelPerm the computed relative permeability values vector for all phases
+   * @param[out] dPhaseRelPerm_dPhaseVolFrac the computed partial derivative of the relative wrt to the volume fraction of the phases
+   * @param[in] phaseOrder vector of phase orders
+   * @param[in] phaseMinVolumeFraction vector of minimum phase volume fractions
+   * @param[in] waterOilRelPermExponentInv vector of exponents used in the computation of the water-oil relative permeability
+   * @param[in] waterOilRelPermMaxValue vector of water-oil permeability curve end-point values 
+   * @param[in] gasOilRelPermExponentInv vector of exponents used in the computation of the gas-oil relative permeability
+   * @param[in] gasOilRelPermMaxValue vector of gas-oil permeability curve end-point values
+   * @param[in] volFracScale scaling factor to apply to the entire relative permeability curve
+   * @return (void)
+   *
+   * This function computes the relative permeabilities for all phases based on the Brooks-Corey-Baker method
+   * Reference: Eclipse technical description
+   */
   inline static void Compute( localIndex const NP,
                               arraySlice1d<real64 const> const & phaseVolFraction,
                               arraySlice1d<real64> const & phaseRelPerm,
@@ -99,6 +131,19 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
+  /**
+   * @brief Evaluate the Brooks-Corey relperm function for a given (scalar) phase saturation
+   * @param[in] scaledVolFrac the scaled volume fraction for this phase
+   * @param[in] dScaledVolFrac_dVolFrac the derivative of scaled volume fraction for this phase wrt to the volume fraction
+   * @param[out] relperm the relative permeability for this phase
+   * @param[out] dRelPerm_dVolFrac the derivative of the relative permeability wrt to the volume fraction of the phase
+   * @param[in] exponentInv the inverse of the exponent used in the VG model
+   * @param[in] maxValue the endpoint relative permeability value
+   * @return (void)
+   *
+   * This function evaluates the relperm function and its derivative at a given phase saturation 
+   * Reference: Eclipse technical description and Petrowiki
+   */
   static inline void EvaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
                                                   real64 const & dScaledVolFrac_dVolFrac,
                                                   real64 & relPerm,
@@ -106,6 +151,22 @@ protected:
                                                   real64 const & exponent,
                                                   real64 const & maxValue );
 
+  /**
+   * @brief Interpolate the two-phase relperms to compute the three-phase relperm 
+   * @param[in] shiftedWaterVolFrac
+   * @param[in] gasVolFrac
+   * @param[out] threePhaseRelPerm
+   * @param[out] dThreePhaseRelPerm_dVolFrac
+   * @param[in] relPerm_wo
+   * @param[in] dRelPerm_wo_dOilVolFrac
+   * @param[in] relPerm_go
+   * @param[in] dRelPerm_go_dOilVolFrac
+   * @return (void)
+   *
+   * This function interpolates the two-phase relperms to compute the three-phase relperm
+   * The interpolation is based on the modified Baker method, also used as default in Eclipse
+   * Reference: Eclipse technical description and PetroWiki
+   */
   static inline void InterpolateTwoPhaseRelPerms( real64 const & shiftedWaterVolFrac,
                                                   real64 const & gasVolFrac,
                                                   real64 & threePhaseRelPerm,
@@ -115,21 +176,7 @@ protected:
                                                   real64 const & dRelPerm_wo_dOilVolFrac,
                                                   real64 const & relPerm_go,
                                                   real64 const & dRelPerm_go_dOilVolFrac );
-  
-  // order of the phase properties in the water-oil data
-  struct WaterOilPairPhaseType
-  {
-    static constexpr integer WATER = 0; // first water phase property
-    static constexpr integer OIL   = 1; // second oil phase property
-  };
-
-  // order of the phase properties in the gas-oil data
-  struct GasOilPairPhaseType
-  {
-    static constexpr integer GAS   = 0; // first gas phase property
-    static constexpr integer OIL   = 1; // second oil phase property
-  };
-  
+    
   array1d<real64> m_phaseMinVolumeFraction;
 
   // water-oil data
@@ -167,9 +214,9 @@ BrooksCoreyBakerRelativePermeability::Compute( localIndex const NP,
   }
   
   real64 const volFracScaleInv = 1.0 / volFracScale;
-  integer const ip_water = phaseOrder[RelativePermeabilityBase::PhaseType::WATER];
-  integer const ip_oil   = phaseOrder[RelativePermeabilityBase::PhaseType::OIL];
-  integer const ip_gas   = phaseOrder[RelativePermeabilityBase::PhaseType::GAS];
+  integer const ip_water = phaseOrder[PhaseType::WATER];
+  integer const ip_oil   = phaseOrder[PhaseType::OIL];
+  integer const ip_gas   = phaseOrder[PhaseType::GAS];
 
   real64 oilRelPerm_wo = 0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_wo_dOilVolFrac = 0; // derivative w.r.t to So
@@ -308,9 +355,9 @@ BrooksCoreyBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const 
                                                                    real64 const & relPerm_go,
                                                                    real64 const & dRelPerm_go_dOilVolFrac )
 {
-  integer const ip_water = phaseOrder[RelativePermeabilityBase::PhaseType::WATER];
-  integer const ip_oil   = phaseOrder[RelativePermeabilityBase::PhaseType::OIL];
-  integer const ip_gas   = phaseOrder[RelativePermeabilityBase::PhaseType::GAS];
+  integer const ip_water = phaseOrder[PhaseType::WATER];
+  integer const ip_oil   = phaseOrder[PhaseType::OIL];
+  integer const ip_gas   = phaseOrder[PhaseType::GAS];
   
   // if water phase is immobile, then use the two-phase gas-oil data only
   if (shiftedWaterVolFrac < std::numeric_limits<real64>::epsilon()) 
