@@ -46,6 +46,7 @@ namespace CommTools
       for(localIndex i=0;i<tmpArray.size();++i)
         allValues[i] = integer_conversion<localIndex>(tmpArray[i]);
     #else
+      int mpiRank = 0;
       allValues.resize(1);
       allValues[0] = myValue;
     #endif
@@ -64,7 +65,7 @@ DofManager::DofManager()
   // instead of resizing it dynamically as fields are added.
 
   m_connectivity.resize(MAX_NUM_FIELDS,MAX_NUM_FIELDS);
-  
+
   for(localIndex i=0; i<MAX_NUM_FIELDS; ++i)
   for(localIndex j=0; j<MAX_NUM_FIELDS; ++j)
     m_connectivity[i][j] = Connectivity::None;
@@ -73,8 +74,8 @@ DofManager::DofManager()
 
 // .... DOF MANAGER :: SET MESH
 
-void DofManager::setMesh(DomainPartition * const domain, 
-                         localIndex const meshLevelIndex, 
+void DofManager::setMesh(DomainPartition * const domain,
+                         localIndex const meshLevelIndex,
                          localIndex const meshBodyIndex)
 {
   GEOS_ERROR_IF(m_meshLevel != nullptr,"A mesh is already assigned to this DofManager.");
@@ -99,10 +100,9 @@ localIndex DofManager::fieldIndex(string const & key)
 
 bool DofManager::keyInUse(string const & key)
 {
-  bool check = false;
   for(localIndex i=0; i<m_fields.size(); ++i)
-     check = (m_fields[i].name == key);
-  return check;
+    if(m_fields[i].name == key) return true;
+  return false;
 }
 
 
@@ -110,8 +110,8 @@ bool DofManager::keyInUse(string const & key)
 // .... DOF MANAGER :: ADD FIELD
 
 void DofManager::addField(string const & field,
-                          Location const location, 
-                          Connectivity const connectivity, 
+                          Location const location,
+                          Connectivity const connectivity,
                           localIndex const components,
                           string_array const & regions)
 {
@@ -176,7 +176,7 @@ void DofManager::addField(string const & field,
     default:
       GEOS_ERROR("DoF support location is not yet supported");
   }
-  
+
   // determine field's global offset
 
   if(numFields > 1)
@@ -189,19 +189,19 @@ void DofManager::addField(string const & field,
     last.fieldOffset = 0;
   }
 
-  // save field's connectivity type (self-to-self) 
+  // save field's connectivity type (self-to-self)
 
   m_connectivity[numFields-1][numFields-1] = connectivity;
 
   // log some basic info
-  
+
   GEOS_LOG_RANK_0("DofManager :: Added field .... " << last.docstring);
-  GEOS_LOG_RANK_0("DofManager :: Global dofs .... " << last.numGlobalRows); 
-  GEOS_LOG_RANK_0("DofManager :: Field offset ... " << last.fieldOffset); 
+  GEOS_LOG_RANK_0("DofManager :: Global dofs .... " << last.numGlobalRows);
+  GEOS_LOG_RANK_0("DofManager :: Field offset ... " << last.fieldOffset);
 }
 
 
-// .... DOF MANAGER :: CREATE INDEX ARRAY 
+// .... DOF MANAGER :: CREATE INDEX ARRAY
 
 void DofManager::createIndexArray_NodeOrFaceVersion(FieldDescription & field)
 {
@@ -215,10 +215,10 @@ void DofManager::createIndexArray_NodeOrFaceVersion(FieldDescription & field)
     setApplyDefaultValue(-1)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
     setDescription(field.docstring);
-      
+
   globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>(field.key);
 
-  // step 1. loop over all active regions 
+  // step 1. loop over all active regions
   //         determine number of local rows
   //         and sequentially number objects
 
@@ -253,7 +253,7 @@ void DofManager::createIndexArray_NodeOrFaceVersion(FieldDescription & field)
 
   localIndex_array gather;
 
-  CommTools::allGather(field.numLocalRows,gather); 
+  CommTools::allGather(field.numLocalRows,gather);
 
   field.numGlobalRows = 0;
   for(localIndex p=0; p<mpiSize; ++p)
@@ -295,18 +295,13 @@ void DofManager::createIndexArray_NodeOrFaceVersion(FieldDescription & field)
 
 void DofManager::createIndexArray_ElemVersion(FieldDescription & field)
 {
-  // step 1. loop over all active regions 
+  // step 1. loop over all active regions
   //         determine number of local rows
 
-  ElementRegionManager * const elemManager = m_meshLevel->getElemManager();
-
   field.numLocalRows = 0;
-  for(localIndex er=0; er<field.regionNames.size(); ++er)
+  for(localIndex er=0; er<field.regionPtrs.size(); ++er)
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion( field.regionNames[er]);
-    GEOS_ERROR_IF(elemRegion == nullptr,"Specified element region not found: " + field.regionNames[er]);
-
-    elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )
+    field.regionPtrs[er]->forCellBlocks([&]( CellBlockSubRegion * const subRegion )
     {
       localIndex numGhost = subRegion->GetNumberOfGhosts();
       field.numLocalRows  += subRegion->size() - numGhost;
@@ -317,7 +312,7 @@ void DofManager::createIndexArray_ElemVersion(FieldDescription & field)
 
   localIndex_array gather;
 
-  CommTools::allGather(field.numLocalRows,gather); 
+  CommTools::allGather(field.numLocalRows,gather);
 
   field.numGlobalRows = 0;
   for(localIndex p=0; p<mpiSize; ++p)
@@ -334,19 +329,17 @@ void DofManager::createIndexArray_ElemVersion(FieldDescription & field)
   globalIndex const isUnset = -1;
   globalIndex count = 0;
 
-  for(localIndex er=0; er<field.regionNames.size(); ++er)
+  for(localIndex er=0; er<field.regionPtrs.size(); ++er)
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion( field.regionNames[er]);
-
-    for(localIndex esr=0; esr < elemRegion->numSubRegions(); esr++)
+    for(localIndex esr=0; esr<field.regionPtrs[er]->numSubRegions(); esr++)
     {
-      CellBlockSubRegion * subRegion = elemRegion->GetSubRegion(esr);
+      CellBlockSubRegion * subRegion = field.regionPtrs[er]->GetSubRegion(esr);
 
       subRegion->RegisterViewWrapper<globalIndex_array>( field.key )->
         setApplyDefaultValue(isUnset)->
         setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->   // TODO: level 1 or 2?
         setDescription(field.docstring);
-   
+
       globalIndex_array & indexArray = subRegion->getReference<globalIndex_array>(field.key);
       integer_array const & ghostRank = subRegion->m_ghostRank;
 
@@ -355,7 +348,7 @@ void DofManager::createIndexArray_ElemVersion(FieldDescription & field)
       for(localIndex elem=0; elem<ghostRank.size(); ++elem)
       if(ghostRank[elem] < 0)
       {
-        indexArray[elem] = field.firstLocalRow+count; 
+        indexArray[elem] = field.firstLocalRow+count;
         count++;
       }
     };
@@ -385,9 +378,69 @@ void DofManager::addCoupling(string const & rowField,
                              Connectivity const connectivity,
                              bool const symmetric)
 {
-  // ... to be written ...
-} 
+  // check if the row field name is already added
 
+  GEOS_ERROR_IF(!keyInUse(rowField),"addCoupling: requested field name must be already existing.");
+
+  // check if the col field name is already added
+
+  GEOS_ERROR_IF(!keyInUse(colField),"addCoupling: requested field name must be already existing.");
+
+  // get row field index
+  localIndex rowFieldIndex = fieldIndex(rowField);
+
+  // get col field index
+  localIndex colFieldIndex = fieldIndex(colField);
+
+  // save field's connectivity type (rowField to colField)
+
+  m_connectivity[rowFieldIndex][colFieldIndex] = connectivity;
+
+  if (symmetric)
+    m_connectivity[colFieldIndex][rowFieldIndex] = connectivity;
+
+}
+
+void DofManager::printCoupling()
+{
+  if(mpiRank == 0)
+  {
+    localIndex numFields = m_fields.size();
+
+    std::cout << std::endl;
+    for(localIndex i=0;i<numFields;++i)
+    {
+      for(localIndex j=0;j<numFields;++j)
+      {
+        switch(m_connectivity[i][j])
+        {
+          case Connectivity::Elem :
+            std::cout << " E ";
+            break;
+          case Connectivity::Face :
+            std::cout << " F ";
+            break;
+          case Connectivity::Node :
+            std::cout << " N ";
+            break;
+          case Connectivity::None :
+            std::cout << "   ";
+            break;
+        }
+        if(j<numFields-1) 
+          std::cout << "|";
+      }
+      std::cout << std::endl;
+      if (i<numFields-1)
+      {
+        for(localIndex j=0;j<numFields-1;++j)
+          std::cout << "---|";
+        std::cout << "---" << std::endl;
+      }
+    std::cout << std::endl;
+    }
+  }
+}
 
 }
 

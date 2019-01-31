@@ -181,6 +181,11 @@ public:
                    localIndex const index,
                    string const & field = "all") const;
 
+   /**
+    * Print the global connectivity matrix
+    */
+   void printCoupling();
+
 private:
   /**
    *  Limit on max number of fields
@@ -255,6 +260,7 @@ private:
     * Create element index array
     */
    void createIndexArray_ElemVersion(FieldDescription & field);
+
 };
 
 

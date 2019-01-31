@@ -90,6 +90,7 @@ TEST_F(DofManagerTest, TestOne)
   dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
   dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
   dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
+  dofManager.printCoupling();
 }
 
 
