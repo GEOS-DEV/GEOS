@@ -359,7 +359,7 @@ void DofManager::createIndexArray_ElemVersion(FieldDescription & field)
   // step 4. synchronize across ranks
 
   std::map<string,string_array> fieldNames;
-  fieldNames["elems"].push_back(field.key);
+  fieldNames["elem"].push_back(field.key);
 
   CommunicationTools::SynchronizeFields(fieldNames,m_meshLevel,
     m_domain->getReference< array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
