@@ -10,22 +10,22 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r2_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair_array">
@@ -35,12 +35,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r1_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
@@ -50,12 +50,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
@@ -65,27 +65,27 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r2Sym_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* &#10;]*" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r2Sym_array">
