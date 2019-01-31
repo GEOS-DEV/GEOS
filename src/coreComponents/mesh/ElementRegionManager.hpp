@@ -210,29 +210,17 @@ public:
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
     {
-      ElementRegion * elementRegion = this->GetRegion(er);
+      ElementRegion * const elementRegion = this->GetRegion(er);
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
         CellBase * const subRegion = elementRegion->GetSubRegion(esr);
 
-        bool isNull = true;
-        CELLTYPE1 * const subRegion1 = dynamic_cast<CELLTYPE1 *>( subRegion );
-        if( subRegion1 != nullptr )
+        bool validCast =
+        ElementRegion::applyLambdaToCellBlocks<CELLTYPE1,CELLTYPE2>( subRegion, [&]( auto * const castedSubRegion )
         {
-          lambda( er, esr, elementRegion, subRegion1 );
-          isNull = false;
-        }
-        else
-        {
-          CELLTYPE2 * const subRegion2 = dynamic_cast<CELLTYPE2 *>( subRegion );
-          if( subRegion2 != nullptr )
-          {
-            lambda( er, esr, elementRegion, subRegion2 );
-            isNull = false;
-          }
-        }
-        GEOS_ERROR_IF( isNull, "subRegion "<<subRegion->getName()<<" is not of a valid type.");
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
       }
     }
   }
@@ -242,29 +230,16 @@ public:
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
     {
-      ElementRegion const * elementRegion = this->GetRegion(er);
+      ElementRegion const * const elementRegion = this->GetRegion(er);
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
         CellBase const * const subRegion = elementRegion->GetSubRegion(esr);
 
-        bool isNull = true;
-        CELLTYPE1 const * const subRegion1 = dynamic_cast<CELLTYPE1  const*>( subRegion );
-        if( subRegion1 != nullptr )
+        ElementRegion::applyLambdaToCellBlocks<CELLTYPE1,CELLTYPE2>( subRegion, [&]( auto const * const castedSubRegion )
         {
-          lambda( er, esr, elementRegion, subRegion1 );
-          isNull = false;
-        }
-        else
-        {
-          CELLTYPE2 const * const subRegion2 = dynamic_cast<CELLTYPE2 const *>( subRegion );
-          if( subRegion2 != nullptr )
-          {
-            lambda( er, esr, elementRegion, subRegion2 );
-            isNull = false;
-          }
-        }
-        GEOS_ERROR_IF( isNull, "subRegion "<<subRegion->getName()<<" is not of a valid type.");
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
       }
     }
   }
