@@ -91,7 +91,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
         elif (sub_unique):
           node_use = 'unique'
 
-        table_values.append([sub_name, 'node', node_use, '`XML_%s`_' % (sub_name)])
+        table_values.append([sub_name, 'node', node_use, ':ref:`XML_%s`' % (sub_name)])
 
     # Write table
     writeTableRST('%s/%s.rst' % (output_folder, type_name), table_values)

@@ -1,10 +1,10 @@
 
 
-================== ==== ======= ========================= 
-Name               Type Default Description               
-================== ==== ======= ========================= 
-Dirichlet          node         `XML_Dirichlet`_          
-FieldSpecification node         `XML_FieldSpecification`_ 
-================== ==== ======= ========================= 
+================== ==== ======= ============================= 
+Name               Type Default Description                   
+================== ==== ======= ============================= 
+Dirichlet          node         :ref:`XML_Dirichlet`          
+FieldSpecification node         :ref:`XML_FieldSpecification` 
+================== ==== ======= ============================= 
 
 

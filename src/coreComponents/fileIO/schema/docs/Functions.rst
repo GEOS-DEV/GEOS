@@ -1,11 +1,11 @@
 
 
-================= ==== ======= ======================== 
-Name              Type Default Description              
-================= ==== ======= ======================== 
-CompositeFunction node         `XML_CompositeFunction`_ 
-TableFunction     node         `XML_TableFunction`_     
-SymbolicFunction  node         `XML_SymbolicFunction`_  
-================= ==== ======= ======================== 
+================= ==== ======= ============================ 
+Name              Type Default Description                  
+================= ==== ======= ============================ 
+CompositeFunction node         :ref:`XML_CompositeFunction` 
+TableFunction     node         :ref:`XML_TableFunction`     
+SymbolicFunction  node         :ref:`XML_SymbolicFunction`  
+================= ==== ======= ============================ 
 
 
