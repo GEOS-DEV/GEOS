@@ -23,6 +23,8 @@ Here we describe the process for development in the GEOSX framework.
    
    /coreComponents/linearAlgebraInterface/docs/DofManager.rst
 
+   /coreComponents/fileIO/schema/docs/SchemaGeneration
+
 
 
 Overview of the code structure

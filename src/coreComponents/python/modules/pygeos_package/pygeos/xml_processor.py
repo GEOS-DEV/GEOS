@@ -159,19 +159,24 @@ def preprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
 
   if (verbose > 0):
     print('Preprocessed xml file stored in %s' % (recordName))
-
-    # Validate against the schema
-    print('Validating the xml against the schema...')
-    try:
-      ofile = ElementTree.parse(recordName)
-      sfile = ElementTree.XMLSchema(ElementTree.parse(os.path.expanduser(schema)))
-      sfile.assertValid(ofile)
-      print('Done!')
-    except ElementTree.DocumentInvalid as err:
-      print('\nWarning: input XML contains potentially invalid input parameters:')
-      print('-'*20+'\n')
-      print(sfile.error_log)
-      print('\n'+'-'*20)
-      print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
+    validateXML(recordName, schema)
 
   return recordName
+
+
+def validateXML(fname, schema):
+  print('Validating the xml against the schema...')
+  try:
+    ofile = ElementTree.parse(fname)
+    sfile = ElementTree.XMLSchema(ElementTree.parse(os.path.expanduser(schema)))
+    sfile.assertValid(ofile)
+    print('Done!')
+  except ElementTree.DocumentInvalid as err:
+    print(err)
+    print('\nWarning: input XML contains potentially invalid input parameters:')
+    print('-'*20+'\n')
+    print(sfile.error_log)
+    print('\n'+'-'*20)
+    print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
+
+
