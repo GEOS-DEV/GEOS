@@ -1,11 +1,11 @@
 
 
-================ ==== ======= ======================= 
-Name             Type Default Description             
-================ ==== ======= ======================= 
-GaussQuadrature3 node         `XML_GaussQuadrature3`_ 
-GaussQuadrature2 node         `XML_GaussQuadrature2`_ 
-GaussQuadrature1 node         `XML_GaussQuadrature1`_ 
-================ ==== ======= ======================= 
+================ ==== ======= =========================== 
+Name             Type Default Description                 
+================ ==== ======= =========================== 
+GaussQuadrature3 node         :ref:`XML_GaussQuadrature3` 
+GaussQuadrature2 node         :ref:`XML_GaussQuadrature2` 
+GaussQuadrature1 node         :ref:`XML_GaussQuadrature1` 
+================ ==== ======= =========================== 
 
 

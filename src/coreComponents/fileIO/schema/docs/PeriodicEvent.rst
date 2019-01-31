@@ -20,9 +20,9 @@ set                  string          Setname of the input object (if empty, defa
 stat                 integer 0       Selection of the min/avg/max for functions that target vectors         
 threshold            real64  1e+10   event threshold                                                        
 name                 string          A name is required for any non-unique nodes                            
-HaltEvent            node            `XML_HaltEvent`_                                                       
-SoloEvent            node            `XML_SoloEvent`_                                                       
-PeriodicEvent        node            `XML_PeriodicEvent`_                                                   
+HaltEvent            node            :ref:`XML_HaltEvent`                                                   
+SoloEvent            node            :ref:`XML_SoloEvent`                                                   
+PeriodicEvent        node            :ref:`XML_PeriodicEvent`                                               
 ==================== ======= ======= ====================================================================== 
 
 
