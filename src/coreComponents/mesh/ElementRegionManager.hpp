@@ -177,9 +177,21 @@ public:
     elementRegions->forSubGroups<ElementRegion>( lambda );
   }
 
-  template< typename CELLTYPE1=CellBlockSubRegion,
-            typename CELLTYPE2=FaceCellSubRegion,
-            typename LAMBDA=void >
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA && lambda )
+  {
+    forCellBlocks<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA && lambda ) const
+  {
+    forCellBlocks<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
   void forCellBlocks( LAMBDA && lambda )
   {
     ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
@@ -187,13 +199,11 @@ public:
     for( auto & region : elementRegions->GetSubGroups() )
     {
       ElementRegion * const elemRegion = region.second->group_cast<ElementRegion *>();
-      elemRegion->forCellBlocks<CELLTYPE1,CELLTYPE2,LAMBDA>( std::forward<LAMBDA>(lambda) );
+      elemRegion->forCellBlocks<CELLTYPE,CELLTYPES...>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename CELLTYPE1=CellBlockSubRegion,
-            typename CELLTYPE2=FaceCellSubRegion,
-            typename LAMBDA=void >
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
   void forCellBlocks( LAMBDA && lambda ) const
   {
     ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
@@ -201,11 +211,24 @@ public:
     for( auto & region : elementRegions->GetSubGroups() )
     {
       ElementRegion const * const elemRegion = region.second->group_cast<ElementRegion const *>();
-      elemRegion->forCellBlocks<CELLTYPE1,CELLTYPE2,LAMBDA>( std::forward<LAMBDA>(lambda) );
+      elemRegion->forCellBlocks<CELLTYPE,CELLTYPES...>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
+
+  template< typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda ) const
+  {
+    forCellBlocksComplete<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+  template< typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda )
+  {
+    forCellBlocksComplete<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
   void forCellBlocksComplete( LAMBDA lambda )
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
@@ -217,7 +240,7 @@ public:
         CellBase * const subRegion = elementRegion->GetSubRegion(esr);
 
         bool validCast =
-        ElementRegion::applyLambdaToCellBlocks<CELLTYPE1,CELLTYPE2>( subRegion, [&]( auto * const castedSubRegion )
+        ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });
@@ -225,7 +248,7 @@ public:
     }
   }
 
-  template< typename CELLTYPE1=CellBlockSubRegion, typename CELLTYPE2=CELLTYPE1, typename LAMBDA >
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
   void forCellBlocksComplete( LAMBDA lambda ) const
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
@@ -236,7 +259,7 @@ public:
       {
         CellBase const * const subRegion = elementRegion->GetSubRegion(esr);
 
-        ElementRegion::applyLambdaToCellBlocks<CELLTYPE1,CELLTYPE2>( subRegion, [&]( auto const * const castedSubRegion )
+        ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });

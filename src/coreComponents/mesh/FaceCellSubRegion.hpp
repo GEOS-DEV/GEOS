@@ -78,6 +78,17 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
+
+  OrderedVariableOneToManyRelation const & nodeList() const
+  {
+    return m_toNodesRelation;
+  }
+
+  OrderedVariableOneToManyRelation & nodeList()
+  {
+    return m_toNodesRelation;
+  }
+
   virtual arraySlice1d<localIndex const> nodeList( localIndex const k ) const override
   {
     return m_toNodesRelation[k];
