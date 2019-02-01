@@ -321,7 +321,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
       elementRegion->forCellBlocks([&]( auto const * const cellBlock )
       {
         localIndex const numElems = cellBlock->size();
-        typename std::remove_pointer<decltype(cellBlock)>::type::ToNodeMap const & elemsToNodes = cellBlock->nodeList();
+        TYPEOFPTR(cellBlock)::NodeMapType const & elemsToNodes = cellBlock->nodeList();
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
