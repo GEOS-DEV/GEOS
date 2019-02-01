@@ -39,14 +39,20 @@ public:
     return name;
   }
 
-  GaussQuadrature() = default;
-  ~GaussQuadrature() override;
+  GaussQuadrature( std::string const & name, ManagedGroup * const parent );
+
+  virtual ~GaussQuadrature() override;
+
+  virtual void PostProcessInput() override;
 
   int size() const override final;
   R1Tensor integration_point( const int index ) const override final;
   double integration_weight( const int index ) const override final;
 
-  void ReadXML( xmlWrapper::xmlNode const & xmlNode ) override final;
+  struct viewKeyStruct
+  {
+    static constexpr auto degreeString = "degree";
+  } viewKeys;
 
 private:
 

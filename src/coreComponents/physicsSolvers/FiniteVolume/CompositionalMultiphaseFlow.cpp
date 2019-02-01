@@ -56,7 +56,9 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   m_numComponents( 0 )
 {
   // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
+  // To generate the schema, multiple solvers of that use this command are constructed
+  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
+  // getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
   this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -131,6 +133,9 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
 void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
+
+  // set the blockID for the block system interface
+  getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();

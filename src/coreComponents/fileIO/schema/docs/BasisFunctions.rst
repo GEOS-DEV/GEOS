@@ -1,11 +1,11 @@
 
 
-============== ==== ======= === ===================== 
-Name           Type Default Use Description           
-============== ==== ======= === ===================== 
-LagrangeBasis3 node             `XML_LagrangeBasis3`_ 
-LagrangeBasis2 node             `XML_LagrangeBasis2`_ 
-LagrangeBasis1 node             `XML_LagrangeBasis1`_ 
-============== ==== ======= === ===================== 
+============== ==== ======= ========================= 
+Name           Type Default Description               
+============== ==== ======= ========================= 
+LagrangeBasis3 node         :ref:`XML_LagrangeBasis3` 
+LagrangeBasis2 node         :ref:`XML_LagrangeBasis2` 
+LagrangeBasis1 node         :ref:`XML_LagrangeBasis1` 
+============== ==== ======= ========================= 
 
 

@@ -24,6 +24,7 @@
  * @author white230
  */
 
+#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
 
@@ -36,23 +37,31 @@
 namespace geosx
 {
 
-class QuadratureBase
+class QuadratureBase : public dataRepository::ManagedGroup
 {
 public:
+  /// Main constructor
+  explicit QuadratureBase( std::string const & name,
+                           ManagedGroup * const parent );
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase >;
+  /// Destructor
+  virtual ~QuadratureBase() override;
 
-  static CatalogInterface::CatalogType& GetCatalog();
-
+  // Catalog name interface
+  static string CatalogName() { return "QuadratureBase"; }
 
   QuadratureBase() = default;
-  virtual ~QuadratureBase();
+  QuadratureBase( QuadratureBase const & ) = default;
+  QuadratureBase( QuadratureBase &&) = default;
+  QuadratureBase& operator=( QuadratureBase const & ) = default;
+  QuadratureBase& operator=( QuadratureBase&& ) = default;  
+
+  using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase, std::string const &, ManagedGroup * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
 
   virtual int size() const = 0;
   virtual R1Tensor integration_point( const int index ) const = 0;
   virtual double integration_weight( const int index ) const = 0;
-
-  virtual void ReadXML( xmlWrapper::xmlNode const & xmlNode ) = 0;
 
 private:
 
