@@ -40,9 +40,9 @@ class CellBlock : public CellBase
 {
 public:
 
-  using ToNodeMap=FixedOneToManyRelation;
-  using ToEdgesMap=FixedOneToManyRelation;
-  using ToFacesMap=FixedOneToManyRelation;
+  using NodeMapType=FixedOneToManyRelation;
+  using EdgeMapType=FixedOneToManyRelation;
+  using FaceMapType=FixedOneToManyRelation;
 
   /**
    * @name Static Factory Catalog Functions
@@ -215,13 +215,13 @@ protected:
 
 
   /// The elements to nodes relation
-  FixedOneToManyRelation  m_toNodesRelation;
+  NodeMapType  m_toNodesRelation;
 
   /// The elements to edges relation
-  FixedOneToManyRelation  m_toEdgesRelation;
+  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
-  FixedOneToManyRelation  m_toFacesRelation;
+  FaceMapType  m_toFacesRelation;
 
 
 //  CellBlock& operator=(const CellBlock& rhs);
