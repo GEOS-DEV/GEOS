@@ -162,6 +162,7 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
+    static constexpr auto numericalMethodString = "numericalMethod";
 
   } m_regionViewKeys;
 
@@ -175,6 +176,7 @@ private:
 
   ElementRegion& operator=(const ElementRegion& rhs);
   string_array m_materialList;
+  string m_numericalMethod;
 
 };
 

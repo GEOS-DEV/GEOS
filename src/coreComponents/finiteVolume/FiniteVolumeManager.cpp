@@ -37,7 +37,7 @@ using namespace dataRepository;
 FiniteVolumeManager::FiniteVolumeManager(string const &name, ManagedGroup *const parent)
   : ManagedGroup(name, parent)
 {
-
+  setInputFlags(InputFlags::OPTIONAL);
 }
 
 FiniteVolumeManager::~FiniteVolumeManager()
@@ -50,6 +50,17 @@ ManagedGroup * FiniteVolumeManager::CreateChild(string const &childKey, string c
   std::unique_ptr<FluxApproximationBase> approx = FluxApproximationBase::CatalogInterface::Factory(childKey, childName, this);
   return this->RegisterGroup<FluxApproximationBase>(childName, std::move(approx));
 }
+
+
+void FiniteVolumeManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from FluxApproximationBase here
+  for (auto& catalogIter: FluxApproximationBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 
 FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::string const &name) const
 {

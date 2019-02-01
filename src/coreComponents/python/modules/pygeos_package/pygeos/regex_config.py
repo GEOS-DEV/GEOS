@@ -1,5 +1,6 @@
 import re
 
+
 class RegexConfig():
   def __init__(self):
     self.parameters = r"\$:?([a-zA-Z_]*)\$?"
