@@ -39,7 +39,8 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.mathjax',
+    'sphinx.ext.mathjax'
+#    'sphinx.ext.imgmath'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -216,3 +217,24 @@ texinfo_documents = [
 
 # Added to allow figure numbering
 numfig = True
+
+# Additional stuff for the LaTeX preamble.
+latex_elements['preamble'] = '\usepackage{amsmath}\n\usepackage{amssymb}\n\usepackage[retainorgcmds]{IEEEtrantools}\n'
+
+#####################################################
+# add LaTeX macros 
+
+f = file('docs/sphinx/latex_macros.sty')
+
+try:
+    pngmath_latex_preamble  # check whether this is already defined
+except NameError:
+    pngmath_latex_preamble = ""
+
+for macro in f:
+    # used when building latex and pdf versions
+    latex_elements['preamble'] += macro + '\n'
+    # used when building html version
+    pngmath_latex_preamble += macro + '\n'
+print latex_elements['preamble']
+#####################################################
