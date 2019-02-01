@@ -54,6 +54,8 @@ EventBase::EventBase( const std::string& name,
   m_lastCycle(0),
   m_target(nullptr)
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  
   RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("event target");
@@ -130,6 +132,24 @@ ManagedGroup * EventBase::CreateChild( string const & childKey, string const & c
 }
 
 
+void EventBase::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent)
+{
+  // Create a choice node if necessary
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  if( targetChoiceNode.empty() )
+  {
+    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+    targetChoiceNode.append_attribute("minOccurs") = "0";
+    targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
+  }
+
+  // Enable recursion in the schema
+  this->getParent()->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
+  {
+    SchemaUtilities::SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
+  });
+}
 
 
 

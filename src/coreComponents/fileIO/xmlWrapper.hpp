@@ -48,6 +48,7 @@ public:
   using xmlResult = pugi::xml_parse_result;
   using xmlNode = pugi::xml_node;
   using xmlAttribute = pugi::xml_attribute;
+  using xmlTypes = pugi::xml_node_type;
 
   xmlWrapper();
   virtual ~xmlWrapper();

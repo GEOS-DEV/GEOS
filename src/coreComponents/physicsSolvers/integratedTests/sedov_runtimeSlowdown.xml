@@ -6,7 +6,7 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  courant="0.25"
+                                  cflFactor="0.25"
                                   targetRegions="Region2"/>
   </Solvers>
 
@@ -57,7 +57,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -84,10 +84,6 @@
   </Constitutive>
 
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
     <FieldSpecification name="source"  
                initialCondition="1"  
@@ -95,7 +91,7 @@
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="shale_MeanStress" 
                scale="-1.0e6"
-               function="spaceFunction"/>
+               functionName="spaceFunction"/>
                
     <!--FieldSpecification name="xpos"  
                initialCondition="1"  
@@ -130,17 +126,17 @@
 
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
+    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
   
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMFaces="1"/>
     <Restart name="sidreRestart"/>
 
   </Outputs>
@@ -148,8 +144,5 @@
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
-
-
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
 
 </Problem>

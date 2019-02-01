@@ -36,12 +36,14 @@ using namespace dataRepository;
 using namespace constitutive;
 FieldSpecificationManager::FieldSpecificationManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 
 FieldSpecificationManager * FieldSpecificationManager::get()
 {
-  static FieldSpecificationManager bcman( "bcMan", nullptr );
+  static FieldSpecificationManager bcman( "FieldSpecifications", nullptr );
   return &bcman;
 }
 
@@ -57,6 +59,15 @@ ManagedGroup * FieldSpecificationManager::CreateChild( string const & childKey, 
   return this->RegisterGroup( childName, std::move( bc ) );
 }
 
+
+void FieldSpecificationManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from BoundaryConditionBase here
+  for (auto& catalogIter: FieldSpecificationBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
 
 
 void FieldSpecificationManager::ApplyInitialConditions( ManagedGroup * domain ) const

@@ -5,7 +5,7 @@
 
   
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
 
     <SolidMechanics_LagrangianFEM name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
@@ -13,8 +13,7 @@
                                   discretization="FE1"
                                   targetRegions="Region2"
                                   >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-3"
                               maxIterNewton="8"
                               verbosityFlag="0"/>
@@ -72,7 +71,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -88,9 +87,6 @@
   </Constitutive>
 
 
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="frac"
@@ -135,9 +131,9 @@
   <Functions>
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
  
   <Outputs>
@@ -147,6 +143,6 @@
 
 
 
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
+  <!-- <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/> -->
 
 </Problem>
