@@ -33,6 +33,7 @@ OutputManager::OutputManager( std::string const & name,
                               ManagedGroup * const parent ):
   ManagedGroup( name, parent)
 {
+  setInputFlags(InputFlags::REQUIRED);
 }
 
 OutputManager::~OutputManager()
@@ -47,5 +48,14 @@ ManagedGroup * OutputManager::CreateChild( string const & childKey, string const
   return this->RegisterGroup<OutputBase>( childName, std::move(output) );
 }
 
+
+void OutputManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from OutputBase here
+  for (auto& catalogIter: OutputBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
 
 } /* namespace geosx */

@@ -25,6 +25,7 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "fileIO/schema/SchemaUtilities.hpp"
 
 
 namespace geosx
@@ -103,6 +104,15 @@ public:
    *       </Events>
    */
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+
+
+  /**
+   * This function is used to inform the schema generator of any
+   * deviations between the xml and GEOS data structures.
+   */
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent) override;
+
 
   /**
    * The target object for an event may be specified via the keyword "target" in the input xml.

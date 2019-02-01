@@ -230,19 +230,14 @@ class TestXMLProcessor(unittest.TestCase):
 
   def test_basic_xml(self):
     tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/basic.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/raw_basic.xml')
+    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_basic.xml')
 
   def test_includes_xml(self):
     tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/includes.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/raw_includes.xml')
+    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_includes.xml')
 
   def test_symbolic_xml(self):
     tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/symbolic.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/raw_symbolic.xml')
-
-  def test_formatting_xml(self):
-    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/symbolic.xml', verbose=0)
-    format_xml_file(tmp)
     self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_symbolic.xml')
 
 

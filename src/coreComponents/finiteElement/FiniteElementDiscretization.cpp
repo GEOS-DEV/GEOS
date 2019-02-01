@@ -46,6 +46,8 @@ using namespace dataRepository;
 FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
   RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
   RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
 }
@@ -119,8 +121,8 @@ void FiniteElementDiscretization::PostProcessInput()
   ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
   ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
   
-  m_basis = &(basisManager->getReference<BasisBase>(basisName));
-  m_quadrature = &(quadratureManager->getReference<QuadratureBase>(quadratureName));
+  m_basis = basisManager->GetGroup<BasisBase>(basisName);
+  m_quadrature = quadratureManager->GetGroup<QuadratureBase>(quadratureName);
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 }
 
