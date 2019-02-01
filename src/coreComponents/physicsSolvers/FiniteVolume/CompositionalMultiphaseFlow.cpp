@@ -1929,7 +1929,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
 {
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * elementRegion,
-                                   auto const * const subRegion )
+                                   CellBase const * const subRegion )
   {
     arrayView1d<real64 const> const & dPres     = m_deltaPressure[er][esr];
     arrayView2d<real64 const> const & dCompDens = m_deltaGlobalCompDensity[er][esr];

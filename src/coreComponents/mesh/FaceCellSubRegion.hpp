@@ -29,9 +29,9 @@ class FaceCellSubRegion : public CellBase
 {
 public:
 
-  using ToNodeMap=OrderedVariableOneToManyRelation;
-  using ToEdgesMap=OrderedVariableOneToManyRelation;
-  using ToFacesMap=FixedOneToManyRelation;
+  using NodeMapType=OrderedVariableOneToManyRelation;
+  using EdgeMapType=OrderedVariableOneToManyRelation;
+  using FaceMapType=FixedOneToManyRelation;
 
   static const string CatalogName()
   { return "FaceCell"; }
@@ -102,13 +102,13 @@ public:
 private:
 
   /// The elements to nodes relation
-  OrderedVariableOneToManyRelation  m_toNodesRelation;
+  NodeMapType  m_toNodesRelation;
 
   /// The elements to edges relation
-  OrderedVariableOneToManyRelation  m_toEdgesRelation;
+  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
-  FixedOneToManyRelation  m_toFacesRelation;
+  FaceMapType  m_toFacesRelation;
 
   /// The member level field for the element center
   array1d< R1Tensor > m_elementAperture;
