@@ -37,7 +37,9 @@ namespace constitutive
 ConstitutiveManager::ConstitutiveManager( string const & name,
                                           ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 ConstitutiveManager::~ConstitutiveManager()
 {}
@@ -48,6 +50,17 @@ ManagedGroup * ConstitutiveManager::CreateChild( string const & childKey, string
   std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
   return RegisterGroup<ConstitutiveBase>( childName, std::move( material ) );
 }
+
+
+void ConstitutiveManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from ConstitutiveBase here
+  for (auto& catalogIter: ConstitutiveBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 
 ConstitutiveBase *
 ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,

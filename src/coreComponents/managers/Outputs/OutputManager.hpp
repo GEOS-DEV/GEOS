@@ -53,6 +53,9 @@ public:
   /// Catalog name interface
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
+
   struct viewKeyStruct
   {
     dataRepository::ViewKey time = { "time" };

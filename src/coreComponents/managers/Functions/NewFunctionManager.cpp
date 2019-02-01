@@ -37,7 +37,9 @@ using namespace dataRepository;
 NewFunctionManager::NewFunctionManager( const std::string& name,
                                         ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 NewFunctionManager::~NewFunctionManager()
 {
@@ -51,6 +53,16 @@ ManagedGroup * NewFunctionManager::CreateChild( string const & functionCatalogKe
   GEOS_LOG_RANK_0("   " << functionCatalogKey << ": " << functionName);
   std::unique_ptr<FunctionBase> function = FunctionBase::CatalogInterface::Factory( functionCatalogKey, functionName, this );
   return this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
+}
+
+
+void NewFunctionManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from FunctionBase here
+  for (auto& catalogIter: FunctionBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 } /* namespace ANST */

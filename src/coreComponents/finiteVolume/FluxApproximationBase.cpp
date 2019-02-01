@@ -37,6 +37,8 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
     m_boundaryFieldName(),
     m_coeffName()
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
   m_boundarySetData = this->RegisterGroup(groupKeyStruct::boundarySetDataString);
 
   RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->

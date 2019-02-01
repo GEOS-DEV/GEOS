@@ -4,7 +4,7 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
 
     <Poroelastic name="poroSolve" 
                  solidSolverName="lagsolve"
@@ -12,10 +12,8 @@
                  couplingTypeOption="FixedStress"
                  verboseLevel="1"
                  discretization="FE1"
-                 targetRegions="Region2"
-                 >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              maxIterNewton="40"
+                 targetRegions="Region2">
+      <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
     </Poroelastic>
 
@@ -26,8 +24,7 @@
                                   discretization="FE1"
                                   targetRegions="Region2"
                                   >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="5"
                               verbosityFlag="2"/>
@@ -40,8 +37,7 @@
                      targetRegions="Region2"
                      fluidName="water"
                      solidName="shale">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
@@ -106,7 +102,7 @@
     </QuadratureRules>
 
     <FiniteElements>
-      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
     
     <FiniteVolume>
@@ -141,9 +137,6 @@
                                   
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="permx"
@@ -222,14 +215,14 @@
   </FieldSpecifications>
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
-    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
+    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition"  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
   <Outputs>
       <Silo name="siloOutput"/>

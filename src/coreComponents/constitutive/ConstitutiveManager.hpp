@@ -53,6 +53,9 @@ public:
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override final;
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
+
   ConstitutiveBase *
   HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                             dataRepository::ManagedGroup * const parent,

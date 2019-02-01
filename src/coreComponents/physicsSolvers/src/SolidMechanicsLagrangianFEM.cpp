@@ -189,7 +189,9 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
   m_nonSendOrRecieveNodes(),
   m_icomm()
 {
-  getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
+  // To generate the schema, multiple solvers of that use this command are constructed
+  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
+  // getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
 
 
   RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
@@ -260,6 +262,13 @@ void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const Mesh
 }
 
 
+void SolidMechanics_LagrangianFEM::InitializePreSubGroups(ManagedGroup * const rootGroup)
+{
+  SolverBase::InitializePreSubGroups(rootGroup);
+
+  // set the blockID for the block system interface
+  getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
+}
 
 
 void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )

@@ -36,6 +36,8 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, ManagedGrou
 //  m_endTime(1e9),
 //  m_bcApplicationFunctionName()
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->

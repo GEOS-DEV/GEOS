@@ -4,25 +4,22 @@ from lxml import etree as ElementTree
 
 def format_xml_file(input_file, output_file=''):
 
-  # This should be updated when possible
   active_blocks = ['Solvers',
-                   'SolverApplications',
+                   'Outputs',
+                   'Events',
                    'Mesh',
-                   'ElementRegions',
-                   'Contact',
                    'Partition',
-                   'Output',
+                   'NumericalMethods',
+                   'ElementRegions',
+                   'Constitutive',
                    'InitialConditions',
-                   'InitialConstitutiveValues',
-                   'BoundaryConditions',
-                   'Tables',
-                   'Fracture',
-                   'Facesets',
-                   'Nodesets']
+                   'FieldSpecifications',
+                   'Functions',
+                   'Geometry',
+                   'Fracture']
 
   documentation_blocks = ['Included',
-                          'Parameters',
-                          'DFNSets']
+                          'Parameters']
 
 
   # Open new files

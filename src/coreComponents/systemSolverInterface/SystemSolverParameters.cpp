@@ -50,6 +50,8 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   m_maxIterNewton(),
   m_numNewtonIterations()
 {
+  setInputFlags(InputFlags::OPTIONAL);
+  
   setRestartFlags(RestartFlags::NO_WRITE);
   RegisterViewWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
     setApplyDefaultValue(0)->

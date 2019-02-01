@@ -2,7 +2,7 @@
 <!--# # -->
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                           verboseLevel="0"
@@ -11,8 +11,7 @@
                           solidName="rock"
                           discretization="singlePhaseTPFA"
                           targetRegions="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
@@ -23,8 +22,8 @@
           file="../cube_tet.vtm"/>
   </Mesh>
   <Geometry>
-    <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
-    <Box name="left" xMin="-1, -1, -1" xMax=" 0.9, 11, 11"/>
+    <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
+    <Box name="left" xMin="-1, -1, -1" xMax="0.9, 11, 11"/>
   </Geometry>
   <Events maxTime="100">
     <!-- This event is applied every cycle, and overrides the
@@ -42,17 +41,14 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"
-                   endtime="-1"/>
+                   target="/Outputs/sidreRestart"/>
   </Events>
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
                                  boundaryFieldName="facePressure"
-                                 coefficientName="permeability"
-                                 cellLocation="center"
-                                 faceLocation="center"/>
+                                 coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
   <ElementRegions>
@@ -69,9 +65,6 @@
                                  referencePressure="0.0"
                                  compressibility="1e-9"/>
   </Constitutive>
-  <InitialConditions>
-    
-  </InitialConditions>
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
@@ -114,9 +107,9 @@
   </FieldSpecifications>
   <Functions>
   </Functions>
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
   <Outputs>
       <Silo name="siloWellPump"/>
       <Restart name="sidreRestart"/>

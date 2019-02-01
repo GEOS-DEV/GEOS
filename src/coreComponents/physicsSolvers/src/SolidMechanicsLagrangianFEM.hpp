@@ -61,6 +61,8 @@ public:
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,

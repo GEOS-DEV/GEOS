@@ -41,8 +41,8 @@ public:
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-private:
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override final;
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
 };
 

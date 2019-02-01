@@ -39,6 +39,8 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
   m_gravityVector( R1Tensor(0.0) ),
   m_blockSystemRepository()
 {
+  setInputFlags(InputFlags::REQUIRED);
+
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
     setApplyDefaultValue({0,0,0})->
     setInputFlag(InputFlags::OPTIONAL);
@@ -62,6 +64,15 @@ ManagedGroup * PhysicsSolverManager::CreateChild( string const & childKey, strin
   return rval;
 }
 
+
+void PhysicsSolverManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from SolverBase here
+  for (auto& catalogIter: SolverBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
 
 
 } /* namespace geosx */
