@@ -81,6 +81,8 @@ public:
    */
   static string CatalogName() { return "SinglePhaseFlow"; }
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
   virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
   virtual real64 SolverStep( real64 const& time_n,

@@ -4,7 +4,7 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
                                  verboseLevel="1"
@@ -16,8 +16,7 @@
                                  relPermName="relperm"
                                  temperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="15"
                               useDirectSolver="1"
@@ -40,8 +39,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax="1.01, 1.01, 1.01"/>
+    <Box name="sink"   xMin="8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -80,10 +79,10 @@
                                   phaseNames="oil gas"
                                   equationsOfState="PR PR"
                                   componentNames="N2 C10 C20 H2O"
-                                  componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"
-                                  componentCriticalTemperature="126.2,622.0,782.0,647.0"
-                                  componentAcentricFactor="0.04,0.443,0.816,0.344"
-                                  componentMolarWeight="28e-3,134e-3,275e-3,18e-3"
+                                  componentCriticalPressure="34e5, 25.3e5, 14.6e5, 220.5e5"
+                                  componentCriticalTemperature="126.2, 622.0, 782.0, 647.0"
+                                  componentAcentricFactor="0.04, 0.443, 0.816, 0.344"
+                                  componentMolarWeight="28e-3, 134e-3, 275e-3, 18e-3"
                                   componentVolumeShift="0 0 0 0"
                                   componentBinaryCoeff="0 0 0 0
                                                         0 0 0 0
@@ -100,10 +99,6 @@
                                      phaseRelPermExponent="2.0 2.0"
                                      phaseRelPermMaxValue="0.8 0.9"/>
   </Constitutive>
-
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="permx"
@@ -262,9 +257,9 @@
 
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
   <Outputs>
     <Silo name="siloOutput"/>

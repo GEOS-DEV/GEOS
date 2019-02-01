@@ -42,6 +42,7 @@ using namespace dataRepository;
 ElementRegionManager::ElementRegionManager(  string const & name, ManagedGroup * const parent ):
   ObjectManagerBase(name,parent)
 {
+  setInputFlags(InputFlags::OPTIONAL);
   this->RegisterGroup<ManagedGroup>(keys::elementRegions);
 }
 
@@ -101,6 +102,29 @@ ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, strin
    return elementRegions->RegisterGroup<ElementRegion>( childName );
  }
 
+
+void ElementRegionManager::ExpandObjectCatalogs()
+{
+  // Create an empty region for schema generation
+  // Are there going to be more types in the future?
+  CreateChild( "ElementRegion", "ElementRegion" );
+}
+
+
+void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                               xmlWrapper::xmlNode schemaParent)
+{
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  if( targetChoiceNode.empty() )
+  {
+    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+    targetChoiceNode.append_attribute("minOccurs") = "0";
+    targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
+  }
+
+  ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
+  SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode);
+}
 
 //void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 //{

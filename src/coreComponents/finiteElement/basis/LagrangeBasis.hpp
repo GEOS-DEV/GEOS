@@ -44,9 +44,11 @@ public:
     return name;
   }
 
-  LagrangeBasis(void){}
+  LagrangeBasis( std::string const & name, ManagedGroup * const parent );
 
-  LagrangeBasis( const int degree );
+  virtual ~LagrangeBasis() override;
+
+  virtual void PostProcessInput() override;
 
   int size() const override final;
 
@@ -58,7 +60,10 @@ public:
 
   R1Tensor support_point( const int index ) override final;
 
-  void ReadXML( xmlWrapper::xmlNode const & targetNode ) override final;
+  struct viewKeyStruct
+  {
+    static constexpr auto degreeString = "degree";
+  } viewKeys;
 
 private:
 

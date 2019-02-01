@@ -1,11 +1,11 @@
 
 
-========== ====== ======= ======== ========================== 
-Name       Type   Default Use      Description                
-========== ====== ======= ======== ========================== 
-basis      string         required (no description available) 
-quadrature string         required (no description available) 
-name       string         required                            
-========== ====== ======= ======== ========================== 
+========== ====== ======= =========================================== 
+Name       Type   Default Description                                 
+========== ====== ======= =========================================== 
+basis      string         (no description available)                  
+quadrature string         (no description available)                  
+name       string         A name is required for any non-unique nodes 
+========== ====== ======= =========================================== 
 
 

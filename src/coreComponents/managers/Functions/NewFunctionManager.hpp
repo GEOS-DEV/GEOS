@@ -43,13 +43,17 @@ public:
 
   static NewFunctionManager * Instance()
   {
-    static NewFunctionManager theFunctionManager("LastFunctionManagerOnEarth", nullptr);
+    static NewFunctionManager theFunctionManager("Functions", nullptr);
 
     return &theFunctionManager;
   }
 
   static string CatalogName() { return "NewFunctionManager"; }
   virtual ManagedGroup * CreateChild( string const & functionCatalogKey, string const & functionName ) override;
+
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
+  
 };
 
 

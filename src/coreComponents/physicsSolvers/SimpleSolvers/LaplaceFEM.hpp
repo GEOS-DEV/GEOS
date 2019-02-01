@@ -61,6 +61,8 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
   /**
    * @defgroup Solver Interface Functions
    *

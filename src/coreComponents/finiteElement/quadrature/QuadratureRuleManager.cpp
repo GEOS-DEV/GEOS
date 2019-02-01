@@ -25,7 +25,9 @@ using namespace dataRepository;
 
 QuadratureRuleManager::QuadratureRuleManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 QuadratureRuleManager::~QuadratureRuleManager()
 {
@@ -35,26 +37,19 @@ QuadratureRuleManager::~QuadratureRuleManager()
 
 ManagedGroup * QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey );
-  this->RegisterViewWrapper( childName, std::move(quadrature) )->setRestartFlags(RestartFlags::NO_WRITE);
-  return nullptr;
+  std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup<QuadratureBase>( childName, std::move(quadrature) );
 }
 
-// Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void QuadratureRuleManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-{
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    std::string childName = childNode.attribute("name").value();
-    QuadratureBase * quadrature = this->getPointer<QuadratureBase>(childName);
 
-    if (quadrature != nullptr)
-    {
-      quadrature->ReadXML(childNode);
-    }
+void QuadratureRuleManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from QuadratureBase here
+  for (auto& catalogIter: QuadratureBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
   }
 }
-
 
 
 } /* namespace geosx */

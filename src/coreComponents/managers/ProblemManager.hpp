@@ -67,10 +67,17 @@ public:
    */
   ///@{
   const static string CatalogName() 
-  { return "ProblemManager"; }
+  { return "Problem"; }
   virtual const string getCatalogName() const override final
   { return ProblemManager::CatalogName(); }
   ///@}
+
+  /**
+   * This function is used to inform the schema generator of any
+   * deviations between the xml and GEOS data structures.
+   */
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent) override;
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
 
@@ -83,6 +90,8 @@ public:
   void InitializePythonInterpreter();
 
   void ClosePythonInterpreter();
+
+  void GenerateDocumentation();
 
   void ParseInputFile();
 
@@ -121,6 +130,9 @@ public:
   const string & getRestartFileName() const
   { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
 
+  const string & getSchemaFileName() const
+  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
   xmlWrapper::xmlNode xmlProblemNode;
@@ -135,7 +147,7 @@ public:
     dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};
     dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
     dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
-    dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
+    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
   } viewKeys;

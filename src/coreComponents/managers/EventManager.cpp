@@ -44,6 +44,8 @@ EventManager::EventManager( std::string const & name,
   m_currentSubEvent(),
   m_currentMaxDt()
 {
+  setInputFlags(InputFlags::REQUIRED);
+  
   RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -58,7 +60,6 @@ EventManager::EventManager( std::string const & name,
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation time.");
-
 
   RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
@@ -79,7 +80,6 @@ EventManager::EventManager( std::string const & name,
   RegisterViewWrapper(viewKeyStruct::currentMaxDtString, &m_currentMaxDt, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Maximum dt request for event loop.");
-
 
 }
 
@@ -115,6 +115,16 @@ ManagedGroup * EventManager::CreateChild( string const & childKey, string const 
 }
 
 
+void EventManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from EventBase here
+  for (auto& catalogIter: EventBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
+
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
@@ -131,7 +141,6 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   // Setup MPI communication
   integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
   integer const comm_size = CommunicationTools::MPI_Size(MPI_COMM_GEOSX );;
-
   real64 send_buffer[2];
   array1d<real64> receive_buffer(2 * comm_size);
 

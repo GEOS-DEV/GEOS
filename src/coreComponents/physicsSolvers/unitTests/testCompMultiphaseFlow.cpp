@@ -621,7 +621,7 @@ protected:
 
 };
 
-ProblemManager CompositionalMultiphaseFlowTest::problemManager("ProblemManager", nullptr);
+ProblemManager CompositionalMultiphaseFlowTest::problemManager("Problem", nullptr);
 CompositionalMultiphaseFlow * CompositionalMultiphaseFlowTest::solver = nullptr;
 
 TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition)

@@ -38,7 +38,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const finiteElementSpace = "finiteElementSpace";
+string const finiteElementSpace = "FiniteElementSpace";
 string const basis = "basis";
 string const quadrature = "quadrature";
 string const dNdX = "dNdX";

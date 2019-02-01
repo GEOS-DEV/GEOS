@@ -11,8 +11,7 @@
                                   discretization="FE1"
                                   targetRegions="Region2"
                                   >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              useMLPrecond="1"
+      <SystemSolverParameters useMLPrecond="1"
                               scalingOption="0"
                               krylovTol="1.0e-8"
                               newtonTol="1.0e-4"
@@ -68,7 +67,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -87,11 +86,6 @@
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
   </Constitutive>
-
-
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="xnegconstraint" 
@@ -132,9 +126,9 @@
                    values="0.0 10.0" />
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
  
   <Outputs>
@@ -144,8 +138,8 @@
   
   <Geometry>
     <Box name="source"
-         xMin="  -1.0, -1.0e-6, -1.0"
-         xMax="  0.041,  1.0e-6,  0.041"/>
+         xMin="-1.0, -1.0e-6, -1.0"
+         xMax="0.041, 1.0e-6, 0.041"/>
   </Geometry>
 
 

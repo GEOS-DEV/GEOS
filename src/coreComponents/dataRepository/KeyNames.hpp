@@ -47,8 +47,8 @@ static constexpr auto Force = "Force";
 static constexpr auto Strain = "Strain";
 static constexpr auto Name = "name";
 static constexpr auto Size = "size";
-static constexpr auto ProblemManager = "ProblemManager";
-static constexpr auto ConstitutiveManager = "ConstitutiveManager";
+static constexpr auto ProblemManager = "Problem";
+static constexpr auto ConstitutiveManager = "Constitutive";
 static constexpr auto ConstitutiveBase = "ConstitutiveBase";
 static constexpr auto solverNames = "solverNames";
 
