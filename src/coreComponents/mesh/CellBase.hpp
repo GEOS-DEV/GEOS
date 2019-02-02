@@ -56,8 +56,8 @@ public:
   };
 
 
-  virtual arraySlice1d<localIndex const> nodeList( localIndex const k ) const = 0;
-  virtual arraySlice1d<localIndex> nodeList( localIndex const k ) = 0;
+  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const = 0;
+  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) = 0;
 
 
   /**

@@ -156,12 +156,12 @@ public:
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
 
-  virtual arraySlice1d<localIndex const> nodeList( localIndex const k ) const override
+  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
   {
     return m_toNodesRelation[k];
   }
 
-  virtual arraySlice1d<localIndex> nodeList( localIndex const k ) override
+  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
   {
     return m_toNodesRelation[k];
   }
