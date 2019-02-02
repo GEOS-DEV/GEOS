@@ -13,8 +13,8 @@ substepFactor        integer 1       integer substep factor (dt_sub=dt/f)
 targetExactStartStop integer 0       allows timesteps to be truncated to match the start/stop times exactly 
 maxRuntime           real64  0       max runtime                                                            
 name                 string          A name is required for any non-unique nodes                            
-HaltEvent            node            :ref:`XML_HaltEvent`                                                   
 SoloEvent            node            :ref:`XML_SoloEvent`                                                   
+HaltEvent            node            :ref:`XML_HaltEvent`                                                   
 PeriodicEvent        node            :ref:`XML_PeriodicEvent`                                               
 ==================== ======= ======= ====================================================================== 
 

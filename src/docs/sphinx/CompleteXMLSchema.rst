@@ -42,18 +42,18 @@ Element: Events
 .. include:: ../../coreComponents/fileIO/schema/docs/Events.rst
 
 
-.. _XML_HaltEvent:
-
-Element: HaltEvent
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
-
-
 .. _XML_SoloEvent:
 
 Element: SoloEvent
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/SoloEvent.rst
+
+
+.. _XML_HaltEvent:
+
+Element: HaltEvent
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
 .. _XML_PeriodicEvent:
@@ -210,13 +210,6 @@ Element: Outputs
 .. include:: ../../coreComponents/fileIO/schema/docs/Outputs.rst
 
 
-.. _XML_ChomboIO:
-
-Element: ChomboIO
-=================
-.. include:: ../../coreComponents/fileIO/schema/docs/ChomboIO.rst
-
-
 .. _XML_Blueprint:
 
 Element: Blueprint
@@ -229,6 +222,13 @@ Element: Blueprint
 Element: Restart
 ================
 .. include:: ../../coreComponents/fileIO/schema/docs/Restart.rst
+
+
+.. _XML_ChomboIO:
+
+Element: ChomboIO
+=================
+.. include:: ../../coreComponents/fileIO/schema/docs/ChomboIO.rst
 
 
 .. _XML_Silo:
@@ -245,11 +245,11 @@ Element: Solvers
 .. include:: ../../coreComponents/fileIO/schema/docs/Solvers.rst
 
 
-.. _XML_DummySolver:
+.. _XML_SurfaceGenerator:
 
-Element: DummySolver
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver.rst
+Element: SurfaceGenerator
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceGenerator.rst
 
 
 .. _XML_SolidMechanics_LagrangianFEM:
@@ -257,13 +257,6 @@ Element: DummySolver
 Element: SolidMechanics_LagrangianFEM
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
-
-
-.. _XML_CompositionalMultiphaseFlow:
-
-Element: CompositionalMultiphaseFlow
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
 
 
 .. _XML_SinglePhaseFlow:
@@ -280,11 +273,18 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/LaplaceFEM.rst
 
 
-.. _XML_SurfaceGenerator:
+.. _XML_DummySolver:
 
-Element: SurfaceGenerator
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceGenerator.rst
+Element: DummySolver
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver.rst
+
+
+.. _XML_CompositionalMultiphaseFlow:
+
+Element: CompositionalMultiphaseFlow
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
 
 
 .. _XML_Poroelastic:
@@ -329,11 +329,11 @@ Element: Constitutive
 .. include:: ../../coreComponents/fileIO/schema/docs/Constitutive.rst
 
 
-.. _XML_VanGenuchtenCapillaryPressure:
+.. _XML_CompositionalMultiphaseFluid:
 
-Element: VanGenuchtenCapillaryPressure
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
+Element: CompositionalMultiphaseFluid
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
 
 
 .. _XML_BlackOilFluid:
@@ -343,25 +343,11 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
-.. _XML_BrooksCoreyCapillaryPressure:
+.. _XML_VanGenuchtenCapillaryPressure:
 
-Element: BrooksCoreyCapillaryPressure
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyCapillaryPressure.rst
-
-
-.. _XML_BrooksCoreyRelativePermeability:
-
-Element: BrooksCoreyRelativePermeability
-========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
-
-
-.. _XML_CompositionalMultiphaseFluid:
-
-Element: CompositionalMultiphaseFluid
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+Element: VanGenuchtenCapillaryPressure
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
 .. _XML_PoreVolumeCompressibleSolid:
@@ -376,6 +362,20 @@ Element: PoreVolumeCompressibleSolid
 Element: CompressibleSinglePhaseFluid
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompressibleSinglePhaseFluid.rst
+
+
+.. _XML_BrooksCoreyCapillaryPressure:
+
+Element: BrooksCoreyCapillaryPressure
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyCapillaryPressure.rst
+
+
+.. _XML_BrooksCoreyRelativePermeability:
+
+Element: BrooksCoreyRelativePermeability
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
 .. _XML_LinearElasticIsotropic:

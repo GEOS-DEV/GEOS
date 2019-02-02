@@ -1,6 +1,6 @@
 .. _FiniteElement:
 
-Finite Element methods
+Finite Element Discretization
 -------------------------------
 
 This section describes the Finite Element methods used by FEM solvers.

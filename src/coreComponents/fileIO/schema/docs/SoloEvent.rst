@@ -12,8 +12,8 @@ allowSubstep         integer 0       allows event sub-stepping
 substepFactor        integer 1       integer substep factor (dt_sub=dt/f)                                   
 targetExactStartStop integer 0       allows timesteps to be truncated to match the start/stop times exactly 
 name                 string          A name is required for any non-unique nodes                            
-HaltEvent            node            :ref:`XML_HaltEvent`                                                   
 SoloEvent            node            :ref:`XML_SoloEvent`                                                   
+HaltEvent            node            :ref:`XML_HaltEvent`                                                   
 PeriodicEvent        node            :ref:`XML_PeriodicEvent`                                               
 ==================== ======= ======= ====================================================================== 
 
