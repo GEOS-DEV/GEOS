@@ -21,6 +21,7 @@ def writeTableRST(file_name, values):
     formatted_lines.append('')
     for jj in range(0, len(values[ii])):
       formatted_lines[ii] += string.ljust(values[ii][jj], M[jj]) + ' '
+
     formatted_lines[ii] += '\n'
 
   # Build table
@@ -69,7 +70,13 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
 
     # Parse attributes
     for attribute_node in child_node.findall(xsd + 'attribute'):
-      table_values.append([attribute_node.get(v, default=' ') for v in ['name', 'type', 'default']])
+      table_row = [attribute_node.get(v, default=' ') for v in ['name', 'type', 'default']]
+      useValue = attribute_node.get('use')
+      if useValue:
+        table_row[2] = useValue
+ 
+      table_values.append(table_row)
+ 
       k = table_values[-1][0]
       if k in attribute_comments:
         table_values[-1].append(attribute_comments[k])
