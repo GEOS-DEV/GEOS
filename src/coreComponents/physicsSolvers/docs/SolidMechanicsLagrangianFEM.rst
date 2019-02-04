@@ -90,8 +90,26 @@ The Quasi-Static time integration option solves the equation of motion after rem
 
 which is essentially a way to express the equation for static equilibrium (:math:`\Sigma F=0`).
 Thus, selection of the Quasi-Static option will yeild a solution where the sum of all forces at a given node is equal to zero.
+The resulting finite element discretized set of residual equations are expressed as
 
+.. math::   
+   (R_{solid})_{ai}=\int\limits_{\Gamma_t} \Phi_a t_i   dA  - \int\limits_\Omega \Phi_{a,j} T_{ij}   dV + \int\limits_\Omega \Phi_a \rho b_{i}  dV = 0,
+   
+Taking the derivative of these residual equations wrt. the primary variable (displacement) yields 
 
+.. math::
+    \pderiv{(R_{solid}^e)_{ai}}{u_{bj}} &= 
+            - \int\limits_{\Omega^e} \Phi_{a,k} \frac{\partial T_{ik}}{\partial u_{bj}}   dV,
+
+And finally, the expression for the residual equation and derivative are used to express a non-linear system of equations
+
+.. math::
+   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_k 
+   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{k+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_k \right) 
+   = - (R_{solid})_{ai}|^{n+1}_k ,
+
+which are solved via the solver package.
+ 
 Implicit Dynamics Time Integration (Newmark Method)
 ---------------------------------------------------
 For implicit dynamic time integration, we use an implemention of the classical Newmark method.
@@ -146,23 +164,47 @@ equation of motion.
 We may express the system in context of a nonlinear residual problem
 
 .. math::
-    (R_{ss}^e)_{ai} &= 
+    (R_{solid}^e)_{ai} &= 
         \int\limits_{\Gamma_t^e} \Phi_a t_i   dA  \\
         &- \int\limits_{\Omega^e} \Phi_{a,j} \left(T_{ij}^{n+1}+  a_{stiff} \left(\pderiv{T_{ij}^{n+1}}{\hat{u}_{bk}} \right)_{elastic} \left( \tilde{v}_{bk}^{n+1} + \frac{\gamma}{\beta \Delta t} \left(\hat{u}_{bk} - \hat{\tilde{u}}_{bk} \right) \right) \right)  dV \notag \\
         &+\int\limits_{\Omega^e} \Phi_a \rho \left(b_{i}- \Phi_b  \left( a_{mass} \left( \tilde{v}_{bi}^{n+1} + \frac{\gamma}{\beta \Delta t} \left(\hat{u}_{bi} - \hat{\tilde{u}}_{bi} \right) \right) + \frac{1}{\beta \Delta t^2}  \left( \hat{u}_{bi} - \hat{\tilde{u}}_{bi} \right) \right) \right)  dV ,\notag \\
-    \pderiv{(R_{ss}^e)_{ai}}{\hat{u}_{bj}} &= 
+    \pderiv{(R_{solid}^e)_{ai}}{\hat{u}_{bj}} &= 
         - \int\limits_{\Omega^e} \Phi_{a,k} \left(\pderiv{T_{ik}^{n+1}}{\hat{u}_{bj}}+  a_{stiff} \frac{\gamma}{\beta \Delta t} \left(\pderiv{T_{ik}^{n+1}}{\hat{u}_{bj}} \right)_{elastic} \right)   dV \notag \\
-        &- \left( \frac{\gamma a_{mass}}{\beta \Delta t} + \frac{1}{\beta \Delta t^2}  \right) \int\limits_{\Omega^e} \rho \Phi_a \Phi_c    \pderiv{ \hat{u}_{ci} }{\hat{u}_{bj}}dV 
+        &- \left( \frac{\gamma a_{mass}}{\beta \Delta t} + \frac{1}{\beta \Delta t^2}  \right) \int\limits_{\Omega^e} \rho \Phi_a \Phi_c    \pderiv{ \hat{u}_{ci} }{\hat{u}_{bj}}dV .
+
+Again, the expression for the residual equation and derivative are used to express a non-linear system of equations
+
+.. math::
+   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_k 
+   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{k+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_k \right) 
+   = - (R_{solid})_{ai}|^{n+1}_k ,
+
+which are solved via the solver package.
 
 Explicit Dynamics Time Integration  (Special Implementation of Newmark Method with \gamma=0.5, \beta=0)
 -------------------------------------------------------------------------------------------------------
 For the Newmark Method, if \gamma=0.5, \beta=0, and the inertial term contains a diagonalized "mass matrix", 
 the update equations may be carried out without the solution of a system of equations. 
-In this case, the update equations simplify to:
+In this case, the update equations simplify to a non-iterative update algorithm.
+
+First the mid-step velocity and end-of-step displacements are calculated through the update equations
 
 .. math::
-   v^{n+1/2} &= v^{n} + \inv{2} a^n \Delta t \\
-   u^{n+1} &= u^n + v^{n+1/2} \Delta t,  \\
-   a^{n+1} &= M^{-1} \left(F_{n+1} - C v^{n+1} - K u^{n+1} \right)   \\
+   v^{n+1/2} &= v^{n} + \inv{2} a^n \Delta t, \text{ and} \\
+   u^{n+1} &= u^n + v^{n+1/2} \Delta t.
+
+Then the residual equation/s are calculated, and acceleration at the end-of-step is calculated via
+
+.. math::
+   \left( M + \frac{\Delta t}{2} C \right) a^{n+1} &=  F_{n+1} - C v^{n+1/2} - K u^{n+1} .
+
+Note that the mass matrix must be diagonal, and damping term may not include the stiffness based damping 
+coefficent for this method, otherwise the above equation will require a system solve.
+Finally, the end-of-step velocities are calculated from the end of step acceleration:   
+
+.. math::
    v^{n+1} &= v^{n+1/2} + \inv{2} a^{n+1} \Delta t.
 
+Note that the velocities may be stored at the midstep, resulting one less kinematic update. 
+This approach is typeically referred to as the "Leapfrog" method.
+However, GEOSX we do not offer this option since it can cause some confusion that result from the storage of state at different points in time.
