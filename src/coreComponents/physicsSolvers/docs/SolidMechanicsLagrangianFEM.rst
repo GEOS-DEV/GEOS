@@ -48,6 +48,7 @@ Definition of Terms
    l,m &\equiv \text {indices over volumetric elements} \notag \\
    q,r,s   &\equiv \text {indices over faces} \notag \\
    n &\equiv \text {indices over time} \notag \\
+   kiter &\equiv \text {iteration count for non-linear solution scheme} \notag \\
    \Omega &\equiv \text {Volume of continuum body} \notag \\
    \Omega_{crack} &\equiv \text {Volume of open crack} \notag \\
    \Gamma &\equiv \text {External surface of } \Omega \notag \\
@@ -104,9 +105,9 @@ Taking the derivative of these residual equations wrt. the primary variable (dis
 And finally, the expression for the residual equation and derivative are used to express a non-linear system of equations
 
 .. math::
-   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_k 
-   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{k+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_k \right) 
-   = - (R_{solid})_{ai}|^{n+1}_k ,
+   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_{kiter} 
+   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{{kiter}+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_{kiter} \right) 
+   = - (R_{solid})_{ai}|^{n+1}_{kiter} ,
 
 which are solved via the solver package.
  
@@ -175,11 +176,12 @@ We may express the system in context of a nonlinear residual problem
 Again, the expression for the residual equation and derivative are used to express a non-linear system of equations
 
 .. math::
-   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_k 
-   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{k+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_k \right) 
-   = - (R_{solid})_{ai}|^{n+1}_k ,
+   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_{kiter} 
+   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{{kiter}+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_{kiter} \right) 
+   = - (R_{solid})_{ai}|^{n+1}_{kiter} ,
 
-which are solved via the solver package.
+which are solved via the solver package. Note that the derivatives involving :math:`u` and :math`\hat{u}` are interchangable, 
+as are differences between the non-linear iterations.
 
 Explicit Dynamics Time Integration  (Special Implementation of Newmark Method with \gamma=0.5, \beta=0)
 -------------------------------------------------------------------------------------------------------
@@ -190,21 +192,21 @@ In this case, the update equations simplify to a non-iterative update algorithm.
 First the mid-step velocity and end-of-step displacements are calculated through the update equations
 
 .. math::
-   v^{n+1/2} &= v^{n} + \inv{2} a^n \Delta t, \text{ and} \\
-   u^{n+1} &= u^n + v^{n+1/2} \Delta t.
+   \tensor{v}^{n+1/2} &= \tensor{v}^{n} +  \tensor{a}^n \left( \frac{\Delta t}{2} \right), \text{ and} \\
+   \tensor{u}^{n+1} &= \tensor{u}^n + \tensor{v}^{n+1/2} \Delta t.
 
 Then the residual equation/s are calculated, and acceleration at the end-of-step is calculated via
 
 .. math::
-   \left( M + \frac{\Delta t}{2} C \right) a^{n+1} &=  F_{n+1} - C v^{n+1/2} - K u^{n+1} .
+   \left( \tensor{M} + \frac{\Delta t}{2} \tensor{C} \right) \tensor{a}^{n+1} &=  \tensor{F}_{n+1} - \tensor{C} v^{n+1/2} - \tensor{K} u^{n+1} .
 
 Note that the mass matrix must be diagonal, and damping term may not include the stiffness based damping 
 coefficent for this method, otherwise the above equation will require a system solve.
 Finally, the end-of-step velocities are calculated from the end of step acceleration:   
 
 .. math::
-   v^{n+1} &= v^{n+1/2} + \inv{2} a^{n+1} \Delta t.
+   \tensor{v}^{n+1} &= \tensor{v}^{n+1/2} + \tensor{a}^{n+1} \left( \frac{\Delta t}{2} \right).
 
 Note that the velocities may be stored at the midstep, resulting one less kinematic update. 
 This approach is typeically referred to as the "Leapfrog" method.
-However, GEOSX we do not offer this option since it can cause some confusion that result from the storage of state at different points in time.
+However, GEOSX we do not offer this option since it can cause some confusion that results from the storage of state at different points in time.
