@@ -17,12 +17,35 @@ def writeTableRST(file_name, values):
 
   # Format lines
   formatted_lines = []
+  kk=0
   for ii in range(0, len(values)):
     formatted_lines.append('')
-    for jj in range(0, len(values[ii])):
-      formatted_lines[ii] += string.ljust(values[ii][jj], M[jj]) + ' '
 
-    formatted_lines[ii] += '\n'
+    # Name
+    formatted_lines[kk] += string.ljust(values[ii][0], M[0]) + ' '
+
+    # Type
+    formatted_lines[kk] += string.ljust(values[ii][1], M[1]) + ' '
+
+    # Default
+    formatted_lines[kk] += string.ljust(values[ii][2], M[2]) + ' '
+
+    # Description
+    description_index = len(formatted_lines[ii])
+    description = values[ii][3].split('\\n')
+    num_description_lines = len(description)
+    
+    line_block = ''
+    if num_description_lines > 1:
+      line_block = '| '        
+    formatted_lines[kk] += line_block + string.ljust(description[0], M[3]) + ' \n'
+
+    for mm in range( 1, num_description_lines ):
+      formatted_lines.append(' '.ljust(description_index) )
+      formatted_lines[kk+mm] += line_block + string.ljust(description[mm],M[3]) + ' \n'
+
+    kk += num_description_lines
+
 
   # Build table
   with open(file_name, 'w') as f:
@@ -66,7 +89,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
     attribute_comments = {}
     for comment_node in child_node.iterchildren(etree.Comment):
       tmp = str(comment_node)[4:-3].split(' = ')
-      attribute_comments[tmp[0]] = tmp[1]
+      attribute_comments[tmp[0]] = tmp[1].replace('\\\\','\\')
 
     # Parse attributes
     for attribute_node in child_node.findall(xsd + 'attribute'):

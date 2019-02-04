@@ -627,15 +627,18 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--targetRegions = Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--newmarkGamma = Value of \gamma in the Newmark Method for Implicit Dynamic time integration option-->
+		<!--newmarkGamma = Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
-		<!--newmarkBeta = Value of \beta in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
+		<!--newmarkBeta = Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--massDamping = Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--stiffnessDamping = Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
-		<!--timeIntegrationOption = Time integration method. Options are:|QuasiStatic|ImplicitDynamic|ExplicitDynamic-->
+		<!--timeIntegrationOption = Time integration method. Options are: 
+ QuasiStatic 
+ ImplicitDynamic 
+ ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
 		<!--useVelocityForQS = Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
