@@ -56,8 +56,8 @@ SolverBase::SolverBase( std::string const & name,
   RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription( "Factor to apply to the CFL condition when calculating the maximum allowable time step. "
-                    "Values should be in the interval (0,1] ");
+    setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
+                    " when calculating the maximum allowable time step. Values should be in the interval (0,1] ");
 
   RegisterViewWrapper(viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
     setApplyDefaultValue(0.5)->

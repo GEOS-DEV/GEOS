@@ -4,6 +4,41 @@
 Lagrangian solid mechanics FEM solver
 #####################################
 
+Introduction
+============
+The `SolidMechanics_LagrangianFEM` solver applies the finite element method to solve the equations of motion.
+The primary field variable is the displacement which is held at the nodes.
+
+Usage
+=========================
+An example of a valid XML block is given here:
+
+.. code-block:: xml
+
+  <Solvers>
+    <SolidMechanics_LagrangianFEM name="lagsolve"
+                                  timeIntegrationOption="QuasiStatic"
+                                  discretization="FE1"
+                                  targetRegions="Region2">
+      <SystemSolverParameters name="solverParams0"
+                              useMLPrecond="1"
+                              scalingOption="0"
+                              krylovTol="1.0e-8"
+                              newtonTol="1.0e-4"
+                              maxIterNewton="8"
+                              verbosityFlag="0"/>
+     </SolidMechanics_LagrangianFEM>
+  </Solvers>
+
+In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
+The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
+
+.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
+
+
+Theory
+=========================
+
 Definition of Terms
 ===================
 
@@ -33,14 +68,14 @@ Definition of Terms
    \mathbf{x}& \equiv \text { current position} \notag \\
    \mathbf{w}&\equiv \text { aperture, or gap vector} \notag 
 
-Overview
-=========================
-The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by:
+
+The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
 
 .. math::
-   T_{ij,j} + \rho(b_{i}-\ddot{x}_{i}) = 0. 
+   T_{ij,j} + \rho(b_{i}-\ddot{x}_{i}) = 0,
 
-The equations of motion are discritized using the Finite Element Method, 
+which is a 3-dimensional expression for the well known expression of Newtons Second Law (:math:`F = m a`).
+These equations of motion are discritized using the Finite Element Method, 
 which leads to a discrete set of residual equations:
 
 .. math::   
@@ -48,6 +83,14 @@ which leads to a discrete set of residual equations:
 
 Quasi-Static Time Integration
 -----------------------------
+The Quasi-Static time integration option solves the equation of motion after removing the intertial term, which is expressed by
+
+.. math::
+   T_{ij,j} + \rho b_{i} = 0,
+
+which is essentially a way to express the equation for static equilibrium (:math:`\Sigma F=0`).
+Thus, selection of the Quasi-Static option will yeild a solution where the sum of all forces at a given node is equal to zero.
+
 
 Implicit Dynamics Time Integration (Newmark Method)
 ---------------------------------------------------
@@ -123,29 +166,3 @@ In this case, the update equations simplify to:
    a^{n+1} &= M^{-1} \left(F_{n+1} - C v^{n+1} - K u^{n+1} \right)   \\
    v^{n+1} &= v^{n+1/2} + \inv{2} a^{n+1} \Delta t.
 
-Usage
-=========================
-
-The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
-
-.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
-
-Input example
-=========================
-
-.. code-block:: xml
-
-  <Solvers>
-    <SolidMechanics_LagrangianFEM name="lagsolve"
-                                  timeIntegrationOption="QuasiStatic"
-                                  discretization="FE1"
-                                  targetRegions="Region2">
-      <SystemSolverParameters name="solverParams0"
-                              useMLPrecond="1"
-                              scalingOption="0"
-                              krylovTol="1.0e-8"
-                              newtonTol="1.0e-4"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
-     </SolidMechanics_LagrangianFEM>
-  </Solvers>
