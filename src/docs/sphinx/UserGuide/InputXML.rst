@@ -3,24 +3,30 @@
 Working with input: XML files
 ****************************************************
 
+.. toctree::
+   :maxdepth: 2
+
+   /coreComponents/physicsSolvers/docs/Solvers
+
+   /coreComponents/mesh/docs/MeshBlock
+
+   /coreComponents/constitutive/docs/Constitutive
+
+   /coreComponents/managers/docs/NumericalMethodsManager
+
+   /coreComponents/managers/docs/EventManager
+
+   /coreComponents/managers/docs/FunctionManager
+
 Problem Block
 ===============================================================================
 This is the problem block
 
-.. include:: /coreComponents/physicsSolvers/docs/Solvers.rst
-
-.. include:: /coreComponents/mesh/docs/MeshBlock.rst
 
 
 Boundary Conditions
 ===============================================================================
 
-.. include:: /coreComponents/constitutive/docs/Constitutive.rst
 
-.. include:: /coreComponents/managers/docs/NumericalMethodsManager.rst
-
-.. include:: /coreComponents/managers/docs/EventManager.rst
-
-.. include:: /coreComponents/managers/docs/FunctionManager.rst
 
 

@@ -1,14 +1,14 @@
 
 
-=========================== ============ ======= ============================================================================================================================================== 
-Name                        Type         Default Description                                                                                                                                    
-=========================== ============ ======= ============================================================================================================================================== 
-phaseNames                  string_array         List of fluid phases                                                                                                                           
-phaseMinVolumeFraction      real64_array 0       Minimum volume fraction value for each phase                                                                                                   
-phaseCapPressureExponentInv real64_array 2       Inverse of capillary power law exponent for each phase                                                                                         
-phaseEntryPressure          real64_array 1       Entry pressure value for each phase                                                                                                            
-capPressureEpsilon          real64       1e-06   Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero 
-name                        string               A name is required for any non-unique nodes                                                                                                    
-=========================== ============ ======= ============================================================================================================================================== 
+=========================== ============ ======== ============================================================================================================================================== 
+Name                        Type         Default  Description                                                                                                                                    
+=========================== ============ ======== ============================================================================================================================================== 
+phaseNames                  string_array required List of fluid phases                                                                                                                           
+phaseMinVolumeFraction      real64_array 0        Minimum volume fraction value for each phase                                                                                                   
+phaseCapPressureExponentInv real64_array 2        Inverse of capillary power law exponent for each phase                                                                                         
+phaseEntryPressure          real64_array 1        Entry pressure value for each phase                                                                                                            
+capPressureEpsilon          real64       1e-06    Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero 
+name                        string       required A name is required for any non-unique nodes                                                                                                    
+=========================== ============ ======== ============================================================================================================================================== 
 
 
