@@ -510,7 +510,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   for( localIndex k=0 ; k<nodeToElementRegion.size() ; ++k )
   {
     nodesToElements.insert( std::make_pair( elemManager.GetRegion( nodeToElementRegion[k] )->
-                                            GetSubRegion( nodeToElementSubRegion[k] ),
+                                            GetSubRegion<CellBlockSubRegion>( nodeToElementSubRegion[k] ),
                                             nodeToElementIndex[k] ) );
   }
 
@@ -770,12 +770,12 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
             localIndex const parentFaceIndex = parentFaceIndices[thisFace] == -1 ? thisFace : parentFaceIndices[thisFace];
             std::pair<CellBlockSubRegion*, localIndex>
             thisElem0 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[thisFace][0] )->
-                                        GetSubRegion( m_originalFacesToElemSubRegion[thisFace][0] ),
+                                        GetSubRegion<CellBlockSubRegion>( m_originalFacesToElemSubRegion[thisFace][0] ),
                                         m_originalFacesToElemIndex[thisFace][0] );
 
             std::pair<CellBlockSubRegion*, localIndex>
             thisElem1 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[thisFace][1] )->
-                                        GetSubRegion( m_originalFacesToElemSubRegion[thisFace][1] ),
+                                        GetSubRegion<CellBlockSubRegion>( m_originalFacesToElemSubRegion[thisFace][1] ),
                                         m_originalFacesToElemIndex[thisFace][1] );
 
             // nextFaceQuality is intended to keep how desirable a face is for the rupture path.
@@ -810,12 +810,12 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
                 std::pair<CellBlockSubRegion*, localIndex>
                 nextElem0 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[candidateFaceIndex][0] )->
-                                            GetSubRegion( m_originalFacesToElemSubRegion[candidateFaceIndex][0] ),
+                                            GetSubRegion<CellBlockSubRegion>( m_originalFacesToElemSubRegion[candidateFaceIndex][0] ),
                                             m_originalFacesToElemIndex[candidateFaceIndex][0] );
 
                 std::pair<CellBlockSubRegion*, localIndex>
                 nextElem1 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[candidateFaceIndex][1] )->
-                                            GetSubRegion( m_originalFacesToElemSubRegion[candidateFaceIndex][1] ),
+                                            GetSubRegion<CellBlockSubRegion>( m_originalFacesToElemSubRegion[candidateFaceIndex][1] ),
                                             m_originalFacesToElemIndex[candidateFaceIndex][1] );
 
                 if( thisElem0 != nextElem0 && thisElem0 != nextElem1 &&
@@ -1111,11 +1111,11 @@ bool SurfaceGenerator::SetElemLocations( const int location,
 
 
         const std::pair<CellBlockSubRegion*, localIndex>
-        elemIndex0 = { elemManager.GetRegion( er0 )->GetSubRegion( esr0 ),
+        elemIndex0 = { elemManager.GetRegion( er0 )->GetSubRegion<CellBlockSubRegion>( esr0 ),
                        m_originalFacesToElemIndex[virtualFaceIndex][0] };
 
         const std::pair<CellBlockSubRegion*, localIndex>
-        elemIndex1 = { elemManager.GetRegion( er1 )->GetSubRegion( esr1 ),
+        elemIndex1 = { elemManager.GetRegion( er1 )->GetSubRegion<CellBlockSubRegion>( esr1 ),
                        m_originalFacesToElemIndex[virtualFaceIndex][1] };
 
         const std::pair<CellBlockSubRegion*, localIndex>& nextElem = ( elemIndex0 == k ) ? elemIndex1 : elemIndex0;
@@ -1866,7 +1866,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       ElementRegion& elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion & subRegion = *(elemRegion.GetSubRegion( esr ));
+        CellBlockSubRegion & subRegion = *(elemRegion.GetSubRegion<CellBlockSubRegion>( esr ));
         arrayView2d<localIndex> const & elemsToNodes = subRegion.nodeList();
         for( localIndex k=0 ; k<subRegion.size() ; ++k )
         {
@@ -1892,7 +1892,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       for( localIndex k=0 ; k<nodesToElementRegions[a].size() ; ++k )
       {
         nodeToElements.insert( std::make_pair( elementManager.GetRegion( nodesToElementRegions[a][k] )->
-                                               GetSubRegion( nodesToElementSubRegions[a][k] ),
+                                               GetSubRegion<CellBlockSubRegion>( nodesToElementSubRegions[a][k] ),
                                                nodesToElementIndex[a][k] ) );
       }
 
@@ -1964,7 +1964,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       ElementRegion& elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion & subRegion = *(elemRegion.GetSubRegion( esr ));
+        CellBlockSubRegion & subRegion = *(elemRegion.GetSubRegion<CellBlockSubRegion>( esr ));
         arrayView2d<localIndex> const & elemsToNodes = subRegion.nodeList();
         arrayView2d<localIndex> const & elemsToFaces = subRegion.faceList();
 
@@ -1995,7 +1995,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         if( facesToElementRegions[a][k] != -1 )
         {
           faceToElements.push_back( std::make_pair( elementManager.GetRegion( facesToElementRegions[a][k] )->
-                                                    GetSubRegion( facesToElementSubRegions[a][k] ),
+                                                    GetSubRegion<CellBlockSubRegion>( facesToElementSubRegions[a][k] ),
                                                     facesToElementIndex[a][k] ) );
         }
       }

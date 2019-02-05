@@ -742,6 +742,8 @@ void ProblemManager::GenerateMesh()
 
       faceManager->BuildFaces( nodeManager, elemManager );
 
+      elemManager->GenerateFractureMesh( faceManager );
+
       edgeManager->BuildEdges(faceManager, nodeManager );
 
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
@@ -751,12 +753,24 @@ void ProblemManager::GenerateMesh()
 
       domain->GenerateSets();
 
-      elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
+      elemManager->forElementRegions( [&](ElementRegion * const region )->void
       {
-        subRegion->nodeList().SetRelatedObject(nodeManager);
-        subRegion->faceList().SetRelatedObject(faceManager);
-        subRegion->CalculateCellVolumes( array1d<localIndex>() );
+        ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
+        subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
+        {
+          subRegion->setupRelatedObjectsInRelations( meshLevel );
+          subRegion->CalculateCellVolumes( array1d<localIndex>(),
+                                           nodeManager->referencePosition() );
+        });
+
       });
+//      elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
+//      {
+//        subRegion->nodeList().SetRelatedObject(nodeManager);
+//        subRegion->faceList().SetRelatedObject(faceManager);
+//        subRegion->CalculateCellVolumes( array1d<localIndex>(),
+//                                         nodeManager->referencePosition() );
+//      });
 
     }
   }
@@ -809,7 +823,7 @@ void ProblemManager::ApplyNumericalMethods()
             string_array const & materialList = elemRegion->getMaterialList();
             localIndex quadratureSize = 1;
 
-            elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )->void
+            elemRegion->forCellBlocks([&]( auto * const subRegion )->void
             {
               if( feDiscretization != nullptr )
               {
