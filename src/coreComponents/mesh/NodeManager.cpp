@@ -147,7 +147,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBase const * const subRegion = elemRegion->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions)->GetGroup<CellBase>(kSubReg);
+      ElementSubRegionBase const * const subRegion = elemRegion->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions)->GetGroup<ElementSubRegionBase>(kSubReg);
 
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )

@@ -87,7 +87,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems_in_subRegion( CellBase const * const subRegion, LAMBDA && body)
+void for_elems_in_subRegion( ElementSubRegionBase const * const subRegion, LAMBDA && body)
 {
   forall_in_range<POLICY>(0,subRegion->size(), body);
 }
@@ -104,7 +104,7 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBase const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      ElementSubRegionBase const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
       forall_in_range<POLICY>(0, cellBlockSubRegion->size(),
                               [=](localIndex index) mutable -> void

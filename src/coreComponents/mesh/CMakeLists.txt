@@ -4,14 +4,14 @@
 #
 set(mesh_headers
     BufferOps.hpp
-    CellBase.hpp
     CellBlockManager.hpp
     CellBlock.hpp
     CellBlockSubRegion.hpp    
     EdgeManager.hpp
+    ElementSubRegionBase.hpp
     ElementRegion.hpp
     ElementRegionManager.hpp
-    FaceCellSubRegion.hpp
+    FaceElementSubRegion.hpp
     FaceManager.hpp
     InterObjectRelation.hpp
     MeshBody.hpp
@@ -26,14 +26,14 @@ set(mesh_headers
 #
 set(mesh_sources
     BufferOps.cpp
-    CellBase.cpp
     CellBlockManager.cpp
     CellBlock.cpp
     CellBlockSubRegion.cpp
     EdgeManager.cpp
+    ElementSubRegionBase.cpp
     ElementRegion.cpp
     ElementRegionManager.cpp
-    FaceCellSubRegion.cpp
+    FaceElementSubRegion.cpp
     FaceManager.cpp
     MeshBody.cpp
     MeshLevel.cpp    

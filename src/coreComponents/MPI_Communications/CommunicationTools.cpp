@@ -558,7 +558,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBase * const subRegion = elemRegion->GetSubRegion(esr);
+      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(esr);
       subRegion->FixUpDownMaps(true);
     }
   }

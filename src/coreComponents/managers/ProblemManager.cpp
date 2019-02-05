@@ -756,7 +756,7 @@ void ProblemManager::GenerateMesh()
       elemManager->forElementRegions( [&](ElementRegion * const region )->void
       {
         ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
-        subRegions->forSubGroups<CellBase>( [&]( CellBase * const subRegion ) -> void
+        subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
           subRegion->CalculateCellVolumes( array1d<localIndex>(),
