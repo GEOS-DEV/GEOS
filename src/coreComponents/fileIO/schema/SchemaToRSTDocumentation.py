@@ -12,7 +12,7 @@ def writeTableRST(file_name, values):
   single_row_format = ('{:<%is} ' * len(M) + '\n') % M
 
   # The final column is allowed to span multiple lines
-  description_index = sum(M[:-1]) + 3
+  description_index = sum(M[:-1]) + len(M) - 1
   multiple_row_format_a = ('{:<%is} ' * (len(M) - 1) + '| {:<%is} \n') % M
   multiple_row_format_b = ' ' * description_index + '| {:<%is} \n' % (M[-1])
 
