@@ -197,37 +197,37 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
   RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of \\gamma in the Newmark Method for time integration");
+    setDescription("Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option");
 
   RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
     setApplyDefaultValue(0.25)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of \\beta in the Newmark Method for time integration. "
+    setDescription("Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
           "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
 
   RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of mass based damping coefficient in equations of motion. ");
+    setDescription("Value of mass based damping coefficient. ");
 
   RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of stiffness based damping coefficient in equations of motion. ");
+    setDescription("Value of stiffness based damping coefficient. ");
 
   RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
     setInputFlag(InputFlags::FALSE)->
-    setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+    setDescription("Time integration enum class value.");
 
   RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+    setDescription("Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic");
 
   RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Flag to indicate the use of the incremental displacement from the previous step as an "
-          "initial estimate for the incremental displacement of the current step.");
+    setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
+                    "initial estimate for the incremental displacement of the current step.");
 }
 
 void SolidMechanics_LagrangianFEM::PostProcessInput()
