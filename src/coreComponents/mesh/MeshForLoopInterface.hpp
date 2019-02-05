@@ -152,17 +152,15 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forCellBlocksIndex( [&]( localIndex const esr, auto const * const cellBlockSubRegion )
     {
-      CellBase const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-
       auto ebody = [=](localIndex index) mutable -> real64
       {
         return lambdaBody(er,esr,index);
       };
 
       sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
-    }
+    });
   }
 
   return sum;

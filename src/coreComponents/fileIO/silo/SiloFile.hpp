@@ -986,9 +986,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                         getIndexInParent();
       }
 
-      for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+      elemRegion->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const subRegion )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
 
         nels += subRegion->size();
 
@@ -1000,7 +999,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             mixlen += subRegion->size();
           }
         }
-      }
+      });
     }
 
     array1d<void*> vars(nvars);
@@ -1033,9 +1032,9 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
         matIndices[a] = constitutiveManager->GetConstitituveRelation( elemRegion->getMaterialList()[a] )->getIndexInParent();
       }
 
-      for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+      elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr,
+                                                              CellBlockSubRegion const * const subRegion )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
 
         if( numMatInRegion == 1 )
         {
@@ -1076,7 +1075,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             }
           }
         }
-      }
+      });
     }
     
     for( localIndex a=0 ; a<activeMaterialNames.size() ; ++a )

@@ -948,15 +948,14 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
 
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const subRegion )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
       if( numMatInRegion > 1 )
       {
         mixlen += subRegion->size() * numMatInRegion;
       }
       dims += subRegion->size();
-    }
+    });
   }
 
   array1d<integer> matlist( dims );
@@ -981,10 +980,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                       getIndexInParent();
     }
 
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const subRegion )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
-
       if( numMatInRegion == 1 )
       {
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
@@ -1014,7 +1011,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
           }
         }
       }
-    }
+    });
   }
 
   {
@@ -1593,9 +1590,9 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   {
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     viewPointers[er].resize( elemRegion->numSubRegions() );
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr,
+                                                            CellBlockSubRegion const * const subRegion )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
       numElems += subRegion->size();
 
       for( auto const & wrapperIter : subRegion->wrappers() )
@@ -1628,7 +1625,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
           });
         }
       }
-    }
+    });
   }
   fakeGroup.resize(numElems);
 
@@ -1651,7 +1648,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
       {
         ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-        for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+        elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr,
+                                                                CellBlockSubRegion const * const subRegion )
         {
           ViewWrapper<arrayType> const &
           sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
@@ -1659,7 +1657,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
           targetArray.copy(counter, sourceArray );
           counter += sourceArray.size(0);
-        }
+        });
       }
     });
   }
@@ -1784,10 +1782,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       ElementRegion const * const region = elementManager->GetRegion(er);
 
-      for( localIndex esr=0 ; esr<region->numSubRegions() ; ++esr )
+      region->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const cellBlock )
       {
-        CellBlockSubRegion const * cellBlock = region->GetSubRegion<CellBlockSubRegion>(esr);
-
         array2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
 
         elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
@@ -1864,7 +1860,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
         shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
         count++;
-      }
+      });
     }
 
 
