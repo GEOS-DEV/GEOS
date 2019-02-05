@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CellBlockSubRegion.cpp
- *
- *  Created on: May 11, 2017
- *      Author: rrsettgast
- */
 
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -32,8 +26,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
-  CellBlock( name, parent ),
-  m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this)
+  CellBlock( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
     setSizedFromParent(0);
@@ -49,8 +42,6 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 
   RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
 
-
-  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 );
 }
 
 CellBlockSubRegion::~CellBlockSubRegion()
@@ -67,6 +58,16 @@ void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
+}
+
+void CellBlockSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
+                                                        string const & setName )
+{
+  set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
+  m_toFacesRelation.resize(0,2);
+  this->resize( targetSet.size() );
+
+
 }
 
 void CellBlockSubRegion::MaterialPassThru( string const & matName,

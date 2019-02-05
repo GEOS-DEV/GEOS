@@ -144,6 +144,9 @@ using arrayView1d = array_view<T,1>;
 template< typename T >
 using arraySlice1d = LvArray::ArraySlice1d<T, localIndex>;
 
+template< typename T >
+using arraySlice1dRval = LvArray::ArraySlice1d_rval<T, localIndex>;
+
 template< typename T, int MAXSIZE >
 using stackArray1d = stack_array<T, 1, MAXSIZE>;
 

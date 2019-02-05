@@ -57,7 +57,7 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
     for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -76,7 +76,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -87,7 +87,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems_in_subRegion( CellBlockSubRegion const * const subRegion, LAMBDA && body)
+void for_elems_in_subRegion( ElementSubRegionBase const * const subRegion, LAMBDA && body)
 {
   forall_in_range<POLICY>(0,subRegion->size(), body);
 }
@@ -104,7 +104,7 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      ElementSubRegionBase const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
 
       forall_in_range<POLICY>(0, cellBlockSubRegion->size(),
                               [=](localIndex index) mutable -> void
@@ -152,17 +152,15 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forCellBlocksIndex( [&]( localIndex const esr, auto const * const cellBlockSubRegion )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-
       auto ebody = [=](localIndex index) mutable -> real64
       {
         return lambdaBody(er,esr,index);
       };
 
       sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
-    }
+    });
   }
 
   return sum;

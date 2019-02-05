@@ -96,7 +96,7 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
+    elemManager->forCellBlocks([&]( ElementSubRegionBase * const cellBlock) -> void
     {
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
@@ -176,7 +176,7 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
 
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forCellBlocks( [&] ( CellBlockSubRegion * const subRegion )
+  elemManager->forCellBlocks( [&] ( ObjectManagerBase * const subRegion )
   {
     subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
     subRegion->getReference<array2d<real64>>(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
@@ -348,7 +348,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
 
 void CompositionalMultiphaseFlow::UpdateComponentFractionAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateComponentFraction( subRegion );
   });
@@ -445,7 +445,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
 
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFractionAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdatePhaseVolumeFraction( subRegion );
   });
@@ -469,7 +469,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
 
 void CompositionalMultiphaseFlow::UpdateFluidModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateFluidModel( subRegion );
   });
@@ -490,7 +490,7 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
 
 void CompositionalMultiphaseFlow::UpdateSolidModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateSolidModel( subRegion );
   });
@@ -508,7 +508,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
 
 void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const domain )
 {
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     UpdateRelPermModel( subRegion );
   });
@@ -542,14 +542,14 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   // in order to initialize the primary solution variables
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * const region,
-                                   CellBlockSubRegion * const subRegion )
+                                   ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64 const> const & compFrac  = m_compFrac[er][esr];
     arrayView2d<real64 const> const & totalDens = m_totalDens[er][esr][m_fluidIndex];
 
     arrayView2d<real64> compDens = m_globalCompDensity[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
       {
@@ -592,7 +592,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   }
 
   // set mass fraction flag on subregion models
-  applyToSubRegions( domain, [&] ( CellBlockSubRegion * subRegion )
+  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
     MultiFluidBase * fluid = GetFluidModel( subRegion );
     fluid->setMassFlag( static_cast<bool>(m_useMass) );
@@ -630,7 +630,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
   // backup some fields used in time derivative approximation
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * const region,
-                                   CellBlockSubRegion * const subRegion )
+                                   ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<real64  const> const & poroRef       = m_porosityRef[er][esr];
@@ -646,7 +646,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
     arrayView3d<real64> const & phaseCompFracOld = m_phaseCompFracOld[er][esr];
     arrayView1d<real64> const & poroOld          = m_porosityOld[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -883,7 +883,7 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
   globalIndex numGlobalRows = 0;
 
   // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  elementRegionManager->forCellBlocks( [&]( CellBlockSubRegion * const subRegion )
+  elementRegionManager->forCellBlocks( [&]( ObjectManagerBase * const subRegion )
   {
     numLocalRows += subRegion->size() - subRegion->GetNumberOfGhosts();
   });
@@ -981,7 +981,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
 
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion const * const region,
-                                   CellBlockSubRegion const * const subRegion )
+                                   ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -1008,7 +1008,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
     arrayView4d<real64 const> const & dPhaseCompFrac_dPres = m_dPhaseCompFrac_dPres[er][esr][m_fluidIndex];
     arrayView5d<real64 const> const & dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp[er][esr][m_fluidIndex];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1468,7 +1468,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
 
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion const * const region,
-                                   CellBlockSubRegion const * const subRegion )
+                                   ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -1483,7 +1483,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
     arrayView2d<real64 const> const & pvMult        = m_pvMult[er][esr][m_solidIndex];
     arrayView2d<real64 const> const & dPvMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1738,7 +1738,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
   real64 localResidualNorm = 0.0;
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion const * const region,
-                                   CellBlockSubRegion const * const subRegion )
+                                   ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -1808,7 +1808,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
 
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * const region,
-                                   CellBlockSubRegion * const subRegion )
+                                   ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -1818,7 +1818,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
     arrayView2d<real64 const> const & compDens  = m_globalCompDensity[er][esr];
     arrayView2d<real64 const> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1865,7 +1865,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
 
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * const region,
-                                   CellBlockSubRegion * const subRegion )
+                                   ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -1873,7 +1873,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
     arrayView1d<real64> const & dPres     = m_deltaPressure[er][esr];
     arrayView2d<real64> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1907,12 +1907,12 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
 {
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * elementRegion,
-                                   CellBlockSubRegion * const subRegion )
+                                   ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres     = m_deltaPressure[er][esr];
     arrayView2d<real64> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
@@ -1929,7 +1929,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
 {
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * elementRegion,
-                                   CellBlockSubRegion * const subRegion )
+                                   ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<real64 const> const & dPres     = m_deltaPressure[er][esr];
     arrayView2d<real64 const> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
@@ -1937,7 +1937,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
     arrayView1d<real64> const & pres     = m_pressure[er][esr];
     arrayView2d<real64> const & compDens = m_globalCompDensity[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>(0,subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
       for (localIndex ic = 0; ic < m_numComponents; ++ic)

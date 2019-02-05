@@ -114,7 +114,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
       for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(kSubReg);
 
         array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
         array2d<localIndex> const & elemsToFaces = subRegion->faceList();
