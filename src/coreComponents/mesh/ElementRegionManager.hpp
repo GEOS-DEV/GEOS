@@ -98,6 +98,8 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlockManager );
 
+  void GenerateFractureMesh( FaceManager const * const faceManager );
+
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
@@ -175,64 +177,92 @@ public:
     elementRegions->forSubGroups<ElementRegion>( lambda );
   }
 
+
   template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda )
+  void forCellBlocks( LAMBDA && lambda )
+  {
+    forCellBlocks<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA && lambda ) const
+  {
+    forCellBlocks<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  void forCellBlocks( LAMBDA && lambda )
   {
     ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-      for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
-      {
-        CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-        lambda( cellBlock );
-      }
+      ElementRegion * const elemRegion = region.second->group_cast<ElementRegion *>();
+      elemRegion->forCellBlocks<CELLTYPE,CELLTYPES...>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda ) const
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  void forCellBlocks( LAMBDA && lambda ) const
   {
     ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto const & region : elementRegions->GetSubGroups() )
+    for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
-      {
-        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-        lambda( cellBlock );
-      }
+      ElementRegion const * const elemRegion = region.second->group_cast<ElementRegion const *>();
+      elemRegion->forCellBlocks<CELLTYPE,CELLTYPES...>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename LAMBDA >
-  void forCellBlocksComplete( LAMBDA lambda )
-  {
-    for( localIndex er=0 ; er<this->numRegions() ; ++er )
-    {
-      ElementRegion * elementRegion = this->GetRegion(er);
-
-      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
-      {
-        CellBlockSubRegion * cellBlock = elementRegion->GetSubRegion(esr);
-        lambda( er, esr, elementRegion, cellBlock );
-      }
-    }
-  }
 
   template< typename LAMBDA >
   void forCellBlocksComplete( LAMBDA lambda ) const
   {
+    forCellBlocksComplete<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+  template< typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda )
+  {
+    forCellBlocksComplete<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda )
+  {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
     {
-      ElementRegion const * elementRegion = this->GetRegion(er);
+      ElementRegion * const elementRegion = this->GetRegion(er);
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion const * cellBlock = elementRegion->GetSubRegion(esr);
-        lambda( er, esr, elementRegion, cellBlock );
+        ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
+
+        bool validCast =
+        ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
+      }
+    }
+  }
+
+  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda ) const
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion const * const elementRegion = this->GetRegion(er);
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
+      {
+        ElementSubRegionBase const * const subRegion = elementRegion->GetSubRegion(esr);
+
+        ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
       }
     }
   }
@@ -476,7 +506,7 @@ ConstructMaterialViewAccessor( string const & viewName,
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       dataRepository::ManagedGroup const * const
       constitutiveGroup = subRegion->GetConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );
@@ -514,7 +544,7 @@ ElementRegionManager::ConstructConstitutiveAccessor( constitutive::ConstitutiveM
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(kSubReg);
       dataRepository::ManagedGroup * const
       constitutiveGroup = subRegion->GetConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );

@@ -297,14 +297,12 @@ void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups(
     m_elemsAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
     m_elemsNotAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
 
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr, CellBlockSubRegion const * const cellBlock )
     {
-      CellBlockSubRegion const * const cellBlock = elemRegion->GetSubRegion(esr);
-
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
       arrayView2d<localIndex> const & elemsToNodes =
-        cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+        cellBlock->nodeList();
 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
@@ -336,7 +334,7 @@ void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups(
           m_elemsNotAttachedToSendOrReceiveNodes[er][esr].insert(k);
         }
       }
-    }
+    });
   }
 }
 
@@ -458,15 +456,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr, CellBlockSubRegion const * const cellBlock )
     {
-      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
-
       arrayView3d< R1Tensor > const & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
 
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -492,7 +488,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       GEOSX_MARK_END(externalElemsLoop);
 
-    } //Element Region
+    }); //Element Region
 
   } //Element Manager
 
@@ -517,15 +513,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr, CellBlockSubRegion const * const cellBlock )
     {
-      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
-
       arrayView3d< R1Tensor > const & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
 
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -551,7 +545,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       GEOSX_MARK_END(internalElemsLoop);
 
-    } //Element Region
+    }); //Element Region
 
   } //Element Manager
 
@@ -1071,12 +1065,10 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion(er);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr, CellBlockSubRegion const * const cellBlock )
     {
-
-      CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(esr);
       localIndex const numElems = cellBlock->size();
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);
@@ -1099,7 +1091,7 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
                                         elementLocalDofIndex.data());
         }
       }
-    }
+    });
   }
 }
 
@@ -1161,10 +1153,8 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr, CellBlockSubRegion const * const cellBlock )
     {
-      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
-
       array3d<R1Tensor> const &
       dNdX = cellBlock->getReference< array3d<R1Tensor> >(keys::dNdX);
 
@@ -1258,7 +1248,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
                                     element_rhs);
         }
       }
-    }
+    });
   }
 
 
