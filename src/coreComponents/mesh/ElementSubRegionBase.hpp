@@ -16,11 +16,11 @@ namespace geosx
 class NodeManager;
 class MeshLevel;
 
-class CellBase : public ObjectManagerBase
+class ElementSubRegionBase : public ObjectManagerBase
 {
 public:
-  CellBase( string const & name, dataRepository::ManagedGroup * const parent );
-  ~CellBase();
+  ElementSubRegionBase( string const & name, dataRepository::ManagedGroup * const parent );
+  ~ElementSubRegionBase();
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                                    const NodeManager& nodeManager,
@@ -132,7 +132,7 @@ protected:
 
 
 template< typename LEAF >
-void CellBase::CalculateCellVolumes( LEAF & leaf,
+void ElementSubRegionBase::CalculateCellVolumes( LEAF & leaf,
                                      array1d<localIndex> const & indices,
                                      array1d<R1Tensor> const & X ) const
 {

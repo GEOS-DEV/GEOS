@@ -111,7 +111,7 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBase * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64 const> const & pres  = m_pressure[er][esr];
     arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
@@ -163,7 +163,7 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBase const * const subRegion )
+                                            ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<real64 const> const & poroRef = m_porosityRef[er][esr];
     arrayView2d<real64 const> const & dens    = m_density[er][esr][m_fluidIndex];
@@ -228,7 +228,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBase * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
     arrayView1d<real64 const> const & poro = m_porosity[er][esr];
@@ -262,7 +262,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBase * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
     arrayView1d<real64> const & vol  = m_volume[er][esr];
@@ -553,7 +553,7 @@ SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion const * const region,
-                                            CellBase const * const subRegion )
+                                            ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -611,7 +611,7 @@ SinglePhaseFlow::AssembleAccumulationTermsCoupled( DomainPartition const * const
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion const * const region,
-                                            CellBase const * const subRegion )
+                                            ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -1174,7 +1174,7 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBase * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1232,7 +1232,7 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
 
   elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBase * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 

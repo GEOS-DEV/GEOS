@@ -33,7 +33,7 @@ using namespace dataRepository;
 
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
-  CellBase( name, parent ),
+  ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_toFacesRelation()

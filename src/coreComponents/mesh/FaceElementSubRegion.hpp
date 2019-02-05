@@ -19,13 +19,13 @@
 #ifndef FACECELLSUBREGION_HPP_
 #define FACECELLSUBREGION_HPP_
 
-#include "CellBase.hpp"
+#include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
 
 namespace geosx
 {
 
-class FaceCellSubRegion : public CellBase
+class FaceElementSubRegion : public ElementSubRegionBase
 {
 public:
 
@@ -38,12 +38,12 @@ public:
 
   virtual const string getCatalogName() const override
   {
-    return FaceCellSubRegion::CatalogName();
+    return FaceElementSubRegion::CatalogName();
   }
 
-  FaceCellSubRegion( string const & name,
+  FaceElementSubRegion( string const & name,
                      dataRepository::ManagedGroup * const parent );
-  virtual ~FaceCellSubRegion() override;
+  virtual ~FaceElementSubRegion() override;
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                      const NodeManager& nodeManager,
@@ -52,7 +52,7 @@ public:
   virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
                                      array1d<R1Tensor> const & X ) override
   {
-    CellBase::CalculateCellVolumes<FaceCellSubRegion>( *this,
+    ElementSubRegionBase::CalculateCellVolumes<FaceElementSubRegion>( *this,
                                                        indices,
                                                        X );
   }
