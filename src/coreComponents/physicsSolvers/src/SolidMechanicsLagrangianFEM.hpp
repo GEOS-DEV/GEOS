@@ -239,7 +239,7 @@ public:
     static constexpr auto newmarkBetaString = "newmarkBeta";
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
-    static constexpr auto useVelocityEstimateForQSString = "useVelocityEstimateForQuasiStatic";
+    static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
     static constexpr auto trilinosIndexString = "trilinosIndex";
     static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
