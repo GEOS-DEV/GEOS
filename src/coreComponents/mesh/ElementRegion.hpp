@@ -28,7 +28,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "FaceManager.hpp"
 #include "CellBlockSubRegion.hpp"
-#include "FaceCellSubRegion.hpp"
+#include "FaceElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -136,23 +136,23 @@ public:
     return GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups();
   }
 
-  template< typename CELLTYPE=CellBase >
+  template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE const * GetSubRegion( string const & regionName ) const
   {
     return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(regionName);
   }
-  template< typename CELLTYPE=CellBase >
+  template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE * GetSubRegion( string const & regionName )
   {
     return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(regionName);
   }
 
-  template< typename CELLTYPE=CellBase >
+  template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE const * GetSubRegion( localIndex const & index ) const
   {
     return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(index);
   }
-  template< typename CELLTYPE=CellBase >
+  template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE * GetSubRegion( localIndex const & index )
   {
     return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(index);
@@ -209,13 +209,13 @@ public:
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA && lambda ) const
   {
-    forCellBlocks<CellBlockSubRegion, FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocks<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA && lambda )
   {
-    forCellBlocks<CellBlockSubRegion, FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocks<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
@@ -250,13 +250,13 @@ public:
   template< typename LAMBDA >
   void forCellBlocksIndex( LAMBDA && lambda ) const
   {
-    forCellBlocksIndex<CellBlockSubRegion, FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocksIndex<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forCellBlocksIndex( LAMBDA && lambda )
   {
-    forCellBlocksIndex<CellBlockSubRegion, FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocksIndex<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
@@ -264,7 +264,7 @@ public:
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      CellBase const * const subRegion = this->GetSubRegion(esr);
+      ElementSubRegionBase const * const subRegion = this->GetSubRegion(esr);
       applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );
@@ -277,7 +277,7 @@ public:
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      CellBase * const subRegion = this->GetSubRegion(esr);
+      ElementSubRegionBase * const subRegion = this->GetSubRegion(esr);
       applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );

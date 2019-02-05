@@ -181,14 +181,14 @@ public:
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA && lambda )
   {
-    forCellBlocks<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocks<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
 
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA && lambda ) const
   {
-    forCellBlocks<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocks<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
@@ -219,12 +219,12 @@ public:
   template< typename LAMBDA >
   void forCellBlocksComplete( LAMBDA lambda ) const
   {
-    forCellBlocksComplete<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocksComplete<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
   template< typename LAMBDA >
   void forCellBlocksComplete( LAMBDA lambda )
   {
-    forCellBlocksComplete<CellBlockSubRegion,FaceCellSubRegion>( std::forward<LAMBDA>(lambda) );
+    forCellBlocksComplete<CellBlockSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -237,7 +237,7 @@ public:
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
-        CellBase * const subRegion = elementRegion->GetSubRegion(esr);
+        ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
 
         bool validCast =
         ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto * const castedSubRegion )
@@ -257,7 +257,7 @@ public:
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
-        CellBase const * const subRegion = elementRegion->GetSubRegion(esr);
+        ElementSubRegionBase const * const subRegion = elementRegion->GetSubRegion(esr);
 
         ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
         {
@@ -506,7 +506,7 @@ ConstructMaterialViewAccessor( string const & viewName,
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       dataRepository::ManagedGroup const * const
       constitutiveGroup = subRegion->GetConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );
@@ -544,7 +544,7 @@ ElementRegionManager::ConstructConstitutiveAccessor( constitutive::ConstitutiveM
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBase * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(kSubReg);
       dataRepository::ManagedGroup * const
       constitutiveGroup = subRegion->GetConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );

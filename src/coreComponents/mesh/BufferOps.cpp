@@ -48,7 +48,7 @@ localIndex Pack( char*& buffer,
       ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
 
       localIndex elemSubRegionIndex                  = var.m_toElementSubRegion[index][b];
-      CellBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+      ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
 
       localIndex elemIndex = var.m_toElementIndex[index][b];
 
@@ -111,7 +111,7 @@ localIndex Unpack( char const * & buffer,
 
       globalIndex globalElementIndex;
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
-      CellBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+      ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
 
       localIndex localElementIndex = softMapLookup( elemSubRegion->m_globalToLocalMap,
                                                     globalElementIndex,
@@ -172,7 +172,7 @@ localIndex Pack( char*& buffer,
         ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
 
         localIndex elemSubRegionIndex                  = var.m_toElementSubRegion[index][b];
-        CellBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
 
         localIndex elemIndex = var.m_toElementIndex[index][b];
 
@@ -228,7 +228,7 @@ localIndex Unpack( char const * & buffer,
         ElementRegion const * const
         elemRegion = elementRegionManager->GetRegion(recvElemRegionIndex);
 
-        CellBase const * const
+        ElementSubRegionBase const * const
         elemSubRegion = elemRegion->GetSubRegion(recvElemSubRegionIndex);
 
         localIndex const recvElemIndex = softMapLookup( elemSubRegion->m_globalToLocalMap,

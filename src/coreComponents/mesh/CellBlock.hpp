@@ -23,7 +23,7 @@
 #ifndef ELEMENTOBJECTT_H_
 #define ELEMENTOBJECTT_H_
 
-#include "CellBase.hpp"
+#include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
@@ -36,7 +36,7 @@ namespace geosx
 /**
  * Class to manage the data stored at the element level.
  */
-class CellBlock : public CellBase
+class CellBlock : public ElementSubRegionBase
 {
 public:
 
@@ -110,7 +110,7 @@ public:
   virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
                                      array1d<R1Tensor> const & X ) override
   {
-    CellBase::CalculateCellVolumes<CellBlock>( *this,
+    ElementSubRegionBase::CalculateCellVolumes<CellBlock>( *this,
                                                indices,
                                                X );
   }

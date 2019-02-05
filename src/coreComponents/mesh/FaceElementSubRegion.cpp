@@ -15,16 +15,17 @@
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-#include "FaceCellSubRegion.hpp"
+#include "FaceElementSubRegion.hpp"
+
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 
 namespace geosx
 {
 
-FaceCellSubRegion::FaceCellSubRegion( string const & name,
+FaceElementSubRegion::FaceElementSubRegion( string const & name,
                                       dataRepository::ManagedGroup * const parent ):
-  CellBase( name, parent )
+  ElementSubRegionBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
     setDescription("Map to the nodes attached to each FaceCell.");
@@ -49,13 +50,13 @@ FaceCellSubRegion::FaceCellSubRegion( string const & name,
     setDescription("The volume of each FaceCell.");
 }
 
-FaceCellSubRegion::~FaceCellSubRegion()
+FaceElementSubRegion::~FaceElementSubRegion()
 {
   // TODO Auto-generated destructor stub
 }
 
 
-R1Tensor const & FaceCellSubRegion::calculateElementCenter( localIndex k,
+R1Tensor const & FaceElementSubRegion::calculateElementCenter( localIndex k,
                                               const NodeManager& nodeManager,
                                               const bool useReferencePos ) const
 {
@@ -74,7 +75,7 @@ R1Tensor const & FaceCellSubRegion::calculateElementCenter( localIndex k,
 
 }
 
-void FaceCellSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
   this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );

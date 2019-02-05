@@ -489,7 +489,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager.GetRegion( er );
-    elemRegion->forCellBlocksIndex([&]( localIndex const esr, CellBase const * const subRegion )
+    elemRegion->forCellBlocksIndex([&]( localIndex const esr, ElementSubRegionBase const * const subRegion )
     {
       bufferSize+= bufferOps::Pack<false>( sendBufferPtr,
                                            elementGhostToReceive[er][esr],
@@ -525,7 +525,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager.GetRegion( er );
-    elemRegion->forCellBlocksIndex([&]( localIndex const esr, CellBase const * const subRegion )
+    elemRegion->forCellBlocksIndex([&]( localIndex const esr, ElementSubRegionBase const * const subRegion )
     {
       packedSize+= bufferOps::Pack<true>( sendBufferPtr,
                                           elementGhostToReceive[er][esr],
@@ -580,7 +580,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
     ElementRegion * const elemRegion = elemManager.GetRegion( er );
-    elemRegion->forCellBlocksIndex([&]( localIndex const esr, CellBase * const subRegion )
+    elemRegion->forCellBlocksIndex([&]( localIndex const esr, ElementSubRegionBase * const subRegion )
     {
       array1d<globalIndex> unmappedIndices;
       unpackedSize+= bufferOps::Unpack( receiveBufferPtr,

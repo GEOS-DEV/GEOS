@@ -148,7 +148,7 @@ void DomainPartition::GenerateSets(  )
     ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
     for( auto & subRegionIter : elementRegion->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions)->GetSubGroups() )
     {
-      CellBase * const subRegion = subRegionIter.second->group_cast<CellBase *>();
+      ElementSubRegionBase * const subRegion = subRegionIter.second->group_cast<ElementSubRegionBase *>();
 //      array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
       dataRepository::ManagedGroup * elementSets = subRegion->sets();
       std::map< string, integer_array > numNodesInSet;

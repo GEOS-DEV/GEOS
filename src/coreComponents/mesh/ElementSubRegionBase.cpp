@@ -5,13 +5,13 @@
  *      Author: settgast
  */
 
-#include "CellBase.hpp"
+#include "ElementSubRegionBase.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-CellBase::CellBase( string const & name, ManagedGroup * const parent ):
+ElementSubRegionBase::ElementSubRegionBase( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase(name,parent),
   m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this),
   m_numNodesPerElement(),
@@ -23,7 +23,7 @@ CellBase::CellBase( string const & name, ManagedGroup * const parent ):
   RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 );
 }
 
-CellBase::~CellBase()
+ElementSubRegionBase::~ElementSubRegionBase()
 {
 }
 
