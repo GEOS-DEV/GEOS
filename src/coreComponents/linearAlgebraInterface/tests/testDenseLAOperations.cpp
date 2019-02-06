@@ -87,6 +87,7 @@ void testMatrixConstructors()
   // Empty constructor
 
   DenseMatrix A(2,2);
+  DenseMatrix B(2,2);
 
 //  SerialDenseMatrix A5(3,3);
 //  SerialDenseMatrix B(3,2);
@@ -95,7 +96,8 @@ void testMatrixConstructors()
 //  SerialDenseMatrix E(2,3);
 //  SerialDenseMatrix F(1,1);
 
-  EXPECT_DOUBLE_EQ( A.get_nRows(), 2.0);
+  EXPECT_EQ( A.get_nRows(), 2);
+  EXPECT_EQ( B.get_nRows(), 3);
 }
 
 
