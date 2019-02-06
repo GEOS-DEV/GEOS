@@ -44,6 +44,9 @@ code differs from our previous efforts in two important ways:
 
 Documentation
 ---------------------
+
+Documentation is hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/latest/?)
+
 We recommend newcomers to the code read one or both of the following introductory
 guides:
 
