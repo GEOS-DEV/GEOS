@@ -986,7 +986,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                         getIndexInParent();
       }
 
-      elemRegion->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const subRegion )
+      elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
       {
 
         nels += subRegion->size();
@@ -1032,8 +1032,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
         matIndices[a] = constitutiveManager->GetConstitituveRelation( elemRegion->getMaterialList()[a] )->getIndexInParent();
       }
 
-      elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr,
-                                                              CellBlockSubRegion const * const subRegion )
+      elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+                                                              CellElementSubRegion const * const subRegion )
       {
 
         if( numMatInRegion == 1 )

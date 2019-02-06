@@ -25,9 +25,9 @@
 #ifndef ELEMENTREGION_H
 #define ELEMENTREGION_H
 
+#include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "FaceManager.hpp"
-#include "CellBlockSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 
 namespace geosx
@@ -128,39 +128,39 @@ public:
 
   subGroupMap & GetSubRegions()
   {
-    return GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
   subGroupMap const & GetSubRegions() const
   {
-    return GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
   template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE const * GetSubRegion( string const & regionName ) const
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(regionName);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<CELLTYPE>(regionName);
   }
   template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE * GetSubRegion( string const & regionName )
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(regionName);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<CELLTYPE>(regionName);
   }
 
   template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE const * GetSubRegion( localIndex const & index ) const
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(index);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<CELLTYPE>(index);
   }
   template< typename CELLTYPE=ElementSubRegionBase >
   CELLTYPE * GetSubRegion( localIndex const & index )
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetGroup<CELLTYPE>(index);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<CELLTYPE>(index);
   }
 
   localIndex numSubRegions() const
   {
-    return this->GetGroup(viewKeyStruct::cellBlockSubRegions)->GetSubGroups().size();
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
 
@@ -207,23 +207,23 @@ public:
   }
 
   template< typename LAMBDA >
-  void forCellBlocks( LAMBDA && lambda ) const
+  void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forCellBlocks<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
-  void forCellBlocks( LAMBDA && lambda )
+  void forElementSubRegions( LAMBDA && lambda )
   {
-    forCellBlocks<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
-  void forCellBlocks( LAMBDA && lambda ) const
+  void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
+    ManagedGroup const * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
 
-    for( auto const & subGroupIter : cellBlockSubRegions->GetSubGroups() )
+    for( auto const & subGroupIter : elementSubRegions->GetSubGroups() )
     {
       applyLambdaToCellBlocks<CELLTYPE, CELLTYPES...>( subGroupIter.second, [&]( auto const * const subRegion )
       {
@@ -233,11 +233,11 @@ public:
   }
 
   template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
-  void forCellBlocks( LAMBDA && lambda )
+  void forElementSubRegions( LAMBDA && lambda )
   {
-    ManagedGroup * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
+    ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
 
-    for( auto & subGroupIter : cellBlockSubRegions->GetSubGroups() )
+    for( auto & subGroupIter : elementSubRegions->GetSubGroups() )
     {
       applyLambdaToCellBlocks<CELLTYPE, CELLTYPES...>( subGroupIter.second, [&]( auto * const subRegion )
       {
@@ -248,19 +248,19 @@ public:
 
 
   template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA && lambda ) const
+  void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
-    forCellBlocksIndex<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA && lambda )
+  void forElementSubRegionsIndex( LAMBDA && lambda )
   {
-    forCellBlocksIndex<CellBlockSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA && lambda ) const
+  void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
@@ -273,7 +273,7 @@ public:
   }
 
   template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA && lambda )
+  void forElementSubRegionsIndex( LAMBDA && lambda )
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
@@ -290,8 +290,8 @@ public:
   {
     static constexpr auto materialListString = "materialList";
     static constexpr auto fractureSetString = "fractureSet";
-    static constexpr auto cellBlockSubRegions = "cellBlockSubRegions";
-    static constexpr auto cellBlockSubRegionNames = "cellBlocks";
+    static constexpr auto elementSubRegions = "cellBlockSubRegions";
+    static constexpr auto sourceCellBlockNames = "cellBlocks";
 
   } m_regionViewKeys;
 

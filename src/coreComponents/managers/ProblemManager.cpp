@@ -755,7 +755,7 @@ void ProblemManager::GenerateMesh()
 
       elemManager->forElementRegions( [&](ElementRegion * const region )->void
       {
-        ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
+        ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
         subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
@@ -764,7 +764,7 @@ void ProblemManager::GenerateMesh()
         });
 
       });
-//      elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
+//      elemManager->forElementSubRegions([&](CellBlockSubRegion * const subRegion)->void
 //      {
 //        subRegion->nodeList().SetRelatedObject(nodeManager);
 //        subRegion->faceList().SetRelatedObject(faceManager);
@@ -823,7 +823,7 @@ void ProblemManager::ApplyNumericalMethods()
             string_array const & materialList = elemRegion->getMaterialList();
             localIndex quadratureSize = 1;
 
-            elemRegion->forCellBlocks([&]( auto * const subRegion )->void
+            elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
             {
               if( feDiscretization != nullptr )
               {

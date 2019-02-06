@@ -104,7 +104,7 @@ void DomainPartition::SetMaps(  )
   //  elementRegionManager->forElementRegions( [&](ElementRegion&
   // elementRegion)-> void
   //  {
-  //    elementRegion.forCellBlocks( [&]( CellBlockSubRegion & subRegion )->void
+  //    elementRegion.forElementSubRegions( [&]( CellBlockSubRegion & subRegion )->void
   //    {
 
   //    });
@@ -146,7 +146,7 @@ void DomainPartition::GenerateSets(  )
   for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
   {
     ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
-    for( auto & subRegionIter : elementRegion->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions)->GetSubGroups() )
+    for( auto & subRegionIter : elementRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetSubGroups() )
     {
       ElementSubRegionBase * const subRegion = subRegionIter.second->group_cast<ElementSubRegionBase *>();
 //      array2d<localIndex> const & elemsToNodes = subRegion->nodeList();

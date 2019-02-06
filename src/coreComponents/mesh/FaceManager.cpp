@@ -104,8 +104,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     ElementRegion * const elemRegion = elementManager->GetRegion(kReg);
 
-    elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const kSubReg,
-                                                            CellBlockSubRegion * const subRegion )
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const kSubReg,
+                                                            CellElementSubRegion * const subRegion )
     {
       localIndex const numFacesPerElement = subRegion->numFacesPerElement();
       array2d<localIndex> & elemsToFaces = subRegion->faceList();
@@ -364,7 +364,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
     ElementRegion const * const elemRegion     = elemManager->GetRegion( elemRegionList[kf][0] );
-    CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>( elemSubRegionList[kf][0] );
+    CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>( elemSubRegionList[kf][0] );
     R1Tensor const elementCenter = subRegion->calculateElementCenter( elemList[kf][0], *nodeManager );
     
     const localIndex numFaceNodes = nodeList()[kf].size();
