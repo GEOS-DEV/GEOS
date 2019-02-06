@@ -191,7 +191,7 @@ public:
     forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
-  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
     ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
@@ -199,11 +199,11 @@ public:
     for( auto & region : elementRegions->GetSubGroups() )
     {
       ElementRegion * const elemRegion = region.second->group_cast<ElementRegion *>();
-      elemRegion->forElementSubRegions<CELLTYPE,CELLTYPES...>( std::forward<LAMBDA>(lambda) );
+      elemRegion->forElementSubRegions<SUBREGIONTYPE,SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
     ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
@@ -211,7 +211,7 @@ public:
     for( auto & region : elementRegions->GetSubGroups() )
     {
       ElementRegion const * const elemRegion = region.second->group_cast<ElementRegion const *>();
-      elemRegion->forElementSubRegions<CELLTYPE,CELLTYPES...>( std::forward<LAMBDA>(lambda) );
+      elemRegion->forElementSubRegions<SUBREGIONTYPE,SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
     }
   }
 
@@ -228,7 +228,7 @@ public:
   }
 
 
-  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda )
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
@@ -240,7 +240,7 @@ public:
         ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
 
         bool validCast =
-        ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+        ElementRegion::applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });
@@ -248,7 +248,7 @@ public:
     }
   }
 
-  template< typename CELLTYPE, typename ... CELLTYPES, typename LAMBDA >
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda ) const
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
@@ -259,7 +259,7 @@ public:
       {
         ElementSubRegionBase const * const subRegion = elementRegion->GetSubRegion(esr);
 
-        ElementRegion::applyLambdaToCellBlocks<CELLTYPE,CELLTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+        ElementRegion::applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });
