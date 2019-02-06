@@ -228,11 +228,6 @@ void LapackMatrix::invert(LapackMatrix& src)
       array1d<double> INV_WORK(NN);
       // Call to LAPACK using LAPACKE
       // --- Compute LU factorization (LAPACK function DGETRF)
-      INFO = 1;
-      if (INFO == 1)
-      {
-
-      }
       INFO = LAPACKE_dgetrf(LAPACK_COL_MAJOR,
                             NN,
                             NN,
