@@ -57,12 +57,12 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
-    for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+    for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
       
-      forall_in_range<POLICY>(0,cellBlock->size(), body);
+      forall_in_range<POLICY>(0,elementSubRegion->size(), body);
 
     }
   }
@@ -76,10 +76,10 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions);
-    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+    for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
 
       forall_in_set<POLICY>(setList, listLen, body);
     }
@@ -104,9 +104,9 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      ElementSubRegionBase const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion(esr);
 
-      forall_in_range<POLICY>(0, cellBlockSubRegion->size(),
+      forall_in_range<POLICY>(0, elementSubRegion->size(),
                               [=](localIndex index) mutable -> void
                               {
                                 lambdaBody(er,esr,index);
@@ -152,14 +152,14 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forCellBlocksIndex( [&]( localIndex const esr, auto const * const cellBlockSubRegion )
+    elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto const * const elementSubRegion )
     {
       auto ebody = [=](localIndex index) mutable -> real64
       {
         return lambdaBody(er,esr,index);
       };
 
-      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
+      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, elementSubRegion->size(), ebody);
     });
   }
 
@@ -196,10 +196,10 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
     FiniteElementSpace const * const feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
-    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    dataRepository::ManagedGroup const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
+    for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellBlockSubRegion const * cellBlock = elementSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
 
       //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
       arrayView3d<R1Tensor> const & dNdX = cellBlock->getReference< array3d<R1Tensor> >(dataRepository::keys::dNdX);

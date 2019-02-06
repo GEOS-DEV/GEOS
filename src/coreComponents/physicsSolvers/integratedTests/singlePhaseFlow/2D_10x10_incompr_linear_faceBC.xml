@@ -89,7 +89,7 @@
                component="0"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -97,7 +97,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -105,21 +105,21 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="0.0"/>
 

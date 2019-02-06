@@ -17,7 +17,8 @@
  */
 
 
-#include "CellBlockSubRegion.hpp"
+#include "CellElementSubRegion.hpp"
+
 #include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
@@ -25,7 +26,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
+CellElementSubRegion::CellElementSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
@@ -44,12 +45,12 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 
 }
 
-CellBlockSubRegion::~CellBlockSubRegion()
+CellElementSubRegion::~CellElementSubRegion()
 {
   // TODO Auto-generated destructor stub
 }
 
-void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
+void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
   this->SetElementType(source->GetElementType());
   this->numNodesPerElement() = source->numNodesPerElement();
@@ -60,7 +61,7 @@ void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->ConstructGlobalToLocalMap();
 }
 
-void CellBlockSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
+void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                                         string const & setName )
 {
   set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
@@ -70,7 +71,7 @@ void CellBlockSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * cons
 
 }
 
-void CellBlockSubRegion::MaterialPassThru( string const & matName,
+void CellElementSubRegion::MaterialPassThru( string const & matName,
                                            string const & setName,
                                            set<localIndex> & materialSet,
                                            ManagedGroup * material )
@@ -80,7 +81,7 @@ void CellBlockSubRegion::MaterialPassThru( string const & matName,
 
 
 
-void CellBlockSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void CellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
@@ -89,21 +90,21 @@ void CellBlockSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionLi
 }
 
 
-localIndex CellBlockSubRegion::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
+localIndex CellElementSubRegion::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 
-localIndex CellBlockSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex CellElementSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
                                                arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template< bool DOPACK >
-localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                       arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
@@ -126,7 +127,7 @@ localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffe
 }
 
 
-localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                  localIndex_array & packList )
 {
   localIndex unPackedSize = 0;
@@ -150,7 +151,7 @@ localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buff
   return unPackedSize;
 }
 
-void CellBlockSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
+void CellElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( nodeList(),
                                     m_unmappedGlobalIndicesInNodelist,
