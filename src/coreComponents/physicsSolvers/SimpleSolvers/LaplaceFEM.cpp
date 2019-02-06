@@ -318,15 +318,15 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
       auto const & numMethodName = m_discretizationName;
 
-      elementRegion->forCellBlocks([&]( auto const * const cellBlock )
+      elementRegion->forElementSubRegions([&]( auto const * const elementSubRegion )
       {
-        localIndex const numElems = cellBlock->size();
-        TYPEOFPTR(cellBlock)::NodeMapType const & elemsToNodes = cellBlock->nodeList();
+        localIndex const numElems = elementSubRegion->size();
+        TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
 
-        array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+        array1d<integer> const & elemGhostRank = elementSubRegion->m_ghostRank;
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
@@ -379,15 +379,15 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( auto & cellBlock : elementRegion->GetGroup(ElementRegion::viewKeyStruct::cellBlockSubRegions)->GetSubGroups() )
+    for( auto & elementSubRegion : elementRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetSubGroups() )
     {
-      CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second );
+      CellElementSubRegion * const cellElementSubRegion = ManagedGroup::group_cast<CellElementSubRegion*>(elementSubRegion.second );
 
-      array3d< R1Tensor > & dNdX = cellBlockSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
+      array3d< R1Tensor > & dNdX = cellElementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
+      array2d<real64> const & detJ            = cellElementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      array2d<localIndex> const & elemsToNodes = cellBlockSubRegion->nodeList();
+      array2d<localIndex> const & elemsToNodes = cellElementSubRegion->nodeList();
       const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
       Epetra_LongLongSerialDenseVector  element_index   (numNodesPerElement);
@@ -395,11 +395,11 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       Epetra_SerialDenseMatrix     element_matrix  (numNodesPerElement,
                                                     numNodesPerElement);
 
-      array1d<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
+      array1d<integer> const & elemGhostRank = cellElementSubRegion->m_ghostRank;
       const int n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
-      for( localIndex k=0 ; k<cellBlockSubRegion->size() ; ++k )
+      for( localIndex k=0 ; k<cellElementSubRegion->size() ; ++k )
       {
         if(elemGhostRank[k] < 0)
         {

@@ -284,7 +284,7 @@ private:
                            set<localIndex>& separationPathFaces,
                            map<localIndex, int>& edgeLocations,
                            map<localIndex, int>& faceLocations,
-                           map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
+                           map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
 
 
   /**
@@ -313,7 +313,7 @@ private:
                         const set<localIndex>& separationPathFaces,
                         const map<localIndex, int>& edgeLocations,
                         const map<localIndex, int>& faceLocations,
-                        const map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
+                        const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
 
   /**
    * @brief function to set which side of the fracture plane all objects are on
@@ -330,11 +330,11 @@ private:
   bool SetLocations( const set<localIndex>& separationPathFaces,
                      ElementRegionManager & elemManager,
                      const FaceManager & faceManager,
-                     const set< std::pair<CellBlockSubRegion*, localIndex> >& nodesToElements,
+                     const set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
                      const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                      map<localIndex, int>& edgeLocations,
                      map<localIndex, int>& faceLocations,
-                     map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
+                     map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
 
   /**
    * @brief function to set which side of the fracture plane all objects are on
@@ -351,15 +351,15 @@ private:
    * @return
    */
   bool SetElemLocations( const int side,
-                         const std::pair<CellBlockSubRegion*, localIndex >& elem,
+                         const std::pair<CellElementSubRegion*, localIndex >& elem,
                          const set<localIndex>& separationPathFaces,
                          ElementRegionManager & elemManager,
                          const FaceManager & faceManager,
-                         const set< std::pair<CellBlockSubRegion*, localIndex> >& nodesToElements,
+                         const set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
                          const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                          map<localIndex, int>& edgeLocations,
                          map<localIndex, int>& faceLocations,
-                         map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations );
+                         map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
 
   /**
    *

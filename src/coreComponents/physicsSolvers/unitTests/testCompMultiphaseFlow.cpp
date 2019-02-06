@@ -277,7 +277,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
     ElementRegion * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forCellBlocksIndex([&]( localIndex const esr, auto * const subRegion )
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
       arrayView1d<integer> & elemGhostRank =
         subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -399,7 +399,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
     ElementRegion * elemRegion = elemManager->GetRegion(er);
     SCOPED_TRACE( "Region " + std::to_string(er) + " (" + elemRegion->getName() + ")" );
 
-    elemRegion->forCellBlocksIndex([&]( localIndex const esr, auto * const subRegion )
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
       SCOPED_TRACE( "Subregion " + std::to_string(esr) + " (" + subRegion->getName() + ")" );
 
@@ -484,7 +484,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
     ElementRegion * elemRegion = elemManager->GetRegion(er);
     SCOPED_TRACE( "Region " + std::to_string(er) + " (" + elemRegion->getName() + ")" );
 
-    elemRegion->forCellBlocksIndex([&]( localIndex const esr, auto * const subRegion )
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
       SCOPED_TRACE( "Subregion " + std::to_string(esr) + " (" + subRegion->getName() + ")" );
 

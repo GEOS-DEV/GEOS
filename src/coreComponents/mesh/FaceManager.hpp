@@ -32,7 +32,7 @@ namespace geosx
 
 class NodeManager;
 class ElementRegionManager;
-class CellBlockSubRegion;
+class CellElementSubRegion;
 
 class FaceManager : public ObjectManagerBase
 {
