@@ -82,7 +82,7 @@
     <FieldSpecification name="source"  
                initialCondition="1"  
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="shale_MeanStress" 
                scale="-1.0e6"
                functionName="spaceFunction"/>

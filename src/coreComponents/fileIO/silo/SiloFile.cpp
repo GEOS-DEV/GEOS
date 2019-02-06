@@ -789,7 +789,7 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
   ElementRegionManager::ElementViewAccessor< std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> > > const
   constitutiveMap = elementManager->ConstructViewAccessor< std::pair< array2d<localIndex>, array2d<localIndex> >, 
                                                            std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> >
-      >( std::string(CellBlockSubRegion::viewKeyStruct::constitutiveMapString) );
+      >( std::string(CellElementSubRegion::viewKeyStruct::constitutiveMapString) );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
@@ -818,7 +818,7 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion<CellBlockSubRegion>(esr);
+      CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
@@ -948,7 +948,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
 
-    elemRegion->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const subRegion )
+    elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
     {
       if( numMatInRegion > 1 )
       {
@@ -980,7 +980,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                       getIndexInParent();
     }
 
-    elemRegion->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const subRegion )
+    elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
     {
       if( numMatInRegion == 1 )
       {
@@ -1590,8 +1590,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   {
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     viewPointers[er].resize( elemRegion->numSubRegions() );
-    elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr,
-                                                            CellBlockSubRegion const * const subRegion )
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+                                                            CellElementSubRegion const * const subRegion )
     {
       numElems += subRegion->size();
 
@@ -1648,8 +1648,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
       {
         ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-        elemRegion->forCellBlocksIndex<CellBlockSubRegion>([&]( localIndex const esr,
-                                                                CellBlockSubRegion const * const subRegion )
+        elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+                                                                CellElementSubRegion const * const subRegion )
         {
           ViewWrapper<arrayType> const &
           sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
@@ -1782,18 +1782,18 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       ElementRegion const * const region = elementManager->GetRegion(er);
 
-      region->forCellBlocks<CellBlockSubRegion>([&]( CellBlockSubRegion const * const cellBlock )
+      region->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const elementSubRegion )
       {
-        array2d<localIndex> const & elemsToNodes = cellBlock->nodeList();
+        array2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
 
         elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
 
-        integer_array const & elemGhostRank = cellBlock->GhostRank();
+        integer_array const & elemGhostRank = elementSubRegion->GhostRank();
 
 
-        string elementType = cellBlock -> GetElementType();
+        string elementType = elementSubRegion -> GetElementType();
         integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
-        for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
+        for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
         {
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
@@ -1816,7 +1816,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
-        shapecnt[count] = static_cast<int>(cellBlock->size());
+        shapecnt[count] = static_cast<int>(elementSubRegion->size());
 
 
       if (! elementType.compare(0, 4, "C3D8") )

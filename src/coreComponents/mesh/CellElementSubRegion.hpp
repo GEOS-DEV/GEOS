@@ -25,11 +25,11 @@
 namespace geosx
 {
 
-class CellBlockSubRegion : public CellBlock
+class CellElementSubRegion : public CellBlock
 {
 public:
-  CellBlockSubRegion( string const & name, ManagedGroup * const parent );
-  virtual ~CellBlockSubRegion() override;
+  CellElementSubRegion( string const & name, ManagedGroup * const parent );
+  virtual ~CellElementSubRegion() override;
 
   void CopyFromCellBlock( CellBlock const * source );
 
