@@ -3,7 +3,8 @@
 #
 
 set( LAI_tests
-     testLAOperations.cpp )
+     testLAOperations.cpp 
+     testDenseLAOperations.cpp)
 
 set( LAI_tests_with_xml
      testDofManager.cpp )
