@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -32,7 +32,7 @@ namespace geosx
 
 class NodeManager;
 class ElementRegionManager;
-class CellBlockSubRegion;
+class CellElementSubRegion;
 
 class FaceManager : public ObjectManagerBase
 {
@@ -58,10 +58,6 @@ public:
   FaceManager( string const &, ManagedGroup * const parent );
   virtual ~FaceManager() override final;
 
-//  void Initialize(  ){}
-
-  virtual void FillDocumentationNode() override final;
-
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
@@ -70,9 +66,10 @@ public:
   void SortAllFaceNodes( NodeManager const * const nodeManager,
                          ElementRegionManager const * const elemManager);
 
-  void SortFaceNodes( array1d<R1Tensor> const & X,
+  void SortFaceNodes( arrayView1d<R1Tensor> const & X,
                       R1Tensor const & elemCenter,
-                      arrayView1d<localIndex> faceNodes );
+                      arrayView1d<localIndex> & faceNodes,
+                      localIndex const numFaceNodes );
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
 
@@ -80,13 +77,14 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const override;
+                                     arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList ) override;
+                                       localIndex_array & packList ) override;
 
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
@@ -100,7 +98,9 @@ public:
     static constexpr auto elementRegionListString     = "elemRegionList";
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
-    static constexpr auto faceCenterString            = "faceCenter";
+    constexpr static auto faceAreaString = "faceArea";
+    constexpr static auto faceCenterString = "faceCenter";
+    constexpr static auto faceNormalString = "faceNormal";
 
     dataRepository::ViewKey nodeList              = { nodeListString };
     dataRepository::ViewKey edgeList              = { edgeListString };
@@ -111,6 +111,16 @@ public:
 
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
+
+  array1d<real64> &       faceArea()       { return m_faceArea; }
+  array1d<real64> const & faceArea() const { return m_faceArea; }
+
+  array1d<R1Tensor> &       faceCenter()       { return m_faceCenter; }
+  array1d<R1Tensor> const & faceCenter() const { return m_faceCenter; }
+
+  array1d<R1Tensor> &       faceNormal()       { return m_faceNormal; }
+  array1d<R1Tensor> const & faceNormal() const { return m_faceNormal; }
+
 
   OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
   OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
@@ -128,18 +138,24 @@ public:
   array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
+
 private:
 
   template<bool DOPACK>
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                             localIndex_array const & packList ) const;
+                                    arrayView1d<localIndex const> const & packList ) const;
 
 
   OrderedVariableOneToManyRelation m_nodeList;
   OrderedVariableOneToManyRelation m_edgeList;
   FixedToManyElementRelation m_toElements;
 
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+
+  array1d< real64 > m_faceArea;
   array1d< R1Tensor > m_faceCenter;
+  array1d< R1Tensor > m_faceNormal;
 
   constexpr static int MAX_FACE_NODES = 9;
 

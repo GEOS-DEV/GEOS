@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -58,17 +58,22 @@ int main(int argc, char** argv)
   MPI_Init(&argc,&argv);
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-#endif
+  logger::InitializeLogger(MPI_COMM_GEOSX);
+#else
+  logger::InitializeLogger();
+#endif 
 
   global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>(global_argc)];
-  for( int i=0 ; i<argc ; ++i )
+  global_argv = new char*[global_argc];
+  for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];
     std::cout<<argv[i]<<std::endl;
   }
 
   int const result = RUN_ALL_TESTS();
+
+  logger::FinalizeLogger();
 
 #ifdef GEOSX_USE_MPI
   MPI_Finalize();
@@ -80,10 +85,7 @@ int main(int argc, char** argv)
 
 TEST(testXML,testXML)
 {
-  ProblemManager problemManager("ProblemManager",nullptr);
-
-  problemManager.BuildDataStructure(nullptr);
-  problemManager.SetDocumentationNodes();
+  ProblemManager problemManager("Problem",nullptr);
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( global_argc, global_argv );
@@ -93,5 +95,4 @@ TEST(testXML,testXML)
   //   inputFileName = "../../src/components/core/tests/xmlTests/basic_input.xml";
   // }
   problemManager.ParseInputFile();
-
 }

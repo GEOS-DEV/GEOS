@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -52,7 +52,7 @@ public:
   ~Blueprint()
   {}
 
-  void write(int cycle) const;
+  void write(int cycle, integer const eventCounter ) const;
 
 private:
   void addNodes(axom::sidre::Group* coords, axom::sidre::Group* fields) const;

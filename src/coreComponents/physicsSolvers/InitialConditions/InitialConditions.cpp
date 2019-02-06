@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -80,8 +80,7 @@ void InitialConditionBase::ReadXML( TICPP::HierarchicalDataNode*  hdn)
 {
   {
     std::string objectTypeStr = hdn->GetAttributeString("object");
-    if(objectTypeStr.empty())
-      throw GPException("Cannot specify an initial condition without an object type");
+    GEOS_ERROR_IF(objectTypeStr.empty(), "Cannot specify an initial condition without an object type");
     objectType_ = PhysicalDomainT::GetObjectDataStructureConditionKey(objectTypeStr);
   }
 
@@ -93,20 +92,18 @@ void InitialConditionBase::ReadXML( TICPP::HierarchicalDataNode*  hdn)
 
   std::size_t foundSpace = regionName_.find(" ");
   std::size_t foundComma = regionName_.find(",");
-  if (foundComma != std::string::npos || foundSpace != std::string::npos )
-    throw GPException("Error.  You are trying to apply an initial condition to multiple regions at once.  This is illegal.");
+  GEOS_ERROR_IF(foundComma != std::string::npos || foundSpace != std::string::npos,
+                "You are trying to apply an initial condition to multiple regions at once.");
 
-  if (objectType_ == PhysicalDomainT::FiniteElementElementRegion && regionName_.empty())
-  {
-    throw GPException("Error.  You are applying an initial condition to Element but didn't provide a region name via toregions=");
-  }
+  GEOS_ERROR_IF(objectType_ == PhysicalDomainT::FiniteElementElementRegion && regionName_.empty(),
+                "You are applying an initial condition to Element but didn't provide a region name via toregions=");
 
   {
     string_array tempSetName;
     tempSetName = hdn->GetStringVector("setname");
-    if (!tempSetName.empty())
-      throw GPException("ERROR!!! 'setname' is no longer supported for initial conditions.  Use 'setnames' instead.");
+    GEOS_ERROR_IF(!tempSetName.empty(),"'setname' is no longer supported for initial conditions.  Use 'setnames' instead.");
   }
+
   setNames_ = hdn->GetStringVector("setnames");
   m_additive = hdn->GetAttributeOrDefault<bool>("additive", false);
   // This flag allows superpose a field onto another one.
@@ -175,17 +172,11 @@ void ReadInitialConditionFromFile::Apply( PhysicalDomainT& domain )
   }
   else
   {
-    if(isIndexedFile_)
+    GEOS_ERROR_IF(isIndexedFile_, "ReadInitialConditionFromFile: Specifying an subset with an indexed file is currently not supported.");
+    for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
     {
-      throw GPException("Error ReadInitialConditionFromFile: Specifying an subset with an indexed file is currently not supported.");
-    }
-    else
-    {
-      for( string_array::size_type i =0 ; i < setNames_.size() ; ++i)
-      {
-        set<localIndex>& set = objectManager.GetSet(setNames_[i]);
-        objectManager.ReadAsciiFieldData(fieldType_, fieldName_, filename_, set);
-      }
+      set<localIndex>& set = objectManager.GetSet(setNames_[i]);
+      objectManager.ReadAsciiFieldData(fieldType_, fieldName_, filename_, set);
     }
   }
 }
@@ -218,8 +209,7 @@ ConstantInitialCondition::ConstantInitialCondition(  TICPP::HierarchicalDataNode
 void ConstantInitialCondition::ReadXML( TICPP::HierarchicalDataNode* hdn)
 {
   valueStr_ = hdn->GetAttributeString("value");
-  if (valueStr_.empty())
-    throw GPException("Error. Value of at least one constant initial condition was not properly set.");
+  GEOS_ERROR_IF(valueStr_.empty(), "Error. Value of at least one constant initial condition was not properly set.");
 }
 
 void ConstantInitialCondition::RegisterFields( PhysicalDomainT& domain ){
@@ -276,8 +266,7 @@ void InitialConditionTable::ReadXML( TICPP::HierarchicalDataNode*  hdn)
 {
 
   m_tableName = hdn->GetAttributeString("table");
-  if (m_tableName.empty())
-    throw GPException("Must declare a table in InitialConditionTable");
+  GEOS_ERROR_IF(m_tableName.empty(), "Must declare a table in InitialConditionTable");
 
   m_component = hdn->GetAttributeOrDefault("component", -1);
 }
@@ -302,9 +291,8 @@ void InitialConditionTable::Apply(PhysicalDomainT& domain)
   const bool isFE = objectManager.GetObjectType() == ObjectDataStructureBaseT::ElementRegion;
   const array1d<R1Tensor>* pos = !isFE ? objectManager.GetFieldDataPointer<FieldInfo::referencePosition>() : 0;
   {
-    if ((!isFE) && (!pos))
-      throw GPException(
-              "InitialConditionTable::Apply - when trying to apply you must either apply to an ElementRegionT or to an ObjectDataStructureBaseT where FieldInfo::referencePosition has been added as a data field");
+      GEOS_ERROR_IF((!isFE) && (!pos), "InitialConditionTable::Apply - when trying to apply you must either apply to an ElementRegionT " <<
+                                       "or to an ObjectDataStructureBaseT where FieldInfo::referencePosition has been added as a data field");
   }
 
   //get the 3D table
@@ -326,8 +314,7 @@ void InitialConditionTable::Apply(PhysicalDomainT& domain)
     m_component = -1;
 
   //make sure something was found; otherwise, throw an exception
-  if(!t3dp && !vf3dp)
-    throw GPException("InitialConditionTable::Apply : unrecognized table or vector field");
+  GEOS_ERROR_IF(!t3dp && !vf3dp, "InitialConditionTable::Apply : unrecognized table or vector field");
 
   //fill the sets
   array1d<set<localIndex>> sets(setNames_.size());
@@ -339,53 +326,48 @@ void InitialConditionTable::Apply(PhysicalDomainT& domain)
   //time, so you need to explicitly declare all cases
   if (!m_additive)
   {
-    if(m_component >= 0 && !SetField(t3dp,  m_component, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr))
-    {
-      //if you have a R1 tensor field in which you are assigning by component,
-      // the only rational way to do this is
-      //with a scalar table ... otherwise, throw an exception
-      throw GPException("InitialConditionTable::Apply - unhandled case for component-wise cases");
-    }
-    else
-    {
-      //with no component, you may set a scalar with a scalar
-      bool ok = SetField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r0ptr);
-      // ... you may set a vector with a scalar (BUT BE CAREFUL!!)
-      if(!ok)
-        ok =    SetField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr);
-      // ... you may set a vector with a vector
-      if(!ok)
-        ok =    SetField(vf3dp, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr);
-      // ... or this is unhandled!!
-      if(!ok)
-        throw GPException("InitialConditionTable::Apply - unhandled case");
-    }
+    //if you have a R1 tensor field in which you are assigning by component,
+    // the only rational way to do this is
+    //with a scalar table ... otherwise, throw an exception
+    GEOS_ERROR_IF(m_component >= 0 && !SetField(t3dp,  m_component, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr),
+                  "InitialConditionTable::Apply - unhandled case for component-wise cases");
+    
+    //with no component, you may set a scalar with a scalar
+    bool ok = SetField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r0ptr);
+    
+    // ... you may set a vector with a scalar (BUT BE CAREFUL!!)
+    if(!ok)
+      ok =    SetField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr);
+    
+    // ... you may set a vector with a vector
+    if(!ok)
+      ok =    SetField(vf3dp, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr);
+    
+    // ... or this is unhandled!!
+    GEOS_ERROR_IF(!ok, "InitialConditionTable::Apply - unhandled case");
   }
   else
   {
-    if(m_component >= 0 && !AddToField(t3dp,  m_component, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr, m_scale))
-    {
-      //if you have a R1 tensor field in which you are assigning by component,
-      // the only rational way to do this is
-      //with a scalar table ... otherwise, throw an exception
-      throw GPException("InitialConditionTable::Apply - unhandled case for component-wise cases");
-    }
-    else
-    {
-      //with no component, you may set a scalar with a scalar
-      bool ok = AddToField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r0ptr, m_scale);
-      // ... you may set a vector with a scalar (BUT BE CAREFUL!!)
-      if(!ok)
-        ok =    AddToField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr, m_scale);
-      // ... you may set a vector with a vector
-      if(!ok)
-        ok =    AddToField(vf3dp, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr, m_scale);
-      // ... or this is unhandled!!
-      if(!ok)
-        throw GPException("InitialConditionTable::Apply - unhandled case");
-    }
-  }
+    //if you have a R1 tensor field in which you are assigning by component,
+    // the only rational way to do this is
+    //with a scalar table ... otherwise, throw an exception
+    GEOS_ERROR_IF(m_component >= 0 && !AddToField(t3dp,  m_component, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr, m_scale),
+               "InitialConditionTable::Apply - unhandled case for component-wise cases");
 
+    //with no component, you may set a scalar with a scalar
+    bool ok = AddToField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r0ptr, m_scale);
+    
+    // ... you may set a vector with a scalar (BUT BE CAREFUL!!)
+    if(!ok)
+      ok =    AddToField(t3dp,  pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr, m_scale);
+    
+    // ... you may set a vector with a vector
+    if(!ok)
+      ok =    AddToField(vf3dp, pos, domain.m_feNodeManager, (ElementRegionT&) objectManager, sets, r1ptr, m_scale);
+    
+    // ... or this is unhandled!!
+    GEOS_ERROR_IF(!ok, "InitialConditionTable::Apply - unhandled case");
+  }
 }
 
 REGISTER_InitialCondition( InitialConditionTable )
@@ -445,8 +427,8 @@ void InitialConditionFunction::ReadXML( TICPP::HierarchicalDataNode*  hdn){
     string_array vTypesVect = Tokenize(varTypesStr," ");
     variableTypes_.resize(vTypesVect.size());
 
-    if(variableTypes_.size() != variableNames_.size())
-      throw GPException("Error InitialConditionFunction: Number of variable types not equal to number of variables.");
+    GEOS_ERROR_IF(variableTypes_.size() != variableNames_.size(),
+                  "Error InitialConditionFunction: Number of variable types not equal to number of variables.");
 
     for( string_array::size_type i=0 ; i < vTypesVect.size() ; ++i )
       variableTypes_[i] = fromString<FieldType>(vTypesVect[i]);
@@ -533,7 +515,7 @@ REGISTER_InitialCondition( InitialConditionFunction )
 //  const std::map<std::string,Table3D >::const_iterator it3 =
 // tableManager.Tables<3>().find(m_tableName);
 //  if(it3 == tableManager.Tables<3>().end())
-//    throw GPException("ConstitutivePropertiesTable::Apply : Cannot find
+//    GEOS_ERROR("ConstitutivePropertiesTable::Apply : Cannot find
 // requested table in the table manager: " + m_tableName);
 //  const Table3D& t3d = it3->second;
 //
@@ -890,10 +872,7 @@ void LinkFractureFaces::RegisterFields( PhysicalDomainT& domain ){
 
 void LinkFractureFaces::Apply( PhysicalDomainT& domain )
 {
-  if(setNames_.size() != 2)
-  {
-    throw GPException("LinkFractureFaces:: two sets are required");
-  }
+  GEOS_ERROR_IF(setNames_.size() != 2, "LinkFractureFaces:: two sets are required");
 
   const array1d<R1Tensor>& u = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement> ();
   const array1d<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
@@ -1058,8 +1037,7 @@ InitialConditionBase* newInitialCondition(const std::string& InitialConditionNam
   InitialConditionInitializer* InitialConditionInitializer = getInitialConditionCatalogue()[InitialConditionName];
   InitialConditionBase *theNewInitialCondition = NULL;
 
-  if(!InitialConditionInitializer)
-    throw GPException("Could not create unrecognized InitialCondition"+ InitialConditionName);
+  GEOS_ERROR_IF(!InitialConditionInitializer, "Could not create unrecognized InitialCondition"+ InitialConditionName);
 
   theNewInitialCondition = InitialConditionInitializer->initializeInitialCondition( hdn,pm );
 

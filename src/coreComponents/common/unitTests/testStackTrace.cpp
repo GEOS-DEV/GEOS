@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -51,7 +51,6 @@
 //------------------------------------------------------------------------------
 //TEST(testStackTrace,stackTrace)
 //{
-//  std::cout<<"calling handler0"<<std::endl;
 //  geosx::stacktrace::handler0(0);
 //}
 #include <execinfo.h>

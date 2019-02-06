@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -47,19 +47,23 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "Blueprint"; }
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
   /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /// Write one final output as the code exits
   virtual void Cleanup( real64 const & time_n,
-                        int const cycleNumber,
-                        dataRepository::ManagedGroup * domain ) override { Execute(time_n, 0.0, cycleNumber, domain); }
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const & eventProgress,
+                        dataRepository::ManagedGroup * domain ) override
+  {
+    Execute(time_n, 0, cycleNumber, eventCounter, eventProgress, domain);
+  }
 
   
   struct viewKeyStruct

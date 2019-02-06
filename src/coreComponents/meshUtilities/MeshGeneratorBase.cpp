@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -32,7 +32,9 @@ using namespace dataRepository;
 
 MeshGeneratorBase::MeshGeneratorBase( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+}
 
 MeshGeneratorBase::~MeshGeneratorBase()
 {}

@@ -16,14 +16,12 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-
-
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include <cmath>
 #include <iostream>
 #include <sys/time.h>
-//#include "coreCompdataRepository/SidreWrapper.hpp"
+#include "SetFPE.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
@@ -32,9 +30,9 @@
 #include "coupling/TribolCoupling.hpp"
 
 
-#ifdef USE_OPENMP
-#include <omp.h>
-#endif
+//#ifdef USE_OPENMP
+//#include <omp.h>
+//#endif
 
 using namespace geosx;
 
@@ -46,10 +44,11 @@ int main( int argc, char *argv[] )
   timeval tim;
   gettimeofday(&tim, nullptr);
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
-  real64 t_initialize, t_run;
 
 #ifdef GEOSX_USE_MPI
-  int rank;
+  int rank = 0;
+  int nranks = 1;
+
   MPI_Init(&argc,&argv);
 
 #if HAVE_TRIBOLCOUPLING
@@ -68,70 +67,72 @@ int main( int argc, char *argv[] )
 #endif
 
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  logger::rank = rank;
+
+  MPI_Comm_size(MPI_COMM_GEOSX, &nranks);
+
+  logger::InitializeLogger(MPI_COMM_GEOSX);
+#else
+  logger::InitializeLogger():
 #endif
 
-  std::cout<<"starting main"<<std::endl;
-
-#if defined(RAJA_ENABLE_OPENMP)
+#ifdef GEOSX_USE_OPENMP
   {
-    int noThreads = omp_get_max_threads(); 
-    std::cout<<"No of threads: "<<noThreads<<std::endl;
+    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
   }
-#endif  
-
-  logger::InitializeLogger();
+#endif
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  cxx_utilities::SetFPE();
+
 
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
   if (restart) {
-    std::cout << "Loading restart file " << restartFileName << std::endl;
+    GEOS_LOG_RANK_0("Loading restart file " << restartFileName);
     dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_GEOSX );
   }
 
-  ProblemManager problemManager( "ProblemManager", nullptr );
-  problemManager.SetDocumentationNodes();
-  problemManager.RegisterDocumentationNodes();  
+  ProblemManager problemManager( "Problem", nullptr );
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
 
-  problemManager.ParseInputFile();
-
-  problemManager.Initialize( &problemManager );
-
-  problemManager.ApplyInitialConditions();
-
-  problemManager.FinalInitializationRecursive( &problemManager );
-
-  if (restart) {
-    problemManager.ReadRestartOverwrite( restartFileName );
+  if ( !problemManager.getSchemaFileName().empty() )
+  {
+    problemManager.GenerateDocumentation();
   }
+  else
+  {
+    problemManager.ParseInputFile();
 
-  std::cout << std::endl << "Running simulation:" << std::endl;
+    problemManager.ProblemSetup();
 
+    if (restart) {
+      problemManager.ReadRestartOverwrite( restartFileName );
+    }
 
-  GEOSX_MARK_BEGIN("RunSimulation");
-  gettimeofday(&tim, nullptr);
-  t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    MPI_Barrier(MPI_COMM_GEOSX);
+    GEOS_LOG_RANK_0("Running simulation");
 
-  problemManager.RunSimulation();
-  gettimeofday(&tim, nullptr);
-  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    gettimeofday(&tim, nullptr);
+    const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  GEOSX_MARK_END("RunSimulation");
-  gettimeofday(&tim, nullptr);
-  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    problemManager.RunSimulation();
 
-  printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );
+    gettimeofday(&tim, nullptr);
+    const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+    GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
+                    "s, run time = " << t_run-t_initialize << "s");
+  }
+  
 
   problemManager.ClosePythonInterpreter();
 
   logger::FinalizeLogger();
 
 #ifdef GEOSX_USE_MPI
+  MPI_Comm_free( &MPI_COMM_GEOSX );
   MPI_Finalize();
 #endif
 

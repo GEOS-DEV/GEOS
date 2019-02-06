@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -26,6 +26,7 @@
 #ifndef LINEARELASTICISOTROPIC_HPP_
 #define LINEARELASTICISOTROPIC_HPP_
 #include "ConstitutiveBase.hpp"
+#include "constitutive/ExponentialRelation.hpp"
 
 namespace geosx
 {
@@ -73,10 +74,6 @@ public:
                                  integer const systemAssembleFlag ) override;
 
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
-
   void GetStiffness( realT c[6][6] ) const override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -97,6 +94,9 @@ public:
     dataRepository::ViewKey shearModulus = { shearModulusString };
     dataRepository::ViewKey poissonRatio = { "PoissonRatio" };
     dataRepository::ViewKey density = { "density" };
+    dataRepository::ViewKey compressibility = { "compressibility" };
+    dataRepository::ViewKey referencePressure = { "referencePressure" };
+    dataRepository::ViewKey biotCoefficient = { "BiotCoefficient" };
 
     dataRepository::ViewKey deviatorStress = { deviatorStressString };
     dataRepository::ViewKey meanStress = { meanStressString };
@@ -130,13 +130,24 @@ public:
 
   struct dataPointers
   {
-    real64 * m_bulkModulus = nullptr;
-    real64 * m_shearModulus = nullptr;
-    R2SymTensor * m_deviatorStress = nullptr;
-    real64 * m_meanStress = nullptr;
+    real64 * restrict m_bulkModulus0;
+    real64 * restrict m_shearModulus0;
+    array2d<real64> * restrict m_bulkModulus = nullptr;
+    array2d<real64> * restrict m_shearModulus = nullptr;
+    array2d<R2SymTensor> * restrict m_deviatorStress = nullptr;
+    array2d<real64> * restrict m_meanStress = nullptr;
   } m_dataPointers;
 
+  virtual void StateUpdatePointPressure(real64 const & pres,
+                                        localIndex const k,
+                                        localIndex const q) override final;
+
+protected:
+  virtual void PostProcessInput() override;
+
 private:
+
+
   real64 m_bulkModulus0;
   real64 m_shearModulus0;
   real64 m_density0;
@@ -146,9 +157,27 @@ private:
   array2d<real64> m_meanStress;
   array2d<R2SymTensor> m_deviatorStress;
 
+  /// scalar compressibility parameter
+  real64 m_compressibility;
+
+  /// reference pressure parameter
+  real64 m_referencePressure;
+
+  /// scalar Biot's coefficient
+  real64 m_biotCoefficient;
+
+  array2d<real64> m_poreVolumeMultiplier;
+  array2d<real64> m_dPVMult_dPressure;
+
+  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
-
+inline void LinearElasticIsotropic::StateUpdatePointPressure( real64 const & pres,
+                                                              localIndex const k,
+                                                              localIndex const q )
+{
+  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+}
 
 }
 

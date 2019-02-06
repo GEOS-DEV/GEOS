@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -38,7 +38,7 @@
 //#include <string>
 
 #include "common/DataTypes.hpp"
-#include "common/integer_conversion.hpp"
+#include "IntegerConversion.hpp"
 
 namespace geosx
 {

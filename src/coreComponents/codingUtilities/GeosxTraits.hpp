@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -74,7 +74,7 @@ template<typename>
 struct is_array : std::false_type {};
 
 template< typename T, int NDIM, typename INDEX_TYPE >
-struct is_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> > : std::true_type{};
+struct is_array< LvArray::Array<T,NDIM,INDEX_TYPE> > : std::true_type{};
 
 
 
@@ -97,12 +97,16 @@ struct is_chaiable
                                 is_tensorT<T>::value;
 };
 
-}
+} /* namespace traits */
 
 
 
 namespace bufferOps
 {
+
+/* Forward declaration of is_packable */
+template< typename T >
+struct is_packable;
 
 
 template< typename T >
@@ -121,12 +125,22 @@ template<typename>
 struct is_packable_array : std::false_type {};
 
 template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >
+struct is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> >
 {
-  static constexpr bool value = is_noncontainer_type_packable<T>::value;
+  static constexpr bool value = is_packable<T>::value;
 };
-template< typename T, int NDIM, typename INDEX_TYPE>
-constexpr bool is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value;
+
+template<typename T, int NDIM, typename INDEX_TYPE>
+struct is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >
+{
+  static constexpr bool value = is_packable<T>::value;
+};
+
+template<typename T, int NDIM, typename INDEX_TYPE>
+struct is_packable_array< LvArray::ArraySlice<T,NDIM,INDEX_TYPE> >
+{
+  static constexpr bool value = is_packable<T>::value;
+};
 
 
 template<typename>
@@ -135,14 +149,10 @@ struct is_packable_set : std::false_type {};
 template< typename T >
 struct is_packable_set< set<T> >
 {
-  static constexpr bool value = is_noncontainer_type_packable<T>::value;
+  static constexpr bool value = is_packable<T>::value;
 };
 template< typename T>
 constexpr bool is_packable_set< set<T> >::value;
-
-
-
-
 
 
 template<typename>
@@ -151,9 +161,8 @@ struct is_packable_map : std::false_type {};
 template<typename T_KEY, typename T_VAL>
 struct is_packable_map< map<T_KEY,T_VAL> >
 {
-  static constexpr bool value = is_noncontainer_type_packable<T_KEY>::value &&
-                                ( is_noncontainer_type_packable<T_VAL>::value ||
-                                  is_packable_array<T_VAL>::value );
+  static constexpr bool value = is_packable<T_KEY>::value &&
+                                is_packable<T_VAL>::value;
 };
 template< typename T_KEY, typename T_VAL>
 constexpr bool is_packable_map< map<T_KEY,T_VAL> >::value;
@@ -172,8 +181,6 @@ template< typename T >
 constexpr bool is_packable<T>::value;
 
 
-
-
 template< typename T >
 struct is_packable_by_index
 {
@@ -183,10 +190,8 @@ struct is_packable_by_index
 template< typename T >
 constexpr bool is_packable_by_index<T>::value;
 
-}
+} /* namespace bufferOps */
 
-
-}
-
+} /* namespace geosx */
 
 #endif /* SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_ */

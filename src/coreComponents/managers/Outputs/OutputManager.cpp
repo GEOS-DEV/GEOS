@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -21,7 +21,6 @@
  */
 
 #include "OutputManager.hpp"
-#include "DocumentationNode.hpp"
 #include "SiloOutput.hpp"
 
 namespace geosx
@@ -34,27 +33,29 @@ OutputManager::OutputManager( std::string const & name,
                               ManagedGroup * const parent ):
   ManagedGroup( name, parent)
 {
+  setInputFlags(InputFlags::REQUIRED);
 }
 
 OutputManager::~OutputManager()
 {}
 
-void OutputManager::FillDocumentationNode()
+
+
+ManagedGroup * OutputManager::CreateChild( string const & childKey, string const & childName )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Outputs");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Manages output types");
-}
-
-
-void OutputManager::CreateChild( string const & childKey, string const & childName )
-{
-  std::cout << "Adding Output: " << childKey << ", " << childName << std::endl;
+  GEOS_LOG_RANK_0("Adding Output: " << childKey << ", " << childName);
   std::unique_ptr<OutputBase> output = OutputBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<OutputBase>( childName, std::move(output) );
+  return this->RegisterGroup<OutputBase>( childName, std::move(output) );
 }
 
+
+void OutputManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from OutputBase here
+  for (auto& catalogIter: OutputBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
 
 } /* namespace geosx */

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -33,7 +33,6 @@ namespace dataRepository
 namespace keys
 {
 string const inputVarNames("inputVarNames");
-string const inputVarTypes("inputVarTypes");
 
 }
 }
@@ -53,14 +52,8 @@ public:
   /// Destructor
   virtual ~FunctionBase() override;
 
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-
   /// Catalog name interface
   static string CatalogName() { return "FunctionBase"; }
-
-  /// After reading the xml, call the function initialization
-  virtual void ReadXML_PostProcess() override { InitializeFunction(); }
 
   /// Function initialization
   virtual void InitializeFunction(){}
@@ -106,11 +99,15 @@ public:
                               set<localIndex> const & set) const;
 
 protected:
+  string_array m_inputVarNames;
+
   template< typename LEAF >
   void EvaluateT( dataRepository::ManagedGroup const * const group,
                   real64 const time,
                   set<localIndex> const & set,
                   real64_array & result ) const;
+
+  virtual void PostProcessInput() override { InitializeFunction(); }
 
 };
 
@@ -124,14 +121,12 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   real64 const * input_ptrs[4];
 
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  string_array const & inputVarTypes = this->getReference<string_array>( dataRepository::keys::inputVarTypes );
-
+  
   localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
   localIndex varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];
-    string const & varTypeName = inputVarTypes[varIndex];
 
     if( varName=="time")
     {

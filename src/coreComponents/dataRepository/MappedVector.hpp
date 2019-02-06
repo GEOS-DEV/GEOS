@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -18,14 +18,12 @@
 
 /**
  * @file MappedVector.hpp
- * @date Aug 23, 2017
- * @authors settgast
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 #define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
-#include "common/Logger.hpp"
+#include "Logger.hpp"
 #include "KeyIndexT.hpp"
 #include "SFINAE_Macros.hpp"
 
@@ -33,14 +31,14 @@ namespace geosx
 {
 /**
  * @class MappedVector
+ *
  * This class defines a stl-like container that stores values in an stl vector,
- * and has a map lookup table to
- * access the values by a key. It combines the random access performance of a
- * vector when the index is known,
- * the flexibility of a mapped key lookup O(n) if only the key is known. In
- * addition, a keyIndex can be used for lookup,
- * which will give similar performance to an index lookup after the first use of
- * a keyIndex.
+ * and has a map lookup table to access the values by a key. It combines the
+ * random access performance of a vector when the index is known, the flexibility
+ * of a mapped key lookup O(n) if only the key is known.
+ *
+ * In addition, a keyIndex can be used for lookup, which will give similar
+ * performance to an index lookup after the first use of a keyIndex.
  */
 template< typename T,
           typename T_PTR=T*,
@@ -52,33 +50,62 @@ public:
   static_assert( std::is_same< T_PTR, T * >::value || std::is_same< T_PTR, std::unique_ptr<T> >::value,
                  "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
 
-
+  /// The type used for the key of the map
   using key_type      = KEY_TYPE;
+
+  /// pointer to the value type
   using mapped_type   = T_PTR;
 
+  /// the type of the lookup map
   using LookupMapType          = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
+
+  /// the type of the values held in the vector
   using value_type             = typename std::pair< KEY_TYPE const, T_PTR >;
+
+  /// a const type of the values held in the vector
   using const_value_type       = typename std::pair< KEY_TYPE const, T const * >;
+
+  /// the type of the vector container
   using valueContainer         = std::vector<value_type>;
+
+  /// a const type of the vector container
   using const_valueContainer   = std::vector<const_value_type>;
+
+  /// the pointer type of the value container
   using pointer                = typename valueContainer::pointer;
+
+  /// the pointer to const type of the value container
   using const_pointer          = typename valueContainer::const_pointer;
+
+  /// reference type of the value container
   using reference              = typename valueContainer::reference;
+
+  /// reference to const type of the value container
   using const_reference        = typename valueContainer::const_reference;
+
+  /// the size_type of the value container
   using size_type              = typename valueContainer::size_type;
 
-
+  /// the iterator type of the value container
   using iterator               = typename valueContainer::iterator;
+
+  /// the iterator to const type of the value container
   using const_iterator         = typename const_valueContainer::const_iterator;
+
+  /// the reverse iterator type of the value container
   using reverse_iterator       = typename valueContainer::reverse_iterator;
+
+  /// the reverse iterator to const type of the value container
   using const_reverse_iterator = typename const_valueContainer::const_reverse_iterator;
 
+  /// aliwas for the KeyIndex itself
   using KeyIndex = KeyIndexT<KEY_TYPE const,INDEX_TYPE>;
 
 
+  /// deleted default constructor
   MappedVector() = default;
 
-
+  /// default destructor
   ~MappedVector()
   {
     clear();
@@ -86,9 +113,16 @@ public:
 
 
 
+  /// default copy constructor
   MappedVector( MappedVector const & source ) = default;
+
+  /// default copy assignment operator
   MappedVector & operator=( MappedVector const & source ) = default;
+
+  /// default move operator
   MappedVector( MappedVector && source ) = default;
+
+  /// default move assignement operator
   MappedVector & operator=( MappedVector && source ) = default;
 
 
@@ -276,13 +310,15 @@ public:
   ///@{
 
   /**
-   *
-   * @param keyName
-   * @param source
-   * @param overwrite
-   * @return
+   * @brief insert new entry into MappedVector
+   * @param keyName key name to assocaite with the new object
+   * @param source pointer to object
+   * @param takeOwnership whether or not to take ownership of the object
+   * @param overwrite if the key already exists, overwrite indicates whether or not overwrite the existing entry
+   * @return pointer to the object that is held in the MappedVector
    */
-  T * insert( KEY_TYPE const & keyName, T_PTR source,
+  T * insert( KEY_TYPE const & keyName,
+              T_PTR source,
               bool takeOwnership,
               bool overwrite = false );
 
@@ -348,7 +384,7 @@ public:
 
   /**
    *  @brief  Remove element at given key
-   *  @param  key  key of element to remove.
+   *  @param  keyIndex  key of element to remove.
    *  @return  void
    *
    *  This function will set the element at the given key to nullptr.
@@ -365,7 +401,9 @@ public:
     erase( index );
   }
 
-
+  /**
+   * @brief function to clear the MappedVector
+   */
   void clear()
   {
     for( typename valueContainer::size_type a=0 ; a<m_values.size() ; ++a )
@@ -380,29 +418,49 @@ public:
 
   ///@}
 
-
+  /**
+   * @brief function to return the number of entries stored
+   * @return number of entries in MappedVector
+   */
   inline INDEX_TYPE size() const
   {
     //TODO this needs to be a safe conversion
     return static_cast<INDEX_TYPE>(m_values.size());
   }
 
+  /**
+   * @brief access for value container
+   * @return reference to valueContainer
+   */
   inline valueContainer const & values()
   { return this->m_values; }
 
+  /**
+   * @brief access for value container
+   * @return reference to const valueContainer
+   */
   inline const_valueContainer const & values() const
   { return this->m_constValues; }
 
+  /**
+   * @brief access for key lookup
+   * @return reference lookup map
+   */
   inline LookupMapType const & keys() const
   { return m_keyLookup; }
 
 
 private:
+  /// random access container that holds the values
   valueContainer m_values;
+
+  /// clone of random access container that holds pointer to const values
   const_valueContainer m_constValues;
 
+  /// map lookup to go from key to index into the m_values container
   LookupMapType m_keyLookup;
 
+  /// flag to indicate whether or not the values in m_values are owned by the container.
   std::vector<int> m_ownsValues;
 };
 

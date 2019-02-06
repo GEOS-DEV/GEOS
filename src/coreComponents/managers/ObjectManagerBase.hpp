@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,18 +24,10 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "DocumentationNode.hpp"
 
 namespace geosx
 {
 class SiloFile;
-namespace dataRepository
-{
-namespace keys
-{
-string const sets("Sets");
-}
-}
 
 
 /**
@@ -51,10 +43,6 @@ public:
   explicit ObjectManagerBase( std::string const & name,
                               dataRepository::ManagedGroup * const parent );
 
-//  explicit ObjectManagerBase( std::string const & name,
-//                              dataRepository::ManagedGroup * const parent,
-//                              cxx_utilities::DocumentationNode * docNode );
-
   ~ObjectManagerBase() override;
 
   /**
@@ -68,83 +56,72 @@ public:
   virtual const string getCatalogName() const = 0;
   ///@}
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void InitializePostSubGroups( ManagedGroup * const ) override;
-
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
 
   virtual localIndex PackSize( string_array const & wrapperNames,
-                        localIndex_array const & packList,
-                        integer const recursive ) const override;
+                               arrayView1d<localIndex const> const & packList,
+                               integer const recursive ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    string_array const & wrapperNames,
-                    localIndex_array const & packList,
-                    integer const recursive )  const override;
-
-//  virtual int Unpack( buffer_unit_type const *& buffer,
-//                      integer const recursive )  override;
+                           string_array const & wrapperNames,
+                           arrayView1d<localIndex const> const & packList,
+                           integer const recursive )  const override;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
-                      localIndex_array & packList,
-                      integer const recursive )  override;
+                             arrayView1d<localIndex> & packList,
+                             integer const recursive )  override;
+
+  template< bool DOPACK >
+  localIndex PackSets( buffer_unit_type * & buffer,
+                       arrayView1d<localIndex const> const & packList ) const;
+
+  localIndex UnpackSets( buffer_unit_type const *& buffer );
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
 
 
-  virtual localIndex PackGlobalMapsSize( localIndex_array const & packList,
-                                  integer const recursive ) const;
+  virtual localIndex PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
+                                         integer const recursive ) const;
 
   virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList,
-                              integer const recursive ) const;
+                                     arrayView1d<localIndex> const & packList,
+                                     integer const recursive ) const;
 
   void SetReceiveLists(  );
 
 
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
   { return 0; }
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const
+                                     arrayView1d<localIndex const> const & packList ) const
   { return 0;}
 
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList )
+                                       array1d<localIndex> & packList )
   { return 0;}
 
 
 
   virtual localIndex UnpackGlobalMaps( buffer_unit_type const * & buffer,
-                                localIndex_array & packList,
-                                integer const recursive );
+                                       localIndex_array & packList,
+                                       integer const recursive );
 
 private:
   template< bool DOPACK >
   localIndex PackPrivate( buffer_unit_type * & buffer,
-                   string_array const & wrapperNames,
-                   localIndex_array const & packList,
-                   integer const recursive ) const;
+                          string_array const & wrapperNames,
+                          arrayView1d<localIndex const> const & packList,
+                          integer const recursive ) const;
 
   template< bool DOPACK >
   localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                             localIndex_array const & packList,
-                             integer const recursive ) const;
-
-//  template< bool DOPACK >
-//  int UnpackPrivate( buffer_unit_type const *& buffer,
-//                     localIndex_array const & packList,
-//                     integer const recursive );
-
-
-//  cxx_utilities::DocumentationNode * m_docNode;
-
-
+                                    arrayView1d<localIndex const> const & packList,
+                                    integer const recursive ) const;
 
   //**********************************************************************************************************************
   // functions for compatibility with old data structure
@@ -161,13 +138,6 @@ public:
   }
 
   using dataRepository::ManagedGroup::resize;
-
-//    localIndex m_DataLengths;
-//
-//    localIndex DataLengths() const { return size(); }
-
-
-
 
   void WriteSilo( SiloFile& siloFile,
                   const std::string& meshname,
@@ -189,40 +159,33 @@ public:
                  const std::string& regionName = "none",
                  const localIndex_array& mask = localIndex_array() );
 
-
-
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
-  typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
+  array1d< typename Field<FIELDKEY>::Type >& GetFieldData()
   {
-    return const_cast<typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ObjectManagerBase&>(*this).
-                                                                                                               GetFieldData<FIELDKEY>());
+    return this->getReference< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
   }
-
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
-  typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
+  array1d< typename Field<FIELDKEY>::Type > const & GetFieldData() const
   {
-    return this->getData< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
+    return this->getReference< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
   }
-
 
   /// returns reference to specified field
   template< typename TYPE >
-  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype GetFieldData( const std::string& fieldName )
+  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype GetFieldData( const std::string& name )
   {
-    return const_cast<typename dataRepository::ViewWrapper<array1d<TYPE> >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<TYPE>(fieldName));
+    return this->getReference< array1d<TYPE> >( name );
   }
 
   /// returns const reference to specified field
   template< typename TYPE >
   typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype_const GetFieldData( const std::string& name ) const
   {
-    return this->getData< array1d<TYPE> >( name );
+    return this->getReference< array1d<TYPE> >( name );
   }
-
-
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
@@ -230,7 +193,6 @@ public:
   {
     return &this->getReference< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
   }
-
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
@@ -253,8 +215,6 @@ public:
     return &this->getReference< TYPE >( fieldName );
   }
 
-
-
   /// add a data field to a member
   template< typename T >
   int AddKeylessDataField( const std::string& name, const bool restart = false, const bool plot = false )
@@ -264,7 +224,6 @@ public:
     (void)plot;
     return 0;
   }
-
 
   /// add a data field to a member
   template< FieldKey FIELDKEY >
@@ -295,8 +254,15 @@ public:
 
   virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const ,
                                                                 array1d<globalIndex_array>&  )
-  {
+  {}
 
+  void SetGhostRankForSenders( arrayView1d<localIndex> const & indicesToSend )
+  {
+    for( auto index : indicesToSend )
+    {
+//      GEOS_ERROR_IF( m_ghostRank[index] >= 0, "trying to set ghostRank of non-locally owned index: m_ghostRank["<<index<<"]="<<m_ghostRank[index] );
+      m_ghostRank[index] = -1;
+    }
   }
 
   localIndex GetNumberOfGhosts() const;
@@ -309,6 +275,19 @@ public:
 
   void CopyObject( localIndex const source, localIndex const destination );
 
+  void SetMaxGlobalIndex();
+
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) {}
+
+  template< typename TYPE_RELATION >
+  static void FixUpDownMaps( TYPE_RELATION & relation,
+                             map< localIndex, array1d<globalIndex> > & unmappedIndices,
+                             bool const clearIfUnmapped );
+
+  template< typename TYPE_RELATION >
+  static void FixUpDownMaps( TYPE_RELATION & relation,
+                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             bool const clearIfUnmapped  );
 
 
   //**********************************************************************************************************************
@@ -401,15 +380,93 @@ public:
 
   real64 m_overAllocationFactor = 1.1;
 
+  globalIndex m_maxGlobalIndex = -1;
+
 //  localIndex_array m_ghostToSend;
  // localIndex_array m_ghostToReceive;
-
 
 };
 
 
+//template< typename T >
+//void ObjectManagerBase::FixUpDownMaps()
+//{
+//
+//}
+
+
+template< typename TYPE_RELATION >
+void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+                                       map< localIndex, array1d<globalIndex> > & unmappedIndices,
+                                       bool const  )
+{
+  bool allValuesMapped = true;
+  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    array1d<globalIndex> const & globalIndices = iter->second;
+    for( localIndex a=0 ; a<globalIndices.size() ; ++a )
+    {
+      if( globalIndices[a] != unmappedLocalIndexValue )
+      {
+        if( relation[li][a] == unmappedLocalIndexValue  )
+        {
+          relation[li][a] = globalToLocal.at(globalIndices[a]);
+        }
+        else
+        {
+          allValuesMapped = false;
+        }
+      }
+      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
+    }
+  }
+  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
+  unmappedIndices.clear();
+}
+
+
+template< typename TYPE_RELATION >
+void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
+                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       bool const clearIfUnmapped )
+{
+  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    if( clearIfUnmapped )
+    {
+      relation[li].clear();
+    }
+    else
+    {
+      set<globalIndex> const & globalIndices = iter->second;
+      for( auto const newGlobalIndex : globalIndices )
+      {
+        // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is
+        // used for an upmap and the object shouldn't exist on this rank. There should be a better
+        // way to check this.
+        auto iterG2L = globalToLocal.find(newGlobalIndex);
+        if( iterG2L != globalToLocal.end() )
+        {
+          relation[li].insert( iterG2L->second );
+        }
+      }
+    }
+  }
+  unmappedIndices.clear();
+}
+
 
 } /* namespace geosx */
+
+
 
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -20,6 +20,15 @@
 
 namespace geosx
 {
+
+
+BasisBase::BasisBase( std::string const & name,
+                      ManagedGroup * const parent ):
+  ManagedGroup(name, parent)
+{
+  setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
+}
+
 
 BasisBase::~BasisBase()
 {

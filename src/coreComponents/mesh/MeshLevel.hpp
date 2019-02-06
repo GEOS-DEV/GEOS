@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -42,13 +42,11 @@ public:
              ManagedGroup * const parent );
   virtual ~MeshLevel() override;
 
-  void InitializePostSubGroups( ManagedGroup * const ) override;
-
   void GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                localIndex_array & nodeAdjacencyList,
                                localIndex_array & edgeAdjacencyList,
                                localIndex_array & faceAdjacencyList,
-                               ElementRegionManager::ElementViewAccessor<localIndex_array> & elementAdjacencyList,
+                               ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>> & elementAdjacencyList,
                                integer const depth );
 
   struct viewStructKeys

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -114,18 +114,11 @@ void UniformStrainQuadrilateral::reinit(const std::vector<R1TensorT<3> > &mapped
 
   data[q].jacobian_determinant = 2.0 * (x3_x1[0]*x4_x2[1] - x3_x1[1]*x4_x2[0]);
 
-//  std::cout<<"data[q].jacobian_determinant =
-// "<<data[q].jacobian_determinant<<std::endl;
-
-
   for( int a=0 ; a<4 ; ++a )
   {
     data[q].mapped_gradients[a](0) = b[m_nodeOrdering[a]][0] / data[q].jacobian_determinant;
     data[q].mapped_gradients[a](1) = b[m_nodeOrdering[a]][1] / data[q].jacobian_determinant;
     data[q].mapped_gradients[a](2) = 0.0;
-
-//    std::cout<<"data["<<q<<"].mapped_gradients["<<a<<"] =
-// "<<data[q].mapped_gradients[a]<<std::endl;
   }
 
 }

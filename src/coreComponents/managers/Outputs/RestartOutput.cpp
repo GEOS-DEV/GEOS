@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -21,12 +21,11 @@
  */
 
 #include "RestartOutput.hpp"
-#include "DocumentationNode.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "managers/ProblemManager.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 
 namespace geosx
@@ -44,36 +43,32 @@ RestartOutput::RestartOutput( std::string const & name,
 RestartOutput::~RestartOutput()
 {}
 
-void RestartOutput::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("Restart");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs Restart format files");
-
-}
-
 void RestartOutput::Execute(real64 const& time_n,
                             real64 const& dt,
-                            const int cycleNumber,
+                            integer const cycleNumber,
+                            integer const eventCounter,
+                            real64 const & eventProgress,
                             ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
   ProblemManager* problemManager = ManagedGroup::group_cast<ProblemManager*>(domainPartition->getParent());
 
 #ifdef GEOSX_USE_ATK
+  // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
+  // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
+
   char fileName[200] = {0};
   sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
 
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
-  BoundaryConditionManager::get()->prepareToWrite();
-  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
+  FieldSpecificationManager::get()->prepareToWrite();
+  int numFiles;
+  MPI_Comm_size( MPI_COMM_GEOSX, &numFiles );
+  SidreWrapper::writeTree( numFiles, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
   problemManager->finishWriting();
   NewFunctionManager::Instance()->finishWriting();
-  BoundaryConditionManager::get()->finishWriting();
+  FieldSpecificationManager::get()->finishWriting();
 #endif
 }
 

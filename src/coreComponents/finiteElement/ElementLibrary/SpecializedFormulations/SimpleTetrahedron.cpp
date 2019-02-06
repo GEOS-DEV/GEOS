@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -111,9 +111,6 @@ void SimpleTetrahedron::reinit(const std::vector<R1TensorT<3> > &mapped_support_
     data[q].mapped_gradients[iNd](0) = a[iNd] * sixth / data[q].jacobian_determinant;
     data[q].mapped_gradients[iNd](1) = b[iNd] * sixth / data[q].jacobian_determinant;
     data[q].mapped_gradients[iNd](2) = c[iNd] * sixth / data[q].jacobian_determinant;
-
-    //std::cout<<"data[q].mapped_gradients[a] =
-    // "<<data[q].mapped_gradients[a]<<std::endl;
   }
 
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -37,7 +37,7 @@ namespace constitutive
  * multidimensional array like interface via the operator[].
  */
 template< typename VIEWTYPE >
-using ViewAccessor = array1d < ReferenceWrapper< VIEWTYPE > >;
+using ViewAccessor = array1d < VIEWTYPE >;
 
 /**
  * @class ConstitutiveManager
@@ -51,8 +51,10 @@ public:
   ConstitutiveManager( string const & name,
                        ManagedGroup * const parent );
 
-  void FillDocumentationNode() override final;
-  virtual void CreateChild( string const & childKey, string const & childName ) override final;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override final;
+
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
   ConstitutiveBase *
   HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
@@ -85,13 +87,13 @@ public:
     return this->GetGroup<T>( index );
   }
 
-  template< typename T >
-  ViewAccessor< T >
-  GetConstitutiveData( string const & name,
-                       dataRepository::ManagedGroup * const relationGroup );
+  // template< typename T >
+  // ViewAccessor< T >
+  // GetConstitutiveData( string const & name,
+  //                      dataRepository::ManagedGroup * const relationGroup );
 
   template< typename T >
-  ViewAccessor< T const >
+  ViewAccessor< T >
   GetConstitutiveData( string const & name,
                        dataRepository::ManagedGroup const * const relationGroup ) const;
 
@@ -107,7 +109,7 @@ public:
 
 
 template< typename T >
-ViewAccessor< T const >
+ViewAccessor< T >
 ConstitutiveManager::GetConstitutiveData( string const & name,
                                           dataRepository::ManagedGroup const * const relationGroup ) const
 {
@@ -119,24 +121,20 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
     ConstitutiveBase const * const material = relationGroup->GetGroup<ConstitutiveBase>( a );
     if( material->hasView( name ) )
     {
-      rval[a].set( material->getReference<T>( name ));
-    }
-    else
-    {
-      rval[a].set( nullptr );
+      rval[a] = material->getReference<T>( name );
     }
   }
   return rval;
 }
 
-template< typename T >
-ViewAccessor< T >
-ConstitutiveManager::GetConstitutiveData( string const & name,
-                                          dataRepository::ManagedGroup * const relationGroup )
-{
-  return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this)->
-                                       GetConstitutiveData<T>( name, relationGroup ) );
-}
+// template< typename T >
+// ViewAccessor< T >
+// ConstitutiveManager::GetConstitutiveData( string const & name,
+//                                           dataRepository::ManagedGroup * const relationGroup )
+// {
+//   return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this)->
+//                                        GetConstitutiveData<T>( name, relationGroup ) );
+// }
 
 }
 } /* namespace geosx */

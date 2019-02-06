@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -51,8 +51,11 @@ inline void getAbsolutePath(const std::string & path, std::string & absolute_pat
   }
   else
   {
-    getcwd(abs_file_path, PATH_MAX + 1);
-    GEOS_ERROR("Could not get the absolute path for " << path << " from "  << abs_file_path);
+    char const * ret = getcwd(abs_file_path, PATH_MAX + 1);
+    if (ret != nullptr)
+      GEOS_ERROR("Could not get the absolute path for " << path << " from "  << abs_file_path);
+    else
+      GEOS_ERROR("Could not get the absolute path for " << path);
   }
 }
 
@@ -77,6 +80,11 @@ inline void splitPath(const std::string& path, std::string& dirname, std::string
     dirname = path.substr(0, pos);
     basename = path.substr(pos + 1);
   }
+}
+
+inline bool isAbsolutePath(const std::string & path)
+{
+  return path[0] == '/';
 }
 
 template <typename REGEX>

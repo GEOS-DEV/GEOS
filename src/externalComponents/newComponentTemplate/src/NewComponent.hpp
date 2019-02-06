@@ -34,6 +34,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
+class DomainPartition;
 
 class NewComponent : public SolverBase
 {
@@ -43,12 +44,6 @@ public:
   virtual ~NewComponent() override;
 
   static std::string CatalogName() { return "NewComponent"; }
-
-  virtual void ReadXML_PostProcess( ) override;
-
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
-
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
 
   virtual real64 SolverStep( real64 const& time_n,

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -21,12 +21,9 @@
  */
 
 #include "SiloOutput.hpp"
-#include "DocumentationNode.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
-
 
 namespace geosx
 {
@@ -36,54 +33,36 @@ using namespace cxx_utilities;
 
 SiloOutput::SiloOutput( std::string const & name,
                         ManagedGroup * const parent ):
-  OutputBase( name, parent)
+  OutputBase( name, parent),
+  m_plotFileRoot(),
+  m_writeFaceMesh(),
+  m_plotLevel()
 {
+  RegisterViewWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  RegisterViewWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
 }
 
 SiloOutput::~SiloOutput()
 {}
 
-void SiloOutput::FillDocumentationNode()
-{
-  OutputBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName("Silo");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs SILO format files");
-
-
-
-  docNode->AllocateChildNode( siloOutputViewKeys.plotLevel.Key(),
-                              siloOutputViewKeys.plotLevel.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "output level",
-                              "output level",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-//  docNode->AllocateChildNode( viewKeys.writeFEMFaces.Key(),
-//                              viewKeys.writeFEMFaces.Key(),
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "flag to write FEM faces",
-//                              "flag to write FEM faces",
-//                              "0",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-}
 
 void SiloOutput::Execute(real64 const& time_n,
                          real64 const& dt,
-                         const int cycleNumber,
+                         integer const cycleNumber,
+                         integer const eventCounter,
+                         real64 const & eventProgress,
                          ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
@@ -93,13 +72,13 @@ void SiloOutput::Execute(real64 const& time_n,
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
   MPI_Barrier( MPI_COMM_GEOSX );
 
-  integer numFiles = this->getReference<integer>( siloOutputViewKeys.parallelThreads);
+  integer numFiles = this->parallelThreads();
 
-  silo.setPlotLevel( getReference<integer>( siloOutputViewKeys.plotLevel ) );
+  silo.setPlotLevel( getReference<integer>( viewKeysStruct::plotLevel ) );
 
   silo.Initialize(PMPIO_WRITE , numFiles );
-  silo.WaitForBatonWrite(rank, cycleNumber, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n, 0);
+  silo.WaitForBatonWrite(rank, cycleNumber, eventCounter, false );
+  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();

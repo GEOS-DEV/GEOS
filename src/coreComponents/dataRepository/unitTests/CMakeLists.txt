@@ -3,8 +3,10 @@
 #
 
 set( dataRepository_tests
+     testDefaultValue.cpp
      testSidreBasic.cpp
      testSidreExtended.cpp
+     testViewWrapper.cpp
    )
 
 #
@@ -16,7 +18,7 @@ foreach(test ${dataRepository_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON dataRepository  gtest
+                        DEPENDS_ON dataRepository gtest cxx-utilities
                         )
 
     blt_add_test( NAME ${test_name} 

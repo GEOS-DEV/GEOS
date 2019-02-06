@@ -1,5 +1,5 @@
 #!/bin/bash
-#env
+env
 function or_die () {
     "$@"
     local status=$?
@@ -8,37 +8,21 @@ function or_die () {
         exit $status
     fi
 }
-echo ${1:-0}
-
-if [ "${1:-0}" = "1" ] ; then
-    echo "local execution"
-    export DO_BUILD="yes"
-    export CMAKE_EXTRA_FLAGS=""
-    export CC=/opt/local/bin/gcc-mp-7
-    export CXX=/opt/local/bin/g++-mp-7
-    export MPICC=/opt/local/bin/mpicc-mpich-gcc7
-    export MPICXX=/opt/local/bin/mpicxx-mpich-gcc7
-    rm -rf travis-build
+if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    mkdir build-darwin-clang-debug;
+    cd build-darwin-clang-debug;
 else
-    #    source ~/.bashrc
     cd /home/geosx/geosx_repo
-#    [[ -d /opt/intel ]] && . /opt/intel/bin/compilervars.sh intel64
+    export PATH=${PATHMOD}:$PATH
+    or_die mkdir travis-build
+    cd travis-build
 fi
 
-
-pwd
-export PATH=${PATHMOD}:$PATH
-echo $PATH
-echo $(ls)
-or_die mkdir travis-build
-cd travis-build
-pwd
-echo $(ls)
 if [[ "$DO_BUILD" == "yes" ]] ; then
     or_die cmake \
-           -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
-           -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_EXEC=mpirun \
-           -DGEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release \
+           -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_Fortran_COMPILER=${FC} \
+           -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_Fortran_COMPILER=${MPIFC} -DMPIEXEC=${MPIEXEC} -DMPIEXEC_EXECUTABLE=${MPIEXEC} \
+           -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR} \
            -DENABLE_SPHINX=OFF \
            ${CMAKE_EXTRA_FLAGS} ../src
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -25,6 +25,7 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "fileIO/schema/SchemaUtilities.hpp"
 
 
 namespace geosx
@@ -70,7 +71,9 @@ public:
    */
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const ,
+                        real64 const & ,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -86,12 +89,10 @@ public:
    * This method is called as the code exits the main run loop
    */
   virtual void Cleanup( real64 const & time_n,
-                        int const cycleNumber,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const & eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
-
-
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
 
   /**
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
@@ -102,7 +103,16 @@ public:
    *         </PeriodicEvent>
    *       </Events>
    */
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+
+
+  /**
+   * This function is used to inform the schema generator of any
+   * deviations between the xml and GEOS data structures.
+   */
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent) override;
+
 
   /**
    * The target object for an event may be specified via the keyword "target" in the input xml.
@@ -135,11 +145,39 @@ public:
    */
   virtual real64 GetTimestepRequest(real64 const time) override;
 
-  /// A pointer to the optional event target
-  ExecutableGroup * m_target;
+
+  /// This method is used to count the number of events/sub-events
+  void GetExecutionOrder(array1d<integer> & eventCounters);
+
+  /**
+   * This method is used to determine how to handle the timestamp for an event
+   * If the event occurs after anything targeting a SolverBase object, then
+   * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
+   * will be time + dt.
+   */
+  void SetProgressIndicator(array1d<integer> & eventCounters);
+
+
 
   struct viewKeyStruct
   {
+
+    static constexpr auto eventTargetString = "target";
+    static constexpr auto beginTimeString = "beginTime";
+    static constexpr auto endTimeString = "endTime";
+    static constexpr auto forceDtString = "forceDt";
+    static constexpr auto lastTimeString = "lastTime";
+    static constexpr auto lastCycleString = "lastCycle";
+
+    static constexpr auto allowSuperstepString = "allowSuperstep";
+    static constexpr auto allowSubstepString = "allowSubstep";
+    static constexpr auto substepFactorString = "substepFactor";
+    static constexpr auto targetExactStartStopString = "targetExactStartStop";
+
+    static constexpr auto currentSubEventString = "currentSubEvent";
+    static constexpr auto isTargetExecutingString = "isTargetExecuting";
+
+
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
     dataRepository::ViewKey endTime = { "endTime" };
@@ -150,6 +188,10 @@ public:
     dataRepository::ViewKey allowSuperstep = { "allowSuperstep" };
     dataRepository::ViewKey allowSubstep = { "allowSubstep" };
     dataRepository::ViewKey substepFactor = { "substepFactor" };
+    dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
+
+    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
+    dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
   } viewKeys;
 
   ///Catalog interface
@@ -163,9 +205,32 @@ public:
   integer GetExitFlag();
   void SetExitFlag(integer flag){ m_exitFlag = flag; }
 
+  integer GetEventCount() const { return m_eventCount; }
+  real64  GetEventProgress() const { return m_eventProgress; }
+
 private:
+  string m_eventTarget;
+  real64 m_beginTime;
+  real64 m_endTime;
+  real64 m_forceDt;
+  integer m_allowSuperstep;
+  integer m_allowSubstep;
+  integer m_substepFactor;
+  integer m_targetExactStartStop;
+
+  integer m_currentSubEvent;
+  integer m_isTargetExecuting;
   integer m_eventForecast = 0;
   integer m_exitFlag = 0;
+  integer m_eventCount = 0;
+  integer m_timeStepEventCount = 0;
+  real64 m_eventProgress = 0;
+  real64 m_lastTime;
+  integer m_lastCycle;
+
+  /// A pointer to the optional event target
+  ExecutableGroup * m_target;
+
 };
 
 } /* namespace geosx */

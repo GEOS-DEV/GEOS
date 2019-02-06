@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -17,41 +17,42 @@
  */
 
 /**
- * @file SinglePhaseFlow_TPFA.hpp
+ * @file SinglePhaseFlow.hpp
  */
 
-#ifndef SINGLE_PHASE_FLOW_TPFA_HPP_
-#define SINGLE_PHASE_FLOW_TPFA_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
+#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 class Epetra_FECrsGraph;
 
 namespace geosx
 {
+
 namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
 /**
- * @class SinglePhaseFlow_TPFA
+ * @class SinglePhaseFlow
  *
  * class to perform a single phase finite volume solve.
  */
-class SinglePhaseFlow : public SolverBase
+class SinglePhaseFlow : public FlowSolverBase
 {
 public:
   /**
-   * @brief main constructor for NodeManager Objects
-   * @param name the name of this instantiation of NodeManager in the repository
-   * @param parent the parent group of this instantiation of NodeManager
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
    */
   SinglePhaseFlow( const std::string& name,
-                        ManagedGroup * const parent );
+                   ManagedGroup * const parent );
 
 
   /// deleted default constructor
@@ -80,12 +81,9 @@ public:
    */
   static string CatalogName() { return "SinglePhaseFlow"; }
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 
-  virtual void FillDocumentationNode() override final;
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
-
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -100,19 +98,19 @@ public:
   /**@{*/
 
   virtual void ImplicitStepSetup( real64 const& time_n,
-                              real64 const& dt,
-                              DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+                                  real64 const& dt,
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
 
   virtual void AssembleSystem( DomainPartition * const domain,
                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time,
+                               real64 const time_n,
                                real64 const dt ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time,
+                                        real64 const time_n,
                                         real64 const dt ) override;
 
   virtual real64
@@ -132,7 +130,101 @@ public:
   virtual  void ImplicitStepComplete( real64 const & time,
                                       real64 const & dt,
                                       DomainPartition * const domain ) override;
+
+  /**
+   * @brief assembles the accumulation terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleAccumulationTerms( DomainPartition const * const domain,
+                                  Epetra_FECrsMatrix * const jacobian,
+                                  Epetra_FEVector * const residual,
+                                  real64 const time_n,
+                                  real64 const dt );
+
+  /**
+   * @brief assembles the accumulation terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleAccumulationTermsCoupled( DomainPartition const * const domain,
+                                         Epetra_FECrsMatrix * const jacobian,
+                                         Epetra_FEVector * const residual,
+                                         real64 const time_n,
+                                         real64 const dt );
+
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param domain the physical domain object
+   * @param blockSystem the entire block system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleFluxTerms( DomainPartition const * const domain,
+                          Epetra_FECrsMatrix * const jacobian,
+                          Epetra_FEVector * const residual,
+                          real64 const time_n,
+                          real64 const dt );
+
   /**@}*/
+
+
+  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
+  {
+    // dof numbering
+    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow" ;
+
+    // primary solution field
+    static constexpr auto pressureString      = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto facePressureString  = "facePressure";
+
+    static constexpr auto deltaVolumeString = "deltaVolume";
+
+    // these are used to store last converged time step values
+    static constexpr auto densityString   = "density";
+    static constexpr auto viscosityString = "viscosity";
+    static constexpr auto porosityString  = "porosity";
+    static constexpr auto oldPorosityString  = "oldPorosity";
+
+    using ViewKey = dataRepository::ViewKey;
+
+    // dof numbering
+    ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
+
+    // primary solution field
+    ViewKey pressure      = { pressureString };
+    ViewKey deltaPressure = { deltaPressureString };
+    ViewKey facePressure  = { facePressureString };
+
+    ViewKey deltaVolume   = { deltaVolumeString };
+
+    // these are used to store last converged time step values
+    ViewKey density      = { densityString };
+    ViewKey viscosity    = { viscosityString };
+    ViewKey porosity     = { porosityString };
+    ViewKey oldPorosity  = { oldPorosityString };
+
+  } viewKeysSinglePhaseFlow;
+
+  viewKeyStruct & viewKeys() { return viewKeysSinglePhaseFlow; }
+  viewKeyStruct const & viewKeys() const { return viewKeysSinglePhaseFlow; }
+
+  struct groupKeyStruct : SolverBase::groupKeyStruct
+  {
+  } groupKeysSinglePhaseFlow;
+
+  groupKeyStruct & groupKeys() { return groupKeysSinglePhaseFlow; }
+  groupKeyStruct const & groupKeys() const { return groupKeysSinglePhaseFlow; }
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+
+private:
 
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
@@ -159,99 +251,76 @@ public:
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex_array& localIndices,
                                      localIndex offset );
 
-
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param object the target ObjectManager for the application of the BC.
-   * @param time current time
+   * @param time_n current time
    * @param blockSystem the entire block system
    */
   void ApplyDirichletBC_implicit( DomainPartition * object,
-                                  real64 const time, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
+                                  real64 const time_n, real64 const dt,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
    * @param domain the domain
-   * @param time current time
+   * @param time_n current time
    * @param blockSystem the entire block system
    */
-  void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
-                                     real64 const time, real64 const dt,
-                                     systemSolverInterface::EpetraBlockSystem * const blockSystem);
-
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    // dof numbering
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
-
-    // primary solution field
-    constexpr static auto pressureString = "pressure";
-    constexpr static auto deltaPressureString = "deltaPressure";
-    constexpr static auto facePressureString = "facePressure";
-
-    // these are used to store last converged time step values
-    constexpr static auto densityString = "density";
-    constexpr static auto viscosityString = "viscosity";
-    constexpr static auto porosityString = "porosity";
-
-    // input data
-    constexpr static auto referencePorosityString = "referencePorosity";
-    constexpr static auto permeabilityString = "permeability";
-
-    // gravity term precomputed values
-    constexpr static auto gravityFlagString = "gravityFlag";
-    constexpr static auto gravityDepthString = "gravityDepth";
-
-    // misc inputs
-    constexpr static auto discretizationString = "discretization";
-    constexpr static auto fluidNameString = "fluidName";
-    constexpr static auto solidNameString = "solidName";
-
-    constexpr static auto fluidIndexString = "fluidIndex";
-    constexpr static auto solidIndexString = "solidIndex";
-
-  } singlePhaseFlowViewKeys;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } singlePhaseFlowGroupKeys;
-
-
-private:
+  void ApplyFaceDirichletBC_implicit( DomainPartition * domain,
+                                      real64 const time_n, real64 const dt,
+                                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
-   * @brief This function generates various discretization information for later use.
-   * @param domain the domain parition
+   * @brief Function to update all constitutive models
+   * @param domain the domain
    */
-  void PrecomputeData(DomainPartition *const domain);
+  void UpdateConstitutiveModels( DomainPartition * const domain );
 
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
+  /// views into primary variable fields
 
-  /// name of the FV discretization object in the data repository
-  string m_discretizationName;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
-  /// name of the fluid constitutive model
-  string m_fluidName;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;
 
-  /// name of the solid constitutive model
-  string m_solidName;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaVolume;
 
-  /// index of the fluid constitutive model
-  localIndex m_fluidIndex;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosity;
 
-  /// index of the solid constitutive model
-  localIndex m_solidIndex;
+  /// views into backup fields
 
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_densityOld;
+
+  /// views into material fields
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_density;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDens_dPres;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_viscosity;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dVisc_dPres;
+
+  /// coupling with mechanics
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStressOld;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStress;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_bulkModulus;
+  ElementRegionManager::MaterialViewAccessor<real64>              m_biotCoefficient;
 };
 
 
 } /* namespace geosx */
 
-#endif /*  */
+#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -22,9 +22,10 @@
  */
 
 #include "CellBlock.hpp"
+#include "MeshLevel.hpp"
 
 #include "NodeManager.hpp"
-
+#include "meshUtilities/ComputationalGeometry.hpp"
 namespace geosx
 {
 using namespace dataRepository;
@@ -32,16 +33,10 @@ using namespace dataRepository;
 
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_CellBlockViewKeys(),
-  m_numNodesPerElement(),
-  m_numEdgesPerElement(),
-  m_numFacesPerElement(),
+  ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
   m_toEdgesRelation(),
-  m_toFacesRelation(),
-  m_elementCenter(),
-  m_elementVolume()
+  m_toFacesRelation()
 {
   RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
   RegisterViewWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
@@ -51,277 +46,180 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
   RegisterViewWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
-
-  m_toNodesRelation.resize(0,8);
-  m_toEdgesRelation.resize(0,12);
-  m_toFacesRelation.resize(0,6);
-//  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
-
 }
 
 
 CellBlock::~CellBlock()
 {}
 
-
-void CellBlock::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  ObjectManagerBase::FillDocumentationNode();
-
-  docNode->setName( this->getCatalogName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "an element region" );
-
-//  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
-//                              viewKeys.numNodesPerElement.Key(),
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-//  docNode->AllocateChildNode( viewKeys.nodeList.Key(),
-//                              viewKeys.nodeList.Key(),
-//                              -1,
-//                              "integer_array",
-//                              "integer_array",
-//                              "nodelist",
-//                              "nodelist",
-//                              "8",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-//  docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
-//                              viewKeys.numFacesPerElement.Key(),
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Number of Faces Per Element",
-//                              "Number of Faces Per Element",
-//                              "6",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-
-//  docNode->AllocateChildNode( keys::defaultMaterial,
-//                              keys::defaultMaterial,
-//                              -1,
-//                              "string",
-//                              "string",
-//                              "Default Material Name",
-//                              "Default Material Name",
-//                              "REQUIRED",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
-//
-//
-//  docNode->AllocateChildNode( keys::constitutiveMap,
-//                              keys::constitutiveMap,
-//                              -1,
-//                              "mapPair_array",
-//                              "mapPair_array",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-
-//  docNode->AllocateChildNode( keys::numNodesPerElement,
-//                              keys::numNodesPerElement,
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              1,
-//                              0 );
-
-
-}
-
-void CellBlock::ReadXML_PostProcess()
-{
-//  integer & numNodesPerElem = this->numNodesPerElement();
-//  numNodesPerElem = 8;
-  this->numNodesPerElement() = 8;
-  this->numFacesPerElement() = 6;
-
-}
-
-//map<string,integer> CellBlock::SetConstitutiveMap( ManagedGroup const * domain
-// )
-//{
-//  map<string,integer> counts;
-//  view_rtype<mapPair_array> cellToConstitutiveMap =
-// this->getData<mapPair_array>(keys::constitutiveMap);
-//  ConstitutiveManager const * constitutiveManager =
-// domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-//
-//  ConstitutiveManager::constitutiveMaps constitutiveMapPair =
-// constitutiveManager->GetMaps( 1 );
-//
-//  string defaultMaterial = this->getData<string>(keys::defaultMaterial);
-//  integer defaultMaterialIndex =
-// constitutiveMapPair.second.at(defaultMaterial);
-//
-//
-//  localIndex counter = 0;
-//  for( localIndex k=0 ; k<this->size() ; ++k )
-//  {
-//    cellToConstitutiveMap[k] = std::make_pair( defaultMaterialIndex, counter++
-// );
-//    ++(counts.at(defaultMaterial));
-//  }
-//  return counts;
-//}
-
-
 void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               const localIndex localFaceIndex,
                               localIndex_array& nodeIndicies) const
 {
-  // get nodelist for this element
-  localIndex const * const elemToNodeMap = m_toNodesRelation[elementIndex];
-
-  // resize the nodeIndicies based on element type (this is wrong for some types
-  // of elements)
-  nodeIndicies.resize(4);
-
-//  if (!m_elementGeometryID.compare(0, 4, "C3D8"))
+  if (!m_elementType.compare(0, 4, "C3D8"))
   {
+    nodeIndicies.resize(4);
+
     if (localFaceIndex == 0)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[1];
-      nodeIndicies[2] = elemToNodeMap[5];
-      nodeIndicies[3] = elemToNodeMap[4];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
     }
     else if (localFaceIndex == 1)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[3];
-      nodeIndicies[3] = elemToNodeMap[1];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][1];
     }
     else if (localFaceIndex == 2)
     {
-      nodeIndicies[0] = elemToNodeMap[0];
-      nodeIndicies[1] = elemToNodeMap[4];
-      nodeIndicies[2] = elemToNodeMap[6];
-      nodeIndicies[3] = elemToNodeMap[2];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][2];
     }
     else if (localFaceIndex == 3)
     {
-      nodeIndicies[0] = elemToNodeMap[1];
-      nodeIndicies[1] = elemToNodeMap[3];
-      nodeIndicies[2] = elemToNodeMap[7];
-      nodeIndicies[3] = elemToNodeMap[5];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
     }
     else if (localFaceIndex == 4)
     {
-      nodeIndicies[0] = elemToNodeMap[3];
-      nodeIndicies[1] = elemToNodeMap[2];
-      nodeIndicies[2] = elemToNodeMap[6];
-      nodeIndicies[3] = elemToNodeMap[7];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][7];
     }
     else if (localFaceIndex == 5)
     {
-      nodeIndicies[0] = elemToNodeMap[4];
-      nodeIndicies[1] = elemToNodeMap[5];
-      nodeIndicies[2] = elemToNodeMap[7];
-      nodeIndicies[3] = elemToNodeMap[6];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][6];
     }
 
   }
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D6"))
-//  {
-//    if (localFaceIndex == 0)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
-//      nodeIndicies[2] = elemToNodeMap[5];
-//      nodeIndicies[3] = elemToNodeMap[4];
-//    }
-//    else if (localFaceIndex == 1)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[2];
-//      nodeIndicies[2] = elemToNodeMap[3];
-//      nodeIndicies[3] = elemToNodeMap[1];
-//    }
-//    else if (localFaceIndex == 2)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[2];
-//      nodeIndicies[2] = elemToNodeMap[4];
-//      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
-//    }
-//    else if (localFaceIndex == 3)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[3];
-//      nodeIndicies[2] = elemToNodeMap[5];
-//      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
-//    }
-//    else if (localFaceIndex == 4)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[2];
-//      nodeIndicies[1] = elemToNodeMap[3];
-//      nodeIndicies[2] = elemToNodeMap[5];
-//      nodeIndicies[3] = elemToNodeMap[4];
-//    }
-//  }
-//
-//  else if (!m_elementGeometryID.compare(0, 4, "C3D4"))
-//  {
-//    if (localFaceIndex == 0)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[2];
-//      nodeIndicies[2] = elemToNodeMap[1];
-//    }
-//    else if (localFaceIndex == 1)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
-//      nodeIndicies[2] = elemToNodeMap[3];
-//    }
-//    else if (localFaceIndex == 2)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[3];
-//      nodeIndicies[2] = elemToNodeMap[2];
-//    }
-//    else if (localFaceIndex == 3)
-//    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[2];
-//      nodeIndicies[2] = elemToNodeMap[3];
-//    }
-//  }
-//
+  else if (!m_elementType.compare(0, 4, "C3D6"))
+  {
+    if (localFaceIndex == 0)
+    {
+      nodeIndicies.resize(3);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+    }
+    else if (localFaceIndex == 1)
+    {
+      nodeIndicies.resize(3);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+    }
+    else if (localFaceIndex == 2)
+    {
+      nodeIndicies.resize(4);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
+    }
+    else if (localFaceIndex == 3)
+    {
+      nodeIndicies.resize(4);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
+    }
+    else if (localFaceIndex == 4)
+    {
+      nodeIndicies.resize(4);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
+    }
+  }
+  else if (!m_elementType.compare(0, 4, "C3D4"))
+  {
+    nodeIndicies.resize(3);
+
+    if (localFaceIndex == 0)
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][1];
+    }
+    else if (localFaceIndex == 1)
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+    }
+    else if (localFaceIndex == 2)
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+    }
+    else if (localFaceIndex == 3)
+    {
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+    }
+  }
+  else if (!m_elementType.compare(0, 4, "C3D5"))
+  {
+    if (localFaceIndex == 0)
+    {
+      nodeIndicies.resize(4);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
+    }
+    else if (localFaceIndex == 1)
+    {
+      nodeIndicies.resize(3);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+    }
+    else if (localFaceIndex == 2)
+    {
+      nodeIndicies.resize(3);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+    }
+    else if (localFaceIndex == 3)
+    {
+      nodeIndicies.resize(3);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+    }
+    else if (localFaceIndex == 4)
+    {
+      nodeIndicies.resize(3);
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+    }
+  }
+
 //  else if ( !m_elementGeometryID.compare(0,4,"CPE2") )
 //  {
 //    if( localFaceIndex == 0 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //  }
 //
@@ -329,18 +227,18 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if( localFaceIndex == 0 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //    else if( localFaceIndex == 1 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
 //    }
 //    else if( localFaceIndex == 2 )
 //    {
-//      nodeIndicies[0] = elemToNodeMap[2];
-//      nodeIndicies[1] = elemToNodeMap[0];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
 //    }
 //  }
 //
@@ -348,23 +246,23 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //    else if (localFaceIndex == 1)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
 //    }
 //    else if (localFaceIndex == 2)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[3];
-//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
 //    }
 //    else if (localFaceIndex == 3)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[2];
-//      nodeIndicies[1] = elemToNodeMap[0];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
 //    }
 //  }
 //
@@ -372,18 +270,18 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
 //    }
 //    else if (localFaceIndex == 1)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[1];
-//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
 //    }
 //    else if (localFaceIndex == 2)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[2];
-//      nodeIndicies[1] = elemToNodeMap[0];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
 //    }
 //  }
 //
@@ -391,10 +289,10 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
-//      nodeIndicies[2] = elemToNodeMap[2];
-//      nodeIndicies[3] = elemToNodeMap[3];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
+//      nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
 //    }
 //  }
 //
@@ -402,95 +300,99 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //  {
 //    if (localFaceIndex == 0)
 //    {
-//      nodeIndicies[0] = elemToNodeMap[0];
-//      nodeIndicies[1] = elemToNodeMap[1];
-//      nodeIndicies[2] = elemToNodeMap[2];
+//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
+//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
+//      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
 //    }
 //  }
 //
-//  else
-//  {
-//    GEOS_ERROR("Error.  Don't know what kind of element this is and cannot
-// build faces.");
-//  }
+  else
+  {
+    GEOS_ERROR("Error.  Don't know what kind of element this is and cannot build faces.");
+  }
 
 }
 
-R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
+R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
+                                                    const NodeManager& nodeManager,
+                                                    const bool ) const
 {
 
   r1_array const & X = nodeManager.referencePosition();
-  localIndex const * const nodelist = m_toNodesRelation[k];
-  R1Tensor elementCenter(0.0);
+  m_elementCenter[k] = 0;
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
   {
-    const localIndex b = nodelist[a];
-    elementCenter += X[b];
-    if(!useReferencePos)
-      elementCenter += X[b];
+    const localIndex b = m_toNodesRelation[k][a];
+    m_elementCenter[k] += X[b];
   }
-  elementCenter /= numNodesPerElement();
+  m_elementCenter[k] /= numNodesPerElement();
 
-  return elementCenter;
+  return m_elementCenter[k];
 }
 
+void CellBlock::SetElementType( string const & elementType)
+{
+  m_elementType = elementType;
 
-//
-//void CellBlock::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
-//{
-//  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
-//}
-//
-//
-//
-//
-//int CellBlock::PackUpDownMapsSize( localIndex_array const & packList ) const
-//{
-//  int packedSize = 0;
-//  buffer_unit_type * junk = nullptr;
-//  packedSize += CommBufferOps::Pack<false>( junk,
-//                                           m_nodeList,
-//                                           packList,
-//                                           this->m_localToGlobalMap,
-//                                           m_nodeList.RelatedObjectLocalToGlobal() );
-//  return packedSize;
-//
-//}
-//
-//
-//int CellBlock::PackUpDownMaps( buffer_unit_type * & buffer,
-//                               localIndex_array const & packList ) const
-//{
-//  int packedSize = 0;
-//
-//  packedSize += CommBufferOps::Pack<true>( buffer,
-//                                           m_nodeList,
-//                                           packList,
-//                                           this->m_localToGlobalMap,
-//                                           m_nodeList.RelatedObjectLocalToGlobal() );
-//
-//  return packedSize;
-//}
-//
-//
-//int CellBlock::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-//                                 localIndex_array const & packList )
-//{
-//  int unPackedSize = 0;
-//
-//  unPackedSize += CommBufferOps::Unpack( buffer,
-//                                         m_nodeList,
-//                                         packList,
-//                                         this->m_globalToLocalMap,
-//                                         m_nodeList.RelatedObjectGlobalToLocal() );
-//
-//  return unPackedSize;
-//}
+  if (!m_elementType.compare(0, 4, "C3D8"))
+  {
+    m_toNodesRelation.resize(0,8);
+    m_toEdgesRelation.resize(0,12);
+    m_toFacesRelation.resize(0,6);
+  }
+  else if (!m_elementType.compare(0, 4, "C3D4"))
+  {
+    m_toNodesRelation.resize(0,4);
+    m_toEdgesRelation.resize(0,6);
+    m_toFacesRelation.resize(0,4);
+  }
+  else if (!m_elementType.compare(0, 4, "C3D6"))
+  {
+    m_toNodesRelation.resize(0,6);
+    m_toEdgesRelation.resize(0,9);
+    m_toFacesRelation.resize(0,5);
+  }
+  else if (!m_elementType.compare(0, 4, "C3D5"))
+  {
+    m_toNodesRelation.resize(0,5);
+    m_toEdgesRelation.resize(0,8);
+    m_toFacesRelation.resize(0,5);
+  }
+  else
+  {
+    GEOS_ERROR("Error.  Don't know what kind of element this is.");
+  }
+
+  if (!m_elementType.compare(0, 4, "C3D8"))
+  {
+    this->numNodesPerElement() = 8;
+    this->numFacesPerElement() = 6;
+  }
+  else if (!m_elementType.compare(0, 4, "C3D4"))
+  {
+    this->numNodesPerElement() = 4;
+    this->numFacesPerElement() = 4;
+  }
+  else if (!m_elementType.compare(0, 4, "C3D6"))
+  {
+    this->numNodesPerElement() = 6;
+    this->numFacesPerElement() = 5;
+  }
+  else if (!m_elementType.compare(0, 4, "C3D5"))
+  {
+    this->numNodesPerElement() = 5;
+    this->numFacesPerElement() = 5;
+  }
+
+}
+
+void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+{
+  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
+  this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
+  this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
 

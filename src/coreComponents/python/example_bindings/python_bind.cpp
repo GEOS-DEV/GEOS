@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -22,8 +22,7 @@
 #include <numpy/arrayobject.h>
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
-
+#include "Logger.hpp"
 
 void init_numpy()
 {
@@ -33,11 +32,8 @@ void init_numpy()
 
 int main(int argc, char** argv)
 {
-  if (argc != 5)
-  {
-    throw std::invalid_argument("The arguments are: path module x y");
-  }
-  std::cout << "Testing c++ python bindings..." << std::endl;
+  GEOS_ERROR_IF(argc != 5, "The arguments are: path module x y");
+  GEOS_LOG("Testing c++ python bindings...");
 
   // Initialize Python, setup the user-defined search path
   std::cout << "Initializing python..." << std::endl;
@@ -52,14 +48,14 @@ int main(int argc, char** argv)
   if (pModule == NULL)
   {
     PyErr_Print();
-    throw std::invalid_argument("Error in loading python module");
+    GEOS_ERROR("Error in loading python module");
   }
 
   // Call the function designed to print and return modified string
   PyObject *pFunc = PyObject_GetAttrString(pModule, (char*)"printStringFromPython");
   PyObject *pValue = Py_BuildValue("(z)", (char*)"blah-blah-blah");
   PyObject *pResult = PyObject_CallObject(pFunc, pValue);
-  std::cout << "Returned string: " << PyString_AsString(pResult) << std::endl;
+  GEOS_LOG("Returned string: " << PyString_AsString(pResult));
 
   // Cast an array of doubles into a numpy array, modify the values in python
   const int numpy_size = 10;

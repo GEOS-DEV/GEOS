@@ -255,7 +255,7 @@ find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
            NO_SYSTEM_ENVIRONMENT_PATH
            NO_CMAKE_SYSTEM_PATH)
 
-set( caliper_lib_list caliper caliper-reader caliper-common  gotcha )
+set( caliper_lib_list caliper caliper-reader caliper-common gotcha caliper-mpi )
                        
 message(INFO "looking for libs in ${CALIPER_DIR}")
 blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
@@ -411,6 +411,142 @@ if( ENABLE_TRILINOS )
   set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
 endif()
+
+
+
+################################
+# METIS
+################################
+if( ENABLE_METIS )
+	message( INFO ": setting up METIS" )
+
+	set(METIS_DIR ${GEOSX_TPL_DIR}/metis)
+
+	find_path( METIS_INCLUDE_DIRS metis.h
+	   PATHS  ${METIS_DIR}/include
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+   find_library( METIS_LIBRARY NAMES metis
+	      PATHS ${METIS_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+message( "METIS_INCLUDE_DIRS = ${METIS_INCLUDE_DIRS}" )
+message( "METIS_LIBRARY = ${METIS_LIBRARY}" )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(METIS  DEFAULT_MSG
+                                  METIS_INCLUDE_DIRS
+				  METIS_LIBRARY )
+if (NOT METIS_FOUND)
+	message(FATAL_ERROR ": METIS not found in ${METIS_DIR}. Maybe you need to build it")
+endif()
+
+blt_register_library( NAME metis
+               	      INCLUDES ${METIS_INCLUDE_DIRS} 
+		      LIBRARIES ${METIS_LIBRARY}
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} metis )  
+
+endif()
+
+
+
+################################
+# PARMETIS
+################################
+if( ENABLE_PARMETIS )
+	message( INFO ": setting up PARMETIS" )
+
+	set(PARMETIS_DIR ${GEOSX_TPL_DIR}/parmetis)
+
+	find_path( PARMETIS_INCLUDE_DIRS parmetis.h
+           PATHS  ${PARMETIS_DIR}/include
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+   find_library( PARMETIS_LIBRARY NAMES parmetis
+              PATHS ${PARMETIS_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+message( "PARMETIS_INCLUDE_DIRS = ${PARMETIS_INCLUDE_DIRS}" )
+message( "PARMETIS_LIBRARY = ${PARMETIS_LIBRARY}" )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(PARMETIS  DEFAULT_MSG
+                                  PARMETIS_INCLUDE_DIRS
+                                  PARMETIS_LIBRARY )
+if (NOT PARMETIS_FOUND)
+	message(FATAL_ERROR ": PARMETIS not found in ${PARMETIS_DIR}. Maybe you need to build it")
+endif()
+
+blt_register_library( NAME parmetis
+                      INCLUDES ${PARMETIS_INCLUDE_DIRS} 
+                      LIBRARIES ${PARMETIS_LIBRARY}
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} parmetis )  
+
+endif()
+
+
+
+################################
+# SUPERLU_DIST
+################################
+if( ENABLE_SUPERLU_DIST)
+	message( INFO ": setting up SUPERLU_DIST" )
+
+	set(SUPERLU_DIST_DIR ${GEOSX_TPL_DIR}/superlu_dist)
+
+	find_path( SUPERLU_DIST_INCLUDE_DIRS superlu_defs.h
+		PATHS  ${SUPERLU_DIST_DIR}/include
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+   find_library( SUPERLU_DIST_LIBRARY NAMES superlu_dist
+	      PATHS ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+message( "SUPERLU_DIST_INCLUDE_DIRS = ${SUPERLU_DIST_INCLUDE_DIRS}" )
+message( "SUPERLU_DIST_LIBRARY = ${SUPERLU_DIST_LIBRARY}" )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(SUPERLU_DIST  DEFAULT_MSG
+	                          SUPERLU_DIST_INCLUDE_DIRS
+				  SUPERLU_DIST_LIBRARY )
+if (NOT SUPERLU_DIST_FOUND)
+	message(FATAL_ERROR ": SUPERLU_DIST not found in ${SUPERLU_DIST_DIR}. Maybe you need to build it")
+endif()
+
+blt_register_library( NAME superlu_dist
+               	      INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
+	              LIBRARIES ${SUPERLU_DIST_LIBRARY}
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} superlu_dist )  
+
+endif()
+
 
 ################################
 # HYPRE

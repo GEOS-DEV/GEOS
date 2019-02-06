@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,7 +25,6 @@
 
 #include "GeometricObjectManager.hpp"
 
-#include "DocumentationNode.hpp"
 #include "SimpleGeometricObjectBase.hpp"
 
 namespace geosx
@@ -37,26 +36,27 @@ using namespace cxx_utilities;
 GeometricObjectManager::GeometricObjectManager( std::string const & name,
                                                 ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 GeometricObjectManager::~GeometricObjectManager()
 {}
 
-
-void GeometricObjectManager::FillDocumentationNode()
+ManagedGroup * GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Geometry");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Geometric object manager");
+  GEOS_LOG_RANK_0("Adding Geometric Object: " << childKey << ", " << childName);
+  std::unique_ptr<SimpleGeometricObjectBase> geometriObject = SimpleGeometricObjectBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup<SimpleGeometricObjectBase>( childName, std::move(geometriObject) );
 }
 
-
-void GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
+void GeometricObjectManager::ExpandObjectCatalogs()
 {
-  std::cout << "Adding Geometric Object: " << childKey << ", " << childName << std::endl;
-  std::unique_ptr<SimpleGeometricObjectBase> geometriObject = SimpleGeometricObjectBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<SimpleGeometricObjectBase>( childName, std::move(geometriObject) );
+  // During schema generation, register one of each type derived from SimpleGeometricObjectBase here
+  for (auto& catalogIter: SimpleGeometricObjectBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 

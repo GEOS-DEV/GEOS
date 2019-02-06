@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -63,7 +63,6 @@ void ContinuumShapeT::Calc_Shape_Deriv(const realT fac)
           dNdXi(a)(i) *= ( 1 + ip_coord_fac * rElement->Xi_node(ip,j) * rElement->Xi_node(a,j));
 
     }
-    //std::cout<<a<<' '<<dNdXi(a)<<std::endl;
   }
 
   CalculateJacobian(elem);

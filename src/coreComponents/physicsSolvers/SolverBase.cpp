@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -33,22 +33,51 @@ SolverBase::SolverBase( std::string const & name,
   m_linearSolverWrapper(),
   m_verboseLevel( 0 ),
   m_gravityVector( R1Tensor( 0.0 ) ),
-  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )//,
-//  m_blockLocalDofNumber()
+  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
+  m_cflFactor(),
+  m_maxStableDt{1e99}
 {
-  // register group with repository. Have Repository own object.
-  this->RegisterGroup( groupKeyStruct::systemSolverParametersString, &m_systemSolverParameters, 0 );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
 //  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
 
-  if( this->globalGravityVector() != nullptr )
-  {
-    m_gravityVector=*globalGravityVector();
-  }
+  // This sets a flag to indicate that this object increments time
+  this->SetTimestepBehavior(1);
 
-//  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
+
+  RegisterViewWrapper(viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Verbosity level for this solver. Higher values will lead to more screen output. For non-debug "
+                   " simulations, this should remain at 0.");
+
+  RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
+                    " when calculating the maximum allowable time step. Values should be in the interval (0,1] ");
+
+  RegisterViewWrapper(viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
+    setApplyDefaultValue(0.5)->
+    setInputFlag(InputFlags::FALSE)->
+    setDescription( "Value of the Maximum Stable Timestep for this solver.");
+
+  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+    setApplyDefaultValue("none")->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, "
+                    "if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. "
+                    "If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be"
+                    "specified.");
+
+  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Allowable regions that the solver may be applied to. Note that this does not indicate that "
+                   "the solver will be applied to these regions, only that allocation will occur such that the "
+                   "solver may be applied to these regions. The decision about what regions this solver will be"
+                   "applied to rests in the EventManager.");
 
 }
 
@@ -63,90 +92,37 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
   return catalog;
 }
 
-void SolverBase::FillDocumentationNode()
+ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & childName )
 {
-
-
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( this->CatalogName());    // If this method lived in Managed
-                                             // groups, this could be done
-                                             // automatically
-  docNode->setSchemaType( "Node" );
-
-  docNode->AllocateChildNode( keys::courant,
-                              keys::courant,
-                              -1,
-                              "real64",
-                              "real64",
-                              "courant Number",
-                              "courant Number",
-                              "0.7",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::maxDt,
-                              keys::maxDt,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Maximum Stable Timestep",
-                              "Maximum Stable Timestep",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::verboseLevelString,
-                              viewKeyStruct::verboseLevelString,
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
+  ManagedGroup * rval = nullptr;
+  if( childKey==SystemSolverParameters::CatalogName() )
+  {
+    rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
+  }
+  else
+  {
+    GEOS_ERROR(childKey<<" is an invalid key to SolverBase child group.");
+  }
+  return rval;
 }
 
-void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+void SolverBase::ExpandObjectCatalogs()
 {
-//  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-//  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
-//  {
-//    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
-//
-//    ElementRegionManager * const elemManager = meshLevel->getElemManager();
-//
-//    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
-//      {
-//        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-//
-//        docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
-//                                    viewKeyStruct::blockLocalDofNumberString,
-//                                    -1,
-//                                    "localIndex_array",
-//                                    "localIndex_array",
-//                                    "verbosity level",
-//                                    "verbosity level",
-//                                    "0",
-//                                    "",
-//                                    0,
-//                                    0,
-//                                    0 );
-//      });
-//  }
+  CreateChild( SystemSolverParameters::CatalogName(), SystemSolverParameters::CatalogName() );
+}
+
+void SolverBase::PostProcessInput()
+{
+  if( this->globalGravityVector() != nullptr )
+  {
+    m_gravityVector=*globalGravityVector();
+  }
 }
 
 
 real64 SolverBase::SolverStep( real64 const& time_n,
                                real64 const& dt,
-                               const int cycleNumber,
+                               const integer cycleNumber,
                                DomainPartition * domain )
 {
   return 0;
@@ -155,7 +131,9 @@ real64 SolverBase::SolverStep( real64 const& time_n,
 
 void SolverBase::Execute( real64 const& time_n,
                           real64 const& dt,
-                          const int cycleNumber,
+                          integer const cycleNumber,
+                          integer const eventCounter,
+                          real64 const & eventProgress,
                           ManagedGroup * domain )
 {
   if( dt > 0 )
@@ -194,6 +172,74 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   return dt;
 }
 
+bool SolverBase::LineSearch( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * const domain,
+                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                             real64 & lastResidual )
+{
+  SystemSolverParameters * const solverParams = getSystemSolverParameters();
+
+  integer const maxNumberLineSearchCuts = solverParams->maxLineSearchCuts();
+  real64 const lineSearchCutFactor = solverParams->lineSearchCutFactor();
+
+  // flag to determine if we should solve the system and apply the solution. If the line
+  // search fails we just bail.
+  bool lineSearchSuccess = false;
+
+  real64 residualNorm = lastResidual;
+
+  // scale factor is value applied to the previous solution. In this case we want to
+  // subtract a portion of the previous solution.
+  real64 scaleFactor = -1.0;
+
+  // main loop for the line search.
+  for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
+  {
+    // cut the scale factor by half. This means that the scale factors will
+    // have values of -0.5, -0.25, -0.125, ...
+    scaleFactor *= lineSearchCutFactor;
+
+    if( !CheckSystemSolution( blockSystem, scaleFactor, domain ) )
+    {
+      if( m_verboseLevel >= 1 )
+      {
+        GEOS_LOG_RANK_0( "Line search: " << lineSearchIteration << ", solution check failed" );
+      }
+      continue;
+    }
+
+    ApplySystemSolution( blockSystem, scaleFactor, domain );
+
+    // re-assemble system
+    AssembleSystem( domain, blockSystem, time_n, dt );
+
+    // apply boundary conditions to system
+    ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+
+    // get residual norm
+    residualNorm = CalculateResidualNorm( blockSystem, domain );
+
+    if( m_verboseLevel >= 1 )
+    {
+      GEOS_LOG_RANK_0( "Line search: " << lineSearchIteration << ", R = " << residualNorm );
+    }
+
+    // if the residual norm is less than the last residual, we can proceed to the
+    // solution step
+    if( residualNorm < lastResidual )
+    {
+      lineSearchSuccess = true;
+      break;
+    }
+  }
+
+  lastResidual = residualNorm;
+  return lineSearchSuccess;
+}
+
+
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           real64 const & dt,
                                           integer const cycleNumber,
@@ -204,14 +250,15 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
-  // call setup for physics solver. Pre step allocations etc.
-  ImplicitStepSetup( time_n, stepDt, domain, blockSystem );
+  SystemSolverParameters * const solverParams = getSystemSolverParameters();
 
-  SystemSolverParameters const * const solverParams = getSystemSolverParameters();
-  real64 const newtonTol = solverParams->newtonTol();
   integer const maxNewtonIter = solverParams->maxIterNewton();
-  integer const maxNumberDtCuts = 2;
-  integer const maxNumberLineSearchCuts = 5;
+  real64 const newtonTol = solverParams->newtonTol();
+
+  integer const maxNumberDtCuts = solverParams->maxTimeStepCuts();
+  real64 const dtCutFactor = solverParams->timeStepCutFactor();
+
+  bool const allowNonConverged = solverParams->allowNonConverged() > 0;
 
   // a flag to denote whether we have converged
   integer isConverged = 0;
@@ -220,10 +267,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   // required.
   for( int dtAttempt = 0 ; dtAttempt<maxNumberDtCuts ; ++dtAttempt )
   {
+    // reset the solver state, since we are restarting the time step
+    ResetStateToBeginningOfStep( domain );
+
     // main Newton loop
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
-    for( int k=0 ; k<maxNewtonIter ; ++k )
+    integer & k = solverParams->numNewtonIterations();
+    for( k=0 ; k<maxNewtonIter ; ++k )
     {
 
       // call assemble to fill the matrix and the rhs
@@ -235,15 +286,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( blockSystem, domain );
 
-      if( m_verboseLevel >= 1 )
+      if ( m_verboseLevel >= 1 )
       {
-        std::cout << "Attempt: " << dtAttempt  << ", Newton: " << k
-                  << ", R = " << residualNorm << std::endl;
+        GEOS_LOG_RANK_0( "Attempt: " << dtAttempt  << ", Newton: " << k << ", R = " << residualNorm );
       }
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if( residualNorm < newtonTol )
+      if ( residualNorm < newtonTol )
       {
         isConverged = 1;
         break;
@@ -254,46 +304,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       if( residualNorm > lastResidual )
       {
 
-        // flag to determine if we should solve the system and apply the solution. If the line
-        // search fails we just bail.
-        int lineSearchSuccess = 0;
-
-        // scale factor is value applied to the previous solution. In this case we want to
-        // subtract a portion of the previous solution.
-        real64 scaleFactor = -1.0;
-
-        // main loop for the line search.
-        for( int lineSearchIteration=0 ; lineSearchIteration<maxNumberLineSearchCuts ; ++lineSearchIteration )
-        {
-          // cut the scale factor by half. This means that the scale factors will
-          // have values of -0.5, -0.25, -0.125, ...
-          scaleFactor *= 0.5;
-          ApplySystemSolution( blockSystem, scaleFactor, domain );
-
-          // re-assemble system
-          AssembleSystem( domain, blockSystem, time_n, stepDt );
-
-          // apply boundary conditions to system
-          ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
-
-          // get residual norm
-          residualNorm = CalculateResidualNorm( blockSystem, domain );
-
-          if( m_verboseLevel >= 1 )
-          {
-            std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
-                      << ", Line search: " << lineSearchIteration + 1
-                      << ", R = " << residualNorm << std::endl;
-          }
-
-          // if the residual norm is less than the last residual, we can proceed to the
-          // solution step
-          if( residualNorm < lastResidual )
-          {
-            lineSearchSuccess = 1;
-            break;
-          }
-        }
+        residualNorm = lastResidual;
+        bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, blockSystem, residualNorm );
 
         // if line search failed, then break out of the main Newton loop. Timestep will be cut.
         if( !lineSearchSuccess )
@@ -303,8 +315,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // call the default linear solver on the system
-      SolveSystem( blockSystem,
-                   getSystemSolverParameters() );
+      SolveSystem( blockSystem, getSystemSolverParameters() );
+
+      if ( !CheckSystemSolution( blockSystem, 1.0, domain ) )
+      {
+        // TODO try chopping (similar to line search)
+        GEOS_LOG_RANK_0( "Solution check failed. Newton loop terminated." );
+        break;
+      }
 
       // apply the system solution to the fields/variables
       ApplySystemSolution( blockSystem, 1.0, domain );
@@ -318,24 +336,28 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      // cut timestep and reset state to beginning of step, and restart the Newton loop.
-      stepDt *= 0.5;
-      ResetStateToBeginningOfStep( domain );
+      // cut timestep, go back to beginning of step and restart the Newton loop
+      stepDt *= dtCutFactor;
     }
   }
 
-  if( !isConverged )
+  if ( !isConverged )
   {
-    std::cout<<"Convergence not achieved.";
-  }
+    GEOS_LOG_RANK_0( "Convergence not achieved." );
 
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, stepDt, domain );
+    if ( allowNonConverged )
+    {
+      GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
+    }
+    else
+    {
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+    }
+  }
 
   // return the achieved timestep
   return stepDt;
 }
-
 
 real64 SolverBase::ExplicitStep( real64 const & time_n,
                                  real64 const & dt,
@@ -361,7 +383,6 @@ void SolverBase::AssembleSystem( DomainPartition * const domain,
 {
   GEOS_ERROR( "SolverBase::Assemble called!. Should be overridden." );
 }
-
 
 void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
                                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
@@ -405,7 +426,6 @@ void SolverBase::ImplicitStepComplete( real64 const & time,
   GEOS_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
-
 void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                               SystemSolverParameters const * const params,
                               systemSolverInterface::BlockIDs const blockID )
@@ -430,16 +450,6 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 }
 
-//void SolverBase::CreateChild( string const & childKey, string const & childName )
-//{
-//  if( CatalogInterface::hasKeyName(childKey) )
-//  {
-//    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
-//    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
-//  }
-//}
-
-
 R1Tensor const * SolverBase::globalGravityVector() const
 {
   R1Tensor const * rval = nullptr;
@@ -450,7 +460,6 @@ R1Tensor const * SolverBase::globalGravityVector() const
 
   return rval;
 }
-
 
 systemSolverInterface::EpetraBlockSystem const * SolverBase::getLinearSystemRepository() const
 {
@@ -467,5 +476,12 @@ systemSolverInterface::EpetraBlockSystem * SolverBase::getLinearSystemRepository
                                                                     viewKeyStruct::
                                                                     blockSystemRepositoryString ) );
 }
+
+bool SolverBase::CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                                      real64 const scalingFactor, DomainPartition * const domain )
+{
+  return true;
+}
+
 
 } /* namespace ANST */

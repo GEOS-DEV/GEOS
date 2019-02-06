@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -26,15 +26,10 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "common/TimingMacros.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 
 #include "mesh/MeshForLoopInterface.hpp"
 //#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
-
-
-struct stabledt
-{
-  double m_maxdt;
-};
 
 namespace ML_Epetra
 { class MultiLevelPreconditioner; }
@@ -45,7 +40,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -66,13 +61,9 @@ public:
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void FillDocumentationNode() override final;
-  
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
-
-  virtual void ReadXML_PostProcess() override final;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
@@ -148,15 +139,49 @@ public:
                                  real64 const & dt,
                                  DomainPartition * const domain ) override;
 
+  /**@}*/
+
+  real64 ElementKernelSelector( localIndex const er,
+                                localIndex const esr,
+                                set<localIndex> const & elementList,
+                                arrayView2d<localIndex> const & elemsToNodes,
+                                arrayView3d< R1Tensor > const & dNdX,
+                                arrayView2d<real64> const & detJ,
+                                arrayView1d<R1Tensor> const & u,
+                                arrayView1d<R1Tensor> const & uhat,
+                                arrayView1d<R1Tensor> & acc,
+                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+                                real64 const dt,
+                                localIndex NUM_NODES_PER_ELEM,
+                                localIndex NUM_QUADRATURE_POINTS );
+
+  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+  real64 ExplicitElementKernel( localIndex const er,
+                                localIndex const esr,
+                                set<localIndex> const & elementList,
+                                arrayView2d<localIndex> const & elemsToNodes,
+                                arrayView3d< R1Tensor > const & dNdX,
+                                arrayView2d<real64> const & detJ,
+                                arrayView1d<R1Tensor> const & u,
+                                arrayView1d<R1Tensor> const & uhat,
+                                arrayView1d<R1Tensor> & acc,
+                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                                ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+                                real64 const dt );
+
+
   realT CalculateElementResidualAndDerivative( real64 const density,
                                                FiniteElementBase const * const fe,
-                                               const array_view<R1Tensor,2>& dNdX,
-                                               const realT* const detJ,
+                                               arraySlice2d<R1Tensor const> const& dNdX,
+                                               arraySlice1d<realT const> const& detJ,
                                                R2SymTensor const * const refStress,
-                                               array1d<R1Tensor> const & u,
-                                               array1d<R1Tensor> const & uhat,
-                                               array1d<R1Tensor> const & uhattilde,
-                                               array1d<R1Tensor> const & vtilde,
+                                               r1_array const& u,
+                                               r1_array const& uhat,
+                                               r1_array const& uhattilde,
+                                               r1_array const& vtilde,
                                                realT const dt,
                                                Epetra_SerialDenseMatrix& dRdU,
                                                Epetra_SerialDenseVector& R,
@@ -167,37 +192,68 @@ public:
                                      systemSolverInterface::EpetraBlockSystem & blockSystem  );
 
   void ForceBC( dataRepository::ManagedGroup * const object,
-                BoundaryConditionBase const* const bc,
+                FieldSpecificationBase const* const bc,
                 set<localIndex> const & set,
                 real64 time,
                 systemSolverInterface::EpetraBlockSystem & blockSystem );
 
-  void TractionBC( dataRepository::ManagedGroup * const object,
-                   BoundaryConditionBase const* const bc,
-                   set<localIndex> const & set,
-                   real64 time,
-                   systemSolverInterface::EpetraBlockSystem & blockSystem );
+
+  void ApplyTractionBC( DomainPartition * const domain,
+                        real64 const time,
+                        systemSolverInterface::EpetraBlockSystem & blockSystem );
 
 
-  enum class timeIntegrationOption
+  enum class timeIntegrationOption : int
   {
     QuasiStatic,
     ImplicitDynamic,
     ExplicitDynamic
   };
 
+  void SetTimeIntegrationOption( string const & stringVal )
+  {
+    if( stringVal == "ExplicitDynamic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
+    }
+    else if( stringVal == "ImplicitDynamic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
+    }
+    else if ( stringVal == "QuasiStatic" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
+    }
+    else
+    {
+      GEOS_ERROR("Invalid time integration option: " << stringVal);
+    }
+  }
+
   struct viewKeyStruct
   {
-    dataRepository::ViewKey vTilde = { "velocityTilde" };
-    dataRepository::ViewKey uhatTilde = { "uhatTilde" };
-    dataRepository::ViewKey newmarkGamma = { "newmarkGamma" };
-    dataRepository::ViewKey newmarkBeta = { "newmarkBeta" };
-    dataRepository::ViewKey massDamping = { "massDamping" };
-    dataRepository::ViewKey stiffnessDamping = { "stiffnessDamping" };
-    dataRepository::ViewKey useVelocityEstimateForQS = { "useVelocityEstimateForQuasiStatic" };
-    dataRepository::ViewKey trilinosIndex = { "trilinosIndex" };
-    dataRepository::ViewKey ghostRank = { "ghostRank" };
-    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
+    static constexpr auto vTildeString = "velocityTilde";
+    static constexpr auto uhatTildeString = "uhatTilde";
+    static constexpr auto cflFactorString = "cflFactor";
+    static constexpr auto newmarkGammaString = "newmarkGamma";
+    static constexpr auto newmarkBetaString = "newmarkBeta";
+    static constexpr auto massDampingString = "massDamping";
+    static constexpr auto stiffnessDampingString = "stiffnessDamping";
+    static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
+    static constexpr auto trilinosIndexString = "trilinosIndex";
+    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
+
+
+    dataRepository::ViewKey vTilde = { vTildeString };
+    dataRepository::ViewKey uhatTilde = { uhatTildeString };
+    dataRepository::ViewKey newmarkGamma = { newmarkGammaString };
+    dataRepository::ViewKey newmarkBeta = { newmarkBetaString };
+    dataRepository::ViewKey massDamping = { massDampingString };
+    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString };
+    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString };
+    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
+    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString };
   } solidMechanicsViewKeys;
 
   struct groupKeyStruct
@@ -205,116 +261,34 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
+protected:
+  virtual void PostProcessInput() override final;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+
+
 private:
 
-  real64 m_maxForce;
-  stabledt m_stabledt;
+  real64 m_newmarkGamma;
+  real64 m_newmarkBeta;
+  real64 m_massDamping;
+  real64 m_stiffnessDamping;
+  string m_timeIntegrationOptionString;
   timeIntegrationOption m_timeIntegrationOption;
+  integer m_useVelocityEstimateForQS;
+  real64 m_maxForce = 0.0;
+
+  array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
+  array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
+  set<localIndex> m_sendOrRecieveNodes;
+  set<localIndex> m_nonSendOrRecieveNodes;
+  MPI_iCommData m_icomm;
+
   SolidMechanics_LagrangianFEM();
 
 };
 
-namespace Integration
-{
 
-template<typename T>
-#ifdef USE_CONTAINERARRAY_RETURN_PTR
-void OnePoint( T const * const __restrict__ dydx,
-               T * const __restrict__ dy,
-               T * const __restrict__ y,
-               real64 const dx,
-               localIndex const length )
-#else
-void OnePoint( T const & dydx,
-               T & dy,
-               T & y,
-               real64 const dx,
-               localIndex const length )
-#endif
-{
-
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a){
-      
-    dy[a][0] = dydx[a][0] * dx;
-    dy[a][1] = dydx[a][1] * dx;
-    dy[a][2] = dydx[a][2] * dx;
-    
-    y[a][0] += dy[a][0];
-    y[a][1] += dy[a][1];
-    y[a][2] += dy[a][2];
-    
-  });
-
-}
-
-template<typename T, typename U>
-void OnePoint (U dydx,
-               T dy_1, T dy_2, T dy_3,
-               T y_1, T y_2, T y_3,
-               real64 const dx,
-               localIndex const length)
-{
-  
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
-      
-    dy_1[a] = dydx[a][0] * dx;
-    dy_2[a] = dydx[a][1] * dx;
-    dy_3[a] = dydx[a][2] * dx;
-    
-    y_1[a] += dy_1[a];
-    y_2[a] += dy_2[a];
-    y_3[a] += dy_3[a];
-  });
-  
-}
-
-
-
-template<typename T>
-#ifdef USE_CONTAINERARRAY_RETURN_PTR
-void OnePoint( T const * const __restrict__ dydx,
-               T * const __restrict__ y,
-               real64 const dx,
-               localIndex const length )
-#else
-void OnePoint( T const &  dydx,
-               T & y,
-               real64 const dx,
-               localIndex const length )
-#endif
-{
-
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
-      
-    y[a].plus_cA( dx, dydx[a] );
-    
-    });
-
-}
-
-//Three arrays present
-template<typename T, typename U>
-void OnePoint( T const dydx_0,
-               T const dydx_1,
-               T const dydx_2,
-               U &  y,
-               real64 const dx,
-               localIndex const length )
-{
-  
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
-    //y[a].plus_cA( dx, dydx[a] );
-    y[a][0] += dx*dydx_0[a];
-    y[a][1] += dx*dydx_1[a];
-    y[a][2] += dx*dydx_2[a];
-  });
-
-}
-
-
-
-
-} // namespace integration
 
 } /* namespace geosx */
 

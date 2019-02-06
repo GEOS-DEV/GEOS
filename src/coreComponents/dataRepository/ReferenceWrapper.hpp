@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -95,16 +95,12 @@ public:
     source.m_ref = nullptr;
   }
 
-  /**
-   * @brief assigment operator sets the value that m_ref refers to to the value of the rhs
-   * @param rhs the rhs value to be copied
-   * @return
-   */
-  inline ReferenceWrapper & operator=( T const & rhs )
+  ReferenceWrapper& operator=( ReferenceWrapper const & source )
   {
-    *m_ref = rhs;
+    m_ref = source.m_ref;
     return *this;
   }
+
 
   /**
    * @tparam T_RHS type of the rhs
@@ -184,6 +180,11 @@ public:
   inline T const & get() const
   {
     return *m_ref;
+  }
+
+  inline bool isValid() const
+  {
+    return m_ref;
   }
 
   /**

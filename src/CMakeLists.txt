@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.9)
 project(geosx LANGUAGES C CXX)
 set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
+set(CMAKE_ENABLE_EXPORTS ON)
 
 ################################
 # Include blt
@@ -36,10 +37,10 @@ if(ENABLE_TRIBOL)
    add_definitions(-DHAVE_TRIBOLCOUPLING)
 endif()
 
-add_subdirectory(coreComponents)
-
 set( externalComponentsLinkList "" ) 
 add_subdirectory(externalComponents)
+add_subdirectory(coreComponents)
+
 
 ################################
 # Add docs
@@ -61,21 +62,17 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
 
 ################################
 # Create header of configuration options
-################################s
+################################
 include(cmake/GeosxConfig.cmake)
 
 
-
-
-
-
-
-
-
-set( extraComponentsListLink "")
+################################
+# Add main
+################################
+set( extraComponentsLinkList "")
 if( ENABLE_PYTHON )
   if( PYTHON_DIR )
-    set( extraComponentsListLink ${extraComponentsListLink} python_interp )
+    set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
 #    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=1)
     blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
   else()
@@ -86,7 +83,7 @@ else()
 endif()
 
 if( ENABLE_OPENMP)
-  set( extraComponentsListLink ${extraComponentsListLink} openmp )
+  set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
 endif()
 
 blt_add_executable(NAME geosx
@@ -96,10 +93,10 @@ blt_add_executable(NAME geosx
                               ${externalComponentsLinkList}
                   )
 
-
-
-
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
+if( ${SPHINX_FOUND} )
+  blt_add_sphinx_target( geosx_docs )
+endif()
 
 message( "Exiting /src/CMakeLists.txt")

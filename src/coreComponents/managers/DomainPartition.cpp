@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -29,7 +29,7 @@
 
 #include "common/TimingMacros.hpp"
 
-#include "common/Logger.hpp"
+#include "common/DataTypes.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -39,11 +39,9 @@ using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
-  m_mpiComm()
+  ManagedGroup( name, parent )
 {
-  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
-  MPI_Comm_dup( MPI_COMM_GEOSX, &m_mpiComm );
+  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
@@ -56,11 +54,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::FillDocumentationNode()
+void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Domain");
-  docNode->setSchemaType("UniqueNode");
+  ManagedGroup::RegisterDataOnMeshRecursive( getMeshBodies() );
 }
 
 
@@ -108,7 +104,7 @@ void DomainPartition::SetMaps(  )
   //  elementRegionManager->forElementRegions( [&](ElementRegion&
   // elementRegion)-> void
   //  {
-  //    elementRegion.forCellBlocks( [&]( CellBlockSubRegion & subRegion )->void
+  //    elementRegion.forElementSubRegions( [&]( CellBlockSubRegion & subRegion )->void
   //    {
 
   //    });
@@ -122,7 +118,7 @@ void DomainPartition::GenerateSets(  )
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
   ManagedGroup * nodeManager = mesh->getNodeManager();
 
-  dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(dataRepository::keys::sets);
+  dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
   std::map< string, integer_array > nodeInSet;
   string_array setNames;
@@ -148,16 +144,13 @@ void DomainPartition::GenerateSets(  )
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
 
   for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
-//  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion
-// )
   {
     ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
-//    elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
-    for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
+    for( auto & subRegionIter : elementRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetSubGroups() )
     {
-      CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
-      array2d<localIndex> const & elemsToNodes = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
-      dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
+      ElementSubRegionBase * const subRegion = subRegionIter.second->group_cast<ElementSubRegionBase *>();
+//      array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
+      dataRepository::ManagedGroup * elementSets = subRegion->sets();
       std::map< string, integer_array > numNodesInSet;
 
       for( auto & setName : setNames )
@@ -166,16 +159,17 @@ void DomainPartition::GenerateSets(  )
         set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          localIndex const * const nodelist = elemsToNodes[k];
+          arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
+          localIndex const numNodes = subRegion->numNodesPerElement();
           integer count = 0;
-          for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
+          for( localIndex a = 0 ; a<numNodes ; ++a )
           {
-            if( nodeInSet[setName][nodelist[a]] == 1 )
+            if( nodeInSet[setName][elemToNodes[a]] == 1 )
             {
               ++count;
             }
           }
-          if( count == elemsToNodes.size(1) )
+          if( count == numNodes )
           {
             targetSet.insert(k);
           }
@@ -188,6 +182,7 @@ void DomainPartition::GenerateSets(  )
 
 void DomainPartition::SetupCommunications()
 {
+  GEOSX_MARK_FUNCTION;
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
@@ -197,6 +192,7 @@ void DomainPartition::SetupCommunications()
   {
     int reorder = 0;
     MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+    GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
   }
   int rank = -1;
   int nsdof = 3;
@@ -227,6 +223,8 @@ void DomainPartition::SetupCommunications()
 
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
+  nodeManager->SetMaxGlobalIndex();
+
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
 
   CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, allNeighbors );
@@ -252,7 +250,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
   if (idim == nsdof)
   {
     bool me = true;
-    for ( unsigned int i = 0 ; i < nsdof ; i++)
+    for ( int i = 0 ; i < nsdof ; i++)
     {
       if (ncoords[i] != partition.m_coords(i))
       {
@@ -270,11 +268,11 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
   }
   else
   {
-    const int dim = partition.m_Partitions(idim);
-    const bool periodic = partition.m_Periodic(idim);
+    const int dim = partition.m_Partitions( integer_conversion<localIndex>(idim));
+    const bool periodic = partition.m_Periodic(integer_conversion<localIndex>(idim));
     for (int i = -1 ; i < 2 ; i++)
     {
-      ncoords[idim] = partition.m_coords(idim) + i;
+      ncoords[idim] = partition.m_coords(integer_conversion<localIndex>(idim)) + i;
       bool ok = true;
       if (periodic)
       {

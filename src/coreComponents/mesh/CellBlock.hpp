@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -17,16 +17,15 @@
  */
 
 /**
- * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
+ * @file CellBlock.hpp
  */
 
 #ifndef ELEMENTOBJECTT_H_
 #define ELEMENTOBJECTT_H_
 
-#include "managers/ObjectManagerBase.hpp"
+#include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 
 
 class StableTimeStep;
@@ -37,9 +36,13 @@ namespace geosx
 /**
  * Class to manage the data stored at the element level.
  */
-class CellBlock : public ObjectManagerBase
+class CellBlock : public ElementSubRegionBase
 {
 public:
+
+  using NodeMapType=FixedOneToManyRelation;
+  using EdgeMapType=FixedOneToManyRelation;
+  using FaceMapType=FixedOneToManyRelation;
 
   /**
    * @name Static Factory Catalog Functions
@@ -81,10 +84,6 @@ public:
   CellBlock(const CellBlock& init);
 
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void ReadXML_PostProcess() override;
-
   virtual ~CellBlock() override;
 
   /**
@@ -104,76 +103,69 @@ public:
    * @param useReferencePos
    * @return
    */
-  R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
+  R1Tensor const & calculateElementCenter( localIndex k,
+                                           const NodeManager& nodeManager,
+                                           const bool useReferencePos = true) const override;
 
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+  virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
+                                     array1d<R1Tensor> const & X ) override
   {
+    ElementSubRegionBase::CalculateCellVolumes<CellBlock>( *this,
+                                               indices,
+                                               X );
+  }
 
-    static constexpr auto numNodesPerElementString     = "numNodesPerElement";
-    static constexpr auto nodeListString               = "nodeList";
-    static constexpr auto numEdgesPerElementString     = "numEdgesPerElement";
-    static constexpr auto edgeListString               = "edgeList";
-    static constexpr auto numFacesPerElementString     = "numFacesPerElement";
-    static constexpr auto faceListString               = "faceList";
-    static constexpr auto elementCenterString          = "elementCenter";
-    static constexpr auto elementVolumeString          = "elementVolume";
+  inline void CalculateCellVolumesKernel( localIndex const k,
+                                          array1d<R1Tensor> const & X )
+  {
+    R1Tensor & center = m_elementCenter[k];
+    center = 0.0;
 
-    dataRepository::ViewKey numNodesPerElement = { numNodesPerElementString };
-    dataRepository::ViewKey nodeList           = { nodeListString };
-    dataRepository::ViewKey numEdgesPerElement = { numEdgesPerElementString };
-    dataRepository::ViewKey edgeList           = { edgeListString };
-    dataRepository::ViewKey numFacesPerElement = { numFacesPerElementString };
-    dataRepository::ViewKey faceList           = { faceListString };
-    dataRepository::ViewKey elementCenter      = { elementCenterString };
-  } m_CellBlockViewKeys;
+    R1Tensor Xlocal[10];
+
+    for (localIndex a = 0; a < m_numNodesPerElement; ++a)
+    {
+      Xlocal[a] = X[m_toNodesRelation[k][a]];
+      center += Xlocal[a];
+    }
+    center /= m_numNodesPerElement;
+
+    if( m_numNodesPerElement == 8 )
+    {
+      m_elementVolume[k] = computationalGeometry::HexVolume(Xlocal);
+    }
+    else if( m_numNodesPerElement == 4)
+    {
+      m_elementVolume[k] = computationalGeometry::TetVolume(Xlocal);
+    }
+    else if( m_numNodesPerElement == 6)
+    {
+      m_elementVolume[k] = computationalGeometry::WedgeVolume(Xlocal);
+    }
+    else if ( m_numNodesPerElement == 5)
+    {
+      m_elementVolume[k] = computationalGeometry::PyramidVolume(Xlocal);
+    }
+    else
+    {
+        GEOS_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
+    }
+  }
 
 
-  /**
-   *
-   * @return reference to the viewKeyStruct member
-   */
-  virtual viewKeyStruct & viewKeys() override
-  { return m_CellBlockViewKeys; }
-
-  /**
-   *
-   * @return reference to const pointing to the viewKeyStruct member
-   */
-  virtual viewKeyStruct const & viewKeys() const override
-  { return m_CellBlockViewKeys; }
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
 
+  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
+  {
+    return m_toNodesRelation[k];
+  }
 
+  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
+  {
+    return m_toNodesRelation[k];
+  }
 
-  /**
-   * @return number of nodes per element
-   */
-  localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
-
-  /**
-   * @return number of nodes per element
-   */
-  localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
-
-  /**
-   * @return number of edges per element
-   */
-  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
-
-  /**
-   * @return number of edges per element
-   */
-  localIndex       & numEdgesPerElement()       { return m_numEdgesPerElement; }
-
-  /**
-   * @return number of faces per element
-   */
-  localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
-
-  /**
-   * @return number of faces per element
-   */
-  localIndex       & numFacesPerElement()       { return m_numFacesPerElement; }
 
   /**
    * @return the element to node map
@@ -184,6 +176,16 @@ public:
    * @return the element to node map
    */
   FixedOneToManyRelation const & nodeList() const        { return m_toNodesRelation; }
+
+  /**
+   * @return the element to node map
+   */
+  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation[k][a]; }
+
+  /**
+   * @return the element to node map
+   */
+  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation[k][a]; }
 
   /**
    * @return the element to edge map
@@ -205,34 +207,25 @@ public:
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-private:
-  /// The number of nodes per element in this cell block
-  localIndex m_numNodesPerElement;
+  string GetElementType() const { return m_elementType; }
 
-  /// The number of edges per element in this cell block
-  localIndex m_numEdgesPerElement;
+  void SetElementType( string const & elementType);
 
-  /// The number of faces per element in this cell block
-  localIndex m_numFacesPerElement;
+protected:
+
 
   /// The elements to nodes relation
-  FixedOneToManyRelation  m_toNodesRelation;
+  NodeMapType  m_toNodesRelation;
 
   /// The elements to edges relation
-  FixedOneToManyRelation  m_toEdgesRelation;
+  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
-  FixedOneToManyRelation  m_toFacesRelation;
-
-  /// The member level field for the element center
-  array1d< R1Tensor > m_elementCenter;
-
-  /// The member level field for the element volume
-  array1d< real64 > m_elementVolume;
+  FaceMapType  m_toFacesRelation;
 
 
 //  CellBlock& operator=(const CellBlock& rhs);
-//  string & m_elementType;
+  string m_elementType;
 
 };
 

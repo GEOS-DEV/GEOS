@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -44,7 +44,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
@@ -59,13 +59,9 @@ public:
 
   static string CatalogName() { return "LaplaceFEM"; }
 
-  virtual void FillDocumentationNode() override final;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
-
-  virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
-
-  virtual void ReadXML_PostProcess() override final;
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -144,21 +140,6 @@ public:
   void SetupMLPreconditioner( DomainPartition const & domain,
                               ML_Epetra::MultiLevelPreconditioner* MLPrec );
 
-
-  realT CalculateElementResidualAndDerivative( real64 const density,
-                                               FiniteElementBase const * const fe,
-                                               const multidimensionalArray::ArrayView<R1Tensor, 2, localIndex> dNdX,
-                                               const realT* const detJ,
-                                               R2SymTensor const * const refStress,
-                                               array1d<R1Tensor> const & u,
-                                               array1d<R1Tensor> const & uhat,
-                                               array1d<R1Tensor> const & uhattilde,
-                                               array1d<R1Tensor> const & vtilde,
-                                               realT const dt,
-                                               Epetra_SerialDenseMatrix& dRdU,
-                                               Epetra_SerialDenseVector& R,
-                                               real64 c[6][6] );
-
   void ApplyDirichletBC_implicit( real64 const time,
                                   DomainPartition & domain,
                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
@@ -183,15 +164,15 @@ public:
 
   } laplaceFEMViewKeys;
 
-//  struct groupKeyStruct
-//  {
-//  } groupKeys;
 
 
-  SystemSolverParameters * getSystemSolverParameters() {return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters); }
+
+
+protected:
+  virtual void PostProcessInput() override final;
 
 private:
-
+  string m_fieldName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   LaplaceFEM();
