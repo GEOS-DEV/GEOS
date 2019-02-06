@@ -39,6 +39,7 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_LAPACK_SUITE "Enables LAPACK_SUITE" ON )
 
 option( ENABLE_MPI "" ON )
 

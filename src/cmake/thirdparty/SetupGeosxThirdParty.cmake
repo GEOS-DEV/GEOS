@@ -547,7 +547,6 @@ set( thirdPartyLibs ${thirdPartyLibs} superlu_dist )
 
 endif()
 
-
 ################################
 # HYPRE
 ################################
@@ -591,7 +590,27 @@ set( thirdPartyLibs ${thirdPartyLibs} hypre )
 
 endif()
 
+################################
+# LAPACK_SUITE
+################################
+if( ENABLE_LAPACK_SUITE )
 
+  if(NOT EXISTS ${LAPACK_SUITE_DIR})
+      message( INFO ": setting up LAPACK_SUITE" )
+      set(LAPACK_SUITE_DIR ${GEOSX_TPL_DIR}/lapack_suite)
+  endif()
+  
+  include(${LAPACK_SUITE_DIR}/lib/cmake/cblas-3.8.0/cblas-config.cmake)
+  include(${LAPACK_SUITE_DIR}/lib/cmake/lapack-3.8.0/lapack-config.cmake)
+  include(${LAPACK_SUITE_DIR}/lib/cmake/lapacke-3.8.0/lapacke-config.cmake)
+
+  blt_register_library( NAME lapack_suite
+                        INCLUDES ${LAPACKE_INCLUDE_DIRS} 
+                        LIBRARIES ${LAPACKE_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} lapack_suite )
+
+endif()
 
 #if (UNCRUSTIFY_EXECUTABLE)
 #  include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)

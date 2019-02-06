@@ -17,6 +17,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CONTAINERARRAY_RETURN_PTR
                           FPARSER
                           HYPRE
+			  LAPACK
                           MATHPRESSO
                           METIS
                           MPI

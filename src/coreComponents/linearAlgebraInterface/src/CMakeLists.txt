@@ -12,7 +12,9 @@ set( linearAlgebraInterface_headers
      TrilinosSolver.hpp
      TrilinosInterface.hpp
      HypreInterface.hpp 
-     LinearSolverParameters.hpp)
+     LinearSolverParameters.hpp
+     LapackInterface.hpp
+     LapackMatrix.hpp)
 
 #
 # Specify all sources
@@ -22,9 +24,10 @@ set( linearAlgebraInterface_sources
      EpetraVector.cpp
      TrilinosSolver.cpp
      BlockVectorView.cpp
-     BlockMatrixView.cpp)
+     BlockMatrixView.cpp
+     LapackMatrix.cpp)
 
-set( dependencyList common trilinos hypre mpi)
+set( dependencyList common trilinos hypre lapack_suite mpi)
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
