@@ -70,7 +70,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forCellBlocks([&]( ManagedGroup * const cellBlock) -> void
+    elemManager->forElementSubRegions([&]( ManagedGroup * const cellBlock) -> void
     {
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
@@ -109,7 +109,7 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
                                             ElementSubRegionBase * const subRegion )
   {
@@ -161,7 +161,7 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
                                             ElementSubRegionBase const * const subRegion )
   {
@@ -226,7 +226,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
                                             ElementSubRegionBase * const subRegion )
   {
@@ -260,7 +260,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
                                             ElementSubRegionBase * const subRegion )
   {
@@ -357,7 +357,7 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
   globalIndex numGlobalRows = 0;
 
   // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  elementRegionManager->forCellBlocks( [&]( ObjectManagerBase * const subRegion )
+  elementRegionManager->forElementSubRegions( [&]( ObjectManagerBase * const subRegion )
     {
       localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
       numGhostRows += subRegionGhosts;
@@ -551,7 +551,7 @@ SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion const * const region,
                                             ElementSubRegionBase const * const subRegion )
   {
@@ -609,7 +609,7 @@ SinglePhaseFlow::AssembleAccumulationTermsCoupled( DomainPartition const * const
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion const * const region,
                                             ElementSubRegionBase const * const subRegion )
   {
@@ -1172,7 +1172,7 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
                                             ElementSubRegionBase * const subRegion )
   {
@@ -1230,7 +1230,7 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
                                             ElementSubRegionBase * const subRegion )
   {

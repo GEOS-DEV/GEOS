@@ -85,7 +85,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
+               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -93,7 +93,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
+               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -101,21 +101,21 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
+               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="TopReferencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
+               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="TopInitialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Top/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
+               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA"
                fieldName="pressure"
                scale="2e5"/>
 
@@ -123,7 +123,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
+               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -131,7 +131,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
+               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -139,21 +139,21 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
+               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="BotReferencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
+               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="BotInitialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Bot/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
+               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_2_TETRA"
                fieldName="pressure"
                scale="1e5"/>
   </FieldSpecifications>
