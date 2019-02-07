@@ -33,7 +33,7 @@
 
 #include "common/DataTypes.hpp"
 
-#include "LapackInterface.hpp"
+#include <LapackSuiteInterface.hpp>
 
 
 /**
@@ -86,8 +86,47 @@ void testMatrixConstructors()
 
   // Empty constructor
 
-  DenseMatrix A(2,2);
-  DenseMatrix B(2,2);
+  DenseMatrix A(2,2), B(1,1), C(4,4);
+  DenseMatrix Cinv;
+  array1d<localIndex> v_tmp;
+
+  std::cout << "default length: " << v_tmp.size() << std::endl;
+
+  // Assign values to A
+  A(0,0) = 3;
+  A(1,0) = 1;
+  A(0,1) = 1;
+  A(1,1) = 3;
+
+  C(0,0) = 3;
+  C(1,1) = 1;
+  C(2,2) = 0.5;
+  C(3,3) = -1;
+
+  Cinv.invert(C);
+
+  A.print();
+  std::cout << "Determinant of A: " << A.determinant() << std::endl;
+  std::cout << "Determinant of B: " << B.determinant() << std::endl;
+  std::cout << "Matrix C" << std::endl;
+  C.print();
+  std::cout << "Matrix C^-1" << std::endl;
+  Cinv.print();
+  BlasMatrix CinvxC(4,4);
+  CinvxC.GEMM(Cinv,C);
+  std::cout << "Matrix C^-1*C" << std::endl;
+  CinvxC.print();
+
+  CinvxC.GEMM(C,Cinv);
+  std::cout << "Matrix C*C^-1" << std::endl;
+  CinvxC.print();
+
+  BlasMatrix D(C);
+  D.MatAdd(Cinv);
+
+  std::cout << "Matrix D" << std::endl;
+  D.print();
+
 
 //  SerialDenseMatrix A5(3,3);
 //  SerialDenseMatrix B(3,2);
@@ -127,7 +166,7 @@ void testMatrixConstructors()
  */
 TEST(testDenseLAOperations,testLapackDenseLAOperations)
 {
-  testMatrixConstructors<LapackInterface>();
+  testMatrixConstructors<LapackSuiteInterface>();
 }
 
 //@}

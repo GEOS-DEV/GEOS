@@ -5,10 +5,10 @@
  *      Author: castelletto1
  */
 
-#ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKINTERFACE_HPP_
-#define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKINTERFACE_HPP_
+#ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKSUITEINTERFACE_HPP_
+#define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKSUITEINTERFACE_HPP_
 
-#include "LapackMatrix.hpp"
+#include <BlasMatrix.hpp>
 //#include "LapackVector.hpp"
 
 namespace geosx
@@ -19,12 +19,12 @@ namespace geosx
  * \brief This class holds aliases based on LAPACK and BLAS library.
  */
 
-class LapackInterface
+class LapackSuiteInterface
 {
 public:
 
   // Lapack matrix and vector wrappers
-  using DenseMatrix = LapackMatrix;
+  using DenseMatrix = BlasMatrix;
 //  using DenseVector = LapackVector;
 
   //! @name Constructor/Destructor Methods
@@ -32,13 +32,13 @@ public:
   /**
    * @brief Empty constructor.
    */
-  LapackInterface() = default;
+  LapackSuiteInterface() = default;
 
   /**
    * @brief Destructor.
    *
    */
-  ~LapackInterface() = default;
+  ~LapackSuiteInterface() = default;
   //@}
 
 };
@@ -47,4 +47,4 @@ public:
 
 
 
-#endif /* CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKINTERFACE_HPP_ */
+#endif /* CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKSUITEINTERFACE_HPP_ */

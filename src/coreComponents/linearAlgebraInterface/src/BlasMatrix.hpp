@@ -17,11 +17,11 @@
  */
 
 /**
- * @file LapackMatrix.hpp
+ * @file BlasMatrix.hpp
  */
 
-#ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKMATRIX_HPP_
-#define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKMATRIX_HPP_
+#ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASMATRIX_HPP_
+#define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
 #include "Logger.hpp"
@@ -32,11 +32,12 @@
 namespace geosx
 {
 /**
- * \class LapackMatrix
- * \brief This class creates and provides basic support for for real-valued,
- *        double-precision dense rectangular. Column-major storage is used.
+ * \class BlasMatrix
+ * \brief This class creates and provides basic support for for manipulating
+ *        a BLAS-style column-major matrix.
  */
-class LapackMatrix
+
+class BlasMatrix
 {
 public:
 
@@ -45,9 +46,9 @@ public:
   //@{
 
   /**
-   * @brief Empty constructor.
+   * @brief Default constructor.
    */
-  LapackMatrix();
+  BlasMatrix();
 
   /**
    * @brief Shaped constructor; defines a variable-sized matrix.
@@ -59,22 +60,39 @@ public:
    *
    * @note All values are initialized to 0.
    */
-  LapackMatrix( localIndex nRows,
-                localIndex nCols );
+  BlasMatrix( localIndex nRows,
+              localIndex nCols );
+
+  /**
+   * @brief Shape constructor; defines a square matrix.
+   *
+   * \param IN
+   * order - Matrix order
+   *
+   * @note All values are initialized to 0.
+   */
+  BlasMatrix( localIndex order );
+
+  /**
+   * @brief Copy constructor.
+   *
+   * \param IN
+   * src - BlasMatrix
+   *
+   */
+  BlasMatrix( BlasMatrix const & src );
 
   /**
    * @brief Matrix destructor.
    */
-  virtual ~LapackMatrix()
-  {
+  ~BlasMatrix();
 
-  }
-
-    //@}
+  //@}
 
   //----------------------------------------------------------------------------
   //! @name Shaping/sizing methods
   //@{
+
   /**
    * @brief Resize matrix. All entries set to zero
    *
@@ -86,6 +104,16 @@ public:
    */
   void resize( localIndex nRows,
                localIndex nCols );
+
+  /**
+   * @brief Resize matrix. All entries set to zero
+   *
+   * \param IN
+   * order - Matrix order
+   *
+   */
+  void resize( localIndex order );
+
   //@}
 
   //----------------------------------------------------------------------------
@@ -115,28 +143,50 @@ public:
    * For dimensions larger than four, the function calls LAPACK functions DGETRF
    * and DGETRI using Trilinos/Epetra LAPACK Wrapper Class.
    */
-  void invert(LapackMatrix& src);
+  void invert( BlasMatrix& src );
 
-//  /**
-//   * @brief Matrix-Matrix sum;
-//   * \a this = scalarA*<tt>A</tt> + \a this.
-//   *
-//   * Computes (scalarA*<tt>A</tt> + \a this) and overwrites the result on the
-//   * current \a this, with optional scaling.
-//   *
-//   * \param IN
-//   * <tt>A</tt> - Dense matrix.
-//   * \param [IN]
-//   * scalarA - Optional scalar to multiply with <tt>A</tt>.
-//   *
-//   * @warning
-//   * Assumes that <tt>A</tt> and \a this have the same size.
-//   *
-//   * @note This function calls BLAS function DAXPY using Trilinos/Epetra BLAS
-//   *       Wrapper Class if built with Trilinos.
-//   */
-//  void MatAdd(SerialDenseMatrix& A, const double scalarA=1.);
-//
+  /**
+   * @brief Matrix-Matrix sum;
+   * \a this = scalarA*<tt>A</tt> + \a this.
+   *
+   * Computes (scalarA*<tt>A</tt> + \a this) and overwrites the result on the
+   * current \a this, with optional scaling.
+   *
+   * \param IN
+   * <tt>A</tt> - BlasMatrix matrix.
+   * \param [IN]
+   * scalarA - Optional scalar to multiply with <tt>A</tt>.
+   *
+   * @warning
+   * Assumes that <tt>A</tt> and \a this have the same size.
+   */
+  void MatAdd(BlasMatrix const & A,
+              const real64 scalarA=1.);
+
+  /**
+   * @brief General matrix-matrix multiplication;
+   * \a this = scalarThis* \a this + scalarAB*<tt>A</tt>*<tt>B</tt>.
+   *
+   * Computes matrix-matrix product with optional scaling and accumulation.
+   *
+   * \param IN
+   * <tt>A</tt> - BlasMatrix.
+   * \param IN
+   * <tt>B</tt> - BlasMatrix.
+   * \param [IN]
+   * scalarAB - Optional scalar to multiply with <tt>A</tt>*<tt>B</tt>.
+   * \param [IN]
+   * scalarThis - Optional parameter to control the accumulation.
+   *
+   * @warning
+   * Assumes that <tt>A</tt> and <tt>B</tt> have compatible sizes and that
+   * \a this already has the right size.
+   */
+  void GEMM( BlasMatrix const & A,
+             BlasMatrix const & B,
+             real64 const scalarAB = 1.,
+             real64 const scalarThis = 0. );
+
 //  /**
 //   * @brief Matrix-Matrix product;
 //   * \a this = scalarThis* \a this + scalarAB*<tt>A</tt>*<tt>B</tt>.
@@ -299,36 +349,40 @@ public:
   //@{
 
   /**
-   * @brief Element access function.
+   * @brief Coefficient access function.
    *
-   * The parentheses operator returns the element in the ith row (RowIndex) and
-   * jth column (ColIndex).
+   * The parentheses operator returns the reference to the coefficient in
+   * position (row, column).
    */
-  real64& operator()(localIndex RowIndex, localIndex ColIndex);
+  inline real64 & operator ()( localIndex row,
+                               localIndex column );
+
+  /**
+   * @brief Constant coefficient access function.
+   *
+   * The parentheses operator returns the reference to the coefficient in
+   * position (row, column).
+   */
+  inline real64 const & operator ()( localIndex row,
+                                     localIndex column ) const;
 
   /**
    * @brief Returns number of matrix rows.
    */
   localIndex get_nRows() const
   {
-    return m_nRows;
-  };
-
-  /**
-   * @brief Returns number of matrix columns.
-   */
-  localIndex get_coefficientPtr() const
-  {
-    return m_nCols;
-  };
+    return m_height;
+  }
+  ;
 
   /**
    * @brief Returns number of matrix columns.
    */
   localIndex get_nCols() const
   {
-    return m_nCols;
-  };
+    return m_width;
+  }
+  ;
 
 //  /**
 //   * @brief Assign scalar \a value to all matrix entries.
@@ -339,32 +393,44 @@ public:
 //  void assign_value(double value);
 
   //@}
-//
-//  //----------------------------------------------------------------------------
-//  //! @name I/O methods
-//  //@{
-//
-//  /**
-//    * @brief Print service method; defines behavior of ostream << operator.
-//    */
-//  void print();
-//
-//  //@}
+
+  //----------------------------------------------------------------------------
+  //! @name I/O methods
+  //@{
+
+  /**
+   * @brief Print service method; defines behavior of ostream << operator.
+   */
+  void print();
+
+  //@}
 
 protected:
 
-  localIndex m_nRows = 0;
-  localIndex m_nCols = 0;
-  array1d<real64> m_Elements;
+  localIndex m_height = 0; ///< Number of rows of the matrix.
+  localIndex m_width = 0; ///< Number of columns of the matrix.
+  array1d<real64> m_values; ///< array1d storing matrix entries (column-major)
 };
 
-// inlined definitions of op()
-inline real64& LapackMatrix::operator () (localIndex RowIndex,
-                                          localIndex ColIndex)
+// Inline methods
+inline real64 & BlasMatrix::operator ()( localIndex row,
+                                         localIndex column )
 {
-  return m_Elements[ColIndex*m_nRows + RowIndex];
+  GEOS_ASSERT_MSG( 0 <= row && row <= m_height &&
+                   0 <= column && column <= m_width,
+                   "Requested value out of bounds" );
+  return m_values[column * m_height + row];
 }
 
-}// namespace geosx
+inline real64 const & BlasMatrix::operator ()( localIndex row,
+                                               localIndex column ) const
+{
+  GEOS_ASSERT_MSG( 0 <= row && row <= m_height &&
+                   0 <= column && column <= m_width,
+                   "Requested value out of bounds" );
+  return m_values[column * m_height + row];
+}
 
-#endif /* CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKMATRIX_HPP_ */
+} // namespace geosx
+
+#endif /* CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASMATRIX_HPP_ */
