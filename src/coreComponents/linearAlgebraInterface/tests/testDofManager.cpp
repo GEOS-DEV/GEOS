@@ -43,14 +43,13 @@ using namespace geosx;
 
 namespace
 {
-  int global_argc;
-  char** global_argv;
+int global_argc;
+char** global_argv;
 }
-
 
 class DofManagerTest : public ::testing::Test
 {
-  protected:
+protected:
 
   static void SetUpTestCase()
   {
@@ -61,54 +60,83 @@ class DofManagerTest : public ::testing::Test
   }
 
   static void TearDownTestCase()
-  {}
+  {
+  }
 
   static ProblemManager problemManager;
 };
 
-
-ProblemManager DofManagerTest::problemManager("ProblemManager", nullptr);
-
+ProblemManager DofManagerTest::problemManager( "ProblemManager", nullptr );
 
 TEST_F(DofManagerTest, TestOne)
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
   DofManager dofManager;
-             dofManager.setMesh(domain,0,0);
+  dofManager.setMesh( domain, 0, 0 );
 
   string_array oneRegion;
-               oneRegion.push_back("region2");
+  oneRegion.push_back( "region2" );
 
   string_array twoRegion;
-               twoRegion.push_back("region1");
-               twoRegion.push_back("region2");
-               
-  dofManager.addField("displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3, twoRegion);
-  dofManager.addField("acceleration", DofManager::Location::Node, DofManager::Connectivity::Elem, 3);
-  dofManager.addField("flux", DofManager::Location::Face, DofManager::Connectivity::Elem, 1);
-  dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
-  dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
-  dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
+  twoRegion.push_back( "region1" );
+  twoRegion.push_back( "region2" );
+
+  //- dofManager.addField("displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 1, twoRegion);
+  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, twoRegion );
+  //dofManager.addField("face_node", DofManager::Location::Node, DofManager::Connectivity::Face, 1, twoRegion);
+  //dofManager.addField("node_face", DofManager::Location::Face, DofManager::Connectivity::Node, 1, twoRegion);
+  //dofManager.addField("massmatrix", DofManager::Location::Node, DofManager::Connectivity::None, 4, twoRegion);
+  //- dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
+  //SparsityPattern const & pattern = dofManager.getSparsityPattern("displacement", "pressure");
+  //SparsityPattern const & pattern = dofManager.getSparsityPattern("displacement", "displacement");
+  //SparsityPattern const & pattern = dofManager.getSparsityPattern("displacement");
+  //SparsityPattern const & pattern = dofManager.getSparsityPattern("", "displacement");
+  //SparsityPattern const & pattern = dofManager.getSparsityPattern("pressure", "pressure");
+  //SparsityPattern const & pattern = dofManager.getSparsityPattern("pressure");
+  //SparsityPattern const & pattern = dofManager.getSparsityPattern("", "pressure");
+  SparsityPattern const & pattern = dofManager.getSparsityPattern();
+
+  int mpiRank;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
+  dofManager.printSparsityPattern( pattern, "global_pattern_" + std::to_string( mpiRank ) + ".csr" );
+
+  globalIndex_array indices;
+  //dofManager.getIndices(indices, DofManager::Connectivity::Elem, 1, 0, 10, "displacement");
+  dofManager.getIndices( indices, DofManager::Connectivity::Face, 10, "pressure" );
+  if( indices.size() > 0 )
+    std::cout << indices << std::endl;
+
+  std::cout << mpiRank << " - numGlobalDofs - " << dofManager.numGlobalDofs() << std::endl;
+  //std::cout << mpiRank << " - numGlobalDofs(""pressure"") - " << dofManager.numGlobalDofs("pressure") << std::endl;
+  std::cout << mpiRank << " - numLocalDofs - " << dofManager.numLocalDofs() << std::endl;
+
+  /*
+   dofManager.addField("acceleration", DofManager::Location::Node, DofManager::Connectivity::Elem, 3);
+   dofManager.addField("flux", DofManager::Location::Face, DofManager::Connectivity::Elem, 1);
+   dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
+   dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
+   dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
+   */
+
   dofManager.printCoupling();
 }
 
-
-int main(int argc, char** argv)
+int main( int argc, char** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
-  #ifdef GEOSX_USE_MPI
-  MPI_Init(&argc,&argv);
+  ::testing::InitGoogleTest( &argc, argv );
+#ifdef GEOSX_USE_MPI
+  MPI_Init( &argc, &argv );
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-  #else
+  logger::InitializeLogger( MPI_COMM_GEOSX );
+#else
   logger::InitializeLogger():
-  #endif
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+#endif
+  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
 
   global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>(global_argc)];
-  for( int i=0 ; i<argc ; ++i )
+  global_argv = new char*[static_cast<unsigned int>( global_argc )];
+  for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];
   }
@@ -117,10 +145,10 @@ int main(int argc, char** argv)
 
   delete[] global_argv;
   logger::FinalizeLogger();
-  #ifdef GEOSX_USE_MPI
+#ifdef GEOSX_USE_MPI
   MPI_Comm_free( &MPI_COMM_GEOSX );
   MPI_Finalize();
-  #endif
+#endif
 
   return result;
 }

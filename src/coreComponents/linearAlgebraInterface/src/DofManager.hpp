@@ -34,22 +34,29 @@ namespace geosx
 {
 
 /**
- * Defines a simple GEOSX sparsity pattern.  
+ * Defines a simple GEOSX sparsity pattern.
  * It is intended to be a lightweight way to communicate between the
  * DoFManager and the LAI implementation, without relying on a specific
  * LAI choice.
  *
- * TODO: replace with proper CrsArray 
+ * TODO: replace with proper CrsArray
  */
 struct SparsityPattern
 {
-  array1d<localIndex> rowLengths;  //<! row lengths, size numLocalRows
-  array1d<globalIndex> colIndices; //<! packed column indices, size numLocalNonZeros
+  // Set default values (empty matrix)
+  SparsityPattern() :
+      nRows( 0 ),
+      nCols( 0 )
+  {
+  }
+  localIndex nRows; //<! number of rows
+  localIndex nCols; //<! number of columns
+  localIndex_array rowLengths; //<! row lengths, size numLocalRows
+  globalIndex_array colIndices; //<! packed column indices, size numLocalNonZeros
 };
 
-
 /**
- * The DoFManager is responsible for allocating global dofs, constructing 
+ * The DoFManager is responsible for allocating global dofs, constructing
  * sparsity patterns, and generally simplifying the interaction between
  * PhysicsSolvers and linear algebra operations.
  */
@@ -72,21 +79,27 @@ public:
    * is nearly identical to Connectivity, but we keep both for code readability
    * in function calls.
    */
-  enum class Location {Elem,Face,Node};    
+  enum class Location
+  {
+    Elem, Face, Node
+  };
 
   /**
    * Enumeration of geometric objects for connectivity type.  Note that this enum
    * is nearly identical to Location, but we keep both for code readability
    * in function calls.
    */
-  enum class Connectivity {Elem,Face,Node,None};
+  enum class Connectivity
+  {
+    Elem, Face, Node, None
+  };
 
   /**
    * Assign a mesh
    */
-  void setMesh(DomainPartition * const domain, 
-               localIndex const meshLevelIndex = 0, 
-               localIndex const meshBodyIndex = 0);
+  void setMesh( DomainPartition * const domain,
+                localIndex const meshLevelIndex = 0,
+                localIndex const meshBodyIndex = 0 );
 
   /**
    * Add fields.
@@ -97,66 +110,65 @@ public:
    * The connectivity type is used to infer the sparsity pattern that connects degrees of freedom.
    * If LC denotes a boolean connectivity graph between support locations L and connectors C, the desired sparsity
    * pattern will be computed as LC*CL.  For example, for a TPFA discretization we have dofs located at cell centers,
-   * and connected through adjacent faces.  In this example, LC is the cell-to-face connectivity, and LC*CL is the 
+   * and connected through adjacent faces.  In this example, LC is the cell-to-face connectivity, and LC*CL is the
    * desired TPFA sparsity pattern.  More generally,
    *
    * Example 1 = ("displacement",NODE,ELEM,3) for a Q1 finite-element interpolation for elasticity
    * Example 2 = ("pressure",ELEM,FACE,1) for a scalar TPFA-type approximation
-   * Example 3 = ("pressure",ELEM,NODE,1) for a scalar MPFA-type approximation 
+   * Example 3 = ("pressure",ELEM,NODE,1) for a scalar MPFA-type approximation
    * Example 4 = ("mass",ELEM,NONE,1) for a diagonal-only sparsity pattern (no connectivitys)
    *
    * When the number of components is greater than one, we always assume they are tightly coupled to one another
    * and form a dense block.  The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
    * dense sub-blocks.
    */
-  void addField(string const & field, 
-                Location const location,
-                Connectivity const connectivity, 
-                localIndex const components = 1,
-                string_array const & regions = string_array() );
+  void addField( string const & field,
+                 Location const location,
+                 Connectivity const connectivity,
+                 localIndex const components = 1,
+                 string_array const & regions = string_array() );
 
   /**
    * Add coupling between two fields.
    * The connectivity argument defines how the two fields couple. If the first field has support location A,
    * the second field has support location B, and the connecting object is C, the sparsity pattern will be
    * defined as (AC)(CB).  The final argument indicates if the coupling is symmetric, in the sense that there
-   * is a two-way coupling between the fields.  Without this argument, a nonzero block will be added to the 
-   * system matrix for block AB, but block BA will remain zero (one-way coupling). 
+   * is a two-way coupling between the fields.  Without this argument, a nonzero block will be added to the
+   * system matrix for block AB, but block BA will remain zero (one-way coupling).
    *
-   * Example 1 = ("node_field","elem_field", ELEM, true) couples all dofs sharing a common element (two-way coupling) 
+   * Example 1 = ("node_field","elem_field", ELEM, true) couples all dofs sharing a common element (two-way coupling)
    * Example 2 = ("node_field_1","node_field_2", NODE, true) couples all dofs sharing a common node (two-way coupling)
    * Example 3 = ("node_field_1","face_field", NODE, false) couples nodal dofs to adjacent faces (one-way coupling)
    */
-   
-  void addCoupling(string const & rowField, 
-                   string const & colField,
-                   Connectivity const connectivity,
-                   bool const symmetric = false);
+
+  void addCoupling( string const & rowField,
+                    string const & colField,
+                    Connectivity const connectivity,
+                    bool const symmetric = false ) const;
 
   /**
-   * Return global number of dofs across all processors. If field argument is "all", return monolithic size.
+   * Return global number of dofs across all processors. If field argument is empty, return monolithic size.
    */
-  globalIndex numGlobalDofs( string const & field = "all" ) const;
+  globalIndex numGlobalDofs( string const & field = "" ) const;
 
   /**
-   * Return local number of dofs on this processor.  If field argument is "all", return monolithic size
+   * Return local number of dofs on this processor.  If field argument is empty, return monolithic size
    */
-  localIndex numLocalDofs( string const & field = "all" ) const;
+  localIndex numLocalDofs( string const & field = "" ) const;
 
-  /**  
+  /**
    * Get a sparsity pattern.  Without additional arguments, this function routines the sparsity pattern for the
    * monolithic matrix.  Sub-patterns can be extracted, however, using row and column field keys.
    */
-  void getSparsityPattern( SparsityPattern & pattern, 
-                           string const & rowField = "all", 
-                           string const & colField = "all") const;
+  SparsityPattern const & getSparsityPattern( string const & rowField = "",
+                                              string const & colField = "" ) const;
 
   /**
    * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
-   * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only 
+   * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only
    * implement appropriate combinations.
    *
-   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell 
+   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell
    * Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
    * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
    */
@@ -165,26 +177,33 @@ public:
                    localIndex const region,
                    localIndex const subregion,
                    localIndex const index,
-                   string const & field = "all") const;
+                   string const & field = "" ) const;
 
   /**
    * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
-   * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only 
+   * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only
    * implement appropriate combinations.
    *
-   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell 
+   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell
    * Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
    * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
    */
   void getIndices( globalIndex_array & indices,
                    Connectivity const connectivity,
                    localIndex const index,
-                   string const & field = "all") const;
+                   string const & field = "" ) const;
 
-   /**
-    * Print the global connectivity matrix
-    */
-   void printCoupling();
+  /**
+   * Print the global connectivity matrix
+   */
+  void printCoupling() const;
+
+  /**
+   * Print the pattern
+   */
+  void printSparsityPattern( SparsityPattern const & pattern, string const & fileName = "" ) const;
+  void printSparsityPattern( string const & field, string fileName = "" ) const;
+  void printCoupledSparsityPattern( string const & rowField, string const & colField, string fileName = "" ) const;
 
 private:
   /**
@@ -207,64 +226,151 @@ private:
    */
   struct FieldDescription
   {
-    string name;                 //!< field name
+    string name; //!< field name
     array1d<string> regionNames; //!< active element regions
     array1d<ElementRegion*> regionPtrs; //!< saved pointers to active regions
-    Location location;           //!< support location
-    localIndex numComponents;    //!< number of vector components
-    string key;                  //!< string key for index array
-    string docstring;            //!< documentation string
-    localIndex numLocalRows;     //!< number of local rows
-    globalIndex numGlobalRows;   //!< number of ghost rows
-    globalIndex firstLocalRow;   //!< first row on this processor (without field offset)
-    globalIndex fieldOffset;     //!< global row offset for multi-field problems
-
+    Location location; //!< support location
+    localIndex numComponents; //!< number of vector components
+    string key; //!< string key for index array
+    string docstring; //!< documentation string
+    localIndex numLocalNodes; //!< number of local nodes
+    localIndex numLocalRows; //!< number of local rows
+    globalIndex numGlobalRows; //!< number of ghost rows
+    globalIndex firstLocalRow; //!< first row on this processor (without field offset)
+    globalIndex fieldOffset; //!< global row offset for multi-field problems
+    SparsityPattern connLocPattern; //!< pattern for the connectivity-location matrix
   };
 
   /**
    * Array of field descriptions
    */
-   array1d<FieldDescription> m_fields;
+  array1d<FieldDescription> m_fields;
 
-   /*
-    * Table of connectivities within and between fields
-    */
-   array2d<Connectivity> m_connectivity;
+  /*
+   * Table of connectivities within and between fields
+   */
+  array2d<Connectivity> m_connectivity;
 
-   /*
-    * Number of MPI ranks
-    */
-   int mpiSize;
+  /*
+   * Table of sparsity patterns within and between fields
+   */
+  array2d<SparsityPattern> m_sparsityPattern;
 
-   /*
-    * This mpi rank
-    */
-   int mpiRank;
+  /*
+   * Number of MPI ranks
+   */
+  int mpiSize;
 
-   /**
-    * Check if string key is already being used
-    */
-   bool keyInUse(string const & key);
+  /*
+   * This mpi rank
+   */
+  int mpiRank;
 
-   /**
-    * Get field index from string key
-    */
-   localIndex fieldIndex(string const & key);
+  /**
+   * Check if string key is already being used
+   */
+  bool keyInUse( string const & key ) const;
 
-   /**
-    * Create index array
-    */
-   void createIndexArray_NodeOrFaceVersion(FieldDescription & field);
+  /**
+   * Get field index from string key
+   */
+  localIndex fieldIndex( string const & key ) const;
 
-   /**
-    * Create element index array
-    */
-   void createIndexArray_ElemVersion(FieldDescription & field);
+  /**
+   * Create index array
+   */
+  void createIndexArray_NodeOrFaceVersion( FieldDescription & field ) const;
+
+  /**
+   * Create element index array
+   */
+  void createIndexArray_ElemVersion( FieldDescription & field );
+
+  /**
+   * Create sparsity pattern for a field with itself (diagonal entries in the
+   * connectivity matrix)
+   */
+  void addDiagSparsityPattern( SparsityPattern & connLocPatt,
+                               localIndex const & fieldIdx,
+                               Connectivity const connectivity ) const;
+
+  /**
+   * Create sparsity pattern for two fields (extra-diagonal entries in the
+   * connectivity matrix)
+   */
+  void addExtraDiagSparsityPattern( SparsityPattern & pattern,
+                                    localIndex const & rowFieldIndex,
+                                    localIndex const & colFieldIndex,
+                                    Connectivity const connectivity ) const;
+
+  /**
+   * Definifion for entries of sparse matrix in COO format
+   */
+  typedef std::pair<localIndex, globalIndex> indexPair;
+
+  /**
+   * Structure used to create CSR matrix from COO format
+   */
+  struct pairComparison
+  {
+    inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
+                            {
+      if( lhs.first < rhs.first )
+        return true;
+      else if( lhs.first == rhs.first )
+        return lhs.second < rhs.second;
+      else
+        return false;
+    }
+    ;
+  };
+
+  /**
+   * Convert a sparse matrix in COO format in the CSR version
+   */
+  void vectorOfPairsToCSR( array1d<indexPair> const pairs,
+                           localIndex const nCols,
+                           SparsityPattern & pattern ) const;
+
+  /**
+   * Add a self connected field (location = connectivity)
+   */
+  void addSelfConnectedFieldSparsityPattern( array1d<indexPair> & pairs,
+                                             localIndex const & fieldIdx ) const;
+
+  /**
+   * Collect several sparsity patterns into one matrix
+   */
+  SparsityPattern combineCSRMatrices( localIndex_array const rowArray,
+                                      localIndex_array const colArray ) const;
+
+  /**
+   * Create an empty matrix
+   */
+  void createEmptyMatrix( localIndex const nRows,
+                          localIndex const nCols,
+                          SparsityPattern & pattern ) const;
+
+  /**
+   * Performe sparse matrix matrix product
+   */
+  localIndex matrixMatrixProduct( SparsityPattern const & matA,
+                                  SparsityPattern const & matB,
+                                  SparsityPattern & matC ) const;
+
+  /**
+   * Performe sparse matrix transposition
+   */
+  void matrixTranpose( SparsityPattern const & matA,
+                       SparsityPattern & matB ) const;
+
+  /**
+   * Just a local INT_MAX
+   */
+  globalIndex const globalIndexMax = std::numeric_limits<globalIndex>::max();
 
 };
-
 
 } /* namespace geosx */
 
 #endif /* SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_DOFMANAGER_HPP_ */
-
