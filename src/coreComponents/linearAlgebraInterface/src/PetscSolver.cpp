@@ -63,7 +63,8 @@ PetscSolver::PetscSolver()
 // Iterative solver
 // ----------------------------
 
-void PetscSolver::solve( PetscSparseMatrix &Mat,
+void PetscSolver::solve( MPI_Comm const comm,
+                         PetscSparseMatrix &Mat,
                          PetscVector &sol,
                          PetscVector &rhs,
                          integer const max_iter,
@@ -72,7 +73,7 @@ void PetscSolver::solve( PetscSparseMatrix &Mat,
 {
   // create linear solver
   KSP ksp;
-  KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPCreate(comm, &ksp);
 
   KSPSetOperators(ksp, M.getMat(), M.getMat());
   KSPSetType(ksp, KSPGMRES);
@@ -99,7 +100,8 @@ void PetscSolver::solve( PetscSparseMatrix &Mat,
 // ----------------------------
 // Initial test of an ML-based preconditioner.
 
-void PetscSolver::ml_solve( PetscSparseMatrix &Mat,
+void PetscSolver::ml_solve( MPI_Comm const comm,
+                            PetscSparseMatrix &Mat,
                             PetscVector &sol,
                             PetscVector &rhs,
                             integer const max_iter,
@@ -108,7 +110,7 @@ void PetscSolver::ml_solve( PetscSparseMatrix &Mat,
 {
   // create linear solver
   KSP ksp;
-  KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPCreate(comm, &ksp);
 
   KSPSetOperators(ksp, M.getMat(), M.getMat());
   KSPSetType(ksp, KSPGMRES);
@@ -145,13 +147,14 @@ void PetscSolver::ml_solve( PetscSparseMatrix &Mat,
 // Direct solver
 // ----------------------------
 
-void PetscSolver::dsolve( PetscSparseMatrix &Mat,
+void PetscSolver::dsolve( MPI_Comm const comm,
+                          PetscSparseMatrix &Mat,
                           PetscVector &sol,
                           PetscVector &rhs )
 {
   // create linear solver
   KSP ksp;
-  KSPCreate(PETSC_COMM_WORLD, &ksp);
+  KSPCreate(comm, &ksp);
 
   KSPSetOperators(ksp, M.getMat(), M.getMat());
   KSPSetType(ksp, KSPPREONLY);

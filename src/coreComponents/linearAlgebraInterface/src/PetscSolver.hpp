@@ -70,7 +70,8 @@ public:
    *
    * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
    */
-  void solve( PetscSparseMatrix &Mat,
+  void solve( MPI_Comm const comm,
+              PetscSparseMatrix &Mat,
               PetscVector &sol,
               PetscVector &rhs,
               integer const max_iter,
@@ -82,7 +83,8 @@ public:
    *
    * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
    */
-  void ml_solve( PetscSparseMatrix &Mat,
+  void ml_solve( MPI_Comm const comm,
+                 PetscSparseMatrix &Mat,
                  PetscVector &sol,
                  PetscVector &rhs,
                  integer const max_iter,
@@ -94,7 +96,8 @@ public:
    *
    * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
    */
-  void dsolve( PetscSparseMatrix &Mat,
+  void dsolve( MPI_Comm const comm,
+               PetscSparseMatrix &Mat,
                PetscVector &sol,
                PetscVector &rhs );
   //@}
