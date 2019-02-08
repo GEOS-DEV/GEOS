@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,241 +16,248 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
+/**
  * @file SinglePhaseWell.cpp
- *
  */
 
 #include "SinglePhaseWell.hpp"
-#include "Segment.hpp"
-#include "Connection.hpp"
-#include "Perforation.hpp"
 
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "codingUtilities/Utilities.hpp"
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "math/TensorT/TensorBaseT.h"
+#include "wells/WellManager.hpp"
+#include "wells/SimpleWell.hpp"
+#include "wells/SinglePhaseWell.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 
+/**
+ * @namespace the geosx namespace that encapsulates the majority of the code
+ */
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
 using namespace systemSolverInterface;
+
+SinglePhaseWell::SinglePhaseWell( const std::string& name,
+                                        ManagedGroup * const parent ):
+  WellSolverBase(name, parent)
+{
+
+}
+
+void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
+{
+  WellSolverBase::InitializePreSubGroups( rootGroup );
+}
+
+void SinglePhaseWell::UpdateConstitutiveModels(DomainPartition * const domain)
+{
+
+}
+
+void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
+{
+
+}
+
+
+void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+{
+  WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+
+}
+
+
+real64 SinglePhaseWell::SolverStep( real64 const& time_n,
+                                          real64 const& dt,
+                                          const int cycleNumber,
+                                          DomainPartition * domain )
+{
+  real64 dt_return = dt;
+
+  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+
+  // currently the only method is implicit time integration
+  dt_return= this->NonlinearImplicitStep( time_n,
+                                          dt,
+                                          cycleNumber,
+                                          domain,
+                                          getLinearSystemRepository() );
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dt_return, domain );
+
+  return dt_return;
+}
+
+void SinglePhaseWell::ImplicitStepSetup( real64 const& time_n,
+                                               real64 const& dt,
+                                               DomainPartition * const domain,
+                                               EpetraBlockSystem * const blockSystem )
+{
+
+}
+
+
+void SinglePhaseWell::ImplicitStepComplete( real64 const & time_n,
+                                                  real64 const & dt,
+                                                  DomainPartition * const domain )
+{
+
+}
+
+void SinglePhaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                                          localIndex & numLocalRows,
+                                                          globalIndex & numGlobalRows,
+                                                          localIndex offset )
+{
   
-SinglePhaseWell::SinglePhaseWell(string const & name, dataRepository::ManagedGroup * const parent)
-  : WellBase( name, parent ),
-    m_bhp()
-{
-  RegisterViewWrapper( viewKeyStruct::bhpString, &m_bhp, false );
-
-  // Most segment-based fields are registered by specific well models, rather than
-  // SegmentManager, ConnectionManager, or PerforationManager that are physics-agnostic
-
-  // Segment-based primary variables: pressure
-  SegmentManager * segManager = GetGroup<SegmentManager>( groupKeyStruct::segmentsString );
-  segManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
-  segManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
-
-  // Connection-based primary variables: velocity
-  ConnectionManager * connManager = GetGroup<ConnectionManager>( groupKeyStruct::connectionsString );
-  connManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::velocityString );
-  connManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaVelocityString );
-
-  // Perforation-based quantities (more to come)
-  PerforationManager * perfManager = GetGroup<PerforationManager>( groupKeyStruct::perforationsString );
-  perfManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
 }
 
-SinglePhaseWell::~SinglePhaseWell()
+void SinglePhaseWell::SetupSystem ( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition * const domain,
+                                          EpetraBlockSystem * const blockSystem )
 {
 
 }
 
-void SinglePhaseWell::InitializePostSubGroups( ManagedGroup * const rootGroup )
-{
-  WellBase::InitializePostSubGroups( rootGroup );
-}
-
-// Initialize all variables in the well
-void SinglePhaseWell::InitializeState( DomainPartition * const domain )
+void SinglePhaseWell::SetSparsityPattern( real64 const & time_n,
+                                                real64 const & dt,
+                                                DomainPartition const * const domain,
+                                                Epetra_FECrsGraph * const sparsity)
 {
 
 }
+
+void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
+                                            EpetraBlockSystem * const blockSystem,
+                                            real64 const time_n,
+                                            real64 const dt )
+{
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+
+  jacobian->Scale(0.0);
+  residual->Scale(0.0);
+
+  CheckWellControlSwitch( domain );
   
-// Apply well solution after the linear solve
-void SinglePhaseWell::ApplySolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                                     real64 const scalingFactor,
-                                     DomainPartition * const domain )
-{
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
-
-  int dummy;
-  double * local_solution = nullptr;
-  solution->ExtractView( &local_solution, &dummy );
-
-  // the pressure lives on segments
-  // the velocity lives on connections
-  arrayView1d<real64> const & deltaPressure =
-    m_segmentManager.getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-  arrayView1d<real64> const & deltaVelocity =
-    m_connectionManager.getReference<array1d<real64>>( viewKeyStruct::deltaVelocityString );
-
-  real64 dummy_newton_update = 0;
+  AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
+  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
+  AssembleSourceTerms( domain, blockSystem, time_n, dt );
   
-  // loop over the segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
+  jacobian->GlobalAssemble(true);
+  residual->GlobalAssemble();
+
+  if( verboseLevel() >= 2 )
   {
-    // update pressure on segment iseg
-    deltaPressure[iseg] += scalingFactor * dummy_newton_update;    
+    GEOS_LOG_RANK("After SinglePhaseWell::AssembleSystem");
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
-
-  // loop over the connection
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // update velocity
-    deltaVelocity[iconn] += scalingFactor * dummy_newton_update;
-  }
-  
-  // synchronize fields
-
-  // update the fluid models
-  StateUpdate( domain ); 
 }
 
-// Compute the rate for all the perforations and form the control equation
-void SinglePhaseWell::AssembleWellTerms( DomainPartition * const domain,
-                                         EpetraBlockSystem * const blockSystem,
-                                         real64 const time_n,
-                                         real64 const dt )
-{
-  // we assemble 1 mass conservation equation per segment
-  // we also need 1 volume balance equation per segment
-
-  // 1- Accumulation term on segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
-  {
-    // 1.1- Compute accumulation term of mass conservation equation for segment iseg 
-
-    // 1.2- Assemble volume balance equation
-  }
-
-
-  // 2- Flux term through connection
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // 2.1- Perform upwinding of fluid dependent quantities at connection iconn
-    
-    // 2.2- Compute flux term at connection iconn
-
-    // 2.3- Add flux term to residual and jacobian corresponding to segments nextSegment and prevSegment
-  }
-    
-  // 3- Source/Sink term through perforations
-  for (localIndex iperf = 0; iperf < numPerforationsLocal(); ++iperf)
-  {
-    // 3.1 Upwinding fluid dependent quantities at perforation iperf
-    // (choose between reservoir and segment vars)
-    
-    // 3.2 Compute the rate at perforation iperf using segment data and reservoir data
-    
-    // 3.3 Add to residual and jacobian corresponding to segment iseg
-    
-  }
-  
-  FormControlEquation( domain, blockSystem, time_n, dt );
-  
-}
-  
-
-// Check if the well control needs to be switched
-void SinglePhaseWell::CheckControlSwitch()
+void
+SinglePhaseWell::AssembleAccumulationTerms( DomainPartition const * const domain,
+                                                  Epetra_FECrsMatrix * const jacobian,
+                                                  Epetra_FEVector * const residual,
+                                                  real64 const time_n,
+                                                  real64 const dt )
 {
 
 }
 
-// Reset the well to its initial state at the beginning of the time step
-void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
+
+void SinglePhaseWell::AssembleFluxTerms( DomainPartition const * const domain,
+                                               Epetra_FECrsMatrix * const jacobian,
+                                               Epetra_FEVector * const residual,
+                                               real64 const time_n,
+                                               real64 const dt )
 {
-  // the pressure lives on segments
-  // the velocity lives on connections
-
-  arrayView1d<real64> const & deltaPressure =
-    m_segmentManager.getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-  arrayView1d<real64> const & deltaVelocity =
-    m_connectionManager.getReference<array1d<real64>>( viewKeyStruct::deltaVelocityString );
-
-  
-  // loop over the segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
-  {
-    // set deltaPressure = 0 on segment iseg
-    deltaPressure[iseg] = 0;
-  }
-
-  // loop over the connection
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // set deltaMixtureVelocity = 0 on connection iconn
-    deltaVelocity[iconn] = 0;
-  }
-  
-  // synchronize fields
-
-  // update the fluid models
-  StateUpdate( domain );
 
 }
 
-real64 SinglePhaseWell::GetTotalFlowRate()
+
+void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
+                                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                           real64 const time_n,
+                                           real64 const dt )
 {
+
+}
+
+
+void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
+{
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = mesh->getWellManager();
+
+  //  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  //  {
+    // check if the well control needs to be switched
+  //  });
+}
+
+real64
+SinglePhaseWell::
+CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
+                       DomainPartition * const domain )
+{
+  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+  Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+
   return 0.0;
 }
 
-// form the well control equation based on the type of well
-void SinglePhaseWell::FormControlEquation(  DomainPartition const * const domain,
-					    EpetraBlockSystem * const blockSystem,
-			                    real64 const time_n,
-			                    real64 const dt )
+void SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+                                                 real64 const scalingFactor,
+                                                 DomainPartition * const domain )
 {
-  
-}
 
-// update each connection pressure from bhp and hydrostatic head
-void SinglePhaseWell::StateUpdate( DomainPartition const * domain )
-{
-  // 1- loop over the segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
-  {
-    // 1.1 Update phase density and viscosity
-
-    /* it would be nice to do something like:
-      
-       SingleFluidBase const * fluid = constitutiveRelations[segmentRegion]->group_cast<SingleFluidBase const *>();
-       fluid->PointUpdate( pressure[iseg] );
- 
-       to update dens[iseg] 
-
-     */
-    
-    // 1.2 Update average mixture density
-  }
-
-  // loop over the connections
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // not much to update if the upwinding is computed in AssembleWellTerms
-  }
- 
 }
 
 
-REGISTER_CATALOG_ENTRY( WellBase, SinglePhaseWell, string const &, ManagedGroup * const )
+void SinglePhaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
+                                         SystemSolverParameters const * const params )
+{
+  Epetra_FEVector * const
+  solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
 
-} //namespace geosx
+  Epetra_FEVector * const
+  residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+  residual->Scale(-1.0);
+
+  solution->Scale(0.0);
+
+
+  if( verboseLevel() >= 2 )
+  {
+    GEOS_LOG_RANK("After SinglePhaseWell::SolveSystem");
+    GEOS_LOG_RANK("\nsolution\n" << *solution);
+  }
+}
+
+void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
+{
+
+}
+
+
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseWell, std::string const &, ManagedGroup * const )
+} /* namespace geosx */

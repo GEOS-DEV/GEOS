@@ -37,8 +37,9 @@ namespace keys
 }
 }
 
+class Well;
 class WellBase;
-
+  
 class WellManager : public dataRepository::ManagedGroup
 {
 public:
@@ -52,7 +53,7 @@ public:
 
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  WellBase * getWell( string const & name );
+  Well * getWell( string const & name );
 
   void setGravityVector(R1Tensor const & gravity, bool gravityFlag = true);
 

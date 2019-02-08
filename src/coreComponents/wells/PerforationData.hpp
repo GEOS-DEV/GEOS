@@ -17,12 +17,12 @@
  */
 
 /*
- * @file PerforationManager.hpp
+ * @file PerforationData.hpp
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONMANAGER_HPP
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONMANAGER_HPP
+#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONDATA_HPP
+#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONDATA_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -36,29 +36,29 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto perfs = "Perforations";
+static constexpr auto perforations = "Perforations";
 }
 }
 
 class DomainPartition;
 class Perforation;
 
-class PerforationManager : public ObjectManagerBase
+class PerforationData : public ObjectManagerBase
 {
 public:
 
-  explicit PerforationManager( string const & name, dataRepository::ManagedGroup * const parent );
-  ~PerforationManager() override;
+  explicit PerforationData( string const & name, dataRepository::ManagedGroup * const parent );
+  ~PerforationData() override;
 
-  PerforationManager() = delete;
-  PerforationManager( PerforationManager const &) = delete;
-  PerforationManager( PerforationManager && ) = delete;
+  PerforationData() = delete;
+  PerforationData( PerforationData const &) = delete;
+  PerforationData( PerforationData && ) = delete;
 
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual const string getCatalogName() const override;
 
-  localIndex numPerforationsGlobal() const { return integer_conversion<localIndex>(m_perfList.size()); }
+  localIndex numPerforationsGlobal() const { return integer_conversion<localIndex>(m_perforationList.size()); }
   localIndex numPerforationsLocal()  const { return integer_conversion<localIndex>(size());         }
 
   Perforation const * getPerforation( localIndex iperf ) const;
@@ -81,7 +81,7 @@ public:
 
     dataRepository::ViewKey gravityDepth               = { gravityDepthString     };
 
-  } viewKeysPerfManager;
+  } viewKeysPerforationManager;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
@@ -89,7 +89,7 @@ public:
 
     dataRepository::GroupKey perforation = { perforationString };
 
-  } groupKeysPerfManager;
+  } groupKeysPerforationManager;
 
 protected:
 
@@ -109,10 +109,10 @@ private:
 
   array1d<real64> m_gravityDepth;
 
-  string_array m_perfList;
+  string_array m_perforationList;
 
 };
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONMANAGER_HPP
+#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONDATA_HPP

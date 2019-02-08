@@ -17,39 +17,39 @@
  */
 
 /*
- * @file WellBase.hpp
+ * @file Well.hpp
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELLBASE_HPP_
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELLBASE_HPP_
+#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELL_HPP_
+#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELL_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
 #include "SegmentManager.hpp"
-#include "ConnectionManager.hpp"
-#include "PerforationManager.hpp"
+#include "ConnectionData.hpp"
+#include "PerforationData.hpp"
 
 
 namespace geosx
 {
 
-class WellBase : public ObjectManagerBase
+class Well : public ObjectManagerBase
 {
 public:
 
   enum class Type { PRODUCER, INJECTOR };
 
-  explicit WellBase( string const & name, dataRepository::ManagedGroup * const parent );
-  ~WellBase() override;
+  explicit Well( string const & name, dataRepository::ManagedGroup * const parent );
+  ~Well() override;
 
-  WellBase() = delete;
-  WellBase( WellBase const &) = delete;
-  WellBase( WellBase && ) = delete;
+  Well() = delete;
+  Well( Well const & ) = delete;
+  Well( Well && ) = delete;
 
   /// Catalog name interface
-  static string CatalogName() { return "WellBase"; }
+  static string CatalogName() { return "Well"; }
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< WellBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< Well, std::string const &, ManagedGroup * const >;
 
   static CatalogInterface::CatalogType & GetCatalog()
   {
@@ -66,20 +66,20 @@ public:
   localIndex numSegmentsGlobal() const { return m_segmentManager.numSegmentsGlobal(); }
   localIndex numSegmentsLocal()  const { return m_segmentManager.numSegmentsLocal(); }
 
-  localIndex numConnectionsGlobal() const { return m_connectionManager.numConnectionsGlobal(); }
-  localIndex numConnectionsLocal()  const { return m_connectionManager.numConnectionsLocal();  }
+  localIndex numConnectionsGlobal() const { return m_connectionData.numConnectionsGlobal(); }
+  localIndex numConnectionsLocal()  const { return m_connectionData.numConnectionsLocal();  }
 
-  localIndex numPerforationsGlobal() const { return m_perforationManager.numPerforationsGlobal(); }
-  localIndex numPerforationsLocal()  const { return m_perforationManager.numPerforationsLocal();  }
+  localIndex numPerforationsGlobal() const { return m_perforationData.numPerforationsGlobal(); }
+  localIndex numPerforationsLocal()  const { return m_perforationData.numPerforationsLocal();  }
  
   SegmentManager * geSegments()              { return &m_segmentManager; }
   SegmentManager const * getSegments() const { return &m_segmentManager; }
 
-  ConnectionManager * getConnections()             { return &m_connectionManager; }
-  ConnectionManager const * getConnections() const { return &m_connectionManager; }
+  ConnectionData * getConnections()             { return &m_connectionData; }
+  ConnectionData const * getConnections() const { return &m_connectionData; }
   
-  PerforationManager * getPerforations()             { return &m_perforationManager; }
-  PerforationManager const * getPerforations() const { return &m_perforationManager; }
+  PerforationData * getPerforations()             { return &m_perforationData; }
+  PerforationData const * getPerforations() const { return &m_perforationData; }
   
   R1Tensor const & getGravityVector() const;
 
@@ -95,26 +95,26 @@ public:
     dataRepository::ViewKey referenceDepth             = { referenceDepthString };
     dataRepository::ViewKey type                       = { typeString };
 
-  } viewKeysWellBase;
+  } viewKeysWell;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
 
     static constexpr auto segmentsString     = dataRepository::keys::segments;
-    static constexpr auto connectionsString  = dataRepository::keys::conns;
-    static constexpr auto perforationsString = dataRepository::keys::perfs;
+    static constexpr auto connectionsString  = dataRepository::keys::connections;
+    static constexpr auto perforationsString = dataRepository::keys::perforations;
 
     dataRepository::GroupKey segments     = { segmentsString     };
     dataRepository::GroupKey connections  = { connectionsString  };
     dataRepository::GroupKey perforations = { perforationsString };
 
-  } groupKeysWellBase;
+  } groupKeysWell;
 
 protected:
 
-  SegmentManager     m_segmentManager;
-  ConnectionManager  m_connectionManager;
-  PerforationManager m_perforationManager;
+  SegmentManager  m_segmentManager;
+  ConnectionData  m_connectionData;
+  PerforationData m_perforationData;
 
   real64 m_referenceDepth;
   string m_typeString;
@@ -124,4 +124,4 @@ protected:
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELLBASE_HPP_
+#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELL_HPP_

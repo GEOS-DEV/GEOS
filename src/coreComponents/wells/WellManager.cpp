@@ -22,7 +22,7 @@
  */
 
 #include "WellManager.hpp"
-#include "WellBase.hpp"
+#include "Well.hpp"
 
 namespace geosx
 {
@@ -45,13 +45,13 @@ WellManager::~WellManager()
 ManagedGroup * WellManager::CreateChild(string const & childKey, string const & childName)
 {
   std::cout << "Adding Well: " << childKey << ", " << childName << std::endl;
-  std::unique_ptr<WellBase> well = WellBase::CatalogInterface::Factory( childKey, childName, this );
-  return RegisterGroup<WellBase>( childName, std::move( well ) );
+  std::unique_ptr<Well> well = Well::CatalogInterface::Factory( childKey, childName, this );
+  return RegisterGroup<Well>( childName, std::move( well ) );
 }
 
-WellBase * WellManager::getWell(string const & name)
+Well * WellManager::getWell(string const & name)
 {
-  return GetGroup<WellBase>(name);
+  return GetGroup<Well>(name);
 }
 
 void WellManager::setGravityVector(R1Tensor const & gravity, bool gravityFlag)

@@ -17,13 +17,13 @@
  */
 
 /*
- * @file ConnectionManager.cpp
+ * @file ConnectionData.cpp
  *
  */
 
-#include "ConnectionManager.hpp"
+#include "ConnectionData.hpp"
 #include "Connection.hpp"
-#include "WellBase.hpp"
+#include "Well.hpp"
 
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -33,18 +33,18 @@ namespace geosx
 
 using namespace dataRepository;
 
-ConnectionManager::ConnectionManager(string const & name, ManagedGroup * const parent)
+ConnectionData::ConnectionData(string const & name, ManagedGroup * const parent)
   : ObjectManagerBase(name, parent)
 {
   RegisterViewWrapper( viewKeyStruct::connIndexString, &m_connIndex, false );
 }
 
-ConnectionManager::~ConnectionManager()
+ConnectionData::~ConnectionData()
 {
 
 }
 
-ManagedGroup * ConnectionManager::CreateChild(string const & childKey, string const & childName)
+ManagedGroup * ConnectionData::CreateChild(string const & childKey, string const & childName)
 {
   if ( childKey == groupKeyStruct::connectionString )
   {
@@ -58,34 +58,34 @@ ManagedGroup * ConnectionManager::CreateChild(string const & childKey, string co
   return nullptr;
 }
 
-const string ConnectionManager::getCatalogName() const
+const string ConnectionData::getCatalogName() const
 {
-  return keys::conns;
+  return keys::connections;
 }
 
-void ConnectionManager::InitializePreSubGroups( ManagedGroup * const problemManager )
+void ConnectionData::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
 
 }
 
-void ConnectionManager::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+void ConnectionData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
   PrecomputeData( mesh );
 }
 
-void ConnectionManager::PrecomputeData( MeshLevel const * mesh )
+void ConnectionData::PrecomputeData( MeshLevel const * mesh )
 {
 
 }
 
-Connection const * ConnectionManager::getConnection( localIndex iconn ) const
+Connection const * ConnectionData::getConnection( localIndex iconn ) const
 {
   return this->GetGroup<Connection>( m_connectionList[iconn] );
 }
 
-Connection * ConnectionManager::getConnection( localIndex iconn )
+Connection * ConnectionData::getConnection( localIndex iconn )
 {
   return this->GetGroup<Connection>( m_connectionList[iconn] );
 }

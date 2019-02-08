@@ -34,7 +34,6 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "wells/WellManager.hpp"
 #include "wells/SimpleWell.hpp"
-#include "wells/SinglePhaseWell.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
@@ -131,19 +130,6 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
   } );
 }
 
-void SinglePhaseFlow::InitializeWellState( DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  {
-    well->InitializeState( domain );
-  });
-}
-
-
 void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
@@ -159,7 +145,6 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
 
   ResetViews( domain );
   UpdateConstitutiveModels( domain );
-  InitializeWellState( domain );
   
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
@@ -535,8 +520,6 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
-  CheckWellControlSwitch( domain );
-  
   if (m_poroElasticFlag)
   {
     AssembleAccumulationTermsCoupled( domain, jacobian, residual, time_n, dt );
@@ -546,7 +529,6 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
     AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   }
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
-  AssembleWellTerms( domain, blockSystem, time_n, dt );
   
   jacobian->GlobalAssemble(true);
   residual->GlobalAssemble();
@@ -807,40 +789,6 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
     residual->SumIntoGlobalValues( integer_conversion<int>(numElems), eqnRowIndices.data(), localFlux.data() );
   });
 }
-
-void SinglePhaseFlow::AssembleWellTerms( DomainPartition * const domain,
-                                         EpetraBlockSystem * const blockSystem,
-                                         real64 const time_n,
-                                         real64 const dt )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  {
-    //  -- Compute the rates at each perforation
-    //  -- Form the control equations
-    //  -- Add to residual and Jacobian matrix
-    well->AssembleWellTerms( domain, blockSystem, time_n, dt );
-  });
-
-}
-
-void SinglePhaseFlow::CheckWellControlSwitch( DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  {
-    // check if the well control needs to be switched
-    well->CheckControlSwitch();
-  });
-
-}
-
 
 void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                EpetraBlockSystem * const blockSystem,
@@ -1408,18 +1356,6 @@ CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
 }
 
 
-real64
-SinglePhaseFlow::CalculateWellResidualNorm(  EpetraBlockSystem const * const blockSystem,
-                                             DomainPartition * const domain )
-{
-  // loop over all wells
-  // for each well
-  //  -- Compute the residuals for the control equation
-  // keep the largest residual as "residual norm" for the wells
-  return 0.0;
-}
-
-
 void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
                                            real64 const scalingFactor,
                                            DomainPartition * const domain )
@@ -1462,35 +1398,7 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   UpdateConstitutiveModels( domain );
-
-  ApplyWellSolution( blockSystem,
-                     scalingFactor,
-		     domain );
-
 }
-
-
-void
-SinglePhaseFlow::ApplyWellSolution( EpetraBlockSystem const * const blockSystem,
-                                    real64 const scalingFactor,
-                                    DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  {
-    //  -- update the well pressures
-    //  -- update the other well variables
-    //       --> for producer, copy from reservoir variables
-    //       --> for injector, use injection stream and well flash
-    well->ApplySolution( blockSystem,
-			 scalingFactor,
-			 domain );
-  });
-}
-
 
 void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
                                         SystemSolverParameters const * const params )
@@ -1533,27 +1441,7 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
   } );
 
   UpdateConstitutiveModels( domain );
-
-  ResetWellStateToBeginningOfStep( domain );
 }
-
-
-void SinglePhaseFlow::ResetWellStateToBeginningOfStep( DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  {
-    //   -- set dWellPres = 0;
-    //   -- update the other well variables
-    well->ResetStateToBeginningOfStep( domain );
-  });
-
-
-}
-
 
 void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
 {

@@ -126,10 +126,6 @@ public:
   virtual real64
   CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
                         DomainPartition *const domain) override;
-
-  virtual real64
-  CalculateWellResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                             DomainPartition *const domain);
   
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -142,15 +138,8 @@ public:
   ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-
-  virtual void
-  ApplyWellSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                     real64 const scalingFactor,
-                     DomainPartition * const domain );
   
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
-
-  virtual void ResetWellStateToBeginningOfStep( DomainPartition * const domain );
 
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
@@ -278,22 +267,6 @@ public:
                                    Epetra_FEVector * const residual,
                                    real64 const time_n,
                                    real64 const dt );
-
-
-  /**
-   * @brief assembles the well terms 
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-
-  void AssembleWellTerms( DomainPartition * const domain,
-                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                          real64 const time_n,
-                          real64 const dt );
-
-  void CheckWellControlSwitch( DomainPartition * const domain );
   
   /**@}*/
 
@@ -449,13 +422,6 @@ private:
    * and any applicable hydrostatic equilibration of the domain
    */
   void InitializeFluidState( DomainPartition * const domain );
-
-    /**
-   * @brief Initialize all well variables from initial conditions and injection stream
-   * @param domain the domain containing the mesh and fields
-   */
-
-  void InitializeWellState( DomainPartition * const domain );
   
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term

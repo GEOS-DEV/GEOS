@@ -17,12 +17,12 @@
  */
 
 /*
- * @file ConnectionManager.hpp
+ * @file ConnectionData.hpp
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTIONMANAGER_HPP
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTIONMANAGER_HPP
+#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTIONDATA_HPP
+#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTIONDATA_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -36,23 +36,23 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto conns = "Connections";
+static constexpr auto connections = "Connections";
 }
 }
 
 class DomainPartition;
 class Connection;
 
-class ConnectionManager : public ObjectManagerBase
+class ConnectionData : public ObjectManagerBase
 {
 public:
 
-  explicit ConnectionManager( string const & name, dataRepository::ManagedGroup * const parent );
-  ~ConnectionManager() override;
+  explicit ConnectionData( string const & name, dataRepository::ManagedGroup * const parent );
+  ~ConnectionData() override;
 
-  ConnectionManager() = delete;
-  ConnectionManager( ConnectionManager const &) = delete;
-  ConnectionManager( ConnectionManager && ) = delete;
+  ConnectionData() = delete;
+  ConnectionData( ConnectionData const &) = delete;
+  ConnectionData( ConnectionData && ) = delete;
 
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -73,7 +73,7 @@ public:
     
     ViewKey connIndex = { connIndexString };
 
-  } viewKeysConnectionManager;
+  } viewKeysConnectionData;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
@@ -81,7 +81,7 @@ public:
 
     dataRepository::GroupKey connection = { connectionString };
 
-  } groupKeysConnectionManager;
+  } groupKeysConnectionData;
 
 protected:
 
@@ -101,4 +101,4 @@ private:
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTIONMANAGER_HPP
+#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTIONDATA_HPP

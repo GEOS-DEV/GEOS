@@ -34,8 +34,6 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "wells/WellManager.hpp"
-#include "wells/CompositionalMultiphaseWell.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
@@ -565,18 +563,6 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   UpdateRelPermModelAll( domain );
 }
 
-void CompositionalMultiphaseFlow::InitializeWellState( DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
-  {
-    well->InitializeState( domain );
-  });
-}
-
 void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
@@ -610,7 +596,6 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   // Initialize primary variables from applied initial conditions
   ResetViews( domain );
   InitializeFluidState( domain );
-  InitializeWellState( domain );
 }
 
 real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
@@ -960,12 +945,9 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
-  CheckWellControlSwitch( domain );
-  
   AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
   AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
-  AssembleWellTerms( domain, blockSystem, time_n, dt );
   
   jacobian->GlobalAssemble( true );
   residual->GlobalAssemble();
@@ -1562,36 +1544,6 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
   });
 }
 
-void CompositionalMultiphaseFlow::AssembleWellTerms( DomainPartition * const domain,
-                                                     EpetraBlockSystem * const blockSystem,
-                                                     real64 const time_n,
-						     real64 const dt )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
-  {
-    //  -- Compute the rates at each perforation
-    //  -- Form the control equations
-    //  -- Add to residual and Jacobian matrix
-    well->AssembleWellTerms( domain, blockSystem, time_n, dt );
-  });
-}
-
-void CompositionalMultiphaseFlow::CheckWellControlSwitch( DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
-  {
-    // check if the well control needs to be switched
-    well->CheckControlSwitch();
-  });
-}
 
 void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                            EpetraBlockSystem * const blockSystem,
@@ -1814,14 +1766,6 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
   return sqrt(globalResidualNorm);
 }
 
-real64
-CompositionalMultiphaseFlow::CalculateWellResidualNorm(  EpetraBlockSystem const * const blockSystem,
-                                                         DomainPartition * const domain )
-{
-  // not implemented yet
-  return 0.0;
-}
-
 void CompositionalMultiphaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
                                                SystemSolverParameters const * const params )
 {
@@ -1954,31 +1898,6 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
 
   UpdateStateAll(domain);
 
-  ApplyWellSolution( blockSystem,
-                     scalingFactor,
-		     domain );
-}
-
-
-void
-CompositionalMultiphaseFlow::ApplyWellSolution( EpetraBlockSystem const * const blockSystem,
-                                                real64 const scalingFactor,
-                                                DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
-  {
-    //  -- update the well pressures
-    //  -- update the other well variables
-    //       --> for producer, copy from reservoir variables
-    //       --> for injector, use injection stream and well flash
-    well->ApplySolution( blockSystem,
-			 scalingFactor,
-			 domain );
-  });
 }
 
 void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
@@ -1999,23 +1918,6 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
   });
 
   UpdateStateAll(domain);
-
-  ResetWellStateToBeginningOfStep( domain );
-}
-
-void CompositionalMultiphaseFlow::ResetWellStateToBeginningOfStep( DomainPartition * const domain )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
-
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
-  {
-    //   -- set dWellPres = 0;
-    //   -- update the other well variables
-    well->ResetStateToBeginningOfStep( domain );
-  });
-
 }
 
 void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,

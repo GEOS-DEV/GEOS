@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,26 +16,32 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
+/**
  * @file CompositionalMultiphaseWell.cpp
- *
  */
 
 #include "CompositionalMultiphaseWell.hpp"
-#include "Segment.hpp"
-#include "Connection.hpp"
-#include "Perforation.hpp"
 
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "codingUtilities/Utilities.hpp"
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "math/TensorT/TensorBaseT.h"
+#include "wells/WellManager.hpp"
+#include "wells/CompositionalMultiphaseWell.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
-
 
 namespace geosx
 {
@@ -43,249 +49,355 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 using namespace systemSolverInterface;
+
+CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
+                                                                      ManagedGroup * const parent )
+  :
+  WellSolverBase( name, parent ),
+  m_numPhases( 0 ),
+  m_numComponents( 0 )
+{
+
+}
+
+localIndex CompositionalMultiphaseWell::numFluidComponents() const
+{
+  return m_numComponents;
+}
+
+localIndex CompositionalMultiphaseWell::numFluidPhases() const
+{
+  return m_numPhases;
+}
+
+
+void CompositionalMultiphaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
+{
+  WellSolverBase::InitializePreSubGroups( rootGroup );
+}
+
+MultiFluidBase * CompositionalMultiphaseWell::GetFluidModel( ManagedGroup * dataGroup ) const
+{
+  MultiFluidBase * const fluid = nullptr;
+
+  return fluid;
+}
+
+MultiFluidBase const * CompositionalMultiphaseWell::GetFluidModel( ManagedGroup const * dataGroup ) const
+{
+  MultiFluidBase const * const fluid = nullptr;
+
+  return fluid;
+}
+
+RelativePermeabilityBase * CompositionalMultiphaseWell::GetRelPermModel( ManagedGroup * dataGroup ) const
+{
+  RelativePermeabilityBase * const relPerm = nullptr;
+
+  return relPerm;
+}
+
+RelativePermeabilityBase const * CompositionalMultiphaseWell::GetRelPermModel( ManagedGroup const * dataGroup ) const
+{
+  RelativePermeabilityBase const * const relPerm = nullptr;
+
+  return relPerm;
+}
+
+void CompositionalMultiphaseWell::UpdateComponentFraction( ManagedGroup * const dataGroup )
+{
   
-CompositionalMultiphaseWell::CompositionalMultiphaseWell(string const & name, dataRepository::ManagedGroup * const parent)
-  : WellBase( name, parent ),
-    m_bhp(),
-    m_numPhases(),
-    m_numComponents()
+}
+
+void CompositionalMultiphaseWell::UpdateComponentFractionAll( DomainPartition * const domain )
 {
-  RegisterViewWrapper( viewKeyStruct::bhpString, &m_bhp, false );
-
-  // Most segment-based fields are registered by specific well models, rather than
-  // SegmentManager, ConnectionManager, and PerforationManager that are is physics-agnostic
-
-  // Segment-based primary variables
-  SegmentManager * segManager = GetGroup<SegmentManager>( groupKeyStruct::segmentsString );
-  segManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
-  segManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
-  segManager->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::globalCompDensityString );
-  segManager->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
   
-  // Connection-based primary variables
-  ConnectionManager * connManager = GetGroup<ConnectionManager>( groupKeyStruct::connectionsString );
-  connManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureVelocityString );
-  connManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
-
-  // Connection-based input variables
-  connManager->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::globalComponentFracString );
-  connManager->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dGlobalComponentFrac_dPresString );
-  connManager->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dGlobalComponentFrac_dCompString );
-
-  // Perforation-based quantities 
-  PerforationManager * perfManager = GetGroup<PerforationManager>( groupKeyStruct::perforationsString );
-  perfManager->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::phaseFlowRateString );
-
-  // more variables added later: secondary variables (density, viscosity, etc) for segment, flow rates for connections, etc
 }
 
-CompositionalMultiphaseWell::~CompositionalMultiphaseWell()
+void CompositionalMultiphaseWell::UpdatePhaseVolumeFraction( ManagedGroup * const dataGroup )
 {
-
+  
 }
 
-void CompositionalMultiphaseWell::InitializePostSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseWell::UpdatePhaseVolumeFractionAll( DomainPartition * const domain )
 {
-  WellBase::InitializePostSubGroups( rootGroup );
-
-  // generate the "all" set to enable application of BC
-  set<localIndex> & setAll = this->sets()->RegisterViewWrapper<set<localIndex>>("all")->reference();
-  setAll.insert(0);
+  
 }
 
-// Initialize all variables in the well
-void CompositionalMultiphaseWell::InitializeState( DomainPartition * const domain )
+void CompositionalMultiphaseWell::UpdateFluidModel( ManagedGroup * const dataGroup )
+{
+  
+}
+
+void CompositionalMultiphaseWell::UpdateFluidModelAll( DomainPartition * const domain )
 {
 
 }
   
-// Apply well solution after the linear solve
-void CompositionalMultiphaseWell::ApplySolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                                                 real64 const scalingFactor,
-                                                 DomainPartition * const domain )
+void CompositionalMultiphaseWell::UpdateRelPermModel( ManagedGroup * dataGroup )
+{
+  
+}
+
+void CompositionalMultiphaseWell::UpdateRelPermModelAll( DomainPartition * const domain )
+{
+  
+}
+
+void CompositionalMultiphaseWell::UpdateState( ManagedGroup * const dataGroup )
+{
+  UpdateComponentFraction( dataGroup );
+  UpdateFluidModel( dataGroup );
+  UpdatePhaseVolumeFraction( dataGroup );
+  UpdateRelPermModel( dataGroup );
+}
+
+void CompositionalMultiphaseWell::UpdateStateAll( DomainPartition * const domain )
+{
+  UpdateComponentFractionAll( domain );
+  UpdateFluidModelAll( domain );
+  UpdatePhaseVolumeFractionAll( domain );
+  UpdateRelPermModelAll( domain );
+}
+
+void CompositionalMultiphaseWell::InitializeWellState( DomainPartition * const domain )
+{
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = mesh->getWellManager();
+
+  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  {
+    // do something
+  });
+}
+
+void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+{
+  WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  
+}
+
+real64 CompositionalMultiphaseWell::SolverStep( real64 const & time_n,
+                                                      real64 const & dt,
+                                                      integer const cycleNumber,
+                                                      DomainPartition * const domain )
+{
+  real64 dt_return = dt;
+
+  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+
+  // currently the only method is implicit time integration
+  dt_return= this->NonlinearImplicitStep( time_n,
+                                          dt,
+                                          cycleNumber,
+                                          domain,
+                                          getLinearSystemRepository() );
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dt_return, domain );
+
+  return dt_return;
+}
+
+void CompositionalMultiphaseWell::BackupFields( DomainPartition * const domain )
+{
+  
+}
+
+void
+CompositionalMultiphaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
+                                                      DomainPartition * const domain,
+                                                      EpetraBlockSystem * const blockSystem )
+{
+
+}
+
+void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                                                      localIndex & numLocalRows,
+                                                                      globalIndex & numGlobalRows,
+                                                                      localIndex offset )
+{
+  
+}
+
+void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * const domain,
+                                                            Epetra_FECrsGraph * const sparsity )
+{
+  
+}
+
+void CompositionalMultiphaseWell::SetupSystem( DomainPartition * const domain,
+                                                     EpetraBlockSystem * const blockSystem )
+{
+  
+}
+
+void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain,
+                                                        EpetraBlockSystem * const blockSystem,
+                                                        real64 const time_n, real64 const dt )
+{ 
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
+                                                                BlockIDs::compositionalBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+
+  jacobian->Scale(0.0);
+  residual->Scale(0.0);
+
+  CheckWellControlSwitch( domain );
+  
+  AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
+  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
+  AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
+  AssembleSourceTerms( domain, blockSystem, time_n, dt );
+  
+  jacobian->GlobalAssemble( true );
+  residual->GlobalAssemble();
+
+  if( verboseLevel() >= 3 )
+  {
+    GEOS_LOG_RANK("After CompositionalMultiphaseWell::AssembleSystem");
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+  }
+
+}
+
+void CompositionalMultiphaseWell::AssembleAccumulationTerms( DomainPartition const * const domain,
+                                                                   Epetra_FECrsMatrix * const jacobian,
+                                                                   Epetra_FEVector * const residual,
+                                                                   real64 const time_n,
+                                                                   real64 const dt )
+{
+  
+}
+
+void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition const * const domain,
+                                                           Epetra_FECrsMatrix * const jacobian,
+                                                           Epetra_FEVector * const residual,
+                                                           real64 const time_n,
+                                                           real64 const dt )
+{
+  
+}
+
+void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition const * const domain,
+                                                                    Epetra_FECrsMatrix * const jacobian,
+                                                                    Epetra_FEVector * const residual,
+                                                                    real64 const time_n,
+                                                                    real64 const dt )
+{
+  
+}
+
+
+void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const domain,
+                                                             EpetraBlockSystem * const blockSystem,
+                                                             real64 const time_n,
+						             real64 const dt )
+{
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = mesh->getWellManager();
+
+  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  {
+    //  -- Compute the rates at each perforation
+    //  -- Form the control equations
+    //  -- Add to residual and Jacobian matrix
+  });
+}
+
+void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * const domain )
+{
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = mesh->getWellManager();
+
+  //  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  //  {
+    // check if the well control needs to be switched
+  //  });
+}
+
+
+real64
+CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
+                                                          DomainPartition * const domain )
+{
+
+  return 0.0;
+}
+
+
+void CompositionalMultiphaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
+                                                     SystemSolverParameters const * const params )
+{
+  Epetra_FEVector * const
+    solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
+
+  Epetra_FEVector * const
+    residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+
+  residual->Scale(-1.0);
+  solution->Scale(0.0);
+
+  if( verboseLevel() >= 2 )
+  {
+    GEOS_LOG_RANK("\nSolution:\n" << *solution);
+  }
+}
+
+bool
+CompositionalMultiphaseWell::CheckSystemSolution( EpetraBlockSystem const * const blockSystem,
+                                                  real64 const scalingFactor,
+                                                  DomainPartition * const domain )
 {
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
 
-  int dummy;
-  double * local_solution = nullptr;
-  solution->ExtractView( &local_solution, &dummy );
 
-  // the pressure and compositions live on segments
-  // the velocity lives on connections
-  arrayView1d<real64> const & deltaPressure =
-    m_segmentManager.getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-  arrayView2d<real64> const & deltaGlobalCompDensity =
-    m_segmentManager.getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
-  arrayView1d<real64> const & deltaMixtureVelocity =
-    m_connectionManager.getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
-
-  real64 dummy_newton_update = 0;
-  
-  // loop over the segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
-  {
-    // update pressure on segment iseg
-    deltaPressure[iseg] += scalingFactor * dummy_newton_update;
-    
-    // update compositions on segment iseg
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
-    {
-      deltaGlobalCompDensity[iseg][ic] += scalingFactor * dummy_newton_update;
-    }
-  }
-
-  // loop over the connection
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // update velocity
-    deltaMixtureVelocity[iconn] += scalingFactor * dummy_newton_update;
-  }
-  
-  // synchronize fields
-
-  // update the fluid models
-  StateUpdate( domain );
+  return false;
 }
-  
-// Compute the rate for all the perforations and form the control equation
-void CompositionalMultiphaseWell::AssembleWellTerms( DomainPartition * const domain,
-                                                     EpetraBlockSystem * const blockSystem,
-                                                     real64 const time_n,
-                                                     real64 const dt )
+
+void
+CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+                                                        real64 const scalingFactor,
+                                                        DomainPartition * const domain )
 {
-  // we assemble n_c mass conservation equations per segment
-  // we also need 1 volume balance equation per segment
-
-  // 1- Accumulation term on segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
-  {
-    // 1.1- Compute accumulation term of mass conservation equations for segment iseg 
-
-    // 1.2- Assemble volume balance equation
-  }
-
-
-  // 2- Flux term through connection
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // 2.1- Perform upwinding of fluid dependent quantities at connection iconn
-    
-    // 2.2- Compute flux term at connection iconn
-
-    // 2.3- Add flux term to residual and jacobian corresponding to segments nextSegment and prevSegment
-  }
-    
-  // 3- Source/Sink term through perforations
-  for (localIndex iperf = 0; iperf < numPerforationsLocal(); ++iperf)
-  {
-    // 3.1 Upwinding fluid dependent quantities at perforation iperf
-    // (choose between reservoir and segment vars)
-    
-    // 3.2 Compute the rate at perforation iperf using segment data and reservoir data
-    
-    // 3.3 Add to residual and jacobian corresponding to segment iseg
-    
-  }
   
-  FormControlEquation( domain, blockSystem, time_n, dt );
 }
 
-  
-// Check if the well control needs to be switched
-void CompositionalMultiphaseWell::CheckControlSwitch()
+void
+CompositionalMultiphaseWell::ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time_n,
+                                        real64 const dt )
 {
-  // to defined later
+
 }
 
-// Reset the well to its initial state at the beginning of the time step
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  // the pressure and compositions live on segments
-  // the velocity lives on connections
-  arrayView1d<real64> const & deltaPressure =
-    m_segmentManager.getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-  arrayView2d<real64> const & deltaGlobalCompDensity =
-    m_segmentManager.getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
-  arrayView1d<real64> const & deltaMixtureVelocity =
-    m_connectionManager.getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = mesh->getWellManager();
 
+  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  {
+    //   -- set dWellPres = 0;
+    //   -- update the other well variables
+  });
+
+}
+
+void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
+                                                              real64 const & dt,
+                                                              DomainPartition * const domain )
+{
   
-  // loop over the segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
-  {
-    // set deltaPressure = 0 on segment iseg
-    deltaPressure[iseg] = 0;
-    
-    // set deltaGlobalCompDensity = 0 on segment iseg
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
-    {
-      deltaGlobalCompDensity[iseg][ic] = 0;
-    }
-  }
-
-  // loop over the connection
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // set deltaMixtureVelocity = 0 on connection iconn
-    deltaMixtureVelocity[iconn] = 0;
-  }
-  
-  // synchronize fields
-
-  // update the fluid models
-  StateUpdate( domain );
-}
-
-real64 CompositionalMultiphaseWell::GetTotalFlowRate()
-{
-  return 0.0;
-}
-
-// form the well control equation based on the type of well
-void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * const domain,
-						       EpetraBlockSystem * const blockSystem,
-                                                       real64 const time_n,
-                                                       real64 const dt )
-{
-  // to be defined later
-}
-
-// update each connection pressure from bhp and hydrostatic head
-void CompositionalMultiphaseWell::StateUpdate( DomainPartition const * domain )
-{
-  // 1- loop over the segments
-  for (localIndex iseg = 0; iseg < numSegmentsLocal(); ++iseg)
-  {
-    // 1.1 Update phase density and viscosity
-
-    /* it would be nice to do something like:
-      
-       MultiFluidBase const * fluid = constitutiveRelations[segmentRegion]->group_cast<MultiFluidBase const *>();
-       fluid->PointUpdate( pressure[iseg] );
- 
-       to update dens[iseg] 
-
-     */
-    
-    // 1.2 Update average mixture density
-
-    // 1.3 Update saturation
-
-    // 1.4 Update relperm and capillary pressure   
-  }
-
-  // loop over the connections
-  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
-  {
-    // if (injector and firstConnection)
-    //    set globalComponentFrac to injection stream
-    
-    // not much to update if the upwinding is computed in AssembleWellTerms
-  }
 }
 
 
-REGISTER_CATALOG_ENTRY( WellBase, CompositionalMultiphaseWell, string const &, ManagedGroup * const )
-
-} //namespace geosx
+REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseWell, string const &, ManagedGroup * const)
+}// namespace geosx
