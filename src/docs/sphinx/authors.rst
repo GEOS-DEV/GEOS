@@ -31,6 +31,8 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
      - *Total*
    * - Antoine Mazuyer
      - *Department of Energy Resources Engineering, Stanford University*
+   * - Shabnam Semnani
+     - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Randolph Settgast
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Christopher Sherman
