@@ -79,12 +79,6 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 	MatMPIAIJSetPreallocation(_mat, nMaxEntriesPerRow, NULL, nMaxEntriesPerRow, NULL);
 	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
 	MatSetUp(_mat);
-
-	// assemble
-	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	// assembled = true;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -102,12 +96,6 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 	MatMPIAIJSetPreallocation(_mat, nMaxEntriesPerRow, NULL, nMaxEntriesPerRow, NULL);
 	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
 	MatSetUp(_mat);
-
-	// assemble
-	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	assembled = true;
 }
 
   // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -124,12 +112,6 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 	MatMPIAIJSetPreallocation(_mat, 0, nMaxEntriesPerRow.data(), 0, nMaxEntriesPerRow.data());
 	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
 	MatSetUp(_mat);
-
-	// assemble
-	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	assembled = true;
   }
 
   // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -147,12 +129,6 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 	MatMPIAIJSetPreallocation(_mat, 0, nMaxEntriesPerRow.data(), 0, nMaxEntriesPerRow.data());
 	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
 	MatSetUp(_mat);
-
-	// assemble
-	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	assembled = true;
   }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -206,14 +182,7 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
            					  int const *cols )
  {
  	int rows[1] = {iRow};
-
  	MatSetValues(_mat, 1, rows, nCols, cols, values, ADD_VALUES);
-
- 	// assemble
-	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	assembled = true;
  }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -225,11 +194,6 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
            					  real64 const value )
  {
  	MatSetValue(_mat, iRow, iCol, value, ADD_VALUES);
-
- 	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	assembled = true;
  }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -241,16 +205,8 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
            					  real64 const *values,
            					  int const *cols )
   {
- 	int rows[1];
- 	rows[0] = iRow;
-
+ 	int rows[1] = {iRow};
  	MatSetValues(_mat, 1, rows, nCols, cols, values, INSERT_VALUES);
-
- 	// assemble
-	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	assembled = true;
  }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -262,11 +218,6 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
            					  real64 const value )
   {
  	MatSetValue(_mat, iRow, iCol, value, INSERT_VALUES);
-
- 	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	assembled = true;
  }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -277,16 +228,8 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
               					 real64 const *values,
               					 int const *cols )
   {
- 	int rows[1];
- 	rows[0] = iRow;
-
+ 	int rows[1] = {iRow};
  	MatSetValues(_mat, 1, rows, nCols, cols, values, INSERT_VALUES);
-
- 	// HANNAH: when do we assemble?
-	// MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	// MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	// assembled = true;
  }
 
 // -------------------------
