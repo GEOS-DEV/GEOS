@@ -116,6 +116,7 @@ public:
     static constexpr auto boundaryFieldNameString = "boundaryFieldName";
     static constexpr auto coeffNameString         = "coefficientName";
     static constexpr auto cellStencilString       = "cellStencil";
+    static constexpr auto fratureStencilString    = "fractureStencil";
   };
 
   struct groupKeyStruct
@@ -128,6 +129,10 @@ protected:
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
+
+  virtual void computeFractureStencil( DomainPartition const & domain,
+                                       CellStencil & fractureStencil,
+                                       CellStencil & cellStencil ) = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;

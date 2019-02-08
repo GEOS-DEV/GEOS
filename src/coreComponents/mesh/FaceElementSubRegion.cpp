@@ -35,7 +35,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false )->
     setDescription("Map to the faces attached to each FaceCell.")->
-    reference().resize(2,0);
+    reference().resize(0,2);
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
     setDescription("The aperture of each FaceCell.");
