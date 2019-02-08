@@ -112,8 +112,6 @@ class PetscVector
    *
    * Add into vector value at given element.
    *
-   * (TODO This needs to use integers for some reason! No longlong).
-   *
    * \param element elements index.
    * \param value Values to add in given element.
    *
@@ -202,6 +200,11 @@ class PetscVector
    */
   void normInf(real64 &result) const;
 
+  //@}
+
+  //! @name Accessor Methods
+  //@{
+
   /**
    * @brief Returns the global of the vector.
    */
@@ -211,6 +214,11 @@ class PetscVector
    * @brief Returns the local size of the vector.
    */
   int localSize() const;
+
+  /**
+   * @brief Returns element i of the vector.
+   */
+  real64 getElement(int i) const;
 
   /**
    * @brief Returns a const pointer to the underlying Vec.

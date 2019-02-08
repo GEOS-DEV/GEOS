@@ -218,6 +218,19 @@ void PetscVector::normInf(real64 &result) const
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get element
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get element i
+real64 PETScVector::getElement(int i) const
+{
+
+	double value[1];
+	int index[1] = {i};
+	VecGetValues(_vec, 1, index, value);
+  	return value[0];
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get the number of global elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the global size of the vector (total number of elements).
