@@ -242,13 +242,56 @@ void DofManager::addField( string const & field,
   SparsityPattern & connLocPatt = last.connLocPattern;
   addDiagSparsityPattern( connLocPatt, numFields - 1, connectivity );
 
-  if( connectivity != Connectivity::Elem )
-  {
-    //AAAAAAAAAAAAAAAA
-  }
+  /////////////////////////////////////////////////////
+  // TRILINOS TEST
+
+  localIndex maxEntriesPerRow = 0;
+  for( localIndex i = 0 ; i < connLocPatt.nRows ; ++i )
+    maxEntriesPerRow = std::max( maxEntriesPerRow, connLocPatt.rowLengths[i + 1] - connLocPatt.rowLengths[i] );
 
   //if (field == "pressure")
   printSparsityPattern( connLocPatt, "FILETMP" + std::to_string( mpiRank ) );
+
+  ParallelMatrix connLocPattDistr;
+  //connLocPattDistr.createWithGlobalSize(connLocPatt.nRows, 128, maxEntriesPerRow);
+  connLocPattDistr.createWithGlobalSize( 464, 128, maxEntriesPerRow );
+  std::cout << connLocPatt.nRows << std::endl;
+  for( globalIndex i = 0 ; i < connLocPatt.nRows ; ++i )
+  {
+    /*
+     * should work!
+     localIndex nnz = connLocPatt.rowLengths[i+1]-connLocPatt.rowLengths[i];
+     array1d<real64> values;
+     values.resize(nnz);
+     values = 1;
+     std::cout << i << " " << nnz << " " << *(connLocPatt.colIndices.data(connLocPatt.rowLengths[i])) << " " << values << std::endl;
+     connLocPattDistr.add(i, connLocPatt.colIndices.data(connLocPatt.rowLengths[i]), values, nnz);
+     */
+    for( globalIndex j = connLocPatt.rowLengths[i] ; j < connLocPatt.rowLengths[i + 1] ; ++j )
+      connLocPattDistr.insert( i, connLocPatt.colIndices[j], 1 );
+  }
+  connLocPattDistr.close();
+  //connLocPattDistr.print();
+
+  ParallelMatrix locLocDistr;
+  // TODO -- create a matrix with right sizes
+  locLocDistr.createWithGlobalSize( 128, 20 );
+  Epetra_FECrsMatrix * const locLocDistrPtr = locLocDistr.unwrappedPointer();
+  Epetra_FECrsMatrix * const connLocPattDistrPtr = connLocPattDistr.unwrappedPointer();
+  int err = EpetraExt::MatrixMatrix::Multiply( *connLocPattDistrPtr,
+                                               true, //use transpose
+                                               *connLocPattDistrPtr,
+                                               false, //don't use tranpose,
+                                               *locLocDistrPtr );
+
+  locLocDistr.print();
+
+  // DOES NOT WORK -- WHY???
+  //if (mpiRank == 0)
+  //  locLocDistr.write("TEST");
+
+  // END TRILINOS TEST
+  /////////////////////////////////////////////////////
 
   // Tranpose the LC matrix
   SparsityPattern pattTransp;
@@ -816,7 +859,7 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
             if( ghostRank[e] < 0 )
               for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
                 for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
-                  if( indexArrayFace[map[e][n]] > 0 )
+                  if( indexArrayFace[map[e][n]] >= 0 )
                     pairs.push_back(
                         std::make_pair( indexArrayFace[map[e][n]], fieldDesc.numComponents * indexArrayElem[e] + i ) );
         }

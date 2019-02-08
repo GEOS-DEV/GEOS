@@ -29,6 +29,7 @@
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ManagedGroup.hpp"
+#include "TrilinosInterface.hpp"
 
 namespace geosx
 {
@@ -54,6 +55,8 @@ struct SparsityPattern
   localIndex_array rowLengths; //<! row lengths, size numLocalRows
   globalIndex_array colIndices; //<! packed column indices, size numLocalNonZeros
 };
+
+using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
 
 /**
  * The DoFManager is responsible for allocating global dofs, constructing
