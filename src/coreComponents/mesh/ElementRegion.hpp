@@ -293,6 +293,11 @@ public:
     static constexpr auto elementSubRegions = "elementSubRegions";
     static constexpr auto sourceCellBlockNames = "cellBlocks";
 
+    static constexpr auto fractureConnectorIndicesString = "fractureConnectorIndices";
+    static constexpr auto fractureElementConnectorString = "fractureElementConnectors";
+    static constexpr auto fractureToCellConnectorString = "fractureCellConnectors";
+
+
   } m_regionViewKeys;
 
   string_array & getMaterialList() {return m_materialList;}

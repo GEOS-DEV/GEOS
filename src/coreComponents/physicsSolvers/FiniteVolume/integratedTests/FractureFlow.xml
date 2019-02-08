@@ -23,11 +23,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 4"
-                  yCoords="0, 1"
+                  xCoords="0, 2"
+                  yCoords="0, 2"
                   zCoords="0, 1"
-                  nx="4"
-                  ny="1"
+                  nx="2"
+                  ny="2"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
@@ -37,7 +37,7 @@
     <Box name="right"  xMin=" 8.99, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
     <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.11, 1.01"/>
     <Box name="top"    xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="fracture"  xMin="1.99, -0.01, -0.01" xMax="2.01, 1.01, 1.01"/>    
+    <Box name="fracture"  xMin="0.99, -0.01, -0.01" xMax="1.01, 2.01, 1.01"/>    
   </Geometry>
 
 

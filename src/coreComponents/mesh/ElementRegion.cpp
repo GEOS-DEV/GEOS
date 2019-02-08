@@ -193,6 +193,32 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
 
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )
  {
+
+   // key is edge index, value is faceElementIndex....this only works for a single fracture Region with a single subregion!!
+   map< localIndex, set<localIndex> > fractureConnectorIndicesMap;
+
+   array1d< array1d<localIndex> > &
+   fractureConnectorIndices = RegisterViewWrapper< array1d<array1d<localIndex> > >( viewKeyStruct::fractureConnectorIndicesString )
+     ->setSizedFromParent(0)
+     ->reference();
+
+   array1d<array1d<localIndex> > &
+   fractureConnectors = RegisterViewWrapper< array1d<array1d<localIndex> > >( viewKeyStruct::fractureElementConnectorString )
+     ->setSizedFromParent(0)
+     ->reference();
+
+   map< localIndex, array1d<localIndex> > fractureConnectorMap;
+
+   FixedToManyElementRelation &
+   fractureCellConnectors = this->RegisterViewWrapper< FixedToManyElementRelation >( viewKeyStruct::fractureToCellConnectorString )
+     ->setSizedFromParent(0)
+     ->reference();
+
+
+   array2d<localIndex > const & faceToElementRegion = faceManager->elementRegionList();
+   array2d<localIndex > const & faceToElementSubRegion = faceManager->elementSubRegionList();
+   array2d<localIndex > const & faceToElementIndex = faceManager->elementList();
+
    ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
    for( string const & setName : this->m_fractureSetNames )
    {
@@ -200,7 +226,66 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
      set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
      subRegion->resize( targetSet.size() );
 
+     fractureCellConnectors.resize( targetSet.size(), 2 );
+
+     FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
+     FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
+     FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+
+     OrderedVariableOneToManyRelation const & facesToNodesMap = faceManager->nodeList();
+     OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
+
+     localIndex kfe = 0;
+     for( auto const faceIndex : targetSet )
+     {
+       faceMap[kfe][0] = faceIndex;
+       faceMap[kfe][1] = -1;
+
+       arrayView1d<localIndex const> const & faceToNodesMap = facesToNodesMap[faceIndex];
+       nodeMap[kfe].resize( faceToNodesMap.size() );
+       for( localIndex a=0 ; a<faceToNodesMap.size() ; ++a )
+       {
+         nodeMap[kfe][a] = faceToNodesMap[a];
+       }
+
+       arrayView1d<localIndex const> const & faceToEdgesMap = facesToEdgesMap[faceIndex];
+       edgeMap[kfe].resize( faceToEdgesMap.size() );
+       for( localIndex a=0 ; a<faceToEdgesMap.size() ; ++a )
+       {
+         edgeMap[kfe][a] = faceToEdgesMap[a];
+         fractureConnectorIndicesMap[ faceToEdgesMap[a] ].insert( kfe );
+       }
+
+       for( localIndex ke=0 ; ke<2 ; ++ke )
+       {
+         fractureCellConnectors.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndex][ke];
+         fractureCellConnectors.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndex][ke];
+         fractureCellConnectors.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndex][ke];
+       }
+       ++kfe;
+     }
    }
+
+   fractureConnectorIndices.resize( fractureConnectorIndicesMap.size() );
+   fractureConnectors.resize( fractureConnectorIndicesMap.size() );
+   localIndex connectorIndex=0;
+   for( auto const & connector : fractureConnectorIndicesMap )
+   {
+     if( connector.second.size() > 1 )
+     {
+       fractureConnectorIndices[connectorIndex] = connector.first;
+       fractureConnectors[connectorIndex].resize( connector.second.size() );
+       localIndex fractureElementCounter = -1;
+       for( auto const fractureElementIndex : connector.second )
+       {
+         fractureConnectors[connectorIndex][++fractureElementCounter] = fractureElementIndex;
+       }
+       ++connectorIndex;
+     }
+   }
+   fractureConnectorIndices.resize(connectorIndex);
+   fractureConnectors.resize(connectorIndex);
+
  }
 
 

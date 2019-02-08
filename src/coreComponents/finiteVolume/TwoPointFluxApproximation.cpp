@@ -148,6 +148,25 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   stencil.compress();
 }
 
+
+
+
+void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & domain,
+                                                        CellStencil & fractureStencil,
+                                                        CellStencil & cellStencil )
+{
+  MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  ElementRegion const * const fractureRegion = elemManager->GetRegion( "Fracture" );
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>(0);
+
+
+}
+
+
 void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet,
                                                        FluxApproximationBase::BoundaryStencil & stencil)
 {
