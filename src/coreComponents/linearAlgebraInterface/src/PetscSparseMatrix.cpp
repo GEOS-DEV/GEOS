@@ -329,11 +329,33 @@ void PetscSparseMatrix::leftRightScale( PetscVector const &vecLeft,
 // Clear row and multiply diagonal term by factor.
 void PetscSparseMatrix::clearRow( int const row,
             				   	  real64 const factor )
-{
+ {
 	int rows[1] = {row};
-	// get diagonal entry
-	MatZeroRows(_mat, 1, rows, factor, NULL, NULL);
-}
+	double diag = 1;
+
+	// who does this row belong to
+	int firstRow, lastRow;
+	MatGetOwnershipRange(_mat, &firstRow, &lastRow);
+
+	if(firstRow <= row && row < lastRow)
+	{
+		// get diagonal entry
+		const double* vals;
+		const int* inds;
+		int numEntries;
+
+		MatGetRow(_mat, row, &numEntries, &inds, &vals);
+
+		for(int i = 0; i < numEntries; i++)
+		{
+			if(inds[i] == row) diag = vals[i];
+		}
+		MatRestoreRow(_mat, row, &numEntries, &inds, &vals);
+	}
+
+	// zero row and multiply diagonal by factor
+	MatZeroRows(_mat, 1, rows, diag*factor, NULL, NULL);
+ }
 
 // ----------------------------
 //  Accessors
