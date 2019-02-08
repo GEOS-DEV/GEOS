@@ -109,15 +109,16 @@ InterObjectRelation<BASETYPE> & InterObjectRelation<BASETYPE>::operator=(const I
 
 
 
-typedef InterObjectRelation<localIndex_array> OneToOneRelation;
-typedef InterObjectRelation<array2d<localIndex>> FixedOneToManyRelation;
-typedef InterObjectRelation<array1d<localIndex_array> > OrderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<set<localIndex>> > UnorderedVariableOneToManyRelation;
+typedef InterObjectRelation< array1d<localIndex> >           OneToOneRelation;
+typedef InterObjectRelation<array2d<localIndex> >            FixedOneToManyRelation;
+typedef InterObjectRelation<array1d< array1d<localIndex> > > OrderedVariableOneToManyRelation;
+typedef InterObjectRelation<array1d<set<localIndex> > >      UnorderedVariableOneToManyRelation;
 
-typedef InterObjectRelation<array1d<array1d<localIndex_array> > > OrderedVariableOneToManyToManyRelation;
+typedef InterObjectRelation< array1d<localIndex const> >           OneToOneConstRelation;
+typedef InterObjectRelation<array2d<localIndex const> >            FixedOneToManyConstRelation;
+typedef InterObjectRelation<array1d< array1d<localIndex const> > > OrderedVariableOneToManyConstRelation;
+typedef InterObjectRelation<array1d<set<localIndex const> > >      UnorderedVariableOneToManyConstRelation;
 
-//typedef InterObjectRelation<array1d< pArray1d > > OrderedVariableOneToManyPairRelation;
-//typedef InterObjectRelation<array1d< pSet > > UnorderedVariableOneToManyPairRelation;
 }
 
 
