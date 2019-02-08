@@ -492,7 +492,7 @@ int PetscSparseMatrix::iupper() const
  	int firstrow;
  	int lastrow;
  	MatGetOwnershipRange(_mat, &firstrow, &lastrow);
- 	return lastrow - 1; 
+ 	return lastrow; 
  } 
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

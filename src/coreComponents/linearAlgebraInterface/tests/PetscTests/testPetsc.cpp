@@ -305,7 +305,7 @@ void test_PETScSparseMatrix(int rank)
   int numEntries_;
   int indices_[2];
   double values_[2];
-  if(mat1.ilower() <= row_ && row_ <= mat1.iupper())
+  if(mat1.ilower() <= row_ && row_ < mat1.iupper())
   {
     mat1.getRow(row_, numEntries_, values_, indices_);
     printf("rank %d: number of entires in row %d: %d\n", rank, row_, numEntries_);
@@ -333,7 +333,7 @@ void test_PETScSparseMatrix(int rank)
   int numEntries__;
   std::vector<int> vecindices_(2);
   std::vector<double> vecvalues_(2);
-  if(mat1.ilower() <= row_ && row_ <= mat1.iupper())
+  if(mat1.ilower() <= row_ && row_ < mat1.iupper())
   {
     mat1.getRow(row_, numEntries__, vecvalues_, vecindices_);
     printf("rank %d: number of entires in row %d: %d\n", rank, row_, numEntries__);
@@ -373,7 +373,7 @@ PETScSparseMatrix computeIdentity(int N, int rank)
   // printf("rank: %d, iupper: %d\n", rank, I.iupper());
 
   // fill the matrix
-  for(int i = I.ilower(); i <= I.iupper(); i++)
+  for(int i = I.ilower(); i < I.iupper(); i++)
   {
 
     // printf("rank: %d, row: %d\n", rank, i);
@@ -405,7 +405,7 @@ PETScSparseMatrix compute2DLaplaceOperator(int N, int rank)
   // printf("rank: %d, iupper: %d\n", rank, laplace2D.iupper());
 
   // fill the matrix
-  for(int i = laplace2D.ilower(); i <= laplace2D.iupper(); i++)
+  for(int i = laplace2D.ilower(); i < laplace2D.iupper(); i++)
   {
     // reset for row i
     int nnz = 0;
