@@ -34,7 +34,12 @@ namespace geosx
 {
 
 namespace dataRepository
-{}
+{
+namespace keys
+{
+string const coarseningRatio = "coarseningRatio";
+}
+}
 
 class NodeManager;
 class DomainPartition;
@@ -70,10 +75,18 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
 
+  /*!
+   * @brief Generate aggregates on a domain
+   * @param[in] domain the domain to be coarsed
+   */
+  void GenerateAggregates( DomainPartition& domain);
+
   int m_delayMeshDeformation = 0;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
+protected:
+  real64 m_coarseningRatio;
 
 };
 }

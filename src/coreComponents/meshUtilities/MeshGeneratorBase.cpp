@@ -33,6 +33,9 @@ using namespace dataRepository;
 MeshGeneratorBase::MeshGeneratorBase( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
+  RegisterViewWrapper(keys::coarseningRatio, &m_coarseningRatio, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("The coarsening Ratio : 0 < r < 1, r = nbCoarseCells/nbFineCells");
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
 
@@ -43,6 +46,14 @@ MeshGeneratorBase::CatalogInterface::CatalogType& MeshGeneratorBase::GetCatalog(
 {
   static MeshGeneratorBase::CatalogInterface::CatalogType catalog;
   return catalog;
+}
+
+void MeshGeneratorBase::GenerateAggregates( DomainPartition& domain)
+{
+  
+  if( m_coarseningRatio == 0.) {
+    return;
+  }
 }
 
 }
