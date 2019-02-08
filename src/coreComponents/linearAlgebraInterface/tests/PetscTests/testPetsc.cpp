@@ -565,7 +565,7 @@ void testNativeSolvers(int rank, int size)
   PETScSolver solver = PETScSolver();
 
   // test iterative solver
-  solver.solve(testMatrix, b, solIterative, 1000, 1e-8, NULL);
+  solver.solve(PETSC_COMM_WORLD, testMatrix, solIterative, b, 1000, 1e-8, NULL);
   double normIterativeSol;
   solIterative.norm2(normIterativeSol);
 
@@ -576,7 +576,7 @@ void testNativeSolvers(int rank, int size)
   if(rank ==0) printf("These should be the same: %f, %f\n", solIterative.getElement(2*n), x.getElement(2*n));
 
   // test direct solver
-  solver.dsolve(testMatrix, b, solDirect, NULL);
+  solver.dsolve(PETSC_COMM_WORLD, testMatrix, solDirect, b, NULL);
   double normDirectSol;
   solDirect.norm2(normDirectSol);
 
@@ -587,7 +587,7 @@ void testNativeSolvers(int rank, int size)
   if(rank ==0) printf("These should be the same: %f, %f\n", solDirect.getElement(3*n), x.getElement(3*n));
 
   // test ML solver
-  solver.ml_solve(testMatrix, b, solML, 1000, 1e-8, NULL);
+  solver.ml_solve(PETSC_COMM_WORLD, testMatrix, solML, b, 1000, 1e-8, NULL);
   double normMLSol;
   solML.norm2(normMLSol);
 
@@ -597,20 +597,17 @@ void testNativeSolvers(int rank, int size)
   if(rank ==0) printf("These should be the same: %f, %f\n", solML.getElement(n), x.getElement(n));
   if(rank ==0) printf("These should be the same: %f, %f\n", solML.getElement(3*n), x.getElement(3*n));
 
-  // // test clearRow
-  testMatrix.print();
+  // test clearRow
+  testMatrix.clearRow(n, 2.0); // everyone calls clearRow()
   if(rank ==0) 
   {
-    // testMatrix.clearRow(n, 2.0);
-    // printf("Clear row: %d\n", n);
-    // // HANNAH: to do
-    // int numValRown;
-    // std::vector<double> vecValuesRown;
-    // std::vector<int> vecIndicesRown;
-    // testMatrix.getRow(n, numValRown, vecValuesRown, vecIndicesRown);
-    // printf("This should be 8: %f\n", vecValuesRown[0]);
-  }
-  // testMatrix.print();
+    // check clearRow
+    int numValRown;
+    std::vector<double> vecValuesRown;
+    std::vector<int> vecIndicesRown;
+    testMatrix.getRow(n, numValRown, vecValuesRown, vecIndicesRown);
+    printf("This should be 8: %f\n", vecValuesRown[0]);
+  } 
 }
 
 int main()
