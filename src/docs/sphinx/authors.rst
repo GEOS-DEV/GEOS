@@ -20,13 +20,15 @@ The following is a list of contributors to the GEOSX code in alphabetical order 
    * - Pengcheng Fu
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Hervé Gross
-     - *Total E&P*
+     - *Total*
    * - François Hamon
-     - *Total E&P*
+     - *Total*
    * - Jixiang Huang
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Sergey Klevtsov
      - *Department of Energy Resources Engineering, Stanford University*
+   * - Alexandre Lapene
+     - *Total*
    * - Antoine Mazuyer
      - *Department of Energy Resources Engineering, Stanford University*
    * - Randolph Settgast
