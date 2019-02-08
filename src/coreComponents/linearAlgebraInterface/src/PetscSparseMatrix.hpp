@@ -337,41 +337,39 @@ public:
 
   /**
    * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
+   * , the values are sent to <tt>Values</tt> and the column indices in <tt>Indices</tt>.
+   */
+  void getRow( int GlobalRow,
+               int &NumEntries,
+               real64* Values,
+               int* Indices ) const;
+
+  /**
+   * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
   void getRow( int GlobalRow,
                int &NumEntries,
-               const real64* Values,
-               const int* Indices ) const;
-
-  /*
-   * Get global row myRow
-   * - numEntries: number of nonzeros 
-   * - vecValues: vector of values
-   * - vecIndices: vector of column indices */
-  // void getRow( int GlobalRow,
-  //              int &NumEntries,
-  //              std::vector<real64> &vecValues,
-  //              std::vector<int> &vecIndices ) const;
+               std::vector<real64> &vecValues,
+               std::vector<int> &vecIndices ) const;
 
   /**
-   * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
-   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
+   * @brief Returns the row <tt>myRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
+   * , the values are sent to <tt>Values</tt> and the column indices in <tt>Indices</tt>.
    */
   void getLocalRow( int myRow,
                     int & NumEntries,
-                    const real64 * & Values,
-                    const int * & Indices ) const;
+                    real64 * & Values,
+                    int * & Indices ) const;
 
-  /*
-   * Get local row myRow
-   * - numEntries: number of nonzeros 
-   * - vecValues: vector of values
-   * - vecIndices: vector of column indices */
-  // void getLocalRow( int myRow,
-  //                   int &NumEntries,
-  //                   std::vector<real64> &vecValues,
-  //                   std::vector<int> &vecIndices ) const;
+  /**
+   * @brief Returns the row <tt>myRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
+   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
+   */
+  void getLocalRow( int myRow,
+                    int &NumEntries,
+                    std::vector<real64> &vecValues,
+                    std::vector<int> &vecIndices ) const;
 
   /**
    * @brief Returns the number of global rows.

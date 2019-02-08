@@ -392,43 +392,55 @@ void PetscSparseMatrix::clearRow( int const row,
 	MatZeroRows(_mat, 1, rows, factor, NULL, NULL);
 }
 
+// ----------------------------
+//  Accessors
+// ----------------------------
+
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get global row.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Extract the global row and output the number of elements, values and column indices.
 void PetscSparseMatrix::getRow( int GlobalRow,
            						int &NumEntries,
-           						const real64* Values,
-           						const int* Indices ) const
+           						real64* Values,
+           						int* Indices ) const
 {
+ 	const double* vals;
+ 	const int* inds;
+ 	int numEntries;
+	MatGetRow(_mat, GlobalRow, &numEntries, &inds, &vals);
 
-	// MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-	// MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
-
-	MatGetRow(_mat, GlobalRow, &NumEntries, &Indices, &Values);
-
-	// need to retun the row
-	int nument;
-	const int* inds;
-	const real64* vals;
-	MatRestoreRow(_mat, GlobalRow, &nument, &inds, &vals);
-}
+    for(int i = 0; i < numEntries; i++)
+    {
+    	Values[i] = vals[i];
+    	Indices[i] = inds[i];
+    }
+    NumEntries = numEntries;
+    
+	MatRestoreRow(_mat, GlobalRow, &numEntries, &inds, &vals);
+ }
 
 /*
 * Get global row myRow
 * - numEntries: number of nonzeros 
 * - vecValues: vector of values
 * - vecIndices: vector of column indices */
-// void PetscSparseMatrix::getRow( int GlobalRow,
-//              					int &NumEntries,
-//              					std::vector<real64> &vecValues,
-//              					std::vector<int> &vecIndices ) const
-// {
-// 	const int* indices_;
-//  	const real64* values_;
-// 	MatGetRow(_mat, GlobalRow, &NumEntries, &indices_, &values_);
-// 	// indices_ -> vecIndices
-// }
+void PetscSparseMatrix::getRow( int GlobalRow,
+             					int &NumEntries,
+             					std::vector<real64> &vecValues,
+             					std::vector<int> &vecIndices ) const
+{
+	const double* vals;
+	const int* inds;
+	int numEntries;
+	MatGetRow(_mat, GlobalRow, &numEntries, &inds, &vals);
+
+	vecIndices.assign(inds, inds + numEntries);
+	vecValues.assign(vals, vals + numEntries);
+	NumEntries = numEntries;
+
+	MatRestoreRow(_mat, GlobalRow, &numEntries, &inds, &vals);
+}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get local row.
@@ -436,37 +448,58 @@ void PetscSparseMatrix::getRow( int GlobalRow,
 // Extract the local row and output the number of elements, values and column indices.
 void PetscSparseMatrix::getLocalRow( int myRow,
                					 	 int & NumEntries,
-               					 	 const real64 * & Values,
-               					 	 const int * & Indices ) const
+               					 	 real64 * & Values,
+               					 	 int * & Indices ) const
 {
-	// myRow -> globalRow
-	int firstRow, lastRow;
-	int globalRow;
-	MatGetOwnershipRange(_mat, &firstRow, &lastRow);
-	globalRow = firstRow + myRow;
+ 	// myRow -> globalRow
+ 	int firstRow, lastRow;
+ 	int GlobalRow;
+ 	MatGetOwnershipRange(_mat, &firstRow, &lastRow);
+ 	GlobalRow = firstRow + myRow;
 
-	MatGetRow(_mat, globalRow, &NumEntries, &Indices, &Values);
+ 	const double* vals;
+ 	const int* inds;
+ 	int numEntries;
+	MatGetRow(_mat, GlobalRow, &numEntries, &inds, &vals);
 
-	// return row
-	int nument;
-	const int* inds;
-	const real64* vals;
-	MatRestoreRow(_mat, globalRow, &nument, &inds, &vals);
-}
+    for(int i = 0; i < numEntries; i++)
+    {
+    	Values[i] = vals[i];
+    	Indices[i] = inds[i];
+    }
+    NumEntries = numEntries;
+    
+	MatRestoreRow(_mat, GlobalRow, &numEntries, &inds, &vals);
+ }
 
-//  /*
-//   * Get local row myRow
-//   * - numEntries: number of nonzeros 
-//   * - vecValues: vector of values
-//   * - vecIndices: vector of column indices */
-//  // void PetscSparseMatrix::getLocalRow( int myRow,
-//  //                   					int &NumEntries,
-//  //                   					std::vector<real64> &vecValues,
-//  //                   					std::vector<int> &vecIndices ) const;
+ /*
+  * Get local row myRow
+  * - numEntries: number of nonzeros 
+  * - vecValues: vector of values
+  * - vecIndices: vector of column indices */
+ void PetscSparseMatrix::getLocalRow( int myRow,
+                   					int &NumEntries,
+                   					std::vector<real64> &vecValues,
+                   					std::vector<int> &vecIndices ) const
 
-// ----------------------------
-//  Accessors
-// ----------------------------
+ {
+ 	// myRow -> globalRow
+ 	int firstRow, lastRow;
+ 	int GlobalRow;
+ 	MatGetOwnershipRange(_mat, &firstRow, &lastRow);
+ 	GlobalRow = firstRow + myRow;
+
+ 	const double* vals;
+ 	const int* inds;
+ 	int numEntries;
+	MatGetRow(_mat, GlobalRow, &numEntries, &inds, &vals);
+
+	vecIndices.assign(inds, inds + numEntries);
+    vecValues.assign(vals, vals + numEntries);
+ 	NumEntries = numEntries;
+
+	MatRestoreRow(_mat, GlobalRow, &numEntries, &inds, &vals);
+ }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get number of global rows.
