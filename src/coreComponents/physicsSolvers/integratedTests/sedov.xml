@@ -58,7 +58,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -84,15 +84,11 @@
   </Constitutive>
 
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
     <FieldSpecification name="source"  
                initialCondition="1"  
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="shale_MeanStress"
                component="-1"
                scale="-1.0e6"/>
@@ -134,9 +130,9 @@
     <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
   
   <Outputs>
     <Silo name="siloOutput" 
@@ -150,8 +146,5 @@
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
-
-
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
 
 </Problem>

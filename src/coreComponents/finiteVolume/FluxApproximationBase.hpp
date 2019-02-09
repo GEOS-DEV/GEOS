@@ -31,14 +31,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-  static constexpr auto FVstencil = "FVstencil";
-}
-}
-
 /**
  * @struct A structure containing a single cell (element) identifier triplet
  */
@@ -60,7 +52,7 @@ struct CellDescriptor
  */
 struct PointDescriptor
 {
-  enum class Tag { CELL, FACE, NODE, PERF };
+  enum class Tag { CELL, FACE, NODE };
 
   Tag tag;
 
@@ -68,7 +60,6 @@ struct PointDescriptor
   {
     localIndex nodeIndex;
     localIndex faceIndex;
-    localIndex perfIndex;
     CellDescriptor cellIndex;
   };
 };
@@ -90,37 +81,27 @@ public:
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
-  using CellStencil = StencilCollection<CellDescriptor, real64>;
-  using FaceStencil = StencilCollection<PointDescriptor, real64>;
-  using WellStencil = StencilCollection<PointDescriptor, real64>;
+  using CellStencil     = StencilCollection<CellDescriptor, real64>;
+  using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
 
   FluxApproximationBase() = delete;
 
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
 
   /// provides const access to the cell stencil collection
-  CellStencil const & getCellStencil() const;
+  CellStencil const & getStencil() const;
 
   /// provides access to the cell stencil collection
-  CellStencil & getCellStencil();
+  CellStencil & getStencil();
 
   /// return a boundary stencil by face set name
-  FaceStencil const & getFaceStencil(string const & setName) const;
+  BoundaryStencil const & getBoundaryStencil(string const & setName) const;
 
   /// return a boundary stencil by face set name
-  FaceStencil & getFaceStencil(string const & setName);
+  BoundaryStencil & getBoundaryStencil(string const & setName);
 
   /// check if a stencil exists
-  bool hasFaceStencil(string const & setName) const;
-
-  /// return a boundary stencil by face set name
-  WellStencil const & getWellStencil(string const & wellName) const;
-
-  /// return a boundary stencil by face set name
-  WellStencil & getWellStencil(string const & wellName);
-
-  /// check if a stencil exists
-  bool hasWellStencil(string const & wellName) const;
+  bool hasBoundaryStencil(string const & setName) const;
 
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
@@ -135,42 +116,24 @@ public:
     static constexpr auto boundaryFieldNameString = "boundaryFieldName";
     static constexpr auto coeffNameString         = "coefficientName";
     static constexpr auto cellStencilString       = "cellStencil";
-
-    dataRepository::ViewKey fieldName         = { fieldNameString };
-    dataRepository::ViewKey boundaryFieldName = { boundaryFieldNameString };
-    dataRepository::ViewKey coeffName         = { coeffNameString };
-    dataRepository::ViewKey cellStencil       = { cellStencilString };
-
-  } viewKeysFABase;
+  };
 
   struct groupKeyStruct
   {
-
-    static constexpr auto faceStencilsString = "faceStencils";
-    static constexpr auto wellStencilsString = "wellStencils";
-
-    dataRepository::ViewKey faceStencils = { faceStencilsString };
-    dataRepository::ViewKey wellStencils = { wellStencilsString };
-
-  } groupKeysFABase;
-
-  /// actual computation of the cell-to-cell stencil, to be overridden by implementations
-  virtual void computeCellStencil(DomainPartition const * domain,
-                                  CellStencil & stencil) const = 0;
-
-  /// actual computation of the boundary stencil, to be overridden by implementations
-  virtual void computeFaceStencil( DomainPartition const * domain,
-                                   set<localIndex> const & faceSet,
-                                   FaceStencil & stencil ) const = 0;
-
-  /// actual computation of well-to-cell stencil, to be overridden by implementations
-  virtual void computeWellStencil( DomainPartition const * domain,
-                                   WellBase const * well,
-                                   WellStencil & stencil ) const = 0;
+    static constexpr auto boundarySetDataString = "BoundarySetData";
+  };
 
 protected:
-
   void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+
+  /// actual computation of the cell-to-cell stencil, to be overridden by implementations
+  virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
+
+  /// actual computation of the boundary stencil, to be overridden by implementations
+  virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;
+
+  /// pointer to boundary set manager
+  dataRepository::ManagedGroup * m_boundarySetData;
 
   /// name of the primary solution field
   string m_fieldName;
@@ -186,7 +149,7 @@ protected:
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
-  this->GetGroup( groupKeysFABase.faceStencils )->forViewWrappersByType<FaceStencil>([&] (auto const & vw) -> void
+  this->forViewWrappersByType<BoundaryStencil>([&] (auto const & vw) -> void
   {
     if (vw.getName() != viewKeyStruct::cellStencilString)
       lambda(vw.reference());

@@ -32,10 +32,6 @@
 #include "pugixml.hpp"
 #include <sstream>
 
-namespace cxx_utilities
-{
-class DocumentationNode;
-}
 namespace geosx
 {
 
@@ -52,6 +48,7 @@ public:
   using xmlResult = pugi::xml_parse_result;
   using xmlNode = pugi::xml_node;
   using xmlAttribute = pugi::xml_attribute;
+  using xmlTypes = pugi::xml_node_type;
 
   xmlWrapper();
   virtual ~xmlWrapper();
@@ -83,9 +80,6 @@ public:
 
 //  static R1Tensor StringToInputVariable( xmlNode const & node, string const name, R1Tensor defValue );
 
-//  static void ReadAttributeAsType( dataRepository::ManagedGroup & group,
-//                                   cxx_utilities::DocumentationNode const & subDocNode,
-//                                   xmlNode const & targetNode );
 
   template< typename T >
   static void ReadAttributeAsType( T & rval,

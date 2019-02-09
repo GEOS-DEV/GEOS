@@ -81,7 +81,9 @@ public:
    */
   static string CatalogName() { return "SinglePhaseFlow"; }
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
+  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -114,7 +116,7 @@ public:
   virtual real64
   CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
                         DomainPartition *const domain) override;
-  
+
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
@@ -122,7 +124,7 @@ public:
   ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-  
+
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual  void ImplicitStepComplete( real64 const & time,
@@ -168,7 +170,6 @@ public:
                           real64 const time_n,
                           real64 const dt );
 
-  
   /**@}*/
 
 
@@ -213,7 +214,7 @@ public:
   viewKeyStruct & viewKeys() { return viewKeysSinglePhaseFlow; }
   viewKeyStruct const & viewKeys() const { return viewKeysSinglePhaseFlow; }
 
-  struct groupKeyStruct : FlowSolverBase::groupKeyStruct
+  struct groupKeyStruct : SolverBase::groupKeyStruct
   {
   } groupKeysSinglePhaseFlow;
 
@@ -221,17 +222,11 @@ public:
   groupKeyStruct const & groupKeys() const { return groupKeysSinglePhaseFlow; }
 
 protected:
-
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
-
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 private:
 
-  
-  void SetupSystem ( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition * const domain,
+  void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
@@ -239,10 +234,8 @@ private:
    * @param domain the domain partition
    * @param sparsity the sparsity pattern matrix
    */
-  void SetSparsityPattern( real64 const & time_n,
-                           real64 const & dt,
-                           DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity);
+  void SetSparsityPattern( DomainPartition const * const domain,
+                           Epetra_FECrsGraph * const sparsity );
 
   /**
    * @brief sets the dof indices for this solver
@@ -281,25 +274,10 @@ private:
    * @param time_n current time
    * @param blockSystem the entire block system
    */
-  void ApplyFaceBC_implicit( DomainPartition * domain,
-                             real64 const time_n, real64 const dt,
-                             systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void ApplyFaceDirichletBC_implicit( DomainPartition * domain,
+                                      real64 const time_n, real64 const dt,
+                                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
-  /**
-   * @brief Function to perform the application of all well BCs
-   * @param domain the domain
-   * @param time_n current time
-   * @param dt time step size
-   * @param blockSystem the entire block system
-   */
-  void ApplyWellBC_implicit( DomainPartition * domain,
-                             real64 const time_n, real64 const dt,
-                             systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief Outputs well stats for the time step
-   */
-  void PrintWellStats( DomainPartition * const domain );
   /**
    * @brief Function to update all constitutive models
    * @param domain the domain

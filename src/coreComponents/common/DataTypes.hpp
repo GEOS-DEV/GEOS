@@ -144,6 +144,9 @@ using arrayView1d = array_view<T,1>;
 template< typename T >
 using arraySlice1d = LvArray::ArraySlice1d<T, localIndex>;
 
+template< typename T >
+using arraySlice1dRval = LvArray::ArraySlice1d_rval<T, localIndex>;
+
 template< typename T, int MAXSIZE >
 using stackArray1d = stack_array<T, 1, MAXSIZE>;
 
@@ -326,9 +329,9 @@ public:
       {std::type_index(typeid(real64)), "real64"},
       {std::type_index(typeid(localIndex)), "localIndex"},
       {std::type_index(typeid(globalIndex)), "globalIndex"},
-      {std::type_index(typeid(R1Tensor)), "r1Tensor"},
-      {std::type_index(typeid(R2Tensor)), "r2Tensor"},
-      {std::type_index(typeid(R2SymTensor)), "r2SymTensor"},
+      {std::type_index(typeid(R1Tensor)), "R1Tensor"},
+      {std::type_index(typeid(R2Tensor)), "R2Tensor"},
+      {std::type_index(typeid(R2SymTensor)), "R2SymTensor"},
       {std::type_index(typeid(integer_array)), "integer_array"},
       {std::type_index(typeid(real32_array)), "real32_array"},
       {std::type_index(typeid(real64_array)), "real64_array"},
@@ -575,7 +578,7 @@ public:
 private:
     std::string ru = "[0-9]*";
     std::string ri = "[+-]?[0-9]*";
-    std::string rr = "[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
+    std::string rr = "[+-]?[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
     std::string rs = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
     std::string r1 = rr + ",? " + rr + ",? " + rr;
     std::string r2 = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
@@ -584,17 +587,34 @@ private:
     std::unordered_map<std::string, std::string> regexMap =
     {
       {"integer", ri},
+      {"localIndex", ri},
+      {"globalIndex", ri},
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
       {"R2Tensor", r2},
       {"R2SymTensor", r2s},
       {"integer_array", "((" + ri + ",? )*)?" + ri},
+      {"localIndex_array", "((" + ri + ",? )*)?" + ri},
+      {"globalIndex_array", "((" + ri + ",? )*)?" + ri},
       {"real32_array", "((" + rr + ",? )*)?" + rr},
       {"real64_array", "((" + rr + ",? )*)?" + rr},
       {"r1_array", "((" + r1 + "; )*)?" + r1},
       {"r2_array", "((" + r2 + "; )*)?" + r2},
       {"r2Sym_array", "((" + r2s + "; )*)?" + r2s},
+      {"integer_array2d", ""},
+      {"localIndex_array2d", ""},
+      {"globalIndex_array2d", ""},
+      {"real32_array2d", ""},
+      {"real64_array2d", ""},
+      {"r1_array2d", ""},
+      {"r2_array2d", ""},
+      {"r2Sym_array2d", ""},
+      {"integer_array3d", ""},
+      {"localIndex_array3d", ""},
+      {"globalIndex_array3d", ""},
+      {"real32_array3d", ""},
+      {"real64_array3d", ""},
       {"string", rs},
       {"string_array", "((" + rs + ",? )*)?" + rs},
       {"mapPair", rs},

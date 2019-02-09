@@ -83,10 +83,6 @@ public:
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
 
-
-//  void FillDocumentationNode() override final;
-
-
   void SetEdgeMaps( EdgeManager const * const edgeManager );
 
   void SetFaceMaps( FaceManager const * const faceManager );

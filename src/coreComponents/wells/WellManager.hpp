@@ -38,7 +38,6 @@ namespace keys
 }
 
 class Well;
-class WellBase;
   
 class WellManager : public dataRepository::ManagedGroup
 {

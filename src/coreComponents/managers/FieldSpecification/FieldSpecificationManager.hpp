@@ -62,6 +62,8 @@ public:
    */
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
   /**
    * @brief Function to apply a value directly to a field variable.
@@ -166,7 +168,7 @@ public:
    */
   template< typename LAMBDA >
   void Apply( real64 const time,
-              dataRepository::ManagedGroup const * domain,
+              dataRepository::ManagedGroup * domain,
               string const & fieldPath,
               string const & fieldName,
               LAMBDA && lambda ) const
@@ -187,10 +189,10 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs->GetStartTime() && time < fs->GetEndTime() && targetName==fieldName ) )
         {
-          MeshLevel const * const meshLevel = domain->group_cast<DomainPartition const *>()->
-                                              getMeshBody( 0 )->getMeshLevel( 0 );
+          MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
+                                        getMeshBody( 0 )->getMeshLevel( 0 );
 
-          dataRepository::ManagedGroup const * targetGroup = meshLevel;
+          dataRepository::ManagedGroup * targetGroup = meshLevel;
 
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
@@ -216,37 +218,6 @@ public:
         }
       }
     }
-  }
-
-  /**
-   * @brief Same as the above, but for a non-const domain and modifying lambda
-   * @tparam LAMBDA
-   * @param time
-   * @param domain
-   * @param fieldPath
-   * @param fieldName
-   * @param lambda
-   */
-  template< typename LAMBDA >
-  void Apply( real64 const time,
-              dataRepository::ManagedGroup * domain,
-              string const & fieldPath,
-              string const & fieldName,
-              LAMBDA && lambda ) const
-  {
-    Apply( time,
-           const_cast<dataRepository::ManagedGroup const *>( domain ),
-           fieldPath,
-           fieldName,
-           [&] ( FieldSpecificationBase const * fs,
-                 string const & setName,
-                 set<localIndex> const & targetSet,
-                 dataRepository::ManagedGroup const * targetGroup,
-                 string const & targetName )
-           {
-             // casting away constness is safe here, since the original object would have been non-const
-             lambda( fs, setName, targetSet, const_cast<dataRepository::ManagedGroup *>( targetGroup ), targetName );
-           } );
   }
 
 private:

@@ -30,7 +30,6 @@
 #include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 #include "ElementRegionManager.hpp"
-#include "wells/WellManager.hpp"
 
 namespace geosx
 {
@@ -66,13 +65,11 @@ public:
 
     // This key is defined in problem manager:
     static constexpr auto elemManagerString = "ElementRegions";
-    static constexpr auto wellManagerString = dataRepository::keys::wellManager;
 
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
     dataRepository::GroupKey elemManager = {elemManagerString};
-    dataRepository::GroupKey wellManager = {wellManagerString};
   } groupKeys;
 
   NodeManager const * getNodeManager() const { return &m_nodeManager; }
@@ -87,16 +84,12 @@ public:
   ElementRegionManager const * getElemManager() const { return &m_elementManager; }
   ElementRegionManager * getElemManager()             { return &m_elementManager; }
 
-  WellManager const * getWellManager() const { return &m_wellManager; }
-  WellManager * getWellManager()             { return &m_wellManager; }
-
 private:
 
   NodeManager m_nodeManager;
   EdgeManager m_edgeManager;
   FaceManager m_faceManager;
   ElementRegionManager m_elementManager;
-  WellManager m_wellManager;
 
 };
 

@@ -126,7 +126,7 @@ public:
   virtual real64
   CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
                         DomainPartition *const domain) override;
-  
+
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
@@ -138,7 +138,7 @@ public:
   ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-  
+
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual void ImplicitStepComplete( real64 const & time,
@@ -267,7 +267,7 @@ public:
                                    Epetra_FEVector * const residual,
                                    real64 const time_n,
                                    real64 const dt );
-  
+
   /**@}*/
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -422,7 +422,7 @@ private:
    * and any applicable hydrostatic equilibration of the domain
    */
   void InitializeFluidState( DomainPartition * const domain );
-  
+
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields

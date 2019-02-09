@@ -57,12 +57,12 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-    for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+    for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
       
-      forall_in_range<POLICY>(0,cellBlock->size(), body);
+      forall_in_range<POLICY>(0,elementSubRegion->size(), body);
 
     }
   }
@@ -76,10 +76,10 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+    for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
 
       forall_in_set<POLICY>(setList, listLen, body);
     }
@@ -87,7 +87,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems_in_subRegion( CellBlockSubRegion const * const subRegion, LAMBDA && body)
+void for_elems_in_subRegion( ElementSubRegionBase const * const subRegion, LAMBDA && body)
 {
   forall_in_range<POLICY>(0,subRegion->size(), body);
 }
@@ -104,9 +104,9 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion(esr);
 
-      forall_in_range<POLICY>(0, cellBlockSubRegion->size(),
+      forall_in_range<POLICY>(0, elementSubRegion->size(),
                               [=](localIndex index) mutable -> void
                               {
                                 lambdaBody(er,esr,index);
@@ -129,6 +129,7 @@ NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body
   return sum.get();
 }
 
+
 template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
 NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
@@ -141,265 +142,30 @@ NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMB
   return sum.get();
 }
 
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-NUMBER sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+template<class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 {
-  NUMBER sum = 0;
+  real64 sum = 0.0;
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto const * const elementSubRegion )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-
       auto ebody = [=](localIndex index) mutable -> real64
       {
         return lambdaBody(er,esr,index);
       };
 
-      sum += sum_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
-    }
+      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, elementSubRegion->size(), ebody);
+    });
   }
 
   return sum;
 }
 
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER min_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
-{
-  RAJA::ReduceMin<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
-
-  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    minval.min(body(index));
-  });
-
-
-  return minval.get();
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER min_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
-{
-  RAJA::ReduceMin<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
-  forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    minval.min(body(index));
-  });
-
-  return minval.get();
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-NUMBER minOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
-{
-  NUMBER minVal = std::numeric_limits<NUMBER>::max();
-
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-    {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-
-      auto ebody = [=](localIndex index) mutable -> real64
-      {
-        return lambdaBody(er,esr,index);
-      };
-
-      minVal = std::min(minVal, min_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody));
-    }
-  }
-
-  return minVal;
-}
-
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER max_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
-{
-  RAJA::ReduceMax<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
-
-  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    maxval.max(body(index));
-  });
-
-
-  return maxval.get();
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER max_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
-{
-  RAJA::ReduceMax<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
-  forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    maxval.max(body(index));
-  });
-
-  return maxval.get();
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-NUMBER maxOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
-{
-  NUMBER maxVal = std::numeric_limits<NUMBER>::min();
-
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-    {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-
-      auto ebody = [=](localIndex index) mutable -> real64
-      {
-        return lambdaBody(er,esr,index);
-      };
-
-      maxVal = std::max(maxVal, max_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody));
-    }
-  }
-
-  return maxVal;
-}
-
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-std::pair<NUMBER, localIndex>
-minloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
-{
-  RAJA::ReduceMinLoc<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
-
-  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    minval.minloc(body(index), index);
-  });
-
-
-  return std::make_pair(minval.get(), minval.getLoc());
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-std::pair<NUMBER, localIndex>
-minloc_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
-{
-  RAJA::ReduceMinLoc<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
-  forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    minval.minloc(body(index), index);
-  });
-
-  return std::make_pair(minval.get(), minval.getLoc());
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
-minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
-{
-  NUMBER minVal = std::numeric_limits<NUMBER>::max();
-  localIndex minReg = -1, minSubreg = -1, minIndex = -1;
-
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-    {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-
-      auto ebody = [=](localIndex index) mutable -> real64
-      {
-        return lambdaBody(er,esr,index);
-      };
-
-      auto ret = minloc_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
-      if (ret.first < minVal)
-      {
-        minVal    = ret.first;
-        minReg    = er;
-        minSubreg = esr;
-        minIndex  = ret.second;
-      }
-    }
-  }
-
-  return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
-}
-
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-std::pair<NUMBER, localIndex>
-maxloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
-{
-  RAJA::ReduceMinLoc<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
-
-  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    maxval.maxloc(body(index), index);
-  });
-
-
-  return std::make_pair(maxval.get(), maxval.getLoc());
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-std::pair<NUMBER, localIndex>
-maxloc_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
-{
-  RAJA::ReduceMaxLoc<REDUCE_POLICY, NUMBER> maxval(std::numeric_limits<NUMBER>::min());
-  forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-    maxval.maxloc(body(index), index);
-  });
-
-  return std::make_pair(maxval.get(), maxval.getLoc());
-}
-
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
-maxLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
-{
-  NUMBER maxVal = std::numeric_limits<NUMBER>::min();
-  localIndex maxReg = -1, maxSubreg = -1, maxIndex = -1;
-
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-    {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-
-      auto ebody = [=](localIndex index) mutable -> real64
-      {
-        return lambdaBody(er,esr,index);
-      };
-
-      auto ret = maxloc_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
-      if (ret.first > maxVal)
-      {
-        maxVal    = ret.first;
-        maxReg    = er;
-        maxSubreg = esr;
-        maxIndex  = ret.second;
-      }
-    }
-  }
-
-  return std::make_pair(maxVal, std::make_tuple(maxReg, maxSubreg, maxIndex));
-}
 
 }
 
@@ -430,10 +196,10 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
     FiniteElementSpace const * const feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-    dataRepository::ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
-    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    dataRepository::ManagedGroup const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
+    for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellBlockSubRegion const * cellBlock = elementSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
 
       //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
       arrayView3d<R1Tensor> const & dNdX = cellBlock->getReference< array3d<R1Tensor> >(dataRepository::keys::dNdX);

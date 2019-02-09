@@ -25,27 +25,70 @@
 #ifndef ELEMENTREGION_H
 #define ELEMENTREGION_H
 
+#include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "FaceManager.hpp"
-
-
-
-class StableTimeStep;
+#include "FaceElementSubRegion.hpp"
 
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const cellBlockSubRegions = "cellBlockSubRegions";
-string const cellBlockSubRegionNames = "cellBlocks";
-}
-}
+//template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+//constexpr static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
+//{
+//  bool rval = false;
+//
+//  SUBREGIONTYPE * const subRegion = dynamic_cast<SUBREGIONTYPE *>( cellSubRegion );
+//  if( subRegion!= nullptr )
+//  {
+//    lambda( subRegion );
+//    rval = true;
+//  }
+//  else
+//  {
+//    rval = applyLambdaToCellBlocks< SUBREGIONTYPES..., LAMBDA >( cellSubRegion, std::forward<LAMBDA>(lambda) );
+//  }
+//
+//  return rval;
+//}
+//
+//template< typename SUBREGIONTYPE, typename LAMBDA >
+//constexpr static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
+//{
+//  bool rval = false;
+//  SUBREGIONTYPE * const subRegion = dynamic_cast<SUBREGIONTYPE *>( cellSubRegion );
+//  if( subRegion!= nullptr )
+//  {
+//    lambda( subRegion );
+//    rval=true;
+//  }
+//
+//  return rval;
+//}
+//
+//template< typename... SUBREGIONTYPES, typename LAMBDA >
+//void forSomeCellBlocks( LAMBDA && lambda ) const
+//{
+//  ManagedGroup const * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
+//
+//  for( auto const & subGroupIter : cellBlockSubRegions->GetSubGroups() )
+//  {
+//    bool isNull =
+//    !applyLambdaToCellBlocks<SUBREGIONTYPES...>( subGroupIter.second, [&]( auto * const subRegion )
+//    {
+//      lambda( subRegion );
+//    });
+//    GEOS_ERROR_IF( isNull, "subRegion "<<subGroupIter.second->getName()<<" is can not be casted to any "
+//                   "types specified in parameter pack.");
+//  }
+//}
 
-class CellBlockSubRegion;
 
+
+
+
+
+class StableTimeStep;
 
 
 /**
@@ -81,80 +124,164 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlocks );
 
+  void GenerateFractureMesh( FaceManager const * const faceManager );
+
   subGroupMap & GetSubRegions()
   {
-    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
   subGroupMap const & GetSubRegions() const
   {
-    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
-  CellBlockSubRegion const * GetSubRegion( string const & regionName ) const
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
   }
-  CellBlockSubRegion * GetSubRegion( string const & regionName )
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE * GetSubRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
   }
 
-  CellBlockSubRegion const * GetSubRegion( localIndex const & index ) const
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
   }
-  CellBlockSubRegion * GetSubRegion( localIndex const & index )
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE * GetSubRegion( localIndex const & index )
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
   }
 
   localIndex numSubRegions() const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups().size();
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
 
   template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda )
+  static bool applyLambdaToCellBlocks( ManagedGroup const * const cellSubRegion, LAMBDA&& lambda )
+  { return false; }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  static bool applyLambdaToCellBlocks( ManagedGroup const * const cellSubRegion, LAMBDA&& lambda )
   {
-    ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
-
-    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion * subRegion ) -> void
-      {
-        lambda( subRegion );
-      });
-  }
-
-
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda ) const
-  {
-    ManagedGroup const * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
-
-    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion const * subRegion ) -> void
-      {
-        lambda( subRegion );
-      });
-  }
-
-  template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA lambda ) const
-  {
-    for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
+    bool rval = false;
+    SUBREGIONTYPE const * const subRegion = dynamic_cast<SUBREGIONTYPE const *>( cellSubRegion );
+    if( subRegion!= nullptr )
     {
-      CellBlockSubRegion const * cellBlock = this->GetSubRegion(esr);
-      lambda( esr, cellBlock );
+      lambda( subRegion );
+      rval = true;
+    }
+    else
+    {
+      rval = applyLambdaToCellBlocks< SUBREGIONTYPES... >( cellSubRegion, std::forward<LAMBDA>(lambda) );
+    }
+    return rval;
+  }
+
+  template< typename LAMBDA >
+  static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
+  { return false; }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
+  {
+    bool rval = false;
+    SUBREGIONTYPE * const subRegion = dynamic_cast<SUBREGIONTYPE *>( cellSubRegion );
+    if( subRegion!= nullptr )
+    {
+      lambda( subRegion );
+      rval = true;
+    }
+    else
+    {
+      rval = applyLambdaToCellBlocks< SUBREGIONTYPES... >( cellSubRegion, std::forward<LAMBDA>(lambda) );
+    }
+    return rval;
+  }
+
+  template< typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda ) const
+  {
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda )
+  {
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda ) const
+  {
+    ManagedGroup const * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+
+    for( auto const & subGroupIter : elementSubRegions->GetSubGroups() )
+    {
+      applyLambdaToCellBlocks<SUBREGIONTYPE, SUBREGIONTYPES...>( subGroupIter.second, [&]( auto const * const subRegion )
+      {
+        lambda( subRegion );
+      });
     }
   }
 
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda )
+  {
+    ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+
+    for( auto & subGroupIter : elementSubRegions->GetSubGroups() )
+    {
+      applyLambdaToCellBlocks<SUBREGIONTYPE, SUBREGIONTYPES...>( subGroupIter.second, [&]( auto * const subRegion )
+      {
+        lambda( subRegion );
+      });
+    }
+  }
+
+
   template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA lambda )
+  void forElementSubRegionsIndex( LAMBDA && lambda ) const
+  {
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementSubRegionsIndex( LAMBDA && lambda )
+  {
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion * cellBlock = this->GetSubRegion(esr);
-      lambda( esr, cellBlock );
+      ElementSubRegionBase const * const subRegion = this->GetSubRegion(esr);
+      applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+      {
+        lambda( esr, castedSubRegion );
+      });
+    }
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsIndex( LAMBDA && lambda )
+  {
+    for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
+    {
+      ElementSubRegionBase * const subRegion = this->GetSubRegion(esr);
+      applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+      {
+        lambda( esr, castedSubRegion );
+      });
     }
   }
 
@@ -162,6 +289,9 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
+    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr auto elementSubRegions = "elementSubRegions";
+    static constexpr auto sourceCellBlockNames = "cellBlocks";
 
   } m_regionViewKeys;
 
@@ -174,7 +304,11 @@ protected:
 private:
 
   ElementRegion& operator=(const ElementRegion& rhs);
+
+  string_array m_cellBlockNames;
+  string_array m_fractureSetNames;
   string_array m_materialList;
+  string m_numericalMethod;
 
 };
 

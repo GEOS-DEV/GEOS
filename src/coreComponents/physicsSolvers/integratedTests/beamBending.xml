@@ -10,8 +10,7 @@
                                   discretization="FE1"
                                   targetRegions="Region2"
                                   >
-      <SystemSolverParameters name="solverParams0"
-                              useMLPrecond="1"
+      <SystemSolverParameters useMLPrecond="1"
                               scalingOption="0"
                               krylovTol="1.0e-8"
                               newtonTol="1.0e-4"
@@ -68,7 +67,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -87,10 +86,6 @@
                               ShearModulus0="4.16667e9"/>
   </Constitutive>
 
-
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
 
@@ -131,21 +126,9 @@
     <TableFunction     name="timeFunction"         inputVarNames="time"  coordinates="0.0 10.0" values="0.0 10.0" />
   </Functions>
 
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
-
- 
   <Outputs>
     <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub"/>
     <Restart name="sidre_restart"/>
   </Outputs>
-  
-
-  <Nodesets>
-  </Nodesets>
-
-
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
 
 </Problem>

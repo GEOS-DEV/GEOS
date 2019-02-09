@@ -1,0 +1,1 @@
+.. include:: ../../../../src/coreComponents/common/docs/caliper.rst

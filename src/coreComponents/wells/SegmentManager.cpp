@@ -23,7 +23,6 @@
 
 #include "SegmentManager.hpp"
 #include "Segment.hpp"
-#include "WellBase.hpp"
 
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"

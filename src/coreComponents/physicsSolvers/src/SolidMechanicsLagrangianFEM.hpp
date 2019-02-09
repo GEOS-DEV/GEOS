@@ -61,6 +61,8 @@ public:
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
@@ -237,7 +239,7 @@ public:
     static constexpr auto newmarkBetaString = "newmarkBeta";
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
-    static constexpr auto useVelocityEstimateForQSString = "useVelocityEstimateForQuasiStatic";
+    static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
     static constexpr auto trilinosIndexString = "trilinosIndex";
     static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";

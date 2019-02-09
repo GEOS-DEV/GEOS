@@ -4,18 +4,14 @@
 set( wells_headers
      WellManager.hpp
      Well.hpp
-     WellBase.hpp
-     SimpleWell.hpp
      WellSolverBase.hpp
      SinglePhaseWell.hpp
      CompositionalMultiphaseWell.hpp
      Segment.hpp
      SegmentManager.hpp
      Connection.hpp
-     ConnectionManager.hpp
      ConnectionData.hpp
      Perforation.hpp
-     PerforationManager.hpp
      PerforationData.hpp
    )
 #
@@ -24,18 +20,14 @@ set( wells_headers
 set( wells_sources
      WellManager.cpp
      Well.cpp
-     WellBase.cpp
-     SimpleWell.cpp
      WellSolverBase.cpp
      SinglePhaseWell.cpp
      CompositionalMultiphaseWell.cpp
      Segment.cpp
      SegmentManager.cpp
      Connection.cpp
-     ConnectionManager.cpp
      ConnectionData.cpp
      Perforation.cpp
-     PerforationManager.cpp
      PerforationData.cpp
    )
 

@@ -71,26 +71,6 @@ NodeManager::NodeManager( std::string const & name,
 
 
 // *********************************************************************************************************************
-/**
- * @author R.R. Settgast
- * @return
- */
-/*
-   NodeManagerT::NodeManagerT( const NodeManagerT& init ):
-   ObjectDataStructureBaseT(init),
-   DataLengths()(this->m_DataLengths),
-   m_refposition(NULL),
-   m_displacement(NULL),
-   m_incrementalDisplacement(NULL),
-   m_velocity(NULL),
-   m_acceleration(NULL),
-   m_force(NULL),
-   m_mass(NULL),
-   m_toElementsRelation(init.m_toElementsRelation),
-   m_nodeToFaceMap(m_UnorderedVariableOneToManyMaps["nodeToFaceMap"]),
-   m_nodeToEdgeMap(m_UnorderedVariableOneToManyMaps["nodeToEdgeMap"])
-   {}
- */
 
 // *********************************************************************************************************************
 /**
@@ -100,38 +80,6 @@ NodeManager::NodeManager( std::string const & name,
 NodeManager::~NodeManager()
 {}
 
-
-//void NodeManager::Initialize()
-//{
-//  this->AddKeyedDataField<FieldInfo::referencePosition>();
-//
-//}
-
-
-
-//void NodeManager::FillDocumentationNode()
-//{
-//  ObjectManagerBase::FillDocumentationNode();
-//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-//
-//  docNode->setName( this->getCatalogName() );
-//  docNode->setSchemaType( "Node" );
-//  docNode->setShortDescription( "a node manager" );
-//
-//
-//  docNode->AllocateChildNode( keys::referencePositionString,
-//                              keys::referencePositionString,
-//                              -1,
-//                              "r1_array",
-//                              "r1_array",
-//                              "reference position of nodes",
-//                              "reference position of nodes",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              1 );
-//}
 
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
@@ -199,15 +147,15 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ElementSubRegionBase const * const subRegion = elemRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetGroup<ElementSubRegionBase>(kSubReg);
 
-      FixedOneToManyRelation const & elemsToNodes = subRegion->getReference<FixedOneToManyRelation>(subRegion->viewKeys().nodeList);
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
+        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
+        for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
-          localIndex nodeIndex = elemsToNodes[ke][a];
+          localIndex nodeIndex = elemToNodes[a];
           toElementRegionList[nodeIndex].push_back( kReg );
           toElementSubRegionList[nodeIndex].push_back( kSubReg );
           toElementList[nodeIndex].push_back( ke );

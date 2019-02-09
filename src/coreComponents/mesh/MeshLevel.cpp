@@ -39,8 +39,7 @@ MeshLevel::MeshLevel( string const & name,
   m_nodeManager( groupStructKeys::nodeManagerString,this),
   m_edgeManager( groupStructKeys::edgeManagerString,this),
   m_faceManager( groupStructKeys::faceManagerString,this),
-  m_elementManager( groupStructKeys::elemManagerString,this),
-  m_wellManager( groupStructKeys::wellManagerString,this)
+  m_elementManager( groupStructKeys::elemManagerString,this)
 {
 
   RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
@@ -54,8 +53,6 @@ MeshLevel::MeshLevel( string const & name,
 
   RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
 
-  // TODO this is probably wrong. Should belong to Domain or ProblemManager.
-  RegisterGroup<WellManager>( groupStructKeys::wellManagerString, &m_wellManager, false );
 
   RegisterViewWrapper<integer>( viewKeys.meshLevel );
 }
@@ -117,7 +114,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
       for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+        CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(kSubReg);
 
         array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
         array2d<localIndex> const & elemsToFaces = subRegion->faceList();

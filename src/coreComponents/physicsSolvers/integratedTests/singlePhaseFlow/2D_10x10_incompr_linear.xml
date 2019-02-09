@@ -4,7 +4,7 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                      verboseLevel="1"
@@ -13,8 +13,7 @@
                      fluidName="water"
                      solidName="rock"
                      targetRegions="Region2">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-12"
+      <SystemSolverParameters krylovTol="1.0e-12"
                               newtonTol="1.0e-8"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
@@ -33,10 +32,10 @@
   </Mesh>
 
   <Geometry>
-    <Box name="left"   xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 10.01, 1.01"/>
-    <Box name="right"  xMin=" 8.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
-    <Box name="top"    xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="left"   xMin="-0.01, -0.01, -0.01" xMax="1.01, 10.01, 1.01"/>
+    <Box name="right"  xMin="8.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+    <Box name="top"    xMin="-0.01, 8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
   </Geometry>
 
 
@@ -84,16 +83,12 @@
                                  compressibility="0.0"/>
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -101,7 +96,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -109,26 +104,26 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="0.0"/>
 
     <FieldSpecification name="boundaryPressure"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                functionName="boundaryPressureFunc"
                scale="1.0e7"
@@ -138,20 +133,18 @@
   <Functions>
     <SymbolicFunction name="boundaryPressureFunc"
                       inputVarNames="elementCenter"
-                      inputVarTypes=""
                       variableNames="x y z"
                       expression="(10-x)/10"/>
 
     <SymbolicFunction name="solutionFunction"
                       inputVarNames="elementCenter"
-                      inputVarTypes=""
                       variableNames="x y z"
                       expression="1e7*(10-x)/10"/>
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
   <Outputs>
       <Silo name="siloOutput"/>

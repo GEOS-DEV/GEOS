@@ -4,7 +4,7 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                           verboseLevel="0"
@@ -13,8 +13,7 @@
                           solidName="rock"
                           discretization="singlePhaseTPFA"
                           targetRegions="Domain">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
@@ -26,8 +25,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax=" 1e9,  1e9,  1e9"/>
-    <Box name="left" xMin="-1, -1, -1" xMax=" 0.9, 11, 11"/>
+    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
+    <Box name="left" xMin="-1, -1, -1" xMax="0.9, 11, 11"/>
   </Geometry>
 
 
@@ -66,7 +65,7 @@
 
 
   <ElementRegions>
-    <ElementRegion name="Domain" cellBlocks="PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID" materialList="water rock"/>
+    <ElementRegion name="Domain" cellBlocks="0_PYRAMID" materialList="water rock"/>
   </ElementRegions>
 
   <Constitutive>
@@ -81,16 +80,12 @@
                                  compressibility="1e-9"/>
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_PYRAMID"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -98,7 +93,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_PYRAMID"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -106,21 +101,21 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_PYRAMID"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_PYRAMID"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/cellBlockSubRegions/PART00001_POLYHEDRON_POLYHEDRON_GROUP_0_PYRAMID"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_PYRAMID"
                fieldName="pressure"
                scale="1e3"/>
     <FieldSpecification name="boundaryPressure"
@@ -134,9 +129,9 @@
 
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
   <Outputs>
       <Silo name="siloWellPump"/>

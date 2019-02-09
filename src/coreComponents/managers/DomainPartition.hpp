@@ -107,7 +107,7 @@ public:
   struct groupKeysStruct
   {
     static constexpr auto meshBodiesString = "MeshBodies";
-    static constexpr auto constitutiveManagerString = "ConstitutiveManager";
+    static constexpr auto constitutiveManagerString = "Constitutive";
 
     dataRepository::GroupKey meshBodies           = { meshBodiesString };
     dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
