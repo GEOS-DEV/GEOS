@@ -539,8 +539,8 @@ public:
     constexpr static auto initialConditionString = "initialCondition";
     constexpr static auto beginTimeString = "beginTime";
     constexpr static auto endTimeString = "endTime";
-
-
+    constexpr static auto readFromString = "readFrom";
+    constexpr static auto nameFromString = "nameFrom";
   } viewKeys;
 
   struct groupKeyStruct
@@ -642,6 +642,12 @@ private:
 
   /// the name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
+
+  /// Name on the mesh on which the property is.
+  string m_readFrom;
+
+  /// Tag or name of the property on the imported mesh
+  string m_nameFrom;
 
 
 };

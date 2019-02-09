@@ -89,6 +89,14 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, ManagedGrou
     setApplyDefaultValue(1.0e99)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("time at which bc will stop being applied");
+
+  RegisterViewWrapper( viewKeyStruct::readFromString, &m_readFrom, 0 )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of the mesh on which the property is");
+
+  RegisterViewWrapper( viewKeyStruct::readFromString, &m_nameFrom, 0 )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name or tag of the property within the imported mesh");
 }
 
 
