@@ -103,40 +103,71 @@ void testMatrixConstructors()
   C(2,2) = 0.5;
   C(3,3) = -1;
 
-  Cinv.invert(C);
+  C.computeInverse(Cinv);
 
-  A.print();
-  std::cout << "Determinant of A: " << A.determinant() << std::endl;
-  std::cout << "Determinant of B: " << B.determinant() << std::endl;
-  std::cout << "Matrix C" << std::endl;
-  C.print();
-  std::cout << "Matrix C^-1" << std::endl;
-  Cinv.print();
-  BlasMatrix CinvxC(4,4);
-  CinvxC.GEMM(Cinv,C);
-  std::cout << "Matrix C^-1*C" << std::endl;
-  CinvxC.print();
-
-  CinvxC.GEMM(C,Cinv);
-  std::cout << "Matrix C*C^-1" << std::endl;
-  CinvxC.print();
+//  A.print();
+//  std::cout << "Determinant of A: " << A.determinant() << std::endl;
+//  std::cout << "Determinant of B: " << B.determinant() << std::endl;
+//  std::cout << "Matrix C" << std::endl;
+//  C.print();
+//  std::cout << "Matrix C^-1" << std::endl;
+//  Cinv.print();
+//  BlasMatrix CinvxC(4,4);
+//  CinvxC.GEMM(Cinv,C);
+//  std::cout << "Matrix C^-1*C" << std::endl;
+////  CinvxC.print();
+//
+//  CinvxC.GEMM(C,Cinv);
+//  std::cout << "Matrix C*C^-1" << std::endl;
+//  CinvxC.print();
 
   BlasMatrix D(C);
   D.MatAdd(Cinv);
-
   std::cout << "Matrix D" << std::endl;
   D.print();
 
 
+  BlasMatrix E;
+  localIndex max_dim = 6;
+  for (localIndex order = 1; order <= max_dim; ++order )
+  {
+    E.resize(order);
+    for (localIndex i = 0; i < E.getNumCols(); ++i)
+      for (localIndex j = 0; j < E.getNumRows(); ++j)
+      {
+        if ( i == j)
+        {
+          E(i,i) = 2;
+        }
+        else if (abs(i - j) == 1)
+        {
+          E(i,j) = -1;
+        }
+
+      }
+
+    std::cout << "Matrix E" << std::endl;
+    E.print();
+
+    BlasMatrix Einv;
+    E.computeInverse(Einv);
+    std::cout << "Matrix Einv" << std::endl;
+    Einv.print();
+
+    BlasMatrix EinvXE(E.getNumRows());
+    EinvXE.GEMM(Einv, E);
+    std::cout << "Matrix Einv*E" << std::endl;
+    EinvXE.print();
+  }
 //  SerialDenseMatrix A5(3,3);
 //  SerialDenseMatrix B(3,2);
 //  SerialDenseMatrix C(3,2);
 //  SerialDenseMatrix D(2,2);
 //  SerialDenseMatrix E(2,3);
-//  SerialDenseMatrix F(1,1);
+//  SerialDenseMatrix F(1,1);S
 
-  EXPECT_EQ( A.get_nRows(), 2);
-  EXPECT_EQ( B.get_nRows(), 3);
+  EXPECT_EQ( A.getNumRows(), 2);
+  EXPECT_EQ( B.getNumRows(), 3);
 }
 
 
