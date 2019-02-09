@@ -45,8 +45,8 @@ BlasMatrix::BlasMatrix( localIndex order )
 
 BlasMatrix::BlasMatrix( BlasMatrix const & src )
 :
-    m_height( src.m_height ),
-    m_width( src.m_width ),
+    m_numRows( src.m_numRows ),
+    m_numCols( src.m_numCols ),
     m_values( src.m_values )
 {
 
@@ -61,11 +61,11 @@ BlasMatrix::~BlasMatrix()
 void BlasMatrix::resize( localIndex nRows,
                          localIndex nCols )
 {
-  GEOS_ASSERT_MSG( nRows > 0, "Matrix number rows must be > 0" );
-  GEOS_ASSERT_MSG( nCols > 0, "Matrix number of columns must be > 0" );
-  m_height = nRows;
-  m_width = nCols;
-  m_values.resizeDefault( m_height * m_width, 0.0 );
+  GEOS_ERROR_IF( nRows <= 0, "Matrix number rows must be > 0" );
+  GEOS_ERROR_IF( nCols <= 0, "Matrix number of columns must be > 0" );
+  m_numRows = nRows;
+  m_numCols = nCols;
+  m_values.resizeDefault( m_numRows * m_numCols, 0.0 );
 }
 
 void BlasMatrix::resize( localIndex order )
@@ -78,9 +78,9 @@ void BlasMatrix::resize( localIndex order )
 double BlasMatrix::determinant()
 {
   // --- check that matrix is square
-  GEOS_ASSERT_MSG( m_height == m_width, "Matrix must be square" );
+  GEOS_ERROR_IF( m_numRows != m_numCols, "Matrix must be square" );
 
-  switch( m_width )
+  switch( m_numCols )
   {
     case 1:
       return m_values[0];
@@ -100,147 +100,166 @@ double BlasMatrix::determinant()
 }
 
 // computes inverse matrix
-void BlasMatrix::invert( BlasMatrix & src )
+void BlasMatrix::computeInverse( BlasMatrix & dst )
 {
   // --- Check that source matrix is square
-  localIndex order = src.get_nRows();
-  GEOS_ASSERT_MSG( order == src.get_nCols(), "Source matrix must be square" );
+  localIndex order = this->getNumRows();
+  GEOS_ERROR_IF( order != this->getNumCols(),
+                 "Determinant computation implemented up to matrix 3x3" );
 
   // --- Initialize the inverse matrix to the appropriate dimension
-  this->resize( order,
-                order );
+  dst.resize( order,
+              order );
 
-  switch( m_width )
+  switch( m_numCols )
   {
     case 1:
-      ( *this )( 0, 0 ) = 1. / src( 0, 0 );
+      dst( 0, 0 ) = 1. / ( *this )( 0, 0 );
       return;
 
       // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
     case 2:
       {
-      const double t4 = 1. / ( src( 0, 0 ) * src( 1, 1 ) - src( 0, 1 ) * src( 1, 0 ) );
-      ( *this )( 0, 0 ) = src( 1, 1 ) * t4;
-      ( *this )( 0, 1 ) = -src( 0, 1 ) * t4;
-      ( *this )( 1, 0 ) = -src( 1, 0 ) * t4;
-      ( *this )( 1, 1 ) = src( 0, 0 ) * t4;
+      const double t4 = 1. / ( ( *this )( 0, 0 ) * ( *this )( 1, 1 ) - ( *this )( 0, 1 ) * ( *this )( 1, 0 ) );
+      dst( 0, 0 ) = ( *this )( 1, 1 ) * t4;
+      dst( 0, 1 ) = -( *this )( 0, 1 ) * t4;
+      dst( 1, 0 ) = -( *this )( 1, 0 ) * t4;
+      dst( 1, 1 ) = ( *this )( 0, 0 ) * t4;
       return;
     }
       ;
 
     case 3:
       {
-      const double t4 = src( 0, 0 ) * src( 1, 1 ),
-          t6 = src( 0, 0 ) * src( 1, 2 ),
-          t8 = src( 0, 1 ) * src( 1, 0 ),
-          t00 = src( 0, 2 ) * src( 1, 0 ),
-          t01 = src( 0, 1 ) * src( 2, 0 ),
-          t04 = src( 0, 2 ) * src( 2, 0 ),
-          t07 = 1. / ( t4 * src( 2, 2 ) - t6 * src( 2, 1 ) - t8 * src( 2, 2 ) +
-              t00 * src( 2, 1 ) + t01 * src( 1, 2 ) - t04 * src( 1, 1 ) );
-      ( *this )( 0, 0 ) = ( src( 1, 1 ) * src( 2, 2 ) - src( 1, 2 ) * src( 2, 1 ) ) * t07;
-      ( *this )( 0, 1 ) = -( src( 0, 1 ) * src( 2, 2 ) - src( 0, 2 ) * src( 2, 1 ) ) * t07;
-      ( *this )( 0, 2 ) = -( -src( 0, 1 ) * src( 1, 2 ) + src( 0, 2 ) * src( 1, 1 ) ) * t07;
-      ( *this )( 1, 0 ) = -( src( 1, 0 ) * src( 2, 2 ) - src( 1, 2 ) * src( 2, 0 ) ) * t07;
-      ( *this )( 1, 1 ) = ( src( 0, 0 ) * src( 2, 2 ) - t04 ) * t07;
-      ( *this )( 1, 2 ) = -( t6 - t00 ) * t07;
-      ( *this )( 2, 0 ) = -( -src( 1, 0 ) * src( 2, 1 ) + src( 1, 1 ) * src( 2, 0 ) ) * t07;
-      ( *this )( 2, 1 ) = -( src( 0, 0 ) * src( 2, 1 ) - t01 ) * t07;
-      ( *this )( 2, 2 ) = ( t4 - t8 ) * t07;
+      const double t4 = ( *this )( 0, 0 ) * ( *this )( 1, 1 ),
+          t6 = ( *this )( 0, 0 ) * ( *this )( 1, 2 ),
+          t8 = ( *this )( 0, 1 ) * ( *this )( 1, 0 ),
+          t00 = ( *this )( 0, 2 ) * ( *this )( 1, 0 ),
+          t01 = ( *this )( 0, 1 ) * ( *this )( 2, 0 ),
+          t04 = ( *this )( 0, 2 ) * ( *this )( 2, 0 ),
+          t07 = 1. / ( t4 * ( *this )( 2, 2 ) - t6 * ( *this )( 2, 1 ) - t8 * ( *this )( 2, 2 ) +
+              t00 * ( *this )( 2, 1 ) + t01 * ( *this )( 1, 2 ) - t04 * ( *this )( 1, 1 ) );
+      dst( 0, 0 ) = ( ( *this )( 1, 1 ) * ( *this )( 2, 2 ) - ( *this )( 1, 2 ) * ( *this )( 2, 1 ) ) * t07;
+      dst( 0, 1 ) = -( ( *this )( 0, 1 ) * ( *this )( 2, 2 ) - ( *this )( 0, 2 ) * ( *this )( 2, 1 ) ) * t07;
+      dst( 0, 2 ) = -( -( *this )( 0, 1 ) * ( *this )( 1, 2 ) + ( *this )( 0, 2 ) * ( *this )( 1, 1 ) ) * t07;
+      dst( 1, 0 ) = -( ( *this )( 1, 0 ) * ( *this )( 2, 2 ) - ( *this )( 1, 2 ) * ( *this )( 2, 0 ) ) * t07;
+      dst( 1, 1 ) = ( ( *this )( 0, 0 ) * ( *this )( 2, 2 ) - t04 ) * t07;
+      dst( 1, 2 ) = -( t6 - t00 ) * t07;
+      dst( 2, 0 ) = -( -( *this )( 1, 0 ) * ( *this )( 2, 1 ) + ( *this )( 1, 1 ) * ( *this )( 2, 0 ) ) * t07;
+      dst( 2, 1 ) = -( ( *this )( 0, 0 ) * ( *this )( 2, 1 ) - t01 ) * t07;
+      dst( 2, 2 ) = ( t4 - t8 ) * t07;
       return;
     }
       ;
 
     case 4:
       {
-      const double t14 = src( 0, 0 ) * src( 1, 1 );
-      const double t15 = src( 2, 2 ) * src( 3, 3 );
-      const double t17 = src( 2, 3 ) * src( 3, 2 );
-      const double t19 = src( 0, 0 ) * src( 2, 1 );
-      const double t20 = src( 1, 2 ) * src( 3, 3 );
-      const double t22 = src( 1, 3 ) * src( 3, 2 );
-      const double t24 = src( 0, 0 ) * src( 3, 1 );
-      const double t25 = src( 1, 2 ) * src( 2, 3 );
-      const double t27 = src( 1, 3 ) * src( 2, 2 );
-      const double t29 = src( 1, 0 ) * src( 0, 1 );
-      const double t32 = src( 1, 0 ) * src( 2, 1 );
-      const double t33 = src( 0, 2 ) * src( 3, 3 );
-      const double t35 = src( 0, 3 ) * src( 3, 2 );
-      const double t37 = src( 1, 0 ) * src( 3, 1 );
-      const double t38 = src( 0, 2 ) * src( 2, 3 );
-      const double t40 = src( 0, 3 ) * src( 2, 2 );
+      const double t14 = ( *this )( 0, 0 ) * ( *this )( 1, 1 );
+      const double t15 = ( *this )( 2, 2 ) * ( *this )( 3, 3 );
+      const double t17 = ( *this )( 2, 3 ) * ( *this )( 3, 2 );
+      const double t19 = ( *this )( 0, 0 ) * ( *this )( 2, 1 );
+      const double t20 = ( *this )( 1, 2 ) * ( *this )( 3, 3 );
+      const double t22 = ( *this )( 1, 3 ) * ( *this )( 3, 2 );
+      const double t24 = ( *this )( 0, 0 ) * ( *this )( 3, 1 );
+      const double t25 = ( *this )( 1, 2 ) * ( *this )( 2, 3 );
+      const double t27 = ( *this )( 1, 3 ) * ( *this )( 2, 2 );
+      const double t29 = ( *this )( 1, 0 ) * ( *this )( 0, 1 );
+      const double t32 = ( *this )( 1, 0 ) * ( *this )( 2, 1 );
+      const double t33 = ( *this )( 0, 2 ) * ( *this )( 3, 3 );
+      const double t35 = ( *this )( 0, 3 ) * ( *this )( 3, 2 );
+      const double t37 = ( *this )( 1, 0 ) * ( *this )( 3, 1 );
+      const double t38 = ( *this )( 0, 2 ) * ( *this )( 2, 3 );
+      const double t40 = ( *this )( 0, 3 ) * ( *this )( 2, 2 );
       const double t42 = t14 * t15 - t14 * t17 - t19 * t20 + t19 * t22 +
           t24 * t25 - t24 * t27 - t29 * t15 + t29 * t17 +
           t32 * t33 - t32 * t35 - t37 * t38 + t37 * t40;
-      const double t43 = src( 2, 0 ) * src( 0, 1 );
-      const double t46 = src( 2, 0 ) * src( 1, 1 );
-      const double t49 = src( 2, 0 ) * src( 3, 1 );
-      const double t50 = src( 0, 2 ) * src( 1, 3 );
-      const double t52 = src( 0, 3 ) * src( 1, 2 );
-      const double t54 = src( 3, 0 ) * src( 0, 1 );
-      const double t57 = src( 3, 0 ) * src( 1, 1 );
-      const double t60 = src( 3, 0 ) * src( 2, 1 );
+      const double t43 = ( *this )( 2, 0 ) * ( *this )( 0, 1 );
+      const double t46 = ( *this )( 2, 0 ) * ( *this )( 1, 1 );
+      const double t49 = ( *this )( 2, 0 ) * ( *this )( 3, 1 );
+      const double t50 = ( *this )( 0, 2 ) * ( *this )( 1, 3 );
+      const double t52 = ( *this )( 0, 3 ) * ( *this )( 1, 2 );
+      const double t54 = ( *this )( 3, 0 ) * ( *this )( 0, 1 );
+      const double t57 = ( *this )( 3, 0 ) * ( *this )( 1, 1 );
+      const double t60 = ( *this )( 3, 0 ) * ( *this )( 2, 1 );
       const double t63 = t43 * t20 - t43 * t22 - t46 * t33 + t46 * t35 +
           t49 * t50 - t49 * t52 - t54 * t25 + t54 * t27 +
           t57 * t38 - t57 * t40 - t60 * t50 + t60 * t52;
       const double t65 = 1. / ( t42 + t63 );
-      const double t71 = src( 0, 2 ) * src( 2, 1 );
-      const double t73 = src( 0, 3 ) * src( 2, 1 );
-      const double t75 = src( 0, 2 ) * src( 3, 1 );
-      const double t77 = src( 0, 3 ) * src( 3, 1 );
-      const double t81 = src( 0, 1 ) * src( 1, 2 );
-      const double t83 = src( 0, 1 ) * src( 1, 3 );
-      const double t85 = src( 0, 2 ) * src( 1, 1 );
-      const double t87 = src( 0, 3 ) * src( 1, 1 );
-      const double t101 = src( 1, 0 ) * src( 2, 2 );
-      const double t103 = src( 1, 0 ) * src( 2, 3 );
-      const double t105 = src( 2, 0 ) * src( 1, 2 );
-      const double t107 = src( 2, 0 ) * src( 1, 3 );
-      const double t109 = src( 3, 0 ) * src( 1, 2 );
-      const double t111 = src( 3, 0 ) * src( 1, 3 );
-      const double t115 = src( 0, 0 ) * src( 2, 2 );
-      const double t117 = src( 0, 0 ) * src( 2, 3 );
-      const double t119 = src( 2, 0 ) * src( 0, 2 );
-      const double t121 = src( 2, 0 ) * src( 0, 3 );
-      const double t123 = src( 3, 0 ) * src( 0, 2 );
-      const double t125 = src( 3, 0 ) * src( 0, 3 );
-      const double t129 = src( 0, 0 ) * src( 1, 2 );
-      const double t131 = src( 0, 0 ) * src( 1, 3 );
-      const double t133 = src( 1, 0 ) * src( 0, 2 );
-      const double t135 = src( 1, 0 ) * src( 0, 3 );
-      ( *this )( 0, 0 ) = ( src( 1, 1 ) * src( 2, 2 ) * src( 3, 3 ) - src( 1, 1 ) * src( 2, 3 ) * src( 3, 2 ) -
-          src( 2, 1 ) * src( 1, 2 ) * src( 3, 3 ) + src( 2, 1 ) * src( 1, 3 ) * src( 3, 2 ) +
-          src( 3, 1 ) * src( 1, 2 ) * src( 2, 3 ) - src( 3, 1 ) * src( 1, 3 ) * src( 2, 2 ) ) * t65;
-      ( *this )( 0, 1 ) = -( src( 0, 1 ) * src( 2, 2 ) * src( 3, 3 ) - src( 0, 1 ) * src( 2, 3 ) * src( 3, 2 ) -
-          t71 * src( 3, 3 ) + t73 * src( 3, 2 ) + t75 * src( 2, 3 ) - t77 * src( 2, 2 ) ) * t65;
-      ( *this )( 0, 2 ) = ( t81 * src( 3, 3 ) - t83 * src( 3, 2 ) - t85 * src( 3, 3 ) + t87 * src( 3, 2 ) +
-          t75 * src( 1, 3 ) - t77 * src( 1, 2 ) ) * t65;
-      ( *this )( 0, 3 ) = -( t81 * src( 2, 3 ) - t83 * src( 2, 2 ) - t85 * src( 2, 3 ) + t87 * src( 2, 2 ) +
-          t71 * src( 1, 3 ) - t73 * src( 1, 2 ) ) * t65;
-      ( *this )( 1, 0 ) = -( t101 * src( 3, 3 ) - t103 * src( 3, 2 ) - t105 * src( 3, 3 ) + t107 * src( 3, 2 ) +
-          t109 * src( 2, 3 ) - t111 * src( 2, 2 ) ) * t65;
-      ( *this )( 1, 1 ) = ( t115 * src( 3, 3 ) - t117 * src( 3, 2 ) - t119 * src( 3, 3 ) + t121 * src( 3, 2 ) +
-          t123 * src( 2, 3 ) - t125 * src( 2, 2 ) ) * t65;
-      ( *this )( 1, 2 ) = -( t129 * src( 3, 3 ) - t131 * src( 3, 2 ) - t133 * src( 3, 3 ) + t135 * src( 3, 2 ) +
-          t123 * src( 1, 3 ) - t125 * src( 1, 2 ) ) * t65;
-      ( *this )( 1, 3 ) = ( t129 * src( 2, 3 ) - t131 * src( 2, 2 ) - t133 * src( 2, 3 ) + t135 * src( 2, 2 ) +
-          t119 * src( 1, 3 ) - t121 * src( 1, 2 ) ) * t65;
-      ( *this )( 2, 0 ) = ( t32 * src( 3, 3 ) - t103 * src( 3, 1 ) - t46 * src( 3, 3 ) + t107 * src( 3, 1 ) +
-          t57 * src( 2, 3 ) - t111 * src( 2, 1 ) ) * t65;
-      ( *this )( 2, 1 ) = -( t19 * src( 3, 3 ) - t117 * src( 3, 1 ) - t43 * src( 3, 3 ) + t121 * src( 3, 1 ) +
-          t54 * src( 2, 3 ) - t125 * src( 2, 1 ) ) * t65;
-      ( *this )( 2, 2 ) = ( t14 * src( 3, 3 ) - t131 * src( 3, 1 ) - t29 * src( 3, 3 ) + t135 * src( 3, 1 ) +
-          t54 * src( 1, 3 ) - t125 * src( 1, 1 ) ) * t65;
-      ( *this )( 2, 3 ) = -( t14 * src( 2, 3 ) - t131 * src( 2, 1 ) - t29 * src( 2, 3 ) + t135 * src( 2, 1 ) +
-          t43 * src( 1, 3 ) - t121 * src( 1, 1 ) ) * t65;
-      ( *this )( 3, 0 ) = -( t32 * src( 3, 2 ) - t101 * src( 3, 1 ) - t46 * src( 3, 2 ) + t105 * src( 3, 1 ) +
-          t57 * src( 2, 2 ) - t109 * src( 2, 1 ) ) * t65;
-      ( *this )( 3, 1 ) = ( t19 * src( 3, 2 ) - t115 * src( 3, 1 ) - t43 * src( 3, 2 ) + t119 * src( 3, 1 ) +
-          t54 * src( 2, 2 ) - t123 * src( 2, 1 ) ) * t65;
-      ( *this )( 3, 2 ) = -( t14 * src( 3, 2 ) - t129 * src( 3, 1 ) - t29 * src( 3, 2 ) + t133 * src( 3, 1 ) +
-          t54 * src( 1, 2 ) - t123 * src( 1, 1 ) ) * t65;
-      ( *this )( 3, 3 ) = ( t14 * src( 2, 2 ) - t129 * src( 2, 1 ) - t29 * src( 2, 2 ) + t133 * src( 2, 1 ) +
-          t43 * src( 1, 2 ) - t119 * src( 1, 1 ) ) * t65;
+      const double t71 = ( *this )( 0, 2 ) * ( *this )( 2, 1 );
+      const double t73 = ( *this )( 0, 3 ) * ( *this )( 2, 1 );
+      const double t75 = ( *this )( 0, 2 ) * ( *this )( 3, 1 );
+      const double t77 = ( *this )( 0, 3 ) * ( *this )( 3, 1 );
+      const double t81 = ( *this )( 0, 1 ) * ( *this )( 1, 2 );
+      const double t83 = ( *this )( 0, 1 ) * ( *this )( 1, 3 );
+      const double t85 = ( *this )( 0, 2 ) * ( *this )( 1, 1 );
+      const double t87 = ( *this )( 0, 3 ) * ( *this )( 1, 1 );
+      const double t101 = ( *this )( 1, 0 ) * ( *this )( 2, 2 );
+      const double t103 = ( *this )( 1, 0 ) * ( *this )( 2, 3 );
+      const double t105 = ( *this )( 2, 0 ) * ( *this )( 1, 2 );
+      const double t107 = ( *this )( 2, 0 ) * ( *this )( 1, 3 );
+      const double t109 = ( *this )( 3, 0 ) * ( *this )( 1, 2 );
+      const double t111 = ( *this )( 3, 0 ) * ( *this )( 1, 3 );
+      const double t115 = ( *this )( 0, 0 ) * ( *this )( 2, 2 );
+      const double t117 = ( *this )( 0, 0 ) * ( *this )( 2, 3 );
+      const double t119 = ( *this )( 2, 0 ) * ( *this )( 0, 2 );
+      const double t121 = ( *this )( 2, 0 ) * ( *this )( 0, 3 );
+      const double t123 = ( *this )( 3, 0 ) * ( *this )( 0, 2 );
+      const double t125 = ( *this )( 3, 0 ) * ( *this )( 0, 3 );
+      const double t129 = ( *this )( 0, 0 ) * ( *this )( 1, 2 );
+      const double t131 = ( *this )( 0, 0 ) * ( *this )( 1, 3 );
+      const double t133 = ( *this )( 1, 0 ) * ( *this )( 0, 2 );
+      const double t135 = ( *this )( 1, 0 ) * ( *this )( 0, 3 );
+      dst( 0, 0 ) = ( ( *this )( 1, 1 ) * ( *this )( 2, 2 ) * ( *this )( 3, 3 ) - ( *this )( 1, 1 ) * ( *this )( 2, 3 ) * ( *this )(
+          3, 2 ) -
+          ( *this )( 2, 1 ) * ( *this )( 1, 2 ) * ( *this )( 3, 3 ) + ( *this )( 2, 1 ) * ( *this )( 1, 3 ) * ( *this )(
+          3, 2 ) +
+          ( *this )( 3, 1 ) * ( *this )( 1, 2 ) * ( *this )( 2, 3 ) - ( *this )( 3, 1 ) * ( *this )( 1, 3 ) * ( *this )(
+          2, 2 ) ) * t65;
+      dst( 0, 1 ) = -( ( *this )( 0, 1 ) * ( *this )( 2, 2 ) * ( *this )( 3, 3 ) - ( *this )( 0, 1 ) * ( *this )( 2, 3 ) * ( *this )(
+          3, 2 ) -
+          t71 * ( *this )( 3, 3 ) + t73 * ( *this )( 3, 2 ) + t75 * ( *this )( 2, 3 ) - t77 * ( *this )( 2, 2 ) ) * t65;
+      dst( 0, 2 ) = ( t81 * ( *this )( 3, 3 ) - t83 * ( *this )( 3, 2 ) - t85 * ( *this )( 3, 3 ) + t87 * ( *this )( 3,
+                                                                                                                     2 ) +
+          t75 * ( *this )( 1, 3 ) - t77 * ( *this )( 1, 2 ) ) * t65;
+      dst( 0, 3 ) = -( t81 * ( *this )( 2, 3 ) - t83 * ( *this )( 2, 2 ) - t85 * ( *this )( 2, 3 ) + t87 * ( *this )(
+          2, 2 ) +
+          t71 * ( *this )( 1, 3 ) - t73 * ( *this )( 1, 2 ) ) * t65;
+      dst( 1, 0 ) = -( t101 * ( *this )( 3, 3 ) - t103 * ( *this )( 3, 2 ) - t105 * ( *this )( 3, 3 ) + t107 * ( *this )(
+          3, 2 ) +
+          t109 * ( *this )( 2, 3 ) - t111 * ( *this )( 2, 2 ) ) * t65;
+      dst( 1, 1 ) = ( t115 * ( *this )( 3, 3 ) - t117 * ( *this )( 3, 2 ) - t119 * ( *this )( 3, 3 ) + t121 * ( *this )(
+          3, 2 ) +
+          t123 * ( *this )( 2, 3 ) - t125 * ( *this )( 2, 2 ) ) * t65;
+      dst( 1, 2 ) = -( t129 * ( *this )( 3, 3 ) - t131 * ( *this )( 3, 2 ) - t133 * ( *this )( 3, 3 ) + t135 * ( *this )(
+          3, 2 ) +
+          t123 * ( *this )( 1, 3 ) - t125 * ( *this )( 1, 2 ) ) * t65;
+      dst( 1, 3 ) = ( t129 * ( *this )( 2, 3 ) - t131 * ( *this )( 2, 2 ) - t133 * ( *this )( 2, 3 ) + t135 * ( *this )(
+          2, 2 ) +
+          t119 * ( *this )( 1, 3 ) - t121 * ( *this )( 1, 2 ) ) * t65;
+      dst( 2, 0 ) = ( t32 * ( *this )( 3, 3 ) - t103 * ( *this )( 3, 1 ) - t46 * ( *this )( 3, 3 ) + t107 * ( *this )(
+          3, 1 ) +
+          t57 * ( *this )( 2, 3 ) - t111 * ( *this )( 2, 1 ) ) * t65;
+      dst( 2, 1 ) = -( t19 * ( *this )( 3, 3 ) - t117 * ( *this )( 3, 1 ) - t43 * ( *this )( 3, 3 ) + t121 * ( *this )(
+          3, 1 ) +
+          t54 * ( *this )( 2, 3 ) - t125 * ( *this )( 2, 1 ) ) * t65;
+      dst( 2, 2 ) = ( t14 * ( *this )( 3, 3 ) - t131 * ( *this )( 3, 1 ) - t29 * ( *this )( 3, 3 ) + t135 * ( *this )(
+          3, 1 ) +
+          t54 * ( *this )( 1, 3 ) - t125 * ( *this )( 1, 1 ) ) * t65;
+      dst( 2, 3 ) = -( t14 * ( *this )( 2, 3 ) - t131 * ( *this )( 2, 1 ) - t29 * ( *this )( 2, 3 ) + t135 * ( *this )(
+          2, 1 ) +
+          t43 * ( *this )( 1, 3 ) - t121 * ( *this )( 1, 1 ) ) * t65;
+      dst( 3, 0 ) = -( t32 * ( *this )( 3, 2 ) - t101 * ( *this )( 3, 1 ) - t46 * ( *this )( 3, 2 ) + t105 * ( *this )(
+          3, 1 ) +
+          t57 * ( *this )( 2, 2 ) - t109 * ( *this )( 2, 1 ) ) * t65;
+      dst( 3, 1 ) = ( t19 * ( *this )( 3, 2 ) - t115 * ( *this )( 3, 1 ) - t43 * ( *this )( 3, 2 ) + t119 * ( *this )(
+          3, 1 ) +
+          t54 * ( *this )( 2, 2 ) - t123 * ( *this )( 2, 1 ) ) * t65;
+      dst( 3, 2 ) = -( t14 * ( *this )( 3, 2 ) - t129 * ( *this )( 3, 1 ) - t29 * ( *this )( 3, 2 ) + t133 * ( *this )(
+          3, 1 ) +
+          t54 * ( *this )( 1, 2 ) - t123 * ( *this )( 1, 1 ) ) * t65;
+      dst( 3, 3 ) = ( t14 * ( *this )( 2, 2 ) - t129 * ( *this )( 2, 1 ) - t29 * ( *this )( 2, 2 ) + t133 * ( *this )(
+          2, 1 ) +
+          t43 * ( *this )( 1, 2 ) - t119 * ( *this )( 1, 1 ) ) * t65;
 
       return;
     }
@@ -248,10 +267,10 @@ void BlasMatrix::invert( BlasMatrix & src )
     default:
       {
       // Copy M in this
-      this->m_values = src.m_values;
+      dst.m_values = this->m_values;
 
       // Declare workspace for permutations and scratch array
-      lapack_int NN = integer_conversion<lapack_int>( this->get_nCols() );
+      lapack_int NN = integer_conversion<lapack_int>( this->getNumCols() );
       array1d<lapack_int> IPIV( NN );
       lapack_int INFO;
       array1d<double> INV_WORK( NN );
@@ -261,86 +280,74 @@ void BlasMatrix::invert( BlasMatrix & src )
       INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
                              NN,
                              NN,
-                             src.m_values.data(),
+                             dst.m_values.data(),
                              NN,
                              IPIV.data() );
-      GEOS_ASSERT_MSG( INFO == 0, "LAPACKE_dgetrf: LU factorization failed" );
+      GEOS_ERROR_IF( INFO != 0,
+                     "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
 
       // --- Invert (LAPACK function DGETRI)
       INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
                              NN,
-                             this->m_values.data(),
+                             dst.m_values.data(),
                              NN,
                              IPIV.data() );
-      GEOS_ASSERT_MSG( INFO == 0, "LAPACKE_dgetri failed" );
+      GEOS_ERROR_IF( INFO != 0,
+                     "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
 
-//      std::vector<int> IPIV( NN );
-//      int INFO;
-//      std::vector<double> INV_WORK(NN);
-//      // Call to BLAS using Epetra BLAS Wrapper Class (Epetra_BLAS)
-//      Epetra_LAPACK Lapack;
-//      // --- Compute LU factorization (LAPACK function DGETRF)
-//      Lapack.GETRF(NN, NN, &(*this)(0,0), NN, &IPIV[0], &INFO);
-//      ASSERT(INFO == 0, "LAPACK DGETRF error");
-//      // --- Invert (LAPACK function DGETRI)
-//      Lapack.GETRI(NN, &(*this)(0,0), NN, &IPIV[0], &INV_WORK[0], &NN, &INFO);
-//      ASSERT(INFO == 0, "LAPACK DGETRI error");
       return;
     }
   }
 }
 
 // matrix-matrix sum (optional scaling)
-void BlasMatrix::MatAdd(BlasMatrix const & A,
-                        real64 const scalarA)
+void BlasMatrix::MatAdd( BlasMatrix const & A,
+                         real64 const scalarA )
 {
-  unsigned int nRowA = A.get_nRows();
-  unsigned int nColA = A.get_nCols();
+  unsigned int nRowA = A.getNumRows();
+  unsigned int nColA = A.getNumCols();
 
-  GEOS_ASSERT_MSG(A.get_nRows() == m_height,
-                  "Matrix dimensions not compatible for sum");
-  GEOS_ASSERT_MSG(A.get_nCols() == m_width,
-                  "Matrix dimensions not compatible for sum");
+  GEOS_ASSERT_MSG( A.getNumRows() == m_numRows,
+                   "Matrix dimensions not compatible for sum" );
+  GEOS_ASSERT_MSG( A.getNumCols() == m_numCols,
+                   "Matrix dimensions not compatible for sum" );
 
-  cblas_daxpy(static_cast<int>(m_values.size()),
-              scalarA,
-              A.m_values.data(),
-              1,
-              m_values.data(),
-              1);
+  cblas_daxpy( static_cast<int>( m_values.size() ),
+               scalarA,
+               A.m_values.data(),
+               1,
+               m_values.data(),
+               1 );
   return;
-
 }
 
 // matrix-matrix multiplication (optional scaling/accumulation)
 void BlasMatrix::GEMM( BlasMatrix const & A,
                        BlasMatrix const & B,
+                       bool transposeA,
+                       bool transposeB,
                        real64 const scalarAB,
                        real64 const scalarThis )
 {
-  GEOS_ASSERT_MSG( A.get_nCols() == B.get_nRows(),
-                   "Matrix dimensions not compatible for product" );
-  GEOS_ASSERT_MSG( A.get_nRows() == m_height,
-                   "Matrix dimensions not compatible for product" );
-  GEOS_ASSERT_MSG( B.get_nCols() == m_width,
-                   "Matrix dimensions not compatible for product" );
 
-  int nRowAi = integer_conversion<int>( A.get_nRows() );
-  int nColAi = integer_conversion<int>( A.get_nCols() );
-  int nRowBi = integer_conversion<int>( B.get_nRows() );
-  int nColBi = integer_conversion<int>( B.get_nCols() );
+  localIndex N1 = transposeA ? A.getNumRows() : A.getNumCols();
+  localIndex N2 = transposeB ? B.getNumCols() : B.getNumRows();
 
+  GEOS_ERROR_IF( N1 != m_numRows || N2 != m_numCols,
+                 "Matrix dimensions not compatible for product" );
+
+  int nRowAi = integer_conversion<int>( A.getNumRows() );
   cblas_dgemm( CblasColMajor,
-               CblasNoTrans,
-               CblasNoTrans,
+               transposeA ? CblasTrans : CblasNoTrans,
+               transposeB ? CblasTrans : CblasNoTrans,
                nRowAi,
-               nColBi,
-               nColAi,
+               integer_conversion<int>( B.getNumCols() ),
+               integer_conversion<int>( A.getNumCols() ),
                scalarAB,
                A.m_values.data(),
                nRowAi,
                B.m_values.data(),
-               nRowBi,
+               integer_conversion<int>( B.getNumRows() ),
                scalarThis,
                this->m_values.data(),
                nRowAi );
@@ -571,10 +578,10 @@ void BlasMatrix::GEMM( BlasMatrix const & A,
 // matrix nice output
 void BlasMatrix::print()
 {
-  for( localIndex i = 0 ; i < m_height ; ++i )
+  for( localIndex i = 0 ; i < m_numRows ; ++i )
   {
-    for( localIndex j = 0 ; j < m_width ; ++j )
-      printf( "%10.2e ", m_values[j * m_height + i] );
+    for( localIndex j = 0 ; j < m_numCols ; ++j )
+      printf( "%10.2e ", m_values[j * m_numRows + i] );
     printf( "\n" );
   }
 }

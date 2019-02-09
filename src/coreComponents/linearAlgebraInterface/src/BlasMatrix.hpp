@@ -60,8 +60,8 @@ public:
    *
    * @note All values are initialized to 0.
    */
-  BlasMatrix( localIndex nRows,
-              localIndex nCols );
+  BlasMatrix( localIndex numRows,
+              localIndex numCols );
 
   /**
    * @brief Shape constructor; defines a square matrix.
@@ -102,8 +102,8 @@ public:
    * nCols - New number of matrix cols.
    *
    */
-  void resize( localIndex nRows,
-               localIndex nCols );
+  void resize( localIndex numRows,
+               localIndex numCols );
 
   /**
    * @brief Resize matrix. All entries set to zero
@@ -143,7 +143,7 @@ public:
    * For dimensions larger than four, the function calls LAPACK functions DGETRF
    * and DGETRI using Trilinos/Epetra LAPACK Wrapper Class.
    */
-  void invert( BlasMatrix& src );
+  void computeInverse( BlasMatrix& dst );
 
   /**
    * @brief Matrix-Matrix sum;
@@ -160,8 +160,8 @@ public:
    * @warning
    * Assumes that <tt>A</tt> and \a this have the same size.
    */
-  void MatAdd(BlasMatrix const & A,
-              const real64 scalarA=1.);
+  void MatAdd( BlasMatrix const & A,
+               const real64 scalarA = 1. );
 
   /**
    * @brief General matrix-matrix multiplication;
@@ -184,6 +184,8 @@ public:
    */
   void GEMM( BlasMatrix const & A,
              BlasMatrix const & B,
+             bool transposeA = false,
+             bool transposeB = false,
              real64 const scalarAB = 1.,
              real64 const scalarThis = 0. );
 
@@ -363,24 +365,24 @@ public:
    * The parentheses operator returns the reference to the coefficient in
    * position (row, column).
    */
-  inline real64 const & operator ()( localIndex row,
-                                     localIndex column ) const;
+  inline real64 const & operator ()( localIndex iRow,
+                                     localIndex jCol ) const;
 
   /**
    * @brief Returns number of matrix rows.
    */
-  localIndex get_nRows() const
+  localIndex getNumRows() const
   {
-    return m_height;
+    return m_numRows;
   }
   ;
 
   /**
    * @brief Returns number of matrix columns.
    */
-  localIndex get_nCols() const
+  localIndex getNumCols() const
   {
-    return m_width;
+    return m_numCols;
   }
   ;
 
@@ -407,28 +409,32 @@ public:
 
 protected:
 
-  localIndex m_height = 0; ///< Number of rows of the matrix.
-  localIndex m_width = 0; ///< Number of columns of the matrix.
+  localIndex m_numRows = 0; ///< Number of rows of the matrix.
+  localIndex m_numCols = 0; ///< Number of columns of the matrix.
   array1d<real64> m_values; ///< array1d storing matrix entries (column-major)
 };
 
 // Inline methods
-inline real64 & BlasMatrix::operator ()( localIndex row,
-                                         localIndex column )
+inline real64 & BlasMatrix::operator ()( localIndex iRow,
+                                         localIndex jCol )
 {
-  GEOS_ASSERT_MSG( 0 <= row && row <= m_height &&
-                   0 <= column && column <= m_width,
+  GEOS_ASSERT_MSG( 0 <= iRow &&
+                       iRow <= m_numRows &&
+                       0 <= jCol &&
+                       jCol <= m_numCols,
                    "Requested value out of bounds" );
-  return m_values[column * m_height + row];
+  return m_values[jCol * m_numRows + iRow];
 }
 
-inline real64 const & BlasMatrix::operator ()( localIndex row,
-                                               localIndex column ) const
-{
-  GEOS_ASSERT_MSG( 0 <= row && row <= m_height &&
-                   0 <= column && column <= m_width,
+inline real64 const & BlasMatrix::operator ()( localIndex iRow,
+                                               localIndex jCol ) const
+                                               {
+  GEOS_ASSERT_MSG( 0 <= iRow &&
+                       iRow <= m_numRows &&
+                       0 <= jCol &&
+                       jCol <= m_numCols,
                    "Requested value out of bounds" );
-  return m_values[column * m_height + row];
+  return m_values[jCol * m_numRows + iRow];
 }
 
 } // namespace geosx
