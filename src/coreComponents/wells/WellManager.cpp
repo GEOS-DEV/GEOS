@@ -30,7 +30,8 @@ namespace geosx
 using namespace dataRepository;
 
 
-WellManager::WellManager(string const & name, dataRepository::ManagedGroup * const parent)
+WellManager::WellManager(string const & name,
+			 dataRepository::ManagedGroup * const parent)
   : ManagedGroup(name, parent)
 {
 

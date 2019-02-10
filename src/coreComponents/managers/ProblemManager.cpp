@@ -26,6 +26,8 @@
 #include "DomainPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "wells/WellManager.hpp"
+#include "wells/Well.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "NumericalMethodsManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
@@ -631,6 +633,7 @@ void ProblemManager::ParseInputFile()
     topLevelNode = xmlProblemNode.child(elementManager->getName().c_str());
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
+
   }
 }
 
@@ -840,6 +843,14 @@ void ProblemManager::ApplyNumericalMethods()
         }
       }
     }
+  }
+
+  WellManager const * wellManager = domain->getWellManager();
+  for( localIndex wellIndex=0 ; wellIndex<wellManager->numSubGroups() ; ++wellIndex )
+  {
+    Well const * const well = wellManager->GetGroup<Well>(wellIndex);
+	
+    // Hang constitutive relation to the well segments
   }
 }
 

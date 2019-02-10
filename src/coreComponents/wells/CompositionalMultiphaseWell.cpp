@@ -162,9 +162,7 @@ void CompositionalMultiphaseWell::UpdateStateAll( DomainPartition * const domain
 
 void CompositionalMultiphaseWell::InitializeWellState( DomainPartition * const domain )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
   {
@@ -207,35 +205,35 @@ void CompositionalMultiphaseWell::BackupFields( DomainPartition * const domain )
 
 void
 CompositionalMultiphaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
-                                                      DomainPartition * const domain,
-                                                      EpetraBlockSystem * const blockSystem )
+                                                DomainPartition * const domain,
+                                                EpetraBlockSystem * const blockSystem )
 {
 
 }
 
 void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                                      localIndex & numLocalRows,
-                                                                      globalIndex & numGlobalRows,
-                                                                      localIndex offset )
+                                                                localIndex & numLocalRows,
+                                                                globalIndex & numGlobalRows,
+                                                                localIndex offset )
 {
   
 }
 
 void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * const domain,
-                                                            Epetra_FECrsGraph * const sparsity )
+                                                      Epetra_FECrsGraph * const sparsity )
 {
   
 }
 
 void CompositionalMultiphaseWell::SetupSystem( DomainPartition * const domain,
-                                                     EpetraBlockSystem * const blockSystem )
+                                               EpetraBlockSystem * const blockSystem )
 {
   
 }
 
 void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain,
-                                                        EpetraBlockSystem * const blockSystem,
-                                                        real64 const time_n, real64 const dt )
+                                                  EpetraBlockSystem * const blockSystem,
+                                                  real64 const time_n, real64 const dt )
 { 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
                                                                 BlockIDs::compositionalBlock );
@@ -264,41 +262,39 @@ void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain
 }
 
 void CompositionalMultiphaseWell::AssembleAccumulationTerms( DomainPartition const * const domain,
-                                                                   Epetra_FECrsMatrix * const jacobian,
-                                                                   Epetra_FEVector * const residual,
-                                                                   real64 const time_n,
-                                                                   real64 const dt )
+                                                             Epetra_FECrsMatrix * const jacobian,
+                                                             Epetra_FEVector * const residual,
+                                                             real64 const time_n,
+                                                             real64 const dt )
 {
   
 }
 
 void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition const * const domain,
-                                                           Epetra_FECrsMatrix * const jacobian,
-                                                           Epetra_FEVector * const residual,
-                                                           real64 const time_n,
-                                                           real64 const dt )
+                                                     Epetra_FECrsMatrix * const jacobian,
+                                                     Epetra_FEVector * const residual,
+                                                     real64 const time_n,
+                                                     real64 const dt )
 {
   
 }
 
 void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition const * const domain,
-                                                                    Epetra_FECrsMatrix * const jacobian,
-                                                                    Epetra_FEVector * const residual,
-                                                                    real64 const time_n,
-                                                                    real64 const dt )
+                                                              Epetra_FECrsMatrix * const jacobian,
+                                                              Epetra_FEVector * const residual,
+                                                              real64 const time_n,
+                                                              real64 const dt )
 {
   
 }
 
 
 void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const domain,
-                                                             EpetraBlockSystem * const blockSystem,
-                                                             real64 const time_n,
-						             real64 const dt )
+                                                       EpetraBlockSystem * const blockSystem,
+                                                       real64 const time_n,
+                                                       real64 const dt )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
   {
@@ -310,20 +306,18 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 
 void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
-  //  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
-  //  {
+  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  {
     // check if the well control needs to be switched
-  //  });
+  });
 }
 
 
 real64
 CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
-                                                          DomainPartition * const domain )
+                                                    DomainPartition * const domain )
 {
 
   return 0.0;
@@ -331,7 +325,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * co
 
 
 void CompositionalMultiphaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                                     SystemSolverParameters const * const params )
+                                               SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const
     solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
@@ -362,33 +356,30 @@ CompositionalMultiphaseWell::CheckSystemSolution( EpetraBlockSystem const * cons
 
 void
 CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
-                                                        real64 const scalingFactor,
-                                                        DomainPartition * const domain )
+                                                  real64 const scalingFactor,
+                                                  DomainPartition * const domain )
 {
   
 }
 
 void
 CompositionalMultiphaseWell::ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt )
+                                                      systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                      real64 const time_n,
+                                                      real64 const dt )
 {
 
 }
 
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
   {
     //   -- set dWellPres = 0;
     //   -- update the other well variables
   });
-
 }
 
 void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,

@@ -79,13 +79,7 @@ namespace geosx
 //Alias to RAJA reduction operators
 template< typename POLICY, typename T >
 using ReduceSum = RAJA::ReduceSum<POLICY, T>;
-
-template< typename POLICY, typename T >
-using ReduceMin = RAJA::ReduceMin<POLICY, T>;
-
-template< typename POLICY, typename T >
-using ReduceMax = RAJA::ReduceMax<POLICY, T>;
-
+  
 //
 template<typename POLICY=atomicPolicy, typename T>
 RAJA_INLINE void atomicAdd(T *acc, T value)

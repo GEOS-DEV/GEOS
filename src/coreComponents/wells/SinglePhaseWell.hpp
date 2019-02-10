@@ -1,4 +1,5 @@
 /*
+
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
@@ -80,13 +81,13 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseyWell() override = default;
+  virtual ~SinglePhaseWell() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return dataRepository::keys::compositionalMultiphaseWell; }
+  static string CatalogName() { return dataRepository::keys::singlePhaseWell; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -211,10 +212,10 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // primary solution field
-    static constexpr auto pressureString               = "pressure";
-    static constexpr auto deltaPressureString          = "deltaPressure";
-    static constexpr auto mixtureVelocityString        = "velocity";
-    static constexpr auto deltaMixtureVelocityString   = "deltaVelocity";
+    static constexpr auto pressureString      = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto velocityString      = "velocity";
+    static constexpr auto deltaVelocityString = "deltaVelocity";
 
     static constexpr auto phaseFlowRateString = "phaseFlowRate";
     static constexpr auto bhpString           = "bhp";

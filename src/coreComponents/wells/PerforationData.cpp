@@ -110,7 +110,7 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
   ElementRegionManager const * elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> elemCenter =
-    elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( CellBlockSubRegion::
+    elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
                                                                                         viewKeyStruct::
                                                                                         elementCenterString );
 
@@ -125,7 +125,7 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
   {
     Perforation const * perf = GetGroup<Perforation>( perfName );
     R1Tensor const & loc = perf->getLocation();
-
+    /*
     auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex er,
                                                   localIndex esr,
                                                   localIndex ei ) -> real64
@@ -134,12 +134,13 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
       v -= elemCenter[er][esr][ei];
       return v.L2_Norm();
     });
-
+    
     m_connectionElementRegion[num_conn_local]    = std::get<0>(ret.second);
     m_connectionElementSubregion[num_conn_local] = std::get<1>(ret.second);
     m_connectionElementIndex[num_conn_local]     = std::get<2>(ret.second);
     m_connectionPerforationIndex[num_conn_local] = num_conn_global++;
-
+    */
+    
     // This will not be correct in parallel until we can actually check that
     // the perforation belongs to local mesh partition
     ++num_conn_local;

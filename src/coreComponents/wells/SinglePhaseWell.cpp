@@ -97,13 +97,11 @@ void SinglePhaseWell::UpdateStateAll( DomainPartition * const domain )
 
 void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
   {
-    // do something
+     // do something
   });
 }
 
@@ -142,35 +140,35 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain )
 
 void
 SinglePhaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
-                                                      DomainPartition * const domain,
-                                                      EpetraBlockSystem * const blockSystem )
+                                    DomainPartition * const domain,
+                                    EpetraBlockSystem * const blockSystem )
 {
 
 }
 
 void SinglePhaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                                      localIndex & numLocalRows,
-                                                                      globalIndex & numGlobalRows,
-                                                                      localIndex offset )
+                                                    localIndex & numLocalRows,
+                                                    globalIndex & numGlobalRows,
+                                                    localIndex offset )
 {
   
 }
 
 void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
-                                                            Epetra_FECrsGraph * const sparsity )
+                                          Epetra_FECrsGraph * const sparsity )
 {
   
 }
 
 void SinglePhaseWell::SetupSystem( DomainPartition * const domain,
-                                                     EpetraBlockSystem * const blockSystem )
+                                   EpetraBlockSystem * const blockSystem )
 {
   
 }
 
 void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
-                                                        EpetraBlockSystem * const blockSystem,
-                                                        real64 const time_n, real64 const dt )
+                                      EpetraBlockSystem * const blockSystem,
+                                      real64 const time_n, real64 const dt )
 { 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
                                                                 BlockIDs::compositionalBlock );
@@ -198,32 +196,30 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
 }
 
 void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition const * const domain,
-                                                                   Epetra_FECrsMatrix * const jacobian,
-                                                                   Epetra_FEVector * const residual,
-                                                                   real64 const time_n,
-                                                                   real64 const dt )
+                                                 Epetra_FECrsMatrix * const jacobian,
+                                                 Epetra_FEVector * const residual,
+                                                 real64 const time_n,
+                                                 real64 const dt )
 {
   
 }
 
 void SinglePhaseWell::AssembleFluxTerms( DomainPartition const * const domain,
-                                                           Epetra_FECrsMatrix * const jacobian,
-                                                           Epetra_FEVector * const residual,
-                                                           real64 const time_n,
-                                                           real64 const dt )
+                                         Epetra_FECrsMatrix * const jacobian,
+                                         Epetra_FEVector * const residual,
+                                         real64 const time_n,
+                                         real64 const dt )
 {
   
 }
 
 
 void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
-                                                             EpetraBlockSystem * const blockSystem,
-                                                             real64 const time_n,
-						             real64 const dt )
+                                           EpetraBlockSystem * const blockSystem,
+                                           real64 const time_n,
+                                           real64 const dt )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
   {
@@ -235,20 +231,18 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
-  //  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  //  {
+  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
+  {
     // check if the well control needs to be switched
-  //  });
+  });
 }
 
 
 real64
 SinglePhaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
-                                                          DomainPartition * const domain )
+                                        DomainPartition * const domain )
 {
 
   return 0.0;
@@ -256,7 +250,7 @@ SinglePhaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSys
 
 
 void SinglePhaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                                     SystemSolverParameters const * const params )
+                                   SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const
     solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
@@ -275,8 +269,8 @@ void SinglePhaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
 
 bool
 SinglePhaseWell::CheckSystemSolution( EpetraBlockSystem const * const blockSystem,
-                                                  real64 const scalingFactor,
-                                                  DomainPartition * const domain )
+                                      real64 const scalingFactor,
+                                      DomainPartition * const domain )
 {
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
@@ -287,38 +281,35 @@ SinglePhaseWell::CheckSystemSolution( EpetraBlockSystem const * const blockSyste
 
 void
 SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
-                                                        real64 const scalingFactor,
-                                                        DomainPartition * const domain )
+                                      real64 const scalingFactor,
+                                      DomainPartition * const domain )
 {
   
 }
 
 void
 SinglePhaseWell::ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt )
+                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                          real64 const time_n,
+                                          real64 const dt )
 {
 
 }
 
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = mesh->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
   {
     //   -- set dWellPres = 0;
     //   -- update the other well variables
   });
-
 }
 
 void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
-                                                              real64 const & dt,
-                                                              DomainPartition * const domain )
+                                            real64 const & dt,
+                                            DomainPartition * const domain )
 {
   
 }
