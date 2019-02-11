@@ -425,7 +425,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
     set<localIndex> facialRupturePath;
     map<localIndex, int> edgeLocations;
     map<localIndex, int> faceLocations;
-    map< std::pair<CellBlockSubRegion*, localIndex >, int> elemLocations;
+    map< std::pair<CellElementSubRegion*, localIndex >, int> elemLocations;
 
 
     fracturePlaneFlag = FindFracturePlanes( nodeID,
@@ -470,7 +470,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            set<localIndex>& separationPathFaces,
                                            map<localIndex, int>& edgeLocations,
                                            map<localIndex, int>& faceLocations,
-                                           map< std::pair< CellBlockSubRegion*, localIndex >, int>& elemLocations )
+                                           map< std::pair< CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
 
   arrayView1d<localIndex> const & parentNodeIndices =
@@ -504,13 +504,13 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   arrayView1d<localIndex> const & nodeToElementIndex = nodeManager.elementList()[nodeID];
 
   // ***** BACKWARDS COMPATIBLITY HACK
-  set< std::pair<CellBlockSubRegion*, localIndex> > nodesToElements;
+  set< std::pair<CellElementSubRegion*, localIndex> > nodesToElements;
 
 
   for( localIndex k=0 ; k<nodeToElementRegion.size() ; ++k )
   {
     nodesToElements.insert( std::make_pair( elemManager.GetRegion( nodeToElementRegion[k] )->
-                                            GetSubRegion( nodeToElementSubRegion[k] ),
+                                            GetSubRegion<CellElementSubRegion>( nodeToElementSubRegion[k] ),
                                             nodeToElementIndex[k] ) );
   }
 
@@ -768,14 +768,14 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
             bool pathFound = false;
 
             localIndex const parentFaceIndex = parentFaceIndices[thisFace] == -1 ? thisFace : parentFaceIndices[thisFace];
-            std::pair<CellBlockSubRegion*, localIndex>
+            std::pair<CellElementSubRegion*, localIndex>
             thisElem0 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[thisFace][0] )->
-                                        GetSubRegion( m_originalFacesToElemSubRegion[thisFace][0] ),
+                                        GetSubRegion<CellElementSubRegion>( m_originalFacesToElemSubRegion[thisFace][0] ),
                                         m_originalFacesToElemIndex[thisFace][0] );
 
-            std::pair<CellBlockSubRegion*, localIndex>
+            std::pair<CellElementSubRegion*, localIndex>
             thisElem1 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[thisFace][1] )->
-                                        GetSubRegion( m_originalFacesToElemSubRegion[thisFace][1] ),
+                                        GetSubRegion<CellElementSubRegion>( m_originalFacesToElemSubRegion[thisFace][1] ),
                                         m_originalFacesToElemIndex[thisFace][1] );
 
             // nextFaceQuality is intended to keep how desirable a face is for the rupture path.
@@ -808,14 +808,14 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                   break;
                 }
 
-                std::pair<CellBlockSubRegion*, localIndex>
+                std::pair<CellElementSubRegion*, localIndex>
                 nextElem0 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[candidateFaceIndex][0] )->
-                                            GetSubRegion( m_originalFacesToElemSubRegion[candidateFaceIndex][0] ),
+                                            GetSubRegion<CellElementSubRegion>( m_originalFacesToElemSubRegion[candidateFaceIndex][0] ),
                                             m_originalFacesToElemIndex[candidateFaceIndex][0] );
 
-                std::pair<CellBlockSubRegion*, localIndex>
+                std::pair<CellElementSubRegion*, localIndex>
                 nextElem1 = std::make_pair( elemManager.GetRegion( m_originalFacesToElemRegion[candidateFaceIndex][1] )->
-                                            GetSubRegion( m_originalFacesToElemSubRegion[candidateFaceIndex][1] ),
+                                            GetSubRegion<CellElementSubRegion>( m_originalFacesToElemSubRegion[candidateFaceIndex][1] ),
                                             m_originalFacesToElemIndex[candidateFaceIndex][1] );
 
                 if( thisElem0 != nextElem0 && thisElem0 != nextElem1 &&
@@ -923,7 +923,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
     edgeLocations[*ke] = INT_MIN;
   }
 
-  for( set< std::pair<CellBlockSubRegion*, localIndex> >::const_iterator k=nodesToElements.begin() ; k!=nodesToElements.end() ; ++k )
+  for( set< std::pair<CellElementSubRegion*, localIndex> >::const_iterator k=nodesToElements.begin() ; k!=nodesToElements.end() ; ++k )
   {
     elemLocations[*k] = INT_MIN;
   }
@@ -1005,11 +1005,11 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 bool SurfaceGenerator::SetLocations( const set<localIndex>& separationPathFaces,
                                      ElementRegionManager & elemManager,
                                      const FaceManager& faceManager,
-                                     const set< std::pair<CellBlockSubRegion*, localIndex> >& nodesToElements,
+                                     const set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
                                      const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                                      map<localIndex, int>& edgeLocations,
                                      map<localIndex, int>& faceLocations,
-                                     map< std::pair< CellBlockSubRegion*, localIndex >, int>& elemLocations )
+                                     map< std::pair< CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
   bool rval = true;
   //  const localIndex separationFace = *(separationPathFaces.begin());
@@ -1017,7 +1017,7 @@ bool SurfaceGenerator::SetLocations( const set<localIndex>& separationPathFaces,
   // insert an element attached to the separation face
   //  std::pair<CellBlockSubRegion*,localIndex> elem0 = m_virtualFaces.m_FaceToElementMap[separationFace][0] ;
 
-  std::pair<CellBlockSubRegion*, localIndex> elem0 = *(nodesToElements.begin());
+  std::pair<CellElementSubRegion*, localIndex> elem0 = *(nodesToElements.begin());
 
 
   SetElemLocations( 0,
@@ -1037,15 +1037,15 @@ bool SurfaceGenerator::SetLocations( const set<localIndex>& separationPathFaces,
 
 
 bool SurfaceGenerator::SetElemLocations( const int location,
-                                         const std::pair<CellBlockSubRegion*, localIndex >& k,
+                                         const std::pair<CellElementSubRegion*, localIndex >& k,
                                          const set<localIndex>& separationPathFaces,
                                          ElementRegionManager & elemManager,
                                          const FaceManager & faceManager,
-                                         const set< std::pair<CellBlockSubRegion*, localIndex> >& nodesToElements,
+                                         const set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
                                          const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                                          map<localIndex, int>& edgeLocations,
                                          map<localIndex, int>& faceLocations,
-                                         map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations )
+                                         map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
 
   arrayView1d<localIndex> const & parentFaceIndices =
@@ -1110,15 +1110,15 @@ bool SurfaceGenerator::SetElemLocations( const int location,
         localIndex const esr1 = m_originalFacesToElemSubRegion[virtualFaceIndex][1];
 
 
-        const std::pair<CellBlockSubRegion*, localIndex>
-        elemIndex0 = { elemManager.GetRegion( er0 )->GetSubRegion( esr0 ),
+        const std::pair<CellElementSubRegion*, localIndex>
+        elemIndex0 = { elemManager.GetRegion( er0 )->GetSubRegion<CellElementSubRegion>( esr0 ),
                        m_originalFacesToElemIndex[virtualFaceIndex][0] };
 
-        const std::pair<CellBlockSubRegion*, localIndex>
-        elemIndex1 = { elemManager.GetRegion( er1 )->GetSubRegion( esr1 ),
+        const std::pair<CellElementSubRegion*, localIndex>
+        elemIndex1 = { elemManager.GetRegion( er1 )->GetSubRegion<CellElementSubRegion>( esr1 ),
                        m_originalFacesToElemIndex[virtualFaceIndex][1] };
 
-        const std::pair<CellBlockSubRegion*, localIndex>& nextElem = ( elemIndex0 == k ) ? elemIndex1 : elemIndex0;
+        const std::pair<CellElementSubRegion*, localIndex>& nextElem = ( elemIndex0 == k ) ? elemIndex1 : elemIndex0;
         const int nextLocation = (separationPathFaces.count( virtualFaceIndex )==0) ? location : otherlocation;
 
         // if the first element is the one we are on, and the element is attached
@@ -1159,7 +1159,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         const set<localIndex>& separationPathFaces,
                                         const map<localIndex, int>& edgeLocations,
                                         const map<localIndex, int>& faceLocations,
-                                        const map< std::pair<CellBlockSubRegion*, localIndex >, int>& elemLocations )
+                                        const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
 
   int rank=0;
@@ -1390,16 +1390,16 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
   // 1) loop over all elements attached to the nodeID
-  for( map<std::pair<CellBlockSubRegion*, localIndex>, int>::const_iterator iter_elem =
+  for( map<std::pair<CellElementSubRegion*, localIndex>, int>::const_iterator iter_elem =
          elemLocations.begin() ; iter_elem != elemLocations.end() ; ++iter_elem )
   {
     const int& location = iter_elem->second;
 
     if( location==1 )
     {
-      const std::pair<CellBlockSubRegion*, localIndex >& elem = iter_elem->first;
+      const std::pair<CellElementSubRegion*, localIndex >& elem = iter_elem->first;
 
-      CellBlockSubRegion& elemSubRegion = *(elem.first);
+      CellElementSubRegion& elemSubRegion = *(elem.first);
       ElementRegion * const elemRegion = elemSubRegion.getParent()->getParent()->group_cast<ElementRegion*>();
       string const elemRegionName = elemRegion->getName();
 
@@ -1698,11 +1698,11 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   {
     std::cout<<"CONSISTENCY CHECKING OF THE MAPS"<<std::endl;
 
-    for( map< std::pair<CellBlockSubRegion*, localIndex >, int>::const_iterator iter_elem=elemLocations.begin() ; iter_elem!=elemLocations.end() ; ++iter_elem )
+    for( map< std::pair<CellElementSubRegion*, localIndex >, int>::const_iterator iter_elem=elemLocations.begin() ; iter_elem!=elemLocations.end() ; ++iter_elem )
     {
-      const std::pair<CellBlockSubRegion*, localIndex >& elem = iter_elem->first;
+      const std::pair<CellElementSubRegion*, localIndex >& elem = iter_elem->first;
 
-      CellBlockSubRegion& elemSubRegion = *(elem.first);
+      CellElementSubRegion& elemSubRegion = *(elem.first);
       const localIndex elemIndex = elem.second;
 
       arrayView2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
@@ -1860,17 +1860,17 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
     // nodeToElement
-    array1d<set<std::pair<CellBlockSubRegion*, localIndex > > > inverseElemsToNodes( nodeManager.size() );
+    array1d<set<std::pair<CellElementSubRegion*, localIndex > > > inverseElemsToNodes( nodeManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
       ElementRegion& elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion & subRegion = *(elemRegion.GetSubRegion( esr ));
+        CellElementSubRegion & subRegion = *(elemRegion.GetSubRegion<CellElementSubRegion>( esr ));
         arrayView2d<localIndex> const & elemsToNodes = subRegion.nodeList();
         for( localIndex k=0 ; k<subRegion.size() ; ++k )
         {
-          std::pair<CellBlockSubRegion*, localIndex > elem = std::make_pair( &subRegion, k );
+          std::pair<CellElementSubRegion*, localIndex > elem = std::make_pair( &subRegion, k );
 
           for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
           {
@@ -1888,17 +1888,17 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     for( localIndex a=0 ; a<nodeManager.size() ; ++a )
     {
 
-      set< std::pair<CellBlockSubRegion*, localIndex> > nodeToElements;
+      set< std::pair<CellElementSubRegion*, localIndex> > nodeToElements;
       for( localIndex k=0 ; k<nodesToElementRegions[a].size() ; ++k )
       {
         nodeToElements.insert( std::make_pair( elementManager.GetRegion( nodesToElementRegions[a][k] )->
-                                               GetSubRegion( nodesToElementSubRegions[a][k] ),
+                                               GetSubRegion<CellElementSubRegion>( nodesToElementSubRegions[a][k] ),
                                                nodesToElementIndex[a][k] ) );
       }
 
 
       std::cout<<"m_NodeToElementMap["<<a<<"] = ( ";
-      for( set<std::pair< CellBlockSubRegion*, localIndex > >::iterator
+      for( set<std::pair< CellElementSubRegion*, localIndex > >::iterator
            ielem=nodeToElements.begin() ; ielem!=nodeToElements.end() ; ++ielem )
       {
         if( inverseElemsToNodes[a].count( *ielem ) == 0 )
@@ -1908,7 +1908,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       }
       std::cout<<")    (";
 
-      for( set<std::pair<CellBlockSubRegion*, localIndex > >::const_iterator
+      for( set<std::pair<CellElementSubRegion*, localIndex > >::const_iterator
            ielem=inverseElemsToNodes[a].begin() ;
            ielem!=inverseElemsToNodes[a].end() ; ++ielem )
       {
@@ -1958,19 +1958,19 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     }
 
     // faceToElement
-    array1d<set<std::pair<CellBlockSubRegion*, localIndex > > > inverseElemsToFaces( faceManager.size() );
+    array1d<set<std::pair<CellElementSubRegion*, localIndex > > > inverseElemsToFaces( faceManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
       ElementRegion& elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion & subRegion = *(elemRegion.GetSubRegion( esr ));
+        CellElementSubRegion & subRegion = *(elemRegion.GetSubRegion<CellElementSubRegion>( esr ));
         arrayView2d<localIndex> const & elemsToNodes = subRegion.nodeList();
         arrayView2d<localIndex> const & elemsToFaces = subRegion.faceList();
 
         for( localIndex k=0 ; k<subRegion.size() ; ++k )
         {
-          std::pair<CellBlockSubRegion*, localIndex > elem = std::make_pair( &subRegion, k );
+          std::pair<CellElementSubRegion*, localIndex > elem = std::make_pair( &subRegion, k );
 
           for( localIndex a=0 ; a<elemsToFaces.size( 1 ) ; ++a )
           {
@@ -1989,13 +1989,13 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     for( localIndex a=0 ; a<faceManager.size() ; ++a )
     {
 
-      array1d< std::pair<CellBlockSubRegion*, localIndex> > faceToElements;
+      array1d< std::pair<CellElementSubRegion*, localIndex> > faceToElements;
       for( localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )
       {
         if( facesToElementRegions[a][k] != -1 )
         {
           faceToElements.push_back( std::make_pair( elementManager.GetRegion( facesToElementRegions[a][k] )->
-                                                    GetSubRegion( facesToElementSubRegions[a][k] ),
+                                                    GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[a][k] ),
                                                     facesToElementIndex[a][k] ) );
         }
       }
@@ -2003,7 +2003,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
       std::cout<<"m_FaceToElementMap["<<a<<"] = ( ";
 
-      for( array1d<std::pair<CellBlockSubRegion*, localIndex > >::const_iterator
+      for( array1d<std::pair<CellElementSubRegion*, localIndex > >::const_iterator
            ielem=faceToElements.begin() ;
            ielem!=faceToElements.end() ; ++ielem )
       {
@@ -2014,7 +2014,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       }
       std::cout<<")    (";
 
-      for( set<std::pair<CellBlockSubRegion*, localIndex > >::const_iterator ielem=inverseElemsToFaces[a].begin() ;
+      for( set<std::pair<CellElementSubRegion*, localIndex > >::const_iterator ielem=inverseElemsToFaces[a].begin() ;
            ielem!=inverseElemsToFaces[a].end() ; ++ielem )
       {
 
@@ -2479,7 +2479,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( const localIndex edgeID,
       for( localIndex k=0 ; k<nodesToElementRegion[nodeID].size() ; ++k )
       {
 
-        CellBlockSubRegion * elementRegion = elementManager.GetRegion( nodesToElementRegion[nodeID][k] )->
+        CellElementSubRegion * elementRegion = elementManager.GetRegion( nodesToElementRegion[nodeID][k] )->
                                              GetSubRegion( nodesToElementSubRegion[nodeID][k] );
         localIndex iEle = nodesToElementIndex[nodeID][k];
         R1Tensor fN, xEle;
@@ -2522,10 +2522,10 @@ realT SurfaceGenerator::CalculateEdgeSIF( const localIndex edgeID,
     localIndex nodeID = convexCorner;
     fNodeO = 0.0;
 
-    for( std::set< std::pair<CellBlockSubRegion *, localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[nodeID].begin() ;
+    for( std::set< std::pair<CellElementSubRegion *, localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[nodeID].begin() ;
          k!=nodeManager.m_toElementsRelation[nodeID].end() ; ++k )
     {
-      CellBlockSubRegion * elementRegion = k->first;
+      CellElementSubRegion * elementRegion = k->first;
       localIndex iEle = k->second;
       R1Tensor fN, xEle;
 
@@ -2687,10 +2687,10 @@ realT SurfaceGenerator::CalculateEdgeSIF( const localIndex edgeID,
       // The unbalanced force from a summation of element contributions should be the external forces, could be fluid
       // pressure or try traction.
       // In this way, we don't need to worry about the how the traction inside a fracture was applied.
-      for( std::set< std::pair<CellBlockSubRegion *, localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[iNd].begin() ;
+      for( std::set< std::pair<CellElementSubRegion *, localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[iNd].begin() ;
            k!=nodeManager.m_toElementsRelation[iNd].end() ; ++k )
       {
-        CellBlockSubRegion * elementRegion = k->first;
+        CellElementSubRegion * elementRegion = k->first;
         localIndex iEle = k->second;
         integer_array& elem_is_ghost = elementRegion->getReference<FieldInfo::ghostRank>();
         R1Tensor fN, xEle;
@@ -2752,8 +2752,8 @@ realT SurfaceGenerator::CalculateEdgeSIF( const localIndex edgeID,
 //    std::cout<<"     facePressure["<<faceID<<"] = "<<(*ppFlowPressure)[faceID]<<std::endl;
 
     realT ElasticModulus = 0.0;
-    Array1dT< std::pair< CellBlockSubRegion *, localIndex > > toElements = faceManager.m_toElementsRelation[faceID];
-    for( Array1dT< std::pair< CellBlockSubRegion *, localIndex > >::iterator iterRegion=toElements.begin() ;
+    Array1dT< std::pair< CellElementSubRegion *, localIndex > > toElements = faceManager.m_toElementsRelation[faceID];
+    for( Array1dT< std::pair< CellElementSubRegion *, localIndex > >::iterator iterRegion=toElements.begin() ;
          iterRegion!=toElements.end() ; ++iterRegion )
     {
       ElementRegionT const & elemRegion = *(iterRegion->first);

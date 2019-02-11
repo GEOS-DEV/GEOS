@@ -277,27 +277,25 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
     ElementRegion * const elemRegion = elemManager->GetRegion(er);
-    for (localIndex esr = 0; esr < elemRegion->numSubRegions(); ++esr)
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
-
       arrayView1d<integer> & elemGhostRank =
-        subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+        subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
       arrayView1d<globalIndex> & dofNumber =
-        subRegion->getReference<array1d<globalIndex >>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
+        subRegion-> template getReference<array1d<globalIndex >>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
       arrayView1d<real64> & pres =
-        subRegion->getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
 
       arrayView1d<real64> & dPres =
-        subRegion->getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
       arrayView2d<real64> & compDens =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
 
       arrayView2d<real64> & dCompDens =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)
       {
@@ -359,7 +357,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
           }
         }
       }
-    }
+    });
   }
 
   jacobianFD->GlobalAssemble(true);
@@ -401,22 +399,21 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
     ElementRegion * elemRegion = elemManager->GetRegion(er);
     SCOPED_TRACE( "Region " + std::to_string(er) + " (" + elemRegion->getName() + ")" );
 
-    for (localIndex esr = 0; esr < elemRegion->numSubRegions(); ++esr)
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
-      CellBlockSubRegion * subRegion = elemRegion->GetSubRegion(esr);
       SCOPED_TRACE( "Subregion " + std::to_string(esr) + " (" + subRegion->getName() + ")" );
 
       arrayView2d<real64> & compDens  =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
 
       arrayView2d<real64> & dCompDens =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
       arrayView2d<real64> & compFrac  =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString );
 
       arrayView3d<real64> & dCompFrac_dCompDens =
-        subRegion->getReference<array3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+        subRegion-> template getReference<array3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
       // reset the solver state to zero out variable updates
       solver->ResetStateToBeginningOfStep( domain );
@@ -459,7 +456,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
                            "compFrac", var, components );
         }
       }
-    }
+    });
   }
 }
 
@@ -487,31 +484,30 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
     ElementRegion * elemRegion = elemManager->GetRegion(er);
     SCOPED_TRACE( "Region " + std::to_string(er) + " (" + elemRegion->getName() + ")" );
 
-    for (localIndex esr = 0; esr < elemRegion->numSubRegions(); ++esr)
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
-      CellBlockSubRegion * subRegion = elemRegion->GetSubRegion(esr);
       SCOPED_TRACE( "Subregion " + std::to_string(esr) + " (" + subRegion->getName() + ")" );
 
       arrayView1d<real64> & pres =
-        subRegion->getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
 
       arrayView1d<real64> & dPres =
-        subRegion->getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
       arrayView2d<real64> & compDens =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
 
       arrayView2d<real64> & dCompDens =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
       arrayView2d<real64> & phaseVolFrac =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString );
 
       arrayView2d<real64> & dPhaseVolFrac_dPres =
-        subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString );
 
       arrayView3d<real64> & dPhaseVolFrac_dCompDens =
-        subRegion->getReference<array3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+        subRegion-> template getReference<array3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
       // reset the solver state to zero out variable updates
       solver->ResetStateToBeginningOfStep( domain );
@@ -576,7 +572,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
                            "phaseVolFrac", var, phases );
         }
       }
-    }
+    });
   }
 }
 
@@ -621,7 +617,7 @@ protected:
 
 };
 
-ProblemManager CompositionalMultiphaseFlowTest::problemManager("ProblemManager", nullptr);
+ProblemManager CompositionalMultiphaseFlowTest::problemManager("Problem", nullptr);
 CompositionalMultiphaseFlow * CompositionalMultiphaseFlowTest::solver = nullptr;
 
 TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition)

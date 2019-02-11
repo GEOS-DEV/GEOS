@@ -37,6 +37,7 @@ SolverBase::SolverBase( std::string const & name,
   m_cflFactor(),
   m_maxStableDt{1e99}
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
@@ -49,24 +50,27 @@ SolverBase::SolverBase( std::string const & name,
   RegisterViewWrapper(viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
+    setDescription("Verbosity level for this solver. Higher values will lead to more screen output. For non-debug "
+                   " simulations, this should remain at 0.");
 
   RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
-          "Values should be in the interval (0,1] ");
+    setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
+                    " when calculating the maximum allowable time step. Values should be in the interval (0,1] ");
 
   RegisterViewWrapper(viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
     setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Factor to apply to the CFL condition when calculating the maximum allowable time step. "
-          "Values should be in the interval (0,1] ");
+    setInputFlag(InputFlags::FALSE)->
+    setDescription( "Value of the Maximum Stable Timestep for this solver.");
 
   this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
     setApplyDefaultValue("none")->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Name of discretization object to use for this solver.");
+    setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, "
+                    "if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. "
+                    "If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be"
+                    "specified.");
 
   RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -102,6 +106,10 @@ ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & 
   return rval;
 }
 
+void SolverBase::ExpandObjectCatalogs()
+{
+  CreateChild( SystemSolverParameters::CatalogName(), SystemSolverParameters::CatalogName() );
+}
 
 void SolverBase::PostProcessInput()
 {

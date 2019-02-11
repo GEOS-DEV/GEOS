@@ -26,7 +26,9 @@ using namespace dataRepository;
 
 BasisFunctionManager::BasisFunctionManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 BasisFunctionManager::~BasisFunctionManager()
 {
@@ -36,26 +38,19 @@ BasisFunctionManager::~BasisFunctionManager()
 
 ManagedGroup * BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
-  this->RegisterViewWrapper( childName, std::move(basis) )->setRestartFlags(RestartFlags::NO_WRITE);
-  return nullptr;
+  std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup<BasisBase>( childName, std::move(basis) );
 }
 
-// Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void BasisFunctionManager::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
-{
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    std::string childName = childNode.attribute("name").value();
-    BasisBase * basis = this->getPointer<BasisBase>(childName);
 
-    if (basis != nullptr)
-    {
-      basis->ReadXML(childNode);
-    }
+void BasisFunctionManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from BasisBase here
+  for (auto& catalogIter: BasisBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
   }
 }
-
 
 
 } /* namespace geosx */

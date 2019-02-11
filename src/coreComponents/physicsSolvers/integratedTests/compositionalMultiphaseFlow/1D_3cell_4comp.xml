@@ -4,7 +4,7 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
                                  verboseLevel="1"
@@ -16,8 +16,7 @@
                                  temperature="297.15"
                                  useMass="0"
                                  targetRegions="Region2">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="15"
                               useDirectSolver="1"
@@ -40,8 +39,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   xMin=" 1.99, -0.01, -0.01" xMax=" 3.01, 1.01, 1.01"/>
+    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax="1.01, 1.01, 1.01"/>
+    <Box name="sink"   xMin="1.99, -0.01, -0.01" xMax="3.01, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -74,10 +73,10 @@
                                   phaseNames="oil gas"
                                   equationsOfState="PR PR"
                                   componentNames="N2 C10 C20 H2O"
-                                  componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"
-                                  componentCriticalTemperature="126.2,622.0,782.0,647.0"
-                                  componentAcentricFactor="0.04,0.443,0.816,0.344"
-                                  componentMolarWeight="28e-3,134e-3,275e-3,18e-3"
+                                  componentCriticalPressure="34e5, 25.3e5, 14.6e5, 220.5e5"
+                                  componentCriticalTemperature="126.2, 622.0, 782.0, 647.0"
+                                  componentAcentricFactor="0.04, 0.443, 0.816, 0.344"
+                                  componentMolarWeight="28e-3, 134e-3, 275e-3, 18e-3"
                                   componentVolumeShift="0 0 0 0"
                                   componentBinaryCoeff="0 0 0 0
                                                         0 0 0 0
@@ -95,16 +94,13 @@
                                      phaseRelPermMaxValue="0.8 0.9"/>
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -112,7 +108,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -120,14 +116,14 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
@@ -136,7 +132,7 @@
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="5e6"/>
 
@@ -145,7 +141,7 @@
     <FieldSpecification name="initialComposition_N2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.099"/>
@@ -153,7 +149,7 @@
     <FieldSpecification name="initialComposition_C10"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.3"/>
@@ -161,7 +157,7 @@
     <FieldSpecification name="initialComposition_C20"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.6"/>
@@ -169,7 +165,7 @@
     <FieldSpecification name="initialComposition_H20"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="3"
                scale="0.001"/>
@@ -177,7 +173,7 @@
     <!-- Injection pressure: ~10 bar -->
 
     <FieldSpecification name="sourceTermPressure"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="1e7"
                setNames="source"/>
@@ -186,28 +182,28 @@
 
     <FieldSpecification name="sourceTermComposition_N2"
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.1"/>
 
     <FieldSpecification name="sourceTermComposition_C10"
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.1"/>
 
     <FieldSpecification name="sourceTermComposition_C20"
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.1"/>
 
     <FieldSpecification name="sourceTermComposition_H20"
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="3"
                scale="0.7"/>
@@ -215,7 +211,7 @@
     <!-- Production pressure: ~1 bar, close to stock tank conditions -->
 
     <FieldSpecification name="sinkTerm"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="1e5"
                setNames="sink"/>
@@ -224,28 +220,28 @@
 
     <FieldSpecification name="sinkTermComposition_N2"
                setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.099"/>
 
     <FieldSpecification name="sinkTermComposition_C10"
                setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.3"/>
 
     <FieldSpecification name="sinkTermComposition_C20"
                setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.6"/>
 
     <FieldSpecification name="sinkTermComposition_H20"
                setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="3"
                scale="0.001"/>
@@ -256,9 +252,9 @@
 
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
   <Outputs>
       <Silo name="siloOutput"/>

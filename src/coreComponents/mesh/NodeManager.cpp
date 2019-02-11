@@ -147,15 +147,15 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ElementSubRegionBase const * const subRegion = elemRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetGroup<ElementSubRegionBase>(kSubReg);
 
-      FixedOneToManyRelation const & elemsToNodes = subRegion->getReference<FixedOneToManyRelation>(subRegion->viewKeys().nodeList);
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
+        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
+        for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
-          localIndex nodeIndex = elemsToNodes[ke][a];
+          localIndex nodeIndex = elemToNodes[a];
           toElementRegionList[nodeIndex].push_back( kReg );
           toElementSubRegionList[nodeIndex].push_back( kSubReg );
           toElementList[nodeIndex].push_back( ke );

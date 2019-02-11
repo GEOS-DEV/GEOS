@@ -31,7 +31,9 @@ using namespace cxx_utilities;
 MeshManager::MeshManager( std::string const & name,
                           ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{}
+{
+  setInputFlags(InputFlags::REQUIRED);
+}
 
 MeshManager::~MeshManager()
 {}
@@ -41,6 +43,16 @@ ManagedGroup * MeshManager::CreateChild( string const & childKey, string const &
   GEOS_LOG_RANK_0("Adding Mesh: " << childKey << ", " << childName);
   std::unique_ptr<MeshGeneratorBase> solver = MeshGeneratorBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<MeshGeneratorBase>( childName, std::move(solver) );
+}
+
+
+void MeshManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from MeshGeneratorBase here
+  for (auto& catalogIter: MeshGeneratorBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 

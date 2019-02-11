@@ -56,7 +56,9 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
   m_numDofPerCell = 1;
 
   // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
+  // To generate the schema, multiple solvers of that use this command are constructed
+  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
+  // getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }
 
 void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
@@ -68,7 +70,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
+    elemManager->forElementSubRegions([&]( ManagedGroup * const cellBlock) -> void
     {
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
@@ -88,6 +90,14 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
   }
 }
 
+void SinglePhaseFlow::InitializePreSubGroups(ManagedGroup * const rootGroup)
+{
+  FlowSolverBase::InitializePreSubGroups(rootGroup);
+
+  // set the blockID for the block system interface
+  getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
+}
+
 void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -99,21 +109,33 @@ void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBlockSubRegion * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64 const> const & pres  = m_pressure[er][esr];
     arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
 
-    SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
+    SingleFluidBase * const fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
+    ConstitutiveBase * const solid = constitutiveRelations[er][esr][m_solidIndex];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
+    if( solid!=nullptr )
     {
-      real64 const presNew = pres[ei] + dPres[ei];
-      fluid->PointUpdate( presNew, ei, 0 ); // fluid
-      constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // solid
-    } );
+      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        real64 const presNew = pres[ei] + dPres[ei];
+        fluid->PointUpdate( presNew, ei, 0 ); // fluid
+        constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // solid
+      } );
+    }
+    else
+    {
+      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        real64 const presNew = pres[ei] + dPres[ei];
+        fluid->PointUpdate( presNew, ei, 0 ); // fluid
+      } );
+    }
   } );
 }
 
@@ -139,9 +161,9 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBlockSubRegion * const subRegion )
+                                            ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<real64 const> const & poroRef = m_porosityRef[er][esr];
     arrayView2d<real64 const> const & dens    = m_density[er][esr][m_fluidIndex];
@@ -151,12 +173,24 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
     arrayView1d<real64> const & densOld = m_densityOld[er][esr];
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
+    if( pvmult.size() == poro.size() )
     {
-      densOld[ei] = dens[ei][0];
-      poro[ei] = poroRef[ei] * pvmult[ei][0];
-      poroOld[ei] = poro[ei];
-    } );
+      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        densOld[ei] = dens[ei][0];
+        poro[ei] = poroRef[ei] * pvmult[ei][0];
+        poroOld[ei] = poro[ei];
+      } );
+    }
+    else
+    {
+      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        densOld[ei] = dens[ei][0];
+        poro[ei] = poroRef[ei];
+        poroOld[ei] = poro[ei];
+      } );
+    }
   } );
 }
 
@@ -192,9 +226,9 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBlockSubRegion * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
     arrayView1d<real64 const> const & poro = m_porosity[er][esr];
@@ -204,7 +238,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
     arrayView1d<real64> const & densOld = m_densityOld[er][esr];
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
       dVol[ei] = 0.0;
@@ -226,9 +260,9 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBlockSubRegion * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
     arrayView1d<real64> const & vol  = m_volume[er][esr];
@@ -236,7 +270,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
     arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
     arrayView1d<real64 const> const & dVol  = m_deltaVolume[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       pres[ei] += dPres[ei];
       vol[ei] += dVol[ei];
@@ -323,7 +357,7 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
   globalIndex numGlobalRows = 0;
 
   // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  elementRegionManager->forCellBlocks( [&]( CellBlockSubRegion * const subRegion )
+  elementRegionManager->forElementSubRegions( [&]( ObjectManagerBase * const subRegion )
     {
       localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
       numGhostRows += subRegionGhosts;
@@ -517,9 +551,9 @@ SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion const * const region,
-                                            CellBlockSubRegion const * const subRegion )
+                                            ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -535,7 +569,7 @@ SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain
     arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
     arrayView2d<real64 const> const & dPVMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -545,7 +579,10 @@ SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain
       real64 const densNew = dens[ei][0];
       real64 const volNew = volume[ei] + dVol[ei];
 
-      poro[ei] = poroRef[ei] * pvmult[ei][0];
+      if( pvmult.size()>0 )
+      {
+        poro[ei] = poroRef[ei] * pvmult[ei][0];
+      }
 
       // Residual contribution is mass conservation in the cell
       real64 const localAccum = poro[ei]    * densNew     * volNew
@@ -572,9 +609,9 @@ SinglePhaseFlow::AssembleAccumulationTermsCoupled( DomainPartition const * const
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion const * const region,
-                                            CellBlockSubRegion const * const subRegion )
+                                            ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -593,7 +630,7 @@ SinglePhaseFlow::AssembleAccumulationTermsCoupled( DomainPartition const * const
     arrayView2d<real64 const> const & bulkModulus        = m_bulkModulus[er][esr][m_solidIndex];
     real64 const & biotCoefficient                       = m_biotCoefficient[er][esr][m_solidIndex];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1135,16 +1172,16 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBlockSubRegion * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
 
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
       {
@@ -1193,13 +1230,13 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forCellBlocksComplete( [&] ( localIndex er, localIndex esr,
+  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                             ElementRegion * const region,
-                                            CellBlockSubRegion * const subRegion )
+                                            ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
-    for_elems_in_subRegion( subRegion, GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
     } );
