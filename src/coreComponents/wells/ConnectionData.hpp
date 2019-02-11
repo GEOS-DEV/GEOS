@@ -67,11 +67,11 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
 
-    static constexpr auto connIndexString = "connIndex";
+    static constexpr auto connectionIndexString = "connectionIndex";
 
     using ViewKey = dataRepository::ViewKey;
     
-    ViewKey connIndex = { connIndexString };
+    ViewKey connectionIndex = { connectionIndexString };
 
   } viewKeysConnectionData;
 
@@ -93,7 +93,7 @@ private:
 
   void PrecomputeData( MeshLevel const * domain );
 
-  array1d<localIndex> m_connIndex;
+  array1d<localIndex> m_connectionIndex;
 
   string_array m_connectionList;
 

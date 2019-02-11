@@ -67,19 +67,19 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
 
-    static constexpr auto connectionElementRegionString    = "connectionElementRegion";
-    static constexpr auto connectionElementSubregionString = "connectionElementSubregion";
-    static constexpr auto connectionElementIndexString     = "connectionElementIndex";
-    static constexpr auto connectionPerforationIndexString = "connectionPerforationIndex";
+    static constexpr auto reservoirElementRegionString    = "reservoirElementRegion";
+    static constexpr auto reservoirElementSubregionString = "reservoirElementSubregion";
+    static constexpr auto reservoirElementIndexString     = "reservoirElementIndex";
+    static constexpr auto perforationIndexString          = "perforationIndex";
 
     static constexpr auto gravityDepthString               = "gravityDepth";
 
-    dataRepository::ViewKey connectionElementRegion    = { connectionElementRegionString    };
-    dataRepository::ViewKey connectionElementSubregion = { connectionElementSubregionString };
-    dataRepository::ViewKey connectionElementIndex     = { connectionElementIndexString     };
-    dataRepository::ViewKey connectionPerforationIndex = { connectionPerforationIndexString };
+    dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString    };
+    dataRepository::ViewKey reservoirElementSubregion = { reservoirElementSubregionString };
+    dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString     };
+    dataRepository::ViewKey perforationIndex          = { perforationIndexString };
 
-    dataRepository::ViewKey gravityDepth               = { gravityDepthString     };
+    dataRepository::ViewKey gravityDepth              = { gravityDepthString };
 
   } viewKeysPerforationManager;
 
@@ -102,10 +102,10 @@ private:
   void ConnectToCells( MeshLevel const * domain );
   void PrecomputeData( MeshLevel const * domain );
 
-  array1d<localIndex> m_connectionElementRegion;
-  array1d<localIndex> m_connectionElementSubregion;
-  array1d<localIndex> m_connectionElementIndex;
-  array1d<localIndex> m_connectionPerforationIndex;
+  array1d<localIndex> m_reservoirElementRegion;
+  array1d<localIndex> m_reservoirElementSubregion;
+  array1d<localIndex> m_reservoirElementIndex;
+  array1d<localIndex> m_perforationIndex;
 
   array1d<real64> m_gravityDepth;
 

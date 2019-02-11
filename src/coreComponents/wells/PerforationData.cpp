@@ -36,10 +36,10 @@ using namespace dataRepository;
 PerforationData::PerforationData(string const & name, ManagedGroup * const parent)
   : ObjectManagerBase(name, parent)
 {
-  RegisterViewWrapper( viewKeyStruct::connectionElementRegionString, &m_connectionElementRegion, false );
-  RegisterViewWrapper( viewKeyStruct::connectionElementSubregionString, &m_connectionElementSubregion, false );
-  RegisterViewWrapper( viewKeyStruct::connectionElementIndexString, &m_connectionElementIndex, false );
-  RegisterViewWrapper( viewKeyStruct::connectionPerforationIndexString, &m_connectionPerforationIndex, false );
+  RegisterViewWrapper( viewKeyStruct::reservoirElementRegionString, &m_reservoirElementRegion, false );
+  RegisterViewWrapper( viewKeyStruct::reservoirElementSubregionString, &m_reservoirElementSubregion, false );
+  RegisterViewWrapper( viewKeyStruct::reservoirElementIndexString, &m_reservoirElementIndex, false );
+  RegisterViewWrapper( viewKeyStruct::perforationIndexString, &m_perforationIndex, false );
 
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
 }
@@ -97,7 +97,7 @@ void PerforationData::PrecomputeData( MeshLevel const * mesh )
 
   for (localIndex iconn = 0; iconn < size(); ++iconn)
   {
-    string const & perfName = m_perforationList[m_connectionPerforationIndex[iconn]];
+    string const & perfName = m_perforationList[m_perforationIndex[iconn]];
     Perforation const * perf = this->GetGroup<Perforation>( perfName );
     gravDepth[iconn] = Dot( perf->getLocation(), gravity );
   }
@@ -135,10 +135,10 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
       return v.L2_Norm();
     });
     
-    m_connectionElementRegion[num_conn_local]    = std::get<0>(ret.second);
-    m_connectionElementSubregion[num_conn_local] = std::get<1>(ret.second);
-    m_connectionElementIndex[num_conn_local]     = std::get<2>(ret.second);
-    m_connectionPerforationIndex[num_conn_local] = num_conn_global++;
+    m_reservoirElementRegion[num_conn_local]    = std::get<0>(ret.second);
+    m_reservoirElementSubregion[num_conn_local] = std::get<1>(ret.second);
+    m_reservoirElementIndex[num_conn_local]     = std::get<2>(ret.second);
+    m_reservoirPerforationIndex[num_conn_local] = num_conn_global++;
     */
     
     // This will not be correct in parallel until we can actually check that

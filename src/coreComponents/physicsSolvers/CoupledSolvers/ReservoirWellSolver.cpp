@@ -26,7 +26,7 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "../FiniteVolume/FlowSolverBase.hpp"
-#include "../../wells/WellSolverBase.hpp"
+#include "../Wells/WellSolverBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -81,7 +81,6 @@ void ReservoirWellSolver::ApplyBoundaryConditions( DomainPartition * const domai
                                                    real64 const time,
                                                    real64 const dt )
 {
-  // access the flow and well solvers
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
 
   flowSolver.ApplyBoundaryConditions( domain, blockSystem, time, dt );
@@ -105,7 +104,22 @@ real64 ReservoirWellSolver::CalculateResidualNorm( systemSolverInterface::Epetra
 void ReservoirWellSolver::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                        SystemSolverParameters const * const params )
 {
-  // TODO: solve the full Jacobian matrix
+  // for now we that BlockIDs::compositionalBlock also contains J_RW, J_WR, amd J_WW
+  //Epetra_FEVector * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
+
+  //Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+
+  //residual->Scale(-1.0);
+  //solution->Scale(0.0);
+
+  //m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
+  //                                              params,
+  //                                              BlockIDs::compositionalBlock );
+
+  //if( verboseLevel() >= 2 )
+  //{
+  //  GEOS_LOG_RANK("\nSolution:\n" << *solution);
+  //}
 }
 
 bool ReservoirWellSolver::CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,

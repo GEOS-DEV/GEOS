@@ -43,8 +43,8 @@ Perforation::Perforation(string const & name, ManagedGroup * const parent)
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Connection transmissibility");
 
-  RegisterViewWrapper( viewKeysPerforation.segmentName.Key(), &m_segmentName, false )->
-    setDefaultValue("0")->
+  RegisterViewWrapper( viewKeysPerforation.wellElementIndex.Key(), &m_wellElementIndex, false )->
+    setDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Well segment name (can be omitted for single-segment wells");
 }

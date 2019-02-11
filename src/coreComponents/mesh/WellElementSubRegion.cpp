@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -15,34 +15,19 @@
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-
-/*
- * @file Segment.cpp
- *
- */
-
-#include "Segment.hpp"
-
-#include "dataRepository/InputFlags.hpp"
+#include "WellElementSubRegion.hpp"
 
 namespace geosx
 {
 
-using namespace dataRepository;
-
-Segment::Segment(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent)
+WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * const parent ):
+  ElementSubRegionBase( name, parent )
 {
-  RegisterViewWrapper( viewKeysSegment.segmentName.Key(), &m_segmentName, false )->
-    setDefaultValue("0")->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Well segment name (can be omitted for single-segment wells");
-}
-
-Segment::~Segment()
-{
-
+  // TOD0
 }
 
 
-} //namespace geosx
+WellElementSubRegion::~WellElementSubRegion()
+{}
+
+}

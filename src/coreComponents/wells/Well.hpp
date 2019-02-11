@@ -25,7 +25,7 @@
 #define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELL_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
-#include "SegmentManager.hpp"
+#include "mesh/WellElementSubRegion.hpp"
 #include "ConnectionData.hpp"
 #include "PerforationData.hpp"
 
@@ -63,18 +63,12 @@ public:
 
   virtual void PostProcessInput() override;
 
-  localIndex numSegmentsGlobal() const { return m_segmentManager.numSegmentsGlobal(); }
-  localIndex numSegmentsLocal()  const { return m_segmentManager.numSegmentsLocal(); }
-
   localIndex numConnectionsGlobal() const { return m_connectionData.numConnectionsGlobal(); }
   localIndex numConnectionsLocal()  const { return m_connectionData.numConnectionsLocal();  }
 
   localIndex numPerforationsGlobal() const { return m_perforationData.numPerforationsGlobal(); }
   localIndex numPerforationsLocal()  const { return m_perforationData.numPerforationsLocal();  }
  
-  SegmentManager * geSegments()              { return &m_segmentManager; }
-  SegmentManager const * getSegments() const { return &m_segmentManager; }
-
   ConnectionData * getConnections()             { return &m_connectionData; }
   ConnectionData const * getConnections() const { return &m_connectionData; }
   
@@ -99,12 +93,11 @@ public:
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-
-    static constexpr auto segmentsString     = dataRepository::keys::segments;
+    static constexpr auto wellElementSubRegionString = dataRepository::keys::wellElementSubRegion;
     static constexpr auto connectionsString  = dataRepository::keys::connections;
     static constexpr auto perforationsString = dataRepository::keys::perforations;
 
-    dataRepository::GroupKey segments     = { segmentsString     };
+    dataRepository::GroupKey wellElementSubRegion = { wellElementSubRegionString };
     dataRepository::GroupKey connections  = { connectionsString  };
     dataRepository::GroupKey perforations = { perforationsString };
 
@@ -112,7 +105,7 @@ public:
 
 protected:
 
-  SegmentManager  m_segmentManager;
+  WellElementSubRegion m_wellElementSubRegion;
   ConnectionData  m_connectionData;
   PerforationData m_perforationData;
 

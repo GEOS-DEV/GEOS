@@ -195,22 +195,32 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
 
 }
 
-void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition const * const domain,
+void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
                                                  Epetra_FECrsMatrix * const jacobian,
                                                  Epetra_FEVector * const residual,
                                                  real64 const time_n,
                                                  real64 const dt )
 {
-  
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
+  {
+    // loop over the segments
+  });  
 }
 
-void SinglePhaseWell::AssembleFluxTerms( DomainPartition const * const domain,
+void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
                                          Epetra_FECrsMatrix * const jacobian,
                                          Epetra_FEVector * const residual,
                                          real64 const time_n,
                                          real64 const dt )
 {
-  
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
+  {
+    // loop over the connections
+  });    
 }
 
 

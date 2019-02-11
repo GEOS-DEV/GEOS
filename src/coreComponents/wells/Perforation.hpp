@@ -46,27 +46,27 @@ public:
   real64 getTransmissibility() const       { return m_transmissibility; }
   void setTransmissibility(real64 tran)    { m_transmissibility = tran; }
 
-  string const & getSegmentName() const    { return m_segmentName; }
-  void setSegmentName(string const & name) { m_segmentName = name; }
+  localIndex const & getWellElementIndex() const    { return m_wellElementIndex; }
+  void setWellElementIndex(localIndex const & index) { m_wellElementIndex = index; }
 
   struct viewKeyStruct
   {
 
     static constexpr auto locationString         = "location";
     static constexpr auto transmissibilityString = "transmissibility";
-    static constexpr auto segmentNameString      = "segmentName";
+    static constexpr auto wellElementIndexString  = "wellElementIndex";
 
     dataRepository::ViewKey location         = { locationString         };
     dataRepository::ViewKey transmissibility = { transmissibilityString };
-    dataRepository::ViewKey segmentName      = { segmentNameString      };
+    dataRepository::ViewKey wellElementIndex  = { wellElementIndexString  };
 
   } viewKeysPerforation;
 
 private:
 
-  R1Tensor m_location;
-  real64   m_transmissibility;
-  string   m_segmentName;
+  R1Tensor   m_location;
+  real64     m_transmissibility;
+  localIndex m_wellElementIndex;
 
   // depending on whether we keep the WellStencil class or not,
   // we may need additional member variables here (i.e., cell id)

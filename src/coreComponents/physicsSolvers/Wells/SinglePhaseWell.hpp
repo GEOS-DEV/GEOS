@@ -1,4 +1,5 @@
 /*
+
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
@@ -17,13 +18,12 @@
  */
 
 /**
- * @file CompositionalMultiphaseWell.hpp
+ * @file SinglePhaseWell.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_WELLS_COMPOSITIONALMULTIPHASEWELLSOLVER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_WELLS_COMPOSITIONALMULTIPHASEWELLSOLVER_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_WELLS_SINGLEPHASEWELLSOLVER_HPP_
+#define SRC_COMPONENTS_CORE_SRC_WELLS_SINGLEPHASEWELLSOLVER_HPP_
 
-#include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
 #include "WellSolverBase.hpp"
 
 class Epetra_FECrsGraph;
@@ -37,21 +37,21 @@ class ManagedGroup;
 
 namespace keys
 {
-string const compositionalMultiphaseWell = "CompositionalMultiphaseWell";
+string const singlePhaseWell = "SinglePhaseWell";
 }
 }
 
 namespace constitutive
 {
-class MultiFluidBase;
+class SingleFluidBase;
 }
 
 /**
- * @class CompositionalMultiphaseWell
+ * @class SinglePhaseWell
  *
- * A compositional multiphase well solver
+ * A single-phase well solver
  */
-class CompositionalMultiphaseWell : public WellSolverBase
+class SinglePhaseWell : public WellSolverBase
 {
 public:
 
@@ -60,34 +60,34 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  CompositionalMultiphaseWell( const string& name,
+  SinglePhaseWell( const string& name,
                                      ManagedGroup * const parent );
 
   /// deleted default constructor
-  CompositionalMultiphaseWell() = delete;
+  SinglePhaseWell() = delete;
 
   /// deleted copy constructor
-  CompositionalMultiphaseWell( CompositionalMultiphaseWell const & ) = delete;
+  SinglePhaseWell( SinglePhaseWell const & ) = delete;
 
   /// default move constructor
-  CompositionalMultiphaseWell( CompositionalMultiphaseWell && ) = default;
+  SinglePhaseWell( SinglePhaseWell && ) = default;
 
   /// deleted assignment operator
-  CompositionalMultiphaseWell & operator=( CompositionalMultiphaseWell const & ) = delete;
+  SinglePhaseWell & operator=( SinglePhaseWell const & ) = delete;
 
   /// deleted move operator
-  CompositionalMultiphaseWell & operator=( CompositionalMultiphaseWell && ) = delete;
+  SinglePhaseWell & operator=( SinglePhaseWell && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~CompositionalMultiphaseWell() override = default;
+  virtual ~SinglePhaseWell() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return dataRepository::keys::compositionalMultiphaseWell; }
+  static string CatalogName() { return dataRepository::keys::singlePhaseWell; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -140,30 +140,6 @@ public:
                                      DomainPartition * const domain ) override;
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateComponentFraction( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateComponentFractionAll( DomainPartition * domain );
-
-  /**
-   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdatePhaseVolumeFractionAll( DomainPartition * domain );
-
-  /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
@@ -174,18 +150,6 @@ public:
    * @param domain the domain containing the mesh and fields
    */
   void UpdateFluidModelAll( DomainPartition * domain );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
-   */
-  void UpdateRelPermModel( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateRelPermModelAll( DomainPartition * domain );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -200,59 +164,34 @@ public:
   void UpdateStateAll( DomainPartition * domain );
 
   /**
-   * @brief Get the number of fluid components (species)
-   * @return the number of components
-   */
-  localIndex numFluidComponents() const;
-
-  /**
-   * @brief Get the number of fluid phases
-   * @return the number of phases
-   */
-  localIndex numFluidPhases() const;
-
-  /**
-   * @brief assembles the accumulation terms for all cells
+   * @brief assembles the accumulation terms for all segments
    * @param domain the physical domain object
    * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleAccumulationTerms( DomainPartition const * const domain,
+  void AssembleAccumulationTerms( DomainPartition * const domain,
                                   Epetra_FECrsMatrix * const jacobian,
                                   Epetra_FEVector * const residual,
                                   real64 const time_n,
                                   real64 const dt );
 
   /**
-   * @brief assembles the flux terms for all cells
+   * @brief assembles the flux terms for all connections
    * @param domain the physical domain object
    * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleFluxTerms( DomainPartition const * const domain,
+  void AssembleFluxTerms( DomainPartition * const domain,
                           Epetra_FECrsMatrix * const jacobian,
                           Epetra_FEVector * const residual,
                           real64 const time_n,
                           real64 const dt );
 
-  /**
-   * @brief assembles the volume balance terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  void AssembleVolumeBalanceTerms( DomainPartition const * const domain,
-                                   Epetra_FECrsMatrix * const jacobian,
-                                   Epetra_FEVector * const residual,
-                                   real64 const time_n,
-                                   real64 const dt );
-
 
   /**
-   * @brief assembles the well terms 
+   * @brief assembles the perforation rate terms 
    * @param domain the physical domain object
    * @param blockSystem the entire block system
    * @param time_n previous time value
@@ -264,6 +203,8 @@ public:
                             real64 const time_n,
                             real64 const dt );
 
+  void InitializeWellState( DomainPartition * const domain );
+  
   void CheckWellControlSwitch( DomainPartition * const domain );
   
   /**@}*/
@@ -271,45 +212,31 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // primary solution field
-    static constexpr auto pressureString               = "pressure";
-    static constexpr auto deltaPressureString          = "deltaPressure";
-    static constexpr auto globalCompDensityString      = "globalCompDensity";
-    static constexpr auto deltaGlobalCompDensityString = "deltaGlobalCompDensity";
-    static constexpr auto mixtureVelocityString        = "mixtureVelocity";
-    static constexpr auto deltaMixtureVelocityString   = "deltaMixtureVelocity";
+    static constexpr auto pressureString      = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto velocityString      = "velocity";
+    static constexpr auto deltaVelocityString = "deltaVelocity";
 
     static constexpr auto phaseFlowRateString = "phaseFlowRate";
     static constexpr auto bhpString           = "bhp";
 
-    // inputs
-    static constexpr auto globalComponentFracString        = "globalComponentFraction";
-    static constexpr auto dGlobalComponentFrac_dPresString = "dGlobalComponentFraction_dPres";
-    static constexpr auto dGlobalComponentFrac_dCompString = "dGlobalComponentFraction_dComp";
-
     using ViewKey = dataRepository::ViewKey;
 
     // primary solution field
-    ViewKey pressure               = { pressureString };
-    ViewKey deltaPressure          = { deltaPressureString };
-    ViewKey globalCompDensity      = { globalCompDensityString };
-    ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
-    ViewKey mixtureVelocity        = { mixtureVelocityString };
-    ViewKey deltaMixtureVelovity   = { deltaMixtureVelocityString };
+    ViewKey pressure      = { pressureString };
+    ViewKey deltaPressure = { deltaPressureString };
+    ViewKey velocity      = { velocityString };
+    ViewKey deltaVelovity = { deltaVelocityString };
     
     // well controls
     ViewKey phaseFlowRate = { phaseFlowRateString };
     ViewKey bhp           = { bhpString };
 
-    // global composition to input injection stream
-    ViewKey globalComponentFrac        = { globalComponentFracString };
-    ViewKey dGlobalComponentFrac_dPres = { dGlobalComponentFrac_dPresString };
-    ViewKey dGlobalComponentFrac_dComp = { dGlobalComponentFrac_dCompString };    
-
-  } viewKeysCompMultiphaseWell;
+  } viewKeysSinglePhaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeysCompMultiphaseWell;
+  } groupKeysSinglePhaseWell;
 
 protected:
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
@@ -324,35 +251,14 @@ private:
    * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
    * @return
    */
-  constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
+  constitutive::SingleFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
 
   /**
    * @brief Extract the fluid model used by this solver from a group (const version)
    * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
    * @return
    */
-  constitutive::MultiFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
-
-  /**
-   * @brief Extract the relative permeability model used by this solver from a group
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::RelativePermeabilityBase * GetRelPermModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Extract the relative permeability model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::RelativePermeabilityBase const * GetRelPermModel( ManagedGroup const * const dataGroup ) const;
-
-    /**
-   * @brief Initialize all well variables from initial conditions and injection stream
-   * @param domain the domain containing the mesh and fields
-   */
-
-  void InitializeWellState( DomainPartition * const domain );
+  constitutive::SingleFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
   
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
@@ -390,15 +296,9 @@ private:
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
                                      localIndex offset );
-
-    /// the max number of fluid phases
-  localIndex m_numPhases;
-
-  /// the number of fluid components
-  localIndex m_numComponents;
 };
 
 } // namespace geosx
 
 
-#endif //SRC_COMPONENTS_CORE_SRC_WELLS_COMPOSITIONALMULTIPHASEWELLS_HPP_
+#endif //SRC_COMPONENTS_CORE_SRC_WELLS_SINGLEPHASEWELLS_HPP_

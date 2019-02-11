@@ -23,7 +23,6 @@
 
 #include "Well.hpp"
 
-#include "PerforationData.hpp"
 #include "WellManager.hpp"
 
 namespace geosx
@@ -33,7 +32,7 @@ using namespace dataRepository;
 
 Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
   : ObjectManagerBase( name, parent ),
-    m_segmentManager(  groupKeyStruct::segmentsString,     this ),
+    m_wellElementSubRegion( name, parent ),
     m_connectionData(  groupKeyStruct::connectionsString,  this ),
     m_perforationData( groupKeyStruct::perforationsString, this ),
     m_referenceDepth( 0.0 ),
@@ -49,8 +48,8 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well type (producer/injector)");
 
-  RegisterGroup( groupKeyStruct::segmentsString,     &m_segmentManager,  false );
-
+  RegisterGroup( groupKeyStruct::wellElementSubRegionString, &m_wellElementSubRegion, false );
+  
   RegisterGroup( groupKeyStruct::connectionsString,  &m_connectionData,  false );
   
   RegisterGroup( groupKeyStruct::perforationsString, &m_perforationData, false );

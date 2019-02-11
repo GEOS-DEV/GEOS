@@ -36,7 +36,7 @@ using namespace dataRepository;
 ConnectionData::ConnectionData(string const & name, ManagedGroup * const parent)
   : ObjectManagerBase(name, parent)
 {
-  RegisterViewWrapper( viewKeyStruct::connIndexString, &m_connIndex, false );
+  RegisterViewWrapper( viewKeyStruct::connectionIndexString, &m_connectionIndex, false );
 }
 
 ConnectionData::~ConnectionData()

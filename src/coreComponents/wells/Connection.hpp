@@ -44,30 +44,28 @@ public:
   void setConnectionName(string const & name) { m_connectionName = name; }
 
   // check if the connection is an exit
-  bool isExitConnection() const { return (m_nextSegmentIndex < 0 || m_prevSegmentIndex < 0); }
+  bool isExitConnection() const { return (m_nextWellElementIndex < 0 || m_prevWellElementIndex < 0); }
   
   struct viewKeyStruct
   {
 
     static constexpr auto connectionNameString   = "connectionName";
-    static constexpr auto nextSegmentIndexString = "nextSegmentIndex";
-    static constexpr auto prevSegmentIndexString = "prevSegmentIndex";
+    static constexpr auto nextWellElementIndexString = "nextWellElementIndex";
+    static constexpr auto prevWellElementIndexString = "prevWellElementIndex";
 
     using ViewKey = dataRepository::ViewKey;
 
-    ViewKey connectionName   = { connectionNameString };
-    ViewKey nextSegmentIndex = { nextSegmentIndexString };
-    ViewKey prevSegmentIndex = { prevSegmentIndexString };
+    ViewKey connectionName       = { connectionNameString };
+    ViewKey nextWellElementIndex = { nextWellElementIndexString };
+    ViewKey prevWellElementIndex = { prevWellElementIndexString };
     
   } viewKeysConnection;
 
 private:
 
   string     m_connectionName;
-  localIndex m_nextSegmentIndex;
-  localIndex m_prevSegmentIndex;
-
-  
+  localIndex m_nextWellElementIndex;
+  localIndex m_prevWellElementIndex;
   
 };
 

@@ -34,14 +34,12 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class FieldSpecificationBase;
-class FiniteElementBase;
 class DomainPartition;
 
 /**
  * @class WellSolverBase
  *
- * Base class for finite volume fluid flow solvers.
+ * Base class for well solvers.
  * Provides some common features
  */
 class WellSolverBase : public SolverBase

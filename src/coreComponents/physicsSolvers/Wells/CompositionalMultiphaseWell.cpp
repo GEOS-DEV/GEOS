@@ -35,7 +35,6 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "wells/WellManager.hpp"
-#include "wells/CompositionalMultiphaseWell.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
@@ -239,6 +238,7 @@ void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
+  // TODO: make sure to remove that if wells write into compositionalBlock
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
@@ -261,31 +261,46 @@ void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain
 
 }
 
-void CompositionalMultiphaseWell::AssembleAccumulationTerms( DomainPartition const * const domain,
+void CompositionalMultiphaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
                                                              Epetra_FECrsMatrix * const jacobian,
                                                              Epetra_FEVector * const residual,
                                                              real64 const time_n,
                                                              real64 const dt )
 {
-  
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  {
+    // loop over the segments
+  });  
 }
 
-void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition const * const domain,
+void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const domain,
                                                      Epetra_FECrsMatrix * const jacobian,
                                                      Epetra_FEVector * const residual,
                                                      real64 const time_n,
                                                      real64 const dt )
 {
-  
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  {
+    // loop over the connections
+  });    
 }
 
-void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition const * const domain,
+void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition * const domain,
                                                               Epetra_FECrsMatrix * const jacobian,
                                                               Epetra_FEVector * const residual,
                                                               real64 const time_n,
                                                               real64 const dt )
 {
-  
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  {
+    // loop over the segments
+  });    
 }
 
 
