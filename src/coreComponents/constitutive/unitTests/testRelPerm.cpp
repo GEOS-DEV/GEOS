@@ -185,7 +185,7 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
 
   // set the fluid state to current
   relPerm->PointUpdate( saturation, 0, 0 );
-
+  
   // update saturation and check derivatives
   auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat, NP, NP );
 
@@ -275,11 +275,11 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
 
   auto & waterOilRelPermExp = relPerm->getReference<array1d<real64>>( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermExponentString );
   waterOilRelPermExp.resize( 2 );
-  waterOilRelPermExp[0] = 2.4; waterOilRelPermExp[1] = 2.5;
+  waterOilRelPermExp[0] = 2.4; waterOilRelPermExp[1] = 1.5;
 
   auto & waterOilRelPermMaxVal = relPerm->getReference<array1d<real64>>( BrooksCoreyBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString );
   waterOilRelPermMaxVal.resize( 2 );
-  waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.95;
+  waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.65;
 
   auto & gasOilRelPermExp = relPerm->getReference<array1d<real64>>( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentString );
   gasOilRelPermExp.resize( 2 );
@@ -287,7 +287,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
 
   auto & gasOilRelPermMaxVal = relPerm->getReference<array1d<real64>>( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString );
   gasOilRelPermMaxVal.resize( 2 );
-  gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
+  gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.95;
 
   relPerm->PostProcessInputRecursive();
   return relPerm;
@@ -340,7 +340,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const 
 
   auto & waterOilRelPermMaxVal = relPerm->getReference<array1d<real64>>( VanGenuchtenBakerRelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString );
   waterOilRelPermMaxVal.resize( 2 );
-  waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.95;
+  waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.75;
 
   auto & gasOilRelPermExpInv = relPerm->getReference<array1d<real64>>( VanGenuchtenBakerRelativePermeability::viewKeyStruct::gasOilRelPermExponentInvString );
   gasOilRelPermExpInv.resize( 2 );
@@ -431,8 +431,8 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase)
   {
     testNumericalDerivatives( fluid, sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 0.3 *(1-sat[0]);
-    sat[2] = 0.7 *(1-sat[0]);
+    sat[1] = alpha *(1-sat[0]);
+    sat[2] = (1-alpha) *(1-sat[0]);
   }
 }
 
@@ -482,7 +482,7 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase)
   // TODO test over a range of values
   real64 const start_sat = 0.3;
   real64 const end_sat   = 0.7;
-  real64 const dS = 1e-2;
+  real64 const dS = 1e-1;
   real64 const alpha = 0.4;
   array1d<real64> sat(3);
   sat[0] = start_sat;
@@ -492,8 +492,8 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase)
   {
     testNumericalDerivatives( fluid, sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 0.6 *(1-sat[0]);
-    sat[2] = 0.4 *(1-sat[0]);
+    sat[1] = alpha *(1-sat[0]);
+    sat[2] = (1-alpha) *(1-sat[0]);
   }
 }
 

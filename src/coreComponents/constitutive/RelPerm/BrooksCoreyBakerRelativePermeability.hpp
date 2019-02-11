@@ -226,7 +226,7 @@ BrooksCoreyBakerRelativePermeability::Compute( localIndex const NP,
   // this function assumes that the oil phase can always be present (i.e., ip_oil > 0)
   
   // 1) Water and oil phase relative permeabilities using water-oil data
-  if (ip_water > 0)
+  if (ip_water >= 0)
   {
     real64 const scaledWaterVolFrac = (phaseVolFraction[ip_water] - phaseMinVolumeFraction[ip_water]) * volFracScaleInv;
     real64 const scaledOilVolFrac   = (phaseVolFraction[ip_oil]   - phaseMinVolumeFraction[ip_oil])   * volFracScaleInv;
@@ -252,12 +252,11 @@ BrooksCoreyBakerRelativePermeability::Compute( localIndex const NP,
                                  dOilRelPerm_wo_dOilVolFrac,
                                  oilExponent_wo,
                                  oilMaxValue_wo );
-
   }
   
   
   // 2) Gas and oil phase relative permeabilities using gas-oil data
-  if (ip_gas > 0)
+  if (ip_gas >= 0)
   {
     real64 const scaledGasVolFrac = (phaseVolFraction[ip_gas] - phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
     real64 const scaledOilVolFrac = (phaseVolFraction[ip_oil] - phaseMinVolumeFraction[ip_oil]) * volFracScaleInv;
@@ -282,9 +281,7 @@ BrooksCoreyBakerRelativePermeability::Compute( localIndex const NP,
                                  oilRelPerm_go,
                                  dOilRelPerm_go_dOilVolFrac,
                                  oilExponent_go,
-                                 oilMaxValue_go );
-
-    
+                                 oilMaxValue_go );    
   }
   
 
@@ -306,7 +303,7 @@ BrooksCoreyBakerRelativePermeability::Compute( localIndex const NP,
   else
   {
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ip_water] - phaseMinVolumeFraction[ip_water]);
-    
+
     InterpolateTwoPhaseRelPerms( shiftedWaterVolFrac,
                                  phaseVolFraction[ip_gas],
                                  relPerm[ip_oil],
@@ -340,7 +337,7 @@ BrooksCoreyBakerRelativePermeability::EvaluateBrooksCoreyFunction( real64 const 
   }
   else
   {
-    relPerm = (scaledVolFrac < 0.0) ? 0.0 : maxValue;
+    relPerm = (scaledVolFrac <= 0.0) ? 0.0 : maxValue;
   }
 }
 
