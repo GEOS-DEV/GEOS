@@ -197,20 +197,27 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
    // key is edge index, value is faceElementIndex....this only works for a single fracture Region with a single subregion!!
    map< localIndex, set<localIndex> > fractureConnectorIndicesMap;
 
-   array1d< array1d<localIndex> > &
-   fractureConnectorIndices = RegisterViewWrapper< array1d<array1d<localIndex> > >( viewKeyStruct::fractureConnectorIndicesString )
+   array1d< localIndex > &
+   fractureConnectorIndices = RegisterViewWrapper< array1d<localIndex > >( viewKeyStruct::fractureConnectorIndicesString )
+     ->setRestartFlags( RestartFlags::NO_WRITE)
      ->setSizedFromParent(0)
      ->reference();
 
    array1d<array1d<localIndex> > &
    fractureConnectors = RegisterViewWrapper< array1d<array1d<localIndex> > >( viewKeyStruct::fractureElementConnectorString )
+     ->setRestartFlags( RestartFlags::NO_WRITE)
      ->setSizedFromParent(0)
      ->reference();
 
-   map< localIndex, array1d<localIndex> > fractureConnectorMap;
+   array1d< localIndex > &
+   fractureCellConnectorIndices = RegisterViewWrapper< array1d<localIndex > >( viewKeyStruct::fractureCellConnectorIndicesString )
+     ->setRestartFlags( RestartFlags::NO_WRITE)
+     ->setSizedFromParent(0)
+     ->reference();
 
    FixedToManyElementRelation &
    fractureCellConnectors = this->RegisterViewWrapper< FixedToManyElementRelation >( viewKeyStruct::fractureToCellConnectorString )
+     ->setRestartFlags( RestartFlags::NO_WRITE)
      ->setSizedFromParent(0)
      ->reference();
 
@@ -222,7 +229,7 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
    ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
    for( string const & setName : this->m_fractureSetNames )
    {
-     FaceElementSubRegion * subRegion = elementSubRegions->RegisterGroup<FaceElementSubRegion>(setName);
+     FaceElementSubRegion * const subRegion = elementSubRegions->RegisterGroup<FaceElementSubRegion>(setName);
      set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
      subRegion->resize( targetSet.size() );
 
@@ -239,7 +246,7 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
      for( auto const faceIndex : targetSet )
      {
        faceMap[kfe][0] = faceIndex;
-       faceMap[kfe][1] = -1;
+       faceMap[kfe][1] = faceIndex;
 
        arrayView1d<localIndex const> const & faceToNodesMap = facesToNodesMap[faceIndex];
        nodeMap[kfe].resize( faceToNodesMap.size() );
@@ -285,6 +292,25 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
    }
    fractureConnectorIndices.resize(connectorIndex);
    fractureConnectors.resize(connectorIndex);
+
+
+   forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion  * const subRegion )
+   {
+     FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
+     for( auto const & setIter : faceManager->sets()->wrappers() )
+     {
+       set<localIndex> const & faceSet = faceManager->sets()->getReference<set<localIndex> >( setIter.first );
+       set<localIndex> & faceElementSet = subRegion->sets()->RegisterViewWrapper< set<localIndex> >( setIter.first )->reference();
+       for( localIndex a=0 ; a<faceMap.size(0) ; ++a )
+       {
+         localIndex const faceIndex = faceMap[a][0];
+         if( faceSet.count( faceIndex ) )
+         {
+           faceElementSet.insert( a );
+         }
+       }
+     }
+   });
 
  }
 

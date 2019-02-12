@@ -99,6 +99,14 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Man
 
   m_density = m_referenceDensity;
   m_viscosity = m_referenceViscosity;
+
+  for( localIndex k=0 ; k<size() ; ++k )
+  {
+    for( localIndex q=0 ; q<numConstitutivePointsPerParentIndex ; ++q )
+    {
+      PointUpdate( m_referencePressure, k, q );
+    }
+  }
 }
 
 std::unique_ptr<ConstitutiveBase>

@@ -157,12 +157,112 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
 {
   MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager const * const nodeManager = mesh->getNodeManager();
+  EdgeManager const * const edgeManager = mesh->getEdgeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
+  localIndex fractureRegionIndex = elemManager->GetRegions().getIndex("Fracture");
   ElementRegion const * const fractureRegion = elemManager->GetRegion( "Fracture" );
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>(0);
 
+  FaceElementSubRegion::NodeMapType const & nodeMap = fractureSubRegion->nodeList();
+  FaceElementSubRegion::EdgeMapType const & edgeMap = fractureSubRegion->edgeList();
+  FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
+  elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(CellBlock::viewKeyStruct::elementCenterString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
+  coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
+
+
+  array1d<localIndex> const &
+  fractureConnectorIndices = fractureRegion->getReference< array1d<localIndex > >( ElementRegion::viewKeyStruct::fractureConnectorIndicesString );
+
+  array1d<array1d<localIndex> > const &
+  fractureConnectors = fractureRegion->getReference< array1d<array1d<localIndex> > >( ElementRegion::viewKeyStruct::fractureElementConnectorString );
+
+  FixedToManyElementRelation const &
+  fractureCellConnectors = fractureRegion->getReference< FixedToManyElementRelation >( ElementRegion::viewKeyStruct::fractureToCellConnectorString );
+
+  arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  R1Tensor aperture = {1.0,1.0,1.0};
+  aperture *= 1e-12;
+
+  arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
+
+  for( localIndex fci=0 ; fci<fractureConnectors.size() ; ++fci )
+  {
+    localIndex const numElems = fractureConnectors[fci].size();
+    localIndex const edgeIndex = fractureConnectorIndices[fci];
+
+
+    array1d<CellDescriptor> stencilCells(numElems);
+    array1d<real64> stencilWeights(numElems);
+
+    R1Tensor edgeCenter, edgeLength;
+    edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
+    edgeManager->calculateLength( edgeIndex, X, edgeLength );
+
+    for( localIndex kfe=0 ; kfe<numElems ; ++kfe )
+    {
+      localIndex const fractureElementIndex = fractureConnectors[fci][kfe];
+      R1Tensor cellCenterToEdgeCenter = edgeCenter;
+      cellCenterToEdgeCenter -= faceCenter[ faceMap[fractureElementIndex][0] ];
+      stencilCells[kfe] = { fractureRegionIndex, 0, fractureElementIndex };
+      stencilWeights[kfe] = pow( -1 , kfe ) * 1e-12 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+    }
+    fractureStencil.add(stencilCells.data(), stencilCells, stencilWeights);
+  }
+
+  {
+    arrayView2d<localIndex const> const & elemRegionList = fractureCellConnectors.m_toElementRegion;
+    arrayView2d<localIndex const> const & elemSubRegionList = fractureCellConnectors.m_toElementSubRegion;
+    arrayView2d<localIndex const> const & elemList = fractureCellConnectors.m_toElementIndex;
+    for( localIndex kfe=0 ; kfe<fractureCellConnectors.size(0) ; ++kfe )
+    {
+      localIndex const numElems = fractureCellConnectors.size(1);
+
+      array1d<CellDescriptor> stencilCells(numElems);
+      array1d<real64> stencilWeights(numElems);
+
+      R2SymTensor coefTensor;
+      R1Tensor cellToFaceVec;
+      R1Tensor faceConormal;
+
+      for (localIndex ke = 0; ke < numElems; ++ke)
+      {
+        real64 faceWeightInv = 0.0;
+
+        localIndex const faceIndex = faceMap[kfe][ke];
+        localIndex const er  = elemRegionList[kfe][ke];
+        localIndex const esr = elemSubRegionList[kfe][ke];
+        localIndex const ei  = elemList[kfe][ke];
+
+        cellToFaceVec = faceCenter[faceIndex];
+        cellToFaceVec -= elemCenter[er][esr][ei];
+
+        real64 const c2fDistance = cellToFaceVec.Normalize();
+
+        // assemble full coefficient tensor from principal axis/components
+        makeFullTensor(coefficient[er][esr][ei], coefTensor);
+
+        faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
+        real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
+
+        stencilCells[0] = { er, esr, ei};
+        stencilWeights[0] = ht ;
+
+        stencilCells[0] = { fractureRegionIndex, 0, kfe};
+        stencilWeights[0] = -ht ;
+
+        fractureStencil.add(stencilCells.data(), stencilCells, stencilWeights);
+      }
+    }
+  }
+  fractureStencil.compress();
 
 }
 

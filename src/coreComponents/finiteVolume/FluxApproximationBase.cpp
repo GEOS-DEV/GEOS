@@ -55,6 +55,9 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
 
   RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
+
+  RegisterViewWrapper<CellStencil>(viewKeyStruct::fratureStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -67,6 +70,10 @@ FluxApproximationBase::GetCatalog()
 void FluxApproximationBase::compute(DomainPartition * domain)
 {
   computeMainStencil(domain, getStencil());
+
+  computeFractureStencil( *domain,
+                          this->getReference<CellStencil>(viewKeyStruct::fratureStencilString),
+                          getStencil() );
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 

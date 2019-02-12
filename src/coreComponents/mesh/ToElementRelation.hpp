@@ -48,6 +48,11 @@ public:
     return m_toElementRegion.size();
   }
 
+  localIndex size( int const dim ) const
+  {
+    return m_toElementRegion.size( dim );
+  }
+
   void setElementRegionManager( ElementRegionManager const * const input )
   {
     m_elemRegionManager = input;

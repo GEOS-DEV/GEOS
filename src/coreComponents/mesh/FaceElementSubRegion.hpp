@@ -120,6 +120,13 @@ public:
     return m_toFacesRelation;
   }
 
+  /**
+   * @return number of nodes per element
+   */
+  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
+
+
+
 private:
 
   /// The elements to nodes relation

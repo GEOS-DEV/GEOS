@@ -160,7 +160,7 @@ void DomainPartition::GenerateSets(  )
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
-          localIndex const numNodes = subRegion->numNodesPerElement();
+          localIndex const numNodes = subRegion->numNodesPerElement( k );
           integer count = 0;
           for( localIndex a = 0 ; a<numNodes ; ++a )
           {
