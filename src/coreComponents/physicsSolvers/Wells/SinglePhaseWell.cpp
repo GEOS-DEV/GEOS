@@ -53,24 +53,35 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
   :
   WellSolverBase( name, parent )
 {
-
+  m_numDofPerWellElement = 1;
+  m_numDofPerConnection  = 1;
 }
 
 void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
+
+  std::cout << "SinglePhaseWell: InitializePreSubGroups" << std::endl;  
 }
 
 SingleFluidBase * SinglePhaseWell::GetFluidModel( ManagedGroup * dataGroup ) const
 {
-  SingleFluidBase * const fluid = nullptr;
+  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  SingleFluidBase * const fluid = constitutiveModels->GetGroup<SingleFluidBase>( m_fluidName );
+  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
 
   return fluid;
 }
 
 SingleFluidBase const * SinglePhaseWell::GetFluidModel( ManagedGroup const * dataGroup ) const
 {
-  SingleFluidBase const * const fluid = nullptr;
+  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  SingleFluidBase const * const fluid = constitutiveModels->GetGroup<SingleFluidBase>( m_fluidName );
+  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
 
   return fluid;
 }
@@ -108,7 +119,8 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
-  
+
+  std::cout << "SinglePhaseWell: InitializePostInitialConditions_PreSubGroups" << std::endl;
 }
 
 real64 SinglePhaseWell::SolverStep( real64 const & time_n,
@@ -169,7 +181,9 @@ void SinglePhaseWell::SetupSystem( DomainPartition * const domain,
 void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
                                       EpetraBlockSystem * const blockSystem,
                                       real64 const time_n, real64 const dt )
-{ 
+{
+  std::cout << "SinglePhaseWell: AssembleSystem" << std::endl;
+  
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
@@ -308,6 +322,8 @@ SinglePhaseWell::ApplyBoundaryConditions( DomainPartition * const domain,
 
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
+  std::cout << "SinglePhaseWell: ResetStateToBeginningOfStep" << std::endl;
+  
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void

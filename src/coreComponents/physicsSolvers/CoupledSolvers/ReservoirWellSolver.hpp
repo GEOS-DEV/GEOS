@@ -40,7 +40,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "Poroelastic"; }
+  static string CatalogName() { return "ReservoirWell"; }
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
@@ -50,31 +50,31 @@ public:
   virtual void AssembleSystem( DomainPartition * const domain,
                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                real64 const time,
-                               real64 const dt );
+                               real64 const dt ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                         real64 const time,
-                                        real64 const dt );
+                                        real64 const dt ) override;
 
   virtual real64
   CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                         DomainPartition * const domain );
+                         DomainPartition * const domain ) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params );
+                            SystemSolverParameters const * const params ) override;
 
   virtual bool
   CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        real64 const scalingFactor,
-                       DomainPartition * const domain );
+                       DomainPartition * const domain ) override;
 
   virtual void
   ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        real64 const scalingFactor,
-                       DomainPartition * const domain );
+                       DomainPartition * const domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain );
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   
   virtual void ImplicitStepComplete( real64 const& time_n,

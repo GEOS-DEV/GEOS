@@ -56,7 +56,21 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 )
 {
+  this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Temperature");
 
+  this->RegisterViewWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Use mass formulation instead of molar");
+
+  this->RegisterViewWrapper( viewKeyStruct::relPermNameString,  &m_relPermName,  false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of the relative permeability constitutive model to use");
+
+  this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
+  
 }
 
 localIndex CompositionalMultiphaseWell::numFluidComponents() const
@@ -77,28 +91,44 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( ManagedGroup * const r
 
 MultiFluidBase * CompositionalMultiphaseWell::GetFluidModel( ManagedGroup * dataGroup ) const
 {
-  MultiFluidBase * const fluid = nullptr;
+  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  MultiFluidBase * const fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
+  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
 
   return fluid;
 }
 
 MultiFluidBase const * CompositionalMultiphaseWell::GetFluidModel( ManagedGroup const * dataGroup ) const
 {
-  MultiFluidBase const * const fluid = nullptr;
+  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  MultiFluidBase const * const fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
+  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
 
   return fluid;
 }
 
 RelativePermeabilityBase * CompositionalMultiphaseWell::GetRelPermModel( ManagedGroup * dataGroup ) const
 {
-  RelativePermeabilityBase * const relPerm = nullptr;
+  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  RelativePermeabilityBase * const relPerm = constitutiveModels->GetGroup<RelativePermeabilityBase>( m_relPermName );
+  GEOS_ERROR_IF( relPerm == nullptr, "Target group does not contain the relative permeability model" );
 
   return relPerm;
 }
 
 RelativePermeabilityBase const * CompositionalMultiphaseWell::GetRelPermModel( ManagedGroup const * dataGroup ) const
 {
-  RelativePermeabilityBase const * const relPerm = nullptr;
+  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  RelativePermeabilityBase const * const relPerm = constitutiveModels->GetGroup<RelativePermeabilityBase>( m_relPermName );
+  GEOS_ERROR_IF( relPerm == nullptr, "Target group does not contain the relative permeability model" );
 
   return relPerm;
 }

@@ -37,7 +37,7 @@ class WellElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=OneToOneRelation;
+  using NodeMapType=FixedOneToManyRelation;
   
   static const string CatalogName()
   { return "WellCell"; }
@@ -78,7 +78,7 @@ public:
    */
   virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
   { 
-    return arraySlice1dRval<localIndex const>(0,0,0); // TODO
+    return m_toNodesRelation[k];
   }
 
   /*!
@@ -87,7 +87,7 @@ public:
    */
   virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
   {
-    return arraySlice1dRval<localIndex>(0,0,0); // TODO
+    return m_toNodesRelation[k];
   }
 
 private:

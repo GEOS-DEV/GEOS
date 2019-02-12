@@ -69,6 +69,10 @@ public:
   /// deleted move operator
   WellSolverBase & operator=( WellSolverBase && ) = delete;
 
+  localIndex fluidIndex() const { return m_fluidIndex; }
+  
+  localIndex numDofPerWellElement() const { return m_numDofPerWellElement; }
+  
   /**
    * @brief default destructor
    */
@@ -76,10 +80,24 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    // nothing for now
+    // gravity term precomputed values
+    static constexpr auto gravityFlagString  = "gravityFlag";
+    static constexpr auto gravityDepthString = "gravityDepth";
+
+    // misc inputs
+    static constexpr auto fluidNameString      = "fluidName";
+    static constexpr auto fluidIndexString     = "fluidIndex";
     
     using ViewKey = dataRepository::ViewKey;
 
+    // gravity term precomputed values
+    ViewKey gravityFlag  = { gravityFlagString };
+    ViewKey gravityDepth = { gravityDepthString };
+
+    // misc inputs
+    ViewKey fluidName      = { fluidNameString };
+    ViewKey fluidIndex     = { fluidIndexString };
+    
   } viewKeysWellSolverBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -100,6 +118,20 @@ protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
+  /// flag to determine whether or not to apply gravity
+  integer m_gravityFlag;
+
+  /// name of the fluid constitutive model
+  string m_fluidName;
+
+  /// index of the fluid constitutive model
+  localIndex m_fluidIndex;
+
+  /// the number of Degrees of Freedom per well element
+  localIndex m_numDofPerWellElement;
+
+  /// the number of Degrees of Freedom per well connection
+  localIndex m_numDofPerConnection;
 
 };
 

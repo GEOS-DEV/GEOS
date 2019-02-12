@@ -61,7 +61,14 @@ void ReservoirWellSolver::ImplicitStepSetup( real64 const& time_n,
                                              DomainPartition * const domain,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem)
 {
-  // Todo
+  std::cout << "ReservoirWellSolver: ImplicitStepSetup" << std::endl;
+
+  FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
+  WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
+
+  flowSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
+  wellSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
+
 }
 
 void ReservoirWellSolver::AssembleSystem( DomainPartition * const domain,
@@ -69,6 +76,8 @@ void ReservoirWellSolver::AssembleSystem( DomainPartition * const domain,
                                           real64 const time,
                                           real64 const dt )
 {
+  std::cout << "ReservoirWellSolver: AssembleSystem" << std::endl;
+  
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
@@ -104,22 +113,7 @@ real64 ReservoirWellSolver::CalculateResidualNorm( systemSolverInterface::Epetra
 void ReservoirWellSolver::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                        SystemSolverParameters const * const params )
 {
-  // for now we that BlockIDs::compositionalBlock also contains J_RW, J_WR, amd J_WW
-  //Epetra_FEVector * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
-
-  //Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-
-  //residual->Scale(-1.0);
-  //solution->Scale(0.0);
-
-  //m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
-  //                                              params,
-  //                                              BlockIDs::compositionalBlock );
-
-  //if( verboseLevel() >= 2 )
-  //{
-  //  GEOS_LOG_RANK("\nSolution:\n" << *solution);
-  //}
+  std::cout << "ReservoirWellSolver: SolveSystem " << std::endl;
 }
 
 bool ReservoirWellSolver::CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
@@ -148,6 +142,8 @@ void ReservoirWellSolver::ApplySystemSolution( systemSolverInterface::EpetraBloc
 
 void ReservoirWellSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
+  std::cout << "ReservoirWellSolver: ResetStateToBeginningOfStep" << std::endl;
+  
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
@@ -159,17 +155,17 @@ void ReservoirWellSolver::ImplicitStepComplete( real64 const& time_n,
                                                 real64 const& dt,
                                                 DomainPartition * const domain)
 {
-  // Todo
+  std::cout << "ReservoirWellSolver: ImplicitStepComplete" << std::endl;
 }
 
 void ReservoirWellSolver::PostProcessInput()
 {
-  // Todo: check that the solver are compatible
+  std::cout << "ReservoirWellSolver: PostProcessInput" << std::endl;
 }
 
 void ReservoirWellSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
 {
-  // Todo
+  std::cout << "ReservoirWellSolver: InitializePostInitialConditions_PreSubGroups" << std::endl;
 }
 
 ReservoirWellSolver::~ReservoirWellSolver()
@@ -182,7 +178,21 @@ real64 ReservoirWellSolver::SolverStep( real64 const & time_n,
                                         int const cycleNumber,
                                         DomainPartition * domain )
 {
-  return 0.0;
+  real64 dt_return = dt;
+
+  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+
+  // currently the only method is implicit time integration
+  dt_return= this->NonlinearImplicitStep( time_n,
+                                          dt,
+                                          cycleNumber,
+                                          domain,
+                                          getLinearSystemRepository() );
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dt_return, domain );
+
+  return dt_return;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, ReservoirWellSolver, std::string const &, ManagedGroup * const )

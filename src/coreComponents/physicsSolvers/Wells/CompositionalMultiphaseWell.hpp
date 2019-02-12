@@ -270,6 +270,13 @@ public:
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
+    // inputs
+    static constexpr auto temperatureString = "temperature";
+    static constexpr auto useMassFlagString = "useMass";
+
+    static constexpr auto relPermNameString  = "relPermName";
+    static constexpr auto relPermIndexString = "relPermIndex";
+    
     // primary solution field
     static constexpr auto pressureString               = "pressure";
     static constexpr auto deltaPressureString          = "deltaPressure";
@@ -281,13 +288,20 @@ public:
     static constexpr auto phaseFlowRateString = "phaseFlowRate";
     static constexpr auto bhpString           = "bhp";
 
-    // inputs
+    // intermediate values for constitutive model input
     static constexpr auto globalComponentFracString        = "globalComponentFraction";
     static constexpr auto dGlobalComponentFrac_dPresString = "dGlobalComponentFraction_dPres";
     static constexpr auto dGlobalComponentFrac_dCompString = "dGlobalComponentFraction_dComp";
 
     using ViewKey = dataRepository::ViewKey;
 
+    // inputs
+    ViewKey temperature = { temperatureString };
+    ViewKey useMassFlag = { useMassFlagString };
+
+    ViewKey relPermName  = { relPermNameString };
+    ViewKey relPermIndex = { relPermIndexString };
+    
     // primary solution field
     ViewKey pressure               = { pressureString };
     ViewKey deltaPressure          = { deltaPressureString };
@@ -396,8 +410,21 @@ private:
 
   /// the number of fluid components
   localIndex m_numComponents;
-};
 
+    /// the (uniform) temperature
+  real64 m_temperature;
+
+  /// flag indicating whether mass or molar formulation should be used
+  integer m_useMass;
+
+  /// name of the rel perm constitutive model
+  string m_relPermName;
+
+  /// index of the rel perm constitutive model
+  localIndex m_relPermIndex;
+
+};
+ 
 } // namespace geosx
 
 

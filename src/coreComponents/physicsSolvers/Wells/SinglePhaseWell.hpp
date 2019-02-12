@@ -61,7 +61,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   SinglePhaseWell( const string& name,
-                                     ManagedGroup * const parent );
+                   ManagedGroup * const parent );
 
   /// deleted default constructor
   SinglePhaseWell() = delete;
