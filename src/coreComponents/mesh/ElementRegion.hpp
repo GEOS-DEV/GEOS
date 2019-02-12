@@ -296,6 +296,7 @@ public:
     static constexpr auto fractureConnectorIndicesString = "fractureConnectorIndices";
     static constexpr auto fractureElementConnectorString = "fractureElementConnectors";
     static constexpr auto fractureToCellConnectorString = "fractureCellConnectors";
+    static constexpr auto fractureCellConnectorIndicesString = "fractureCellConnectorIndices";
 
 
   } m_regionViewKeys;

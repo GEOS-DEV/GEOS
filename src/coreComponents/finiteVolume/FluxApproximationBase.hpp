@@ -103,6 +103,11 @@ public:
   /// check if a stencil exists
   bool hasBoundaryStencil(string const & setName) const;
 
+
+  /// call a user-provided function for each boundary stencil
+  template<typename LAMBDA>
+  void forCellStencils(LAMBDA && lambda) const;
+
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
   void forBoundaryStencils(LAMBDA && lambda) const;
@@ -152,12 +157,20 @@ protected:
 };
 
 template<typename LAMBDA>
+void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
+{
+  this->forViewWrappersByType<CellStencil>([&] (auto const & vw) -> void
+  {
+    lambda(vw.reference());
+  });
+}
+
+template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
   this->forViewWrappersByType<BoundaryStencil>([&] (auto const & vw) -> void
   {
-    if (vw.getName() != viewKeyStruct::cellStencilString)
-      lambda(vw.reference());
+    lambda(vw.reference());
   });
 }
 

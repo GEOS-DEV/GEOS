@@ -23,21 +23,22 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 2"
-                  yCoords="0, 2"
+                  xCoords="-1, 1"
+                  yCoords="0, 3"
                   zCoords="0, 1"
                   nx="2"
-                  ny="2"
+                  ny="3"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="left"   xMin="-0.01, -0.01, -0.01" xMax=" 1.01,  1.01, 1.01"/>
-    <Box name="right"  xMin=" 8.99, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
-    <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.11, 1.01"/>
-    <Box name="top"    xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="fracture"  xMin="0.99, -0.01, -0.01" xMax="1.01, 2.01, 1.01"/>    
+    <Box name="left"      xMin="-0.01, -0.01, -0.01" xMax=" 1.01,  1.01, 1.01"/>
+    <Box name="right"     xMin=" 8.99, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
+    <Box name="bottom"    xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.11, 1.01"/>
+    <Box name="top"       xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="fracture"  xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 1.01"/>
+    <Box name="source"    xMin="-0.01, -0.01, -0.01" xMax=" 0.01,  1.01, 1.01"/>
   </Geometry>
 
 
@@ -86,13 +87,13 @@
     <CompressibleSinglePhaseFluid name="water"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="0.0"
+                                  compressibility="5e-10"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
-                                 compressibility="0.0"/>
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <InitialConditions>
@@ -173,24 +174,14 @@
                fieldName="pressure"
                scale="0.0"/>
 
-    <FieldSpecification name="boundaryPressure"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+    <FieldSpecification name="source"
+               objectPath="ElementRegions/elementRegions/Fracture/elementSubRegions/fracture"
                fieldName="pressure"
-               functionName="boundaryPressureFunc"
                scale="1.0e7"
-               setNames="left right"/>
+               setNames="source"/>
   </FieldSpecifications>
 
   <Functions>
-    <SymbolicFunction name="boundaryPressureFunc"
-                      inputVarNames="elementCenter"
-                      variableNames="x y z"
-                      expression="(10-x)/10"/>
-
-    <SymbolicFunction name="solutionFunction"
-                      inputVarNames="elementCenter"
-                      variableNames="x y z"
-                      expression="1e7*(10-x)/10"/>
   </Functions>
 
   <Partition>
