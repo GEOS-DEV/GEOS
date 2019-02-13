@@ -507,7 +507,8 @@ Pack( char*& buffer,
   const localIndex length = var.size();
   localIndex sizeOfPackedArrayChars = length * sizeof(T);
 
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(), length );
+  T const * const data = var.data();
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, data, length );
 
   return sizeOfPackedChars;
 }
@@ -548,7 +549,8 @@ Pack( char*& buffer,
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(indices[a]), var.strides()[0] );
+    T const * const data = var.data(indices[a]);
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, data, var.strides()[0] );
   }
   return sizeOfPackedChars;
 }
@@ -1029,7 +1031,7 @@ Unpack( char const *& buffer,
                                    relatedObjectGlobalToLocalMap,
                                    clearFlag );
 
-    unmappedGlobalIndices[li].insert( unmappedIndices.begin(),unmappedIndices.end() );
+    unmappedGlobalIndices[li].insert( unmappedIndices.values(), unmappedIndices.size() );
   }
   return sizeOfUnpackedChars;
 }

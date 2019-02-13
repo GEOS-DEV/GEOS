@@ -171,7 +171,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       std::pair<globalIndex_array, globalIndex> tempComp;
 
       // fill the array with the remaining composition object global indices
-      tempComp.first.insert( tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
+      tempComp.first.insert(0, &nodeList[1], nodeList.size() - 1 );
 
       // set the second value of the pair to the localIndex of the object.
       tempComp.second = a;
