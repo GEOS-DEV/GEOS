@@ -253,10 +253,10 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
         real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
         stencilCells[0] = { er, esr, ei};
-        stencilWeights[0] = ht ;
+        stencilWeights[0] = pow(-1,ke) * ht ;
 
-        stencilCells[0] = { fractureRegionIndex, 0, kfe};
-        stencilWeights[0] = -ht ;
+        stencilCells[1] = { fractureRegionIndex, 0, kfe};
+        stencilWeights[1] = -pow(-1,ke) * ht ;
 
         fractureStencil.add(stencilCells.data(), stencilCells, stencilWeights);
       }

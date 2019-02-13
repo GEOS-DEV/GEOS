@@ -948,7 +948,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
 
-    elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
+    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
       if( numMatInRegion > 1 )
       {
@@ -980,7 +980,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                       getIndexInParent();
     }
 
-    elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
+    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
       if( numMatInRegion == 1 )
       {
@@ -1590,8 +1590,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   {
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     viewPointers[er].resize( elemRegion->numSubRegions() );
-    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                            CellElementSubRegion const * const subRegion )
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
+                                               auto const * const subRegion )
     {
       numElems += subRegion->size();
 
@@ -1648,8 +1648,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
       {
         ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-        elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                                CellElementSubRegion const * const subRegion )
+        elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
+                                                   auto const * const subRegion )
         {
           ViewWrapper<arrayType> const &
           sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
@@ -1782,11 +1782,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       ElementRegion const * const region = elementManager->GetRegion(er);
 
-      region->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const elementSubRegion )
+      region->forElementSubRegions([&]( auto const * const elementSubRegion )
       {
-        array2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+        TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
 
-        elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
+        // TODO HACK. this isn't correct for variable relations.
+        elementToNodeMap[count].resize( elemsToNodes.size(0), elementSubRegion->numNodesPerElement(0) );
 
         integer_array const & elemGhostRank = elementSubRegion->GhostRank();
 
@@ -1795,7 +1796,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
         {
-          integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
+          integer numNodesPerElement = integer_conversion<int>( elementSubRegion->numNodesPerElement(k));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
             elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
@@ -1858,7 +1859,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 // geometry type " + elementRegion.m_elementGeometryID + " \n");
 //      }
 
-        shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
+        shapesize[count] = integer_conversion<int>( elementSubRegion->numNodesPerElement(0) );
         count++;
       });
     }
