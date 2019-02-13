@@ -277,7 +277,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
     } );
   } );
 
-  elemManager->forElementSubRegionsComplete<FaceElementSubRegion>([&] ( localIndex er,
+  elemManager->forElementSubRegionsComplete([&] ( localIndex er,
                                                                         localIndex esr,
                                                                         ElementRegion * const region,
                                                                         ElementSubRegionBase * const subRegion )

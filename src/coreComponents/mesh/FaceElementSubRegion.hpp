@@ -78,6 +78,8 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
+  string GetElementType() const { return "C3D8"; }
+
 
   NodeMapType const & nodeList() const
   {

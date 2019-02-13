@@ -249,10 +249,14 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
        faceMap[kfe][1] = faceIndex;
 
        arrayView1d<localIndex const> const & faceToNodesMap = facesToNodesMap[faceIndex];
-       nodeMap[kfe].resize( faceToNodesMap.size() );
+       nodeMap[kfe].resize( faceToNodesMap.size() * 2 );
        for( localIndex a=0 ; a<faceToNodesMap.size() ; ++a )
        {
+         const localIndex aa = a == 0 ? a : faceToNodesMap.size() - a;
+
+         // TODO HACK need to generalize to something other than quads
          nodeMap[kfe][a] = faceToNodesMap[a];
+         nodeMap[kfe][a+4] = faceToNodesMap[aa];
        }
 
        arrayView1d<localIndex const> const & faceToEdgesMap = facesToEdgesMap[faceIndex];
