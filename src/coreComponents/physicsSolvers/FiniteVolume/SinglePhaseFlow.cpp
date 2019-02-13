@@ -620,41 +620,38 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      if (elemGhostRank[ei] >= 0)
+      if (elemGhostRank[ei] < 0)
       {
-        return;
+        globalIndex const elemDOF = dofNumber[ei];
+        real64 const densNew = dens[ei][0];
+        real64 const volNew = volume[ei] + dVol[ei];
+
+        real64 dPoro_dPres;
+        AssembleAccumulationTermsHelper<ISPORO>::porosityUpdate( poro[ei], dPoro_dPres,
+                                                                 biotCoefficient,
+                                                                 poroOld[ei],
+                                                                 bulkModulus[ei][0],
+                                                                 totalMeanStress[ei],
+                                                                 oldTotalMeanStress[ei],
+                                                                 dPres[ei],
+                                                                 poroRef[ei],
+                                                                 pvmult[ei][0],
+                                                                 dPVMult_dPres[ei][0] );
+
+
+        // Residual contribution is mass conservation in the cell
+        real64 const localAccum = poro[ei]    * densNew     * volNew
+                                - poroOld[ei] * densOld[ei] * volume[ei];
+
+        // Derivative of residual wrt to pressure in the cell
+        real64 const localAccumJacobian = dPoro_dPres * densNew * volNew
+                                        + dDens_dPres[ei][0] * poro[ei] * volNew;
+
+
+        // add contribution to global residual and jacobian
+        residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
+        jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
       }
-
-      globalIndex const elemDOF = dofNumber[ei];
-
-      real64 const densNew = dens[ei][0];
-      real64 const volNew = volume[ei] + dVol[ei];
-
-      real64 dPoro_dPres;
-      AssembleAccumulationTermsHelper<ISPORO>::porosityUpdate( poro[ei], dPoro_dPres,
-                                                               biotCoefficient,
-                                                               poroOld[ei],
-                                                               bulkModulus[ei][0],
-                                                               totalMeanStress[ei],
-                                                               oldTotalMeanStress[ei],
-                                                               dPres[ei],
-                                                               poroRef[ei],
-                                                               pvmult[ei][0],
-                                                               dPVMult_dPres[ei][0] );
-
-
-      // Residual contribution is mass conservation in the cell
-      real64 const localAccum = poro[ei]    * densNew     * volNew
-                              - poroOld[ei] * densOld[ei] * volume[ei];
-
-      // Derivative of residual wrt to pressure in the cell
-      real64 const localAccumJacobian = dPoro_dPres * densNew * volNew
-                                      + dDens_dPres[ei][0] * poro[ei] * volNew;
-
-
-      // add contribution to global residual and jacobian
-      residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
-      jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
     } );
   } );
 }
