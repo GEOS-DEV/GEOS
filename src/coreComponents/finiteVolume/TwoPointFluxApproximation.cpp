@@ -188,16 +188,15 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
   arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-  R1Tensor aperture = {1.0,1.0,1.0};
-  aperture *= 1e-12;
 
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
+
+  arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
 
   for( localIndex fci=0 ; fci<fractureConnectors.size() ; ++fci )
   {
     localIndex const numElems = fractureConnectors[fci].size();
     localIndex const edgeIndex = fractureConnectorIndices[fci];
-
 
     array1d<CellDescriptor> stencilCells(numElems);
     array1d<real64> stencilWeights(numElems);
@@ -212,7 +211,9 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
       R1Tensor cellCenterToEdgeCenter = edgeCenter;
       cellCenterToEdgeCenter -= faceCenter[ faceMap[fractureElementIndex][0] ];
       stencilCells[kfe] = { fractureRegionIndex, 0, fractureElementIndex };
-      stencilWeights[kfe] = pow( -1 , kfe ) * 1e-12 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+      // TODO stenciWeights will mean something else once you take out the aperture.
+      // We won't be doing the harmonic mean here...etc.
+      stencilWeights[kfe] = pow( -1 , kfe ) * pow( aperture[fractureElementIndex], 3) / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
     }
     fractureStencil.add(stencilCells.data(), stencilCells, stencilWeights);
   }

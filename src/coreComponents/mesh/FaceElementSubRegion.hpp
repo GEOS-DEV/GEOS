@@ -127,7 +127,8 @@ public:
    */
   virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-
+  arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
 
 private:
 
@@ -141,7 +142,7 @@ private:
   FaceMapType  m_toFacesRelation;
 
   /// The member level field for the element center
-  array1d< R1Tensor > m_elementAperture;
+  array1d< real64 > m_elementAperture;
 
   /// The member level field for the element center
   array1d< R1Tensor > m_elementArea;
