@@ -522,7 +522,7 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
 
   if (m_poroElasticFlag)
   {
-    AssembleAccumulationTermsCoupled( domain, jacobian, residual, time_n, dt );
+    AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   }
   else
   {
@@ -541,12 +541,54 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   }
 }
 
-void
-SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
-                                            Epetra_FECrsMatrix * const jacobian,
-                                            Epetra_FEVector * const residual,
-                                            real64 const time_n,
-                                            real64 const dt )
+template< bool ISPORO >
+struct AssembleAccumulationTermsHelper;
+
+template<>
+struct AssembleAccumulationTermsHelper<true>
+{
+  inline static constexpr void poroUpdateAndJacobianCalc( real64 & poro,
+                                                          real64 & dPoro_dPres,
+                                                          real64 const biotCoefficient,
+                                                          real64 const poroOld,
+                                                          real64 const bulkModulus,
+                                                          real64 const totalMeanStress,
+                                                          real64 const oldTotalMeanStress,
+                                                          real64 const dPres,
+                                                          real64 const poroRef,
+                                                          real64 const pvmult,
+                                                          real64 const dPVMult_dPres )
+  {
+    dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
+    poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
+  }
+};
+
+template<>
+struct AssembleAccumulationTermsHelper<false>
+{
+  inline static constexpr void poroUpdateAndJacobianCalc( real64 & poro,
+                                                          real64 & dPoro_dPres,
+                                                          real64 const biot,
+                                                          real64 const poroOld,
+                                                          real64 const bulkModulus,
+                                                          real64 const totalMeanStress,
+                                                          real64 const oldTotalMeanStress,
+                                                          real64 const dPres,
+                                                          real64 const poroRef,
+                                                          real64 const pvmult,
+                                                          real64 const dPVMult_dPres )
+  {
+    poro = poroRef * pvmult;
+    dPoro_dPres = dPVMult_dPres * poroRef;
+  }
+};
+
+void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
+                                                 Epetra_FECrsMatrix * const jacobian,
+                                                 Epetra_FEVector * const residual,
+                                                 real64 const time_n,
+                                                 real64 const dt )
 {
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -569,28 +611,58 @@ SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain
     arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
     arrayView2d<real64 const> const & dPVMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
+    arrayView1d<real64 const> dPres;
+    arrayView1d<real64 const> oldTotalMeanStress;
+    arrayView1d<real64 const> totalMeanStress;
+    arrayView2d<real64 const> bulkModulus;
+    real64 biotCoefficient;
+
+    if (m_poroElasticFlag)
+    {
+      dPres              = m_deltaPressure[er][esr];
+      oldTotalMeanStress = m_totalMeanStressOld[er][esr];
+      totalMeanStress    = m_totalMeanStress[er][esr];
+      bulkModulus        = m_bulkModulus[er][esr][m_solidIndex];
+      biotCoefficient    = m_biotCoefficient[er][esr][m_solidIndex];
+    }
+
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
+      {
         return;
+      }
 
       globalIndex const elemDOF = dofNumber[ei];
 
       real64 const densNew = dens[ei][0];
       real64 const volNew = volume[ei] + dVol[ei];
 
-      if( pvmult.size()>0 )
+      real64 localAccumJacobian = 0;
+      if (m_poroElasticFlag)
       {
-        poro[ei] = poroRef[ei] * pvmult[ei][0];
+
+        poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei][0]
+                               * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
+
+        // Derivative of residual wrt to pressure in the cell
+        localAccumJacobian = (biotCoefficient - poroOld[ei]) / bulkModulus[ei][0] * densNew * volNew
+                           + dDens_dPres[ei][0] * poro[ei] * volNew;
+      }
+      else
+      {
+        if( pvmult.size()>0 )
+        {
+          poro[ei] = poroRef[ei] * pvmult[ei][0];
+        }
+        // Derivative of residual wrt to pressure in the cell
+        localAccumJacobian = dPVMult_dPres[ei][0] * poroRef[ei] * densNew * volNew
+                           + dDens_dPres[ei][0] * poro[ei] * volNew;
       }
 
       // Residual contribution is mass conservation in the cell
       real64 const localAccum = poro[ei]    * densNew     * volNew
                               - poroOld[ei] * densOld[ei] * volume[ei];
-
-      // Derivative of residual wrt to pressure in the cell
-      real64 const localAccumJacobian = dPVMult_dPres[ei][0] * poroRef[ei] * densNew * volNew
-                                      + dDens_dPres[ei][0] * poro[ei] * volNew;
 
       // add contribution to global residual and jacobian
       residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
