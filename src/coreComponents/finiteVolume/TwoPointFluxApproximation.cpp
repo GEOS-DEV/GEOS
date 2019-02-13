@@ -163,7 +163,11 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
 
   localIndex fractureRegionIndex = elemManager->GetRegions().getIndex("Fracture");
   ElementRegion const * const fractureRegion = elemManager->GetRegion( "Fracture" );
+  if( fractureRegion==nullptr ) return;
+
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>(0);
+
+  if( fractureSubRegion==nullptr ) return;
 
   FaceElementSubRegion::NodeMapType const & nodeMap = fractureSubRegion->nodeList();
   FaceElementSubRegion::EdgeMapType const & edgeMap = fractureSubRegion->edgeList();
