@@ -146,19 +146,6 @@ public:
                                   real64 const dt );
 
   /**
-   * @brief assembles the accumulation terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  void AssembleAccumulationTermsCoupled( DomainPartition const * const domain,
-                                         Epetra_FECrsMatrix * const jacobian,
-                                         Epetra_FEVector * const residual,
-                                         real64 const time_n,
-                                         real64 const dt );
-
-  /**
    * @brief assembles the flux terms for all cells
    * @param domain the physical domain object
    * @param blockSystem the entire block system
