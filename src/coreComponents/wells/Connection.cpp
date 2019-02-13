@@ -31,12 +31,10 @@ namespace geosx
 using namespace dataRepository;
 
 Connection::Connection(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent)
+  : ManagedGroup(name, parent),
+    m_nextWellElementIndex(-1),
+    m_prevWellElementIndex(-1)
 {
-  RegisterViewWrapper( viewKeysConnection.connectionName.Key(), &m_connectionName, false )->
-    setDefaultValue("0")->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Well connection name (can be omitted for single-segment wells)");
 }
 
 Connection::~Connection()

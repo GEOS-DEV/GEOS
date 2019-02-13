@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATION_HPP
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATION_HPP
+#ifndef GEOSX_CORECOMPONENTS_WELLS_PERFORATION_HPP
+#define GEOSX_CORECOMPONENTS_WELLS_PERFORATION_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 
@@ -40,32 +40,34 @@ public:
   Perforation( Perforation const &) = delete;
   Perforation( Perforation && ) = delete;
 
-  R1Tensor const & getLocation() const     { return m_location; }
-  void setLocation(R1Tensor const & loc)   { m_location = loc;  }
+  R1Tensor const & getLocation() const
+  { return m_location; }
 
-  real64 getTransmissibility() const       { return m_transmissibility; }
-  void setTransmissibility(real64 tran)    { m_transmissibility = tran; }
+  real64 getTransmissibility() const
+  { return m_transmissibility; }
 
-  localIndex const & getWellElementIndex() const    { return m_wellElementIndex; }
-  void setWellElementIndex(localIndex const & index) { m_wellElementIndex = index; }
+  localIndex const & getWellElementIndex() const
+  { return m_wellElementIndex; }
 
   struct viewKeyStruct
   {
-
     static constexpr auto locationString         = "location";
     static constexpr auto transmissibilityString = "transmissibility";
     static constexpr auto wellElementIndexString  = "wellElementIndex";
 
     dataRepository::ViewKey location         = { locationString         };
     dataRepository::ViewKey transmissibility = { transmissibilityString };
-    dataRepository::ViewKey wellElementIndex  = { wellElementIndexString  };
+    dataRepository::ViewKey wellElementIndex = { wellElementIndexString };
 
   } viewKeysPerforation;
 
 private:
-
+  
+  // geometry
   R1Tensor   m_location;
   real64     m_transmissibility;
+
+  // connectivity
   localIndex m_wellElementIndex;
 
   // depending on whether we keep the WellStencil class or not,

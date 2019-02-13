@@ -39,6 +39,7 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     m_typeString( "producer" ),
     m_type( Type::PRODUCER )
 {
+  std::cout << "Well::Well: " << name << std::endl;
   RegisterViewWrapper( viewKeyStruct::referenceDepthString, &m_referenceDepth, false )->
     setDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -51,8 +52,9 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
   RegisterGroup( groupKeyStruct::wellElementSubRegionString, &m_wellElementSubRegion, false );
   
   RegisterGroup( groupKeyStruct::connectionsString,  &m_connectionData,  false );
-  
+
   RegisterGroup( groupKeyStruct::perforationsString, &m_perforationData, false );
+
 }
 
 Well::~Well()
@@ -62,7 +64,7 @@ Well::~Well()
 
 dataRepository::ManagedGroup * Well::CreateChild(string const & childKey, string const & childName)
 {
-  // child groups will be registered explicitly, rather than via input file
+  std::cout << "Well: CreateChild (Child groups will be registered explicitly, rather than via input file)" << std::endl;
   return nullptr;
 }
 
@@ -73,6 +75,7 @@ R1Tensor const & Well::getGravityVector() const
 
 void Well::PostProcessInput()
 {
+  std::cout << "Well: PostProcessInput" << std::endl;
   if (m_typeString == "producer")
   {
     m_type = Type::PRODUCER;
@@ -87,5 +90,6 @@ void Well::PostProcessInput()
   }
 }
 
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, Well, std::string const &, ManagedGroup * const )
 
 } //namespace geosx

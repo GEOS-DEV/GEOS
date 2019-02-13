@@ -32,7 +32,7 @@ using namespace dataRepository;
 
 WellManager::WellManager(string const & name,
 			 dataRepository::ManagedGroup * const parent)
-  : ManagedGroup(name, parent)
+  : ObjectManagerBase(name, parent)
 {
 
 
@@ -46,8 +46,13 @@ WellManager::~WellManager()
 ManagedGroup * WellManager::CreateChild(string const & childKey, string const & childName)
 {
   std::cout << "Adding Well: " << childKey << ", " << childName << std::endl;
-  std::unique_ptr<Well> well = Well::CatalogInterface::Factory( childKey, childName, this );
+  std::unique_ptr<ObjectManagerBase> well = ObjectManagerBase::CatalogInterface::Factory( childKey, childName, this );
   return RegisterGroup<Well>( childName, std::move( well ) );
+}
+
+const string WellManager::getCatalogName() const
+{
+  return keys::wellManager;
 }
 
 Well * WellManager::getWell(string const & name)

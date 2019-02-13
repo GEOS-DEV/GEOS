@@ -634,6 +634,11 @@ void ProblemManager::ParseInputFile()
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
 
+    WellManager * wellManager = domain->getWellManager();
+    topLevelNode = xmlProblemNode.child(wellManager->getName().c_str());
+    wellManager->ProcessInputFileRecursive( topLevelNode );
+    wellManager->PostProcessInputRecursive();
+
   }
 }
 

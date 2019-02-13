@@ -35,6 +35,11 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "wells/WellManager.hpp"
+#include "wells/Well.hpp"
+#include "wells/PerforationData.hpp"
+#include "wells/Perforation.hpp"
+#include "wells/ConnectionData.hpp"
+#include "wells/Connection.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
@@ -193,7 +198,7 @@ void CompositionalMultiphaseWell::InitializeWellState( DomainPartition * const d
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     // do something
   });
@@ -299,7 +304,7 @@ void CompositionalMultiphaseWell::AssembleAccumulationTerms( DomainPartition * c
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     // loop over the segments
   });  
@@ -313,9 +318,21 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+   // loop over the wells
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    // loop over the connections
+    ConnectionData const * const connectionData = well->getConnections();
+
+    // for each well, loop over the connections
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+      Connection const * const connection = connectionData->getConnection( iconn );
+
+      std::cout << "CompositionalMultiphaseWell: computing flux terms for connection "
+		<< connection->getName()
+		<< std::endl;
+      // compute flux term and add to mass conservation in the two neighboring segments
+    }
   });    
 }
 
@@ -327,7 +344,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition * 
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     // loop over the segments
   });    
@@ -341,19 +358,32 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  // loop over the wells
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    //  -- Compute the rates at each perforation
-    //  -- Form the control equations
-    //  -- Add to residual and Jacobian matrix
-  });
+    PerforationData const * const perforationData = well->getPerforations();
+
+    // for each well, loop over the connections
+    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+    {
+      Perforation const * const perforation = perforationData->getPerforation( iperf );
+      std::cout << "CompositionalMultiphaseWell: computing source terms for perforation "
+		<< perforation->getName()
+		<< std::endl;
+
+      //  -- Compute the rates at each perforation
+      //  -- Form the control equations
+      //  -- Add to residual and Jacobian matrix
+
+    }
+  });    
 }
 
 void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     // check if the well control needs to be switched
   });
@@ -420,7 +450,7 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<CompositionalMultiphaseWell>( [&] ( CompositionalMultiphaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     //   -- set dWellPres = 0;
     //   -- update the other well variables

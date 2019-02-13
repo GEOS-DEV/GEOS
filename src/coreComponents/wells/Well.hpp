@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELL_HPP_
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELL_HPP_
+#ifndef GEOSX_CORECOMPONENTS_WELLS_WELL_HPP_
+#define GEOSX_CORECOMPONENTS_WELLS_WELL_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -117,4 +117,4 @@ protected:
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELL_HPP_
+#endif //GEOSX_CORECOMPONENTS_WELLS_WELL_HPP_

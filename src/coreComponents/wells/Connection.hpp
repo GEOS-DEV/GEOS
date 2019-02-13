@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTION_HPP
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTION_HPP
+#ifndef GEOSX_CORECOMPONENTS_WELLS_CONNECTION_HPP
+#define GEOSX_CORECOMPONENTS_WELLS_CONNECTION_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 
@@ -40,22 +40,23 @@ public:
   Connection( Connection const &) = delete;
   Connection( Connection && ) = delete;
 
-  string const & getConnectionName() const    { return m_connectionName; }
-  void setConnectionName(string const & name) { m_connectionName = name; }
-
+  localIndex const & getNextWellElementIndex() const
+  { return m_nextWellElementIndex; }
+  
+  localIndex const & getPreviousWellElementIndex() const
+  { return m_prevWellElementIndex; }  
+  
   // check if the connection is an exit
-  bool isExitConnection() const { return (m_nextWellElementIndex < 0 || m_prevWellElementIndex < 0); }
+  bool isExitConnection() const
+  { return (m_nextWellElementIndex < 0 || m_prevWellElementIndex < 0); }
   
   struct viewKeyStruct
   {
-
-    static constexpr auto connectionNameString   = "connectionName";
     static constexpr auto nextWellElementIndexString = "nextWellElementIndex";
     static constexpr auto prevWellElementIndexString = "prevWellElementIndex";
 
     using ViewKey = dataRepository::ViewKey;
 
-    ViewKey connectionName       = { connectionNameString };
     ViewKey nextWellElementIndex = { nextWellElementIndexString };
     ViewKey prevWellElementIndex = { prevWellElementIndexString };
     
@@ -63,7 +64,7 @@ public:
 
 private:
 
-  string     m_connectionName;
+  // connectivity info
   localIndex m_nextWellElementIndex;
   localIndex m_prevWellElementIndex;
   
@@ -71,4 +72,4 @@ private:
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_CONNECTION_HPP
+#endif //GEOSX_CORECOMPONENTS_WELLS_CONNECTION_HPP

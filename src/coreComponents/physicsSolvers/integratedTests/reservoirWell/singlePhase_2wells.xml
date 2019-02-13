@@ -105,14 +105,34 @@
                 referenceDepth="0.5">
       <!--<Segments>
 	<Segment name="prod1_seg0" />
-      </Segments>
+      </Segments> -->
       <Connections>
 	<Connection name="prod1_conn0" />
-      </Connections> -->
+	<Connection name="prod1_conn1" />
+      </Connections> 
       <Perforations>
         <Perforation name="prod1_p0" location="0.5 0.5 0.5" transmissibility="1e-15"/>
-      </Perforations>
+	<Perforation name="prod1_p1" location="1.5 0.5 0.5" transmissibility="1e-15"/>
+      </Perforations> 
     </Well>
+    
+    <Well name="inj1"
+          type="injector"
+          referenceDepth="0.5">
+      <!--<Segments>
+	<Segment name="inj1_seg0" />
+      </Segments> -->
+      <Connections>
+	<Connection name="inj1_conn0" />	
+	<Connection name="inj1_conn1" />
+      </Connections> 
+      <Perforations>
+        <Perforation name="inj1_p0" location="9.5 0.5 0.5" transmissibility="1e-15"/>
+	<Perforation name="inj1_p1" location="8.5 0.5 0.5" transmissibility="1e-15"/>
+	<Perforation name="inj1_p2" location="7.5 0.5 0.5" transmissibility="1e-15"/>
+      </Perforations> 
+    </Well>
+
   </Wells>
   
   <FieldSpecifications>

@@ -33,20 +33,20 @@ using namespace dataRepository;
 Perforation::Perforation(string const & name, ManagedGroup * const parent)
   : ManagedGroup(name, parent),
     m_location(),
-    m_transmissibility()
+    m_transmissibility(0),
+    m_wellElementIndex(-1)
 {
-  RegisterViewWrapper( viewKeysPerforation.location.Key(), &m_location, false )->
+  std::cout << "Perforation::Perforation" << std::endl;
+
+  RegisterViewWrapper( viewKeyStruct::locationString, &m_location, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Perforation physical coordinates");
 
-  RegisterViewWrapper( viewKeysPerforation.transmissibility.Key(), &m_transmissibility, false )->
+  RegisterViewWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Connection transmissibility");
 
-  RegisterViewWrapper( viewKeysPerforation.wellElementIndex.Key(), &m_wellElementIndex, false )->
-    setDefaultValue(-1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Well segment name (can be omitted for single-segment wells");
+  RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
 }
 
 Perforation::~Perforation()

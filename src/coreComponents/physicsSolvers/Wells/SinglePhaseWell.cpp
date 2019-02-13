@@ -34,6 +34,11 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "wells/WellManager.hpp"
+#include "wells/Well.hpp"
+#include "wells/PerforationData.hpp"
+#include "wells/Perforation.hpp"
+#include "wells/ConnectionData.hpp"
+#include "wells/Connection.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
@@ -110,7 +115,7 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
      // do something
   });
@@ -217,7 +222,7 @@ void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     // loop over the segments
   });  
@@ -231,10 +236,25 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  {
-    // loop over the connections
-  });    
+  // loop over the wells
+  //wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  //{
+  
+    Well * well = wellManager->getWell("inj1");
+
+    ConnectionData const * const connectionData = well->getConnections();
+
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+      Connection const * const connection = connectionData->getConnection( iconn );
+      std::cout << "SinglePhaseWell: computing flux terms for connection "
+	        << connection->getName()
+		<< " for well " << well->getName()
+	        << std::endl;
+    }
+
+  //}); 
+
 }
 
 
@@ -245,19 +265,37 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
-  {
-    //  -- Compute the rates at each perforation
-    //  -- Form the control equations
-    //  -- Add to residual and Jacobian matrix
-  });
+  // loop over the wells
+  //wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  //{
+    Well * well = wellManager->getWell("inj1");
+
+    PerforationData const * const perforationData = well->getPerforations();
+
+    // for each well, loop over the connections
+    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+    {      
+      Perforation const * const perforation = perforationData->getPerforation( iperf );
+
+      std::cout << "SinglePhaseWell: computing source terms for perforation "
+		<< perforation->getName()
+		<< " for well " << well->getName()
+		<< std::endl;
+
+      //  -- Compute the rates at each perforation
+      //  -- Form the control equations
+      //  -- Add to residual and Jacobian matrix
+      
+    }
+    
+  //});    
 }
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 {
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     // check if the well control needs to be switched
   });
@@ -326,7 +364,7 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
   
   WellManager * const wellManager = domain->getWellManager();
 
-  wellManager->forSubGroups<SinglePhaseWell>( [&] ( SinglePhaseWell * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     //   -- set dWellPres = 0;
     //   -- update the other well variables

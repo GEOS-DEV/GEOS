@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONDATA_HPP
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONDATA_HPP
+#ifndef GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP
+#define GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -58,8 +58,10 @@ public:
 
   virtual const string getCatalogName() const override;
 
-  localIndex numPerforationsGlobal() const { return integer_conversion<localIndex>(m_perforationList.size()); }
-  localIndex numPerforationsLocal()  const { return integer_conversion<localIndex>(size());         }
+  localIndex numPerforationsGlobal() const
+  { return integer_conversion<localIndex>(m_perforationList.size()); }
+  localIndex numPerforationsLocal()  const
+  { return integer_conversion<localIndex>(size()); }
 
   Perforation const * getPerforation( localIndex iperf ) const;
   Perforation *       getPerforation( localIndex iperf );
@@ -115,4 +117,4 @@ private:
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_PERFORATIONDATA_HPP
+#endif //GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP

@@ -65,7 +65,8 @@ const string ConnectionData::getCatalogName() const
 
 void ConnectionData::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-
+  // for now, assume that numConnectionsGlobal == numConnectionsLocal
+  resize( numConnectionsGlobal() );
 }
 
 void ConnectionData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )

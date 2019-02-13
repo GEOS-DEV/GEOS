@@ -21,10 +21,11 @@
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELLMANAGER_HPP_
-#define GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELLMANAGER_HPP_
+#ifndef GEOSX_CORECOMPONENTS_WELLS_WELLMANAGER_HPP_
+#define GEOSX_CORECOMPONENTS_WELLS_WELLMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
 {
@@ -33,17 +34,17 @@ namespace dataRepository
 {
 namespace keys
 {
-  static constexpr auto wellManager = "Wells";
+static constexpr auto wellManager = "Wells";
 }
 }
 
 class Well;
   
-class WellManager : public dataRepository::ManagedGroup
+class WellManager : public ObjectManagerBase
 {
 public:
 
-  WellManager( string const & name, ManagedGroup * const parent );
+  explicit WellManager( string const & name, dataRepository::ManagedGroup * const parent );
   virtual ~WellManager() override;
 
   WellManager() = delete;
@@ -52,6 +53,8 @@ public:
 
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+  virtual const string getCatalogName() const override;
+  
   Well * getWell( string const & name );
 
   void setGravityVector(R1Tensor const & gravity, bool gravityFlag = true);
@@ -68,4 +71,4 @@ private:
 
 }
 
-#endif //CORECOMPONENTS_MANAGERS_WELLS_WELLMANAGER_HPP_
+#endif //CORECOMPONENTS_WELLS_WELLMANAGER_HPP_

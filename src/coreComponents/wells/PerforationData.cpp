@@ -70,6 +70,15 @@ const string PerforationData::getCatalogName() const
 
 void PerforationData::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
+  std::cout << "PerforationData: InitializePreSubGroups" << std::endl;
+  
+  // for now, assume that numPerforationsLocal == numPerforationGlobal
+  resize( numPerforationsGlobal() );
+  std::cout << "PerforationData: numPerforationsLocal() = "
+	    << numPerforationsLocal()
+	    << std::endl;
+
+  /*
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
@@ -81,6 +90,7 @@ void PerforationData::InitializePreSubGroups( ManagedGroup * const problemManage
   {
     setAll.insert( iconn );
   }
+  */
 }
 
 void PerforationData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
@@ -92,6 +102,7 @@ void PerforationData::InitializePostInitialConditions_PreSubGroups( ManagedGroup
 
 void PerforationData::PrecomputeData( MeshLevel const * mesh )
 {
+  /*
   R1Tensor const & gravity = getParent()->group_cast<Well *>()->getGravityVector();
   arrayView1d<real64> & gravDepth = getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
@@ -101,6 +112,7 @@ void PerforationData::PrecomputeData( MeshLevel const * mesh )
     Perforation const * perf = this->GetGroup<Perforation>( perfName );
     gravDepth[iconn] = Dot( perf->getLocation(), gravity );
   }
+  */
 }
 
 void PerforationData::ConnectToCells( MeshLevel const * mesh )
