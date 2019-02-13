@@ -656,64 +656,6 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
   } );
 }
 
-void
-SinglePhaseFlow::AssembleAccumulationTermsCoupled( DomainPartition const * const domain,
-                                                   Epetra_FECrsMatrix * const jacobian,
-                                                   Epetra_FEVector * const residual,
-                                                   real64 const time_n,
-                                                   real64 const dt )
-{
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                            ElementRegion const * const region,
-                                            ElementSubRegionBase const * const subRegion )
-  {
-    arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
-
-    arrayView1d<real64 const> const & dPres         = m_deltaPressure[er][esr];
-    arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
-    arrayView1d<real64>       const & poro          = m_porosity[er][esr];
-    arrayView1d<real64 const> const & poroOld       = m_porosityOld[er][esr];
-    arrayView1d<real64 const> const & volume        = m_volume[er][esr];
-    arrayView1d<real64 const> const & dVol          = m_deltaVolume[er][esr];
-    arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
-    arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
-
-    arrayView1d<real64 const> const & oldTotalMeanStress = m_totalMeanStressOld[er][esr];
-    arrayView1d<real64 const> const & totalMeanStress    = m_totalMeanStress[er][esr];
-    arrayView2d<real64 const> const & bulkModulus        = m_bulkModulus[er][esr][m_solidIndex];
-    real64 const & biotCoefficient                       = m_biotCoefficient[er][esr][m_solidIndex];
-
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      if (elemGhostRank[ei] >= 0)
-        return;
-
-      globalIndex const elemDOF = dofNumber[ei];
-
-      real64 const densNew = dens[ei][0];
-      real64 const volNew = volume[ei] + dVol[ei];
-
-      poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei][0]
-                             * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
-
-      // Residual contribution is mass conservation in the cell
-      real64 const localAccum = poro[ei]    * densNew     * volNew
-                              - poroOld[ei] * densOld[ei] * volume[ei];
-
-      // Derivative of residual wrt to pressure in the cell
-      real64 const localAccumJacobian = (biotCoefficient - poroOld[ei]) / bulkModulus[ei][0] * densNew * volNew
-                                      + dDens_dPres[ei][0] * poro[ei] * volNew;
-
-      // add contribution to global residual and jacobian
-      residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
-      jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
-    } );
-  } );
-}
 
 void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
                                          Epetra_FECrsMatrix * const jacobian,
