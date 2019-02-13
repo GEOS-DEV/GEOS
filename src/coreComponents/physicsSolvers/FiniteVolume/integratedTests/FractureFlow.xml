@@ -68,7 +68,8 @@
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
-                                 coefficientName="permeability"/>
+                                 coefficientName="permeability"
+                                 fractureRegions="Fracture"/>
     </FiniteVolume>
   </NumericalMethods>
 

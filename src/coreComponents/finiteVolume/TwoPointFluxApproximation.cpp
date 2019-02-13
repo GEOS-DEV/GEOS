@@ -155,19 +155,19 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
                                                         CellStencil & fractureStencil,
                                                         CellStencil & cellStencil )
 {
+
   MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager const * const nodeManager = mesh->getNodeManager();
   EdgeManager const * const edgeManager = mesh->getEdgeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  localIndex fractureRegionIndex = elemManager->GetRegions().getIndex("Fracture");
-  ElementRegion const * const fractureRegion = elemManager->GetRegion( "Fracture" );
-  if( fractureRegion==nullptr ) return;
+  localIndex fractureRegionIndex = elemManager->GetRegions().getIndex(m_fractureRegionName);
+  ElementRegion const * const fractureRegion = elemManager->GetRegion( m_fractureRegionName );
+
 
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>(0);
 
-  if( fractureSubRegion==nullptr ) return;
 
   FaceElementSubRegion::NodeMapType const & nodeMap = fractureSubRegion->nodeList();
   FaceElementSubRegion::EdgeMapType const & edgeMap = fractureSubRegion->edgeList();
