@@ -126,29 +126,13 @@
                scale="2.0e-16"/>
 
 
-    <FieldSpecification name="permxf"
+    <FieldSpecification name="aperture"
                component="0"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Fracture"
-               fieldName="permeability"
-               scale="2.0e-16"/>
-
-    <FieldSpecification name="permyf"
-               component="1"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Fracture"
-               fieldName="permeability"
-               scale="2.0e-16"/>
-
-    <FieldSpecification name="permzf"
-               component="2"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Fracture"
-               fieldName="permeability"
-               scale="2.0e-16"/>
+               objectPath="ElementRegions/elementRegions/Fracture/elementSubRegions/fracture"
+               fieldName="elementAperture"
+               scale="1.0e-4"/>
 
 
 
