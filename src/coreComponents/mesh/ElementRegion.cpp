@@ -194,6 +194,11 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )
  {
 
+   if( this->m_fractureSetNames.empty() )
+   {
+     return;
+   }
+
    // key is edge index, value is faceElementIndex....this only works for a single fracture Region with a single subregion!!
    map< localIndex, set<localIndex> > fractureConnectorIndicesMap;
 

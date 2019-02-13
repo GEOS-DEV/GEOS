@@ -276,17 +276,6 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
       vol[ei] += dVol[ei];
     } );
   } );
-
-  elemManager->forElementSubRegionsComplete([&] ( localIndex er,
-                                                                        localIndex esr,
-                                                                        ElementRegion * const region,
-                                                                        ElementSubRegionBase * const subRegion )
-  {
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      printf( "m_pressure[%ld][%ld][%ld] = %f \n", er, esr, ei, m_pressure[er][esr][ei] );
-    });
-  });
 }
 
 void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
