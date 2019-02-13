@@ -138,6 +138,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
+  template< bool ISPORO >
   void AssembleAccumulationTerms( DomainPartition const * const domain,
                                   Epetra_FECrsMatrix * const jacobian,
                                   Epetra_FEVector * const residual,
