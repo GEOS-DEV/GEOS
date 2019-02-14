@@ -75,51 +75,91 @@ TEST_F(DofManagerTest, TestOne)
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
 
-  string_array oneRegion;
-  oneRegion.push_back( "region2" );
+  string_array displacementRegion;
+  displacementRegion.push_back( "region1" );
+  displacementRegion.push_back( "region3" );
+  displacementRegion.push_back( "region4" );
 
-  string_array twoRegion;
-  twoRegion.push_back( "region1" );
-  twoRegion.push_back( "region2" );
+  string_array pressureRegion;
+  pressureRegion.push_back( "region1" );
+  pressureRegion.push_back( "region2" );
+  pressureRegion.push_back( "region3" );
 
-  //- dofManager.addField("displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 1, twoRegion);
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, twoRegion );
-  //dofManager.addField("face_node", DofManager::Location::Node, DofManager::Connectivity::Face, 1, twoRegion);
-  //dofManager.addField("node_face", DofManager::Location::Face, DofManager::Connectivity::Node, 1, twoRegion);
-  //dofManager.addField("massmatrix", DofManager::Location::Node, DofManager::Connectivity::None, 4, twoRegion);
-  //- dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
-  //SparsityPattern const & pattern = dofManager.getSparsityPattern("displacement", "pressure");
-  //SparsityPattern const & pattern = dofManager.getSparsityPattern("displacement", "displacement");
-  //SparsityPattern const & pattern = dofManager.getSparsityPattern("displacement");
-  //SparsityPattern const & pattern = dofManager.getSparsityPattern("", "displacement");
-  //SparsityPattern const & pattern = dofManager.getSparsityPattern("pressure", "pressure");
-  //SparsityPattern const & pattern = dofManager.getSparsityPattern("pressure");
-  //SparsityPattern const & pattern = dofManager.getSparsityPattern("", "pressure");
-  SparsityPattern const & pattern = dofManager.getSparsityPattern();
+  string_array testRegion1;
+  testRegion1.push_back( "region1" );
+
+  string_array testRegion2;
+  testRegion2.push_back( "region2" );
+  testRegion2.push_back( "region4" );
+
+  string_array testRegion3;
+  testRegion3.push_back( "region3" );
+
+  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 1,
+                       displacementRegion );
+  //dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 1);
+  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
+  dofManager.addField( "massmatrix", DofManager::Location::Elem, DofManager::Connectivity::None, 2, testRegion3 );
+
+  /*
+   dofManager.addField( "facenode", DofManager::Location::Node, DofManager::Connectivity::Face, testRegion2 );
+   dofManager.addField( "elemface", DofManager::Location::Face, DofManager::Connectivity::Elem );
+   dofManager.addField( "nodeelem", DofManager::Location::Elem, DofManager::Connectivity::Node, pressureRegion );
+   dofManager.addField( "nodeface", DofManager::Location::Face, DofManager::Connectivity::Node, testRegion2 );
+   */
+
+  dofManager.addCoupling( "displacement", "pressure", DofManager::Connectivity::Elem, testRegion3, false );
+  dofManager.addCoupling( "massmatrix", "pressure", DofManager::Connectivity::Elem );
+  /*
+   dofManager.addCoupling( "facenode", "pressure", DofManager::Connectivity::Node, testRegion1 );
+   dofManager.addCoupling( "elemface", "nodeelem", DofManager::Connectivity::Node, testRegion3, false );
+   dofManager.addCoupling( "nodeface", "nodeelem", DofManager::Connectivity::Face, testRegion1 );
+   dofManager.addCoupling( "displacement", "facenode", DofManager::Connectivity::Face );
+   dofManager.addCoupling( "pressure", "nodeface", DofManager::Connectivity::Face, testRegion1 );
+   dofManager.addCoupling( "nodeface", "displacement", DofManager::Connectivity::Elem );
+   */
+
+  ParallelMatrix pattern;
+
+  dofManager.getSparsityPattern( pattern, "displacement", "displacement" );
+  dofManager.printParallelMatrix( pattern, "displacement" );
+
+  dofManager.getSparsityPattern( pattern, "pressure", "pressure" );
+  dofManager.printParallelMatrix( pattern, "pressure" );
+
+  dofManager.getSparsityPattern( pattern, "displacement", "pressure" );
+  dofManager.printParallelMatrix( pattern, "coupling.mtx" );
+
+  dofManager.getSparsityPattern( pattern, "massmatrix", "massmatrix" );
+  dofManager.printParallelMatrix( pattern, "massmatrix.mtx" );
+
+  dofManager.getSparsityPattern( pattern );
+  dofManager.printParallelMatrix( pattern, "global" );
 
   int mpiRank;
   MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
-  dofManager.printSparsityPattern( pattern, "global_pattern_" + std::to_string( mpiRank ) + ".csr" );
 
   globalIndex_array indices;
-  //dofManager.getIndices(indices, DofManager::Connectivity::Elem, 1, 0, 10, "displacement");
-  dofManager.getIndices( indices, DofManager::Connectivity::Face, 10, "pressure" );
+  dofManager.getIndices( indices, DofManager::Connectivity::Elem, 1, 0, 10, "displacement" );
   if( indices.size() > 0 )
-    std::cout << indices << std::endl;
+    std::cout << mpiRank << " - " << "displacement" << " " << indices << std::endl;
+
+  dofManager.getIndices( indices, DofManager::Connectivity::Face, 30, "pressure" );
+  if( indices.size() > 0 )
+    std::cout << mpiRank << " - " << "pressure" << " " << indices << std::endl;
 
   std::cout << mpiRank << " - numGlobalDofs - " << dofManager.numGlobalDofs() << std::endl;
-  //std::cout << mpiRank << " - numGlobalDofs(""pressure"") - " << dofManager.numGlobalDofs("pressure") << std::endl;
+  std::cout << mpiRank << " - numGlobalDofs(" "displacement" ") - " << dofManager.numGlobalDofs( "displacement" )
+            << std::endl;
+  std::cout << mpiRank << " - numGlobalDofs(" "pressure" ") - " << dofManager.numGlobalDofs( "pressure" ) << std::endl;
   std::cout << mpiRank << " - numLocalDofs - " << dofManager.numLocalDofs() << std::endl;
+  std::cout << mpiRank << " - numLocalDofs(" "displacement" ") - " << dofManager.numLocalDofs( "displacement" )
+            << std::endl;
+  std::cout << mpiRank << " - numLocalDofs(" "pressure" ") - " << dofManager.numLocalDofs( "pressure" ) << std::endl;
 
-  /*
-   dofManager.addField("acceleration", DofManager::Location::Node, DofManager::Connectivity::Elem, 3);
-   dofManager.addField("flux", DofManager::Location::Face, DofManager::Connectivity::Elem, 1);
-   dofManager.addField("pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 1, oneRegion);
-   dofManager.addField("composition", DofManager::Location::Elem, DofManager::Connectivity::Face, 2, oneRegion);
-   dofManager.addCoupling("displacement", "pressure", DofManager::Connectivity::Elem, true);
-   */
+  dofManager.printConnectivityMatrix();
 
-  dofManager.printCoupling();
+  dofManager.cleanUp();
 }
 
 int main( int argc, char** argv )

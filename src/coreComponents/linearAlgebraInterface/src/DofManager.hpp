@@ -29,6 +29,7 @@
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/MappedVector.hpp"
 #include "TrilinosInterface.hpp"
 
 namespace geosx
@@ -125,11 +126,38 @@ public:
    * and form a dense block.  The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
    * dense sub-blocks.
    */
+
+  /**
+   * Just an interface to allow only three parameters
+   */
+  void addField( string const & field,
+                 Location const location,
+                 Connectivity const connectivity );
+
+  /**
+   * Just another interface to allow four parameters (no regions)
+   */
   void addField( string const & field,
                  Location const location,
                  Connectivity const connectivity,
-                 localIndex const components = 1,
-                 string_array const & regions = string_array() );
+                 localIndex const components );
+
+  /**
+   * Just another interface to allow four parameters (no components)
+   */
+  void addField( string const & field,
+                 Location const location,
+                 Connectivity const connectivity,
+                 string_array const & regions );
+
+  /**
+   * The real function, allowing the creation of self-connected blocks
+   */
+  void addField( string const & field,
+                 Location const location,
+                 Connectivity const connectivity,
+                 localIndex const components,
+                 string_array const & regions );
 
   /**
    * Add coupling between two fields.
@@ -144,10 +172,37 @@ public:
    * Example 3 = ("node_field_1","face_field", NODE, false) couples nodal dofs to adjacent faces (one-way coupling)
    */
 
+  /**
+   * Just an interface to allow only three parameters
+   */
+  void addCoupling( string const & rowField,
+                    string const & colField,
+                    Connectivity const connectivity ) const;
+
+  /**
+   * Just another interface to allow four parameters (no symmetry)
+   */
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity,
-                    bool const symmetric = false ) const;
+                    string_array const & regions ) const;
+
+  /**
+   * Just another interface to allow four parameters (no regions)
+   */
+  void addCoupling( string const & rowField,
+                    string const & colField,
+                    Connectivity const connectivity,
+                    bool const symmetric ) const;
+
+  /**
+   * The real function, allowing the creation of coupling blocks
+   */
+  void addCoupling( string const & rowField,
+                    string const & colField,
+                    Connectivity const connectivity,
+                    string_array const & regions,
+                    bool const symmetric ) const;
 
   /**
    * Return global number of dofs across all processors. If field argument is empty, return monolithic size.
@@ -163,8 +218,9 @@ public:
    * Get a sparsity pattern.  Without additional arguments, this function routines the sparsity pattern for the
    * monolithic matrix.  Sub-patterns can be extracted, however, using row and column field keys.
    */
-  SparsityPattern const & getSparsityPattern( string const & rowField = "",
-                                              string const & colField = "" ) const;
+  void getSparsityPattern( ParallelMatrix & locLocDistr,
+                           string const & rowField = "",
+                           string const & colField = "" ) const;
 
   /**
    * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
@@ -199,14 +255,28 @@ public:
   /**
    * Print the global connectivity matrix
    */
-  void printCoupling() const;
+  void printConnectivityMatrix() const;
 
   /**
-   * Print the pattern
+   * Print the connectivity-location pattern for a specific field
+   */
+  void printConnectivityLocationPattern( string const & field, string const & fileName = "" ) const;
+
+  /**
+   * Print the given parallel matrix in Matrix Market format (MTX file)
+   */
+  void printParallelMatrix( ParallelMatrix const & matrix,
+                            string const & filename ) const;
+
+  /**
+   * Print a CSR pattern on file or on screen
    */
   void printSparsityPattern( SparsityPattern const & pattern, string const & fileName = "" ) const;
-  void printSparsityPattern( string const & field, string fileName = "" ) const;
-  void printCoupledSparsityPattern( string const & rowField, string const & colField, string fileName = "" ) const;
+
+  /**
+   * Release internal storage
+   */
+  void cleanUp() const;
 
 private:
   /**
@@ -241,7 +311,9 @@ private:
     globalIndex numGlobalRows; //!< number of ghost rows
     globalIndex firstLocalRow; //!< first row on this processor (without field offset)
     globalIndex fieldOffset; //!< global row offset for multi-field problems
-    SparsityPattern connLocPattern; //!< pattern for the connectivity-location matrix
+    globalIndex firstLocalConnectivity; //!< first connector on this processor
+    globalIndex numGlobalConnectivity; //!< number of connector for this field
+    ParallelMatrix* connLocPattern; //!< pattern for the connectivity-location matrix
   };
 
   /**
@@ -249,22 +321,27 @@ private:
    */
   array1d<FieldDescription> m_fields;
 
-  /*
+  /**
    * Table of connectivities within and between fields
    */
   array2d<Connectivity> m_connectivity;
 
-  /*
+  /**
+   * Definifion for entries of sparse matrices collection
+   */
+  typedef std::pair<ParallelMatrix*, ParallelMatrix*> matrixPair;
+
+  /**
    * Table of sparsity patterns within and between fields
    */
-  array2d<SparsityPattern> m_sparsityPattern;
+  array2d<matrixPair> m_sparsityPattern;
 
-  /*
+  /**
    * Number of MPI ranks
    */
   int mpiSize;
 
-  /*
+  /**
    * This mpi rank
    */
   int mpiRank;
@@ -282,12 +359,13 @@ private:
   /**
    * Create index array
    */
-  void createIndexArray_NodeOrFaceVersion( FieldDescription & field ) const;
+  void createIndexArray_NodeOrFaceVersion( FieldDescription & field,
+                                           localIndex_array const & activeRegionsInput = localIndex_array() ) const;
 
   /**
    * Create element index array
    */
-  void createIndexArray_ElemVersion( FieldDescription & field );
+  void createIndexArray_ElemVersion( FieldDescription & field ) const;
 
   /**
    * Create sparsity pattern for a field with itself (diagonal entries in the
@@ -295,15 +373,19 @@ private:
    */
   void addDiagSparsityPattern( SparsityPattern & connLocPatt,
                                localIndex const & fieldIdx,
-                               Connectivity const connectivity ) const;
+                               Connectivity const connectivity,
+                               localIndex_array const & activeRegionsInput = localIndex_array() ) const;
 
   /**
    * Create sparsity pattern for two fields (extra-diagonal entries in the
    * connectivity matrix)
    */
-  void addExtraDiagSparsityPattern( SparsityPattern & pattern,
+  void addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDistr,
+                                    ParallelMatrix *& colConnLocPattDistr,
                                     localIndex const & rowFieldIndex,
                                     localIndex const & colFieldIndex,
+                                    localIndex_array const & rowActiveRegions,
+                                    localIndex_array const & colActiveRegions,
                                     Connectivity const connectivity ) const;
 
   /**
@@ -331,46 +413,30 @@ private:
   /**
    * Convert a sparse matrix in COO format in the CSR version
    */
-  void vectorOfPairsToCSR( array1d<indexPair> const pairs,
+  void vectorOfPairsToCSR( array1d<indexPair> const & pairs,
+                           localIndex const nRows,
                            localIndex const nCols,
                            SparsityPattern & pattern ) const;
-
-  /**
-   * Add a self connected field (location = connectivity)
-   */
-  void addSelfConnectedFieldSparsityPattern( array1d<indexPair> & pairs,
-                                             localIndex const & fieldIdx ) const;
-
-  /**
-   * Collect several sparsity patterns into one matrix
-   */
-  SparsityPattern combineCSRMatrices( localIndex_array const rowArray,
-                                      localIndex_array const colArray ) const;
-
-  /**
-   * Create an empty matrix
-   */
-  void createEmptyMatrix( localIndex const nRows,
-                          localIndex const nCols,
-                          SparsityPattern & pattern ) const;
-
-  /**
-   * Performe sparse matrix matrix product
-   */
-  localIndex matrixMatrixProduct( SparsityPattern const & matA,
-                                  SparsityPattern const & matB,
-                                  SparsityPattern & matC ) const;
-
-  /**
-   * Performe sparse matrix transposition
-   */
-  void matrixTranpose( SparsityPattern const & matA,
-                       SparsityPattern & matB ) const;
 
   /**
    * Just a local INT_MAX
    */
   globalIndex const globalIndexMax = std::numeric_limits<globalIndex>::max();
+
+  /**
+   * Map a global row index to local row index
+   */
+  localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A, globalIndex const index ) const;
+
+  /**
+   * Performe a matrix matrix product with Parallel Matrix
+   */
+  void MatrixMatrixMultiply( EpetraMatrix const &A,
+                             bool const transA,
+                             EpetraMatrix const &B,
+                             bool const transB,
+                             EpetraMatrix &C,
+                             bool const call_FillComplete = true ) const;
 
 };
 
