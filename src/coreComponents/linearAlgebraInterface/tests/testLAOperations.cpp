@@ -46,7 +46,6 @@
 #include "BlockMatrixView.hpp"
 #include "BlockVectorView.hpp"
 
-
 /**
  * \file testLAOperations.cpp
  * \brief This test file is part of the ctest suite and tests the Trilinos based solvers
@@ -64,7 +63,6 @@ using namespace geosx;
  * @brief Functions used to construct useful matrices in the test files.
  */
 //@{
-
 /**
  * @brief Compute an identity matrix
  *
@@ -78,8 +76,7 @@ using namespace geosx;
 // ==============================
 // This function computes the identity matrix. It can be used to generate a dummy
 // preconditioner.
-
-template< typename LAI >
+template<typename LAI>
 typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
                                               globalIndex N )
 {
@@ -87,13 +84,13 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
   typename LAI::ParallelMatrix I;
 
   // Create a matrix of size N with 1 non-zero per row
-  I.createWithGlobalSize(N,1,comm);
+  I.createWithGlobalSize( N, 1, comm );
 
   // Loop over rows to fill the matrix
-  for (globalIndex i = I.ilower(); i < I.iupper(); i++ )
+  for( globalIndex i = I.ilower() ; i < I.iupper() ; i++ )
   {
     // Set the value for element (i,i) to 1
-    I.insert( i, i, 1.0);
+    I.insert( i, i, 1.0 );
   }
 
   // Close the matrix (make data contiguous in memory)
@@ -102,7 +99,6 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
   // Return the matrix.
   return I;
 }
-
 
 /**
  * @brief Compute the 2D Laplace operator
@@ -114,46 +110,44 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
 // ==============================
 // Compute 2D Laplace Operator
 // ==============================
-
 // This function computes the matrix corresponding to a 2D Laplace operator. These
 // matrices arise from a classical finite volume formulation on a cartesian mesh
 // (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
-
-template< typename LAI >
+template<typename LAI>
 typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
                                                        globalIndex n )
 {
   // total dofs = n^2
-  globalIndex N = n*n;
+  globalIndex N = n * n;
 
   // Declare matrix
   typename LAI::ParallelMatrix laplace2D;
 
   // Create a matrix of global size N with 5 non-zeros per row
-  laplace2D.createWithGlobalSize(N,5,comm);
+  laplace2D.createWithGlobalSize( N, 5, comm );
 
   // Allocate arrays to fill the matrix (values and columns)
   real64 values[5];
   globalIndex cols[5];
 
   // Loop over rows to fill the matrix
-  for ( globalIndex i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
+  for( globalIndex i = laplace2D.ilower() ; i < laplace2D.iupper() ; i++ )
   {
     // Re-set the number of non-zeros for row i to 0.
     localIndex nnz = 0;
 
     // The left -n: position i-n
-    if ( i-n >= 0 )
+    if( i - n >= 0 )
     {
-      cols[nnz] = i-n;
+      cols[nnz] = i - n;
       values[nnz] = -1.0;
       nnz++;
     }
 
     // The left -1: position i-1
-    if ( i-1 >= 0 )
+    if( i - 1 >= 0 )
     {
-      cols[nnz] = i-1;
+      cols[nnz] = i - 1;
       values[nnz] = -1.0;
       nnz++;
     }
@@ -164,17 +158,17 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
     nnz++;
 
     // The right +1: position i+1
-    if ( i+1 < N )
+    if( i + 1 < N )
     {
-      cols[nnz] = i+1;
+      cols[nnz] = i + 1;
       values[nnz] = -1.0;
       nnz++;
     }
 
     // The right +n: position i+n
-    if ( i+n < N )
+    if( i + n < N )
     {
-      cols[nnz] = i+n;
+      cols[nnz] = i + n;
       values[nnz] = -1.0;
       nnz++;
     }
@@ -191,7 +185,6 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 }
 
 //@}
-
 
 /*! @name Test functions.
  * @brief Templated functions to test the linear solvers.
@@ -210,37 +203,35 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 // In these 3 functions we test the linear algebra operations, the native solvers from the
 // libraries as well as the re-implemented GEOSX solvers for CG and BiCGSTAB. We run these
 // on both monolithic and block matrices.
-
 // -------------------------------------
 // Test libraries operations and solvers
 // -------------------------------------
 // We start by testing the linear algebra operations. We fill two matrices (one will be a
 // preconditioner) and make sure the sparse storage is behaving properly. We then test the
 // iterative and direct solvers available.
-
-template< typename LAI >
+template<typename LAI>
 void testInterfaceSolvers()
 {
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using ParallelMatrix = typename LAI::ParallelMatrix;
   using ParallelVector = typename LAI::ParallelVector;
-  using LinearSolver   = typename LAI::LinearSolver;
+  using LinearSolver = typename LAI::LinearSolver;
 
   // Get the MPI rank
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
-  globalIndex n = 100; 
-  globalIndex N = n*n;
+  globalIndex n = 100;
+  globalIndex N = n * n;
 
   // Compute a 2D Laplace operator
   ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
 
   // Define some vectors
-  ParallelVector x_true, 
-                 x_comp, 
-                 b;
+  ParallelVector x_true,
+      x_comp,
+      b;
 
   x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
   x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
@@ -249,13 +240,13 @@ void testInterfaceSolvers()
   // We have some simple initialization options for vectors:
   x_true.rand(); // random
   x_comp.zero(); // zero 
-  b.set(1.0);    // ones
+  b.set( 1.0 ); // ones
 
   // Also define a residual vector, this time using the copy constructor
   ParallelVector r( b );
 
   // Test dot product: r.b = b.b = N
-  real64 dotTest = r.dot(b);
+  real64 dotTest = r.dot( b );
   EXPECT_DOUBLE_EQ( dotTest, N );
 
   // Test various norms
@@ -278,7 +269,7 @@ void testInterfaceSolvers()
 
   // Now create a solver parameter list and solver
   LinearSolverParameters parameters;
-  LinearSolver solver(parameters);             
+  LinearSolver solver( parameters );
 
   // Set basic options
   parameters.verbosity = 0;
@@ -290,10 +281,10 @@ void testInterfaceSolvers()
   parameters.amg.coarseType = "direct";
 
   // Solve using the iterative solver and compare norms with true solution
-  solver.solve( matrix, x_comp, b);
+  solver.solve( matrix, x_comp, b );
   real64 norm_comp = x_comp.norm2();
   real64 norm_true = x_true.norm2();
-  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-6 );
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-6 );
 
   // We now do the same using a direct solver.
   // Again the norm should be the norm of x. We use a tougher tolerance on the test
@@ -303,7 +294,7 @@ void testInterfaceSolvers()
   parameters.solverType = "direct";
   solver.solve( matrix, x_comp, b );
   norm_comp = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 1e-12 );
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-12 );
 
   // Option to write files (for direct comparison)
   // matrix.write("matrix.dat");
@@ -315,14 +306,14 @@ void testInterfaceSolvers()
   array1d<real64> col_values;
   array1d<globalIndex> col_indices;
 
-  if(rank == 0)
+  if( rank == 0 )
   {
-    matrix.getRowCopy(0,col_indices,col_values);
-    EXPECT_EQ(col_indices.size(),3);
-    matrix.getRowCopy(1,col_indices,col_values);
-    EXPECT_EQ(col_indices.size(),4); 
-    matrix.getRowCopy(n+1,col_indices,col_values);
-    EXPECT_EQ(col_indices.size(),5); 
+    matrix.getRowCopy( 0, col_indices, col_values );
+    EXPECT_EQ( col_indices.size(), 3 );
+    matrix.getRowCopy( 1, col_indices, col_values );
+    EXPECT_EQ( col_indices.size(), 4 );
+    matrix.getRowCopy( n + 1, col_indices, col_values );
+    EXPECT_EQ( col_indices.size(), 5 );
   }
 
   // Try clearing rows and setting diagonal value
@@ -330,18 +321,17 @@ void testInterfaceSolvers()
   double diagValue = 100.0;
   globalIndex firstRow = matrix.ilower();
 
-  matrix.clearRow(firstRow,diagValue);
+  matrix.clearRow( firstRow, diagValue );
 
-  matrix.getRowCopy(firstRow,col_indices,col_values);
-  for(localIndex i=0; i<col_indices.size(); ++i)
+  matrix.getRowCopy( firstRow, col_indices, col_values );
+  for( localIndex i = 0 ; i < col_indices.size() ; ++i )
   {
-    if(firstRow == col_indices[i])
-      EXPECT_DOUBLE_EQ(col_values[i],diagValue);
-    else 
-      EXPECT_DOUBLE_EQ(col_values[i],0.0);
+    if( firstRow == col_indices[i] )
+      EXPECT_DOUBLE_EQ( col_values[i], diagValue );
+    else
+      EXPECT_DOUBLE_EQ( col_values[i], 0.0 );
   }
 }
-
 
 /**
  * @function testGEOSXSolvers
@@ -355,8 +345,7 @@ void testInterfaceSolvers()
 // -----------------------------------------
 // We now test the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
 // on monolithic matrices.
-
-template< typename LAI >
+template<typename LAI>
 void testGEOSXSolvers()
 {
   // Define aliases templated on the Linear Algebra Interface (LAI).
@@ -369,7 +358,7 @@ void testGEOSXSolvers()
 
   // Use nxn cartesian mesh to generate the Laplace 2D operator.
   globalIndex n = 100;
-  globalIndex N = n*n;
+  globalIndex N = n * n;
 
   // Compute a 2D Laplace operator and identity matrix
   ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
@@ -377,12 +366,12 @@ void testGEOSXSolvers()
 
   // Define vectors 
   ParallelVector x_true,
-                 x_comp,
-                 b;
+      x_comp,
+      b;
 
-  x_true.createWithGlobalSize( N, MPI_COMM_WORLD);
-  x_comp.createWithGlobalSize( N, MPI_COMM_WORLD);
-  b.createWithGlobalSize( N, MPI_COMM_WORLD);
+  x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
+  b.createWithGlobalSize( N, MPI_COMM_WORLD );
 
   x_true.rand();
   x_comp.zero();
@@ -391,11 +380,11 @@ void testGEOSXSolvers()
 
   // Test with CG solver
   CGsolver<LAI> testCG;
-                testCG.solve( matrix, x_comp, b, identity );
+  testCG.solve( matrix, x_comp, b, identity );
 
   real64 norm_true = x_true.norm2();
   real64 norm_comp = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 5e-6 );
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
 
   // Test with BiCGSTAB solver 
   x_comp.zero();
@@ -405,9 +394,8 @@ void testGEOSXSolvers()
 
   norm_true = x_true.norm2();
   norm_comp = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp/norm_true - 1. ), 5e-6 );
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
 }
-
 
 /**
  * @function testGEOSXBlockSolvers
@@ -421,8 +409,7 @@ void testGEOSXSolvers()
 // -----------------------------------------
 // We finish by testing the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
 // on block matrices.
-
-template< typename LAI >
+template<typename LAI>
 void testGEOSXBlockSolvers()
 {
   // The usual typenames
@@ -438,22 +425,22 @@ void testGEOSXBlockSolvers()
   // [L L] [x_true] = [b_1]
 
   globalIndex n = 100;
-  globalIndex N = n*n;
+  globalIndex N = n * n;
 
-  ParallelMatrix matrix   = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
+  ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
   ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
 
   ParallelVector x_true,
-                 x_comp_0,
-                 x_comp_1,
-                 b_0,
-                 b_1;
+      x_comp_0,
+      x_comp_1,
+      b_0,
+      b_1;
 
-  x_true.createWithGlobalSize( N, MPI_COMM_WORLD);
-  x_comp_0.createWithGlobalSize( N, MPI_COMM_WORLD);
-  x_comp_1.createWithGlobalSize( N, MPI_COMM_WORLD);
-  b_0.createWithGlobalSize( N, MPI_COMM_WORLD);
-  b_1.createWithGlobalSize( N, MPI_COMM_WORLD);
+  x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_comp_0.createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_comp_1.createWithGlobalSize( N, MPI_COMM_WORLD );
+  b_0.createWithGlobalSize( N, MPI_COMM_WORLD );
+  b_1.createWithGlobalSize( N, MPI_COMM_WORLD );
 
   x_true.rand();
   x_comp_0.zero();
@@ -470,7 +457,7 @@ void testGEOSXBlockSolvers()
   BlockMatrixView<LAI> block_precon( nRows, nCols );
   BlockVectorView<LAI> block_x_true( nCols );
   BlockVectorView<LAI> block_x_comp( nCols );
-  BlockVectorView<LAI> block_rhs   ( nRows );
+  BlockVectorView<LAI> block_rhs( nRows );
 
   // In this test we simply tile the laplace operator, so we assign a duplicate
   // of the monolithic matrix to every block of the matrix.
@@ -500,7 +487,7 @@ void testGEOSXBlockSolvers()
   // Set right hand side blocks.
   block_rhs.set( 0, b_0 );
   block_rhs.set( 1, b_1 );
-  block_matrix.multiply( block_x_true, block_rhs);
+  block_matrix.multiply( block_x_true, block_rhs );
 
 //TODO: Need to refactor Native block solvers.  Disable this testing section for now.
 #if 0
@@ -518,7 +505,7 @@ void testGEOSXBlockSolvers()
 
   // now try out the BiCGstab solver
 
-  x_comp_0.zero(); // TODO: fix block zero()
+  x_comp_0.zero();// TODO: fix block zero()
   x_comp_1.zero();
 
   BiCGSTABsolver<LAI> testBiCGSTAB;
@@ -530,38 +517,77 @@ void testGEOSXBlockSolvers()
 #endif
 }
 
-
 //------------------------------
 // Test matrix-matrix operations
 //------------------------------
 // Currently just test matrix-matrix multiply, but eventually
 // should include add and other level-III operations
-template< typename LAI >
+template<typename LAI>
 void testMatrixMatrixOperations()
 {
   using ParallelMatrix = typename LAI::ParallelMatrix;
 
   globalIndex n = 100;
-  globalIndex N = n*n;
+  globalIndex N = n * n;
 
   ParallelMatrix A = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
 
   ParallelMatrix A_squared;
-                 A_squared.createWithGlobalSize( N, 1, MPI_COMM_WORLD) ;
+  A_squared.createWithGlobalSize( N, 1, MPI_COMM_WORLD );
 
-  A.multiply(A,A_squared);
+  A.multiply( A, A_squared );
 
   real64 a = A.normInf();
   real64 b = A_squared.normInf();
 
-  EXPECT_DOUBLE_EQ( a*a, b );
-} 
+  EXPECT_DOUBLE_EQ( a * a, b );
+}
 
+//-----------------------------------
+// Test rectangular matrix operations
+//-----------------------------------
+// Create a rectangular matrix and check its sizes and norms
+template<typename LAI>
+void testRectangularMatrixOperations()
+{
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+
+  int mpiSize;
+  MPI_Comm_size( MPI_COMM_WORLD, &mpiSize );
+
+  // Set a size that allows to run with arbitrary number of processes
+  globalIndex nRows = std::max( 100, mpiSize );
+  globalIndex nCols = 2 * nRows;
+
+  ParallelMatrix A;
+  A.createWithGlobalSize( nRows, nCols, 1 );
+
+  for( globalIndex i = A.ilower() ; i < A.iupper() ; ++i )
+  {
+    real64 entry = static_cast<double>( i + 1 );
+    A.insert( i, 2 * i, entry );
+    A.insert( i, 2 * i + 1, -entry );
+  }
+  A.close();
+  A.print();
+
+  // Check on sizes
+  EXPECT_EQ( A.globalRows(), nRows );
+  EXPECT_EQ( A.globalCols(), nCols );
+
+  // Check on norms
+  real64 a = A.norm1();
+  real64 b = A.normInf();
+  real64 c = A.normFrobenius();
+
+  EXPECT_DOUBLE_EQ( a, static_cast<double>( nRows ) );
+  EXPECT_DOUBLE_EQ( b, static_cast<double>( nCols ) );
+  EXPECT_DOUBLE_EQ( c, sqrt( static_cast<double>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3 ) );
+}
 
 // END_RST_NARRATIVE
 
 //@}
-
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -577,8 +603,6 @@ void testMatrixMatrixOperations()
  */
 //@{
 
-
-
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
  */
@@ -589,6 +613,7 @@ TEST(testLAOperations,testEpetraLAOperations)
   testGEOSXSolvers<TrilinosInterface>();
   testGEOSXBlockSolvers<TrilinosInterface>();
   testMatrixMatrixOperations<TrilinosInterface>();
+  testRectangularMatrixOperations<TrilinosInterface>();
   MPI_Finalize();
 }
 
