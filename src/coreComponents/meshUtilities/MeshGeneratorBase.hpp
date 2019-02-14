@@ -70,6 +70,10 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
 
+  virtual real64 GetFieldValue(localIndex index,
+                               int const component,
+                               const std::string& propertyName) const = 0;
+
   int m_delayMeshDeformation = 0;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, ManagedGroup * const >;

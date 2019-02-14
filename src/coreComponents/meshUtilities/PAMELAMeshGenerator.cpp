@@ -279,9 +279,13 @@ void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elemen
                                                        int nodeIDInBox[],
                                                        const int node_size )
 {}
-template< typename T>
-T PAMELAMeshGenerator::GetFieldValue(localIndex const index, int const component) const
+
+real64 PAMELAMeshGenerator::GetFieldValue(localIndex index,
+                                          int const component,
+                                          const std::string& propertyName) const
 {
+  //auto pamelaRegion = m_polyhedronMap.begin();
+  return 0.;
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )

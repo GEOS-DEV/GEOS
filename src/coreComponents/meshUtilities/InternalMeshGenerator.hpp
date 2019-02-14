@@ -89,6 +89,15 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
+  virtual real64 GetFieldValue(localIndex index,
+                               int const component,
+                               const std::string& propertyName) const override
+  {
+    GEOS_ERROR("Can't load property with the Internal Mesh Genertor. This feature is only available for mesh generator importing external meshes");
+    real64 noValue = 0.;
+    return noValue;
+  }
+
 //  int m_delayMeshDeformation;
 
 protected:

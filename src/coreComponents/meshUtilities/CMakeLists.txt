@@ -7,7 +7,6 @@ set(meshUtilities_headers
     MeshManager.hpp
     MeshGeneratorBase.hpp
     InternalMeshGenerator.hpp
-    VTMMeshGenerator.hpp
     MeshUtilities.hpp
     SimpleGeometricObjects/GeometricObjectManager.hpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
@@ -23,7 +22,6 @@ set(meshUtilities_sources
     MeshManager.cpp
     MeshGeneratorBase.cpp
     InternalMeshGenerator.cpp
-    VTMMeshGenerator.cpp
     MeshUtilities.cpp
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp

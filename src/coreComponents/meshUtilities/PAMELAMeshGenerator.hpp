@@ -74,8 +74,9 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  template< typename T>
-  T GetFieldValue(localIndex const index, int const component) const;
+  virtual real64 GetFieldValue(localIndex index,
+                               int const component,
+                               const std::string& propertyName) const override;
 
 protected:
   void PostProcessInput() override final;
