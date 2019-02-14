@@ -25,7 +25,6 @@
 #define GEOSX_CORECOMPONENTS_WELLS_WELLMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
 {
@@ -40,7 +39,7 @@ static constexpr auto wellManager = "Wells";
 
 class Well;
   
-class WellManager : public ObjectManagerBase
+class WellManager : public dataRepository::ManagedGroup
 {
 public:
 
@@ -52,8 +51,6 @@ public:
   WellManager( WellManager && ) = delete;
 
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
-
-  virtual const string getCatalogName() const override;
   
   Well * getWell( string const & name );
 
@@ -61,7 +58,7 @@ public:
 
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
   bool getGravityFlag() const { return m_gravityFlag; }
-
+  
 private:
 
   R1Tensor m_gravityVector;

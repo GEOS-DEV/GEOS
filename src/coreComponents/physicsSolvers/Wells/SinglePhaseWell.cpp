@@ -237,11 +237,8 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
   WellManager * const wellManager = domain->getWellManager();
 
   // loop over the wells
-  //wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-  //{
-  
-    Well * well = wellManager->getWell("inj1");
-
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
     ConnectionData const * const connectionData = well->getConnections();
 
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
@@ -253,7 +250,7 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 	        << std::endl;
     }
 
-  //}); 
+  }); 
 
 }
 
@@ -266,10 +263,8 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
   WellManager * const wellManager = domain->getWellManager();
 
   // loop over the wells
-  //wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-  //{
-    Well * well = wellManager->getWell("inj1");
-
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
     PerforationData const * const perforationData = well->getPerforations();
 
     // for each well, loop over the connections
@@ -288,7 +283,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       
     }
     
-  //});    
+  });    
 }
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
@@ -336,7 +331,6 @@ SinglePhaseWell::CheckSystemSolution( EpetraBlockSystem const * const blockSyste
 {
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
-
 
   return false;
 }

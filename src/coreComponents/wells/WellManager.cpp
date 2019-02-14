@@ -32,27 +32,27 @@ using namespace dataRepository;
 
 WellManager::WellManager(string const & name,
 			 dataRepository::ManagedGroup * const parent)
-  : ObjectManagerBase(name, parent)
+  : dataRepository::ManagedGroup(name, parent)
 {
-
-
 }
 
 WellManager::~WellManager()
 {
 
 }
-
+  
 ManagedGroup * WellManager::CreateChild(string const & childKey, string const & childName)
 {
-  std::cout << "Adding Well: " << childKey << ", " << childName << std::endl;
-  std::unique_ptr<ObjectManagerBase> well = ObjectManagerBase::CatalogInterface::Factory( childKey, childName, this );
-  return RegisterGroup<Well>( childName, std::move( well ) );
-}
-
-const string WellManager::getCatalogName() const
-{
-  return keys::wellManager;
+  if ( childKey == "Well")
+  {
+    std::cout << "Adding Well: " << childKey << ", " << childName << std::endl;
+    return RegisterGroup<Well>( childName );
+  }
+  else
+  {
+    GEOS_ERROR( "Unrecognized node: " << childKey );
+  }
+  return nullptr;
 }
 
 Well * WellManager::getWell(string const & name)
