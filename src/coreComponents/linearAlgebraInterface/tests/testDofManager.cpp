@@ -49,6 +49,16 @@ char** global_argv;
 
 class DofManagerTest : public ::testing::Test
 {
+public:
+  void setTimer( double &time )
+  {
+    time = MPI_Wtime();
+  }
+  void getElapsedTime( double &time )
+  {
+    time = MPI_Wtime() - time;
+  }
+
 protected:
 
   static void SetUpTestCase()
@@ -75,6 +85,8 @@ TEST_F(DofManagerTest, TestOne)
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
 
+  const bool printPattern = false;
+
   string_array displacementRegion;
   displacementRegion.push_back( "region1" );
   displacementRegion.push_back( "region3" );
@@ -95,6 +107,10 @@ TEST_F(DofManagerTest, TestOne)
   string_array testRegion3;
   testRegion3.push_back( "region3" );
 
+  double timeAddField, timeAddCoupling, timeGetSingleSparsityPattern, timeGetGlobalSparsityPattern, timeGetIndices;
+
+  setTimer( timeAddField );
+
   dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 1,
                        displacementRegion );
   //dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 1);
@@ -108,6 +124,9 @@ TEST_F(DofManagerTest, TestOne)
    dofManager.addField( "nodeface", DofManager::Location::Face, DofManager::Connectivity::Node, testRegion2 );
    */
 
+  getElapsedTime( timeAddField );
+  setTimer( timeAddCoupling );
+
   dofManager.addCoupling( "displacement", "pressure", DofManager::Connectivity::Elem, testRegion3, false );
   dofManager.addCoupling( "massmatrix", "pressure", DofManager::Connectivity::Elem );
   /*
@@ -119,25 +138,48 @@ TEST_F(DofManagerTest, TestOne)
    dofManager.addCoupling( "nodeface", "displacement", DofManager::Connectivity::Elem );
    */
 
+  getElapsedTime( timeAddCoupling );
+  setTimer( timeGetSingleSparsityPattern );
+
   ParallelMatrix pattern;
 
   dofManager.getSparsityPattern( pattern, "displacement", "displacement" );
-  dofManager.printParallelMatrix( pattern, "displacement" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "displacement" );
 
   dofManager.getSparsityPattern( pattern, "pressure", "pressure" );
-  dofManager.printParallelMatrix( pattern, "pressure" );
-
-  dofManager.getSparsityPattern( pattern, "displacement", "pressure" );
-  dofManager.printParallelMatrix( pattern, "coupling.mtx" );
-
-  dofManager.getSparsityPattern( pattern, "pressure", "displacement" );
-  dofManager.printParallelMatrix( pattern, "coupling_empty.mtx" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "pressure" );
 
   dofManager.getSparsityPattern( pattern, "massmatrix", "massmatrix" );
-  dofManager.printParallelMatrix( pattern, "massmatrix.mtx" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "massmatrix.mtx" );
+
+  dofManager.getSparsityPattern( pattern, "displacement", "pressure" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "coupling1.mtx" );
+
+  dofManager.getSparsityPattern( pattern, "pressure", "displacement" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "coupling1_empty.mtx" );
+
+  dofManager.getSparsityPattern( pattern, "pressure", "massmatrix" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "coupling2.mtx" );
+
+  dofManager.getSparsityPattern( pattern, "massmatrix", "pressure" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "coupling2_transp.mtx" );
+
+  getElapsedTime( timeGetSingleSparsityPattern );
+  setTimer( timeGetGlobalSparsityPattern );
 
   dofManager.getSparsityPattern( pattern );
-  dofManager.printParallelMatrix( pattern, "global" );
+  if( printPattern )
+    dofManager.printParallelMatrix( pattern, "global" );
+
+  getElapsedTime( timeGetGlobalSparsityPattern );
+  setTimer( timeGetIndices );
 
   int mpiRank;
   MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
@@ -151,6 +193,8 @@ TEST_F(DofManagerTest, TestOne)
   if( indices.size() > 0 )
     std::cout << mpiRank << " - " << "pressure" << " " << indices << std::endl;
 
+  getElapsedTime( timeGetIndices );
+
   std::cout << mpiRank << " - numGlobalDofs - " << dofManager.numGlobalDofs() << std::endl;
   std::cout << mpiRank << " - numGlobalDofs(" "displacement" ") - " << dofManager.numGlobalDofs( "displacement" )
             << std::endl;
@@ -161,6 +205,51 @@ TEST_F(DofManagerTest, TestOne)
   std::cout << mpiRank << " - numLocalDofs(" "pressure" ") - " << dofManager.numLocalDofs( "pressure" ) << std::endl;
 
   dofManager.printConnectivityMatrix();
+
+  // Sum up all timings
+  int mpiSize;
+  MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
+  array1d<double> timesLocal( 5 ), timesSum( 5 );
+  timesLocal[0] = timeAddField;
+  timesLocal[1] = timeAddCoupling;
+  timesLocal[2] = timeGetSingleSparsityPattern;
+  timesLocal[3] = timeGetGlobalSparsityPattern;
+  timesLocal[4] = timeGetIndices;
+
+  MPI_Allreduce( timesLocal.data(), timesSum.data(), 5, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
+
+  timeAddField = timesSum[0];
+  timeAddCoupling = timesSum[1];
+  timeGetSingleSparsityPattern = timesSum[2];
+  timeGetGlobalSparsityPattern = timesSum[3];
+  timeGetIndices = timesSum[4];
+
+  if( mpiRank == 0 )
+  {
+    double totalTime = std::accumulate( timesSum.begin(), timesSum.end(), 0.0 );
+    std::cout << "TIMING" << std::endl;
+    std::cout << "addField: " << std::fixed << std::setprecision( 0 ) << std::trunc( timeAddField * 1e3 ) << " [ms] -- "
+              << std::fixed
+              << std::setprecision( 2 ) << timeAddField / totalTime * 100.0 << "%" << std::endl;
+    std::cout << "addCoupling: " << std::fixed << std::setprecision( 0 ) << std::trunc( timeAddCoupling * 1e3 )
+              << " [ms] -- "
+              << std::fixed << std::setprecision( 2 ) << timeAddCoupling / totalTime * 100.0 << "%"
+              << std::endl;
+    std::cout << "getSparsityPattern(local): " << std::fixed << std::setprecision( 0 )
+              << std::trunc( timeGetSingleSparsityPattern * 1e3 )
+              << " [ms] -- " << std::fixed << std::setprecision( 2 )
+              << timeGetSingleSparsityPattern / totalTime * 100.0
+              << "%" << std::endl;
+    std::cout << "getSparsityPattern(global): " << std::fixed << std::setprecision( 0 )
+              << std::trunc( timeGetGlobalSparsityPattern * 1e3 )
+              << " [ms] -- " << std::fixed << std::setprecision( 2 )
+              << timeGetGlobalSparsityPattern / totalTime * 100.0
+              << "%" << std::endl;
+    std::cout << "getIndices: " << std::fixed << std::setprecision( 0 ) << std::trunc( timeGetIndices * 1e3 )
+              << " [ms] -- "
+              << std::fixed << std::setprecision( 2 ) << timeGetIndices / totalTime * 100.0 << "%"
+              << std::endl;
+  }
 
   dofManager.cleanUp();
 }
