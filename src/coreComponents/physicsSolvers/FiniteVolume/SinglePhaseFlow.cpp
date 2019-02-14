@@ -793,9 +793,6 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
       residual->SumIntoGlobalValues( integer_conversion<int>(numElems), eqnRowIndices.data(), localFlux.data() );
     });
-
-    jacobian->Print(std::cout);
-    residual->Print(std::cout);
   });
 }
 
