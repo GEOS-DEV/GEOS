@@ -312,7 +312,6 @@ private:
     globalIndex firstLocalRow; //!< first row on this processor (without field offset)
     globalIndex fieldOffset; //!< global row offset for multi-field problems
     globalIndex firstLocalConnectivity; //!< first connector on this processor
-    globalIndex numGlobalConnectivity; //!< number of connector for this field
     ParallelMatrix* connLocPattern; //!< pattern for the connectivity-location matrix
   };
 

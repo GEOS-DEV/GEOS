@@ -130,6 +130,9 @@ TEST_F(DofManagerTest, TestOne)
   dofManager.getSparsityPattern( pattern, "displacement", "pressure" );
   dofManager.printParallelMatrix( pattern, "coupling.mtx" );
 
+  dofManager.getSparsityPattern( pattern, "pressure", "displacement" );
+  dofManager.printParallelMatrix( pattern, "coupling_empty.mtx" );
+
   dofManager.getSparsityPattern( pattern, "massmatrix", "massmatrix" );
   dofManager.printParallelMatrix( pattern, "massmatrix.mtx" );
 

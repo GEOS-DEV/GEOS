@@ -389,8 +389,6 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
     field.firstLocalConnectivity += gather[p];
-  std::accumulate( gather.begin(), gather.end(), field.numGlobalConnectivity );
-  ++field.numGlobalConnectivity;
 
   // step 3. adjust local values to reflect processor offset
   for( localIndex n = 0 ; n < indexArray.size() ; ++n )
@@ -488,8 +486,6 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
     field.firstLocalConnectivity += gather[p];
-  std::accumulate( gather.begin(), gather.end(), field.numGlobalConnectivity );
-  ++field.numGlobalConnectivity;
 
   // step 4. synchronize across ranks
   std::map<string, string_array> fieldNames;
@@ -646,8 +642,8 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
             }
           }
         }
-    locLocDistr.close();
   }
+  locLocDistr.close();
 }
 
 // Just an interface to allow only three parameters
