@@ -29,9 +29,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "meshUtilities/MeshGeneratorBase.hpp"
-#ifdef GEOSX_USE_PAMELA
-#include "meshUtilities/PAMELAMeshGenerator.hpp"
-#endif
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 namespace geosx
 {

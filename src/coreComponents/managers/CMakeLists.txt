@@ -56,18 +56,22 @@ set(managers_sources
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp)
 
-#set( dependencyList dataRepository fileIO  )
+set( dependencyList dataRepository fileIO optionparser mathpresso RAJA trilinos )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )
 #foreach( lib ${dependencyList} )
 #    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
 #endforeach()
 #message( "dependencyList2 = ${dependencyList2}" )
 
+if( ENABLE_PAMELA )
+    set( dependencyList ${dependencyList} PAMELA )
+endif()
+
 
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
-                 DEPENDS_ON            dataRepository fileIO optionparser mathpresso RAJA trilinos
+                 DEPENDS_ON            ${dependencyList}
 #                 SHARED FALSE
                )
 
