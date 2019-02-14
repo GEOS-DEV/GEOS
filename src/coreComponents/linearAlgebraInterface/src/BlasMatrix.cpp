@@ -61,11 +61,12 @@ BlasMatrix::~BlasMatrix()
 void BlasMatrix::resize( localIndex nRows,
                          localIndex nCols )
 {
-  GEOS_ERROR_IF( nRows <= 0, "Matrix number rows must be > 0" );
-  GEOS_ERROR_IF( nCols <= 0, "Matrix number of columns must be > 0" );
+  GEOS_ASSERT_MSG( nRows > 0, "Matrix number rows must be > 0" );
+  GEOS_ASSERT_MSG( nCols > 0, "Matrix number of columns must be > 0" );
   m_numRows = nRows;
   m_numCols = nCols;
-  m_values.resizeDefault( m_numRows * m_numCols, 0.0 );
+  m_values.resizeDefault( m_numRows * m_numCols);
+  m_values = 0.0;
 }
 
 void BlasMatrix::resize( localIndex order )
@@ -75,46 +76,106 @@ void BlasMatrix::resize( localIndex order )
 
 //-------------------------------------------------------Mathematical methods---
 // determinant calculation
-double BlasMatrix::determinant()
+real64 BlasMatrix::determinant()
 {
   // --- check that matrix is square
-  GEOS_ERROR_IF( m_numRows != m_numCols, "Matrix must be square" );
+  GEOS_ASSERT_MSG( m_numRows == m_numCols && m_numRows > 0,
+                   "Matrix must be square with order greater than zero" );
 
-  switch( m_numCols )
+  switch( m_numRows )
   {
     case 1:
       return m_values[0];
     case 2:
-      return m_values[0] * m_values[3] - m_values[2] * m_values[1];
+      return m_values[0] * m_values[3] - m_values[1] * m_values[2];
     case 3:
-      return m_values[0] *
-          ( m_values[4] * m_values[8] - m_values[7] * m_values[5] )
-          - m_values[1] *
-              ( m_values[3] * m_values[8] - m_values[6] * m_values[5] )
-          + m_values[2] *
-              ( m_values[3] * m_values[7] - m_values[6] * m_values[4] );
+      {
+      real64 const * const v = m_values.data();
+      return
+      v[0] * ( v[4] * v[8] - v[5] * v[7] ) +
+      v[3] * ( v[2] * v[7] - v[1] * v[8] ) +
+      v[6] * ( v[1] * v[5] - v[2] * v[4] );
+    }
+    case 4:
+      {
+      real64 const * const v = m_values.data();
+      return
+      v[ 0] * ( v[ 5] * ( v[10] * v[15] - v[11] * v[14] ) -
+                v[ 9] * ( v[ 6] * v[15] - v[ 7] * v[14] ) +
+                v[13] * ( v[ 6] * v[11] - v[ 7] * v[10] )
+              ) -
+      v[ 4] * ( v[ 1] * ( v[10] * v[15] - v[11] * v[14] ) -
+                v[ 9] * ( v[ 2] * v[15] - v[ 3] * v[14] ) +
+                v[13] * ( v[ 2] * v[11] - v[ 3] * v[10] )
+              ) +
+      v[ 8] * ( v[ 1] * ( v[ 6] * v[15] - v [7] * v[14] ) -
+                v[ 5] * ( v[ 2] * v[15] - v[ 3] * v[14] ) +
+                v[13] * ( v[ 2] * v[ 7] - v[ 3] * v[ 6] )
+              ) -
+      v[12] * ( v[ 1] * ( v[ 6] * v[11] - v[ 7] * v[10] ) -
+                v[ 5] * ( v[ 2] * v[11] - v[ 3] * v[10] ) +
+                v[ 9] * ( v[ 2] * v[ 7] - v[ 3] * v[ 6] )
+              );
+     }
     default:
-      GEOS_ERROR_IF( true, "Determinant computation implemented up to matrix 3x3" );
-      return 1;
+
+      // Compute the determinant via LU factorization
+      lapack_int INFO;
+      lapack_int NN = integer_conversion<lapack_int>( this->getNumRows() );
+      array1d<lapack_int> IPIV( NN );
+      array1d<double> LUfactor(m_values);
+
+      INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
+                             NN,
+                             NN,
+                             LUfactor.data(),
+                             NN,
+                             IPIV.data() );
+      GEOS_ASSERT_MSG( INFO == 0,
+                       "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
+
+      real64 det = 1.0;
+      for( int i = 0 ; i < NN ; ++i )
+      {
+        if( IPIV[i] != i+1 ) //IPIV is based on Fortran convention (counting from 1)
+        {
+          det *= -LUfactor[NN * i + i];
+        }
+        else
+        {
+          det *= LUfactor[NN * i + i];
+        }
+      }
+      return det;
   }
 }
 
 // computes inverse matrix
-void BlasMatrix::computeInverse( BlasMatrix & dst )
+void BlasMatrix::computeInverse( BlasMatrix & dst)
+{
+  real64 det;
+  this->computeInverse( dst, det);
+}
+
+// computes inverse matrix
+void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
 {
   // --- Check that source matrix is square
   localIndex order = this->getNumRows();
-  GEOS_ERROR_IF( order != this->getNumCols(),
-                 "Determinant computation implemented up to matrix 3x3" );
+  GEOS_ASSERT_MSG( order == this->getNumCols(), "Matrix must be square" );
 
   // --- Initialize the inverse matrix to the appropriate dimension
   dst.resize( order,
               order );
 
+  det = this->determinant();
+  real64 oneOverDet = 1. / this->determinant();
+  GEOS_ASSERT_MSG( !(std::isinf( oneOverDet )) , "Matrix is singular" );
+
   switch( m_numCols )
   {
     case 1:
-      dst( 0, 0 ) = 1. / ( *this )( 0, 0 );
+      dst( 0, 0 ) = oneOverDet;
       return;
 
       // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
@@ -283,8 +344,8 @@ void BlasMatrix::computeInverse( BlasMatrix & dst )
                              dst.m_values.data(),
                              NN,
                              IPIV.data() );
-      GEOS_ERROR_IF( INFO != 0,
-                     "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
+      GEOS_ASSERT_MSG( INFO == 0,
+                       "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
 
       // --- Invert (LAPACK function DGETRI)
       INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
@@ -292,8 +353,8 @@ void BlasMatrix::computeInverse( BlasMatrix & dst )
                              dst.m_values.data(),
                              NN,
                              IPIV.data() );
-      GEOS_ERROR_IF( INFO != 0,
-                     "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
+      GEOS_ASSERT_MSG( INFO == 0,
+                       "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
 
       return;
     }
@@ -322,199 +383,134 @@ void BlasMatrix::MatAdd( BlasMatrix const & A,
 }
 
 // matrix-matrix multiplication (optional scaling/accumulation)
-void BlasMatrix::GEMM( BlasMatrix const & A,
-                       BlasMatrix const & B,
-                       bool transposeA,
-                       bool transposeB,
-                       real64 const scalarAB,
-                       real64 const scalarThis )
+void BlasMatrix::matrixMultiply( BlasMatrix const &src,
+                                 BlasMatrix &dst,
+                                 real64 const scalarThisSrc,
+                                 real64 const scalarDst )
 {
 
-  localIndex N1 = transposeA ? A.getNumRows() : A.getNumCols();
-  localIndex N2 = transposeB ? B.getNumCols() : B.getNumRows();
+  GEOS_ASSERT_MSG( dst.getNumRows() == m_numRows &&
+                       dst.getNumCols() == src.getNumCols() &&
+                       m_numCols == src.getNumRows(),
+                   "Matrix dimensions not compatible for product" );
 
-  GEOS_ERROR_IF( N1 != m_numRows || N2 != m_numCols,
-                 "Matrix dimensions not compatible for product" );
+  int M = integer_conversion<int>( m_numRows );
+  int N = integer_conversion<int>( src.getNumCols() );
+  int K = integer_conversion<int>( m_numCols );
 
-  int nRowAi = integer_conversion<int>( A.getNumRows() );
   cblas_dgemm( CblasColMajor,
-               transposeA ? CblasTrans : CblasNoTrans,
-               transposeB ? CblasTrans : CblasNoTrans,
-               nRowAi,
-               integer_conversion<int>( B.getNumCols() ),
-               integer_conversion<int>( A.getNumCols() ),
-               scalarAB,
-               A.m_values.data(),
-               nRowAi,
-               B.m_values.data(),
-               integer_conversion<int>( B.getNumRows() ),
-               scalarThis,
-               this->m_values.data(),
-               nRowAi );
-  return;
-
+               CblasNoTrans,
+               CblasNoTrans,
+               M,
+               N,
+               K,
+               scalarThisSrc,
+               m_values.data(),
+               M,
+               src.m_values.data(),
+               K,
+               scalarDst,
+               dst.m_values.data(),
+               M );
 }
 
-//
-//// matrix-matrix multiplication (optional scaling/accumulation)
-//void SerialDenseMatrix::MatMatMult(SerialDenseMatrix& A,
-//                                   SerialDenseMatrix& B,
-//                                   double scalarAB,
-//                                   double scalarThis)
-//{
-//  unsigned int nRowA = A.get_nRows();
-//  unsigned int nColA = A.get_nCols();
-//  unsigned int nRowB = B.get_nRows();
-//  unsigned int nColB = B.get_nCols();
-//
-//  ASSERT(nColA == nRowB, "Matrix dimensions not compatible for product");
-//  ASSERT(nRowA == m_nRows, "Matrix dimensions not compatible for product");
-//  ASSERT(nColB == m_nCols, "Matrix dimensions not compatible for product");
-//
-//#ifdef WITH_TRILINOS
-//  // Call to BLAS using Epetra BLAS Wrapper Class (Epetra_BLAS)
-//  int nRowAi = static_cast<int>(nRowA);
-//  int nColAi = static_cast<int>(nColA);
-//  int nRowBi = static_cast<int>(nRowB);
-//  int nColBi = static_cast<int>(nColB);
-//  Epetra_BLAS Blas;
-//  Blas.GEMM('N', 'N', nRowAi, nColBi, nColAi,
-//            scalarAB, &A(0,0), nRowAi, &B(0, 0), nRowBi,
-//            scalarThis, &(*this)(0,0), m_nRows);
-//  return;
-//#else
-//  // Loops are arranged without paying attention to accessing data in a
-//  // contiguous way
-//  for (unsigned int i = 0; i < m_nRows; ++i)
-//    for (unsigned int j = 0; j < m_nCols; ++j)
-//    {
-//      double add_value = (abs(scalarThis) > 0.) ? (*this)(i,j) : 0.;
-//      for (unsigned int k = 0; k < nColA; ++k)
-//        add_value += scalarAB * A(i,k) * B(k,j);
-//      (*this)(i,j) = add_value;
-//    }
-//#endif
-//}
-//
-//// matrix-transpose(matrix) multiplication (optional scaling/accumulation)
-//void SerialDenseMatrix::MatMatTMult(SerialDenseMatrix& A,
-//                                    SerialDenseMatrix& B,
-//                                    double scalarAB,
-//                                    double scalarThis)
-//{
-//  unsigned int nRowA = A.get_nRows();
-//  unsigned int nColA = A.get_nCols();
-//  unsigned int nRowB = B.get_nRows();
-//  unsigned int nColB = B.get_nCols();
-//
-//  ASSERT(nColA == nColB, "Matrix dimensions not compatible for product");
-//  ASSERT(nRowA == m_nRows, "Matrix dimensions not compatible for product");
-//  ASSERT(nRowB == m_nCols, "Matrix dimensions not compatible for product");
-//
-//#ifdef WITH_TRILINOS
-//  // Call to BLAS using Epetra BLAS Wrapper Class (Epetra_BLAS)
-//  int nRowAi = static_cast<int>(nRowA);
-//  int nColAi = static_cast<int>(nColA);
-//  int nRowBi = static_cast<int>(nRowB);
-//  Epetra_BLAS Blas;
-//  Blas.GEMM('N', 'T', nRowAi, nRowBi, nColAi,
-//            scalarAB, &A(0,0), nRowAi, &B(0, 0), nRowBi,
-//            scalarThis, &(*this)(0,0), m_nRows);
-//  return;
-//#else
-//  // Loops are arranged without paying attention to accessing data in a
-//  // contiguous way
-//  for (unsigned int i = 0; i < m_nRows; ++i)
-//    for (unsigned int j = 0; j < m_nCols; ++j)
-//    {
-//      double add_value = (abs(scalarThis) > 0.) ? (*this)(i,j) : 0.;
-//      for (unsigned int k = 0; k < nColA; ++k)
-//        add_value += scalarAB * A(i,k) * B(j,k);
-//      (*this)(i,j) = add_value;
-//    }
-//#endif
-//}
-//
-//// transpose(matrix)-matrix multiplication (optional scaling/accumulation)
-//void SerialDenseMatrix::MatTMatMult(SerialDenseMatrix& A,
-//                                    SerialDenseMatrix& B,
-//                                    double scalarAB,
-//                                    double scalarThis)
-//{
-//  unsigned int nRowA = A.get_nRows();
-//  unsigned int nColA = A.get_nCols();
-//  unsigned int nRowB = B.get_nRows();
-//  unsigned int nColB = B.get_nCols();
-//
-//  ASSERT(nRowA == nRowB, "Matrix dimensions not compatible for product");
-//  ASSERT(nColA == m_nRows, "Matrix dimensions not compatible for product");
-//  ASSERT(nColB == m_nCols, "Matrix dimensions not compatible for product");
-//
-//#ifdef WITH_TRILINOS
-//  // Call to BLAS using Epetra BLAS Wrapper Class (Epetra_BLAS)
-//  int nRowAi = static_cast<int>(nRowA);
-//  int nColAi = static_cast<int>(nColA);
-//  int nRowBi = static_cast<int>(nRowB);
-//  int nColBi = static_cast<int>(nColB);
-//  Epetra_BLAS Blas;
-//  Blas.GEMM('T', 'N', nColAi, nColBi, nRowAi,
-//            scalarAB, &A(0,0), nRowAi, &B(0, 0), nRowBi,
-//            scalarThis, &(*this)(0,0), m_nRows);
-//  return;
-//#else
-//  // Loops are arranged without paying attention to accessing data in a
-//  // contiguous way
-//  for (unsigned int i = 0; i < m_nRows; ++i)
-//    for (unsigned int j = 0; j < m_nCols; ++j)
-//    {
-//      double add_value = (abs(scalarThis) > 0.) ? (*this)(i,j) : 0.;
-//      for (unsigned int k = 0; k < nRowA; ++k)
-//        add_value += scalarAB * A(k,i) * B(k,j);
-//      (*this)(i,j) = add_value;
-//    }
-//#endif
-//}
-//
-//// transpose(Matrix)-transpose(matrix) multiplication
-//// (optional scaling/accumulation)
-//void SerialDenseMatrix::MatTMatTMult(SerialDenseMatrix& A,
-//                                     SerialDenseMatrix& B,
-//                                     double scalarAB,
-//                                     double scalarThis)
-//{
-//  unsigned int nRowA = A.get_nRows();
-//  unsigned int nColA = A.get_nCols();
-//  unsigned int nRowB = B.get_nRows();
-//  unsigned int nColB = B.get_nCols();
-//
-//  ASSERT(nRowA == nColB, "Matrix dimensions not compatible for product");
-//  ASSERT(nColA == m_nRows, "Matrix dimensions not compatible for product");
-//  ASSERT(nRowB == m_nCols, "Matrix dimensions not compatible for product");
-//
-//#ifdef WITH_TRILINOS
-//  // Call to BLAS using Epetra BLAS Wrapper Class (Epetra_BLAS)
-//  int nRowAi = static_cast<int>(nRowA);
-//  int nColAi = static_cast<int>(nColA);
-//  int nRowBi = static_cast<int>(nRowB);
-//  Epetra_BLAS Blas;
-//  Blas.GEMM('T', 'T', nColAi, nRowBi, nRowAi,
-//            scalarAB, &A(0,0), nRowAi, &B(0, 0), nRowBi,
-//            scalarThis, &(*this)(0,0), m_nRows);
-//  return;
-//#else
-//  // Loops are arranged without paying attention to accessing data in a
-//  // contiguous way
-//  for (unsigned int i = 0; i  <m_nRows; ++i)
-//    for (unsigned int j = 0; j < m_nCols; ++j)
-//    {
-//      double add_value = (abs(scalarThis) > 0.) ? (*this)(i,j) : 0.;
-//      for (unsigned int k = 0; k < nRowA; ++k)
-//        add_value += scalarAB * A(k,i) * B(j,k);
-//      (*this)(i,j) = add_value;
-//    }
-//#endif
-//}
-//
+// transpose(matrix)-matrix multiplication (optional scaling/accumulation)
+void BlasMatrix::TmatrixMultiply( BlasMatrix const &src,
+                                  BlasMatrix &dst,
+                                  real64 const scalarThisSrc,
+                                  real64 const scalarDst )
+{
+
+  GEOS_ASSERT_MSG( dst.getNumRows() == m_numCols &&
+                       dst.getNumCols() == src.getNumCols() &&
+                       m_numRows == src.getNumRows(),
+                   "Matrix dimensions not compatible for product" );
+
+  int M = integer_conversion<int>( m_numCols );
+  int N = integer_conversion<int>( src.getNumCols() );
+  int K = integer_conversion<int>( m_numRows );
+
+  cblas_dgemm( CblasColMajor,
+               CblasTrans,
+               CblasNoTrans,
+               M,
+               N,
+               K,
+               scalarThisSrc,
+               m_values.data(),
+               K,
+               src.m_values.data(),
+               K,
+               scalarDst,
+               dst.m_values.data(),
+               M );
+}
+
+// transpose(matrix)-matrix multiplication (optional scaling/accumulation)
+void BlasMatrix::matrixTMultiply( BlasMatrix const &src,
+                                  BlasMatrix &dst,
+                                  real64 const scalarThisSrc,
+                                  real64 const scalarDst )
+{
+
+  GEOS_ASSERT_MSG( dst.getNumRows() == m_numRows &&
+                       dst.getNumCols() == src.getNumRows() &&
+                       m_numCols == src.getNumCols(),
+                   "Matrix dimensions not compatible for product" );
+
+  int M = integer_conversion<int>( m_numRows );
+  int N = integer_conversion<int>( src.getNumRows() );
+  int K = integer_conversion<int>( m_numCols );
+
+  cblas_dgemm( CblasColMajor,
+               CblasNoTrans,
+               CblasTrans,
+               M,
+               N,
+               K,
+               scalarThisSrc,
+               m_values.data(),
+               M,
+               src.m_values.data(),
+               N,
+               scalarDst,
+               dst.m_values.data(),
+               M );
+}
+
+// transpose(matrix)-transpose(matrix) multiplication
+// (optional scaling/accumulation)
+void BlasMatrix::TmatrixTMultiply( BlasMatrix const &src,
+                                   BlasMatrix &dst,
+                                   real64 const scalarThisSrc,
+                                   real64 const scalarDst )
+{
+
+  GEOS_ASSERT_MSG( dst.getNumRows() == m_numCols &&
+                       dst.getNumCols() == src.getNumRows() &&
+                       m_numRows == src.getNumCols(),
+                   "Matrix dimensions not compatible for product" );
+
+  int M = integer_conversion<int>( m_numCols );
+  int N = integer_conversion<int>( src.getNumRows() );
+  int K = integer_conversion<int>( m_numRows );
+
+  cblas_dgemm( CblasColMajor,
+               CblasTrans,
+               CblasTrans,
+               M,
+               N,
+               K,
+               scalarThisSrc,
+               m_values.data(),
+               K,
+               src.m_values.data(),
+               N,
+               scalarDst,
+               dst.m_values.data(),
+               M );
+}
+
 //// matrix-vector multiplication
 //void SerialDenseMatrix::MatVecMult(SerialDenseMatrix& x,
 //                                   SerialDenseMatrix& y)
