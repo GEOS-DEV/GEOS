@@ -569,7 +569,6 @@ void testRectangularMatrixOperations()
     A.insert( i, 2 * i + 1, -entry );
   }
   A.close();
-  A.print();
 
   // Check on sizes
   EXPECT_EQ( A.globalRows(), nRows );
