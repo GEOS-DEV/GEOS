@@ -126,7 +126,7 @@ public:
    * The function is implemented for a matrix up to order three. The matrix must
    * be square.
    */
-  double determinant();
+  real64 determinant();
 
   /**
    * @brief Compute inverse; \a this = <tt>M</tt><sup>-1</sup>.
@@ -144,6 +144,27 @@ public:
    * and DGETRI using Trilinos/Epetra LAPACK Wrapper Class.
    */
   void computeInverse( BlasMatrix& dst );
+
+  /**
+   * @brief Compute inverse; \a this = <tt>M</tt><sup>-1</sup>.
+   *
+   * Assign the inverse of the given matrix to \a dst and return the
+   * determinant of \a this.
+   *
+   * \param IN
+   * \a dst - Dense matrix containg the inverse.
+   *
+   * \param IN
+   * \a determinant - Determinant of \a this.
+   *
+   * @warning
+   * Assumes \a dst already has the same size as \a this.
+   *
+   * @note This function is hardcoded for square matrices up to order four.
+   * For dimensions larger than four, the function calls LAPACK functions DGETRF
+   * and DGETRI using lapacke interface.
+   */
+  void computeInverse( BlasMatrix& dst, real64& det );
 
   /**
    * @brief Matrix-Matrix sum;
@@ -164,139 +185,107 @@ public:
                const real64 scalarA = 1. );
 
   /**
-   * @brief General matrix-matrix multiplication;
-   * \a this = scalarThis* \a this + scalarAB*<tt>A</tt>*<tt>B</tt>.
+   * @brief Matrix-Matrix product;
+   * \a dst = scalarDst * \a dst + scalarThisSrc * \a this * \a src.
    *
    * Computes matrix-matrix product with optional scaling and accumulation.
    *
    * \param IN
-   * <tt>A</tt> - BlasMatrix.
+   * \a src - Source BlasMatrix.
    * \param IN
-   * <tt>B</tt> - BlasMatrix.
+   * \a dst - Destination BlasMatrix.
    * \param [IN]
-   * scalarAB - Optional scalar to multiply with <tt>A</tt>*<tt>B</tt>.
+   * scalarThisSrc - Optional scalar to multiply with \a this * \a src.
    * \param [IN]
-   * scalarThis - Optional parameter to control the accumulation.
+   * scalarDst - Optional parameter to control the accumulation.
    *
    * @warning
-   * Assumes that <tt>A</tt> and <tt>B</tt> have compatible sizes and that
-   * \a this already has the right size.
+   * Assumes that \a this and \a src have compatible sizes and that \a dst
+   * already has the right size.
+   *
    */
-  void GEMM( BlasMatrix const & A,
-             BlasMatrix const & B,
-             bool transposeA = false,
-             bool transposeB = false,
-             real64 const scalarAB = 1.,
-             real64 const scalarThis = 0. );
+  void matrixMultiply(BlasMatrix const &src,
+                      BlasMatrix &dst,
+                      real64 const scalarThisSrc=1.,
+                      real64 const scalarDst=0.);
 
-//  /**
-//   * @brief Matrix-Matrix product;
-//   * \a this = scalarThis* \a this + scalarAB*<tt>A</tt>*<tt>B</tt>.
-//   *
-//   * Computes matrix-matrix product with optional scaling and accumulation.
-//   *
-//   * \param IN
-//   * <tt>A</tt> - Dense matrix.
-//   * \param IN
-//   * <tt>B</tt> - Dense matrix.
-//   * \param [IN]
-//   * scalarAB - Optional scalar to multiply with <tt>A</tt>*<tt>B</tt>.
-//   * \param [IN]
-//   * scalarThis - Optional parameter to control the accumulation.
-//   *
-//   * @warning
-//   * Assumes that <tt>A</tt> and <tt>B</tt> have compatible sizes and that
-//   * \a this already has the right size.
-//   *
-//   * @note This function calls BLAS function DGEMM using Trilinos/Epetra BLAS
-//   *       Wrapper Class if built with Trilinos.
-//   */
-//  void MatMatMult(SerialDenseMatrix& A, SerialDenseMatrix& B,
-//                  const double scalarAB=1., const double scalarThis=0.);
-//
-//  /**
-//   * @brief Matrix-Matrix product;
-//   * \a this = scalarThis* \a this +
-//   *           scalarAB*<tt>A</tt>*<tt>B</tt><sup>T</sup>.
-//   *
-//   * Computes matrix-matrix product with optional scaling and accumulation
-//   * using the transpose of <tt>B</tt>.
-//   *
-//   * \param IN
-//   * <tt>A</tt> - Dense matrix.
-//   * \param IN
-//   * <tt>B</tt> - Dense matrix.
-//   * \param [IN]
-//   * scalarAB - Optional scalar to multiply with
-//   * <tt>A</tt>*<tt>B</tt><sup>T</sup>.
-//   * \param [IN]
-//   * scalarThis - Optional parameter to control the accumulation.
-//   *
-//   * @warning
-//   * Assumes that <tt>A</tt> and <tt>B</tt><sup>T</sup> have compatible sizes
-//   * and that \a this already has the right size.
-//   *
-//   * @note This function calls BLAS function DGEMM using Trilinos/Epetra BLAS
-//   *       Wrapper Class if built with Trilinos.
-//   */
-//  void MatMatTMult(SerialDenseMatrix& A, SerialDenseMatrix& B,
-//                   const double scalarAB=1., const double scalarThis=0.);
-//
-//  /**
-//   * @brief Matrix-Matrix product;
-//   * \a this = scalarThis* \a this +
-//   *           scalarAB*<tt>A</tt><sup>T</sup>*<tt>B</tt>.
-//   *
-//   * Computes matrix-matrix product with optional scaling and accumulation
-//   * using the transpose of <tt>A</tt>.
-//   *
-//   * \param IN
-//   * <tt>A</tt> - Dense matrix.
-//   * \param IN
-//   * <tt>B</tt> - Dense matrix.
-//   * \param [IN]
-//   * scalarAB - Optional scalar to multiply with
-//   * <tt>A</tt><sup>T</sup>*<tt>B</tt>.
-//   * \param [IN]
-//   * scalarThis - Optional parameter to control the accumulation.
-//   *
-//   * @warning
-//   * Assumes that <tt>A</tt><sup>T</sup> and <tt>B</tt> have compatible sizes
-//   * and that \a this already has the right size.
-//   *
-//   * @note This function calls BLAS function DGEMM using Trilinos/Epetra BLAS
-//   *       Wrapper Class if built with Trilinos.
-//   */
-//  void MatTMatMult(SerialDenseMatrix& A, SerialDenseMatrix& B,
-//                   const double scalarAB=1., const double scalarThis=0.);
-//
-//  /**
-//   * @brief Matrix-Matrix product;
-//   * \a this = scalarThis* \a this +
-//   *           scalarAB*<tt>A</tt><sup>T</sup>*<tt>B</tt><sup>T</sup>.
-//   *
-//   * Computes matrix-matrix product with optional scaling and accumulation
-//   * using the transpose of <tt>A</tt> and <tt>B</tt>.
-//   *
-//   * \param IN
-//   * <tt>A</tt> - Dense matrix.
-//   * \param IN
-//   * <tt>B</tt> - Dense matrix.
-//   * \param [IN]
-//   * scalarAB - Optional scalar to multiply with
-//   * A</tt><sup>T</sup>*<tt>B</tt><sup>T</sup>.
-//   * \param [IN]
-//   * scalarThis - Optional parameter to control the accumulation.
-//   *
-//   * @warning
-//   * Assumes that <tt>A</tt><sup>T</sup> and <tt>B</tt><sup>T</sup> have
-//   * compatible sizes and that \a this already has the right size.
-//   *
-//   * @note This function calls BLAS function DGEMM using Trilinos/Epetra BLAS
-//   *       Wrapper Class if built with Trilinos.
-//   */
-//  void MatTMatTMult(SerialDenseMatrix& A, SerialDenseMatrix& B,
-//                    const double scalarAB=1., const double scalarThis=0.);
+  /**
+   * @brief transpose(Matrix)-Matrix product;
+   * \a dst = scalarDst * \a dst + scalarThisSrc * \a this<sup>T</sup> * \a src.
+   *
+   * Computes transpose(matrix)-matrix product with optional scaling and accumulation.
+   *
+   * \param IN
+   * \a src - Source BlasMatrix.
+   * \param IN
+   * \a dst - Destination BlasMatrix.
+   * \param [IN]
+   * scalarThisSrc - Optional scalar to multiply with \a this<sup>T</sup> * \a src.
+   * \param [IN]
+   * scalarDst - Optional parameter to control the accumulation.
+   *
+   * @warning
+   * Assumes that \a this and \a src have compatible sizes and that \a dst
+   * already has the right size.
+   *
+   */
+  void TmatrixMultiply(BlasMatrix const &src,
+                       BlasMatrix &dst,
+                       real64 const scalarThisSrc=1.,
+                       real64 const scalarDst=0.);
+
+  /**
+   * @brief Matrix-transpose(Matrix) product;
+   * \a dst = scalarDst * \a dst + scalarThisSrc * \a this * \a src<sup>T</sup>.
+   *
+   * Computes matrix-transpose(matrix) product with optional scaling and accumulation.
+   *
+   * \param IN
+   * \a src - Source BlasMatrix.
+   * \param IN
+   * \a dst - Destination BlasMatrix.
+   * \param [IN]
+   * scalarThisSrc - Optional scalar to multiply with \a this * \a src<sup>T</sup>.
+   * \param [IN]
+   * scalarDst - Optional parameter to control the accumulation.
+   *
+   * @warning
+   * Assumes that \a this and \a src have compatible sizes and that \a dst
+   * already has the right size.
+   *
+   */
+  void matrixTMultiply(BlasMatrix const &src,
+                       BlasMatrix &dst,
+                       real64 const scalarThisSrc=1.,
+                       real64 const scalarDst=0.);
+
+  /**
+   * @brief transpose(Matrix)-transpose(Matrix) product;
+   * \a dst = scalarDst * \a dst +
+   *          scalarThisSrc * \a this<sup>T</sup> * \a src<sup>T</sup>.
+   *
+   * Computes transpose(matrix)matrix-transpose(matrix) product with optional
+   * scaling and accumulation.
+   *
+   * \param IN
+   * \a src - Source BlasMatrix.
+   * \param IN
+   * \a dst - Destination BlasMatrix.
+   * \param [IN]
+   * scalarThisSrc - Optional scalar to multiply with \a this<sup>T</sup> * \a src<sup>T</sup>.
+   * \param [IN]
+   * scalarDst - Optional parameter to control the accumulation.
+   *
+   * @warning
+   * Assumes that \a this and \a src have compatible sizes and that \a dst
+   * already has the right size.
+   *
+   */
+  void TmatrixTMultiply(BlasMatrix const &src,
+                        BlasMatrix &dst,
+                        real64 const scalarThisSrc=1.,
+                        real64 const scalarDst=0.);
+
 //
 //  /**
 //   * @brief Matrix-Vector product;
