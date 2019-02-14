@@ -28,8 +28,8 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/Utilities.hpp"
 
-//This is an include of PAMELA
 #include "Mesh/Mesh.hpp"
+#include "MeshDataWriters/MeshParts.hpp"
 
 #include "MeshGeneratorBase.hpp"
 
@@ -74,6 +74,9 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
+  template< typename T>
+  T GetFieldValue(localIndex const index, int const component) const;
+
 protected:
   void PostProcessInput() override final;
 
@@ -81,6 +84,9 @@ private:
 
   /// Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+
+  /// Polyhedrons organized by regions
+  PAMELA::PartMap<PAMELA::Polyhedron*> m_polyhedronMap;
 
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =

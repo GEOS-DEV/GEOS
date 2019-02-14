@@ -28,8 +28,11 @@
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
+#include "meshUtilities/MeshGeneratorBase.hpp"
+#ifdef GEOSX_USE_PAMELA
+#include "meshUtilities/PAMELAMeshGenerator.hpp"
+#endif
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
-
 namespace geosx
 {
 class Function;
@@ -663,6 +666,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
+  string const & readFrom = getReference<string>( viewKeyStruct::readFromString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
@@ -675,14 +679,14 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
       fieldType & field = view.reference();
-      if( functionName.empty() )
+      if( functionName.empty() && readFrom.empty() )
       {
         for( auto a : targetSet )
         {
           FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
         }
       }
-      else
+      else if( !functionName.empty() && readFrom.empty() )
       {
         FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
 
@@ -707,6 +711,14 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
             ++count;
           }
         }
+      }
+      else if( functionName.empty() && !readFrom.empty() ) 
+      {
+        MeshGeneratorBase const * const meshGenerator = this->GetGroupByPath<MeshGeneratorBase>("/Mesh/" + m_readFrom);
+      }
+      else
+      {
+        GEOS_ERROR("Unvalid Field Specification definition.");
       }
     } );
 }

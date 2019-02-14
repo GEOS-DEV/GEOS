@@ -36,9 +36,6 @@
 
 #include "Mesh/MeshFactory.hpp"
 
-#include "MeshDataWriters/MeshParts.hpp"
-#include "MeshDataWriters/VTKWriter.hpp"
-
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 
@@ -89,6 +86,10 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
+  std::cout << this << std::endl;
+  std::cout << this->GetGroupByPath("/Mesh/CubeHex") << std::endl;
+  std::cout << this->GetGroupByPath("/Mesh/CubeHex")->GetGroup(0)->getName() << std::endl;
+
   ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
@@ -99,7 +100,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
 
 
   // Use the PartMap of PAMELA to get the mesh
-  auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get()));
+  m_polyhedronMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get()));
 
   // Vertices are written first
   r1_array const & X = nodeManager->referencePosition();
@@ -115,7 +116,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   }
   
   // First loop which iterate on the regions
-  for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
+  for( auto regionItr = m_polyhedronMap.begin() ; regionItr != m_polyhedronMap.end() ; ++regionItr )
   {
     auto regionPtr = regionItr->second;
     auto regionIndex = regionPtr->Index;
@@ -278,6 +279,10 @@ void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elemen
                                                        int nodeIDInBox[],
                                                        const int node_size )
 {}
+template< typename T>
+T PAMELAMeshGenerator::GetFieldValue(localIndex const index, int const component) const
+{
+}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )
 }

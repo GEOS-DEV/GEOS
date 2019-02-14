@@ -115,6 +115,7 @@
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                readFrom="Beam"
+               nameFrom="P_2010"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_HEX"
                fieldName="pressure"
