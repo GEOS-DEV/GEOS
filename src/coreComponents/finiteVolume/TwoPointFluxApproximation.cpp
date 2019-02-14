@@ -143,7 +143,7 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
       stencilCells[ke] = { elemRegionList[kf][ke], elemSubRegionList[kf][ke], elemList[kf][ke] };
       stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
     }
-    stencil.add(stencilCells.data(), stencilCells, stencilWeights);
+    stencil.add(stencilCells.data(), stencilCells, stencilWeights, kf);
   }
   stencil.compress();
 }
@@ -197,6 +197,7 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
 
   arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
 
+  // connections between FaceElements
   for( localIndex fci=0 ; fci<fractureConnectors.size() ; ++fci )
   {
     localIndex const numElems = fractureConnectors[fci].size();
@@ -219,10 +220,13 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
       // We won't be doing the harmonic mean here...etc.
       stencilWeights[kfe] = pow( -1 , kfe ) * pow( aperture[fractureElementIndex], 3) / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
     }
-    fractureStencil.add(stencilCells.data(), stencilCells, stencilWeights);
+    fractureStencil.add( stencilCells.data(), stencilCells, stencilWeights, edgeIndex );
   }
 
+  // add connections for FaceElements to/from CellElements.
   {
+    array2d< CellDescriptor > cellStencilZeros( fractureCellConnectors.size(0), 2 );
+
     arrayView2d<localIndex const> const & elemRegionList = fractureCellConnectors.m_toElementRegion;
     arrayView2d<localIndex const> const & elemSubRegionList = fractureCellConnectors.m_toElementSubRegion;
     arrayView2d<localIndex const> const & elemList = fractureCellConnectors.m_toElementIndex;
@@ -263,8 +267,15 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
         stencilCells[1] = { fractureRegionIndex, 0, kfe};
         stencilWeights[1] = -pow(-1,ke) * ht ;
 
-        fractureStencil.add(stencilCells.data(), stencilCells, stencilWeights);
+        fractureStencil.add( stencilCells.data(), stencilCells, stencilWeights, faceIndex );
       }
+
+
+      // remove cell connectors from original stencil
+      cellStencilZeros[kfe][0] = { elemRegionList[kfe][0], elemSubRegionList[kfe][0], elemList[kfe][0] };
+      cellStencilZeros[kfe][1] = { elemRegionList[kfe][1], elemSubRegionList[kfe][1], elemList[kfe][1] };
+
+      cellStencil.zero( faceMap[kfe][0], cellStencilZeros.data() );
     }
   }
   fractureStencil.compress();
@@ -347,7 +358,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain,
         stencilPoints[1].faceIndex = kf;
         stencilWeights[1] = -faceWeight;
 
-        stencil.add(stencilPoints.data(), stencilPoints, stencilWeights);
+        stencil.add(stencilPoints.data(), stencilPoints, stencilWeights, kf );
       }
     }
   }

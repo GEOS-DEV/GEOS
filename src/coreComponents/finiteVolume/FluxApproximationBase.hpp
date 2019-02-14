@@ -39,6 +39,11 @@ struct CellDescriptor
   localIndex region;
   localIndex subRegion;
   localIndex index;
+
+  bool operator==( CellDescriptor const & other )
+  {
+    return( region==other.region && subRegion==other.subRegion && index==other.index );
+  }
 };
 
 /**
