@@ -88,6 +88,11 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
   // TODO
 }
 
+void WellSolverBase::ResetViews( DomainPartition * const domain )
+{
+  // TODO
+}
+  
 WellSolverBase::~WellSolverBase() = default;
 
 } // namespace geosx

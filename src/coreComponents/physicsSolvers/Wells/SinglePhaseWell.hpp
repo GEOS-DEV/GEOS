@@ -98,11 +98,6 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
-                             integer const cycleNumber,
-                             DomainPartition * domain ) override;
-
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
                                   DomainPartition * const domain,
@@ -138,21 +133,9 @@ public:
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
-   */
-  void UpdateFluidModel( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
    * @param domain the domain containing the mesh and fields
    */
   void UpdateFluidModelAll( DomainPartition * domain );
-
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateState( ManagedGroup * dataGroup );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -301,6 +284,12 @@ private:
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
                                      localIndex offset );
+
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
+
 };
 
 } // namespace geosx

@@ -90,9 +90,11 @@ void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
     perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
     
   });    
-  
 
-  
+  // TODO: figure out where this should go
+  // set the blockID for the block system interface
+  getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
+
   std::cout << "SinglePhaseWell: InitializePreSubGroups" << std::endl;  
 }
 
@@ -118,21 +120,40 @@ SingleFluidBase const * SinglePhaseWell::GetFluidModel( ManagedGroup const * dat
   return fluid;
 }
 
-void SinglePhaseWell::UpdateFluidModel( ManagedGroup * const dataGroup )
-{
-  
-}
-
 void SinglePhaseWell::UpdateFluidModelAll( DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = domain->getWellManager();
 
+  ConstitutiveManager * const constitutiveManager =
+    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
+  // TODO: how to do the same for the wells?
+  //ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
+  //  elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+
+    array1d<real64> const & wellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+    // temp hack to make sure that it compiles
+    SingleFluidBase * const fluid = nullptr; //constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
+
+    // TODO: use Raja here
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      real64 const newWellPressure = wellPressure[iwelem] + dWellPressure[iwelem];
+      // TODO: how to update the correct arrays in the well
+      const localIndex dummy = 0;
+      fluid->PointUpdate( newWellPressure, dummy, 0 ); 
+    }
+      
+  });    
 }
   
-void SinglePhaseWell::UpdateState( ManagedGroup * const dataGroup )
-{
-  UpdateFluidModel( dataGroup );
-}
-
 void SinglePhaseWell::UpdateStateAll( DomainPartition * const domain )
 {
   UpdateFluidModelAll( domain );
@@ -155,31 +176,9 @@ void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup
   std::cout << "SinglePhaseWell: InitializePostInitialConditions_PreSubGroups" << std::endl;
 }
 
-real64 SinglePhaseWell::SolverStep( real64 const & time_n,
-                                                      real64 const & dt,
-                                                      integer const cycleNumber,
-                                                      DomainPartition * const domain )
-{
-  real64 dt_return = dt;
-
-  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-
-  // currently the only method is implicit time integration
-  dt_return= this->NonlinearImplicitStep( time_n,
-                                          dt,
-                                          cycleNumber,
-                                          domain,
-                                          getLinearSystemRepository() );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dt_return, domain );
-
-  return dt_return;
-}
-
 void SinglePhaseWell::BackupFields( DomainPartition * const domain )
 {
-  
+  // TODO
 }
 
 void
@@ -187,6 +186,17 @@ SinglePhaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
                                     DomainPartition * const domain,
                                     EpetraBlockSystem * const blockSystem )
 {
+  // bind the stored views to the current domain
+  ResetViews( domain );
+
+  // set deltas to zero and recompute dependent quantities
+  ResetStateToBeginningOfStep( domain );
+
+  // backup fields used in time derivative approximation
+  BackupFields( domain );
+
+  // setup dof numbers and linear system
+  SetupSystem( domain, blockSystem );
 
 }
 
@@ -195,19 +205,19 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                     globalIndex & numGlobalRows,
                                                     localIndex offset )
 {
-  
+  // TODO
 }
 
 void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
                                           Epetra_FECrsGraph * const sparsity )
 {
-  
+  // TODO
 }
 
 void SinglePhaseWell::SetupSystem( DomainPartition * const domain,
                                    EpetraBlockSystem * const blockSystem )
 {
-  
+  // TODO
 }
 
 void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
@@ -249,6 +259,8 @@ void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
 {
   WellManager * const wellManager = domain->getWellManager();
 
+  // NOT NEEDED FOR NOW
+  
   // loop over the wells
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -274,6 +286,9 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 {
   WellManager * const wellManager = domain->getWellManager();
 
+  // NOT NEEDED FOR NOW
+  // or maybe just for the first connection
+  
   // loop over the wells
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -332,7 +347,6 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  dResDensity_dPres;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  resViscosity;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  dResViscosity_dPres;
-
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -474,26 +488,6 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     }
   });
     
-  // loop over the wells
-  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-  {
-    
-    // for debugging purposes
-    
-    PerforationData const * const perforationData = well->getPerforations();
-
-    // for each well, loop over the connections
-    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
-    {      
-      Perforation const * const perforation = perforationData->getPerforation( iperf );
-
-      std::cout << "SinglePhaseWell: computing source terms for perforation "
-		<< perforation->getName()
-		<< " for well " << well->getName()
-		<< std::endl;      
-    }
-    
-  });    
 }
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
@@ -633,11 +627,41 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
 
 }
 
+void SinglePhaseWell::ResetViews(DomainPartition * const domain)
+{
+  // TODO
+}
+  
 void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
                                             real64 const & dt,
                                             DomainPartition * const domain )
-{
-  
+{  
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    ConnectionData * connectionData = well->getConnections();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    
+    // get a reference to the primary variables on segments
+    array1d<real64> const & wellPressure  = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    // get a reference to the primary variables on connections
+    array1d<real64> const & wellVelocity  = connectionData->getReference<array1d<real64>>( viewKeyStruct::velocityString );
+    array1d<real64> const & dWellVelocity = connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaVelocityString );
+
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      wellPressure[iwelem] += dWellPressure[iwelem];
+    }
+
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+      // TODO: check if there is a variable on this connection
+      wellVelocity[iconn] += dWellVelocity[iconn];
+    }    
+  }); 
 }
 
 
