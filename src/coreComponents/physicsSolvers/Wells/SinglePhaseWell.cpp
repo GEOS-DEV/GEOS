@@ -346,10 +346,9 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     array1d<real64> const & dWellDensity_dPres   = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::dDensity_dPresString );
     array1d<real64> const & wellViscosity        = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::viscosityString );
     array1d<real64> const & dWellViscosity_dPres = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::dViscosity_dPresString );
-    // get well variables on connections
-    array1d<real64> const & wellGravDepth = perforationData->getReference<array1d<real64>>( viewKeyStruct::pressureString );
     // get well variables on perforations
-    array1d<real64> const & wellFlowRate = perforationData->getReference<array1d<real64>>( viewKeyStruct::flowRateString );
+    array1d<real64> const & wellGravDepth = perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    array1d<real64> const & wellFlowRate  = perforationData->getReference<array1d<real64>>( viewKeyStruct::flowRateString );
 
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
@@ -538,6 +537,58 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = domain->getWellManager();
+
+  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
+
+  // get the update
+  int dummy;
+  double* local_solution = nullptr;
+  solution->ExtractView(&local_solution,&dummy);
+  
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    PerforationData * perforationData = well->getPerforations();
+    ConnectionData * connectionData = well->getConnections();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get a reference to the primary variables on segments
+    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    // get a reference to the primary variables on connections
+    array1d<real64> const & dWellVelocity = connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaVelocityString );
+   
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+
+      // TODO: check for ghost segments
+
+      // extract solution and apply to dP
+      globalIndex const dummyDofNumber = 0;
+      int const lid = rowMap->LID( integer_conversion<int>( dummyDofNumber ) );
+      dWellPressure[iwelem] += scalingFactor * local_solution[lid];
+      
+    }
+
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+
+      // TODO: check for ghost connections if needed
+      // TODO: check if there is a primary var defined on this connection
+
+      // extract solution and apply to dP
+      globalIndex const dummyDofNumber = 0;
+      int const lid = rowMap->LID( integer_conversion<int>( dummyDofNumber ) );
+      dWellVelocity[iconn] += scalingFactor * local_solution[lid];
+      
+    }
+  });  
+
+  // TODO: call CommunicationTools::SynchronizeFields
+
+  // update properties
+  UpdateStateAll( domain );
   
 }
 
