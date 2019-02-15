@@ -142,6 +142,13 @@ public:
    */
   void ApplyInitialConditions( dataRepository::ManagedGroup * domain ) const;
 
+  /**
+   * @brief function to apply initial conditions from an external mesh
+   * @param domain the DomainParition object
+   */
+  void ApplyInitialConditionsFromMesh( dataRepository::ManagedGroup * domain,
+                                       MeshManager * meshManager) const;
+
 
   /**
    * @brief This function is the main driver for the field applications
@@ -213,6 +220,73 @@ public:
             {
               set<localIndex> const & targetSet = setWrapper->reference();
               lambda( fs, setName, targetSet, targetGroup, targetName );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  template< typename LAMBDA >
+  void Apply2( real64 const time,
+              dataRepository::ManagedGroup * domain,
+              string const & fieldPath,
+              string const & fieldName,
+              MeshManager * meshManager,
+              LAMBDA && lambda ) const
+  {
+    GEOSX_MARK_FUNCTION;
+    for( auto & subGroup : this->GetSubGroups() )
+    {
+      FieldSpecificationBase const * fs = subGroup.second->group_cast<FieldSpecificationBase const *>();
+      if( fs->GetNameFrom().empty() ) {
+        continue;
+      }
+      int const isInitialCondition = fs->initialCondition();
+
+      if( ( isInitialCondition && fieldPath=="" ) ||
+          ( !isInitialCondition && fs->GetObjectPath().find(fieldPath) != string::npos ) )
+      {
+        string_array const targetPath = stringutilities::Tokenize( fs->GetObjectPath(), "/" );
+        localIndex const targetPathLength = integer_conversion<localIndex>(targetPath.size());
+        string const targetName = fs->GetFieldName();
+
+        if( ( isInitialCondition && fieldName=="" ) ||
+            ( !isInitialCondition && time >= fs->GetStartTime() && time < fs->GetEndTime() && targetName==fieldName ) )
+        {
+          MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
+                                        getMeshBody( 0 )->getMeshLevel( 0 );
+
+          dataRepository::ManagedGroup * targetGroup = meshLevel;
+
+          std::string meshName = domain->group_cast<DomainPartition*>()->getMeshBody( 0 )->getName();
+          MeshGeneratorBase *  meshGenerator = meshManager->GetGroup<MeshGeneratorBase>(meshName);
+
+          string processedPath;
+          for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
+          {
+            std::cout << "boucle name before " << targetGroup->getName() << std::endl;
+            targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
+            std::cout << "boucle name after " << targetGroup->getName() << std::endl;
+            processedPath += "/" + targetPath[pathLevel];
+
+            GEOS_ERROR_IF( targetGroup == nullptr,
+                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
+          }
+
+          dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+          string_array setNames = fs->GetSetNames();
+          for( auto & setName : setNames )
+          {
+            std::cout << "processedPath : " <<  processedPath << std::endl;
+            std::cout << "targetGroup->getName() : " << targetGroup->getName() << std::endl;
+            std::cout << targetGroup->getName() << " << " << targetGroup->getParent()->getName() << std::endl;
+            auto fieldArray = meshGenerator->GetPropertyArray(fs->GetNameFrom(), targetGroup->group_cast<CellBlock*>());
+            dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+            if( setWrapper != nullptr )
+            {
+              set<localIndex> const & targetSet = setWrapper->reference();
+              lambda( fs, setName, targetSet, targetGroup, targetName, fieldArray );
             }
           }
         }

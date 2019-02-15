@@ -75,9 +75,8 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  virtual real64 GetFieldValue(localIndex index,
-                               int const component,
-                               const std::string& propertyName) const override;
+  virtual const real64_array GetPropertyArray( const std::string& propertyName,
+                                                    CellBlock * cellBlock) const override;
 
 protected:
   void PostProcessInput() override final;
@@ -102,6 +101,9 @@ private:
     { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
     { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
     };
+
+  std::unordered_map<std::string, PAMELA::SubPart<PAMELA::Polyhedron *> * > m_cellBlockUniqueIdToPAMELACellBlock_;
+  std::unordered_map<std::string, PAMELA::Part<PAMELA::Polyhedron *> * > m_cellBlockUniqueIdToPAMELARegion_;
 };
 
 }

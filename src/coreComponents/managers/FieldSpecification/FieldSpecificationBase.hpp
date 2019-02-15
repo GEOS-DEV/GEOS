@@ -437,11 +437,11 @@ public:
   virtual ~FieldSpecificationBase() override;
 
 template< typename FIELD_OP >
-void ApplyOneFieldValue( localIndex index,
-                         real64 value,
-                         real64 const time,
-                         ManagedGroup * dataGroup,
-                         string const & fieldName ) const;
+void ApplyFieldValue( set<localIndex> const & targetSet,
+                      real64 const time,
+                      ManagedGroup * dataGroup,
+                      string const & fieldName,
+                      real64_array const & fieldArray) const;
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
@@ -667,11 +667,11 @@ private:
 
 
 template< typename FIELD_OP >
-void FieldSpecificationBase::ApplyOneFieldValue( localIndex index,
-                                                 real64 value,
-                                                 real64 const time,
-                                                 ManagedGroup * dataGroup,
-                                                 string const & fieldName ) const
+void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
+                                              real64 const time,
+                                              ManagedGroup * dataGroup,
+                                              string const & fieldName,
+                                              real64_array const & fieldArray) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
@@ -688,7 +688,11 @@ void FieldSpecificationBase::ApplyOneFieldValue( localIndex index,
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
       fieldType & field = view.reference();
-      FIELD_OP::SpecifyFieldValue( field, index, component, value );
+      GEOS_ERROR_IF( targetSet.size() != fieldArray.size(), "Target set is not the same size than given array for setting " + fieldName);
+      for( auto a : targetSet )
+      {
+        FIELD_OP::SpecifyFieldValue( field, a, component, fieldArray[a] );
+      }
     } );
 }
 template< typename FIELD_OP >

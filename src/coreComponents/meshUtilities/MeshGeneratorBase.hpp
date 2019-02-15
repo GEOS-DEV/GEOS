@@ -28,6 +28,7 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "mesh/CellBlock.hpp"
 #include "common/DataTypes.hpp"
 
 namespace geosx
@@ -70,9 +71,8 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
 
-  virtual real64 GetFieldValue(localIndex index,
-                               int const component,
-                               const std::string& propertyName) const = 0;
+  virtual const real64_array GetPropertyArray( const std::string& propertyName,
+                                                    CellBlock * cellBlock) const = 0;
 
   int m_delayMeshDeformation = 0;
 

@@ -131,9 +131,11 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       CellBlock * cellBlock = nullptr;
       if( cellBlockName == "HEX" )
       {
-        std::cout << regionIndexStr + "_" + cellBlockName << std::endl;
+        std::string cellBlockUniqueId = regionIndexStr + "_" + cellBlockName;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>(cellBlockUniqueId);
+        m_cellBlockUniqueIdToPAMELACellBlock_[cellBlockUniqueId] =  cellBlockPAMELA;
+        m_cellBlockUniqueIdToPAMELARegion_[cellBlockUniqueId] = regionPtr;
         cellBlock -> SetElementType("C3D8");
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
@@ -171,9 +173,11 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       }
       else if( cellBlockName == "TETRA" )
       {
+        std::string cellBlockUniqueId = regionIndexStr + "_" + cellBlockName;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
-        std::cout << regionIndexStr + "_" + cellBlockName << std::endl;
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>(cellBlockUniqueId);
+        m_cellBlockUniqueIdToPAMELACellBlock_[cellBlockUniqueId] =  cellBlockPAMELA;
+        m_cellBlockUniqueIdToPAMELARegion_[cellBlockUniqueId] = regionPtr;
         cellBlock -> SetElementType("C3D4");
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
@@ -203,8 +207,11 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       }
       else if( cellBlockName == "WEDGE" )
       {
+        std::string cellBlockUniqueId = regionIndexStr + "_" + cellBlockName;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>(cellBlockUniqueId);
+        m_cellBlockUniqueIdToPAMELACellBlock_[cellBlockUniqueId] =  cellBlockPAMELA;
+        m_cellBlockUniqueIdToPAMELARegion_[cellBlockUniqueId] = regionPtr;
         cellBlock -> SetElementType("C3D6");
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
@@ -238,8 +245,11 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       }
       else if( cellBlockName == "PYRAMID" )
       {
+        std::string cellBlockUniqueId = regionIndexStr + "_" + cellBlockName;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>(cellBlockUniqueId);
+        m_cellBlockUniqueIdToPAMELACellBlock_[cellBlockUniqueId] =  cellBlockPAMELA;
+        m_cellBlockUniqueIdToPAMELARegion_[cellBlockUniqueId] = regionPtr;
         cellBlock -> SetElementType("C3D5");
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
@@ -281,6 +291,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
           meshPropertyItr->first);
       m_pamelaPartitionnedMesh->SetVariableOnPolyhedron(meshPropertyItr->first, meshPropertyItr->second);
     }
+    /*
     // Property transfer on GEOSX, using FieldSpecifications
     for(auto propertyItr = regionPtr->PerElementVariable.begin() ; propertyItr != regionPtr->PerElementVariable.end() ; propertyItr++)
     {
@@ -314,6 +325,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         }
       });
     }
+  */
   }
 
 }
@@ -325,10 +337,33 @@ void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elemen
                                                        const int node_size )
 {}
 
-real64 PAMELAMeshGenerator::GetFieldValue(localIndex index,
-                                          int const component,
-                                          const std::string& propertyName) const
+const real64_array PAMELAMeshGenerator::GetPropertyArray( const std::string& propertyName,
+                                                    CellBlock * cellBlock) const
 {
+  std::cout << "cell block size "<< cellBlock->size() << std::endl;
+  real64_array pptArray(cellBlock->size());
+  auto regionPAMELA = m_cellBlockUniqueIdToPAMELARegion_.at(cellBlock->getName());
+  auto cellBlockPAMELA = m_cellBlockUniqueIdToPAMELACellBlock_.at(cellBlock->getName());
+  for(auto propertyItr = regionPAMELA->PerElementVariable.begin() ; propertyItr != regionPAMELA->PerElementVariable.end() ; propertyItr++)
+  {
+    auto propertyPtr = (*propertyItr);
+    std::cout << "LABEL " << propertyPtr->Label << std::endl;
+    std::cout << "PPT NAME " << propertyName << std::endl;
+    if(propertyPtr->Label == propertyName)
+    {
+
+      for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
+          cellItr != cellBlockPAMELA->SubCollection.end_owned() ; cellItr++) {
+        auto collectionIndex = cellItr - cellBlockPAMELA->SubCollection.begin_owned();
+        auto pptIndex = cellBlockPAMELA->IndexMapping[collectionIndex];
+
+        real64 value = propertyPtr->get_data(pptIndex)[0];
+        pptArray[pptIndex] = value;
+      }
+    }
+  }
+  return pptArray;
+}
   /*
   for( auto regionItr = m_polyhedronMap.begin() ; regionItr != m_polyhedronMap.end() ; ++regionItr )
   {
@@ -364,8 +399,6 @@ real64 PAMELAMeshGenerator::GetFieldValue(localIndex index,
   }
   return 0.;
   */
-  return 0;
-}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )
 }
