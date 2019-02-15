@@ -31,6 +31,7 @@
 
 namespace geosx
 {
+
 /**
  * \class BlasMatrix
  * \brief This class creates and provides basic support for for manipulating
@@ -90,7 +91,7 @@ public:
   //@}
 
   //----------------------------------------------------------------------------
-  //! @name Shaping/sizing methods
+  //! @name Shaping/sizing/permuting methods
   //@{
 
   /**
@@ -114,6 +115,60 @@ public:
    */
   void resize( localIndex order );
 
+  /**
+   * @brief Reinitialize the matrix.
+   *
+   * Sets all elements to zero.
+   *
+   */
+  void zero();
+
+  /**
+   * @brief Operator that sets all matrix entries equal to a constant value
+   *
+   * * \param IN
+   * \a value - Constant value to be assigned to each entry of the matrix
+   *
+   */
+  BlasMatrix &operator=(double value);
+
+  /**
+   * @brief Rearranges rows of a matrix as specified by a permutation vector
+   *
+   * * \param IN
+   * \a permutationVector - contains the permutation vector
+   * \a forwardPermuation - optional argument
+   *
+   * @note Given an M*N matrix A and a permulation vector PERM
+   *
+   *       Forward permutation (forwardPermutation = true):
+   *       A(PERM(I),*) is moved A(I,*) for I = 1,2,...,M.
+   *
+   *       Backward permutation (forwardPermutation = false):
+   *       A(I,*) is moved A(PERM(I),*) for I = 1,2,...,M.
+   *
+   */
+  void permuteRows(array1d<int> permutationVector,
+                   const bool forwardPermutation = true);
+  /**
+   * @brief Rearranges columns of a matrix as specified by a permutation vector
+   *
+   * * \param IN
+   * \a permutationVector - contains the permutation vector
+   * \a forwardPermuation - optional argument
+   *
+   * @note Given an M*N matrix A and a permulation vector PERM
+   *
+   *       Forward permutation (forwardPermutation = true):
+   *       A(*,PERM(I)) is moved A(*,I) for I = 1,2,...,M.
+   *
+   *       Backward permutation (forwardPermutation = false):
+   *       A(*,I) is moved A(*,PERM(I)) for I = 1,2,...,M.
+   *
+   */
+  void permuteCols(array1d<int> permutationVector,
+                   const bool forwardPermutation = true);
+
   //@}
 
   //----------------------------------------------------------------------------
@@ -123,10 +178,24 @@ public:
   /**
    * @brief Computes determinant.
    *
-   * The function is implemented for a matrix up to order three. The matrix must
-   * be square.
+   * The matrix must be square.
    */
-  real64 determinant();
+  real64 determinant() const;
+
+  /**
+   * @brief Returns the infinity norm of the matrix.
+   */
+  real64 normInf() const;
+
+  /**
+   * @brief Returns the one norm of the matrix.
+   */
+  real64 norm1() const;
+
+  /**
+   * @brief Returns the Frobenius norm of the matrix.
+   */
+  real64 normFrobenius() const;
 
   /**
    * @brief Compute inverse; \a this = <tt>M</tt><sup>-1</sup>.
@@ -139,9 +208,9 @@ public:
    * @warning
    * Assumes \a this already has the same size as <tt>M</tt>.
    *
-   * @note This function is hardcoded for square matrices up to order four.
+   * @note This function is hardcoded for square matrices up to order three.
    * For dimensions larger than four, the function calls LAPACK functions DGETRF
-   * and DGETRI using Trilinos/Epetra LAPACK Wrapper Class.
+   * and DGETRI.
    */
   void computeInverse( BlasMatrix& dst );
 
@@ -164,7 +233,8 @@ public:
    * For dimensions larger than four, the function calls LAPACK functions DGETRF
    * and DGETRI using lapacke interface.
    */
-  void computeInverse( BlasMatrix& dst, real64& det );
+  void computeInverse( BlasMatrix& dst,
+                       real64& det );
 
   /**
    * @brief Matrix-Matrix sum;
@@ -181,8 +251,17 @@ public:
    * @warning
    * Assumes that <tt>A</tt> and \a this have the same size.
    */
-  void MatAdd( BlasMatrix const & A,
-               const real64 scalarA = 1. );
+  void matrixAdd( BlasMatrix const & A,
+                  real64 const scalarA = 1. );
+
+  /**
+   * @brief In-place scalar-matrix product;
+   * \a this = scalarThis* \a this
+   *
+   * \param IN
+   * scalarThis - Scalar to multiply with \a this.
+   */
+  void scale(real64 scalarThis);
 
   /**
    * @brief Matrix-Matrix product;
@@ -286,55 +365,57 @@ public:
                         real64 const scalarThisSrc=1.,
                         real64 const scalarDst=0.);
 
-//
-//  /**
-//   * @brief Matrix-Vector product;
-//   * \a <tt>y</tt> = \a this * <tt>x</tt>.
-//   *
-//   * Computes matrix-vector product with optional scaling and accumulation.
-//   *
-//   * \param IN
-//   * <tt>x</tt> - Dense vector.
-//   * \param OUT
-//   * <tt>y</tt> - Dense vector.
-//   *
-//   * @warning
-//   * Assumes that <tt>x</tt> and <tt>y</tt> have compatible sizes.
-//   */
-//  void MatVecMult(SerialDenseMatrix& x, SerialDenseMatrix& y);
-//
-//  /**
-//   * @brief Matrix-Vector product;
-//   * \a <tt>y</tt> = \a this <sup>T</sup> * <tt>x</tt>.
-//   *
-//   * Computes matrix-vector product with optional scaling and accumulation using
-//   * the transpose of \a this.
-//   *
-//   * \param IN
-//   * <tt>x</tt> - Dense vector.
-//   * \param OUT
-//   * <tt>y</tt> - Dense vector.
-//   *
-//   * @warning
-//   * Assumes that <tt>x</tt> and <tt>y</tt> have compatible sizes.
-//   */
-//  void MatTVecMult(SerialDenseMatrix& x, SerialDenseMatrix& y);
-//
-//
-//  /**
-//   * @brief In-place scalar-matrix product;
-//   * \a this = scalarThis* \a this
-//   *
-//   * \param IN
-//   * scalarThis - Scalar to multiply with \a this.
-//   *
-//   * @note This function calls BLAS function DSCAL using Trilinos/Epetra BLAS
-//   *       Wrapper Class if built with Trilinos.
-//   */
-//  void Scale(double scalarThis);
-//
-//  //@}
-//
+  /**
+   * @brief Matrix-Vector product;
+   * \a <tt>dst</tt> = \a this * <tt>src</tt>.
+   *
+   * Computes matrix-vector product with optional scaling and accumulation.
+   *
+   * \param IN
+   * <tt>src</tt> - Dense vector.
+   * \param OUT
+   * <tt>dst</tt> - Dense vector.
+   * * \param [IN]
+   * scalarThisSrc - Optional scalar to multiply with \a this<sup>T</sup> * \a src<sup>T</sup>.
+   * \param [IN]
+   * scalarDst - Optional parameter to control the accumulation.
+   *
+   * @warning
+   * Assumes that <tt>x</tt> and <tt>y</tt> have compatible sizes.
+   */
+  void vectorMultiply(BlasMatrix const & src,
+                      BlasMatrix &dst,
+                      real64 const scalarThisSrc=1.,
+                      real64 const scalarDst=0.);
+
+  /**
+   * @brief transpose(Matrix)-Vector product;
+   * \a <tt>y</tt> = \a this <sup>T</sup> * <tt>x</tt>.
+   *
+   * Computes transpose(matrix)-vector product with optional scaling and accumulation using
+   * the transpose of \a this.
+   *
+   * \param IN
+   * <tt>src</tt> - Dense vector.
+   * \param OUT
+   * <tt>dst</tt> - Dense vector.
+   * * \param [IN]
+   * scalarThisSrc - Optional scalar to multiply with \a this<sup>T</sup> * \a src<sup>T</sup>.
+   * \param [IN]
+   * scalarDst - Optional parameter to control the accumulation.
+   *
+   * @warning
+   * Assumes that <tt>x</tt> and <tt>y</tt> have compatible sizes.
+   */
+  void TvectorMultiply(BlasMatrix const & src,
+                       BlasMatrix &dst,
+                       real64 const scalarThisSrc=1.,
+                       real64 const scalarDst=0.);
+
+
+
+  //@}
+
   //----------------------------------------------------------------------------
   //! @name Data Accessor methods
   //@{
@@ -360,28 +441,12 @@ public:
   /**
    * @brief Returns number of matrix rows.
    */
-  localIndex getNumRows() const
-  {
-    return m_numRows;
-  }
-  ;
+  localIndex getNumRows() const;
 
   /**
    * @brief Returns number of matrix columns.
    */
-  localIndex getNumCols() const
-  {
-    return m_numCols;
-  }
-  ;
-
-//  /**
-//   * @brief Assign scalar \a value to all matrix entries.
-//   *
-//   * \param IN
-//   * <tt>value</tt> - Scalar to be assigned to all matrix entries.
-//   */
-//  void assign_value(double value);
+  localIndex getNumCols() const;
 
   //@}
 

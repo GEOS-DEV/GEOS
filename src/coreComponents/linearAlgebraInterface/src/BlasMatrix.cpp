@@ -65,8 +65,8 @@ void BlasMatrix::resize( localIndex nRows,
   GEOS_ASSERT_MSG( nCols > 0, "Matrix number of columns must be > 0" );
   m_numRows = nRows;
   m_numCols = nCols;
-  m_values.resizeDefault( m_numRows * m_numCols);
-  m_values = 0.0;
+  m_values.resizeDefault( m_numRows * m_numCols );
+  this->zero();
 }
 
 void BlasMatrix::resize( localIndex order )
@@ -74,9 +74,54 @@ void BlasMatrix::resize( localIndex order )
   this->resize( order, order );
 }
 
+void BlasMatrix::zero()
+{
+  m_values = 0;
+}
+
+BlasMatrix &BlasMatrix::operator=(double value)
+{
+   m_values = value;
+   return *this;
+}
+
+void BlasMatrix::permuteRows( array1d<int> permVector,
+                              const bool forwardPermutation)
+{
+  // --- check that permutation vector has correct size
+  GEOS_ASSERT_MSG( permVector.size() == m_numRows,
+                   "Row permutation vector not consistent with matrix size" );
+  LAPACKE_dlapmr( LAPACK_COL_MAJOR,
+                  forwardPermutation,
+                  integer_conversion<lapack_int>( m_numRows ),
+                  integer_conversion<lapack_int >( m_numCols ),
+                  m_values.data(),
+                  integer_conversion<lapack_int>( m_numRows ),
+                  permVector.data());
+
+  return;
+}
+
+void BlasMatrix::permuteCols( array1d<int> permVector,
+                              const bool forwardPermutation)
+{
+  // --- check that permutation vector has correct size
+  GEOS_ASSERT_MSG( permVector.size() == m_numCols,
+                   "Cols permutation vector not consistent with matrix size" );
+  LAPACKE_dlapmt( LAPACK_COL_MAJOR,
+                  forwardPermutation,
+                  integer_conversion<lapack_int>( m_numRows ),
+                  integer_conversion<lapack_int >( m_numCols ),
+                  m_values.data(),
+                  integer_conversion<lapack_int>( m_numRows ),
+                  permVector.data());
+
+  return;
+}
+
 //-------------------------------------------------------Mathematical methods---
 // determinant calculation
-real64 BlasMatrix::determinant()
+real64 BlasMatrix::determinant() const
 {
   // --- check that matrix is square
   GEOS_ASSERT_MSG( m_numRows == m_numCols && m_numRows > 0,
@@ -92,38 +137,38 @@ real64 BlasMatrix::determinant()
       {
       real64 const * const v = m_values.data();
       return
-      v[0] * ( v[4] * v[8] - v[5] * v[7] ) +
-      v[3] * ( v[2] * v[7] - v[1] * v[8] ) +
-      v[6] * ( v[1] * v[5] - v[2] * v[4] );
+          v[0] * ( v[4] * v[8] - v[5] * v[7] ) +
+          v[3] * ( v[2] * v[7] - v[1] * v[8] ) +
+          v[6] * ( v[1] * v[5] - v[2] * v[4] );
     }
     case 4:
       {
       real64 const * const v = m_values.data();
       return
-      v[ 0] * ( v[ 5] * ( v[10] * v[15] - v[11] * v[14] ) -
-                v[ 9] * ( v[ 6] * v[15] - v[ 7] * v[14] ) +
-                v[13] * ( v[ 6] * v[11] - v[ 7] * v[10] )
-              ) -
-      v[ 4] * ( v[ 1] * ( v[10] * v[15] - v[11] * v[14] ) -
-                v[ 9] * ( v[ 2] * v[15] - v[ 3] * v[14] ) +
-                v[13] * ( v[ 2] * v[11] - v[ 3] * v[10] )
+      v[0] * ( v[5] * ( v[10] * v[15] - v[11] * v[14] ) -
+               v[9] * ( v[6] * v[15] - v[7] * v[14] ) +
+               v[13] * ( v[6] * v[11] - v[7] * v[10] )
+             ) -
+      v[4] * ( v[1] * ( v[10] * v[15] - v[11] * v[14] ) -
+               v[9] * ( v[2] * v[15] - v[3] * v[14] ) +
+               v[13] * ( v[2] * v[11] - v[3] * v[10] )
               ) +
-      v[ 8] * ( v[ 1] * ( v[ 6] * v[15] - v [7] * v[14] ) -
-                v[ 5] * ( v[ 2] * v[15] - v[ 3] * v[14] ) +
-                v[13] * ( v[ 2] * v[ 7] - v[ 3] * v[ 6] )
-              ) -
-      v[12] * ( v[ 1] * ( v[ 6] * v[11] - v[ 7] * v[10] ) -
-                v[ 5] * ( v[ 2] * v[11] - v[ 3] * v[10] ) +
-                v[ 9] * ( v[ 2] * v[ 7] - v[ 3] * v[ 6] )
-              );
-     }
+      v[8] * ( v[1] * ( v[6] * v[15] - v[7] * v[14] ) -
+               v[5] * ( v[2] * v[15] - v[3] * v[14] ) +
+               v[13] * ( v[2] * v[7] - v[3] * v[6] )
+          ) -
+      v[12] * ( v[1] * ( v[6] * v[11] - v[7] * v[10] ) -
+                v[5] * ( v[2] * v[11] - v[3] * v[10] ) +
+                v[9] * ( v[2] * v[7] - v[3] * v[6] )
+          );
+    }
     default:
 
       // Compute the determinant via LU factorization
       lapack_int INFO;
       lapack_int NN = integer_conversion<lapack_int>( this->getNumRows() );
       array1d<lapack_int> IPIV( NN );
-      array1d<double> LUfactor(m_values);
+      array1d<double> LUfactor( m_values );
 
       INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
                              NN,
@@ -137,7 +182,7 @@ real64 BlasMatrix::determinant()
       real64 det = 1.0;
       for( int i = 0 ; i < NN ; ++i )
       {
-        if( IPIV[i] != i+1 ) //IPIV is based on Fortran convention (counting from 1)
+        if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
         {
           det *= -LUfactor[NN * i + i];
         }
@@ -151,10 +196,10 @@ real64 BlasMatrix::determinant()
 }
 
 // computes inverse matrix
-void BlasMatrix::computeInverse( BlasMatrix & dst)
+void BlasMatrix::computeInverse( BlasMatrix & dst )
 {
   real64 det;
-  this->computeInverse( dst, det);
+  this->computeInverse( dst, det );
 }
 
 // computes inverse matrix
@@ -162,215 +207,173 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
 {
   // --- Check that source matrix is square
   localIndex order = this->getNumRows();
-  GEOS_ASSERT_MSG( order == this->getNumCols(), "Matrix must be square" );
+  GEOS_ASSERT_MSG( order > 0 && order == this->getNumCols(),
+                   "Matrix must be square" );
 
   // --- Initialize the inverse matrix to the appropriate dimension
   dst.resize( order,
               order );
 
-  det = this->determinant();
-  real64 oneOverDet = 1. / this->determinant();
-  GEOS_ASSERT_MSG( !(std::isinf( oneOverDet )) , "Matrix is singular" );
+  // --- Check if matrix is singular by computing the determinant
+  //     note: if order greater than 3 we compute the determinant by
+  //           first constructing the LU factors, later reused for calculating
+  //           the inverse.
+  lapack_int NN;
+  array1d<lapack_int> IPIV;
+  lapack_int INFO;
+  array1d<double> INV_WORK;
 
-  switch( m_numCols )
+  if (order <= 3)
   {
-    case 1:
-      dst( 0, 0 ) = oneOverDet;
-      return;
+    det = this->determinant();
+    real64 oneOverDet = 1. / this->determinant();
+  }
+  else
+  {
+    // Copy this in dst
+    dst.m_values = this->m_values;
 
-      // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
-    case 2:
+    // Declare workspace for permutations and scratch array
+    NN = integer_conversion<lapack_int>( this->getNumCols() );
+    IPIV.resize(NN);
+    INV_WORK.resize(NN);
+
+    // Call to LAPACK using LAPACKE
+    // --- Compute LU factorization (LAPACK function DGETRF)
+    INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
+                           NN,
+                           NN,
+                           dst.m_values.data(),
+                           NN,
+                           IPIV.data() );
+    GEOS_ASSERT_MSG( INFO == 0,
+                     "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
+
+    // --- Compute determinant (not done calling directly the function determinant
+    det = 1.0;
+    for( int i = 0 ; i < NN ; ++i )
+    {
+      if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
       {
-      const double t4 = 1. / ( ( *this )( 0, 0 ) * ( *this )( 1, 1 ) - ( *this )( 0, 1 ) * ( *this )( 1, 0 ) );
-      dst( 0, 0 ) = ( *this )( 1, 1 ) * t4;
-      dst( 0, 1 ) = -( *this )( 0, 1 ) * t4;
-      dst( 1, 0 ) = -( *this )( 1, 0 ) * t4;
-      dst( 1, 1 ) = ( *this )( 0, 0 ) * t4;
-      return;
+        det *= -dst.m_values[NN * i + i];
+      }
+      else
+      {
+        det *= dst.m_values[NN * i + i];
+      }
     }
-      ;
+  }
 
-    case 3:
-      {
-      const double t4 = ( *this )( 0, 0 ) * ( *this )( 1, 1 ),
-          t6 = ( *this )( 0, 0 ) * ( *this )( 1, 2 ),
-          t8 = ( *this )( 0, 1 ) * ( *this )( 1, 0 ),
-          t00 = ( *this )( 0, 2 ) * ( *this )( 1, 0 ),
-          t01 = ( *this )( 0, 1 ) * ( *this )( 2, 0 ),
-          t04 = ( *this )( 0, 2 ) * ( *this )( 2, 0 ),
-          t07 = 1. / ( t4 * ( *this )( 2, 2 ) - t6 * ( *this )( 2, 1 ) - t8 * ( *this )( 2, 2 ) +
-              t00 * ( *this )( 2, 1 ) + t01 * ( *this )( 1, 2 ) - t04 * ( *this )( 1, 1 ) );
-      dst( 0, 0 ) = ( ( *this )( 1, 1 ) * ( *this )( 2, 2 ) - ( *this )( 1, 2 ) * ( *this )( 2, 1 ) ) * t07;
-      dst( 0, 1 ) = -( ( *this )( 0, 1 ) * ( *this )( 2, 2 ) - ( *this )( 0, 2 ) * ( *this )( 2, 1 ) ) * t07;
-      dst( 0, 2 ) = -( -( *this )( 0, 1 ) * ( *this )( 1, 2 ) + ( *this )( 0, 2 ) * ( *this )( 1, 1 ) ) * t07;
-      dst( 1, 0 ) = -( ( *this )( 1, 0 ) * ( *this )( 2, 2 ) - ( *this )( 1, 2 ) * ( *this )( 2, 0 ) ) * t07;
-      dst( 1, 1 ) = ( ( *this )( 0, 0 ) * ( *this )( 2, 2 ) - t04 ) * t07;
-      dst( 1, 2 ) = -( t6 - t00 ) * t07;
-      dst( 2, 0 ) = -( -( *this )( 1, 0 ) * ( *this )( 2, 1 ) + ( *this )( 1, 1 ) * ( *this )( 2, 0 ) ) * t07;
-      dst( 2, 1 ) = -( ( *this )( 0, 0 ) * ( *this )( 2, 1 ) - t01 ) * t07;
-      dst( 2, 2 ) = ( t4 - t8 ) * t07;
-      return;
-    }
-      ;
+  real64 oneOverDet = 1. / this->determinant();
+  GEOS_ASSERT_MSG( !( std::isinf( oneOverDet ) ), "Matrix is singular" );
 
-    case 4:
-      {
-      const double t14 = ( *this )( 0, 0 ) * ( *this )( 1, 1 );
-      const double t15 = ( *this )( 2, 2 ) * ( *this )( 3, 3 );
-      const double t17 = ( *this )( 2, 3 ) * ( *this )( 3, 2 );
-      const double t19 = ( *this )( 0, 0 ) * ( *this )( 2, 1 );
-      const double t20 = ( *this )( 1, 2 ) * ( *this )( 3, 3 );
-      const double t22 = ( *this )( 1, 3 ) * ( *this )( 3, 2 );
-      const double t24 = ( *this )( 0, 0 ) * ( *this )( 3, 1 );
-      const double t25 = ( *this )( 1, 2 ) * ( *this )( 2, 3 );
-      const double t27 = ( *this )( 1, 3 ) * ( *this )( 2, 2 );
-      const double t29 = ( *this )( 1, 0 ) * ( *this )( 0, 1 );
-      const double t32 = ( *this )( 1, 0 ) * ( *this )( 2, 1 );
-      const double t33 = ( *this )( 0, 2 ) * ( *this )( 3, 3 );
-      const double t35 = ( *this )( 0, 3 ) * ( *this )( 3, 2 );
-      const double t37 = ( *this )( 1, 0 ) * ( *this )( 3, 1 );
-      const double t38 = ( *this )( 0, 2 ) * ( *this )( 2, 3 );
-      const double t40 = ( *this )( 0, 3 ) * ( *this )( 2, 2 );
-      const double t42 = t14 * t15 - t14 * t17 - t19 * t20 + t19 * t22 +
-          t24 * t25 - t24 * t27 - t29 * t15 + t29 * t17 +
-          t32 * t33 - t32 * t35 - t37 * t38 + t37 * t40;
-      const double t43 = ( *this )( 2, 0 ) * ( *this )( 0, 1 );
-      const double t46 = ( *this )( 2, 0 ) * ( *this )( 1, 1 );
-      const double t49 = ( *this )( 2, 0 ) * ( *this )( 3, 1 );
-      const double t50 = ( *this )( 0, 2 ) * ( *this )( 1, 3 );
-      const double t52 = ( *this )( 0, 3 ) * ( *this )( 1, 2 );
-      const double t54 = ( *this )( 3, 0 ) * ( *this )( 0, 1 );
-      const double t57 = ( *this )( 3, 0 ) * ( *this )( 1, 1 );
-      const double t60 = ( *this )( 3, 0 ) * ( *this )( 2, 1 );
-      const double t63 = t43 * t20 - t43 * t22 - t46 * t33 + t46 * t35 +
-          t49 * t50 - t49 * t52 - t54 * t25 + t54 * t27 +
-          t57 * t38 - t57 * t40 - t60 * t50 + t60 * t52;
-      const double t65 = 1. / ( t42 + t63 );
-      const double t71 = ( *this )( 0, 2 ) * ( *this )( 2, 1 );
-      const double t73 = ( *this )( 0, 3 ) * ( *this )( 2, 1 );
-      const double t75 = ( *this )( 0, 2 ) * ( *this )( 3, 1 );
-      const double t77 = ( *this )( 0, 3 ) * ( *this )( 3, 1 );
-      const double t81 = ( *this )( 0, 1 ) * ( *this )( 1, 2 );
-      const double t83 = ( *this )( 0, 1 ) * ( *this )( 1, 3 );
-      const double t85 = ( *this )( 0, 2 ) * ( *this )( 1, 1 );
-      const double t87 = ( *this )( 0, 3 ) * ( *this )( 1, 1 );
-      const double t101 = ( *this )( 1, 0 ) * ( *this )( 2, 2 );
-      const double t103 = ( *this )( 1, 0 ) * ( *this )( 2, 3 );
-      const double t105 = ( *this )( 2, 0 ) * ( *this )( 1, 2 );
-      const double t107 = ( *this )( 2, 0 ) * ( *this )( 1, 3 );
-      const double t109 = ( *this )( 3, 0 ) * ( *this )( 1, 2 );
-      const double t111 = ( *this )( 3, 0 ) * ( *this )( 1, 3 );
-      const double t115 = ( *this )( 0, 0 ) * ( *this )( 2, 2 );
-      const double t117 = ( *this )( 0, 0 ) * ( *this )( 2, 3 );
-      const double t119 = ( *this )( 2, 0 ) * ( *this )( 0, 2 );
-      const double t121 = ( *this )( 2, 0 ) * ( *this )( 0, 3 );
-      const double t123 = ( *this )( 3, 0 ) * ( *this )( 0, 2 );
-      const double t125 = ( *this )( 3, 0 ) * ( *this )( 0, 3 );
-      const double t129 = ( *this )( 0, 0 ) * ( *this )( 1, 2 );
-      const double t131 = ( *this )( 0, 0 ) * ( *this )( 1, 3 );
-      const double t133 = ( *this )( 1, 0 ) * ( *this )( 0, 2 );
-      const double t135 = ( *this )( 1, 0 ) * ( *this )( 0, 3 );
-      dst( 0, 0 ) = ( ( *this )( 1, 1 ) * ( *this )( 2, 2 ) * ( *this )( 3, 3 ) - ( *this )( 1, 1 ) * ( *this )( 2, 3 ) * ( *this )(
-          3, 2 ) -
-          ( *this )( 2, 1 ) * ( *this )( 1, 2 ) * ( *this )( 3, 3 ) + ( *this )( 2, 1 ) * ( *this )( 1, 3 ) * ( *this )(
-          3, 2 ) +
-          ( *this )( 3, 1 ) * ( *this )( 1, 2 ) * ( *this )( 2, 3 ) - ( *this )( 3, 1 ) * ( *this )( 1, 3 ) * ( *this )(
-          2, 2 ) ) * t65;
-      dst( 0, 1 ) = -( ( *this )( 0, 1 ) * ( *this )( 2, 2 ) * ( *this )( 3, 3 ) - ( *this )( 0, 1 ) * ( *this )( 2, 3 ) * ( *this )(
-          3, 2 ) -
-          t71 * ( *this )( 3, 3 ) + t73 * ( *this )( 3, 2 ) + t75 * ( *this )( 2, 3 ) - t77 * ( *this )( 2, 2 ) ) * t65;
-      dst( 0, 2 ) = ( t81 * ( *this )( 3, 3 ) - t83 * ( *this )( 3, 2 ) - t85 * ( *this )( 3, 3 ) + t87 * ( *this )( 3,
-                                                                                                                     2 ) +
-          t75 * ( *this )( 1, 3 ) - t77 * ( *this )( 1, 2 ) ) * t65;
-      dst( 0, 3 ) = -( t81 * ( *this )( 2, 3 ) - t83 * ( *this )( 2, 2 ) - t85 * ( *this )( 2, 3 ) + t87 * ( *this )(
-          2, 2 ) +
-          t71 * ( *this )( 1, 3 ) - t73 * ( *this )( 1, 2 ) ) * t65;
-      dst( 1, 0 ) = -( t101 * ( *this )( 3, 3 ) - t103 * ( *this )( 3, 2 ) - t105 * ( *this )( 3, 3 ) + t107 * ( *this )(
-          3, 2 ) +
-          t109 * ( *this )( 2, 3 ) - t111 * ( *this )( 2, 2 ) ) * t65;
-      dst( 1, 1 ) = ( t115 * ( *this )( 3, 3 ) - t117 * ( *this )( 3, 2 ) - t119 * ( *this )( 3, 3 ) + t121 * ( *this )(
-          3, 2 ) +
-          t123 * ( *this )( 2, 3 ) - t125 * ( *this )( 2, 2 ) ) * t65;
-      dst( 1, 2 ) = -( t129 * ( *this )( 3, 3 ) - t131 * ( *this )( 3, 2 ) - t133 * ( *this )( 3, 3 ) + t135 * ( *this )(
-          3, 2 ) +
-          t123 * ( *this )( 1, 3 ) - t125 * ( *this )( 1, 2 ) ) * t65;
-      dst( 1, 3 ) = ( t129 * ( *this )( 2, 3 ) - t131 * ( *this )( 2, 2 ) - t133 * ( *this )( 2, 3 ) + t135 * ( *this )(
-          2, 2 ) +
-          t119 * ( *this )( 1, 3 ) - t121 * ( *this )( 1, 2 ) ) * t65;
-      dst( 2, 0 ) = ( t32 * ( *this )( 3, 3 ) - t103 * ( *this )( 3, 1 ) - t46 * ( *this )( 3, 3 ) + t107 * ( *this )(
-          3, 1 ) +
-          t57 * ( *this )( 2, 3 ) - t111 * ( *this )( 2, 1 ) ) * t65;
-      dst( 2, 1 ) = -( t19 * ( *this )( 3, 3 ) - t117 * ( *this )( 3, 1 ) - t43 * ( *this )( 3, 3 ) + t121 * ( *this )(
-          3, 1 ) +
-          t54 * ( *this )( 2, 3 ) - t125 * ( *this )( 2, 1 ) ) * t65;
-      dst( 2, 2 ) = ( t14 * ( *this )( 3, 3 ) - t131 * ( *this )( 3, 1 ) - t29 * ( *this )( 3, 3 ) + t135 * ( *this )(
-          3, 1 ) +
-          t54 * ( *this )( 1, 3 ) - t125 * ( *this )( 1, 1 ) ) * t65;
-      dst( 2, 3 ) = -( t14 * ( *this )( 2, 3 ) - t131 * ( *this )( 2, 1 ) - t29 * ( *this )( 2, 3 ) + t135 * ( *this )(
-          2, 1 ) +
-          t43 * ( *this )( 1, 3 ) - t121 * ( *this )( 1, 1 ) ) * t65;
-      dst( 3, 0 ) = -( t32 * ( *this )( 3, 2 ) - t101 * ( *this )( 3, 1 ) - t46 * ( *this )( 3, 2 ) + t105 * ( *this )(
-          3, 1 ) +
-          t57 * ( *this )( 2, 2 ) - t109 * ( *this )( 2, 1 ) ) * t65;
-      dst( 3, 1 ) = ( t19 * ( *this )( 3, 2 ) - t115 * ( *this )( 3, 1 ) - t43 * ( *this )( 3, 2 ) + t119 * ( *this )(
-          3, 1 ) +
-          t54 * ( *this )( 2, 2 ) - t123 * ( *this )( 2, 1 ) ) * t65;
-      dst( 3, 2 ) = -( t14 * ( *this )( 3, 2 ) - t129 * ( *this )( 3, 1 ) - t29 * ( *this )( 3, 2 ) + t133 * ( *this )(
-          3, 1 ) +
-          t54 * ( *this )( 1, 2 ) - t123 * ( *this )( 1, 1 ) ) * t65;
-      dst( 3, 3 ) = ( t14 * ( *this )( 2, 2 ) - t129 * ( *this )( 2, 1 ) - t29 * ( *this )( 2, 2 ) + t133 * ( *this )(
-          2, 1 ) +
-          t43 * ( *this )( 1, 2 ) - t119 * ( *this )( 1, 1 ) ) * t65;
+  // --- Compute inverse
+  switch( order )
+    {
+      case 1:
+        dst( 0, 0 ) = oneOverDet;
+        return;
 
-      return;
-    }
+        // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
+      case 2:
+        {
+        dst( 0, 0 ) = ( *this )( 1, 1 ) * oneOverDet;
+        dst( 0, 1 ) = -( *this )( 0, 1 ) * oneOverDet;
+        dst( 1, 0 ) = -( *this )( 1, 0 ) * oneOverDet;
+        dst( 1, 1 ) = ( *this )( 0, 0 ) * oneOverDet;
+        return;
+      }
+        ;
 
-    default:
-      {
-      // Copy M in this
-      dst.m_values = this->m_values;
+      case 3:
+        {
+        dst( 0, 0 ) = ( ( *this )( 1, 1 ) * ( *this )( 2, 2 ) -
+                        ( *this )( 1, 2 ) * ( *this )( 2, 1 ) ) * oneOverDet;
+        dst( 0, 1 ) = ( ( *this )( 0, 2 ) * ( *this )( 2, 1 ) -
+                        ( *this )( 0, 1 ) * ( *this )( 2, 2 ) ) * oneOverDet;
+        dst( 0, 2 ) = ( ( *this )( 0, 1 ) * ( *this )( 1, 2 ) -
+                        ( *this )( 0, 2 ) * ( *this )( 1, 1 ) ) * oneOverDet;
+        dst( 1, 0 ) = ( ( *this )( 1, 2 ) * ( *this )( 2, 0 ) -
+                        ( *this )( 1, 0 ) * ( *this )( 2, 2 ) ) * oneOverDet;
+        dst( 1, 1 ) = ( ( *this )( 0, 0 ) * ( *this )( 2, 2 ) -
+                        ( *this )( 0, 2 ) * ( *this )( 2, 0 ) ) * oneOverDet;
+        dst( 1, 2 ) = ( ( *this )( 0, 2 ) * ( *this )( 1, 0 ) -
+                        ( *this )( 0, 0 ) * ( *this )( 1, 2 ) ) * oneOverDet;
+        dst( 2, 0 ) = ( ( *this )( 1, 0 ) * ( *this )( 2, 1 ) -
+                        ( *this )( 1, 1 ) * ( *this )( 2, 0 ) ) * oneOverDet;
+        dst( 2, 1 ) = ( ( *this )( 0, 1 ) * ( *this )( 2, 0 ) -
+                        ( *this )( 0, 0 ) * ( *this )( 2, 1 ) ) * oneOverDet;
+        dst( 2, 2 ) = ( ( *this )( 0, 0 ) * ( *this )( 1, 1 ) -
+                        ( *this )( 0, 1 ) * ( *this )( 1, 0 ) ) * oneOverDet;
+        return;
+      }
+      default:
+    {
+    // --- Invert (LAPACK function DGETRI)
+    INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
+                           NN,
+                           dst.m_values.data(),
+                           NN,
+                           IPIV.data() );
+    GEOS_ASSERT_MSG( INFO == 0,
+                     "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
 
-      // Declare workspace for permutations and scratch array
-      lapack_int NN = integer_conversion<lapack_int>( this->getNumCols() );
-      array1d<lapack_int> IPIV( NN );
-      lapack_int INFO;
-      array1d<double> INV_WORK( NN );
-
-      // Call to LAPACK using LAPACKE
-      // --- Compute LU factorization (LAPACK function DGETRF)
-      INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
-                             NN,
-                             NN,
-                             dst.m_values.data(),
-                             NN,
-                             IPIV.data() );
-      GEOS_ASSERT_MSG( INFO == 0,
-                       "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
-
-      // --- Invert (LAPACK function DGETRI)
-      INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
-                             NN,
-                             dst.m_values.data(),
-                             NN,
-                             IPIV.data() );
-      GEOS_ASSERT_MSG( INFO == 0,
-                       "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
-
-      return;
+    return;
     }
   }
 }
 
-// matrix-matrix sum (optional scaling)
-void BlasMatrix::MatAdd( BlasMatrix const & A,
-                         real64 const scalarA )
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Inf-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the infinity norm of the matrix.
+real64 BlasMatrix::normInf() const
 {
-  unsigned int nRowA = A.getNumRows();
-  unsigned int nColA = A.getNumCols();
+  return LAPACKE_dlange( LAPACK_COL_MAJOR,
+                         'I',
+                         integer_conversion<lapack_int>(m_numRows),
+                         integer_conversion<lapack_int>(m_numCols),
+                         m_values.data(),
+                         integer_conversion<lapack_int>(m_numRows));
 
-  GEOS_ASSERT_MSG( A.getNumRows() == m_numRows,
-                   "Matrix dimensions not compatible for sum" );
-  GEOS_ASSERT_MSG( A.getNumCols() == m_numCols,
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// 1-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the one norm of the matrix.
+real64 BlasMatrix::norm1() const
+{
+  return LAPACKE_dlange( LAPACK_COL_MAJOR,
+                         '1',
+                         integer_conversion<lapack_int>(m_numRows),
+                         integer_conversion<lapack_int>(m_numCols),
+                         m_values.data(),
+                         integer_conversion<lapack_int>(m_numRows));
+
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Frobenius-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the Frobenius norm of the matrix.
+real64 BlasMatrix::normFrobenius() const
+{
+  return LAPACKE_dlange( LAPACK_COL_MAJOR,
+                         'F',
+                         integer_conversion<lapack_int>(m_numRows),
+                         integer_conversion<lapack_int>(m_numCols),
+                         m_values.data(),
+                         integer_conversion<lapack_int>(m_numRows));
+
+}
+
+// matrix-matrix sum (optional scaling)
+void BlasMatrix::matrixAdd( BlasMatrix const & A,
+                            real64 const scalarA )
+{
+
+  GEOS_ASSERT_MSG( A.getNumRows() == m_numRows && A.getNumCols() == m_numCols,
                    "Matrix dimensions not compatible for sum" );
 
   cblas_daxpy( static_cast<int>( m_values.size() ),
@@ -379,6 +382,17 @@ void BlasMatrix::MatAdd( BlasMatrix const & A,
                1,
                m_values.data(),
                1 );
+  return;
+}
+
+// in-place scalar-matrix product
+void BlasMatrix::scale(real64 scalarThis)
+{
+  // Call to BLAS using CBLAS interface
+  cblas_dscal(integer_conversion<int>(m_values.size()),
+              scalarThis,
+              m_values.data(),
+              1);
   return;
 }
 
@@ -511,64 +525,55 @@ void BlasMatrix::TmatrixTMultiply( BlasMatrix const &src,
                M );
 }
 
-//// matrix-vector multiplication
-//void SerialDenseMatrix::MatVecMult(SerialDenseMatrix& x,
-//                                   SerialDenseMatrix& y)
-//{
-//  ASSERT(this->m_nRows == y.get_nRows(), "Matrix and destination vector "
-//                                         "dimensions not compatible for "
-//                                         "product");
-//  ASSERT(this->m_nCols == x.get_nRows(), "Matrix and destination vector "
-//                                         "dimensions not compatible for "
-//                                         "product");
-//
-//  y.MatMatMult(*this, x);
-//
-//  return;
-//}
-//
-//// matrix-vector multiplication
-//void SerialDenseMatrix::MatTVecMult(SerialDenseMatrix& x,
-//                                    SerialDenseMatrix& y)
-//{
-//  ASSERT(this->m_nCols == y.get_nRows(), "Matrix and destination vector "
-//                                         "dimensions not compatible for "
-//                                         "product");
-//  ASSERT(this->m_nRows == x.get_nRows(), "Matrix and destination vector "
-//                                         "dimensions not compatible for "
-//                                         "product");
-//
-//  y.MatTMatMult(*this, x);
-//
-//  return;
-//}
-//
-//// in-place scalar-matrix product
-//void SerialDenseMatrix::Scale(double scalarThis)
-//{
-//
-//#ifdef WITH_TRILINOS
-//  // Call to BLAS using Epetra BLAS Wrapper Class (Epetra_BLAS)
-//  Epetra_BLAS Blas;
-//  Blas.SCAL(static_cast<int>(m_data.size()), scalarThis, &(*this)(0,0), 1);
-//  return;
-//#else
-//  // Data accessing by column
-//  for (unsigned int j = 0; j < m_nCols; ++j)
-//    for (unsigned int i = 0; i  <m_nRows; ++i)
-//       (*this)(i,j) = scalarThis*(*this)(i,j);
-//#endif
-//
-//}
+// matrix-vector multiplication
+void BlasMatrix::vectorMultiply(BlasMatrix const &src,
+                                BlasMatrix &dst,
+                                real64 const scalarThisSrc,
+                                real64 const scalarDst)
+{
+  GEOS_ASSERT_MSG(m_numCols == src.getNumRows() && m_numRows == dst.getNumRows(),
+                  "Matrix, source vector and destination vector not compatible");
+
+  this->matrixMultiply(src,
+                       dst,
+                       scalarThisSrc,
+                       scalarDst);
+
+  return;
+}
+
+// transpose(matrix)-vector multiplication
+void BlasMatrix::TvectorMultiply(BlasMatrix const &src,
+                                 BlasMatrix &dst,
+                                 real64 const scalarThisSrc,
+                                 real64 const scalarDst)
+{
+  GEOS_ASSERT_MSG(m_numRows == src.getNumRows() && m_numCols == dst.getNumRows(),
+                  "Matrix, source vector and destination vector not compatible");
+
+  this->TmatrixMultiply(src,
+                        dst,
+                        scalarThisSrc,
+                        scalarDst);
+
+  return;
+}
+
+
 //
 //------------------------------------------------------Data Accessor methods---
 
-//// matrix nice output
-//void SerialDenseMatrix::assign_value(double value)
-//{
-//  std::fill(m_data.begin(), m_data.end(), value);
-//  return;
-//};
+// Returns number of matrix rows.
+localIndex BlasMatrix::getNumRows() const
+{
+  return m_numRows;
+}
+
+// Returns number of matrix columns.
+localIndex BlasMatrix::getNumCols() const
+{
+  return m_numCols;
+}
 
 //----------------------------------------------------------------I/O methods---
 // matrix nice output
