@@ -550,7 +550,6 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    PerforationData * perforationData = well->getPerforations();
     ConnectionData * connectionData = well->getConnections();
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
@@ -592,24 +591,46 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   
 }
 
-void
-SinglePhaseWell::ApplyBoundaryConditions( DomainPartition * const domain,
-                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                          real64 const time_n,
-                                          real64 const dt )
-{
-
-}
-
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    //   -- set dWellPres = 0;
-    //   -- update the other well variables
+    ConnectionData * connectionData = well->getConnections();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get a reference to the primary variables on segments
+    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    // get a reference to the primary variables on connections
+    array1d<real64> const & dWellVelocity = connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaVelocityString );
+
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+
+      // TODO: check for ghost segments
+
+      // extract solution and apply to dP
+      dWellPressure[iwelem] = 0;
+      
+    }
+
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+
+      // TODO: check for ghost connections if needed
+      // TODO: check if there is a primary var defined on this connection
+
+      // extract solution and apply to dP
+      dWellVelocity[iconn] = 0;
+      
+    }
   });
+
+  // call constitutive models
+  UpdateStateAll( domain );
+
 }
 
 void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
