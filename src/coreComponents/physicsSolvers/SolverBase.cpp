@@ -268,7 +268,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   for( int dtAttempt = 0 ; dtAttempt<maxNumberDtCuts ; ++dtAttempt )
   {
     // reset the solver state, since we are restarting the time step
-    ResetStateToBeginningOfStep( domain );
+    if (dtAttempt > 0)
+      ResetStateToBeginningOfStep( domain );
 
     // main Newton loop
     // keep residual from previous iteration in case we need to do a line search
