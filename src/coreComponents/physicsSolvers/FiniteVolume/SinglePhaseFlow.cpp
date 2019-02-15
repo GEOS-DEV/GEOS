@@ -647,10 +647,10 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
         real64 const localAccumJacobian = dPoro_dPres * densNew * volNew
                                         + dDens_dPres[ei][0] * poro[ei] * volNew;
 
-
         // add contribution to global residual and jacobian
         residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
         jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+
       }
     } );
   } );
