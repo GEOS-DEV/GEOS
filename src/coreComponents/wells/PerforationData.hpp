@@ -60,7 +60,7 @@ public:
 
   localIndex numPerforationsLocal()  const
   { return integer_conversion<localIndex>(size()); }
-
+  
   Perforation const * getPerforation( localIndex iperf ) const;
   Perforation *       getPerforation( localIndex iperf );
 
