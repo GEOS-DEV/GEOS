@@ -98,7 +98,7 @@ public:
   
 protected:
 
-  void InitializePreSubGroups( ManagedGroup * const problemManager );
+  void InitializePreSubGroups( ManagedGroup * const problemManager ) override;
 
 
 private:

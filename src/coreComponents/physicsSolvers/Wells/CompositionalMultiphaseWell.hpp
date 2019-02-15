@@ -318,7 +318,6 @@ public:
     
     // well controls
     ViewKey phaseFlowRate = { phaseFlowRateString };
-    ViewKey bhp           = { bhpString };
 
     // saturation
     ViewKey phaseVolFrac        = { phaseVolumeFractionString };
