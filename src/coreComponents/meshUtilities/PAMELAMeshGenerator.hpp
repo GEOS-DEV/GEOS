@@ -30,6 +30,7 @@
 
 #include "Mesh/Mesh.hpp"
 #include "MeshDataWriters/MeshParts.hpp"
+#include "MeshDataWriters/Writer.hpp"
 
 #include "MeshGeneratorBase.hpp"
 
@@ -86,8 +87,8 @@ private:
   /// Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
 
-  /// Polyhedrons organized by regions
-  PAMELA::PartMap<PAMELA::Polyhedron*> m_polyhedronMap;
+  /// Mesh partitionned and filled with property inside PAMELA
+  std::unique_ptr< PAMELA::Writer > m_pamelaPartitionnedMesh;
 
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =

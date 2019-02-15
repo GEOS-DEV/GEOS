@@ -97,7 +97,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, ManagedGrou
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the mesh on which the property is");
 
-  RegisterViewWrapper( viewKeyStruct::readFromString, &m_nameFrom, 0 )->
+  RegisterViewWrapper( viewKeyStruct::nameFromString, &m_nameFrom, 0 )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name or tag of the property within the imported mesh");
 }

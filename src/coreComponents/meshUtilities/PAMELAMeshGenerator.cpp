@@ -40,6 +40,8 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 
 #include "mesh/MeshBody.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationBase.hpp"
 
 namespace geosx
 {
@@ -69,8 +71,9 @@ void PAMELAMeshGenerator::PostProcessInput()
                                                PAMELA::ELEMENTS::FAMILY::POLYGON );
   m_pamelaMesh->CreateLineGroupWithAdjacency(
     "TopologicalC2C",
-    m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
-                                                               PAMELA::ELEMENTS::FAMILY::POLYGON ));
+    m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYGON ));
+  m_pamelaPartitionnedMesh =
+    std::unique_ptr< PAMELA::Writer >(new PAMELA::Writer(m_pamelaMesh.get(),this->getName()));
 
 }
 
@@ -86,11 +89,7 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
-  std::cout << this << std::endl;
-  std::cout << this->GetGroupByPath("/Mesh/CubeHex") << std::endl;
-  std::cout << this->GetGroupByPath("/Mesh/CubeHex")->GetGroup(0)->getName() << std::endl;
-
-  ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
+ ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
@@ -100,7 +99,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
 
 
   // Use the PartMap of PAMELA to get the mesh
-  m_polyhedronMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get()));
+  auto polyhedronMap = m_pamelaPartitionnedMesh->GetPolyhedronMap();
 
   // Vertices are written first
   r1_array const & X = nodeManager->referencePosition();
@@ -116,7 +115,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   }
   
   // First loop which iterate on the regions
-  for( auto regionItr = m_polyhedronMap.begin() ; regionItr != m_polyhedronMap.end() ; ++regionItr )
+  for( auto regionItr = polyhedronMap.begin() ; regionItr != polyhedronMap.end() ; ++regionItr )
   {
     auto regionPtr = regionItr->second;
     auto regionIndex = regionPtr->Index;
@@ -132,6 +131,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       CellBlock * cellBlock = nullptr;
       if( cellBlockName == "HEX" )
       {
+        std::cout << regionIndexStr + "_" + cellBlockName << std::endl;
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
         cellBlock -> SetElementType("C3D8");
@@ -173,6 +173,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       {
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
+        std::cout << regionIndexStr + "_" + cellBlockName << std::endl;
         cellBlock -> SetElementType("C3D4");
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
@@ -269,6 +270,50 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         }
       }
     }
+    // Property transfer on partionned PAMELA Mesh
+    auto fieldSpecificationManager = FieldSpecificationManager::get();
+    auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
+    for( auto meshPropertyItr = meshProperties.begin() ; meshPropertyItr != meshProperties.end() ; meshPropertyItr++)
+    {
+      m_pamelaPartitionnedMesh->DeclareVariable(PAMELA::FAMILY::POLYHEDRON,
+          PAMELA::VARIABLE_DIMENSION::SCALAR,
+          PAMELA::VARIABLE_LOCATION::PER_CELL,
+          meshPropertyItr->first);
+      m_pamelaPartitionnedMesh->SetVariableOnPolyhedron(meshPropertyItr->first, meshPropertyItr->second);
+    }
+    // Property transfer on GEOSX, using FieldSpecifications
+    for(auto propertyItr = regionPtr->PerElementVariable.begin() ; propertyItr != regionPtr->PerElementVariable.end() ; propertyItr++)
+    {
+      auto propertyPtr = (*propertyItr);
+      fieldSpecificationManager->forSubGroups<FieldSpecificationBase>([&](FieldSpecificationBase * field)->void
+      {
+        if(field->GetNameFrom() == propertyPtr->Label)
+        {
+          std::cout << "Importing " << field->GetFieldName() << " using the property "
+                    << propertyPtr->Label << " in the external mesh file" << std::endl;
+          for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
+            cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
+          {
+            auto cellBlockPAMELA = cellBlockIterator->second;
+            auto cellBlockType = cellBlockPAMELA->ElementType;
+            auto cellBlockName = ElementToLabel.at( cellBlockType );
+            CellBlock * cellBlock = nullptr;
+            if( cellBlockName == "HEX" )
+            {
+              cellBlock =
+                cellBlockManager->GetGroup( keys::cellBlocks )->GetGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
+              for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
+                  cellItr != cellBlockPAMELA->SubCollection.end_owned() ; cellItr++) {
+                    auto collectionIndex = cellItr - cellBlockPAMELA->SubCollection.begin_owned();
+                    auto pptIndex = cellBlockPAMELA->IndexMapping[collectionIndex];
+                    localIndex value = static_cast<localIndex>(propertyPtr->get_data(pptIndex)[0]);
+                field->ApplyOneFieldValue<FieldSpecificationEqual>(pptIndex, value, 0.0, cellBlock, field->GetFieldName());
+              }
+            }
+          }
+        }
+      });
+    }
   }
 
 }
@@ -284,8 +329,42 @@ real64 PAMELAMeshGenerator::GetFieldValue(localIndex index,
                                           int const component,
                                           const std::string& propertyName) const
 {
-  //auto pamelaRegion = m_polyhedronMap.begin();
+  /*
+  for( auto regionItr = m_polyhedronMap.begin() ; regionItr != m_polyhedronMap.end() ; ++regionItr )
+  {
+    auto regionPtr = regionItr->second;
+    for( auto variableIterator = regionPtr->PerElementVariable.begin() ;
+        variableIterator != regionPtr->PerElementVariable.end() ; variableIterator++ )
+    {
+      auto variablePtr = (*variableIterator);
+      if( variablePtr->Label != propertyName)
+      {
+        continue;
+      }
+      for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
+          cellBlockIterator != regionPtr->SubParts.end() ; ++cellBlockIterator)
+      {
+        if( cellBlockIterator->second->SubCollection.size_owned() > 0 )
+        {
+          auto cellBlockPtr = cellBlockIterator->second;
+          for( auto cellIterator = cellBlockPtr->SubCollection.begin_owned() ; 
+              cellIterator != cellBlockPtr->SubCollection.end_owned() ; cellIterator++)
+          {
+            auto collectionIndex = cellIterator - cellBlockPtr->SubCollection.begin_owned();
+            auto variableIndex = cellBlockPtr->IndexMapping[collectionIndex];
+            if(index == variableIndex)
+            {
+            auto variableData = variablePtr->get_data(variableIndex);
+              return *variableData.begin();
+            }
+          }
+        }
+      }
+    }
+  }
   return 0.;
+  */
+  return 0;
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )

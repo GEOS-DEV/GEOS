@@ -33,6 +33,13 @@ public:
   MeshManager( std::string const & name,
                ManagedGroup * const parent );
 
+  /**
+   * @brief Singleton getter returns a pointer to the Singleton instance of
+   *        MeshManager.
+   * @return a pointer to the singleton FieldSpecificationManager
+   */
+  static MeshManager * get();
+
   virtual ~MeshManager() override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;

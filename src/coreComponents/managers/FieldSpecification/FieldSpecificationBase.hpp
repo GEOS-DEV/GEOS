@@ -28,6 +28,8 @@
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/ProblemManager.hpp"
+#include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/MeshGeneratorBase.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 namespace geosx
@@ -434,6 +436,13 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
+template< typename FIELD_OP >
+void ApplyOneFieldValue( localIndex index,
+                         real64 value,
+                         real64 const time,
+                         ManagedGroup * dataGroup,
+                         string const & fieldName ) const;
+
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] targetSet the set of indices which the value will be applied.
@@ -599,6 +608,9 @@ public:
   real64 GetScale() const
   { return m_scale; }
 
+  std::string GetNameFrom() const
+  { return m_nameFrom ; }
+
 
 protected:
   void PostProcessInput() override final;
@@ -654,6 +666,31 @@ private:
 
 
 
+template< typename FIELD_OP >
+void FieldSpecificationBase::ApplyOneFieldValue( localIndex index,
+                                                 real64 value,
+                                                 real64 const time,
+                                                 ManagedGroup * dataGroup,
+                                                 string const & fieldName ) const
+{
+  integer const component = GetComponent();
+  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
+  string const & readFrom = getReference<string>( viewKeyStruct::readFromString );
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( vw->get_typeid());
+
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                  false,
+                                  [&]( auto type, auto baseType ) -> void
+    {
+      using fieldType = decltype(type);
+      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
+      fieldType & field = view.reference();
+      FIELD_OP::SpecifyFieldValue( field, index, component, value );
+    } );
+}
 template< typename FIELD_OP >
 void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
                                                            real64 const time,
@@ -711,7 +748,14 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
       }
       else if( functionName.empty() && !readFrom.empty() ) 
       {
-        MeshGeneratorBase const * const meshGenerator = this->GetGroupByPath<MeshGeneratorBase>("/Mesh/" + m_readFrom);
+        /*
+        const MeshManager * meshManager = MeshManager::get();
+        for( auto a : targetSet )
+        {
+          real64 value = meshGenerator->GetFieldValue(a, component, m_nameFrom);
+          FIELD_OP::SpecifyFieldValue( field, a, component, value );
+        }
+        */
       }
       else
       {
