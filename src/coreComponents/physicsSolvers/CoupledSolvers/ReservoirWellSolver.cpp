@@ -61,14 +61,11 @@ void ReservoirWellSolver::ImplicitStepSetup( real64 const& time_n,
                                              DomainPartition * const domain,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem)
 {
-  std::cout << "ReservoirWellSolver: ImplicitStepSetup" << std::endl;
-
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
   flowSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
   wellSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
-
 }
 
 void ReservoirWellSolver::AssembleSystem( DomainPartition * const domain,
@@ -81,8 +78,12 @@ void ReservoirWellSolver::AssembleSystem( DomainPartition * const domain,
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
+  // set Jacobian and residual to zero
+  
   flowSolver.AssembleSystem( domain, blockSystem, time, dt );
   wellSolver.AssembleSystem( domain, blockSystem, time, dt );
+
+  // call globalAssemble(true)
 }
   
 void ReservoirWellSolver::ApplyBoundaryConditions( DomainPartition * const domain,
@@ -142,8 +143,6 @@ void ReservoirWellSolver::ApplySystemSolution( systemSolverInterface::EpetraBloc
 
 void ReservoirWellSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  std::cout << "ReservoirWellSolver: ResetStateToBeginningOfStep" << std::endl;
-  
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
@@ -155,17 +154,14 @@ void ReservoirWellSolver::ImplicitStepComplete( real64 const& time_n,
                                                 real64 const& dt,
                                                 DomainPartition * const domain)
 {
-  std::cout << "ReservoirWellSolver: ImplicitStepComplete" << std::endl;
 }
 
 void ReservoirWellSolver::PostProcessInput()
 {
-  std::cout << "ReservoirWellSolver: PostProcessInput" << std::endl;
 }
 
 void ReservoirWellSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
 {
-  std::cout << "ReservoirWellSolver: InitializePostInitialConditions_PreSubGroups" << std::endl;
 }
 
 ReservoirWellSolver::~ReservoirWellSolver()

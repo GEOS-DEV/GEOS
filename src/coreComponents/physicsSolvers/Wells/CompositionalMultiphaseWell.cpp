@@ -402,19 +402,6 @@ CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * co
 void CompositionalMultiphaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
                                                SystemSolverParameters const * const params )
 {
-  Epetra_FEVector * const
-    solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
-
-  Epetra_FEVector * const
-    residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-
-  residual->Scale(-1.0);
-  solution->Scale(0.0);
-
-  if( verboseLevel() >= 2 )
-  {
-    GEOS_LOG_RANK("\nSolution:\n" << *solution);
-  }
 }
 
 bool
@@ -460,8 +447,7 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
 void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
                                                               real64 const & dt,
                                                               DomainPartition * const domain )
-{
-  
+{  
 }
 
 

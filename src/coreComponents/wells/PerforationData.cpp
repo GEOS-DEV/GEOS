@@ -40,85 +40,74 @@ PerforationData::PerforationData(string const & name, ManagedGroup * const paren
   RegisterViewWrapper( viewKeyStruct::reservoirElementSubregionString, &m_reservoirElementSubregion, false );
   RegisterViewWrapper( viewKeyStruct::reservoirElementIndexString, &m_reservoirElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::perforationIndexString, &m_perforationIndex, false );
-
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
 }
 
 PerforationData::~PerforationData()
 {
-
-}
-
-ManagedGroup * PerforationData::CreateChild(string const & childKey, string const & childName)
-{
-  if ( childKey == groupKeyStruct::perforationString )
-  {
-    m_perforationList.push_back( childName );
-    return RegisterGroup<Perforation>( childName );
-  }
-  else
-  {
-    GEOS_ERROR( "Unrecognized node: " << childKey );
-  }
-  return nullptr;
 }
 
 const string PerforationData::getCatalogName() const
 {
-  return keys::perforations;
+  return keys::perforationData;
 }
 
+ManagedGroup * PerforationData::CreateChild(string const & childKey, string const & childName)
+{
+  return nullptr;
+}
+
+Perforation const * PerforationData::getPerforation( localIndex iperf ) const
+{
+  Well const * parent = getParent()->group_cast<Well const *>();
+  PerforationManager const * perforationManager
+    = parent->GetGroup<PerforationManager>( Well::groupKeyStruct::perforationsString );
+  Perforation const * perforation
+    = perforationManager->getPerforation( m_perforationIndex[iperf] );
+  return perforation;
+}
+
+Perforation * PerforationData::getPerforation( localIndex iperf )
+{
+  Well * parent = getParent()->group_cast<Well *>();
+  PerforationManager * perforationManager
+    = parent->GetGroup<PerforationManager>( Well::groupKeyStruct::perforationsString );
+  Perforation * perforation
+    = perforationManager->getPerforation( m_perforationIndex[iperf] );
+  return perforation;
+}
+  
 void PerforationData::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  std::cout << "PerforationData: InitializePreSubGroups" << std::endl;
-  
-  // for now, assume that numPerforationsLocal == numPerforationGlobal
-  resize( numPerforationsGlobal() );
-  std::cout << "PerforationData: numPerforationsLocal() = "
-	    << numPerforationsLocal()
-	    << std::endl;
-
-  /*
-  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
+  std::cout << "PerforationData::InitializePreSubGroups" << std::endl;
+  DomainPartition const * domain
+    = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
   ConnectToCells( mesh );
-
-  // generate the "all" set to enable application of BC
-  set<localIndex> & setAll = this->sets()->RegisterViewWrapper<set<localIndex>>("all")->reference();
-  for (localIndex iconn = 0; iconn < numPerforationsLocal(); ++iconn)
-  {
-    setAll.insert( iconn );
-  }
-  */
 }
 
 void PerforationData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
-  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
+  DomainPartition const * domain
+    = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
   PrecomputeData( mesh );
 }
 
 void PerforationData::PrecomputeData( MeshLevel const * mesh )
 {
-  /*
   R1Tensor const & gravity = getParent()->group_cast<Well *>()->getGravityVector();
   arrayView1d<real64> & gravDepth = getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
-  for (localIndex iconn = 0; iconn < size(); ++iconn)
+  for (localIndex iperf = 0; iperf < size(); ++iperf)
   {
-    string const & perfName = m_perforationList[m_perforationIndex[iconn]];
-    Perforation const * perf = this->GetGroup<Perforation>( perfName );
-    gravDepth[iconn] = Dot( perf->getLocation(), gravity );
+    Perforation const * perforation = getPerforation( iperf );
+    gravDepth[iperf] = Dot( perforation->getLocation(), gravity );
   }
-  */
 }
 
 void PerforationData::ConnectToCells( MeshLevel const * mesh )
 {
-  // will be changed later
-  
   ElementRegionManager const * elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> elemCenter =
@@ -127,16 +116,21 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
                                                                                         elementCenterString );
 
   // initially allocate enough memory for all (global) perforations
-  resize( numPerforationsGlobal() );
-
+  PerforationManager const * perforationManager
+    = getParent()->GetGroup<PerforationManager>( Well::
+						 groupKeyStruct::
+						 perforationsString );
+  resize( perforationManager->numPerforationsGlobal() );
+  
   // TODO Until we can properly trace perforations to cells,
   // just connect to the nearest cell center (this is NOT correct in general)
-  localIndex num_conn_local = 0;
+  localIndex num_conn_local  = 0;
   localIndex num_conn_global = 0;
-  for ( string const & perfName : m_perforationList )
+
+  for ( globalIndex iperf = 0; iperf < perforationManager->numPerforationsGlobal(); ++iperf )
   {
-    Perforation const * perf = GetGroup<Perforation>( perfName );
-    R1Tensor const & loc = perf->getLocation();
+    Perforation const * perforation = perforationManager->getPerforation( iperf );
+    R1Tensor const & loc = perforation->getLocation();
     /*
     auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex er,
                                                   localIndex esr,
@@ -152,24 +146,11 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
     m_reservoirElementIndex[num_conn_local]     = std::get<2>(ret.second);
     m_reservoirPerforationIndex[num_conn_local] = num_conn_global++;
     */
-    
-    // This will not be correct in parallel until we can actually check that
-    // the perforation belongs to local mesh partition
+    m_perforationIndex[num_conn_local] = num_conn_local;
     ++num_conn_local;
-  }
 
+  }
   resize( num_conn_local );
 }
-
-Perforation const * PerforationData::getPerforation( localIndex iperf ) const
-{
-  return this->GetGroup<Perforation>( m_perforationList[iperf] );
-}
-
-Perforation * PerforationData::getPerforation( localIndex iperf )
-{
-  return this->GetGroup<Perforation>( m_perforationList[iperf] );
-}
-
 
 } //namespace geosx

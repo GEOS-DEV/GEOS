@@ -34,19 +34,19 @@ Perforation::Perforation(string const & name, ManagedGroup * const parent)
   : ManagedGroup(name, parent),
     m_location(),
     m_transmissibility(0),
-    m_wellElementIndex(-1)
+    m_wellElementName("")
 {
-  std::cout << "Perforation::Perforation" << std::endl;
-
   RegisterViewWrapper( viewKeyStruct::locationString, &m_location, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Perforation physical coordinates");
 
   RegisterViewWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false )->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Connection transmissibility");
+    setDescription("Perforation transmissibility");
 
-  RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
+  RegisterViewWrapper( viewKeyStruct::wellElementNameString, &m_wellElementName, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Well element name");
 }
 
 Perforation::~Perforation()

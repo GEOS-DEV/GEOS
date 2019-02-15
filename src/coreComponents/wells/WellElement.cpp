@@ -17,11 +17,11 @@
  */
 
 /*
- * @file Connection.cpp
+ * @file WellElement.cpp
  *
  */
 
-#include "Connection.hpp"
+#include "WellElement.hpp"
 
 #include "dataRepository/InputFlags.hpp"
 
@@ -30,23 +30,13 @@ namespace geosx
 
 using namespace dataRepository;
 
-Connection::Connection(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent),
-    m_nextWellElementName(""),
-    m_prevWellElementName("")
+WellElement::WellElement(string const & name, ManagedGroup * const parent)
+  : ManagedGroup(name, parent)
 {
-  RegisterViewWrapper( viewKeyStruct::nextWellElementNameString, &m_nextWellElementName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Next well element name");
-
-  RegisterViewWrapper( viewKeyStruct::prevWellElementNameString, &m_prevWellElementName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Previous well element name");
 }
 
-Connection::~Connection()
+WellElement::~WellElement()
 {
-
 }
 
 

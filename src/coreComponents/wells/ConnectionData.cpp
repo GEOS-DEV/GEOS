@@ -44,6 +44,11 @@ ConnectionData::~ConnectionData()
 
 }
 
+const string ConnectionData::getCatalogName() const
+{
+  return keys::connectionData;
+}
+  
 ManagedGroup * ConnectionData::CreateChild(string const & childKey, string const & childName)
 {
   if ( childKey == groupKeyStruct::connectionString )
@@ -58,15 +63,10 @@ ManagedGroup * ConnectionData::CreateChild(string const & childKey, string const
   return nullptr;
 }
 
-const string ConnectionData::getCatalogName() const
-{
-  return keys::connections;
-}
-
 void ConnectionData::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
   // for now, assume that numConnectionsGlobal == numConnectionsLocal
-  resize( numConnectionsGlobal() );
+  resize( m_connectionList.size() );
 }
 
 void ConnectionData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )

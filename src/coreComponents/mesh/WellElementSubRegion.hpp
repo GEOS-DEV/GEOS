@@ -22,6 +22,8 @@
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
 
+#include "../wells/WellElement.hpp"
+
 namespace geosx
 {
 
@@ -29,7 +31,7 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto wellElementSubRegion = "wellElementSubRegion";
+static constexpr auto wellElementData = "wellElementData";
 }
 }
 
@@ -39,38 +41,34 @@ public:
 
   using NodeMapType=FixedOneToManyRelation;
   
-  static const string CatalogName()
-  { return "WellCell"; }
+  static const string CatalogName() { return dataRepository::keys::wellElementData; }
 
-  virtual const string getCatalogName() const override
-  {
-    return WellElementSubRegion::CatalogName();
-  }
+  virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
 
   WellElementSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~WellElementSubRegion() override;
+
+  localIndex numWellElementsLocal()  const
+  { return integer_conversion<localIndex>(size()); }
+
+  WellElement const * getWellElement( localIndex iwelem ) const;
+  WellElement *       getWellElement( localIndex iwelem );
   
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                                    const NodeManager& nodeManager,
                                                    const bool useReferencePos = true) const override
   {
-    return m_elementCenter[k]; // TODO
+    return m_elementCenter[k]; 
   }
 
   virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
                                      array1d<R1Tensor> const & X ) override
   {
-    // TODO
   }
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
   {
-    // TODO
   }
-
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
-  {
-  };
 
   /*!
    * @brief returns the element to node relations.
@@ -90,9 +88,24 @@ public:
     return m_toNodesRelation[k];
   }
 
+  struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
+  {
+    static constexpr auto wellElementIndexString = "wellElementIndex";
+
+    dataRepository::ViewKey wellElementIndex = { wellElementIndexString };
+    
+  } viewKeysWellElementData;
+  
+protected:
+
+  void InitializePreSubGroups( ManagedGroup * const problemManager );
+
+
 private:
   /// The elements to nodes relation is one to one relation.
   NodeMapType  m_toNodesRelation;
+
+  array1d<localIndex> m_wellElementIndex;
 };
 
 } /* namespace geosx */

@@ -17,37 +17,37 @@
  */
 
 /*
- * @file Connection.cpp
+ * @file WellElement.hpp
  *
  */
 
-#include "Connection.hpp"
+#ifndef GEOSX_CORECOMPONENTS_WELLS_WELLELEMENT_HPP
+#define GEOSX_CORECOMPONENTS_WELLS_WELLELEMENT_HPP
 
-#include "dataRepository/InputFlags.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
 
-using namespace dataRepository;
-
-Connection::Connection(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent),
-    m_nextWellElementName(""),
-    m_prevWellElementName("")
+class WellElement : public dataRepository::ManagedGroup
 {
-  RegisterViewWrapper( viewKeyStruct::nextWellElementNameString, &m_nextWellElementName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Next well element name");
+public:
 
-  RegisterViewWrapper( viewKeyStruct::prevWellElementNameString, &m_prevWellElementName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Previous well element name");
-}
+  explicit WellElement( string const & name, dataRepository::ManagedGroup * const parent );
+  ~WellElement() override;
 
-Connection::~Connection()
-{
+  WellElement() = delete;
+  WellElement( WellElement const &) = delete;
+  WellElement( WellElement && ) = delete;
 
-}
+  struct viewKeyStruct
+  {
+  } viewKeysWellElement;
 
+private:
+
+};
 
 } //namespace geosx
+
+#endif //GEOSX_CORECOMPONENTS_MANAGERS_WELLS_WELLELEMENT_HPP

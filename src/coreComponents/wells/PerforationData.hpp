@@ -36,7 +36,7 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto perforations = "Perforations";
+static constexpr auto perforationData = "PerforationData";
 }
 }
 
@@ -54,12 +54,10 @@ public:
   PerforationData( PerforationData const &) = delete;
   PerforationData( PerforationData && ) = delete;
 
+  virtual const string getCatalogName() const override;
+  
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  virtual const string getCatalogName() const override;
-
-  localIndex numPerforationsGlobal() const
-  { return integer_conversion<localIndex>(m_perforationList.size()); }
   localIndex numPerforationsLocal()  const
   { return integer_conversion<localIndex>(size()); }
 
@@ -73,25 +71,19 @@ public:
     static constexpr auto reservoirElementSubregionString = "reservoirElementSubregion";
     static constexpr auto reservoirElementIndexString     = "reservoirElementIndex";
     static constexpr auto perforationIndexString          = "perforationIndex";
-
-    static constexpr auto gravityDepthString               = "gravityDepth";
+    static constexpr auto gravityDepthString              = "gravityDepth";
 
     dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString    };
     dataRepository::ViewKey reservoirElementSubregion = { reservoirElementSubregionString };
     dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString     };
     dataRepository::ViewKey perforationIndex          = { perforationIndexString };
-
     dataRepository::ViewKey gravityDepth              = { gravityDepthString };
 
-  } viewKeysPerforationManager;
+  } viewKeysPerforationData;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    static constexpr auto perforationString = "Perforation";
-
-    dataRepository::GroupKey perforation = { perforationString };
-
-  } groupKeysPerforationManager;
+  } groupKeysPerforationData;
 
 protected:
 
@@ -108,10 +100,7 @@ private:
   array1d<localIndex> m_reservoirElementSubregion;
   array1d<localIndex> m_reservoirElementIndex;
   array1d<localIndex> m_perforationIndex;
-
   array1d<real64> m_gravityDepth;
-
-  string_array m_perforationList;
 
 };
 

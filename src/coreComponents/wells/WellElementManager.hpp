@@ -17,12 +17,12 @@
  */
 
 /*
- * @file ConnectionData.hpp
+ * @file WellElementManager.hpp
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_WELLS_CONNECTIONDATA_HPP
-#define GEOSX_CORECOMPONENTS_WELLS_CONNECTIONDATA_HPP
+#ifndef GEOSX_CORECOMPONENTS_WELLS_WELLELEMENTMANAGER_HPP
+#define GEOSX_CORECOMPONENTS_WELLS_WELLELEMENTMANAGER_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -36,51 +36,45 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto connectionData = "Connections";
+static constexpr auto wellElements = "Segments";
 }
 }
 
 class DomainPartition;
-class Connection;
+class WellElement;
 
-class ConnectionData : public ObjectManagerBase
+class WellElementManager : public ObjectManagerBase
 {
 public:
 
-  explicit ConnectionData( string const & name, dataRepository::ManagedGroup * const parent );
-  ~ConnectionData() override;
+  explicit WellElementManager( string const & name, dataRepository::ManagedGroup * const parent );
+  ~WellElementManager() override;
 
-  ConnectionData() = delete;
-  ConnectionData( ConnectionData const &) = delete;
-  ConnectionData( ConnectionData && ) = delete;
+  WellElementManager() = delete;
+  WellElementManager( WellElementManager const &) = delete;
+  WellElementManager( WellElementManager && ) = delete;
 
   virtual const string getCatalogName() const override;
   
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  localIndex numConnectionsLocal()  const { return integer_conversion<localIndex>(size());         }
+  globalIndex numWellElementsGlobal()  const
+  { return integer_conversion<globalIndex>(m_globalWellElementList.size()); }
 
-  Connection const * getConnection( localIndex iconn ) const;
-  Connection *       getConnection( localIndex iconn );
-
+  WellElement const * getWellElement( globalIndex iwelem ) const;
+  WellElement *       getWellElement( globalIndex iwelem );
+  
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-
-    static constexpr auto connectionIndexString = "connectionIndex";
-
-    using ViewKey = dataRepository::ViewKey;
-    
-    ViewKey connectionIndex = { connectionIndexString };
-
-  } viewKeysConnectionData;
+  } viewKeysWellElementManager;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    static constexpr auto connectionString = "Connection";
+    static constexpr auto wellElementString = "Segment";
 
-    dataRepository::GroupKey connection = { connectionString };
+    dataRepository::GroupKey wellElement = { wellElementString };
 
-  } groupKeysConnectionData;
+  } groupKeysWellElementManager;
 
 protected:
 
@@ -90,14 +84,10 @@ protected:
 
 private:
 
-  void PrecomputeData( MeshLevel const * domain );
-
-  array1d<localIndex> m_connectionIndex;
-
-  string_array m_connectionList;
+  string_array m_globalWellElementList;
 
 };
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_WELLS_CONNECTIONDATA_HPP
+#endif //GEOSX_CORECOMPONENTS_WELLS_WELLELEMENTMANAGER_HPP

@@ -40,33 +40,33 @@ public:
   Connection( Connection const &) = delete;
   Connection( Connection && ) = delete;
 
-  localIndex const & getNextWellElementIndex() const
-  { return m_nextWellElementIndex; }
+  string const & getNextWellElementName() const
+  { return m_nextWellElementName; }
   
-  localIndex const & getPreviousWellElementIndex() const
-  { return m_prevWellElementIndex; }  
+  string const & getPreviousWellElementName() const
+  { return m_prevWellElementName; }  
   
   // check if the connection is an exit
   bool isExitConnection() const
-  { return (m_nextWellElementIndex < 0 || m_prevWellElementIndex < 0); }
+  { return (m_nextWellElementName.empty() || m_prevWellElementName.empty() ); }
   
   struct viewKeyStruct
   {
-    static constexpr auto nextWellElementIndexString = "nextWellElementIndex";
-    static constexpr auto prevWellElementIndexString = "prevWellElementIndex";
+    static constexpr auto nextWellElementNameString = "nextSegmentName";
+    static constexpr auto prevWellElementNameString = "prevSegmentName";
 
     using ViewKey = dataRepository::ViewKey;
 
-    ViewKey nextWellElementIndex = { nextWellElementIndexString };
-    ViewKey prevWellElementIndex = { prevWellElementIndexString };
+    ViewKey nextWellElementName = { nextWellElementNameString };
+    ViewKey prevWellElementName = { prevWellElementNameString };
     
   } viewKeysConnection;
 
 private:
 
   // connectivity info
-  localIndex m_nextWellElementIndex;
-  localIndex m_prevWellElementIndex;
+  string m_nextWellElementName;
+  string m_prevWellElementName;
   
 };
 

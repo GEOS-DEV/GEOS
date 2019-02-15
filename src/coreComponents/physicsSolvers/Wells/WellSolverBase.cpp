@@ -56,8 +56,6 @@ void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
-  std::cout << "WellSolverBase: InitializePreSubGroups" << std::endl;  
-  
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 

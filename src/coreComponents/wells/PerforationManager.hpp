@@ -17,12 +17,12 @@
  */
 
 /*
- * @file ConnectionData.hpp
+ * @file PerforationManager.hpp
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_WELLS_CONNECTIONDATA_HPP
-#define GEOSX_CORECOMPONENTS_WELLS_CONNECTIONDATA_HPP
+#ifndef GEOSX_CORECOMPONENTS_WELLS_PERFORATIONMANAGER_HPP
+#define GEOSX_CORECOMPONENTS_WELLS_PERFORATIONMANAGER_HPP
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -36,51 +36,45 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto connectionData = "Connections";
+static constexpr auto perforations = "Perforations";
 }
 }
 
 class DomainPartition;
-class Connection;
+class Perforation;
 
-class ConnectionData : public ObjectManagerBase
+class PerforationManager : public ObjectManagerBase
 {
 public:
 
-  explicit ConnectionData( string const & name, dataRepository::ManagedGroup * const parent );
-  ~ConnectionData() override;
+  explicit PerforationManager( string const & name, dataRepository::ManagedGroup * const parent );
+  ~PerforationManager() override;
 
-  ConnectionData() = delete;
-  ConnectionData( ConnectionData const &) = delete;
-  ConnectionData( ConnectionData && ) = delete;
+  PerforationManager() = delete;
+  PerforationManager( PerforationManager const &) = delete;
+  PerforationManager( PerforationManager && ) = delete;
 
   virtual const string getCatalogName() const override;
   
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  localIndex numConnectionsLocal()  const { return integer_conversion<localIndex>(size());         }
+  globalIndex numPerforationsGlobal()  const
+  { return integer_conversion<globalIndex>(m_globalPerforationList.size()); }
 
-  Connection const * getConnection( localIndex iconn ) const;
-  Connection *       getConnection( localIndex iconn );
-
+  Perforation const * getPerforation( globalIndex iperf ) const;
+  Perforation *       getPerforation( globalIndex iperf );
+  
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-
-    static constexpr auto connectionIndexString = "connectionIndex";
-
-    using ViewKey = dataRepository::ViewKey;
-    
-    ViewKey connectionIndex = { connectionIndexString };
-
-  } viewKeysConnectionData;
+  } viewKeysPerforationManager;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    static constexpr auto connectionString = "Connection";
+    static constexpr auto perforationString = "Perforation";
 
-    dataRepository::GroupKey connection = { connectionString };
+    dataRepository::GroupKey perforation = { perforationString };
 
-  } groupKeysConnectionData;
+  } groupKeysPerforationManager;
 
 protected:
 
@@ -90,14 +84,10 @@ protected:
 
 private:
 
-  void PrecomputeData( MeshLevel const * domain );
-
-  array1d<localIndex> m_connectionIndex;
-
-  string_array m_connectionList;
+  string_array m_globalPerforationList;
 
 };
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_WELLS_CONNECTIONDATA_HPP
+#endif //GEOSX_CORECOMPONENTS_WELLS_PERFORATIONMANAGER_HPP

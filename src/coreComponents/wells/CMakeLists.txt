@@ -8,6 +8,9 @@ set( wells_headers
      ConnectionData.hpp
      Perforation.hpp
      PerforationData.hpp
+     PerforationManager.hpp
+     WellElement.hpp
+     WellElementManager.hpp
    )
 #
 # Specify all sources
@@ -19,6 +22,9 @@ set( wells_sources
      ConnectionData.cpp
      Perforation.cpp
      PerforationData.cpp
+     PerforationManager.cpp
+     WellElement.cpp
+     WellElementManager.cpp
    )
 
 blt_add_library( NAME                  wells

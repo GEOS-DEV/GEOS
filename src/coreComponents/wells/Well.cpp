@@ -32,9 +32,11 @@ using namespace dataRepository;
 
 Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
   : ObjectManagerBase( name, parent ),
-    m_wellElementSubRegion( name, parent ),
-    m_connectionData(  groupKeyStruct::connectionsString,  this ),
-    m_perforationData( groupKeyStruct::perforationsString, this ),
+    m_wellElementSubRegion( groupKeyStruct::wellElementDataString, this ),
+    m_wellElementManager( groupKeyStruct::wellElementsString, this ),
+    m_connectionData( groupKeyStruct::connectionDataString, this ),
+    m_perforationData( groupKeyStruct::perforationDataString, this ),
+    m_perforationManager( groupKeyStruct::perforationsString, this ),
     m_referenceDepth( 0.0 ),
     m_typeString( "producer" ),
     m_type( Type::PRODUCER )
@@ -49,12 +51,13 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well type (producer/injector)");
 
-  RegisterGroup( groupKeyStruct::wellElementSubRegionString, &m_wellElementSubRegion, false );
+  RegisterGroup( groupKeyStruct::wellElementDataString, &m_wellElementSubRegion, false );
+  RegisterGroup( groupKeyStruct::wellElementsString,    &m_wellElementManager,   false );
   
-  RegisterGroup( groupKeyStruct::connectionsString,  &m_connectionData,  false );
+  RegisterGroup( groupKeyStruct::connectionDataString,  &m_connectionData,  false );
 
-  RegisterGroup( groupKeyStruct::perforationsString, &m_perforationData, false );
-
+  RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData,    false );
+  RegisterGroup( groupKeyStruct::perforationsString,    &m_perforationManager, false );
 }
 
 Well::~Well()
@@ -62,20 +65,20 @@ Well::~Well()
 
 }
 
+
+  
 dataRepository::ManagedGroup * Well::CreateChild(string const & childKey, string const & childName)
 {
-  std::cout << "Well: CreateChild (Child groups will be registered explicitly, rather than via input file)" << std::endl;
   return nullptr;
 }
 
-R1Tensor const & Well::getGravityVector() const
+void Well::InitializePostSubGroups( ManagedGroup * const rootGroup )
 {
-  return getParent()->group_cast<WellManager const *>()->getGravityVector();
+  resize(1);
 }
-
+  
 void Well::PostProcessInput()
 {
-  std::cout << "Well: PostProcessInput" << std::endl;
   if (m_typeString == "producer")
   {
     m_type = Type::PRODUCER;
@@ -90,6 +93,10 @@ void Well::PostProcessInput()
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, Well, std::string const &, ManagedGroup * const )
+
+R1Tensor const & Well::getGravityVector() const
+{
+  return getParent()->group_cast<WellManager const *>()->getGravityVector();
+}
 
 } //namespace geosx

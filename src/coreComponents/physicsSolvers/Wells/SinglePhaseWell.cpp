@@ -189,9 +189,9 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
 {
   std::cout << "SinglePhaseWell: AssembleSystem" << std::endl;
   
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
-                                                                BlockIDs::compositionalBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+                                                                BlockIDs::fluidPressureBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
   jacobian->Scale(0.0);
   residual->Scale(0.0);
@@ -222,10 +222,21 @@ void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
 {
   WellManager * const wellManager = domain->getWellManager();
 
+  // loop over the wells
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    // loop over the segments
-  });  
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      WellElement const * const wellElement = wellElementSubRegion->getWellElement( iwelem );
+      std::cout << "SinglePhaseWell: computing flux terms for segment "
+	        << wellElement->getName()
+		<< " for well " << well->getName()
+	        << std::endl;
+    }
+
+  }); 
 }
 
 void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
@@ -309,19 +320,6 @@ SinglePhaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSys
 void SinglePhaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
                                    SystemSolverParameters const * const params )
 {
-  Epetra_FEVector * const
-    solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
-
-  Epetra_FEVector * const
-    residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-
-  residual->Scale(-1.0);
-  solution->Scale(0.0);
-
-  if( verboseLevel() >= 2 )
-  {
-    GEOS_LOG_RANK("\nSolution:\n" << *solution);
-  }
 }
 
 bool
@@ -354,8 +352,6 @@ SinglePhaseWell::ApplyBoundaryConditions( DomainPartition * const domain,
 
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  std::cout << "SinglePhaseWell: ResetStateToBeginningOfStep" << std::endl;
-  
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
