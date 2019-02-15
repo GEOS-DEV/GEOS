@@ -13,7 +13,7 @@
                  verboseLevel="1"
                  discretization="FE1"
                  targetRegions="Region2">
-      <SystemSolverParameters maxIterNewton="100"
+      <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
     </Poroelastic>
 
