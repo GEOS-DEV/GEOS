@@ -77,7 +77,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   this->RegisterViewWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
   
 }
-
+  
 localIndex CompositionalMultiphaseWell::numFluidComponents() const
 {
   return m_numComponents;
@@ -88,10 +88,41 @@ localIndex CompositionalMultiphaseWell::numFluidPhases() const
   return m_numPhases;
 }
 
-
 void CompositionalMultiphaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
+
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  WellManager * wellManager = domain->getWellManager();
+  
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::globalCompDensityString );
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::globalCompFractionString );
+    wellElementSubRegion->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+    wellElementSubRegion->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::phaseDensityString );
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::phaseViscosityString );
+
+    ConnectionData * connectionData = well->getConnections();
+    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureVelocityString );
+    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+
+    PerforationData * perforationData = well->getPerforations();
+    perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::phaseFlowRateString );
+    
+  });    
+
 }
 
 MultiFluidBase * CompositionalMultiphaseWell::GetFluidModel( ManagedGroup * dataGroup ) const

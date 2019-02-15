@@ -51,7 +51,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
 
   this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
 }
-
+  
 void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
@@ -62,6 +62,10 @@ void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   ConstitutiveBase const * fluid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
   m_fluidIndex = fluid->getIndexInParent();
+
+  WellManager * wellManager = domain->getWellManager();
+  wellManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::bhpString );
+
 }
 
 void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)

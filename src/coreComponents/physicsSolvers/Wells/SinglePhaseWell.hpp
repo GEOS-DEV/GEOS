@@ -89,6 +89,8 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::singlePhaseWell; }
 
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -217,8 +219,10 @@ public:
     static constexpr auto velocityString      = "velocity";
     static constexpr auto deltaVelocityString = "deltaVelocity";
 
-    static constexpr auto phaseFlowRateString = "phaseFlowRate";
-    static constexpr auto bhpString           = "bhp";
+    static constexpr auto densityString       = "density";
+    static constexpr auto viscosityString     = "viscosity";
+    
+    static constexpr auto flowRateString      = "flowRate";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -227,10 +231,13 @@ public:
     ViewKey deltaPressure = { deltaPressureString };
     ViewKey velocity      = { velocityString };
     ViewKey deltaVelovity = { deltaVelocityString };
+
+    // density and viscosity
+    ViewKey density   = { densityString };
+    ViewKey viscosity = { viscosityString };
     
     // well controls
-    ViewKey phaseFlowRate = { phaseFlowRateString };
-    ViewKey bhp           = { bhpString };
+    ViewKey flowRate = { flowRateString };
 
   } viewKeysSinglePhaseWell;
 
@@ -239,7 +246,6 @@ public:
   } groupKeysSinglePhaseWell;
 
 protected:
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 

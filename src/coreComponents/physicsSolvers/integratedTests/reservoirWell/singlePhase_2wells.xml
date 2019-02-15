@@ -101,35 +101,58 @@
 
   <Wells>
     <Well name="prod1"
-                type="producer"
-                referenceDepth="0.5">
-      <!--<Segments>
-	<Segment name="prod1_seg0" />
-      </Segments> -->
+          type="producer"
+          referenceDepth="0.5">
+      <Segments>
+	<Segment name="prod1_unique_seg" />
+      </Segments> 
       <Connections>
-	<Connection name="prod1_conn0" />
-	<Connection name="prod1_conn1" />
+	<Connection name="prod1_first_conn"
+		    prevSegmentName=""
+		    nextSegmentName="prod1_unique_seg" />
+	<Connection name="prod1_last_conn"
+		    prevSegmentName="prod1_unique_seg"
+		    nextSegmentName="" />
       </Connections> 
       <Perforations>
-        <Perforation name="prod1_p0" location="0.5 0.5 0.5" transmissibility="1e-15"/>
-	<Perforation name="prod1_p1" location="1.5 0.5 0.5" transmissibility="1e-15"/>
+        <Perforation name="prod1_p0"
+		     location="0.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="prod1_unique_seg" />
+	<Perforation name="prod1_p1"
+		     location="1.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="prod1_unique_seg" />
       </Perforations> 
     </Well>
     
     <Well name="inj1"
           type="injector"
           referenceDepth="0.5">
-      <!--<Segments>
-	<Segment name="inj1_seg0" />
-      </Segments> -->
+      <Segments>
+	<Segment name="inj1_unique_seg" />
+      </Segments> 
       <Connections>
-	<Connection name="inj1_conn0" />	
-	<Connection name="inj1_conn1" />
+	<Connection name="inj1_first_conn"
+		    prevSegmentName=""
+		    nextSegmentName="inj1_unique_seg" />
+	<Connection name="inj1_last_conn"
+		    prevSegmentName="inj1_unique_seg"
+		    nextSegmentName="" />
       </Connections> 
       <Perforations>
-        <Perforation name="inj1_p0" location="9.5 0.5 0.5" transmissibility="1e-15"/>
-	<Perforation name="inj1_p1" location="8.5 0.5 0.5" transmissibility="1e-15"/>
-	<Perforation name="inj1_p2" location="7.5 0.5 0.5" transmissibility="1e-15"/>
+        <Perforation name="inj1_p0"
+		     location="0.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj1_unique_seg" />
+	<Perforation name="inj1_p1"
+		     location="1.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj1_unique_seg" />
+	<Perforation name="inj1_p1"
+		     location="1.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj1_unique_seg" />
       </Perforations> 
     </Well>
 

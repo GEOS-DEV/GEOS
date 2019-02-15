@@ -72,7 +72,7 @@ public:
   localIndex fluidIndex() const { return m_fluidIndex; }
   
   localIndex numDofPerWellElement() const { return m_numDofPerWellElement; }
-  
+
   /**
    * @brief default destructor
    */
@@ -87,6 +87,9 @@ public:
     // misc inputs
     static constexpr auto fluidNameString      = "fluidName";
     static constexpr auto fluidIndexString     = "fluidIndex";
+
+    // bhp control
+    static constexpr auto bhpString = "bhp";
     
     using ViewKey = dataRepository::ViewKey;
 
@@ -95,8 +98,11 @@ public:
     ViewKey gravityDepth = { gravityDepthString };
 
     // misc inputs
-    ViewKey fluidName      = { fluidNameString };
-    ViewKey fluidIndex     = { fluidIndexString };
+    ViewKey fluidName    = { fluidNameString };
+    ViewKey fluidIndex   = { fluidIndexString };
+
+    // bhp control
+    ViewKey bhp = { bhpString }; 
     
   } viewKeysWellSolverBase;
 

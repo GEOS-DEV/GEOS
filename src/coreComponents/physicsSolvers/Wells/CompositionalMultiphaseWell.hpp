@@ -286,12 +286,18 @@ public:
     static constexpr auto deltaMixtureVelocityString   = "deltaMixtureVelocity";
 
     static constexpr auto phaseFlowRateString = "phaseFlowRate";
-    static constexpr auto bhpString           = "bhp";
 
+    // saturation, viscosity and density
+    static constexpr auto phaseVolumeFractionString = "phaseVolumeFraction";
+    static constexpr auto dPhaseVolumeFraction_dPressureString = "dPhaseVolumeFraction_dPres";
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dPhaseVolumeFraction_dComp";
+
+    static constexpr auto phaseDensityString   = "phaseDensity";
+    static constexpr auto phaseViscosityString = "phaseViscosity";
+    
     // intermediate values for constitutive model input
-    static constexpr auto globalComponentFracString        = "globalComponentFraction";
-    static constexpr auto dGlobalComponentFrac_dPresString = "dGlobalComponentFraction_dPres";
-    static constexpr auto dGlobalComponentFrac_dCompString = "dGlobalComponentFraction_dComp";
+    static constexpr auto globalCompFractionString                     = "globalComponentFraction";
+    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dGlobalComponentFraction_dGlobalCompDensity";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -314,11 +320,19 @@ public:
     ViewKey phaseFlowRate = { phaseFlowRateString };
     ViewKey bhp           = { bhpString };
 
-    // global composition to input injection stream
-    ViewKey globalComponentFrac        = { globalComponentFracString };
-    ViewKey dGlobalComponentFrac_dPres = { dGlobalComponentFrac_dPresString };
-    ViewKey dGlobalComponentFrac_dComp = { dGlobalComponentFrac_dCompString };    
+    // saturation
+    ViewKey phaseVolFrac        = { phaseVolumeFractionString };
+    ViewKey dPhaseVolFrac_dPres = { dPhaseVolumeFraction_dPressureString };
+    ViewKey dPhaseVolFrac_dComp = { dPhaseVolumeFraction_dGlobalCompDensityString };
 
+    // density and viscosity
+    ViewKey phaseDensity   = { phaseDensityString };
+    ViewKey phaseViscosity = { phaseViscosityString };
+    
+    // global composition to input injection stream
+    ViewKey globalComponentFrac        = { globalCompFractionString };
+    ViewKey dGlobalComponentFrac_dComp = { dGlobalCompFraction_dGlobalCompDensityString };    
+        
   } viewKeysCompMultiphaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct

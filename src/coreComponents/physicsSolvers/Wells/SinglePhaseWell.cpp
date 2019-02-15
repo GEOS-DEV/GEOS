@@ -60,12 +60,36 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 {
   m_numDofPerWellElement = 1;
   m_numDofPerConnection  = 1;
-}
 
+}
+  
 void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
 
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  WellManager * wellManager = domain->getWellManager();
+  
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::densityString );
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::viscosityString );
+
+    ConnectionData * connectionData = well->getConnections(); 
+    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::velocityString );
+    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaVelocityString );
+
+    PerforationData * perforationData = well->getPerforations();
+    perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
+    
+  });    
+  
+
+  
   std::cout << "SinglePhaseWell: InitializePreSubGroups" << std::endl;  
 }
 
