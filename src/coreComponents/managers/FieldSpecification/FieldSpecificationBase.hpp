@@ -28,9 +28,6 @@
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "meshUtilities/MeshManager.hpp"
-#include "meshUtilities/MeshGeneratorBase.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 namespace geosx
 {
@@ -436,6 +433,18 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
+  /**
+   * @tparam FIELD_OP type that contains static functions to apply the value to the field
+   * @param[in] targetSet the set of indices which the value will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the value.
+   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] fieldname the name of the field to apply the value to.
+   * @param[in] fieldArray an external array that will used to fill the field
+   *
+   * This function applies the value to a field variable. This function is typically
+   * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
+   */
 template< typename FIELD_OP >
 void ApplyFieldValue( set<localIndex> const & targetSet,
                       real64 const time,
@@ -661,7 +670,6 @@ private:
   /// Tag or name of the property on the imported mesh
   string m_nameFrom;
 
-
 };
 
 
@@ -752,14 +760,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
       }
       else if( functionName.empty() && !readFrom.empty() ) 
       {
-        /*
-        const MeshManager * meshManager = MeshManager::get();
-        for( auto a : targetSet )
-        {
-          real64 value = meshGenerator->GetFieldValue(a, component, m_nameFrom);
-          FIELD_OP::SpecifyFieldValue( field, a, component, value );
-        }
-        */
+        // Property is assigned elsewhere
       }
       else
       {

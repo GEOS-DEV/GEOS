@@ -27,6 +27,8 @@
 #include "common/TimingMacros.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "meshUtilities/MeshManager.hpp"
+#include "meshUtilities/MeshGeneratorBase.hpp"
 
 namespace geosx
 {
@@ -228,12 +230,12 @@ public:
   }
 
   template< typename LAMBDA >
-  void Apply2( real64 const time,
-              dataRepository::ManagedGroup * domain,
-              string const & fieldPath,
-              string const & fieldName,
-              MeshManager * meshManager,
-              LAMBDA && lambda ) const
+  void ApplyFromMesh( real64 const time,
+                      dataRepository::ManagedGroup * domain,
+                      string const & fieldPath,
+                      string const & fieldName,
+                      MeshManager * meshManager,
+                      LAMBDA && lambda ) const
   {
     GEOSX_MARK_FUNCTION;
     for( auto & subGroup : this->GetSubGroups() )
@@ -265,9 +267,7 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            std::cout << "boucle name before " << targetGroup->getName() << std::endl;
             targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
-            std::cout << "boucle name after " << targetGroup->getName() << std::endl;
             processedPath += "/" + targetPath[pathLevel];
 
             GEOS_ERROR_IF( targetGroup == nullptr,
@@ -278,9 +278,6 @@ public:
           string_array setNames = fs->GetSetNames();
           for( auto & setName : setNames )
           {
-            std::cout << "processedPath : " <<  processedPath << std::endl;
-            std::cout << "targetGroup->getName() : " << targetGroup->getName() << std::endl;
-            std::cout << targetGroup->getName() << " << " << targetGroup->getParent()->getName() << std::endl;
             auto fieldArray = meshGenerator->GetPropertyArray(fs->GetNameFrom(), targetGroup->group_cast<CellBlock*>());
             dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
             if( setWrapper != nullptr )

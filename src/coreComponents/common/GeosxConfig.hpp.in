@@ -17,10 +17,9 @@
 #cmakedefine GEOSX_USE_MATHPRESSO
 #cmakedefine GEOSX_USE_MPI
 #cmakedefine GEOSX_USE_OPENMP
-#cmakedefine GEOSX_USE_PAMELA
 #cmakedefine GEOSX_USE_PYTHON
 #cmakedefine USE_GEOSX_PTP
-#cmakedefine GEOSX_USE_PVTPackage
+#cmakedefine GEOSX_USE_PVT_PACKAGE
 #cmakedefine GEOSX_USE_RAJA
 #cmakedefine GEOSX_USE_TIMERS
 

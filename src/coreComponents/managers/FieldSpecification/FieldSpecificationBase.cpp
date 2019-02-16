@@ -17,9 +17,6 @@
  */
 
 #include "FieldSpecificationBase.hpp"
-#ifdef GEOSX_USE_PAMELA
-#include "Mesh/Mesh.hpp"
-#endif
 
 namespace geosx
 {

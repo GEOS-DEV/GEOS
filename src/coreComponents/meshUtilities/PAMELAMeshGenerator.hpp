@@ -76,7 +76,7 @@ public:
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
   virtual const real64_array GetPropertyArray( const std::string& propertyName,
-                                                    CellBlock * cellBlock) const override;
+                                               CellBlock * cellBlock) const override;
 
 protected:
   void PostProcessInput() override final;

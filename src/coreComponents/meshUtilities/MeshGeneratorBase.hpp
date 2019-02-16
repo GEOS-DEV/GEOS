@@ -72,7 +72,7 @@ public:
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
 
   virtual const real64_array GetPropertyArray( const std::string& propertyName,
-                                                    CellBlock * cellBlock) const = 0;
+                                               CellBlock * cellBlock) const = 0;
 
   int m_delayMeshDeformation = 0;
 

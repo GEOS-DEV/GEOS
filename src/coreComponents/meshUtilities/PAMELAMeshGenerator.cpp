@@ -40,8 +40,6 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 
 #include "mesh/MeshBody.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/FieldSpecification/FieldSpecificationBase.hpp"
 
 namespace geosx
 {
@@ -89,7 +87,7 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
- ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
+  ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
@@ -281,7 +279,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
       }
     }
     // Property transfer on partionned PAMELA Mesh
-    auto fieldSpecificationManager = FieldSpecificationManager::get();
     auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
     for( auto meshPropertyItr = meshProperties.begin() ; meshPropertyItr != meshProperties.end() ; meshPropertyItr++)
     {
@@ -291,41 +288,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
           meshPropertyItr->first);
       m_pamelaPartitionnedMesh->SetVariableOnPolyhedron(meshPropertyItr->first, meshPropertyItr->second);
     }
-    /*
-    // Property transfer on GEOSX, using FieldSpecifications
-    for(auto propertyItr = regionPtr->PerElementVariable.begin() ; propertyItr != regionPtr->PerElementVariable.end() ; propertyItr++)
-    {
-      auto propertyPtr = (*propertyItr);
-      fieldSpecificationManager->forSubGroups<FieldSpecificationBase>([&](FieldSpecificationBase * field)->void
-      {
-        if(field->GetNameFrom() == propertyPtr->Label)
-        {
-          std::cout << "Importing " << field->GetFieldName() << " using the property "
-                    << propertyPtr->Label << " in the external mesh file" << std::endl;
-          for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
-            cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
-          {
-            auto cellBlockPAMELA = cellBlockIterator->second;
-            auto cellBlockType = cellBlockPAMELA->ElementType;
-            auto cellBlockName = ElementToLabel.at( cellBlockType );
-            CellBlock * cellBlock = nullptr;
-            if( cellBlockName == "HEX" )
-            {
-              cellBlock =
-                cellBlockManager->GetGroup( keys::cellBlocks )->GetGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
-              for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
-                  cellItr != cellBlockPAMELA->SubCollection.end_owned() ; cellItr++) {
-                    auto collectionIndex = cellItr - cellBlockPAMELA->SubCollection.begin_owned();
-                    auto pptIndex = cellBlockPAMELA->IndexMapping[collectionIndex];
-                    localIndex value = static_cast<localIndex>(propertyPtr->get_data(pptIndex)[0]);
-                field->ApplyOneFieldValue<FieldSpecificationEqual>(pptIndex, value, 0.0, cellBlock, field->GetFieldName());
-              }
-            }
-          }
-        }
-      });
-    }
-  */
   }
 
 }
@@ -340,15 +302,12 @@ void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elemen
 const real64_array PAMELAMeshGenerator::GetPropertyArray( const std::string& propertyName,
                                                     CellBlock * cellBlock) const
 {
-  std::cout << "cell block size "<< cellBlock->size() << std::endl;
   real64_array pptArray(cellBlock->size());
   auto regionPAMELA = m_cellBlockUniqueIdToPAMELARegion_.at(cellBlock->getName());
   auto cellBlockPAMELA = m_cellBlockUniqueIdToPAMELACellBlock_.at(cellBlock->getName());
   for(auto propertyItr = regionPAMELA->PerElementVariable.begin() ; propertyItr != regionPAMELA->PerElementVariable.end() ; propertyItr++)
   {
     auto propertyPtr = (*propertyItr);
-    std::cout << "LABEL " << propertyPtr->Label << std::endl;
-    std::cout << "PPT NAME " << propertyName << std::endl;
     if(propertyPtr->Label == propertyName)
     {
 
@@ -364,41 +323,6 @@ const real64_array PAMELAMeshGenerator::GetPropertyArray( const std::string& pro
   }
   return pptArray;
 }
-  /*
-  for( auto regionItr = m_polyhedronMap.begin() ; regionItr != m_polyhedronMap.end() ; ++regionItr )
-  {
-    auto regionPtr = regionItr->second;
-    for( auto variableIterator = regionPtr->PerElementVariable.begin() ;
-        variableIterator != regionPtr->PerElementVariable.end() ; variableIterator++ )
-    {
-      auto variablePtr = (*variableIterator);
-      if( variablePtr->Label != propertyName)
-      {
-        continue;
-      }
-      for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
-          cellBlockIterator != regionPtr->SubParts.end() ; ++cellBlockIterator)
-      {
-        if( cellBlockIterator->second->SubCollection.size_owned() > 0 )
-        {
-          auto cellBlockPtr = cellBlockIterator->second;
-          for( auto cellIterator = cellBlockPtr->SubCollection.begin_owned() ; 
-              cellIterator != cellBlockPtr->SubCollection.end_owned() ; cellIterator++)
-          {
-            auto collectionIndex = cellIterator - cellBlockPtr->SubCollection.begin_owned();
-            auto variableIndex = cellBlockPtr->IndexMapping[collectionIndex];
-            if(index == variableIndex)
-            {
-            auto variableData = variablePtr->get_data(variableIndex);
-              return *variableData.begin();
-            }
-          }
-        }
-      }
-    }
-  }
-  return 0.;
-  */
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )
 }

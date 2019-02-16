@@ -86,8 +86,7 @@ void FieldSpecificationManager::ApplyInitialConditions( ManagedGroup * domain ) 
 void FieldSpecificationManager::ApplyInitialConditionsFromMesh( dataRepository::ManagedGroup * domain,
                                                                 MeshManager * meshManager) const
 {
-  std::cout << "This mesh mananager has nb subgroups " << meshManager->numSubGroups() << std::endl;
-  Apply2( 0.0, domain, "", "", meshManager,
+  ApplyFromMesh( 0.0, domain, "", "", meshManager,
          [&]( FieldSpecificationBase const * const bc,
          string const &,
          set<localIndex> const & targetSet,

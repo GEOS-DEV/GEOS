@@ -35,13 +35,6 @@ MeshManager::MeshManager( std::string const & name,
   setInputFlags(InputFlags::REQUIRED);
 }
 
-
-MeshManager * MeshManager::get()
-{
-  static MeshManager bcman( "Mesh", nullptr );
-  return &bcman;
-}
-
 MeshManager::~MeshManager()
 {}
 
@@ -65,8 +58,6 @@ void MeshManager::ExpandObjectCatalogs()
 
 void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
-  std::cout << "NB GROUP : " << this->numSubGroups() << std::endl;
-  std::cout << this << std::endl;
   forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
   {
     meshGen->GenerateMesh( domain );

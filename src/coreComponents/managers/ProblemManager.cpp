@@ -869,27 +869,6 @@ void ProblemManager::RunSimulation()
 {
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run(domain);
-  ManagedGroup * group = this;
-  for(int i = 0 ; i < group->numSubGroups() ; i++)
-  {
-    ManagedGroup * subGroup = group->GetSubGroups()[i];
-    std::cout << subGroup->getName() << std::endl;
-    for(int j = 0 ; j < subGroup->numSubGroups() ; j++)
-    {
-      ManagedGroup * subsubGroup = subGroup->GetSubGroups()[j];
-      std::cout << " " << subsubGroup->getName() << std::endl;
-      for(int k = 0 ; k < subsubGroup->numSubGroups() ; k++)
-      {
-        ManagedGroup * subsubsubGroup = subsubGroup->GetSubGroups()[k];
-        std::cout << "  " << subsubsubGroup->getName() << std::endl;
-        for(int l = 0 ; l < subsubsubGroup->numSubGroups() ; l++)
-        {
-          ManagedGroup * subsubsubsubGroup = subsubsubGroup->GetSubGroups()[l];
-          std::cout << "   " << subsubsubsubGroup->getName() << std::endl;
-        }
-      }
-    }
-  }
 }
 
 DomainPartition * ProblemManager::getDomainPartition()
