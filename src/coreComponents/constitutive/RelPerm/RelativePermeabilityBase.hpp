@@ -56,9 +56,9 @@ public:
     static constexpr integer GAS   = 0; // first gas phase property
     static constexpr integer OIL   = 1; // second oil phase property
   };
-  
 
-  
+
+
   RelativePermeabilityBase( std::string const & name, dataRepository::ManagedGroup * const parent );
 
   virtual ~RelativePermeabilityBase() override;

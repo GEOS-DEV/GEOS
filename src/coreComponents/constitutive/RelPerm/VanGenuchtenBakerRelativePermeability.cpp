@@ -43,7 +43,7 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Minimum volume fraction value for each phase");
 
-  
+
   RegisterViewWrapper( viewKeyStruct::waterOilRelPermExponentInvString,   &m_waterOilRelPermExponentInv,   false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -59,7 +59,7 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation");
-  
+
   RegisterViewWrapper( viewKeyStruct::gasOilRelPermMaxValueString,   &m_gasOilRelPermMaxValue,   false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -82,10 +82,10 @@ VanGenuchtenBakerRelativePermeability::DeliverClone(string const & name, Managed
   clone->m_phaseOrder = this->m_phaseOrder;
 
   clone->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
-  
+
   clone->m_waterOilRelPermExponentInv = this->m_waterOilRelPermExponentInv;
   clone->m_waterOilRelPermMaxValue    = this->m_waterOilRelPermMaxValue;
-  
+
   clone->m_gasOilRelPermExponentInv = this->m_gasOilRelPermExponentInv;
   clone->m_gasOilRelPermMaxValue    = this->m_gasOilRelPermMaxValue;
 
@@ -116,16 +116,16 @@ void VanGenuchtenBakerRelativePermeability::PostProcessInput()
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction,  NP,   viewKeyStruct::phaseMinVolumeFractionString );
 
   if (m_phaseOrder[PhaseType::WATER] >= 0)
-    {
-      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponentInv, 2, viewKeyStruct::waterOilRelPermExponentInvString );
-      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString );
-    }
+  {
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponentInv, 2, viewKeyStruct::waterOilRelPermExponentInvString );
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString );
+  }
 
   if (m_phaseOrder[PhaseType::GAS] >= 0)
-    {
-      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponentInv,   2, viewKeyStruct::gasOilRelPermExponentInvString );
-      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   2, viewKeyStruct::gasOilRelPermMaxValueString );
-    }
+  {
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponentInv,   2, viewKeyStruct::gasOilRelPermExponentInvString );
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   2, viewKeyStruct::gasOilRelPermMaxValueString );
+  }
 
 #undef COREY_CHECK_INPUT_LENGTH
 
@@ -138,23 +138,23 @@ void VanGenuchtenBakerRelativePermeability::PostProcessInput()
   }
   GEOS_ERROR_IF( m_volFracScale < 0.0, "VanGenuchtenBakerRelativePermeability: sum of min volume fractions exceeds 1.0" );
 
-  
+
   for (localIndex ip = 0; ip < 2; ++ip)
   {
     if (m_phaseOrder[PhaseType::WATER] >= 0)
     {
       GEOS_ERROR_IF( m_waterOilRelPermExponentInv[ip] < 0.0,
-	     	     "VanGenuchtenBakerRelativePermeability: invalid water-oil exponent inverse value: " << m_waterOilRelPermExponentInv[ip] );
+                     "VanGenuchtenBakerRelativePermeability: invalid water-oil exponent inverse value: " << m_waterOilRelPermExponentInv[ip] );
       GEOS_ERROR_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
-  		     "VanGenuchtenBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
+                     "VanGenuchtenBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
     }
 
     if (m_phaseOrder[PhaseType::GAS] >= 0)
     {
       GEOS_ERROR_IF( m_gasOilRelPermExponentInv[ip] < 0.0,
-	  	     "VanGenuchtenBakerRelativePermeability: invalid gas-oil exponent inverse value: " << m_gasOilRelPermExponentInv[ip] );
+                     "VanGenuchtenBakerRelativePermeability: invalid gas-oil exponent inverse value: " << m_gasOilRelPermExponentInv[ip] );
       GEOS_ERROR_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
-  		     "VanGenuchtenBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
+                     "VanGenuchtenBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
     }
   }
 
@@ -173,10 +173,10 @@ void VanGenuchtenBakerRelativePermeability::BatchUpdate( arrayView2d<real64 cons
 {
 
   arrayView1d<real64 const> const & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
-  
+
   arrayView1d<real64 const> const & waterOilRelPermExponentInv = m_waterOilRelPermExponentInv;
   arrayView1d<real64 const> const & waterOilRelPermMaxValue    = m_waterOilRelPermMaxValue;
-  
+
   arrayView1d<real64 const> const & gasOilRelPermExponentInv = m_gasOilRelPermExponentInv;
   arrayView1d<real64 const> const & gasOilRelPermMaxValue    = m_gasOilRelPermMaxValue;
 

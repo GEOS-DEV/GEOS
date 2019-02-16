@@ -42,7 +42,7 @@ namespace constitutive
 class VanGenuchtenBakerRelativePermeability : public RelativePermeabilityBase
 {
 public:
-  
+
   VanGenuchtenBakerRelativePermeability( std::string const & name, dataRepository::ManagedGroup * const parent );
 
   virtual ~VanGenuchtenBakerRelativePermeability() override;
@@ -76,7 +76,7 @@ public:
                             localIndex const k,
                             localIndex const q ) override;
 
-  
+
   /**
    * @brief Computes the phase relative permeabilities using the Van Genuchten-Baker method
    * @param NP phase index
@@ -106,7 +106,7 @@ public:
                               arraySlice1d<real64  const> const & gasOilRelPermExponentInv,
                               arraySlice1d<real64  const> const & gasOilRelPermMaxValue,
                               real64 const & volFracScale);
-  
+
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
     static constexpr auto phaseMinVolumeFractionString  = "phaseMinVolumeFraction";
@@ -178,7 +178,7 @@ protected:
                                                   real64 const & dRelPerm_wo_dOilVolFrac,
                                                   real64 const & relPerm_go,
                                                   real64 const & dRelPerm_go_dOilVolFrac );
-  
+
   array1d<real64> m_phaseMinVolumeFraction;
 
   // water-oil data
@@ -214,7 +214,7 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
       dRelPerm_dVolFrac[ip][jp] = 0.0;
     }
   }
-  
+
   real64 const volFracScaleInv = 1.0 / volFracScale;
   integer const ip_water = phaseOrder[PhaseType::WATER];
   integer const ip_oil   = phaseOrder[PhaseType::OIL];
@@ -226,13 +226,13 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
   real64 dOilRelPerm_go_dOilVolFrac = 0; // derivative w.r.t to So
 
   // this function assumes that the oil phase can always be present (i.e., ip_oil > 0)
-  
+
   // 1) Water and oil phase relative permeabilities using water-oil data
   if (ip_water >= 0)
   {
     real64 const scaledWaterVolFrac = (phaseVolFraction[ip_water] - phaseMinVolumeFraction[ip_water]) * volFracScaleInv;
     real64 const scaledOilVolFrac   = (phaseVolFraction[ip_oil]   - phaseMinVolumeFraction[ip_oil])   * volFracScaleInv;
-    
+
     real64 const waterExponentInv = waterOilRelPermExponentInv[WaterOilPairPhaseType::WATER];
     real64 const waterMaxValue = waterOilRelPermMaxValue[WaterOilPairPhaseType::WATER];
 
@@ -246,7 +246,7 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
 
     real64 const oilExponentInv_wo = waterOilRelPermExponentInv[WaterOilPairPhaseType::OIL];
     real64 const oilMaxValue_wo = waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL];
-    
+
     // oil rel perm
     EvaluateVanGenuchtenFunction( scaledOilVolFrac,
                                   volFracScaleInv,
@@ -256,14 +256,14 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
                                   oilMaxValue_wo );
 
   }
-  
-  
+
+
   // 2) Gas and oil phase relative permeabilities using gas-oil data
   if (ip_gas >= 0)
   {
     real64 const scaledGasVolFrac = (phaseVolFraction[ip_gas] - phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
     real64 const scaledOilVolFrac = (phaseVolFraction[ip_oil] - phaseMinVolumeFraction[ip_oil]) * volFracScaleInv;
-	
+
     real64 const gasExponentInv = gasOilRelPermExponentInv[GasOilPairPhaseType::GAS];
     real64 const gasMaxValue = gasOilRelPermMaxValue[GasOilPairPhaseType::GAS];
 
@@ -277,7 +277,7 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
 
     real64 const oilExponentInv_go = gasOilRelPermExponentInv[GasOilPairPhaseType::OIL];
     real64 const oilMaxValue_go    = gasOilRelPermMaxValue[GasOilPairPhaseType::OIL];
-    
+
     // oil rel perm
     EvaluateVanGenuchtenFunction( scaledOilVolFrac,
                                   volFracScaleInv,
@@ -286,9 +286,9 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
                                   oilExponentInv_go,
                                   oilMaxValue_go );
 
-    
+
   }
-  
+
 
   // 3) Compute the "three-phase" oil relperm
 
@@ -308,7 +308,7 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
   else
   {
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ip_water] - phaseMinVolumeFraction[ip_water]);
-    
+
     InterpolateTwoPhaseRelPerms( shiftedWaterVolFrac,
 				 phaseVolFraction[ip_gas],
 				 relPerm[ip_oil],
@@ -330,10 +330,10 @@ VanGenuchtenBakerRelativePermeability::EvaluateVanGenuchtenFunction( real64 cons
                                                                      real64 const & maxValue )
 {
   real64 const exponent = 1 / exponentInv;
-  
+
   relPerm           = 0.0;
   dRelPerm_dVolFrac = 0.0;
-  
+
   if (scaledVolFrac > 0.0 && scaledVolFrac < 1.0)
   {
     // intermediate values
@@ -342,7 +342,7 @@ VanGenuchtenBakerRelativePermeability::EvaluateVanGenuchtenFunction( real64 cons
     real64 const c = ( 1 - b * ( 1 - a * scaledVolFrac ) );
     real64 const volFracSquared = scaledVolFrac * scaledVolFrac;
     real64 const dVolFracSquared_dVolFrac = 2 * dScaledVolFrac_dVolFrac * scaledVolFrac;
-    
+
     relPerm  = maxValue * volFracSquared * c;
 
     dRelPerm_dVolFrac  = dVolFracSquared_dVolFrac * c
@@ -369,7 +369,7 @@ VanGenuchtenBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const
   integer const ip_water = phaseOrder[PhaseType::WATER];
   integer const ip_oil   = phaseOrder[PhaseType::OIL];
   integer const ip_gas   = phaseOrder[PhaseType::GAS];
-  
+
   // if water phase is immobile, then use the two-phase gas-oil data only
   if (shiftedWaterVolFrac < std::numeric_limits<real64>::epsilon()) 
   {
@@ -393,7 +393,7 @@ VanGenuchtenBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const
                                            + gasVolFrac   * dRelPerm_go_dOilVolFrac;
     real64 const dSumRelPerm_dGasVolFrac   = relPerm_go;
 
-    
+
     real64 const sumVolFrac    = shiftedWaterVolFrac + gasVolFrac;
     real64 const sumVolFracInv = 1 / sumVolFrac; // div by 0 handled by the if statement above
     real64 const dSumVolFracInv_dWaterVolFrac = - sumVolFracInv * sumVolFracInv;
@@ -408,7 +408,7 @@ VanGenuchtenBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const
   }
 }
 
-  
+
 } // namespace constitutive
 
 } // namespace geosx

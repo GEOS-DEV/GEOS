@@ -43,7 +43,7 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Minimum volume fraction value for each phase");
 
-  
+
   RegisterViewWrapper( viewKeyStruct::waterOilRelPermExponentString,   &m_waterOilRelPermExponent,   false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -59,7 +59,7 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation");
-  
+
   RegisterViewWrapper( viewKeyStruct::gasOilRelPermMaxValueString,   &m_gasOilRelPermMaxValue,   false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -82,10 +82,10 @@ BrooksCoreyBakerRelativePermeability::DeliverClone(string const & name, ManagedG
   clone->m_phaseOrder = this->m_phaseOrder;
 
   clone->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
-  
+
   clone->m_waterOilRelPermExponent = this->m_waterOilRelPermExponent;
   clone->m_waterOilRelPermMaxValue = this->m_waterOilRelPermMaxValue;
-  
+
   clone->m_gasOilRelPermExponent   = this->m_gasOilRelPermExponent;
   clone->m_gasOilRelPermMaxValue   = this->m_gasOilRelPermMaxValue;
 
@@ -138,30 +138,30 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
   }
   GEOS_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyBakerRelativePermeability: sum of min volume fractions exceeds 1.0" );
 
-  
+
   for (localIndex ip = 0; ip < 2; ++ip)
   {
     if (m_phaseOrder[PhaseType::WATER] >= 0)
       {
         GEOS_ERROR_IF( m_waterOilRelPermExponent[ip] < 0.0,
-	     	     "BrooksCoreyBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip] );
+                       "BrooksCoreyBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip] );
         GEOS_ERROR_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
-  		     "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
+                       "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
       }
 
     if (m_phaseOrder[PhaseType::GAS] >= 0)
       {
         GEOS_ERROR_IF( m_gasOilRelPermExponent[ip] < 0.0,
-	  	     "BrooksCoreyBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip] );
+                       "BrooksCoreyBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip] );
         GEOS_ERROR_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
-  		     "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
+                       "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
       }
   }
 
   if (m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0)
   {
     real64 const mean = 0.5 * ( m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]
-			      + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
+                              + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
     m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]     = mean;
     m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] = mean;
   }
@@ -172,10 +172,10 @@ void BrooksCoreyBakerRelativePermeability::BatchUpdate( arrayView2d<real64 const
 {
 
   arrayView1d<real64 const> const & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
-  
+
   arrayView1d<real64 const> const & waterOilRelPermExponent = m_waterOilRelPermExponent;
   arrayView1d<real64 const> const & waterOilRelPermMaxValue = m_waterOilRelPermMaxValue;
-  
+
   arrayView1d<real64 const> const & gasOilRelPermExponent   = m_gasOilRelPermExponent;
   arrayView1d<real64 const> const & gasOilRelPermMaxValue   = m_gasOilRelPermMaxValue;
 
