@@ -18,7 +18,6 @@
 
 /**
  * @file FaceManager.cpp
- * @author settgast1
  */
 
 #include "FaceManager.hpp"
