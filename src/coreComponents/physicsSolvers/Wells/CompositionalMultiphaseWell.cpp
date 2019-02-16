@@ -429,12 +429,6 @@ CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * co
   return 0.0;
 }
 
-
-void CompositionalMultiphaseWell::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                               SystemSolverParameters const * const params )
-{
-}
-
 bool
 CompositionalMultiphaseWell::CheckSystemSolution( EpetraBlockSystem const * const blockSystem,
                                                   real64 const scalingFactor,
@@ -452,33 +446,145 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = domain->getWellManager();
+
+  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
+
+  // get the update
+  int dummy;
+  double* local_solution = nullptr;
+  solution->ExtractView(&local_solution,&dummy);
   
-}
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    ConnectionData * connectionData = well->getConnections();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
-void
-CompositionalMultiphaseWell::ApplyBoundaryConditions( DomainPartition * const domain,
-                                                      systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                      real64 const time_n,
-                                                      real64 const dt )
-{
+    // get a reference to the primary variables on segments
+    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    array2d<real64> const & dWellGlobalCompDensity = wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    // get a reference to the primary variables on connections
+    array1d<real64> const & dWellVelocity = connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+   
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
 
+      // TODO: check for ghost segments
+
+      // extract solution and apply to dP
+      globalIndex const dummyOffset = 0;
+      int lid = rowMap->LID( integer_conversion<int>( dummyOffset ) );
+      dWellPressure[iwelem] += scalingFactor * local_solution[lid];
+
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      {
+        lid = rowMap->LID( integer_conversion<int>( dummyOffset + ic + 1 ) );
+        dWellGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
+      }
+
+    }
+
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+
+      // TODO: check for ghost connections if needed
+      // TODO: check if there is a primary var defined on this connection
+
+      // extract solution and apply to dP
+      globalIndex const dummyDofNumber = 0;
+      int const lid = rowMap->LID( integer_conversion<int>( dummyDofNumber ) );
+      dWellVelocity[iconn] += scalingFactor * local_solution[lid];
+      
+    }
+  });  
+
+  // TODO: call CommunicationTools::SynchronizeFields
+
+  // update properties
+  UpdateStateAll( domain );
+    
 }
 
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    //   -- set dWellPres = 0;
-    //   -- update the other well variables
+    ConnectionData * connectionData = well->getConnections();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get a reference to the primary variables on segments
+    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    array2d<real64> const & dWellGlobalCompDensity = wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    // get a reference to the primary variables on connections
+    array1d<real64> const & dWellVelocity = connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+
+      // TODO: check for ghost segments
+
+      // extract solution and apply to dP
+      dWellPressure[iwelem] = 0;
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+        dWellGlobalCompDensity[iwelem][ic] = 0;      
+    }
+
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+
+      // TODO: check for ghost connections if needed
+      // TODO: check if there is a primary var defined on this connection
+
+      // extract solution and apply to dP
+      dWellVelocity[iconn] = 0;
+      
+    }
   });
+
+  // call constitutive models
+  UpdateStateAll( domain );
 }
 
 void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
                                                               real64 const & dt,
                                                               DomainPartition * const domain )
-{  
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    ConnectionData * connectionData = well->getConnections();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    
+    // get a reference to the primary variables on segments
+    array1d<real64> const & wellPressure  = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    array2d<real64> const & wellGlobalCompDensity  = wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
+    array2d<real64> const & dWellGlobalCompDensity = wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    // get a reference to the primary variables on connections
+    array1d<real64> const & wellVelocity  = connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureVelocityString );
+    array1d<real64> const & dWellVelocity = connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      wellPressure[iwelem] += dWellPressure[iwelem];
+      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+	wellGlobalCompDensity[iwelem][ic] += dWellGlobalCompDensity[iwelem][ic];
+    }
+
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+      // TODO: check if there is a variable on this connection
+      wellVelocity[iconn] += dWellVelocity[iconn];
+    }    
+  }); 
+ 
 }
 
 

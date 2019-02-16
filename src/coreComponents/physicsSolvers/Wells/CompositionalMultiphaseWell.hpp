@@ -112,18 +112,10 @@ public:
                                real64 const time_n,
                                real64 const dt ) override;
 
-  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt ) override;
-
   virtual real64
   CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
                         DomainPartition *const domain) override;
-  
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params ) override;
-  
+    
   virtual bool
   CheckSystemSolution(systemSolverInterface::EpetraBlockSystem const * const blockSystem, real64 const scalingFactor,
                       DomainPartition * const domain) override;
