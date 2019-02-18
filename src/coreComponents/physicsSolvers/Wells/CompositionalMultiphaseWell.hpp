@@ -83,6 +83,8 @@ public:
    */
   virtual ~CompositionalMultiphaseWell() override = default;
 
+  virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
+  
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
@@ -95,11 +97,6 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
-                             integer const cycleNumber,
-                             DomainPartition * domain ) override;
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
@@ -135,19 +132,7 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateComponentFraction( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
-   */
   void UpdateComponentFractionAll( DomainPartition * domain );
-
-  /**
-   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -157,33 +142,15 @@ public:
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
-   */
-  void UpdateFluidModel( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
    * @param domain the domain containing the mesh and fields
    */
   void UpdateFluidModelAll( DomainPartition * domain );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
-   */
-  void UpdateRelPermModel( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
    * @param domain the domain containing the mesh and fields
    */
   void UpdateRelPermModelAll( DomainPartition * domain );
-
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateState( ManagedGroup * dataGroup );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)

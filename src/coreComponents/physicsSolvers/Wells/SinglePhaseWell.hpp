@@ -89,6 +89,8 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::singlePhaseWell; }
 
+  virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
+  
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   /**

@@ -634,7 +634,7 @@ void ProblemManager::ParseInputFile()
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
 
-    WellManager * wellManager = domain->getWellManager();
+    WellManager * wellManager = domain->getMeshBody(0)->getWellManager();
     topLevelNode = xmlProblemNode.child(wellManager->getName().c_str());
     wellManager->ProcessInputFileRecursive( topLevelNode );
     wellManager->PostProcessInputRecursive();
@@ -850,12 +850,18 @@ void ProblemManager::ApplyNumericalMethods()
     }
   }
 
-  WellManager const * wellManager = domain->getWellManager();
-  for( localIndex wellIndex=0 ; wellIndex<wellManager->numSubGroups() ; ++wellIndex )
+  localIndex const quadratureSize = 1;
+  for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
   {
-    Well const * const well = wellManager->GetGroup<Well>(wellIndex);
-	
-    // Hang constitutive relation to the well segments
+    MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
+    WellManager * const wellManager = meshBody->getWellManager();
+    
+    wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+    {
+      WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+      constitutiveManager->HangConstitutiveRelation( "fluid", wellElementSubRegion, quadratureSize );
+    });
   }
 }
 

@@ -24,7 +24,6 @@
 
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "wells/WellManager.hpp"
 
 #include "fileIO/silo/SiloFile.hpp"
 
@@ -47,7 +46,6 @@ DomainPartition::DomainPartition( std::string const & name,
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
-  RegisterGroup<WellManager>( groupKeys.wellManager );
   RegisterGroup<CellBlockManager>( keys::cellManager );
 }
 
@@ -73,11 +71,6 @@ void DomainPartition::InitializationOrder( string_array & order )
   {
     order.push_back(groupKeysStruct::meshBodiesString);
     usedNames.insert(groupKeysStruct::meshBodiesString);
-  }
-
-  {
-    order.push_back(groupKeysStruct::wellManagerString);
-    usedNames.insert(groupKeysStruct::wellManagerString);
   }
 
 

@@ -63,13 +63,12 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
   m_numDofPerConnection  = 1;
 
 }
-  
-void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
-{
-  WellSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-  WellManager * wellManager = domain->getWellManager();
+void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
+{
+  WellSolverBase::RegisterDataOnMesh(meshBodies);
+
+  WellManager * wellManager = meshBodies->GetGroup<MeshBody>(0)->getWellManager();
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -90,6 +89,12 @@ void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
     perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::flowRateString );
     
   });    
+
+}
+  
+void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
+{
+  WellSolverBase::InitializePreSubGroups( rootGroup );
 
   // TODO: figure out where this should go
   // set the blockID for the block system interface
@@ -122,33 +127,23 @@ SingleFluidBase const * SinglePhaseWell::GetFluidModel( ManagedGroup const * dat
 
 void SinglePhaseWell::UpdateFluidModelAll( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = domain->getWellManager();
-
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-  // TODO: how to do the same for the wells?
-  //ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-  //  elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
+    SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
+    
+    array1d<real64> const & wellPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-    array1d<real64> const & wellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-    array1d<real64> const & dWellPressure = wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    array1d<real64> const & dWellPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-    // temp hack to make sure that it compiles
-    SingleFluidBase * const fluid = nullptr; //constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
-
-    // TODO: use Raja here
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
       real64 const newWellPressure = wellPressure[iwelem] + dWellPressure[iwelem];
-      // TODO: how to update the correct arrays in the well
-      const localIndex dummy = 0;
-      fluid->PointUpdate( newWellPressure, dummy, 0 ); 
+      fluid->PointUpdate( newWellPressure, iwelem, 0 ); 
     }
       
   });    
@@ -161,7 +156,7 @@ void SinglePhaseWell::UpdateStateAll( DomainPartition * const domain )
 
 void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -257,7 +252,7 @@ void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
                                                  real64 const time_n,
                                                  real64 const dt )
 {
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   // NOT NEEDED FOR NOW
   
@@ -284,7 +279,7 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
                                          real64 const time_n,
                                          real64 const dt )
 {
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   // NOT NEEDED FOR NOW
   // or maybe just for the first connection
@@ -314,8 +309,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
                                            real64 const dt )
 {
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   NumericalMethodsManager * const numericalMethodManager = domain->
     getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
@@ -327,8 +321,6 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
                                                                 BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-  // ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber = m_dofNumber;
-
   /*
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & resPressure        = m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dResPressure       = m_deltaPressure;
@@ -336,17 +328,15 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & resDensity         = m_density;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResDensity_dPres  = m_dDens_dPres;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & resViscosity       = m_viscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResViscositydPres = m_dVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResViscosity_dPres = m_dVisc_dPres;
   */
-
-  // temp to make sure that it compiles
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const  resPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const  dResPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const  resGravDepth;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  resDensity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  dResDensity_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  resViscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  dResViscosity_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const  resPressure        ;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const  dResPressure       ;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const  resGravDepth       ;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  resDensity         ;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  dResDensity_dPres  ;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  resViscosity       ;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const  dResViscosity_dPres ;
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -492,7 +482,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -531,8 +521,7 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
@@ -587,8 +576,7 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
 
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -636,8 +624,7 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
                                             real64 const & dt,
                                             DomainPartition * const domain )
 {  
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  WellManager * const wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {

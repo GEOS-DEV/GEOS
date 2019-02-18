@@ -78,6 +78,8 @@ public:
    */
   virtual ~WellSolverBase() override;
 
+  virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
+  
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values

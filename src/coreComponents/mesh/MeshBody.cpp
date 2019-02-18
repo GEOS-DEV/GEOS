@@ -25,6 +25,7 @@
 
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
+#include "wells/WellManager.hpp"
 
 namespace geosx
 {
@@ -35,6 +36,7 @@ MeshBody::MeshBody( string const & name,
   ManagedGroup(name,parent)
 {
   RegisterViewWrapper<integer>( viewKeys.meshLevels );
+  RegisterGroup<WellManager>( groupKeys.wellManager );
 }
 
 MeshBody::~MeshBody()
