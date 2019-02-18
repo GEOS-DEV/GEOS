@@ -8,7 +8,7 @@
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                           verboseLevel="0"
-                          gravityFlag="1"
+                          gravityFlag="0"
                           fluidName="water"
                           solidName="rock"
                           discretization="singlePhaseTPFA"
@@ -26,7 +26,7 @@
 
   <Geometry>
     <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
-    <Box name="left" xMin="-1, -1, -1" xMax="0.9, 11, 11"/>
+    <Box name="top" xMin="-1, -1, 0.999" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
 
 
@@ -65,7 +65,7 @@
 
 
   <ElementRegions>
-    <ElementRegion name="Domain" cellBlocks="0_HEX" materialList="water rock"/>
+    <ElementRegion name="Domain" cellBlocks="1_HEX" materialList="water rock"/>
   </ElementRegions>
 
   <Constitutive>
@@ -85,46 +85,45 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_HEX"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/1_HEX"
                fieldName="permeability"
-               scale="2.0e-14"/>
+               scale="1.0e-13"/>
 
     <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_HEX"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/1_HEX"
                fieldName="permeability"
-               scale="2.0e-14"/>
+               scale="1.0e-13"/>
 
     <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_HEX"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/1_HEX"
                fieldName="permeability"
-               scale="2.0e-14"/>
+               scale="1.0e-13"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_HEX"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/1_HEX"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
-               readFrom="Beam"
-               nameFrom="P_2010"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_HEX"
+               objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/1_HEX"
                fieldName="pressure"
-               scale="1e3"/>
+               readFrom="Beam"
+               nameFrom="P_2011"/>
     <FieldSpecification name="boundaryPressure"
                objectPath="faceManager"
                fieldName="facePressure"
-               scale="1.1e3"
-               setNames="left"/>
+               scale="1.1e2"
+               setNames="top"/>
   </FieldSpecifications>
 
   <Functions>
