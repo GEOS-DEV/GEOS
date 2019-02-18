@@ -40,6 +40,7 @@ namespace keys
 string const compositionalMultiphaseWell = "CompositionalMultiphaseWell";
 }
 }
+class CompositionalMultiphaseFlow;
 
 namespace constitutive
 {
@@ -230,33 +231,33 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // inputs
-    static constexpr auto temperatureString = "temperature";
-    static constexpr auto useMassFlagString = "useMass";
+    static constexpr auto temperatureString = "wellTemperature";
+    static constexpr auto useMassFlagString = "wellUseMass";
 
-    static constexpr auto relPermNameString  = "relPermName";
-    static constexpr auto relPermIndexString = "relPermIndex";
+    static constexpr auto relPermNameString  = "wellRelPermName";
+    static constexpr auto relPermIndexString = "wellRelPermIndex";
     
     // primary solution field
-    static constexpr auto pressureString               = "pressure";
-    static constexpr auto deltaPressureString          = "deltaPressure";
-    static constexpr auto globalCompDensityString      = "globalCompDensity";
-    static constexpr auto deltaGlobalCompDensityString = "deltaGlobalCompDensity";
-    static constexpr auto mixtureVelocityString        = "mixtureVelocity";
-    static constexpr auto deltaMixtureVelocityString   = "deltaMixtureVelocity";
+    static constexpr auto pressureString               = "wellPressure";
+    static constexpr auto deltaPressureString          = "wellDeltaPressure";
+    static constexpr auto globalCompDensityString      = "wellGlobalCompDensity";
+    static constexpr auto deltaGlobalCompDensityString = "wellDeltaGlobalCompDensity";
+    static constexpr auto mixtureVelocityString        = "wellMixtureVelocity";
+    static constexpr auto deltaMixtureVelocityString   = "wellDeltaMixtureVelocity";
 
-    static constexpr auto phaseFlowRateString = "phaseFlowRate";
+    static constexpr auto phaseFlowRateString = "wellPhaseFlowRate";
 
     // saturation, viscosity and density
-    static constexpr auto phaseVolumeFractionString = "phaseVolumeFraction";
-    static constexpr auto dPhaseVolumeFraction_dPressureString = "dPhaseVolumeFraction_dPres";
-    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dPhaseVolumeFraction_dComp";
+    static constexpr auto phaseVolumeFractionString = "wellPhaseVolumeFraction";
+    static constexpr auto dPhaseVolumeFraction_dPressureString = "dWellPhaseVolumeFraction_dPres";
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dWellPhaseVolumeFraction_dComp";
 
-    static constexpr auto phaseDensityString   = "phaseDensity";
-    static constexpr auto phaseViscosityString = "phaseViscosity";
+    static constexpr auto phaseDensityString   = "wellPhaseDensity";
+    static constexpr auto phaseViscosityString = "wellPhaseViscosity";
     
     // intermediate values for constitutive model input
-    static constexpr auto globalCompFractionString                     = "globalComponentFraction";
-    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dGlobalComponentFraction_dGlobalCompDensity";
+    static constexpr auto globalCompFractionString                     = "wellGlobalComponentFraction";
+    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dWellGlobalComponentFraction_dGlobalCompDensity";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -377,13 +378,18 @@ private:
                                      globalIndex & numGlobalRows,
                                      localIndex offset );
 
-    /// the max number of fluid phases
+  /**
+   * @brief Setup stored reservoir views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
+
+  /// the max number of fluid phases
   localIndex m_numPhases;
 
   /// the number of fluid components
   localIndex m_numComponents;
 
-    /// the (uniform) temperature
+  /// the (uniform) temperature
   real64 m_temperature;
 
   /// flag indicating whether mass or molar formulation should be used
@@ -394,6 +400,46 @@ private:
 
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
+
+  /// views into reservoir primary variable fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaResPressure;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resGlobalCompDensity;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_deltaResGlobalCompDensity;
+
+  /// views into other reservoir variable fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resCompFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResCompFrac_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dResPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResPhaseVolFrac_dCompDens;
+
+  /// views into reservoir material fields
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseFrac;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dResPhaseFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseFrac_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseDens;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dResPhaseDens_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseDens_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseVisc;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dResPhaseVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseVisc_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_resPhaseCompFrac;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> m_dResPhaseCompFrac_dComp;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resTotalDens;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseRelPerm;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
  

@@ -24,6 +24,7 @@
 
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 namespace geosx
 {
@@ -82,8 +83,8 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup *
   
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
-  // Check if we need to use ResetViews
-  //ResetViews( domain );
+  // bind the stored reservoir views to the current domain
+  ResetViews( domain );
 
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
@@ -96,7 +97,11 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 
 void WellSolverBase::ResetViews( DomainPartition * const domain )
 {
-  // TODO
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  m_resGravDepth =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FlowSolverBase::viewKeyStruct::gravityDepthString );
 }
   
 WellSolverBase::~WellSolverBase() = default;

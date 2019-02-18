@@ -40,6 +40,7 @@ namespace keys
 string const singlePhaseWell = "SinglePhaseWell";
 }
 }
+class SinglePhaseFlow;
 
 namespace constitutive
 {
@@ -194,17 +195,17 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // primary solution field
-    static constexpr auto pressureString      = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
-    static constexpr auto velocityString      = "velocity";
-    static constexpr auto deltaVelocityString = "deltaVelocity";
+    static constexpr auto pressureString      = "wellPressure";
+    static constexpr auto deltaPressureString = "wellDeltaPressure";
+    static constexpr auto velocityString      = "wellVelocity";
+    static constexpr auto deltaVelocityString = "wellDeltaVelocity";
 
-    static constexpr auto densityString          = "density";
-    static constexpr auto dDensity_dPresString   = "dDensity_dPres";
-    static constexpr auto viscosityString        = "viscosity";
-    static constexpr auto dViscosity_dPresString = "dViscosity_dPres";
+    static constexpr auto densityString          = "wellDensity";
+    static constexpr auto dDensity_dPresString   = "dWellDensity_dPres";
+    static constexpr auto viscosityString        = "wellViscosity";
+    static constexpr auto dViscosity_dPresString = "dWellViscosity_dPres";
     
-    static constexpr auto flowRateString = "flowRate";
+    static constexpr auto flowRateString = "wellFlowRate";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -288,9 +289,22 @@ private:
                                      localIndex offset );
 
   /**
-   * @brief Setup stored views into domain data for the current step
+   * @brief Setup stored reservoir views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
+
+  /// views into reservoir primary variable fields
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaResPressure;
+
+  /// views into reservoir material fields
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resDensity;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResDens_dPres;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resViscosity;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResVisc_dPres;
 
 };
 

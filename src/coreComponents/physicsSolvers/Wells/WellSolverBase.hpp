@@ -83,15 +83,15 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr auto gravityFlagString  = "gravityFlag";
-    static constexpr auto gravityDepthString = "gravityDepth";
+    static constexpr auto gravityFlagString  = "wellGravityFlag";
+    static constexpr auto gravityDepthString = "wellGravityDepth";
 
     // misc inputs
-    static constexpr auto fluidNameString      = "fluidName";
-    static constexpr auto fluidIndexString     = "fluidIndex";
+    static constexpr auto fluidNameString      = "wellFluidName";
+    static constexpr auto fluidIndexString     = "wellFluidIndex";
 
     // bhp control
-    static constexpr auto bhpString = "bhp";
+    static constexpr auto bhpString = "wellBHP";
     
     using ViewKey = dataRepository::ViewKey;
 
@@ -143,6 +143,8 @@ protected:
   /// the number of Degrees of Freedom per well connection
   localIndex m_numDofPerConnection;
 
+  /// views into reservoir constant data fields
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_resGravDepth;
 };
 
 }
