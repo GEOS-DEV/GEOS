@@ -20,7 +20,7 @@
      </SolidMechanics_LagrangianFEM>
   
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="1"
+                      verboseLevel="3"
                       targetRegions="Region2">
     </SurfaceGenerator>
   </Solvers>

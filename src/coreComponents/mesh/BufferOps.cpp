@@ -210,10 +210,11 @@ localIndex Unpack( char const * & buffer,
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
-    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-    GEOS_ERROR_IF( numIndicesUnpacked != var.m_toElementRegion.size(1), "");
+    localIndex numSubIndicesUnpacked;
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
+    GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size(1), "");
 
-    for( localIndex b=0 ; b<numIndicesUnpacked ; ++b )
+    for( localIndex b=0 ; b<numSubIndicesUnpacked ; ++b )
     {
       localIndex recvElemRegionIndex;
       localIndex recvElemSubRegionIndex;
@@ -223,7 +224,7 @@ localIndex Unpack( char const * & buffer,
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemSubRegionIndex );
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
 
-      if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-11 )
+      if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
       {
         ElementRegion const * const
         elemRegion = elementRegionManager->GetRegion(recvElemRegionIndex);
@@ -240,11 +241,18 @@ localIndex Unpack( char const * & buffer,
           localIndex & elemRegionIndex = var.m_toElementRegion[index][c];
           localIndex & elemSubRegionIndex = var.m_toElementSubRegion[index][c];
           localIndex & elemIndex = var.m_toElementIndex[index][c];
-          if( ( elemRegionIndex==-1 || elemSubRegionIndex==-1 || elemIndex==-1 ) )
+          if( ( elemRegionIndex==recvElemRegionIndex &&
+                elemSubRegionIndex==recvElemSubRegionIndex &&
+                elemIndex==recvElemIndex ) )
+          {
+            break;
+          }
+          else if( ( elemRegionIndex==-1 || elemSubRegionIndex==-1 || elemIndex==-1 ) )
           {
             elemRegionIndex = recvElemRegionIndex;
             elemSubRegionIndex = recvElemSubRegionIndex;
             elemIndex = recvElemIndex;
+            break;
           }
         }
       }

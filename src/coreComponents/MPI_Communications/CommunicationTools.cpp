@@ -550,16 +550,16 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.RebuildSyncLists( meshLevel, commID );
   }
 
-  meshLevel->getNodeManager()->FixUpDownMaps(true);
-  meshLevel->getEdgeManager()->FixUpDownMaps(true);
-  meshLevel->getFaceManager()->FixUpDownMaps(true);
+  meshLevel->getNodeManager()->FixUpDownMaps(false);
+  meshLevel->getEdgeManager()->FixUpDownMaps(false);
+  meshLevel->getFaceManager()->FixUpDownMaps(false);
   for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
   {
     ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(esr);
-      subRegion->FixUpDownMaps(true);
+      subRegion->FixUpDownMaps(false);
     }
   }
 

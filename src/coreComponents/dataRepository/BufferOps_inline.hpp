@@ -775,10 +775,84 @@ Unpack( char const *& buffer,
     }
 
     array1d<globalIndex> unmappedIndices;
+    array1d<globalIndex> tempUnmappedIndices;
+    array1d<localIndex> unpackedIndices;
+    set<localIndex> unpackedIndicesSet;
+
     sizeOfUnpackedChars += Unpack( buffer,
-                                   var[li],
-                                   unmappedIndices,
+                                   unpackedIndices,
+                                   tempUnmappedIndices,
                                    relatedObjectGlobalToLocalMap );
+
+    unmappedIndices.resize( tempUnmappedIndices.size() );
+    bool const unmappedFlag = tempUnmappedIndices.size()>0 ? true : false;
+
+    if( var[li].size() == 0 )
+    {
+      var[li] = unpackedIndices;
+      unmappedIndices = tempUnmappedIndices;
+    }
+    else if( var[li].size() == unpackedIndices.size() )
+    {
+      localIndex const numElems = var[li].size();
+      for( localIndex c=0 ; c<numElems ; ++c )
+      {
+        unpackedIndicesSet.insert(unpackedIndices[c]);
+      }
+      bool isSame = true;
+      for( localIndex c=0 ; c<numElems ; ++c )
+      {
+        if( unpackedIndicesSet.count(var[li][c])==0 )
+        {
+          isSame = false;
+        }
+      }
+      if( !isSame )
+      {
+        localIndex shift = INT_MIN;
+        for( localIndex b=0 ; b<numElems ; ++b )
+        {
+          localIndex existingIndex = var[li][b];
+          for( localIndex c=0 ; c<numElems ; ++c )
+          {
+            localIndex newIndex = unpackedIndices[c];
+            if( existingIndex==newIndex )
+            {
+              shift = c - b;
+              break;
+            }
+          }
+          if( shift != INT_MIN )
+          {
+            break;
+          }
+        }
+        GEOS_ERROR_IF( shift==INT_MIN, "Trying to unpack indices with no valid localIndices...can't set order.");
+        for( localIndex b=0 ; b<numElems ; ++b )
+        {
+          localIndex c = b + shift;
+          if( c < 0 )
+          {
+            c += numElems;
+          }
+          else if( c >= numElems )
+          {
+            c -= numElems;
+          }
+          var[li][b] = unpackedIndices[c];
+          if( unmappedFlag )
+          {
+            unmappedIndices[b] = tempUnmappedIndices[c];
+          }
+        }
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "Unpacked indices do not match the expected size of unpacked indices");
+    }
+
+
     if( unmappedIndices.size() > 0 )
     {
       unmappedGlobalIndices[li] = unmappedIndices;

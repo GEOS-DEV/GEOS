@@ -34,6 +34,26 @@
 namespace geosx
 {
 
+void ModifiedObjectLists::clearNewFromModified()
+{
+  for( auto const & a : newNodes )
+  {
+    modifiedNodes.erase(a);
+  }
+
+  for( auto const & a : newEdges )
+  {
+    modifiedEdges.erase(a);
+  }
+
+  for( auto const & a : modifiedFaces )
+  {
+    modifiedFaces.erase(a);
+  }
+
+}
+
+
 static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
                                      localIndex const lookup )
 {
@@ -392,6 +412,9 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
       }
     }
 #ifdef USE_GEOSX_PTP
+
+    modifiedObjects.clearNewFromModified();
+    /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
     ParallelTopologyChange::SyncronizeTopologyChange( mesh,
                                                       neighbors,
                                                       modifiedObjects);
@@ -1542,6 +1565,23 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             facesToElementIndex[faceIndex][1] = -1;
           }
 
+          if( verboseLevel() > 1 )
+          {
+            std::cout<<"    facesToElementRegions["<<newFaceIndex<<"][0]    = "<<facesToElementRegions[newFaceIndex][0]<<std::endl;
+            std::cout<<"    facesToElementSubRegions["<<newFaceIndex<<"][0] = "<<facesToElementSubRegions[newFaceIndex][0]<<std::endl;
+            std::cout<<"    facesToElementIndex["<<newFaceIndex<<"][0]      = "<<facesToElementIndex[newFaceIndex][0]<<std::endl;
+            std::cout<<"    facesToElementRegions["<<newFaceIndex<<"][1]    = "<<facesToElementRegions[newFaceIndex][1]<<std::endl;
+            std::cout<<"    facesToElementSubRegions["<<newFaceIndex<<"][1] = "<<facesToElementSubRegions[newFaceIndex][1]<<std::endl;
+            std::cout<<"    facesToElementIndex["<<newFaceIndex<<"][1]      = "<<facesToElementIndex[newFaceIndex][1]<<std::endl;
+
+            std::cout<<"    facesToElementRegions["<<faceIndex<<"][0]    = "<<facesToElementRegions[faceIndex][0]<<std::endl;
+            std::cout<<"    facesToElementSubRegions["<<faceIndex<<"][0] = "<<facesToElementSubRegions[faceIndex][0]<<std::endl;
+            std::cout<<"    facesToElementIndex["<<faceIndex<<"][0]      = "<<facesToElementIndex[faceIndex][0]<<std::endl;
+            std::cout<<"    facesToElementRegions["<<faceIndex<<"][1]    = "<<facesToElementRegions[faceIndex][1]<<std::endl;
+            std::cout<<"    facesToElementSubRegions["<<faceIndex<<"][1] = "<<facesToElementSubRegions[faceIndex][1]<<std::endl;
+            std::cout<<"    facesToElementIndex["<<faceIndex<<"][1]      = "<<facesToElementIndex[faceIndex][1]<<std::endl;
+
+          }
 
           faceManager.SortFaceNodes( X, elemCenter, facesToNodes[newFaceIndex], facesToNodes[newFaceIndex].size() );
 
