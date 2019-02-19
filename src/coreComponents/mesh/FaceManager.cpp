@@ -555,7 +555,8 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array & packList )
+                                          localIndex_array & packList,
+                                          bool const overwriteMap )
 {
   localIndex unPackedSize = 0;
 
@@ -591,7 +592,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toElements,
                                      packList,
                                      m_toElements.getElementRegionManager(),
-                                     false );
+                                     overwriteMap );
 
 
 
