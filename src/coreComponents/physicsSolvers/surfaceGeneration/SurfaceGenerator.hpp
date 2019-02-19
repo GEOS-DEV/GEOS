@@ -317,6 +317,13 @@ private:
                         const map<localIndex, int>& faceLocations,
                         const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
 
+  void MapConsistencyCheck( const localIndex nodeID,
+                            NodeManager const & nodeManager,
+                            EdgeManager const & edgeManager,
+                            FaceManager const & faceManager,
+                            ElementRegionManager const & elementManager,
+                            const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
+
   /**
    * @brief function to set which side of the fracture plane all objects are on
    * @param separationPathFaces

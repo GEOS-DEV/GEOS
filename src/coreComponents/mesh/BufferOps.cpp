@@ -254,7 +254,17 @@ localIndex Unpack( char const * & buffer,
             elemIndex = recvElemIndex;
             break;
           }
+          else
+          {
+            //TODO need a better criteria and an error check here
+          }
         }
+      }
+      else if( clearFlag )
+      {
+        var.m_toElementRegion[index][b] = -1;
+        var.m_toElementSubRegion[index][b] = -1;
+        var.m_toElementIndex[index][b] = -1;
       }
     }
   }

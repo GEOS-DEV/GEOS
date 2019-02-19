@@ -230,7 +230,8 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 //**************************************************************************************************
 localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array & packList )
+                                          localIndex_array & packList,
+                                          bool const overwriteMap )
 {
   localIndex unPackedSize = 0;
 
@@ -243,7 +244,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    m_unmappedGlobalIndicesInToEdges,
                                    this->m_globalToLocalMap,
                                    m_toEdgesRelation.RelatedObjectGlobalToLocal(),
-                                   false );
+                                   overwriteMap );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
@@ -253,7 +254,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    m_unmappedGlobalIndicesInToFaces,
                                    this->m_globalToLocalMap,
                                    m_toFacesRelation.RelatedObjectGlobalToLocal(),
-                                   false );
+                                   overwriteMap );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
@@ -261,7 +262,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    this->m_toElements,
                                    packList,
                                    m_toElements.getElementRegionManager(),
-                                   false );
+                                   overwriteMap );
 
   return unPackedSize;
 }

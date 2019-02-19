@@ -775,6 +775,12 @@ Unpack( char const *& buffer,
     }
 
     array1d<globalIndex> unmappedIndices;
+#if 1
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   var[li],
+                                   unmappedIndices,
+                                   relatedObjectGlobalToLocalMap );
+#else
     array1d<globalIndex> tempUnmappedIndices;
     array1d<localIndex> unpackedIndices;
     set<localIndex> unpackedIndicesSet;
@@ -783,7 +789,6 @@ Unpack( char const *& buffer,
                                    unpackedIndices,
                                    tempUnmappedIndices,
                                    relatedObjectGlobalToLocalMap );
-
     unmappedIndices.resize( tempUnmappedIndices.size() );
     bool const unmappedFlag = tempUnmappedIndices.size()>0 ? true : false;
 
@@ -851,7 +856,7 @@ Unpack( char const *& buffer,
     {
       GEOS_ERROR( "Unpacked indices do not match the expected size of unpacked indices");
     }
-
+#endif
 
     if( unmappedIndices.size() > 0 )
     {

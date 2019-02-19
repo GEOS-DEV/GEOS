@@ -102,7 +102,8 @@ public:
 
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       array1d<localIndex> & packList )
+                                       array1d<localIndex> & packList,
+                                       bool const overwriteMap )
   { return 0;}
 
 

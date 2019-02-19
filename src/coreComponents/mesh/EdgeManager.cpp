@@ -752,7 +752,8 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array & packList )
+                                          localIndex_array & packList,
+                                          bool const overwriteMap )
 {
   localIndex unPackedSize = 0;
 
@@ -775,7 +776,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_unmappedGlobalIndicesInToFaces,
                                      this->m_globalToLocalMap,
                                      m_toFacesRelation.RelatedObjectGlobalToLocal(),
-                                     false );
+                                     overwriteMap );
 
   return unPackedSize;
 }
