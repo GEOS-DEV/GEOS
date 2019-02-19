@@ -422,7 +422,8 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 int
 ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                        ElementReferenceAccessor<localIndex_array> & packList )
+                                        ElementReferenceAccessor<localIndex_array> & packList,
+                                        bool const overwriteMap )
 {
   int unpackedSize = 0;
 
@@ -445,7 +446,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
       /// THIS IS WRONG
       localIndex_array & elemList = packList[kReg][kSubReg];
-      unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList );
+      unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList, overwriteMap );
     });
   }
 
