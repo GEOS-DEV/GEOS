@@ -247,13 +247,10 @@ public:
 
     static constexpr auto phaseFlowRateString = "wellPhaseFlowRate";
 
-    // saturation, viscosity and density
+    // saturations
     static constexpr auto phaseVolumeFractionString = "wellPhaseVolumeFraction";
     static constexpr auto dPhaseVolumeFraction_dPressureString = "dWellPhaseVolumeFraction_dPres";
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dWellPhaseVolumeFraction_dComp";
-
-    static constexpr auto phaseDensityString   = "wellPhaseDensity";
-    static constexpr auto phaseViscosityString = "wellPhaseViscosity";
     
     // intermediate values for constitutive model input
     static constexpr auto globalCompFractionString                     = "wellGlobalComponentFraction";
@@ -283,10 +280,6 @@ public:
     ViewKey phaseVolFrac        = { phaseVolumeFractionString };
     ViewKey dPhaseVolFrac_dPres = { dPhaseVolumeFraction_dPressureString };
     ViewKey dPhaseVolFrac_dComp = { dPhaseVolumeFraction_dGlobalCompDensityString };
-
-    // density and viscosity
-    ViewKey phaseDensity   = { phaseDensityString };
-    ViewKey phaseViscosity = { phaseViscosityString };
     
     // global composition to input injection stream
     ViewKey globalComponentFrac        = { globalCompFractionString };

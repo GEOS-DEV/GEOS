@@ -200,11 +200,7 @@ public:
     static constexpr auto velocityString      = "wellVelocity";
     static constexpr auto deltaVelocityString = "wellDeltaVelocity";
 
-    static constexpr auto densityString          = "wellDensity";
-    static constexpr auto dDensity_dPresString   = "dWellDensity_dPres";
-    static constexpr auto viscosityString        = "wellViscosity";
-    static constexpr auto dViscosity_dPresString = "dWellViscosity_dPres";
-    
+    // well control
     static constexpr auto flowRateString = "wellFlowRate";
 
     using ViewKey = dataRepository::ViewKey;
@@ -214,14 +210,8 @@ public:
     ViewKey deltaPressure = { deltaPressureString };
     ViewKey velocity      = { velocityString };
     ViewKey deltaVelovity = { deltaVelocityString };
-
-    // density and viscosity
-    ViewKey density          = { densityString };
-    ViewKey dDensity_dPres   = { dDensity_dPresString };
-    ViewKey viscosity        = { viscosityString };
-    ViewKey dViscosity_dPres = { dViscosity_dPresString };
     
-    // well controls
+    // well control
     ViewKey flowRate = { flowRateString };
 
   } viewKeysSinglePhaseWell;
