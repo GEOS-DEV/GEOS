@@ -64,8 +64,13 @@ void ReservoirWellSolver::ImplicitStepSetup( real64 const& time_n,
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
+  //  flowSolver.SkipLinearSystemSetup( true );
+  //  wellSolver.SkipLinearSystemSetup( true );
+  
   flowSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
   wellSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
+
+  //  SetupSystem( domain, blockSystem );
 }
 
 void ReservoirWellSolver::AssembleSystem( DomainPartition * const domain,
@@ -154,10 +159,11 @@ void ReservoirWellSolver::ImplicitStepComplete( real64 const& time_n,
                                                 real64 const& dt,
                                                 DomainPartition * const domain)
 {
-}
+  FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
+  WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
-void ReservoirWellSolver::PostProcessInput()
-{
+  flowSolver.ImplicitStepComplete( time_n, dt, domain );
+  wellSolver.ImplicitStepComplete( time_n, dt, domain );
 }
 
 void ReservoirWellSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
@@ -191,6 +197,7 @@ real64 ReservoirWellSolver::SolverStep( real64 const & time_n,
   return dt_return;
 }
 
+  
 REGISTER_CATALOG_ENTRY( SolverBase, ReservoirWellSolver, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */

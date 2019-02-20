@@ -411,19 +411,16 @@ void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * cons
                                                                 globalIndex & numGlobalRows,
                                                                 localIndex offset )
 {
-  // TODO
 }
 
 void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * const domain,
                                                       Epetra_FECrsGraph * const sparsity )
 {
-  // TODO 
 }
 
 void CompositionalMultiphaseWell::SetupSystem( DomainPartition * const domain,
                                                EpetraBlockSystem * const blockSystem )
 {
-  // TODO
 }
 
 void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain,
@@ -434,19 +431,12 @@ void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
-  // TODO: make sure to remove that if wells write into compositionalBlock
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
-
   CheckWellControlSwitch( domain );
   
   AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
   AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
   AssembleSourceTerms( domain, blockSystem, time_n, dt );
-  
-  jacobian->GlobalAssemble( true );
-  residual->GlobalAssemble();
 
   if( verboseLevel() >= 3 )
   {

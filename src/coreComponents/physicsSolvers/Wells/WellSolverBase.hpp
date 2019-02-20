@@ -45,6 +45,13 @@ class DomainPartition;
 class WellSolverBase : public SolverBase
 {
 public:
+
+  struct ElemTag
+  {
+    static constexpr integer RES  = 0;
+    static constexpr integer WELL = 1;
+  };
+
 /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
@@ -52,7 +59,6 @@ public:
    */
   WellSolverBase( const std::string& name,
                   ManagedGroup * const parent );
-
 
   /// deleted default constructor
   WellSolverBase() = delete;
@@ -70,7 +76,7 @@ public:
   WellSolverBase & operator=( WellSolverBase && ) = delete;
 
   localIndex fluidIndex() const { return m_fluidIndex; }
-  
+
   localIndex numDofPerWellElement() const { return m_numDofPerWellElement; }
 
   /**
@@ -92,7 +98,7 @@ public:
 
     // bhp control
     static constexpr auto bhpString = "wellBHP";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     // gravity term precomputed values
@@ -105,7 +111,7 @@ public:
 
     // bhp control
     ViewKey bhp = { bhpString }; 
-    
+  
   } viewKeysWellSolverBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -119,7 +125,7 @@ private:
    * @param domain the domain parition
    */
   void PrecomputeData(DomainPartition *const domain);
-
+  
 protected:
 
   virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;

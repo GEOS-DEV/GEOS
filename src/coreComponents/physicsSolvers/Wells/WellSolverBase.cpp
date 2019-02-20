@@ -74,7 +74,7 @@ void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   m_fluidIndex = fluid->getIndexInParent();
 
 }
-
+  
 void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);

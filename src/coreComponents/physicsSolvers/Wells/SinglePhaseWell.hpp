@@ -194,6 +194,9 @@ public:
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
+    // degrees of freedom numbers on the well elements
+    static constexpr auto dofNumberString = "wellBlockLocalDofNumber";
+
     // primary solution field
     static constexpr auto pressureString      = "wellPressure";
     static constexpr auto deltaPressureString = "wellDeltaPressure";
@@ -205,12 +208,15 @@ public:
 
     using ViewKey = dataRepository::ViewKey;
 
+    // degrees of freedom numbers of the well elements
+    ViewKey dofNumber = { dofNumberString };
+
     // primary solution field
     ViewKey pressure      = { pressureString };
     ViewKey deltaPressure = { deltaPressureString };
     ViewKey velocity      = { velocityString };
     ViewKey deltaVelovity = { deltaVelocityString };
-    
+
     // well control
     ViewKey flowRate = { flowRateString };
 
@@ -283,6 +289,9 @@ private:
    */
   void ResetViews( DomainPartition * const domain ) override;
 
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber; // TODO will move to DofManager
+  
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
@@ -301,4 +310,4 @@ private:
 } // namespace geosx
 
 
-#endif //SRC_COMPONENTS_CORE_SRC_WELLS_SINGLEPHASEWELLS_HPP_
+#endif //SRC_COMPONENTS_CORE_SRC_WELLS_SINGLEPHASEWELL_HPP_

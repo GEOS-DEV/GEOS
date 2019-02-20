@@ -75,6 +75,7 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
   {
     
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dofNumberString ); 
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
@@ -199,19 +200,16 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                     globalIndex & numGlobalRows,
                                                     localIndex offset )
 {
-  // TODO
 }
 
 void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
                                           Epetra_FECrsGraph * const sparsity )
 {
-  // TODO
 }
 
 void SinglePhaseWell::SetupSystem( DomainPartition * const domain,
                                    EpetraBlockSystem * const blockSystem )
 {
-  // TODO
 }
 
 void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
@@ -219,22 +217,16 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
                                       real64 const time_n, real64 const dt )
 {
   std::cout << "SinglePhaseWell: AssembleSystem" << std::endl;
-  
+
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                                 BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
-
   CheckWellControlSwitch( domain );
-  
+
   AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
   AssembleSourceTerms( domain, blockSystem, time_n, dt );
-  
-  jacobian->GlobalAssemble( true );
-  residual->GlobalAssemble();
 
   if( verboseLevel() >= 3 )
   {
@@ -254,7 +246,7 @@ void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
   WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   // NOT NEEDED FOR NOW
-  
+
   // loop over the wells
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -312,6 +304,8 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
                                                                 BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber = m_resDofNumber;
+
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & resPressure         = m_resPressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dResPressure        = m_deltaResPressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & resGravDepth        = m_resGravDepth;
@@ -320,11 +314,15 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResDensity_dPres   = m_dResDens_dPres;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & resViscosity        = m_resViscosity;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResViscosity_dPres = m_dResVisc_dPres;
-  
+
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     PerforationData * perforationData = well->getPerforations();
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get the degrees of freedom 
+    array1d<real64> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::dofNumberString );
 
     // get well primary variables on segments
     array1d<real64> const & wellPressure         =
@@ -335,7 +333,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
     // get well secondary variables on segments
     SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
-    
+
     array2d<real64> const & wellDensity          =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
 
@@ -351,10 +349,10 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     // get well variables on perforations
     array1d<real64> const & wellFlowRate  =
       perforationData->getReference<array1d<real64>>( viewKeyStruct::flowRateString );
-    
+
     array1d<real64> const & wellGravDepth =
       perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::gravityDepthString );
-    
+
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
@@ -369,10 +367,16 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
     // temp hack
     real64 const gravD = 0;
-    
+
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
     {
       // local working variables and arrays
+      stackArray1d<globalIndex, 2> eqnRowIndices( 2 );
+      stackArray1d<globalIndex, 2> dofColIndices( 2 );
+
+      stackArray1d<real64, 2> localFlux( 2 );
+      stackArray2d<real64, 4> localFluxJacobian(2, 2);
+
       real64 densMean = 0.0;
       stackArray1d<real64, 2> dDensMean_dP( 2 );
 
@@ -390,81 +394,99 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       stackArray1d<real64, 2> dMobility_dP( 2 );
 
       stackArray1d<localIndex, 2> weightIndex( 2 );
+      stackArray1d<localIndex, 2> multiplier( 2 );
+
+      // clear working arrays
+      eqnRowIndices = -1;
+      dDensMean_dP = 0.0;
 
       // TODO: add localFlux / localFluxJacobian
-      
+
+      // 1) Reservoir side
+
       // get the reservoir (sub)region and element indices
       localIndex const er  = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];
       localIndex const ei  = resElementIndex[iperf];
 
-      // TODO: add a tag for Res = 0 and Well = 1
+      // row index on reservoir side
+      eqnRowIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
+
+      // column index on reservoir side
+      dofColIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
 
       // get reservoir variables
-      pressure[0]  = resPressure[er][esr][ei] + dResPressure[er][esr][ei];
-      gravDepth[0] = resGravDepth[er][esr][ei]; 
+      pressure[ElemTag::RES]  = resPressure[er][esr][ei] + dResPressure[er][esr][ei];
+      gravDepth[ElemTag::RES] = resGravDepth[er][esr][ei]; 
 
-      density[0]     = resDensity[er][esr][m_fluidIndex][ei][0];
-      dDensity_dP[0] = dResDensity_dPres[er][esr][m_fluidIndex][ei][0];
+      density[ElemTag::RES]     = resDensity[er][esr][m_fluidIndex][ei][0];
+      dDensity_dP[ElemTag::RES] = dResDensity_dPres[er][esr][m_fluidIndex][ei][0];
 
-      viscosity[0]     = resViscosity[er][esr][m_fluidIndex][ei][0];
-      dViscosity_dP[0] = dResViscosity_dPres[er][esr][m_fluidIndex][ei][0];
-
-      mobility[0]      = density[0] / viscosity[0];
-      dMobility_dP[0]  = dDensity_dP[0] / viscosity[0] - mobility[0] / viscosity[0] * dViscosity_dP[0];
+      viscosity[ElemTag::RES]     = resViscosity[er][esr][m_fluidIndex][ei][0];
+      dViscosity_dP[ElemTag::RES] = dResViscosity_dPres[er][esr][m_fluidIndex][ei][0];
 
       // TODO: check whether we need this
-      weightIndex[0] = 0;
+      weightIndex[ElemTag::RES] = 0;
+      multiplier[ElemTag::RES]  = 1;
 
-      densMean += densWeight[weightIndex[0]] * density[0];
-      dDensMean_dP[0] = densWeight[weightIndex[0]] * dDensity_dP[0];
+      densMean += densWeight[weightIndex[ElemTag::RES]] * density[ElemTag::RES];
+      dDensMean_dP[ElemTag::RES] = densWeight[weightIndex[ElemTag::RES]] * dDensity_dP[ElemTag::RES];
 
-      // get well variables
+      // 2) Well side
+
       localIndex const iwelem = 0; // this is a hack
 
-      pressure[1]  = wellPressure[iwelem] + dWellPressure[iwelem];
-      gravDepth[1] = wellGravDepth[iwelem];
+      // row index on well side
+      eqnRowIndices[ElemTag::WELL] = wellDofNumber[iwelem];
 
-      density[1]     = wellDensity[iwelem][0];
-      dDensity_dP[1] = dWellDensity_dPres[iwelem][0];
+      // column index on well side
+      dofColIndices[ElemTag::WELL] = wellDofNumber[iwelem];
 
-      viscosity[1]     = wellViscosity[iwelem][0];
-      dViscosity_dP[1] = dWellViscosity_dPres[iwelem][0];
+      // get well variables
+      pressure[ElemTag::WELL]  = wellPressure[iwelem] + dWellPressure[iwelem];
+      gravDepth[ElemTag::WELL] = wellGravDepth[iwelem];
 
-      mobility[1]     = density[0] / viscosity[0];
-      dMobility_dP[1] = dDensity_dP[0] / viscosity[0] - mobility[0] / viscosity[0] * dViscosity_dP[0];
+      density[ElemTag::WELL]     = wellDensity[iwelem][0];
+      dDensity_dP[ElemTag::WELL] = dWellDensity_dPres[iwelem][0];
 
-      weightIndex[1] = 1;
+      viscosity[ElemTag::WELL]     = wellViscosity[iwelem][0];
+      dViscosity_dP[ElemTag::WELL] = dWellViscosity_dPres[iwelem][0];
 
-      densMean += densWeight[weightIndex[1]] * density[1];
-      dDensMean_dP[1] = densWeight[weightIndex[1]] * dDensity_dP[1];
+      weightIndex[ElemTag::WELL] = 1;
+      multiplier[ElemTag::WELL]  = -1;
+
+      densMean += densWeight[weightIndex[ElemTag::WELL]] * density[ElemTag::WELL];
+      dDensMean_dP[ElemTag::WELL] = densWeight[weightIndex[ElemTag::WELL]] * dDensity_dP[ElemTag::WELL];
 
       //***** calculation of flux *****
 
       // TODO: use distinct treatments for injector and producer
-      
+
       // get transmissibility at the interface
       Perforation * perforation = perforationData->getPerforation( iperf ); 
       const real64 trans = perforation->getTransmissibility(); // TODO: change to an array of transmissibilities in PerforationData
 
-      // compute potential difference
       real64 potDif = 0.0;
       for (localIndex i = 0; i < 2; ++i)
       {
+        // compute mobility
+        mobility[i]     = density[i] / viscosity[i];
+        dMobility_dP[i] = dDensity_dP[i] / viscosity[i]
+   	                - mobility[i] / viscosity[i] * dViscosity_dP[i];
 
-        real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
+	// compute gravity terms
+	real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
         real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
 
-	// TODO: missing here: a multiplier 1 or -1 to actually compute a potential difference
-	
-	potDif += trans * (pressure[i] + gravTerm);
-        dFlux_dP[i] = trans * (1.0 + dGrav_dP);
+	// compute potential difference
+	potDif += multiplier[i] * trans * (pressure[i] + gravTerm);
+        dFlux_dP[i] = multiplier[i] * trans * (1.0 + dGrav_dP);
       }
 
       // compute the final flux and derivatives
 
       // choose upstream cell
-      localIndex const k_up = (potDif >= 0) ? 0 : 1;
+      localIndex const k_up = (potDif >= 0) ? ElemTag::RES : ElemTag::WELL;
 
       real64 const flux = mobility[k_up] * potDif;
       for (localIndex ke = 0; ke < 2; ++ke)
@@ -473,12 +495,29 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
       //***** end flux terms *****
 
-      // TODO:
       // populate local flux vector and derivatives
-      // save flux from/into the perforation for calculating well totals
-      // wellFlowRate[iperf] = localFlux * sign;
-      // Add to global residual/jacobian
+      localFlux[ElemTag::RES]  =  dt * flux;
+      localFlux[ElemTag::WELL] = -localFlux[ElemTag::RES];
 
+      for (localIndex ke = 0; ke < 2; ++ke)
+      {
+        localFluxJacobian[ElemTag::RES][ke]  =   dt * dFlux_dP[ke];
+        localFluxJacobian[ElemTag::WELL][ke] = - dt * dFlux_dP[ke];
+      }
+
+      // Add to global residual/jacobian
+      jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 ),
+                                     eqnRowIndices.data(),
+                                     integer_conversion<int>( 2 ),
+                                     dofColIndices.data(),
+                                     localFluxJacobian.data() );
+
+      residual->SumIntoGlobalValues( integer_conversion<int>( 2 ),
+				     eqnRowIndices.data(),
+				     localFlux.data() );
+
+      // TODO:
+      // save flux from/into the perforation for constraint and calculating well totals
     }
   });
 
@@ -632,6 +671,9 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
   ElementRegionManager * const elemManager = mesh->getElemManager();
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
+  m_resDofNumber =
+    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+  
   m_resPressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
 
