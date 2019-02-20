@@ -290,6 +290,19 @@ public:
                              map< localIndex, set<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped  );
 
+  static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
+                                       localIndex const lookup )
+  {
+    localIndex rval = lookup;
+
+    while( parentIndices[rval] != -1 )
+    {
+      rval = parentIndices[rval];
+    }
+
+    return rval;
+  }
+
 
   //**********************************************************************************************************************
 
