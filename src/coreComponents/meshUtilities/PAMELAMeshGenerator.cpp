@@ -26,13 +26,10 @@
 #include "PAMELAMeshGenerator.hpp"
 
 #include "managers/DomainPartition.hpp"
+#include "managers/TableManager.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
-
-#ifdef USE_ATK
-#include "slic/slic.hpp"
-#endif
 
 #include "Mesh/MeshFactory.hpp"
 
@@ -94,7 +91,19 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>( std::string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
   CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
+  const TableManager& tableManager = TableManager::Instance();
 
+
+  // Property transfer on partionned PAMELA Mesh
+  auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
+  for( auto meshPropertyItr = meshProperties.begin() ; meshPropertyItr != meshProperties.end() ; meshPropertyItr++)
+  {
+    m_pamelaPartitionnedMesh->DeclareVariable(PAMELA::FAMILY::POLYHEDRON,
+        PAMELA::VARIABLE_DIMENSION::SCALAR,
+        PAMELA::VARIABLE_LOCATION::PER_CELL,
+        meshPropertyItr->first);
+    m_pamelaPartitionnedMesh->SetVariableOnPolyhedron(meshPropertyItr->first, meshPropertyItr->second);
+  }
 
   // Use the PartMap of PAMELA to get the mesh
   auto polyhedronMap = m_pamelaPartitionnedMesh->GetPolyhedronMap();
@@ -112,6 +121,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
   }
   
+
   // First loop which iterate on the regions
   for( auto regionItr = polyhedronMap.begin() ; regionItr != polyhedronMap.end() ; ++regionItr )
   {
@@ -278,17 +288,32 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         }
       }
     }
-    // Property transfer on partionned PAMELA Mesh
-    auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
-    for( auto meshPropertyItr = meshProperties.begin() ; meshPropertyItr != meshProperties.end() ; meshPropertyItr++)
+    for(auto propertyItr = regionPtr->PerElementVariable.begin() ; propertyItr != regionPtr->PerElementVariable.end() ; propertyItr++)
     {
-      m_pamelaPartitionnedMesh->DeclareVariable(PAMELA::FAMILY::POLYHEDRON,
-          PAMELA::VARIABLE_DIMENSION::SCALAR,
-          PAMELA::VARIABLE_LOCATION::PER_CELL,
-          meshPropertyItr->first);
-      m_pamelaPartitionnedMesh->SetVariableOnPolyhedron(meshPropertyItr->first, meshPropertyItr->second);
+      auto propertyPtr = (*propertyItr);
+      localIndex_array cell_indexes;
+      real64_array pptArray;
+      localIndex cell_index;
+      for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
+          cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
+      {
+        auto cellBlockPAMELA = cellBlockIterator->second;
+        auto cellBlockType = cellBlockPAMELA->ElementType;
+        auto cellBlockName = ElementToLabel.at( cellBlockType );
+        if( cellBlockName == "HEX" || cellBlockName == "PYRAMID" || cellBlockName == "TETRA" || cellBlockName == "WEDGE"){
+          cell_indexes.resize(cell_indexes.size() +cellBlockPAMELA->SubCollection.size_owned()) ;
+          for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
+              cellItr != cellBlockPAMELA->SubCollection.end_owned() ; cellItr++) {
+            cell_indexes[cell_index] = (*cellItr)->get_localIndex();
+            real64 value = propertyPtr->get_data(integer_conversion<int>(cell_index))[0];
+            pptArray[cell_index++] = value;
+          }
+        }
+      }
+      tableManager.NewTable<1>(propertyPtr->Label,cell_indexes,pptArray,TableInterpolation::Order::zeroth);
     }
   }
+
 
 }
 
