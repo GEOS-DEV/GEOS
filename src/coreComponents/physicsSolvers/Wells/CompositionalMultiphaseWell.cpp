@@ -428,6 +428,108 @@ void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * cons
 void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * const domain,
                                                       Epetra_FECrsGraph * const sparsity )
 {
+  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
+  WellManager const * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
+    elementRegionManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
+
+  // TODO: use that
+  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const & resElemGhostRank =
+    elementRegionManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex constexpr maxNumDof  = maxNumComp + 2;
+
+  localIndex const resNDOF  = m_numDofPerResCell;
+  localIndex const wellNDOF = resNDOF + 1;
+
+  //**** loop over all perforations. Fill in sparsity for all pairs of DOF/elem that are connected by a perforation
+  wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
+  {
+
+    PerforationData const * const perforationData = well->getPerforations();
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+
+    // get the element region, subregion, index
+    arrayView1d<localIndex const> const & resElementRegion =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
+
+    arrayView1d<localIndex const> const & resElementSubRegion =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+
+    arrayView1d<localIndex const> const & resElementIndex =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+
+    
+    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+    {
+
+      // get the reservoir (sub)region and element indices
+      localIndex const er  = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei  = resElementIndex[iperf];
+
+      stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( resNDOF + wellNDOF );
+      stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( resNDOF + wellNDOF );
+
+      globalIndex const resOffset  = resNDOF * resDofNumber[er][esr][ei];
+      for (localIndex idof = 0; idof < resNDOF; ++idof)
+      {
+        elementLocalDofIndexRow[ElemTag::RES * wellNDOF + idof] = resOffset + idof;
+	elementLocalDofIndexCol[ElemTag::RES * wellNDOF + idof] = resOffset + idof;
+      }
+      // TODO: globalIndex const wellOffset = firstWellOffset + wellNDOF * iwell * wellElemLocalDofNumber[iwelem]
+      globalIndex const wellOffset = 0;
+      for (localIndex idof = 0; idof < wellNDOF; ++idof)
+      {
+	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = wellOffset + idof;
+	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = wellOffset + idof;
+      }      
+
+      sparsity->InsertGlobalIndices( integer_conversion<int>( resNDOF + wellNDOF ),
+                                     elementLocalDofIndexRow.data(),
+                                     integer_conversion<int>( resNDOF + wellNDOF ),
+                                     elementLocalDofIndexCol.data() );
+    }
+
+    ConnectionData const * const connectionData = well->getConnections();
+    
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+
+      // TODO: check if the connection has a primary var
+      
+      stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( 2 * wellNDOF );
+      stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( 2 * wellNDOF );
+
+      // this is not needed for now
+      
+      // TODO: get previous segment
+
+      // TODO: get second segment
+
+      // TODO: globalIndex const wellOffsetPrev = firstWellOffset + wellNDOF * iwell * wellElemLocalDofNumber[iwelemPrev]
+      globalIndex const wellOffsetPrev = 0;
+      // TODO: globalIndex const wellOffsetNext = firstWellOffset + wellNDOF * iwell * wellElemLocalDofNumber[iwelemNext]
+      globalIndex const wellOffsetNext = 0;
+      for (localIndex idof = 0; idof < wellNDOF; ++idof)
+      {
+	elementLocalDofIndexRow[idof]            = wellOffsetPrev + idof;
+	elementLocalDofIndexRow[wellNDOF + idof] = wellOffsetNext + idof;
+	elementLocalDofIndexCol[idof]            = wellOffsetPrev + idof;
+	elementLocalDofIndexCol[wellNDOF + idof] = wellOffsetNext + idof;
+      }      
+
+      sparsity->InsertGlobalIndices( integer_conversion<int>( 2 * wellNDOF ),
+                                     elementLocalDofIndexRow.data(),
+                                     integer_conversion<int>( 2 * wellNDOF ),
+                                     elementLocalDofIndexCol.data() );
+    }
+    
+  });
+  
 }
 
 void CompositionalMultiphaseWell::SetupSystem( DomainPartition * const domain,
@@ -678,8 +780,6 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
       dCompFlux_dP = 0.0;
       dCompFlux_dC = 0.0;
 
-      // TODO: add localFlux and localFluxJacobian
-      
       // get the reservoir (sub)region and element indices
       localIndex const er  = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];
