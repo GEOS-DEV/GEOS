@@ -230,6 +230,9 @@ public:
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
+    // degrees of freedom numbers on the well elements
+    static constexpr auto dofNumberString = "wellBlockLocalDofNumber";
+    
     // inputs
     static constexpr auto temperatureString = "wellTemperature";
     static constexpr auto useMassFlagString = "wellUseMass";
@@ -258,6 +261,9 @@ public:
 
     using ViewKey = dataRepository::ViewKey;
 
+    // degrees of freedom numbers of the well elements
+    ViewKey dofNumber = { dofNumberString };
+    
     // inputs
     ViewKey temperature = { temperatureString };
     ViewKey useMassFlag = { useMassFlagString };
@@ -382,6 +388,9 @@ private:
   /// the number of fluid components
   localIndex m_numComponents;
 
+  /// the number of degrees of freedom per reservoir cell
+  localIndex m_numDofPerResCell;
+  
   /// the (uniform) temperature
   real64 m_temperature;
 
@@ -394,6 +403,8 @@ private:
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
 
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber;
+  
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
