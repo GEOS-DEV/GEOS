@@ -48,11 +48,6 @@ public:
 
   InterObjectRelation & operator=(const InterObjectRelation& copiedRelationship);
 
-  operator BASETYPE() const
-  {
-    return static_cast<BASETYPE>(this);
-  }
-
   /// equals operator that sets *this to a single value of any type
   template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
   {

@@ -53,24 +53,6 @@
 #include <mpi.h>
 #endif
 
-#ifdef __INTEL_COMPILER
-/**
- * @brief this function is standard, but is missing on the intel compiler
- * @tparam T the type that the unique_ptr will wrap
- * @param args variadic args to the constructor of T
- * @return a std::unique_ptr<T> whose constructor was called with args...
- */
-namespace std
-{
-  template<typename T, typename... Args>
-  std::unique_ptr<T> make_unique(Args&&... args)
-  {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-  }
-
-}
-#endif
-
 
 /**
  * top level geosx namespace contains all code that is specific to GEOSX

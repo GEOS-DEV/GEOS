@@ -591,7 +591,7 @@ Pack( char*& buffer,
 
   static_if( DO_PACKING )
   {
-    globalIndex * const buffer_GI = reinterpret_cast<globalIndex * const>(buffer);
+    globalIndex * const buffer_GI = reinterpret_cast<globalIndex *>(buffer);
     for( localIndex a=0 ; a<length ; ++a )
     {
       if( var[a] != unmappedLocalIndexValue )
