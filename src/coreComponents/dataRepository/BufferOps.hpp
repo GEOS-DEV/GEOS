@@ -250,6 +250,25 @@ Unpack( char const *& buffer,
 template< bool DO_PACKING >
 localIndex
 Pack( char*& buffer,
+      arrayView1d<localIndex const> const & var,
+      arrayView1d<localIndex const> const & indices,
+      arrayView1d<globalIndex const> const & localToGlobalMap,
+      arrayView1d<globalIndex const> const & relatedObjectLocalToGlobalMap );
+
+//------------------------------------------------------------------------------
+inline
+localIndex
+Unpack( char const *& buffer,
+        arrayView1d<localIndex> & var,
+        array1d<localIndex> const & indices,
+        map<globalIndex,localIndex> const & globalToLocalMap,
+        map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap );
+
+
+//------------------------------------------------------------------------------
+template< bool DO_PACKING >
+localIndex
+Pack( char*& buffer,
       arrayView1d<localIndex_array const> const & var,
       map< localIndex, array1d<globalIndex> > const & unmappedGlobalIndices,
       arrayView1d<localIndex const> const & indices,

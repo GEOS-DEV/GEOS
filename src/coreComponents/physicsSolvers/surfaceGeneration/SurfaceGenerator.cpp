@@ -53,20 +53,6 @@ void ModifiedObjectLists::clearNewFromModified()
 
 }
 
-
-static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
-                                     localIndex const lookup )
-{
-  localIndex rval = lookup;
-
-  while( parentIndices[rval] != -1 )
-  {
-    rval = parentIndices[rval];
-  }
-
-  return rval;
-}
-
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                                     const localIndex thisFace, const localIndex thisEdge )
 {
@@ -503,7 +489,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   arrayView1d<localIndex> const & parentNodeIndices =
     nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
 
-  localIndex const parentNodeIndex = GetParentRecusive( parentNodeIndices, nodeID );
+  localIndex const parentNodeIndex = ObjectManagerBase::GetParentRecusive( parentNodeIndices, nodeID );
 
   arrayView1d<localIndex> const & parentFaceIndices =
     faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.parentIndex );
@@ -2065,10 +2051,10 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
       for( localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )
       {
         // TODO This only works for a single region
-        if( facesToElementRegions[a][0] != -1 )
+        if( facesToElementRegions[a][k] != -1 )
         {
-          faceToElements.push_back( std::make_pair( elementManager.GetRegion( facesToElementRegions[a][0] )->
-                                                    GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[a][0] ),
+          faceToElements.push_back( std::make_pair( elementManager.GetRegion( facesToElementRegions[a][k] )->
+                                                    GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[a][k] ),
                                                     facesToElementIndex[a][k] ) );
         }
       }
