@@ -27,9 +27,9 @@
 #include "managers/ProblemManager.hpp"
 
 
-//#ifdef USE_OPENMP
-//#include <omp.h>
-//#endif
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 using namespace geosx;
 
@@ -63,9 +63,8 @@ int main( int argc, char *argv[] )
   }
 #endif
 
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  // cxx_utilities::setSignalHandling(cxx_utilities::handler1);
   cxx_utilities::SetFPE();
-
 
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
