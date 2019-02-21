@@ -134,6 +134,11 @@
 
 
   <Functions>
+    <TableFunction name="timeFunction"
+                   inputVarNames="time"
+                   coordinates= "0.0 1.0 1.0e9"
+                   values     = "0.0 1.0 1.0" />
+    
   </Functions>
 
   <!-- <Partition>

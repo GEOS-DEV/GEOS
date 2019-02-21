@@ -277,8 +277,7 @@ void NodeManager::FixUpDownMaps(  bool const clearIfUnmapped )
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
 
-//  ObjectManagerBase::FixUpDownMaps( faceList(),
-//                                    m_unmappedGlobalIndicesInFacelist);
+
 }
 
 

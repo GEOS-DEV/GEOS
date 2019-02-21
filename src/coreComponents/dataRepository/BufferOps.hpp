@@ -193,7 +193,7 @@ Unpack( char const *& buffer,
         set<localIndex> & var,
         set<globalIndex> & unmappedGlobalIndices,
         map<globalIndex,localIndex> const & globalToLocalMap,
-        bool const clearFlag );
+        bool const clearExistingSet );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >

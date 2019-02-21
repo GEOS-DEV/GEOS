@@ -63,7 +63,7 @@ public:
                                        localIndex_array & packList,
                                        bool const overwriteMap ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {

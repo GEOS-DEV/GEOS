@@ -278,8 +278,6 @@ public:
 
   void SetMaxGlobalIndex();
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) {}
-
   template< typename TYPE_RELATION >
   static void FixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, array1d<globalIndex> > & unmappedIndices,

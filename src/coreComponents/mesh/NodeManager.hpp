@@ -102,7 +102,7 @@ public:
                                        localIndex_array & packList,
                                        bool const overwriteMap ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  void FixUpDownMaps( bool const clearIfUnmapped );
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
