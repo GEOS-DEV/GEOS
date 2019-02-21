@@ -24,7 +24,7 @@ class LapackSuiteInterface
 public:
 
   // Lapack matrix and vector wrappers
-  using DenseMatrix = BlasMatrix;
+  using SerialMatrix = BlasMatrix;
   using Vector = BlasVector;
 
   //! @name Constructor/Destructor Methods

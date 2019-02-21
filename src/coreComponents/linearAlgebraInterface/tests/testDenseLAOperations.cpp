@@ -82,12 +82,13 @@ using namespace geosx;
 template< typename LAI >
 void testMatrixConstructors()
 {
-  using DenseMatrix = typename LAI::DenseMatrix;
+  using SerialMatrix = typename LAI::SerialMatrix;
+  using SerialVector = typename LAI::SerialVector;
 
   // Empty constructor
 
-  DenseMatrix A(2,2), B(1,1), C(4,4);
-  DenseMatrix Cinv;
+  SerialMatrix A(2,2), B(1,1), C(4,4);
+  SerialMatrix Cinv;
   array1d<localIndex> v_tmp;
 
   std::cout << "default length: " << v_tmp.size() << std::endl;
@@ -103,7 +104,77 @@ void testMatrixConstructors()
   C(2,2) = 0.5;
   C(3,3) = -1;
 
+  std::cout << "C : \n";
+  C.print();
+  std::cout << "det(C) : " << C.determinant() << "\n";
+
+
+
   C.computeInverse(Cinv);
+
+
+  SerialMatrix mat1(2,3);
+  SerialMatrix mat2(4,2);
+  mat1(0,0) = 1;
+  mat1(0,1) = 2;
+  mat1(0,2) = 3;
+  mat1(1,0) = 4;
+  mat1(1,1) = 5;
+  mat1(1,2) = 6;
+
+  mat2(0,0) = 1;
+  mat2(0,1) = 2;
+  mat2(1,0) = 3;
+  mat2(1,1) = 4;
+  mat2(2,0) = 5;
+  mat2(2,1) = 6;
+  mat2(3,0) = 7;
+  mat2(3,1) = 8;
+
+  std::cout << "normInf(mat2): " << mat2.normInf() << "\n";
+  std::cout << "  norm1(mat2): " << mat2.norm1() << "\n";
+  std::cout << "  normF(mat2): " << mat2.normFrobenius() << "\n";
+
+  SerialMatrix mat3(mat2.getNumRows(), mat1.getNumCols());
+
+  std::cout << "mat1 : \n";
+  mat1.print();
+  std::cout << "mat2 : \n";
+  mat2.print();
+
+  mat2.matrixMultiply(mat1, mat3);
+  std::cout << "mat2^T * mat1^T: " << std::endl;
+  mat3.print();
+
+  mat3.resize(mat1.getNumCols(),mat2.getNumRows());
+  mat1.TmatrixTMultiply(mat2, mat3);
+  std::cout << "mat2^T * mat1^T: " << std::endl;
+  mat3.print();
+
+  SerialMatrix mat4(4,3);
+  mat4(0,0) = 1;
+  mat4(0,1) = 2;
+  mat4(0,2) = 3;
+  mat4(1,0) = 4;
+  mat4(1,1) = 5;
+  mat4(1,2) = 6;
+  mat4(2,0) = 7;
+  mat4(2,1) = 8;
+  mat4(2,2) = 9;
+  mat4(3,0) = 10;
+  mat4(3,1) = 11;
+  mat4(3,2) = 12;
+
+  mat3.resize(mat1.getNumRows(),mat4.getNumRows());
+  mat1.matrixTMultiply(mat4, mat3);
+  std::cout << "mat2^T * mat1^T: " << std::endl;
+  mat3.print();
+
+
+  mat3.resize(mat4.getNumRows(),mat1.getNumRows());
+  mat4.matrixTMultiply(mat1, mat3);
+  std::cout << "mat2^T * mat1^T: " << std::endl;
+  mat3.print();
 
 //  A.print();
 //  std::cout << "Determinant of A: " << A.determinant() << std::endl;
@@ -121,17 +192,22 @@ void testMatrixConstructors()
 //  std::cout << "Matrix C*C^-1" << std::endl;
 //  CinvxC.print();
 
-  BlasMatrix D(C);
-  D.MatAdd(Cinv);
+  SerialMatrix D(C);
+  D.matrixAdd(Cinv);
   std::cout << "Matrix D" << std::endl;
   D.print();
 
 
-  BlasMatrix E;
-  localIndex max_dim = 6;
+  SerialMatrix E;
+  SerialMatrix Einv;
+  SerialMatrix EinvXE;
+  real64 det;
+  localIndex max_dim = 8;
   for (localIndex order = 1; order <= max_dim; ++order )
   {
     E.resize(order);
+    std::cout << "Matrix E" << std::endl;
+    E.print();
     for (localIndex i = 0; i < E.getNumCols(); ++i)
       for (localIndex j = 0; j < E.getNumRows(); ++j)
       {
@@ -141,6 +217,7 @@ void testMatrixConstructors()
         }
         else if (abs(i - j) == 1)
         {
+          std::cout << "i: " << i << "j: " << j << "; abs(i - j): " << abs(i - j) << std::endl;
           E(i,j) = -1;
         }
 
@@ -149,16 +226,87 @@ void testMatrixConstructors()
     std::cout << "Matrix E" << std::endl;
     E.print();
 
-    BlasMatrix Einv;
-    E.computeInverse(Einv);
+    E.computeInverse(Einv, det);
     std::cout << "Matrix Einv" << std::endl;
     Einv.print();
+    std::cout << "\n\ndet(E): " << det << "; det(Einv): " << Einv.determinant() << "; product: " << det*Einv.determinant() << "\n\n";
 
-    BlasMatrix EinvXE(E.getNumRows());
-    EinvXE.GEMM(Einv, E);
+    EinvXE.resize(E.getNumRows());
+    E.matrixMultiply(Einv, EinvXE);
     std::cout << "Matrix Einv*E" << std::endl;
     EinvXE.print();
+    std::cout << "Determinant(Einv*E): " << EinvXE.determinant() << std::endl;
+    std::cout << "****************************\n\n";
   }
+
+  SerialMatrix matrixPermute(5,7);
+
+  for (localIndex j = 0; j < matrixPermute.getNumCols(); ++j)
+    for (localIndex i = 0; i < matrixPermute.getNumRows(); ++i)
+      matrixPermute(i,j) = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+
+  SerialMatrix matrixOrig(matrixPermute);
+
+  array1d<int> rowsPermutation,
+               colsPermutation; //start counting from 1
+  for(int i = 1; i <= matrixPermute.getNumRows(); ++i)
+  {
+    rowsPermutation.push_back(i);
+    std::cout << rowsPermutation[i-1] << " ";
+  }
+  std::cout << std::endl;
+  std::random_shuffle ( rowsPermutation.begin(), rowsPermutation.end() );
+  for(int i = 0; i < matrixPermute.getNumRows(); ++i)
+    std::cout << rowsPermutation[i] << " ";
+  std::cout << std::endl;
+
+  for(int i = 1; i <= matrixPermute.getNumCols(); ++i)
+  {
+    colsPermutation.push_back(i);
+    std::cout << colsPermutation[i-1] << " ";
+  }
+  std::cout << std::endl;
+  std::random_shuffle ( colsPermutation.begin(), colsPermutation.end() );
+  for(int i = 0; i < matrixPermute.getNumCols(); ++i)
+    std::cout << colsPermutation[i] << " ";
+  std::cout << std::endl;
+
+  std::cout << "\n\n\n\n\nMatrixPermute" << std::endl;
+  matrixPermute.print();
+  std::cout << "Row permuted matrixPermute" << std::endl;
+  matrixPermute.permuteRows(rowsPermutation);
+  matrixPermute.print();
+  std::cout << "Col permuted matrixPermute" << std::endl;
+  matrixPermute.permuteCols(colsPermutation);
+  matrixPermute.print();
+  std::cout << "Col permuted matrixPermute" << std::endl;
+  matrixPermute.permuteCols(colsPermutation, false);
+  matrixPermute.print();
+  std::cout << "Row permuted matrixPermute" << std::endl;
+  matrixPermute.permuteRows(rowsPermutation, false);
+  matrixPermute.print();
+
+  std::cout << "Row orig" << std::endl;
+  matrixOrig.print();
+  matrixOrig.matrixAdd(matrixPermute, -1.0);
+  std::cout << "Row orig" << std::endl;
+  matrixOrig.print();
+
+  Vector src_vec(matrixPermute.getNumCols()), dst_vec(matrixPermute.getNumRows());
+  for (localIndex i = 0; i < matrixPermute.getNumCols(); ++i)
+    src_vec(i) = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+
+
+
+  matrixPermute.vectorMultiply(src_vec, dst_vec);
+  std::cout << "dst_vec" << std::endl;
+  dst_vec.print();
+
+  matrixPermute.vectorMultiply(src_vec, dst_vec,1, -1);
+  std::cout << "dst_vec" << std::endl;
+  dst_vec.print();
+
+
 //  SerialDenseMatrix A5(3,3);
 //  SerialDenseMatrix B(3,2);
 //  SerialDenseMatrix C(3,2);
