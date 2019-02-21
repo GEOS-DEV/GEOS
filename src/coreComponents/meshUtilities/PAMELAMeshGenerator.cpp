@@ -26,10 +26,15 @@
 #include "PAMELAMeshGenerator.hpp"
 
 #include "managers/DomainPartition.hpp"
-#include "managers/TableManager.hpp"
+#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/TableFunction.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
+
+#ifdef USE_ATK
+#include "slic/slic.hpp"
+#endif
 
 #include "Mesh/MeshFactory.hpp"
 
@@ -45,9 +50,12 @@ using namespace dataRepository;
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
   MeshGeneratorBase( name, parent )
 {
-  this->RegisterViewWrapper<string>(keys::filePath)->
+  RegisterViewWrapper(viewKeyStruct::fileString, &m_filePath, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("path to the mesh file");
+  RegisterViewWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Fields to be imported from the external mesh file");
 }
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
@@ -60,7 +68,7 @@ void PAMELAMeshGenerator::PostProcessInput()
 {
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >
-      ( PAMELA::MeshFactory::makeMesh( this->getReference<string>( keys::filePath )));
+      ( PAMELA::MeshFactory::makeMesh(m_filePath));
   m_pamelaMesh->CreateFacesFromCells();
   m_pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
                                                PAMELA::ELEMENTS::FAMILY::POLYGON );
@@ -84,6 +92,7 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
 
 void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
+  std::cout << "nb attributes " << m_fieldsToImport.size() << std::endl;
   ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
@@ -91,19 +100,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>( std::string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
   CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
-  const TableManager& tableManager = TableManager::Instance();
 
-
-  // Property transfer on partionned PAMELA Mesh
-  auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
-  for( auto meshPropertyItr = meshProperties.begin() ; meshPropertyItr != meshProperties.end() ; meshPropertyItr++)
-  {
-    m_pamelaPartitionnedMesh->DeclareVariable(PAMELA::FAMILY::POLYHEDRON,
-        PAMELA::VARIABLE_DIMENSION::SCALAR,
-        PAMELA::VARIABLE_LOCATION::PER_CELL,
-        meshPropertyItr->first);
-    m_pamelaPartitionnedMesh->SetVariableOnPolyhedron(meshPropertyItr->first, meshPropertyItr->second);
-  }
 
   // Use the PartMap of PAMELA to get the mesh
   auto polyhedronMap = m_pamelaPartitionnedMesh->GetPolyhedronMap();
@@ -121,7 +118,6 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
   }
   
-
   // First loop which iterate on the regions
   for( auto regionItr = polyhedronMap.begin() ; regionItr != polyhedronMap.end() ; ++regionItr )
   {
@@ -288,32 +284,38 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
         }
       }
     }
-    for(auto propertyItr = regionPtr->PerElementVariable.begin() ; propertyItr != regionPtr->PerElementVariable.end() ; propertyItr++)
+
+    // Property transfer on partionned PAMELA Mesh
+    auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
+    auto functionManager = NewFunctionManager::Instance();
+    for(auto fieldName : m_fieldsToImport)
     {
-      auto propertyPtr = (*propertyItr);
-      localIndex_array cell_indexes;
-      real64_array pptArray;
-      localIndex cell_index;
-      for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
-          cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
+      std::cout << fieldName << std::endl;
+      auto meshProperty = meshProperties[fieldName];
+      int count = 0;
+      auto fieldTable = functionManager->CreateChild(TableFunction::CatalogName(), fieldName)->group_cast<TableFunction*>();
+      for(auto propertyValueItr = meshProperty.begin_owned() ; propertyValueItr != meshProperty.end_owned() ; propertyValueItr++)
       {
-        auto cellBlockPAMELA = cellBlockIterator->second;
-        auto cellBlockType = cellBlockPAMELA->ElementType;
-        auto cellBlockName = ElementToLabel.at( cellBlockType );
-        if( cellBlockName == "HEX" || cellBlockName == "PYRAMID" || cellBlockName == "TETRA" || cellBlockName == "WEDGE"){
-          cell_indexes.resize(cell_indexes.size() +cellBlockPAMELA->SubCollection.size_owned()) ;
-          for(auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
-              cellItr != cellBlockPAMELA->SubCollection.end_owned() ; cellItr++) {
-            cell_indexes[cell_index] = (*cellItr)->get_localIndex();
-            real64 value = propertyPtr->get_data(integer_conversion<int>(cell_index))[0];
-            pptArray[cell_index++] = value;
-          }
+        real64 propertyValue = (*propertyValueItr);
+      }
+      std::cout << count << std::endl;
+      m_pamelaPartitionnedMesh->DeclareVariable(PAMELA::FAMILY::POLYHEDRON,
+          PAMELA::VARIABLE_DIMENSION::SCALAR,
+          PAMELA::VARIABLE_LOCATION::PER_CELL,
+          fieldName);
+      m_pamelaPartitionnedMesh->SetVariableOnPolyhedron(fieldName, meshProperty);
+
+      // Write property into a table
+      for(auto propertyItr = regionPtr->PerElementVariable.begin() ; propertyItr != regionPtr->PerElementVariable.end() ; propertyItr++)
+      {
+        auto meshPartitionnedProperty = (*propertyItr);
+        if( meshPartitionnedProperty->Label == fieldName)
+        {
+           fieldTable->resize(meshPartitionnedProperty->size());
         }
       }
-      tableManager.NewTable<1>(propertyPtr->Label,cell_indexes,pptArray,TableInterpolation::Order::zeroth);
     }
   }
-
 
 }
 

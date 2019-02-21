@@ -41,18 +41,14 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const filePath = "file";
-}
-}
-
-
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
+  struct viewKeyStruct
+  {
+    constexpr static auto fileString = "file";
+    constexpr static auto fieldsToImportString = "fieldsToImport";
+  } viewKeys;
   PAMELAMeshGenerator( const std::string& name,
                        ManagedGroup * const parent );
 
@@ -104,6 +100,10 @@ private:
 
   std::unordered_map<std::string, PAMELA::SubPart<PAMELA::Polyhedron *> * > m_cellBlockUniqueIdToPAMELACellBlock_;
   std::unordered_map<std::string, PAMELA::Part<PAMELA::Polyhedron *> * > m_cellBlockUniqueIdToPAMELARegion_;
+
+  string_array m_fieldsToImport;
+
+  string m_filePath;
 };
 
 }
