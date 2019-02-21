@@ -450,8 +450,6 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                             elemLocations );
     if( fracturePlaneFlag )
     {
-
-      std::cout<<"PRE-FRACTURE CHECK"<<std::endl;
       MapConsistencyCheck( nodeID, nodeManager, edgeManager, faceManager, elementManager, elemLocations );
 
       didSplit = true;
@@ -1756,7 +1754,8 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
   {
     std::cout<<"CONSISTENCY CHECKING OF THE MAPS"<<std::endl;
 
-    for( map< std::pair<CellElementSubRegion*, localIndex >, int>::const_iterator iter_elem=elemLocations.begin() ; iter_elem!=elemLocations.end() ; ++iter_elem )
+    for( map< std::pair<CellElementSubRegion*, localIndex >, int>::const_iterator iter_elem=elemLocations.begin() ;
+         iter_elem!=elemLocations.end() ; ++iter_elem )
     {
       const std::pair<CellElementSubRegion*, localIndex >& elem = iter_elem->first;
 
@@ -1949,9 +1948,12 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
       set< std::pair<CellElementSubRegion const *, localIndex> > nodeToElements;
       for( localIndex k=0 ; k<nodesToElementRegions[a].size() ; ++k )
       {
-        nodeToElements.insert( std::make_pair( elementManager.GetRegion( nodesToElementRegions[a][k] )->
-                                               GetSubRegion<CellElementSubRegion>( nodesToElementSubRegions[a][k] ),
-                                               nodesToElementIndex[a][k] ) );
+        if( nodesToElementRegions[a][k]!=-1 && nodesToElementSubRegions[a][k]!=-1 && nodesToElementIndex[a][k]!=-1 )
+        {
+          nodeToElements.insert( std::make_pair( elementManager.GetRegion( nodesToElementRegions[a][k] )->
+                                                 GetSubRegion<CellElementSubRegion>( nodesToElementSubRegions[a][k] ),
+                                                 nodesToElementIndex[a][k] ) );
+        }
       }
 
 

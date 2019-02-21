@@ -422,9 +422,9 @@ localIndex Unpack( char const *& buffer,
                    set<localIndex> & var,
                    set<globalIndex> & unmappedGlobalIndices,
                    map<globalIndex,localIndex> const & globalToLocalMap,
-                   bool const clearFlag )
+                   bool const clearExistingSet )
 {
-  if( clearFlag )
+  if( clearExistingSet )
   {
     var.clear();
   }

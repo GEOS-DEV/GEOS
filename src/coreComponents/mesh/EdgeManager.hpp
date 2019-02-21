@@ -79,7 +79,7 @@ public:
                                        localIndex_array & packList,
                                        bool const overwriteMap ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  void FixUpDownMaps( bool const clearIfUnmapped );
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
