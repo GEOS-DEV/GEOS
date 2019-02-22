@@ -17,30 +17,30 @@
  */
 
 /**
- * @file ReservoirWellSolver.hpp
+ * @file ReservoirWellsSystemSolver.hpp
  *
  */
 
-#ifndef RESERVOIRWELLSOLVER_HPP_
-#define RESERVOIRWELLSOLVER_HPP_
+#ifndef RESERVOIRWELLSYSTEMSOLVER_HPP_
+#define RESERVOIRWELLSYSTEMSOLVER_HPP_
 
 #include "../SolverBase.hpp"
 
 namespace geosx
 {
 
-class ReservoirWellSolver : public SolverBase
+class ReservoirWellsSystemSolver : public SolverBase
 {
 public:
-  ReservoirWellSolver( const std::string& name,
-                       ManagedGroup * const parent );
-  ~ReservoirWellSolver() override;
+  ReservoirWellsSystemSolver( const std::string& name,
+                              ManagedGroup * const parent );
+  ~ReservoirWellsSystemSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "ReservoirWell"; }
+  static string CatalogName() { return "ReservoirWellsSystem"; }
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
@@ -92,7 +92,7 @@ public:
   {
     constexpr static auto flowSolverNameString = "flowSolverName";
     constexpr static auto wellSolverNameString = "wellSolverName";
-  } reservoirWellSolverViewKeys;
+  } reservoirWellsSystemSolverViewKeys;
 
 
 protected:
@@ -100,7 +100,7 @@ protected:
 
 
 private:
-
+  
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
    * @param domain the domain containing the mesh and fields
@@ -108,29 +108,6 @@ private:
    */
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
   
   string m_flowSolverName;
   string m_wellSolverName;
@@ -139,4 +116,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* RESERVOIRWELLSOLVER_HPP_ */
+#endif /* RESERVOIRWELLSSYSTEMSOLVER_HPP_ */

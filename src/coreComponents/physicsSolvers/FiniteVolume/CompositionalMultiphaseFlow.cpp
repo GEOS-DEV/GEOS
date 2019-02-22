@@ -682,7 +682,8 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 co
   BackupFields( domain );
 
   // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  if (!m_reservoirWellsSystemFlag)
+    SetupSystem( domain, blockSystem );
 }
 
 void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
@@ -947,16 +948,22 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
+  if (!m_reservoirWellsSystemFlag)
+  {
+    jacobian->Scale(0.0);
+    residual->Scale(0.0);
+  }
 
   AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
   AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
 
-  jacobian->GlobalAssemble( true );
-  residual->GlobalAssemble();
-
+  if (!m_reservoirWellsSystemFlag)
+  {
+    jacobian->GlobalAssemble( true );
+    residual->GlobalAssemble();
+  }
+    
   if( verboseLevel() >= 3 )
   {
     GEOS_LOG_RANK("After CompositionalMultiphaseFlow::AssembleSystem");

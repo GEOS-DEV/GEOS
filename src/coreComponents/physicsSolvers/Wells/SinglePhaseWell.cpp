@@ -67,6 +67,8 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 
 void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
 {
+  std::cout << "SinglePhaseWell::RegisterDataOnMesh started" << std::endl;
+  
   WellSolverBase::RegisterDataOnMesh(meshBodies);
 
   WellManager * wellManager = meshBodies->GetGroup<MeshBody>(0)->getWellManager();
@@ -75,7 +77,7 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
   {
     
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
-    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dofNumberString ); 
+    wellElementSubRegion->RegisterViewWrapper<array1d<localIndex>>( viewKeyStruct::dofNumberString ); 
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
@@ -88,17 +90,16 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
     
   });    
 
+  std::cout << "SinglePhaseWell::RegisterDataOnMesh complete" << std::endl;
 }
   
 void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
+  std::cout << "SinglePhaseWell: InitializePreSubGroups started" << std::endl;
+  
   WellSolverBase::InitializePreSubGroups( rootGroup );
 
-  // TODO: figure out where this should go
-  // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
-
-  std::cout << "SinglePhaseWell: InitializePreSubGroups" << std::endl;  
+  std::cout << "SinglePhaseWell: InitializePreSubGroups complete" << std::endl;  
 }
 
 SingleFluidBase * SinglePhaseWell::GetFluidModel( ManagedGroup * dataGroup ) const
@@ -166,14 +167,15 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 
 void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
+  std::cout << "SinglePhaseWell::InitializePostInitialConditions_PreSubGroups started" << std::endl;
+  
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  std::cout << "SinglePhaseWell: InitializePostInitialConditions_PreSubGroups" << std::endl;
+  std::cout << "SinglePhaseWell::InitializePostInitialConditions_PreSubGroups complete" << std::endl;
 }
 
 void SinglePhaseWell::BackupFields( DomainPartition * const domain )
 {
-  // TODO
 }
 
 void
@@ -181,6 +183,8 @@ SinglePhaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
                                     DomainPartition * const domain,
                                     EpetraBlockSystem * const blockSystem )
 {
+  std::cout << "SinglePhaseWell::ImplicitStepSetup started" << std::endl;
+  
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
 
@@ -190,22 +194,94 @@ SinglePhaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
   // backup fields used in time derivative approximation
   BackupFields( domain );
 
-  // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  // the setup of dof numbers and linear system
+  // is done in ReservoirWellSolver
 
+  std::cout << "SinglePhaseWell::ImplicitStepSetup" << std::endl;
 }
 
-void SinglePhaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                    localIndex & numLocalRows,
+void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
+						    localIndex  & numLocalRows,
                                                     globalIndex & numGlobalRows,
                                                     localIndex offset )
 {
+  std::cout << "SinglePhaseWell::SetNumRowsAndTrilinosIndices started" << std::endl;
+  
+  int numMpiProcesses;
+  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
+
+  int thisMpiProcess = 0;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
+
+  localIndex numLocalRowsToSend = numLocalRows;
+  array1d<localIndex> gather(numMpiProcesses);
+
+  // communicate the number of local rows to each process
+  m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
+                                                &gather.front(),
+                                                1 );
+
+  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
+
+  // find the first local row on this partition, and find the number of total global rows.
+  localIndex firstLocalRow = 0;
+  numGlobalRows = 0;
+
+  for( integer p=0 ; p<numMpiProcesses ; ++p)
+  {
+    numGlobalRows += gather[p];
+    if(p<thisMpiProcess)
+      firstLocalRow += gather[p];
+  }
+
+  // TODO: double check this for multiple MPI processes
+  
+  // get the well information
+  WellManager const * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+
+  localIndex localCount = 0;
+  wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
+  {
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+    
+    arrayView1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+    arrayView1d<integer> const & wellElemGhostRank =
+      wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  
+    // create trilinos dof indexing, setting initial values to -1 to indicate unset values.
+    for ( localIndex iwelem = 0; iwelem < wellElemGhostRank.size(); ++iwelem )
+    {
+      wellDofNumber[iwelem] = -1;
+    }
+
+    // loop over all well elements and set the dof number if the element is not a ghost
+    for ( localIndex iwelem = 0; iwelem < wellElemGhostRank.size(); ++iwelem )
+    {
+      if (wellElemGhostRank[iwelem] < 0 )
+      {
+        wellDofNumber[iwelem] = firstLocalRow + localCount + offset;
+        localCount += 1;
+      }
+      else
+      {
+        wellDofNumber[iwelem] = -1;
+      }
+    }
+  });
+  	    
+
+  GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
+
+  std::cout << "SinglePhaseWell::SetNumRowsAndTrilinosIndices complete" << std::endl;
 }
 
 void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
                                           Epetra_FECrsGraph * const sparsity )
 {
-    MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  std::cout << "SinglePhaseWell::SetSparsityPattern started" << std::endl;
+  
+  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
   WellManager const * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
   
@@ -216,17 +292,17 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const & resElemGhostRank =
     elementRegionManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  localIndex constexpr maxNumDof  = 2;
+  localIndex constexpr maxNumDof = 2;      // dofs are pressure (reservoir and well) and velocity (well only)
+  localIndex const resNDOF = 1;            // dof is pressure
+  localIndex const wellNDOF = resNDOF + 1; // dofs are pressure and velocity
 
-  localIndex const resNDOF  = 1;
-  localIndex const wellNDOF = resNDOF + 1;
-
-  //**** loop over all perforations. Fill in sparsity for all pairs of DOF/elem that are connected by a perforation
+  //**** Loop over all perforations (reservoir-well entries in J_RW and J_WR)
+  // Fill in sparsity for all pairs of DOF/elem that are connected by a perforation
   wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
   {
-
-    PerforationData const * const perforationData = well->getPerforations();
     WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+    PerforationData const * const perforationData = well->getPerforations();
+    ConnectionData const * const connectionData   = well->getConnections();
 
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
@@ -268,18 +344,17 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
                                      elementLocalDofIndexCol.data() );
     }
 
-    ConnectionData const * const connectionData = well->getConnections();
-    
+    //**** Loop over all connections between segments in the wellbore (off-diagonal entries in J_WW)
+    //     Fill in sparsity for all pairs of DOF/elem that are connected by a connection
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
-
+      // this is not needed for now
+      
       // TODO: check if the connection has a primary var
       
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( 2 * wellNDOF );
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( 2 * wellNDOF );
 
-      // this is not needed for now
-      
       // TODO: get previous segment
 
       // TODO: get second segment
@@ -304,19 +379,15 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
     
   });
   
-
+  std::cout << "SinglePhaseWell::SetSparsityPattern complete" << std::endl;
 }
 
-void SinglePhaseWell::SetupSystem( DomainPartition * const domain,
-                                   EpetraBlockSystem * const blockSystem )
-{
-}
-
+  
 void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
                                       EpetraBlockSystem * const blockSystem,
                                       real64 const time_n, real64 const dt )
 {
-  std::cout << "SinglePhaseWell: AssembleSystem" << std::endl;
+  std::cout << "SinglePhaseWell: AssembleSystem started" << std::endl;
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                                 BlockIDs::fluidPressureBlock );
@@ -326,7 +397,7 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
 
   AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
-  AssembleSourceTerms( domain, blockSystem, time_n, dt );
+  AssembleSourceTerms( domain, jacobian, residual, time_n, dt );
 
   if( verboseLevel() >= 3 )
   {
@@ -335,6 +406,7 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
     GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
 
+  std::cout << "SinglePhaseWell: AssembleSystem complete" << std::endl;
 }
 
 void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
@@ -394,15 +466,15 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 
 
 void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
-                                           EpetraBlockSystem * const blockSystem,
+                                           Epetra_FECrsMatrix * const jacobian,
+                                           Epetra_FEVector * const residual,
                                            real64 const time_n,
                                            real64 const dt )
 {
+  std::cout << "SinglePhaseWell::AssembleSourceTerms started" << std::endl;
+  
   WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
-                                                                BlockIDs::fluidPressureBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber = m_resDofNumber;
 
@@ -421,8 +493,8 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
     // get the degrees of freedom 
-    array1d<real64> const & wellDofNumber =
-      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::dofNumberString );
+    array1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
     // get well primary variables on segments
     array1d<real64> const & wellPressure         =
@@ -525,7 +597,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       viscosity[ElemTag::RES]     = resViscosity[er][esr][m_fluidIndex][ei][0];
       dViscosity_dP[ElemTag::RES] = dResViscosity_dPres[er][esr][m_fluidIndex][ei][0];
 
-      // TODO: check whether we need this
+      // TODO: check whether we need this weight
       weightIndex[ElemTag::RES] = 0;
       multiplier[ElemTag::RES]  = 1;
 
@@ -621,6 +693,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     }
   });
 
+  std::cout << "SinglePhaseWell::AssembleSourceTerms complete" << std::endl;
 }
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
@@ -663,6 +736,8 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
+  std::cout << "SinglePhaseWell::ApplySystemSolution started" << std::endl;
+  
   WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
@@ -717,10 +792,13 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   // update properties
   UpdateStateAll( domain );
 
+  std::cout << "SinglePhaseWell::ApplySystemSolution complete" << std::endl;
 }
 
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
+  std::cout << "SinglePhaseWell::ResetStateToBeginningOfStep started" << std::endl;
+  
   WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
@@ -761,10 +839,13 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
   // call constitutive models
   UpdateStateAll( domain );
 
+  std::cout << "SinglePhaseWell::ResetStateToBeginningOfStep complete" << std::endl;
 }
 
 void SinglePhaseWell::ResetViews(DomainPartition * const domain)
 {
+  std::cout << "SinglePhaseWell::ResetViews started" << std::endl;
+  
   WellSolverBase::ResetViews(domain);
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -792,12 +873,16 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
   m_dResVisc_dPres =
     elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
                                                                                       constitutiveManager );
+
+  std::cout << "SinglePhaseWell::ResetViews complete" << std::endl;
 }
   
 void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
                                             real64 const & dt,
                                             DomainPartition * const domain )
-{  
+{
+  std::cout << "SinglePhaseWell::ImplicitStepComplete started" << std::endl;
+  
   WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
@@ -829,7 +914,9 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
       // TODO: check if there is a variable on this connection
       wellVelocity[iconn] += dWellVelocity[iconn];
     }    
-  }); 
+  });
+
+  std::cout << "SinglePhaseWell::ImplicitStepComplete complete" << std::endl;
 }
 
 

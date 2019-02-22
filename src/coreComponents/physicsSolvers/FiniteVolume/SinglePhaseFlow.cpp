@@ -248,7 +248,8 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
   } );
 
   // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  if (!m_reservoirWellsSystemFlag)
+    SetupSystem( domain, blockSystem );
 }
 
 
@@ -345,7 +346,7 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
 
 
 void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
-                                         EpetraBlockSystem * const blockSystem )
+                                    EpetraBlockSystem * const blockSystem )
 {
   // assume that there is only a single MeshLevel for now
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -517,9 +518,12 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
-
+  if (!m_reservoirWellsSystemFlag)
+  {
+    jacobian->Scale(0.0);
+    residual->Scale(0.0);
+  }
+  
   if (m_poroElasticFlag)
   {
     AssembleAccumulationTermsCoupled( domain, jacobian, residual, time_n, dt );
@@ -530,8 +534,11 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   }
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
 
-  jacobian->GlobalAssemble(true);
-  residual->GlobalAssemble();
+  if (!m_reservoirWellsSystemFlag)
+  {
+    jacobian->GlobalAssemble(true);
+    residual->GlobalAssemble();
+  }
 
   if( verboseLevel() >= 2 )
   {
@@ -1210,8 +1217,8 @@ void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
 
   Epetra_FEVector * const
   residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
-  residual->Scale(-1.0);
 
+  residual->Scale(-1.0);
   solution->Scale(0.0);
 
   m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,

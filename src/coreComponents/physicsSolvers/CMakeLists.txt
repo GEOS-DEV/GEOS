@@ -7,7 +7,7 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      CoupledSolvers/PoroelasticSolver.hpp
-     CoupledSolvers/ReservoirWellSolver.hpp
+     CoupledSolvers/ReservoirWellsSystemSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
      FiniteVolume/FlowSolverBase.hpp
      FiniteVolume/SinglePhaseFlow.hpp
@@ -27,7 +27,7 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
      CoupledSolvers/PoroelasticSolver.cpp
-     CoupledSolvers/ReservoirWellSolver.cpp
+     CoupledSolvers/ReservoirWellsSystemSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
      FiniteVolume/FlowSolverBase.cpp
      FiniteVolume/SinglePhaseFlow.cpp

@@ -61,7 +61,19 @@ void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
   wellManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::bhpString );
 
 }
-  
+
+void WellSolverBase::SetSparsityPattern( DomainPartition const * const domain,
+                                         Epetra_FECrsGraph * const sparsity )
+{
+}
+
+void WellSolverBase::SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
+                                                   localIndex & numLocalRows,
+                                                   globalIndex & numGlobalRows,
+                                                   localIndex offset )
+{
+}
+ 
 void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);

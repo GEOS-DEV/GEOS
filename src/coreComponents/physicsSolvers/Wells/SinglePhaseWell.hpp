@@ -180,11 +180,34 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-
   void AssembleSourceTerms( DomainPartition * const domain,
-                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            Epetra_FECrsMatrix * const jacobian,
+                            Epetra_FEVector * const residual,
                             real64 const time_n,
                             real64 const dt );
+
+  /**
+   * @brief set the sparsity pattern for the linear system
+   * @param domain the domain partition
+   * @param sparsity the sparsity pattern matrix
+   */
+  void SetSparsityPattern( DomainPartition const * const domain,
+                           Epetra_FECrsGraph * const sparsity );
+
+  /**
+   * @brief sets the dof indices for this solver
+   * @param meshLevel the mesh object (single level only)
+   * @param numLocalRows the number of local rows on this partition
+   * @param numGlobalRows the number of global rows in the problem
+   * @param offset the DOF offset for this solver in the case of a non-block system
+   *
+   * This function sets the number of global rows, and sets the dof numbers for
+   * this solver. dof numbers are referred to trilinosIndices currently.
+   */
+  void SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
+                                     localIndex & numLocalRows,
+                                     globalIndex & numGlobalRows,
+                                     localIndex offset );
 
   void InitializeWellState( DomainPartition * const domain );
   
@@ -195,7 +218,7 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // degrees of freedom numbers on the well elements
-    static constexpr auto dofNumberString = "wellBlockLocalDofNumber";
+    static constexpr auto dofNumberString = "wellElementLocalDofNumber_SinglePhaseWell";
 
     // primary solution field
     static constexpr auto pressureString      = "wellPressure";
@@ -252,37 +275,6 @@ private:
    * @param domain the domain containing the mesh and fields
    */
   void BackupFields( DomainPartition * const domain );
-
-  /**
-   * @brief Set up the linear system (DOF indices and sparsity patterns)
-   * @param domain the domain containing the mesh and fields
-   * @param blockSystem the linear system object
-   */
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step

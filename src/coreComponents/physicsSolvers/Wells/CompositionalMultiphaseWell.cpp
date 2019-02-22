@@ -413,12 +413,12 @@ CompositionalMultiphaseWell::ImplicitStepSetup( real64 const & time_n, real64 co
   // backup fields used in time derivative approximation
   BackupFields( domain );
 
-  // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  // assumes that the setup of dof numbers and linear system
+  // is done in ReservoirWellSolver
 
 }
 
-void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
                                                                 localIndex & numLocalRows,
                                                                 globalIndex & numGlobalRows,
                                                                 localIndex offset )
@@ -439,17 +439,16 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const & resElemGhostRank =
     elementRegionManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-  localIndex constexpr maxNumDof  = maxNumComp + 2;
-
-  localIndex const resNDOF  = m_numDofPerResCell;
-  localIndex const wellNDOF = resNDOF + 1;
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
+  localIndex constexpr maxNumDof  = maxNumComp + 2; // dofs are 1 pressure, NC comp densities (reservoir and well), 1 velocity (well only)
+  localIndex const resNDOF  = m_numDofPerResCell; // reservoir dofs are 1 pressure and NC comp densities
+  localIndex const wellNDOF = resNDOF + 1; // well dofs are 1 pressure, NC comp densities, 1 velocity
 
   //**** loop over all perforations. Fill in sparsity for all pairs of DOF/elem that are connected by a perforation
   wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
   {
-
     PerforationData const * const perforationData = well->getPerforations();
+    ConnectionData const * const connectionData   = well->getConnections();
     WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
 
     // get the element region, subregion, index
@@ -462,7 +461,8 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
     arrayView1d<localIndex const> const & resElementIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
-    
+    //**** Loop over all perforations (reservoir-well entries in J_RW and J_WR)
+    // Fill in sparsity for all pairs of DOF/elem that are connected by a perforation
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
     {
 
@@ -494,8 +494,8 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
                                      elementLocalDofIndexCol.data() );
     }
 
-    ConnectionData const * const connectionData = well->getConnections();
-    
+    //**** Loop over all connections between segments in the wellbore (off-diagonal entries in J_WW)
+    //     Fill in sparsity for all pairs of DOF/elem that are connected by a connection
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
 
@@ -532,10 +532,6 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
   
 }
 
-void CompositionalMultiphaseWell::SetupSystem( DomainPartition * const domain,
-                                               EpetraBlockSystem * const blockSystem )
-{
-}
 
 void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain,
                                                   EpetraBlockSystem * const blockSystem,
@@ -550,7 +546,7 @@ void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain
   AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
   AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
-  AssembleSourceTerms( domain, blockSystem, time_n, dt );
+  AssembleSourceTerms( domain, jacobian, residual, time_n, dt );
 
   if( verboseLevel() >= 3 )
   {
@@ -617,15 +613,12 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition * 
 
 
 void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const domain,
-                                                       EpetraBlockSystem * const blockSystem,
+                                                       Epetra_FECrsMatrix * const jacobian,
+                                                       Epetra_FEVector * const residual,
                                                        real64 const time_n,
                                                        real64 const dt )
 {
   WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
-
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
-                                                                BlockIDs::compositionalBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber = m_resDofNumber;
 
@@ -651,8 +644,8 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
   
-  localIndex const NC   = m_numComponents;
-  localIndex const NP   = m_numPhases;
+  localIndex const NC      = m_numComponents;
+  localIndex const NP      = m_numPhases;
   localIndex const resNDOF = m_numDofPerResCell;
  
   real64 constexpr densWeight[2] = { 1.0, 0.0 };
@@ -663,8 +656,8 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
     // get the degrees of freedom
-    array1d<real64> const & wellDofNumber =
-      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::dofNumberString );
+    array1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
     
     // get well primary variables on segments
     array1d<real64> const & wellPressure =
@@ -796,7 +789,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
       for (localIndex jdof = 0; jdof < resNDOF; ++jdof)
       {
         dofColIndices[ElemTag::RES  * resNDOF + jdof] = resOffset  + jdof;
-       dofColIndices[ElemTag::WELL  * resNDOF + jdof] = wellOffset + jdof;
+        dofColIndices[ElemTag::WELL  * resNDOF + jdof] = wellOffset + jdof;
       }
       
       // loop over phases, compute and upwind phase flux
@@ -873,9 +866,9 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 	multiplier[ElemTag::RES] = 1;
 
         // 2) get well variables
-	
-        localIndex const iwelem = 0; // this is a hack
 
+	localIndex const iwelem = 0; // this is a hack
+	
 	// pressure
 	pressure[ElemTag::WELL]  = wellPressure[iwelem] + dWellPressure[iwelem];
         gravDepth[ElemTag::WELL] = wellGravDepth[iwelem];
@@ -934,7 +927,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
         Perforation * perforation = perforationData->getPerforation( iperf ); 
         const real64 trans = perforation->getTransmissibility(); // TODO: change to an array of transmissibilities in PerforationData
 
-	// compute potential difference MPFA-style
+	// compute potential difference
         for (localIndex i = 0; i < 2; ++i)
         {
           presGrad += multiplier[i] * trans * pressure[i]; // pressure = pres + dPres
@@ -1050,7 +1043,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
  
       for (localIndex ic = 0; ic < NC; ++ic)
       {
-        localFlux[ElemTag::RES * NC  + ic] =  dt * compFlux[ic];
+        localFlux[ElemTag::RES  * NC + ic] =  dt * compFlux[ic];
         localFlux[ElemTag::WELL * NC + ic] = -dt * compFlux[ic];
  
         for (localIndex ke = 0; ke < 2; ++ke)
