@@ -17,8 +17,7 @@
  */
 
 /**
- * @file FaceManager.h
- * @author settgast1
+ * @file FaceManager.hpp
  */
 
 #ifndef FACEMANAGER_H_
