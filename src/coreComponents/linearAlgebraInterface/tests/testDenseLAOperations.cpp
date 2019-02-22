@@ -292,7 +292,7 @@ void testMatrixConstructors()
   std::cout << "Row orig" << std::endl;
   matrixOrig.print();
 
-  Vector src_vec(matrixPermute.getNumCols()), dst_vec(matrixPermute.getNumRows());
+  SerialVector src_vec(matrixPermute.getNumCols()), dst_vec(matrixPermute.getNumRows());
   for (localIndex i = 0; i < matrixPermute.getNumCols(); ++i)
     src_vec(i) = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
 

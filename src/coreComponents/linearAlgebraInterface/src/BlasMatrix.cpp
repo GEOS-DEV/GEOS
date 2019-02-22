@@ -21,7 +21,7 @@
  */
 
 // Include the corresponding header file.
-#include <BlasMatrix.hpp>
+#include "BlasMatrix.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -526,35 +526,63 @@ void BlasMatrix::TmatrixTMultiply( BlasMatrix const &src,
 }
 
 // matrix-vector multiplication
-void BlasMatrix::vectorMultiply(BlasMatrix const &src,
-                                BlasMatrix &dst,
+void BlasMatrix::vectorMultiply(BlasVector const &src,
+                                BlasVector &dst,
                                 real64 const scalarThisSrc,
                                 real64 const scalarDst)
 {
-  GEOS_ASSERT_MSG(m_numCols == src.getNumRows() && m_numRows == dst.getNumRows(),
+  GEOS_ASSERT_MSG(m_numCols == src.getSize() && m_numRows == dst.getSize(),
                   "Matrix, source vector and destination vector not compatible");
 
-  this->matrixMultiply(src,
-                       dst,
-                       scalarThisSrc,
-                       scalarDst);
+  int M = integer_conversion<int>( m_numRows );
+  int N = 1;
+  int K = integer_conversion<int>( m_numCols );
+
+  cblas_dgemm( CblasColMajor,
+               CblasNoTrans,
+               CblasNoTrans,
+               M,
+               N,
+               K,
+               scalarThisSrc,
+               m_values.data(),
+               M,
+               src.getValues()->data(),
+               K,
+               scalarDst,
+               dst.getValues()->data(),
+               M );
 
   return;
 }
 
 // transpose(matrix)-vector multiplication
-void BlasMatrix::TvectorMultiply(BlasMatrix const &src,
-                                 BlasMatrix &dst,
+void BlasMatrix::TvectorMultiply(BlasVector const &src,
+                                 BlasVector &dst,
                                  real64 const scalarThisSrc,
                                  real64 const scalarDst)
 {
-  GEOS_ASSERT_MSG(m_numRows == src.getNumRows() && m_numCols == dst.getNumRows(),
+  GEOS_ASSERT_MSG(m_numRows == src.getSize() && m_numCols == dst.getSize(),
                   "Matrix, source vector and destination vector not compatible");
 
-  this->TmatrixMultiply(src,
-                        dst,
-                        scalarThisSrc,
-                        scalarDst);
+  int M = integer_conversion<int>( m_numCols );
+  int N = integer_conversion<int>( 1 );
+  int K = integer_conversion<int>( m_numRows );
+
+  cblas_dgemm( CblasColMajor,
+               CblasTrans,
+               CblasNoTrans,
+               M,
+               N,
+               K,
+               scalarThisSrc,
+               m_values.data(),
+               K,
+               src.getValues()->data(),
+               K,
+               scalarDst,
+               dst.getValues()->data(),
+               M );
 
   return;
 }

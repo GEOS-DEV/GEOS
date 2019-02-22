@@ -8,8 +8,8 @@
 #ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKSUITEINTERFACE_HPP_
 #define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LAPACKSUITEINTERFACE_HPP_
 
-#include "BlasMatrix.hpp"
 #include "BlasVector.hpp"
+#include "BlasMatrix.hpp"
 
 namespace geosx
 {
@@ -25,7 +25,7 @@ public:
 
   // Lapack matrix and vector wrappers
   using SerialMatrix = BlasMatrix;
-  using Vector = BlasVector;
+  using SerialVector = BlasVector;
 
   //! @name Constructor/Destructor Methods
   //@{
