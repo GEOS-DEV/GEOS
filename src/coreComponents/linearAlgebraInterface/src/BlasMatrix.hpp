@@ -24,6 +24,7 @@
 #define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
+#include "BlasVector.hpp"
 #include "Logger.hpp"
 
 #include "cblas.h"
@@ -383,8 +384,8 @@ public:
    * @warning
    * Assumes that <tt>x</tt> and <tt>y</tt> have compatible sizes.
    */
-  void vectorMultiply(BlasMatrix const & src,
-                      BlasMatrix &dst,
+  void vectorMultiply(BlasVector const & src,
+                      BlasVector &dst,
                       real64 const scalarThisSrc=1.,
                       real64 const scalarDst=0.);
 
@@ -407,8 +408,8 @@ public:
    * @warning
    * Assumes that <tt>x</tt> and <tt>y</tt> have compatible sizes.
    */
-  void TvectorMultiply(BlasMatrix const & src,
-                       BlasMatrix &dst,
+  void TvectorMultiply(BlasVector const & src,
+                       BlasVector &dst,
                        real64 const scalarThisSrc=1.,
                        real64 const scalarDst=0.);
 

@@ -23,7 +23,11 @@
 #ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASVECTOR_HPP_
 #define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASVECTOR_HPP_
 
-#include "BlasMatrix.hpp"
+#include "common/DataTypes.hpp"
+#include "Logger.hpp"
+
+#include "cblas.h"
+#include "lapacke.h"
 
 namespace geosx
 {
@@ -31,85 +35,222 @@ namespace geosx
 /**
  * \class BlasVector
  * \brief This class creates and provides basic support for for manipulating
- *        a BLAS-style vectors
+ *        a BLAS-style column vector
  */
 
-class BlasVector : public BlasMatrix
+class BlasVector
 {
 public:
-   //----------------------------------------------------------------------------
-   //! @name Constructor/Destructor Methods
-   //@{
+
+  //----------------------------------------------------------------------------
+  //! @name Constructor/Destructor Methods
+  //@{
 
   /**
    * @brief Default constructor.
    */
   BlasVector();
 
-   /**
-    * @brief Shaped constructor; defines a variable-sized vector.
-    *
-    * \param IN
-    * length - vector size.
-    *
-    * @note All values are initialized to 0.
-    */
-    BlasVector(localIndex length);
+  /**
+   * @brief Shaped constructor; defines a variable-sized vector.
+   *
+   * \param IN
+   * length - vector size.
+   *
+   * @note All values are initialized to 0.
+   */
+  BlasVector( localIndex length );
 
-   //@}
+  /**
+   * @brief Copy constructor.
+   *
+   * \param IN
+   * src - BlasMatrix
+   *
+   */
+  BlasVector( BlasVector const & src );
 
-   //----------------------------------------------------------------------------
-   //! @name Mathematical methods
-   //@{
+  /**
+   * @brief Matrix destructor.
+   */
+  ~BlasVector();
 
-   /**
-    * @brief Vector-Vector sum;
-    * \a this = scalarX*<tt>x</tt> + \a this.
-    *
-    * Computes (scalarX*<tt>x</tt> + \a this) and overwrites the result on the
-    * current \a this, with optional scaling.
-    *
-    * \param IN
-    * <tt>x</tt> - Dense vector.
-    * \param [IN]
-    * scalarx - Optional scalar to multiply with <tt>x</tt>.
-    *
-    * @warning
-    * Assumes that <tt>x</tt> and \a this have the same size.
-    *
-    * @note This function calls BLAS function DAXPY using Trilinos/Epetra BLAS
-    *       Wrapper Class if built with Trilinos.
-    */
-   void vectorAdd(BlasVector& x, real64 const scalarX=1.);
+  //@}
 
-   //@}
+  //----------------------------------------------------------------------------
+  //! @name Shaping/sizing/permuting methods
+  //@{
 
-   //----------------------------------------------------------------------------
-   //! @name Data Accessor methods
-   //@{
+  /**
+   * @brief Resize vector. All entries set to zero
+   *
+   * \param IN
+   * length - Vector length
+   *
+   */
+  void resize( localIndex length );
 
-   using BlasMatrix::operator(); //overload base-class function operator()
+  /**
+   * @brief Reinitialize the vector.
+   *
+   * Sets all elements to zero.
+   *
+   */
+  void zero();
 
-   /**
-    * @brief Element access function.
-    *
-    * The parentheses operator returns the element in the ith vector entry.
-    */
-   inline real64 & operator ()( localIndex Index);
+  /**
+   * @brief Operator that sets all matrix entries equal to a constant value
+   *
+   * * \param IN
+   * \a value - Constant value to be assigned to each entry of the matrix
+   *
+   */
+  BlasVector &operator=( double value );
 
-   /**
-    * @brief Element access function.
-    *
-    * The parentheses operator returns the element in the ith vector entry.
-    */
-   inline real64 const & operator ()( localIndex Index) const;
+  /**
+   * @brief Rearranges the vector coefficient as specified by a permutation
+   *        vector
+   *
+   * * \param IN
+   * \a permutationVector - contains the permutation vector
+   * \a forwardPermuation - optional argument
+   *
+   * @note Given an M*1 vector V and a permutation vector PERM
+   *
+   *       Forward permutation (forwardPermutation = true):
+   *       V(PERM(I),*) is moved V(I,*) for I = 1,2,...,M.
+   *
+   *       Backward permutation (forwardPermutation = false):
+   *       V(I,*) is moved V(PERM(I),*) for I = 1,2,...,M.
+   *
+   */
+  void permute( array1d<int> permutationVector,
+                const bool forwardPermutation = true );
 
-   /**
-    * @brief Returns vector length.
-    */
-   localIndex length() const;
+  //@}
 
-   //@}
+  //----------------------------------------------------------------------------
+    //! @name Mathematical methods
+    //@{
+
+    /**
+     * @brief Returns the 1-norm of the vector.
+     */
+    real64 norm1() const;
+
+    /**
+     * @brief Returns the two norm of the vector.
+     */
+    real64 norm2() const;
+
+    /**
+     * @brief Infinity-norm of the vector.
+     */
+    real64 normInf() const;
+
+    /**
+     * @brief Vector-Vector sum;
+     * \a this = scalarVec*<tt>Vec</tt> + \a this.
+     *
+     * Computes (scalarVec*<tt>Vec</tt> + \a this) and overwrites the result on the
+     * current \a this, with optional scaling.
+     *
+     * \param IN
+     * <tt>Vec</tt> - BlasVector vector.
+     * \param [IN]
+     * scalarVec - Optional scalar to multiply with <tt>Vec</tt>.
+     *
+     * @warning
+     * Assumes that <tt>Vec</tt> and \a this have the same size.
+     */
+    void vectorAdd( BlasVector const & Vec,
+                    real64 const scalarVec = 1. );
+
+    /**
+     * @brief In-place scalar-vector product;
+     * \a this = scalarThis* \a this
+     *
+     * \param IN
+     * scalarThis - Scalar to multiply with \a this.
+     */
+    void scale(real64 scalarThis);
+
+    /**
+     * @brief Dot product with the vector vec.
+     *
+     * \param vec EpetraVector to dot-product with.
+     *
+     */
+    real64 dot( BlasVector const &vec );
+
+    /**
+     * @brief Update vector \a this as \a this = <tt>vec</tt>.
+     *
+     * @note The naming convention follows the BLAS library.
+     *
+     * \param x EpetraVector to copy.
+     *
+     */
+    void copy( BlasVector const &vec );
+
+    //@}
+
+    //----------------------------------------------------------------------------
+    //! @name Data Accessor methods
+    //@{
+
+    /**
+     * @brief Coefficient access function.
+     *
+     * The parentheses operator returns the reference to the coefficient in
+     * position (index).
+     */
+    inline real64 & operator ()( localIndex index );
+
+    /**
+     * @brief Constant coefficient access function.
+     *
+     * The parentheses operator returns the reference to the coefficient in
+     * position (index).
+     */
+    inline real64 const & operator ()( localIndex index ) const;
+
+    /**
+     * @brief Returns vector size.
+     */
+    localIndex getSize() const;
+
+    /**
+     * @brief Returns a const pointer to the underlying
+     *        array1d<real64> object.
+     */
+    array1d<real64> const * getValues() const;
+
+    /**
+     * @brief Returns a non-const pointer to the underlying
+     *        array1d<real64> object.
+     */
+    array1d<real64>* getValues();
+
+    //@}
+
+    //@}
+
+    //----------------------------------------------------------------------------
+    //! @name I/O methods
+    //@{
+
+    /**
+     * @brief Print service method; defines behavior of ostream << operator.
+     */
+    void print();
+
+    //@}
+
+protected:
+
+  localIndex m_size = 0; ///< Number of vector entries (lenght)
+  array1d<real64> m_values; ///< array1d storing vector entries
 
 };
 
@@ -117,15 +258,15 @@ public:
 inline real64 & BlasVector::operator ()( localIndex index )
 {
   GEOS_ASSERT_MSG( 0 <= index &&
-                   index <= m_numRows,
+                   index <= m_size,
                    "Requested value out of bounds" );
   return m_values[index];
 }
 
 inline real64 const & BlasVector::operator ()( localIndex index) const
-                                               {
+{
   GEOS_ASSERT_MSG( 0 <= index &&
-                   index <= m_numRows,
+                   index <= m_size,
                    "Requested value out of bounds" );
   return m_values[index];
 }
