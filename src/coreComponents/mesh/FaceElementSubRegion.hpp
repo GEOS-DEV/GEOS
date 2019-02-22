@@ -78,16 +78,19 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
+  string GetElementType() const { return "C3D8"; }
 
-  OrderedVariableOneToManyRelation const & nodeList() const
+
+  NodeMapType const & nodeList() const
   {
     return m_toNodesRelation;
   }
 
-  OrderedVariableOneToManyRelation & nodeList()
+  NodeMapType & nodeList()
   {
     return m_toNodesRelation;
   }
+
 
   virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
   {
@@ -98,6 +101,34 @@ public:
   {
     return m_toNodesRelation[k];
   }
+
+  EdgeMapType const & edgeList() const
+  {
+    return m_toEdgesRelation;
+  }
+
+  EdgeMapType & edgeList()
+  {
+    return m_toEdgesRelation;
+  }
+
+  FaceMapType const & faceList() const
+  {
+    return m_toFacesRelation;
+  }
+
+  FaceMapType & faceList()
+  {
+    return m_toFacesRelation;
+  }
+
+  /**
+   * @return number of nodes per element
+   */
+  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
+
+  arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
 
 private:
 
@@ -111,7 +142,7 @@ private:
   FaceMapType  m_toFacesRelation;
 
   /// The member level field for the element center
-  array1d< R1Tensor > m_elementAperture;
+  array1d< real64 > m_elementAperture;
 
   /// The member level field for the element center
   array1d< R1Tensor > m_elementArea;

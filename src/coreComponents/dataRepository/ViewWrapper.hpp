@@ -201,6 +201,35 @@ public:
     return typeid(T);
   }
 
+
+  /**
+   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * @param base
+   * @return casted ViewWrapper<T>
+   */
+  static ViewWrapper<T> * cast( ViewWrapperBase * const base )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast< ViewWrapper<T> * >(base);
+#else
+    return static_cast< ViewWrapper<T> * >(base);
+#endif
+  }
+
+  /**
+   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * @param base
+   * @return casted reference to const ViewWrapper<T>
+   */
+  static ViewWrapper<T> const * cast( ViewWrapperBase const * const base )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast< ViewWrapper<T> const * >(base);
+#else
+    return static_cast< ViewWrapper<T> const * >(base);
+#endif
+  }
+
   /**
    * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
    * @param base

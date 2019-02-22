@@ -71,6 +71,8 @@ public:
    */
   localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
 
+  virtual localIndex numNodesPerElement( localIndex const ) const { return m_numNodesPerElement; }
+
   /**
    * @return number of edges per element
    */

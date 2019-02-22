@@ -432,31 +432,34 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   constexpr localIndex numElems = 2;
   globalIndex_array elementLocalDofIndexRow(numElems);
   globalIndex_array elementLocalDofIndexCol(numElems);
-  stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
   {
-    stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
+    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
     {
-      elementLocalDofIndexRow[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-    });
+      stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
+      {
+        elementLocalDofIndexRow[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+      });
 
-    localIndex const stencilSize = stencil.size();
-    elementLocalDofIndexCol.resize(stencilSize);
-    stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
-    {
-      elementLocalDofIndexCol[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-    });
+      localIndex const stencilSize = stencil.size();
+      elementLocalDofIndexCol.resize(stencilSize);
+      stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
+      {
+        elementLocalDofIndexCol[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+      });
 
-    sparsity->InsertGlobalIndices(integer_conversion<int>(numElems),
-                                  elementLocalDofIndexRow.data(),
-                                  integer_conversion<int>(stencilSize),
-                                  elementLocalDofIndexCol.data());
+      sparsity->InsertGlobalIndices(integer_conversion<int>(numElems),
+                                    elementLocalDofIndexRow.data(),
+                                    integer_conversion<int>(stencilSize),
+                                    elementLocalDofIndexCol.data());
+    });
   });
+
 
   // loop over all elements and add all locals just in case the above connector loop missed some
   forAllElemsInMesh<RAJA::seq_exec>( meshLevel, GEOSX_LAMBDA ( localIndex const er,
@@ -595,8 +598,8 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                            ElementRegion const * const region,
-                                            ElementSubRegionBase const * const subRegion )
+                                                   ElementRegion const * const region,
+                                                   ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
@@ -647,10 +650,10 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
         real64 const localAccumJacobian = dPoro_dPres * densNew * volNew
                                         + dDens_dPres[ei][0] * poro[ei] * volNew;
 
-
         // add contribution to global residual and jacobian
         residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
         jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+
       }
     } );
   } );
@@ -670,7 +673,6 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
-  FluxApproximationBase::CellStencil const & stencilCollection =fluxApprox->getStencil();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber = m_dofNumber;
 
@@ -685,109 +687,112 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   constexpr localIndex numElems = 2;
   constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
 
-  stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
   {
-    localIndex const stencilSize = stencil.size();
-
-    // working arrays
-    stackArray1d<globalIndex, numElems> eqnRowIndices(numElems);
-    stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
-
-    stackArray1d<real64, numElems> localFlux(numElems);
-    stackArray2d<real64, numElems*maxStencilSize> localFluxJacobian(numElems, stencilSize);
-
-    stackArray1d<real64, numElems> densWeight(numElems);
-    stackArray1d<real64, numElems> mobility(numElems);
-    stackArray1d<real64, numElems> dMobility_dP(numElems);
-    stackArray1d<real64, maxStencilSize> dDensMean_dP(stencilSize);
-    stackArray1d<real64, maxStencilSize> dFlux_dP(stencilSize);
-
-    // clear working arrays
-    eqnRowIndices = -1;
-    dDensMean_dP = 0.0;
-
-    // density averaging weights
-    densWeight = 0.5;
-
-    // calculate quantities on primary connected cells
-    real64 densMean = 0.0;
-    stencil.forConnected( [&] ( CellDescriptor const & cell, localIndex i )
+    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
     {
-      localIndex const er  = cell.region;
-      localIndex const esr = cell.subRegion;
-      localIndex const ei  = cell.index;
+      localIndex const stencilSize = stencil.size();
 
-      eqnRowIndices[i] = dofNumber[er][esr][ei];
+      // working arrays
+      stackArray1d<globalIndex, numElems> eqnRowIndices(numElems);
+      stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
 
-      // density
-      real64 const density   = dens[er][esr][m_fluidIndex][ei][0];
-      real64 const dDens_dP  = dDens_dPres[er][esr][m_fluidIndex][ei][0];
+      stackArray1d<real64, numElems> localFlux(numElems);
+      stackArray2d<real64, numElems*maxStencilSize> localFluxJacobian(numElems, stencilSize);
 
-      // viscosity
-      real64 const viscosity = visc[er][esr][m_fluidIndex][ei][0];
-      real64 const dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
+      stackArray1d<real64, numElems> densWeight(numElems);
+      stackArray1d<real64, numElems> mobility(numElems);
+      stackArray1d<real64, numElems> dMobility_dP(numElems);
+      stackArray1d<real64, maxStencilSize> dDensMean_dP(stencilSize);
+      stackArray1d<real64, maxStencilSize> dFlux_dP(stencilSize);
 
-      // mobility
-      mobility[i]  = density / viscosity;
-      dMobility_dP[i]  = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
+      // clear working arrays
+      eqnRowIndices = -1;
+      dDensMean_dP = 0.0;
 
-      // average density
-      densMean += densWeight[i] * density;
-      dDensMean_dP[i] = densWeight[i] * dDens_dP;
+      // density averaging weights
+      densWeight = 0.5;
+
+      // calculate quantities on primary connected cells
+      real64 densMean = 0.0;
+      stencil.forConnected( [&] ( CellDescriptor const & cell, localIndex i )
+      {
+        localIndex const er  = cell.region;
+        localIndex const esr = cell.subRegion;
+        localIndex const ei  = cell.index;
+
+        eqnRowIndices[i] = dofNumber[er][esr][ei];
+
+        // density
+        real64 const density   = dens[er][esr][m_fluidIndex][ei][0];
+        real64 const dDens_dP  = dDens_dPres[er][esr][m_fluidIndex][ei][0];
+
+        // viscosity
+        real64 const viscosity = visc[er][esr][m_fluidIndex][ei][0];
+        real64 const dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
+
+        // mobility
+        mobility[i]  = density / viscosity;
+        dMobility_dP[i]  = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
+
+        // average density
+        densMean += densWeight[i] * density;
+        dDensMean_dP[i] = densWeight[i] * dDens_dP;
+      });
+
+      //***** calculation of flux *****
+
+      // compute potential difference MPFA-style
+      real64 potDif = 0.0;
+      stencil.forAll( [&] ( CellDescriptor const & cell, real64 w, localIndex i )
+      {
+        localIndex const er  = cell.region;
+        localIndex const esr = cell.subRegion;
+        localIndex const ei  = cell.index;
+
+        dofColIndices[i] = dofNumber[er][esr][ei];
+
+        real64 const gravD    = gravDepth[er][esr][ei];
+        real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
+        real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
+
+        potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
+        dFlux_dP[i] = w * (1.0 - dGrav_dP);
+      });
+
+      // upwinding of fluid properties (make this an option?)
+      localIndex const k_up = (potDif >= 0) ? 0 : 1;
+
+      // compute the final flux and derivatives
+      real64 const flux = mobility[k_up] * potDif;
+      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      {
+        dFlux_dP[ke] *= mobility[k_up];
+      }
+
+      dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
+
+      //***** end flux terms *****
+
+      // populate local flux vector and derivatives
+      localFlux[0] =  dt * flux;
+      localFlux[1] = -localFlux[0];
+
+      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      {
+        localFluxJacobian[0][ke] =   dt * dFlux_dP[ke];
+        localFluxJacobian[1][ke] = - dt * dFlux_dP[ke];
+      }
+
+      // Add to global residual/jacobian
+      jacobian->SumIntoGlobalValues( integer_conversion<int>(numElems),
+                                     eqnRowIndices.data(),
+                                     integer_conversion<int>(stencilSize),
+                                     dofColIndices.data(),
+                                     localFluxJacobian.data() );
+
+      residual->SumIntoGlobalValues( integer_conversion<int>(numElems), eqnRowIndices.data(), localFlux.data() );
     });
-
-    //***** calculation of flux *****
-
-    // compute potential difference MPFA-style
-    real64 potDif = 0.0;
-    stencil.forAll( [&] ( CellDescriptor const & cell, real64 w, localIndex i )
-    {
-      localIndex const er  = cell.region;
-      localIndex const esr = cell.subRegion;
-      localIndex const ei  = cell.index;
-
-      dofColIndices[i] = dofNumber[er][esr][ei];
-
-      real64 const gravD    = gravDepth[er][esr][ei];
-      real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
-      real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
-
-      potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
-      dFlux_dP[i] = w * (1.0 - dGrav_dP);
-    });
-
-    // upwinding of fluid properties (make this an option?)
-    localIndex const k_up = (potDif >= 0) ? 0 : 1;
-
-    // compute the final flux and derivatives
-    real64 const flux = mobility[k_up] * potDif;
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
-    {
-      dFlux_dP[ke] *= mobility[k_up];
-    }
-
-    dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
-
-    //***** end flux terms *****
-
-    // populate local flux vector and derivatives
-    localFlux[0] =  dt * flux;
-    localFlux[1] = -localFlux[0];
-
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
-    {
-      localFluxJacobian[0][ke] =   dt * dFlux_dP[ke];
-      localFluxJacobian[1][ke] = - dt * dFlux_dP[ke];
-    }
-
-    // Add to global residual/jacobian
-    jacobian->SumIntoGlobalValues( integer_conversion<int>(numElems),
-                                   eqnRowIndices.data(),
-                                   integer_conversion<int>(stencilSize),
-                                   dofColIndices.data(),
-                                   localFluxJacobian.data() );
-
-    residual->SumIntoGlobalValues( integer_conversion<int>(numElems), eqnRowIndices.data(), localFlux.data() );
   });
 }
 

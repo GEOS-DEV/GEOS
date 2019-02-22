@@ -53,6 +53,7 @@ public:
                                      real64 const& dt,
                                      DomainPartition * const domain) override final;
 
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
