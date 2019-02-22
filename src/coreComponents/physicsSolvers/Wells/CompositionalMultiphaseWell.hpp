@@ -231,7 +231,9 @@ public:
    * @param sparsity the sparsity pattern matrix
    */
   void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
+                           Epetra_FECrsGraph * const sparsity,
+			   globalIndex firstWellElemDofNumber,
+			   localIndex numDofPerResElement );
 
   /**
    * @brief sets the dof indices for this solver
@@ -380,9 +382,6 @@ private:
 
   /// the number of fluid components
   localIndex m_numComponents;
-
-  /// the number of degrees of freedom per reservoir cell
-  localIndex m_numDofPerResCell;
   
   /// the (uniform) temperature
   real64 m_temperature;

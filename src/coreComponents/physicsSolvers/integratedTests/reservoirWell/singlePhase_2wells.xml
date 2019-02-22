@@ -6,14 +6,14 @@
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
-    <ReservoirWell name="reservoirWell"
+    <ReservoirWellsSystem name="reservoirWell"
 		   flowSolverName="SinglePhaseFlow"
                    wellSolverName="SinglePhaseWell"
                    verboseLevel="1"
                    targetRegions="Region2">
       <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
-    </ReservoirWell>
+    </ReservoirWellsSystem>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                      verboseLevel="1"
@@ -57,15 +57,10 @@
 
 
   <Events maxTime="100.0">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="20.0"
                    target="/Solvers/reservoirWell" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    timeFrequency="100.0"
                    targetExactTimestep="1"
@@ -214,7 +209,7 @@
     <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
   </Functions>
 
-  <!-- <Partition>
+  <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
   </Partition> -->
 

@@ -855,9 +855,11 @@ void ProblemManager::ApplyNumericalMethods()
     
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-      WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
-      constitutiveManager->HangConstitutiveRelation( "fluid", wellElementSubRegion, quadratureSize );
+    // TODO: "water" should not be hard coded here,
+    // find a way to get the fluid constitutive model instead
+    constitutiveManager->HangConstitutiveRelation( "water", wellElementSubRegion, quadratureSize );
   });
 }
 

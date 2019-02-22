@@ -77,7 +77,9 @@ public:
 
   localIndex fluidIndex() const { return m_fluidIndex; }
 
-  localIndex numDofPerWellElement() const { return m_numDofPerWellElement; }
+  localIndex numDofPerElement() const { return m_numDofPerElement; }
+
+  localIndex numDofPerConnection() const { return m_numDofPerConnection; }
 
   /**
    * @brief default destructor
@@ -92,7 +94,9 @@ public:
    * @param sparsity the sparsity pattern matrix
    */
   virtual void SetSparsityPattern( DomainPartition const * const domain,
-                                   Epetra_FECrsGraph * const sparsity );
+                                   Epetra_FECrsGraph * const sparsity,
+				   globalIndex firstWellElemDofNumber,
+				   localIndex numDofPerResElement );
 
   /**
    * @brief sets the dof indices for this solver
@@ -117,8 +121,8 @@ public:
     static constexpr auto gravityDepthString = "gravityDepth";
 
     // misc inputs
-    static constexpr auto fluidNameString      = "fluidName";
-    static constexpr auto fluidIndexString     = "fluidIndex";
+    static constexpr auto fluidNameString  = "fluidName";
+    static constexpr auto fluidIndexString = "fluidIndex";
 
     // bhp control
     static constexpr auto bhpString = "BHP";
@@ -130,8 +134,8 @@ public:
     ViewKey gravityDepth = { gravityDepthString };
 
     // misc inputs
-    ViewKey fluidName    = { fluidNameString };
-    ViewKey fluidIndex   = { fluidIndexString };
+    ViewKey fluidName  = { fluidNameString };
+    ViewKey fluidIndex = { fluidIndexString };
 
     // bhp control
     ViewKey bhp = { bhpString }; 
@@ -168,7 +172,7 @@ protected:
   localIndex m_fluidIndex;
 
   /// the number of Degrees of Freedom per well element
-  localIndex m_numDofPerWellElement;
+  localIndex m_numDofPerElement;
 
   /// the number of Degrees of Freedom per well connection
   localIndex m_numDofPerConnection;

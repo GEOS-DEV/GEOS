@@ -192,7 +192,9 @@ public:
    * @param sparsity the sparsity pattern matrix
    */
   void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
+                           Epetra_FECrsGraph * const sparsity,
+			   globalIndex firstWellElemDofNumber,
+			   localIndex numDofPerResElement);
 
   /**
    * @brief sets the dof indices for this solver

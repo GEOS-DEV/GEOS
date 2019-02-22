@@ -38,7 +38,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
     m_gravityFlag(1),
     m_fluidName(),
     m_fluidIndex(),
-    m_numDofPerWellElement(0),
+    m_numDofPerElement(0),
     m_numDofPerConnection(0)
 {
   RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
@@ -63,7 +63,9 @@ void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
 }
 
 void WellSolverBase::SetSparsityPattern( DomainPartition const * const domain,
-                                         Epetra_FECrsGraph * const sparsity )
+                                         Epetra_FECrsGraph * const sparsity,
+					 globalIndex firstWellElemDofNumber,
+					 localIndex numDofPerResElement )
 {
 }
 

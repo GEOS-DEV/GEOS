@@ -60,8 +60,8 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
   :
   WellSolverBase( name, parent )
 {
-  m_numDofPerWellElement = 1;
-  m_numDofPerConnection  = 1;
+  m_numDofPerElement    = 1;
+  m_numDofPerConnection = 1;
 
 }
 
@@ -77,7 +77,7 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
   {
     
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
-    wellElementSubRegion->RegisterViewWrapper<array1d<localIndex>>( viewKeyStruct::dofNumberString ); 
+    wellElementSubRegion->RegisterViewWrapper<array1d<globalIndex>>( viewKeyStruct::dofNumberString ); 
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
@@ -261,6 +261,7 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
       if (wellElemGhostRank[iwelem] < 0 )
       {
         wellDofNumber[iwelem] = firstLocalRow + localCount + offset;
+	std::cout << "wells: currentDofNumber = " << firstLocalRow + localCount + offset << std::endl;
         localCount += 1;
       }
       else
@@ -277,33 +278,40 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
 }
 
 void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
-                                          Epetra_FECrsGraph * const sparsity )
+                                          Epetra_FECrsGraph * const sparsity,
+					  globalIndex firstWellElemDofNumber,
+					  localIndex numDofPerResElement)
 {
   std::cout << "SinglePhaseWell::SetSparsityPattern started" << std::endl;
   
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
   WellManager const * const wellManager = domain->getWellManager();
-  
+
+  // get the reservoir degrees of freedom
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
     elementRegionManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
-  // TODO: use that
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const & resElemGhostRank =
     elementRegionManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  localIndex constexpr maxNumDof = 2;      // dofs are pressure (reservoir and well) and velocity (well only)
-  localIndex const resNDOF = 1;            // dof is pressure
-  localIndex const wellNDOF = resNDOF + 1; // dofs are pressure and velocity
+  // set the number of degrees of freedom per element on both sides (reservoir and well)
+  localIndex constexpr maxNumDof = 2; // dofs are pressure (reservoir and well) and velocity (well only) 
+  localIndex const resNDOF  = numDofPerResElement; // dof is pressure
+  localIndex const wellNDOF = numDofPerElement()
+                            + numDofPerConnection(); // dofs are pressure and velocity
 
-  //**** Loop over all perforations (reservoir-well entries in J_RW and J_WR)
-  // Fill in sparsity for all pairs of DOF/elem that are connected by a perforation
+  
   wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
   {
     WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
     PerforationData const * const perforationData = well->getPerforations();
     ConnectionData const * const connectionData   = well->getConnections();
 
+    // get the well degrees of freedom 
+    array1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+    
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
@@ -314,7 +322,9 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
     arrayView1d<localIndex const> const & resElementIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
-    
+    // 1) Insert the entries corresponding to reservoir-well perforations
+    //    This will fill J_WW, J_WR, and J_RW
+    //    That is all we need for single-segmented wells
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
     {
 
@@ -326,16 +336,42 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( resNDOF + wellNDOF );
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( resNDOF + wellNDOF );
 
+      // get the offset of the reservoir element equation
       globalIndex const resOffset  = resNDOF * resDofNumber[er][esr][ei];
+      // specify the reservoir equation number
       elementLocalDofIndexRow[ElemTag::RES * wellNDOF] = resOffset;
+      // specify the reservoir variable number
       elementLocalDofIndexCol[ElemTag::RES * wellNDOF] = resOffset;
+      std::cout << "iperf = " << iperf << " resOffset = " << resOffset << std::endl;
       
-      // TODO: globalIndex const wellOffset = firstWellOffset + wellNDOF * iwell * wellElemLocalDofNumber[iwelem]
-      globalIndex const wellOffset = 0;
+      /*
+       * firstWellElemDofNumber denotes the first DOF number of the well segments, for all the wells (i.e., first segment of first well)
+       * currentElemDofNumber denotes the DOF number of the current segment
+       *
+       * The coordinates of this element's 2x2 block in J_WW can be accessed using:
+       *
+       * IndexRow = firstWellElemDofNumber * resNDOF ( = all the equations in J_RR)
+       *          + (currentElemDofNumber - firstWellElemDofNumber ) * wellNDOF ( = offset of current segment in J_WW)
+       *          + idof ( = local dofs for this segment, pressure and velocity)
+       *	   
+       * This is needed because resNDOF is not equal to wellNDOF
+       */
+
+      localIndex const iwelem = 0; // this is a hack (we assume single-segmented wells)
+      
+      std::cout << "firstWellElemDofNumber = " << firstWellElemDofNumber << std::endl;
+      // get the offset of the well element equation
+      globalIndex const currentElemDofNumber = wellDofNumber[iwelem];
+      globalIndex const currentElemOffset    = firstWellElemDofNumber * resNDOF // number of eqns in J_RR
+                                             + (currentElemDofNumber - firstWellElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
       for (localIndex idof = 0; idof < wellNDOF; ++idof)
       {
-	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = wellOffset + idof;
-	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = wellOffset + idof;
+	// specify the well equation number
+	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = currentElemOffset + idof;
+	// specify the reservoir variable number
+	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = currentElemOffset + idof;
+	std::cout << "iperf = " << iperf << " idof = " << idof << " wellOffset = "
+		  << elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] << std::endl;
       }      
 
       sparsity->InsertGlobalIndices( integer_conversion<int>( resNDOF + wellNDOF ),
@@ -344,31 +380,38 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
                                      elementLocalDofIndexCol.data() );
     }
 
-    //**** Loop over all connections between segments in the wellbore (off-diagonal entries in J_WW)
-    //     Fill in sparsity for all pairs of DOF/elem that are connected by a connection
+    // 2) Insert the entries corresponding to well-well connection between segments
+    //    This will fill J_WW only
+    //    That is not needed for single-segmented wells
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
-      // this is not needed for now
       
-      // TODO: check if the connection has a primary var
-      
+      // get previous segment index
+      localIndex iwelemPrev = -1; // TODO
+
+      // get second segment index
+      localIndex iwelemNext = -1; // TODO
+
+      // check if this is not an entry or exit
+      if (iwelemPrev < 0 || iwelemNext < 0)
+	continue;
+
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( 2 * wellNDOF );
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( 2 * wellNDOF );
-
-      // TODO: get previous segment
-
-      // TODO: get second segment
-
-      // TODO: globalIndex const wellOffsetPrev = firstWellOffset + wellNDOF * iwell * wellElemLocalDofNumber[iwelemPrev]
-      globalIndex const wellOffsetPrev = 0;
-      // TODO: globalIndex const wellOffsetNext = firstWellOffset + wellNDOF * iwell * wellElemLocalDofNumber[iwelemNext]
-      globalIndex const wellOffsetNext = 0;
+      
+      // get the offset of the well element equations
+      globalIndex const prevElemDofNumber = wellDofNumber[iwelemPrev];
+      globalIndex const prevElemOffset    = firstWellElemDofNumber * resNDOF // number of eqns in J_RR
+                                          + (prevElemDofNumber - firstWellElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
+      globalIndex const nextElemDofNumber = wellDofNumber[iwelemNext];
+      globalIndex const nextElemOffset    = firstWellElemDofNumber * resNDOF // number of eqns in J_RR
+                                          + (nextElemDofNumber - firstWellElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
       for (localIndex idof = 0; idof < wellNDOF; ++idof)
       {
-	elementLocalDofIndexRow[idof]            = wellOffsetPrev + idof;
-	elementLocalDofIndexRow[wellNDOF + idof] = wellOffsetNext + idof;
-	elementLocalDofIndexCol[idof]            = wellOffsetPrev + idof;
-	elementLocalDofIndexCol[wellNDOF + idof] = wellOffsetNext + idof;
+	elementLocalDofIndexRow[idof]            = prevElemOffset + idof;
+	elementLocalDofIndexRow[wellNDOF + idof] = nextElemOffset + idof;
+	elementLocalDofIndexCol[idof]            = prevElemOffset + idof;
+	elementLocalDofIndexCol[wellNDOF + idof] = nextElemOffset + idof;
       }      
 
       sparsity->InsertGlobalIndices( integer_conversion<int>( 2 * wellNDOF ),

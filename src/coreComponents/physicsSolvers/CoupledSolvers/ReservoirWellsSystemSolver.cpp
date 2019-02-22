@@ -112,13 +112,23 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
     numResGhostRows += subRegionGhosts;
     numResLocalRows += subRegion->size() - subRegionGhosts;
   });
-
+  
   flowSolver.SetNumRowsAndTrilinosIndices( mesh,
                                            numResLocalRows,
                                            numResGlobalRows,
                                            0 );
+  /*
+  // TODO: uncomment this
+  std::map<string, string_array > fieldNames;
+  fieldNames["elems"].push_back(viewKeysSinglePhaseFlow.blockLocalDofNumber.Key());
+  CommunicationTools::
+  SynchronizeFields(fieldNames,
+                    mesh,
+                    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  */
+
   std::cout << "SinglePhaseFlow::SetNumRowsAndTrilinosIndices complete" << std::endl;
-  
+
   // get the number of local well elements, and ghost elements...i.e. local rows and ghost rows
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -128,43 +138,44 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
     numWellLocalRows += wellElementSubRegion->size() - subRegionGhosts;
   });
 
-  // TODO: use this offset to shift the well rows and put them after the reservoir rows
-  localIndex const offset = numResGlobalRows+1; 
   wellSolver.SetNumRowsAndTrilinosIndices( domain,
                                            numWellLocalRows,
                                            numWellGlobalRows,
-					   offset);
+					   numResGlobalRows); // offset for well global rows
 
+  // TODO: synchronize the well vars
+  
   std::cout << "SinglePhaseWell::SetNumRowsAndTrilinosIndices complete" << std::endl;
   
-  // TODO: check whether we need that
-  /*
-  std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back(viewKeysSinglePhaseFlow.blockLocalDofNumber.Key());
-  CommunicationTools::
-  SynchronizeFields(fieldNames,
-                    mesh,
-                    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-  */
-
   // construct row map, and set a pointer to the row map
+  globalIndex const nResDOF  = flowSolver.numDofPerCell();
+  globalIndex const nWellDOF = wellSolver.numDofPerElement()
+                             + wellSolver.numDofPerConnection();
+  globalIndex const totalNumberOfDofs = numResGlobalRows  * nResDOF   // dofs in reservoir
+                                      + numWellGlobalRows * nWellDOF; // dofs in wells
   Epetra_Map * const
   rowMap = blockSystem->
            SetRowMap( BlockIDs::fluidPressureBlock,
-                      std::make_unique<Epetra_Map>( numResGlobalRows + numWellGlobalRows,
-                                                    numResLocalRows  + numWellLocalRows,
+                      std::make_unique<Epetra_Map>( totalNumberOfDofs,
+                                                    totalNumberOfDofs,
                                                     0,
                                                     m_linearSolverWrapper.m_epetraComm ) );
 
-  // construct sparisty matrix, set a pointer to the sparsity pattern matrix
+  std::cout << "Total number of rows "
+	    << numResGlobalRows + numWellGlobalRows
+	    << " (reservoir: " << numResGlobalRows
+	    << ", wells: " << numWellGlobalRows << ")" << std::endl;
+  
+  // construct sparsity matrix, set a pointer to the sparsity pattern matrix
   Epetra_FECrsGraph * const
   sparsity = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
                                        BlockIDs::fluidPressureBlock,
                                        std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
 
-  // set the sparsity pattern
-  flowSolver.SetSparsityPattern( domain, sparsity ); // setup sparsity for J_RR
-  wellSolver.SetSparsityPattern( domain, sparsity ); // setup sparsity for J_WW, J_WR, and J_RW
+  // setup sparsity pattern for J_RR
+  flowSolver.SetSparsityPattern( domain, sparsity );
+  // setep sparsity pattern for J_WW, J_WR, and J_RW
+  wellSolver.SetSparsityPattern( domain, sparsity, numResGlobalRows, nResDOF ); 
   
   // assemble the global sparsity matrix
   sparsity->GlobalAssemble();
@@ -175,6 +186,10 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                           BlockIDs::fluidPressureBlock,
                           std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
 
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+								BlockIDs::fluidPressureBlock );
+  std::cout << *jacobian << std::endl;
+  
   // construct solution vector
   blockSystem->SetSolutionVector( BlockIDs::fluidPressureBlock,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
@@ -197,7 +212,8 @@ void ReservoirWellsSystemSolver::AssembleSystem( DomainPartition * const domain,
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
   // set Jacobian and residual to zero
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock );
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+								BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
   jacobian->Scale(0.0);
