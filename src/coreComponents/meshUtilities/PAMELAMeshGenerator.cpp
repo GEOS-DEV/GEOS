@@ -118,7 +118,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
   {
     auto regionPtr = regionItr->second;
-    auto regionIndex = regionPtr->Index;
+    auto regionIndex = regionPtr->LocalIndex;
     auto regionIndexStr = std::to_string(regionIndex);
 
     // Iterate on cell types
