@@ -553,10 +553,10 @@ public:
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      if ( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      ViewWrapper<Wrapped> * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
+      if ( wrapper != nullptr )
       {
-        auto & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
-        lambda(wrapper);
+        lambda(*wrapper);
       }
     }
   }
@@ -566,10 +566,10 @@ public:
   {
     for( auto const & wrapperIter : m_wrappers )
     {
-      if( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      ViewWrapper<Wrapped> const * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
+      if ( wrapper != nullptr )
       {
-        auto const & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
-        lambda(wrapper);
+        lambda(*wrapper);
       }
     }
   }

@@ -101,11 +101,10 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Poisson's ratio");
 
-  RegisterViewWrapper<real64>( viewKeys().biotCoefficient.Key() )->
+  RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Biot's coefficient");
-
 
   RegisterViewWrapper( viewKeys().compressibility.Key(), &m_compressibility, 0 )->
     setApplyDefaultValue(-1)->
@@ -117,20 +116,12 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("ReferencePressure");
 
-  RegisterViewWrapper( viewKeys().biotCoefficient.Key(), &m_biotCoefficient, 0 )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Young's Elastic Modulus");
-
-
-
-
   RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
     setDescription("Stress Deviator stress");
 
   RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
     setApplyDefaultValue(-1)->
-    setDescription("Young's Elastic Modulus");
+    setDescription("Mean stress");
 
 
   RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->

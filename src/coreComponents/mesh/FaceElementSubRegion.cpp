@@ -35,7 +35,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false )->
     setDescription("Map to the faces attached to each FaceCell.")->
-    reference().resize(2,0);
+    reference().resize(0,2);
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
     setDescription("The aperture of each FaceCell.");
@@ -57,19 +57,20 @@ FaceElementSubRegion::~FaceElementSubRegion()
 
 
 R1Tensor const & FaceElementSubRegion::calculateElementCenter( localIndex k,
-                                              const NodeManager& nodeManager,
-                                              const bool useReferencePos ) const
+                                                               const NodeManager& nodeManager,
+                                                               const bool useReferencePos ) const
 {
   r1_array const & X = nodeManager.referencePosition();
   m_elementCenter[k] = 0;
-  for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
+  localIndex const numNodes = numNodesPerElement( k );
+  for ( localIndex a = 0 ; a < numNodes ; ++a)
   {
     const localIndex b = m_toNodesRelation[k][a];
     m_elementCenter[k] += X[b];
     if(!useReferencePos)
       m_elementCenter[k] += X[b];
   }
-  m_elementCenter[k] /= numNodesPerElement();
+  m_elementCenter[k] /= numNodes;
 
   return m_elementCenter[k];
 
