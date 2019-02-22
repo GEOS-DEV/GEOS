@@ -615,9 +615,8 @@ void ProblemManager::ParseInputFile()
     GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
   xmlProblemNode = xmlDocument.child(this->getName().c_str());
-
   ProcessInputFileRecursive( xmlProblemNode );
-
+  
   // The objects in domain are handled separately for now
   {
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -628,13 +627,14 @@ void ProblemManager::ParseInputFile()
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
     meshManager->GenerateMeshLevels(domain);
-
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     topLevelNode = xmlProblemNode.child(elementManager->getName().c_str());
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
 
-    WellManager * wellManager = domain->getMeshBody(0)->getWellManager();
+    WellManager * wellManager = domain->getWellManager();
+    if (wellManager == nullptr)
+      GEOS_ERROR("ProblemManager::ParseInputFile: wellManager is null");
     topLevelNode = xmlProblemNode.child(wellManager->getName().c_str());
     wellManager->ProcessInputFileRecursive( topLevelNode );
     wellManager->PostProcessInputRecursive();
@@ -851,18 +851,14 @@ void ProblemManager::ApplyNumericalMethods()
   }
 
   localIndex const quadratureSize = 1;
-  for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
-  {
-    MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
-    WellManager * const wellManager = meshBody->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
     
-    wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-    {
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
       WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
       constitutiveManager->HangConstitutiveRelation( "fluid", wellElementSubRegion, quadratureSize );
-    });
-  }
+  });
 }
 
 

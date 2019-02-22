@@ -113,15 +113,15 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr auto gravityFlagString  = "wellGravityFlag";
-    static constexpr auto gravityDepthString = "wellGravityDepth";
+    static constexpr auto gravityFlagString  = "gravityFlag";
+    static constexpr auto gravityDepthString = "gravityDepth";
 
     // misc inputs
-    static constexpr auto fluidNameString      = "wellFluidName";
-    static constexpr auto fluidIndexString     = "wellFluidIndex";
+    static constexpr auto fluidNameString      = "fluidName";
+    static constexpr auto fluidIndexString     = "fluidIndex";
 
     // bhp control
-    static constexpr auto bhpString = "wellBHP";
+    static constexpr auto bhpString = "BHP";
 
     using ViewKey = dataRepository::ViewKey;
 

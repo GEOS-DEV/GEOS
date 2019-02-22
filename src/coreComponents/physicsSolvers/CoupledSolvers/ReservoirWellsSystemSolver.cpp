@@ -95,7 +95,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   // assume that there is only a single MeshLevel for now
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
   
   // for this solver, the dof are on the cell center, and the row corrosponds to an element
   localIndex  numResGhostRows   = 0;

@@ -71,7 +71,7 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
   
   WellSolverBase::RegisterDataOnMesh(meshBodies);
 
-  WellManager * wellManager = meshBodies->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * wellManager = meshBodies->getParent()->group_cast<DomainPartition *>()->getWellManager();
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -128,7 +128,7 @@ SingleFluidBase const * SinglePhaseWell::GetFluidModel( ManagedGroup const * dat
 
 void SinglePhaseWell::UpdateFluidModelAll( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -157,7 +157,7 @@ void SinglePhaseWell::UpdateStateAll( DomainPartition * const domain )
 
 void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -237,7 +237,7 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
   // TODO: double check this for multiple MPI processes
   
   // get the well information
-  WellManager const * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager const * const wellManager = domain->getWellManager();
 
   localIndex localCount = 0;
   wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
@@ -283,7 +283,7 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
   
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
-  WellManager const * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager const * const wellManager = domain->getWellManager();
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
     elementRegionManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
@@ -415,7 +415,7 @@ void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
                                                  real64 const time_n,
                                                  real64 const dt )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   // NOT NEEDED FOR NOW
 
@@ -442,7 +442,7 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
                                          real64 const time_n,
                                          real64 const dt )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   // NOT NEEDED FOR NOW
 
@@ -473,7 +473,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 {
   std::cout << "SinglePhaseWell::AssembleSourceTerms started" << std::endl;
   
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber = m_resDofNumber;
@@ -698,7 +698,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -738,7 +738,7 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
 {
   std::cout << "SinglePhaseWell::ApplySystemSolution started" << std::endl;
   
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
@@ -799,7 +799,7 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
 {
   std::cout << "SinglePhaseWell::ResetStateToBeginningOfStep started" << std::endl;
   
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -883,7 +883,7 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
 {
   std::cout << "SinglePhaseWell::ImplicitStepComplete started" << std::endl;
   
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {

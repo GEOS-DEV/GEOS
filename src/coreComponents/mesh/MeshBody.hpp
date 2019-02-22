@@ -27,7 +27,6 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
-#include "wells/WellManager.hpp"
 
 namespace geosx
 {
@@ -47,12 +46,6 @@ public:
 
   MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>(level); }
   MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>(level); }
-
-  WellManager const * getWellManager() const
-  { return this->GetGroup<WellManager>(groupKeys.wellManager); }
-
-  WellManager * getWellManager()
-  { return this->GetGroup<WellManager>(groupKeys.wellManager); }
   
   struct viewKeysStruct
   {
@@ -63,9 +56,6 @@ public:
 
   struct groupStructKeys
   {
-    static constexpr auto wellManagerString = "Wells";
-    
-    dataRepository::GroupKey wellManager = { wellManagerString };
   } groupKeys;
 
 

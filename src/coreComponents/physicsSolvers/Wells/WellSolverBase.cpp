@@ -57,7 +57,7 @@ void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
 {
   SolverBase::RegisterDataOnMesh( meshBodies );
 
-  WellManager * wellManager = meshBodies->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * wellManager = meshBodies->getParent()->group_cast<DomainPartition *>()->getWellManager();
   wellManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::bhpString );
 
 }

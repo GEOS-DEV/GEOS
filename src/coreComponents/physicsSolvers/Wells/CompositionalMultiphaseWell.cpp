@@ -94,7 +94,7 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBo
 {
   WellSolverBase::RegisterDataOnMesh(meshBodies);
 
-  WellManager * wellManager = meshBodies->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * wellManager = meshBodies->getParent()->group_cast<DomainPartition *>()->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -188,7 +188,7 @@ RelativePermeabilityBase const * CompositionalMultiphaseWell::GetRelPermModel( M
 
 void CompositionalMultiphaseWell::UpdateComponentFractionAll( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -235,7 +235,7 @@ void CompositionalMultiphaseWell::UpdateComponentFractionAll( DomainPartition * 
 
 void CompositionalMultiphaseWell::UpdatePhaseVolumeFractionAll( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -332,7 +332,7 @@ void CompositionalMultiphaseWell::UpdatePhaseVolumeFractionAll( DomainPartition 
 
 void CompositionalMultiphaseWell::UpdateFluidModelAll( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -357,7 +357,7 @@ void CompositionalMultiphaseWell::UpdateFluidModelAll( DomainPartition * const d
   
 void CompositionalMultiphaseWell::UpdateRelPermModelAll( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -381,7 +381,7 @@ void CompositionalMultiphaseWell::UpdateStateAll( DomainPartition * const domain
 
 void CompositionalMultiphaseWell::InitializeWellState( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -430,7 +430,7 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
-  WellManager const * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager const * const wellManager = domain->getWellManager();
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
     elementRegionManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
@@ -563,7 +563,7 @@ void CompositionalMultiphaseWell::AssembleAccumulationTerms( DomainPartition * c
                                                              real64 const time_n,
                                                              real64 const dt )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -577,7 +577,7 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
                                                      real64 const time_n,
                                                      real64 const dt )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
    // loop over the wells
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
@@ -603,7 +603,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition * 
                                                               real64 const time_n,
                                                               real64 const dt )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -618,7 +618,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
                                                        real64 const time_n,
                                                        real64 const dt )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber = m_resDofNumber;
 
@@ -1080,7 +1080,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 
 void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -1112,7 +1112,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
@@ -1179,7 +1179,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
 
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -1313,7 +1313,7 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
                                                               real64 const & dt,
                                                               DomainPartition * const domain )
 {
-  WellManager * const wellManager = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
