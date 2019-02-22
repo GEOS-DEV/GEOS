@@ -83,9 +83,13 @@ public:
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
-                                       bool const overwriteMap ) override;
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
   void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( set<localIndex> const & receivedFaces,
+                         ElementRegionManager const & elemRegionManager );
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
