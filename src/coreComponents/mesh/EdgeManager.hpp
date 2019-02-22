@@ -93,12 +93,6 @@ public:
 //                                     const set<localIndex>& newEdgeIndices,
 //                                     const set<localIndex>& modifiedEdgeIndices );
 
-//  void EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor&
-// center)const;
-//  void EdgeVector(const NodeManager& nodeManager, localIndex edge, R1Tensor&
-// vector)const;
-//  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
-
   void AddToEdgeToFaceMap( const FaceManager * faceManager,
                            const localIndex_array& newFaceIndices );
 
@@ -108,6 +102,14 @@ public:
                   array1d<set<localIndex>>& nodesToEdges );
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
+
+  void calculateCenter( localIndex const edgeIndex,
+                        arraySlice1d<R1Tensor const> const & X,
+                        R1Tensor & center ) const;
+
+  void calculateLength( localIndex const edgeIndex,
+                        arraySlice1d<R1Tensor const> const & X,
+                        R1Tensor & center ) const;
 
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
@@ -169,5 +171,23 @@ private:
                                     arrayView1d<localIndex const> const & packList ) const;
 
 };
+
+inline void EdgeManager::calculateCenter( localIndex const edgeIndex,
+                                          arraySlice1d<R1Tensor const> const & X,
+                                          R1Tensor & center ) const
+{
+  center = X[m_toNodesRelation[edgeIndex][0]];
+  center += X[m_toNodesRelation[edgeIndex][1]];
+  center *= 0.5;
+}
+
+inline void EdgeManager::calculateLength( localIndex const edgeIndex,
+                                          arraySlice1d<R1Tensor const> const & X,
+                                          R1Tensor & center ) const
+{
+  center = X[m_toNodesRelation[edgeIndex][1]];
+  center -= X[m_toNodesRelation[edgeIndex][0]];
+}
+
 }
 #endif /* EDGEMANAGERT_H_ */
