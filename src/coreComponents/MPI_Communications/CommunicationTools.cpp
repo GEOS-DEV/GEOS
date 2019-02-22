@@ -397,10 +397,10 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndex ),
-                 reinterpret_cast<char*>( &(object.m_maxGlobalIndex) ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 
@@ -447,10 +447,10 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndex ),
-                 reinterpret_cast<char*>( &(object.m_maxGlobalIndex) ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 }
