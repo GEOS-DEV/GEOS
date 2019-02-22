@@ -29,7 +29,6 @@ namespace geosx
 {
 class SiloFile;
 
-
 /**
  * @class ObjectManagerBase
  * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
@@ -103,7 +102,8 @@ public:
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        array1d<localIndex> & packList,
-                                       bool const overwriteMap )
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps )
   { return 0;}
 
 
@@ -287,6 +287,14 @@ public:
   static void FixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, set<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped  );
+
+  static void CleanUpMap( set<localIndex> const & targetIndices,
+                          array1d<set<localIndex> > & upmap,
+                          array2d<localIndex> const & downmap );
+
+  static void CleanUpMap( set<localIndex> const & targetIndices,
+                          array1d<set<localIndex> > & upmap,
+                          array1d< array1d<localIndex > > const & downmap );
 
   static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
                                        localIndex const lookup )
@@ -474,6 +482,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
   }
   unmappedIndices.clear();
 }
+
 
 
 } /* namespace geosx */

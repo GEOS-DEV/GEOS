@@ -446,7 +446,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
       /// THIS IS WRONG
       localIndex_array & elemList = packList[kReg][kSubReg];
-      unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList, overwriteMap );
+      unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList, false, overwriteMap );
     });
   }
 

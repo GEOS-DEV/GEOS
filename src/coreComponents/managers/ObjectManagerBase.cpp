@@ -728,13 +728,72 @@ void ObjectManagerBase::SetMaxGlobalIndex()
   {
     maxGlobalIndexLocally = std::max( maxGlobalIndexLocally, m_localToGlobalMap[a] );
   }
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndexLocally ),
-                 reinterpret_cast<char*>( &m_maxGlobalIndex ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndexLocally,
+                 &m_maxGlobalIndex,
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 }
 
+void ObjectManagerBase::CleanUpMap( set<localIndex> const & targetIndices,
+                                    array1d<set<localIndex> > & upmap,
+                                    array2d<localIndex> const & downmap )
+{
+  for( auto const & targetIndex : targetIndices )
+  {
+    set<localIndex> eraseList;
+    for( auto const & compositeIndex : upmap[targetIndex] )
+    {
+      bool hasTargetIndex = false;
+      for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+      {
+        localIndex const compositeLocalIndex = downmap[compositeIndex][a];
+        if( compositeLocalIndex==targetIndex )
+        {
+          hasTargetIndex=true;
+        }
+      }
+      if( !hasTargetIndex )
+      {
+        eraseList.insert(compositeIndex);
+      }
+    }
+    for( auto const & val : eraseList )
+    {
+      upmap[targetIndex].erase(val);
+    }
+  }
+}
+
+void ObjectManagerBase::CleanUpMap( set<localIndex> const & targetIndices,
+                                    array1d<set<localIndex> > & upmap,
+                                    array1d< array1d<localIndex> > const & downmap )
+{
+  for( auto const & targetIndex : targetIndices )
+  {
+    set<localIndex> eraseList;
+    for( auto const & compositeIndex : upmap[targetIndex] )
+    {
+      bool hasTargetIndex = false;
+      for( localIndex a=0 ; a<downmap[compositeIndex].size() ; ++a )
+      {
+        localIndex const compositeLocalIndex = downmap[compositeIndex][a];
+        if( compositeLocalIndex==targetIndex )
+        {
+          hasTargetIndex=true;
+        }
+      }
+      if( !hasTargetIndex )
+      {
+        eraseList.insert(compositeIndex);
+      }
+    }
+    for( auto const & val : eraseList )
+    {
+      upmap[targetIndex].erase(val);
+    }
+  }
+}
 
 } /* namespace geosx */

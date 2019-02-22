@@ -465,6 +465,8 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                        edgeLocations,
                        faceLocations,
                        elemLocations );
+      MapConsistencyCheck( nodeID, nodeManager, edgeManager, faceManager, elementManager, elemLocations );
+
     }
   }
 
@@ -1715,8 +1717,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       } // for( int kf=0 ; kf<elemRegion.m_numFacesPerElement ; ++kf )
     } // if( location==1 )
   } // for( map<std::pair<CellBlockSubRegion*, localIndex>, int>::const_iterator iter_elem = elemLocations.begin()
-
-  MapConsistencyCheck( nodeID, nodeManager, edgeManager, faceManager, elementManager, elemLocations );
 }
 
 
