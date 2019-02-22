@@ -61,7 +61,8 @@ public:
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
-                                       bool const overwriteMap ) override;
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
   virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
 

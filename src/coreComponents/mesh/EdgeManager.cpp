@@ -753,7 +753,8 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
-                                          bool const overwriteMap )
+                                          bool const overwriteUpMaps,
+                                          bool const overwriteDownMaps )
 {
   localIndex unPackedSize = 0;
 
@@ -776,7 +777,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_unmappedGlobalIndicesInToFaces,
                                      this->m_globalToLocalMap,
                                      m_toFacesRelation.RelatedObjectGlobalToLocal(),
-                                     overwriteMap );
+                                     overwriteUpMaps );
 
   return unPackedSize;
 }
@@ -794,5 +795,13 @@ void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
 //  ObjectManagerBase::FixUpDownMaps( faceList(),
 //                                    m_unmappedGlobalIndicesInFacelist);
 }
+
+
+void EdgeManager::depopulateUpMaps( set<localIndex> const & receivedEdges,
+                                    array1d< array1d< localIndex > > const & facesToEdges )
+{
+  ObjectManagerBase::CleanUpMap( receivedEdges, m_toFacesRelation, facesToEdges );
+}
+
 
 }

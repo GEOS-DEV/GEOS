@@ -100,9 +100,15 @@ public:
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
-                                       bool const overwriteMap ) override;
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
   void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( set<localIndex> const & receivedNodes,
+                         array2d< localIndex > const & edgesToNodes,
+                         array1d< array1d< localIndex > > const & facesToNodes,
+                         ElementRegionManager const & elemRegionManager );
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
