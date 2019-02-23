@@ -554,7 +554,9 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array & packList )
+                                          localIndex_array & packList,
+                                          bool const overwriteUpMaps,
+                                          bool const overwriteDownMaps )
 {
   localIndex unPackedSize = 0;
 
@@ -590,7 +592,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toElements,
                                      packList,
                                      m_toElements.getElementRegionManager(),
-                                     false );
+                                     overwriteUpMaps );
 
 
 
@@ -607,10 +609,45 @@ void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
                                     m_unmappedGlobalIndicesInToEdges,
                                     clearIfUnmapped );
 
-//  ObjectManagerBase::FixUpDownMaps( faceList(),
-//                                    m_unmappedGlobalIndicesInFacelist);
 }
 
+
+void FaceManager::depopulateUpMaps( set<localIndex> const & receivedFaces,
+                                    ElementRegionManager const & elemRegionManager )
+{
+  for( auto const & targetIndex : receivedFaces )
+  {
+    for( localIndex k=0 ; k<m_toElements.m_toElementRegion.size(1) ; ++k )
+    {
+      localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];
+      localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
+      localIndex const elemIndex          = m_toElements.m_toElementIndex[targetIndex][k];
+
+      if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
+      {
+        CellElementSubRegion const * subRegion = elemRegionManager.GetRegion(elemRegionIndex)->
+                                                 GetSubRegion<CellElementSubRegion>(elemSubRegionIndex);
+        array2d<localIndex> const & downmap = subRegion->faceList();
+        bool hasTargetIndex = false;
+
+        for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+        {
+          localIndex const compositeLocalIndex = downmap[elemIndex][a];
+          if( compositeLocalIndex==targetIndex )
+          {
+            hasTargetIndex=true;
+          }
+        }
+        if( !hasTargetIndex )
+        {
+          m_toElements.m_toElementRegion[targetIndex][k] = -1;
+          m_toElements.m_toElementSubRegion[targetIndex][k] = -1;
+          m_toElements.m_toElementIndex[targetIndex][k] = -1;
+        }
+      }
+    }
+  }
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
 
