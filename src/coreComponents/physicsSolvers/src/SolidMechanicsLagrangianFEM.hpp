@@ -243,6 +243,7 @@ public:
     static constexpr auto trilinosIndexString = "trilinosIndex";
     static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
+    static constexpr auto maxNumResolvesString = "maxNumResolves";
 
 
     dataRepository::ViewKey vTilde = { vTildeString };
@@ -277,6 +278,7 @@ private:
   timeIntegrationOption m_timeIntegrationOption;
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
+  integer m_maxNumResolves;
 
   array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
