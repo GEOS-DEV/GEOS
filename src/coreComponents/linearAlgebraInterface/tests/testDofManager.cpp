@@ -178,6 +178,16 @@ TEST_F(DofManagerTest, TestOne)
   if( printPattern )
     dofManager.printParallelMatrix( pattern, "global" );
 
+  // Create the permutation collecting all unknowns belonging to each process
+  ParallelMatrix permutation;
+  dofManager.createPermutation( permutation );
+
+  ParallelMatrix permutedPattern;
+  // Apply the permutation
+  dofManager.permuteSparsityPattern( pattern, permutation, permutedPattern );
+  if( printPattern )
+    dofManager.printParallelMatrix( permutedPattern, "permutatedGlobal" );
+
   getElapsedTime( timeGetGlobalSparsityPattern );
   setTimer( timeGetIndices );
 
@@ -249,6 +259,9 @@ TEST_F(DofManagerTest, TestOne)
               << " [ms] -- "
               << std::fixed << std::setprecision( 2 ) << timeGetIndices / totalTime * 100.0 << "%"
               << std::endl;
+    std::cout << "TOTAL: " << std::fixed << std::setprecision( 0 ) << std::trunc( totalTime * 1e3 ) << " [ms] -- "
+              << std::fixed
+              << std::setprecision( 2 ) << 100.0 << "%" << std::endl;
   }
 
   dofManager.cleanUp();

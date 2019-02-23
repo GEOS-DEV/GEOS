@@ -53,6 +53,30 @@ void allGather( localIndex const myValue, localIndex_array & allValues )
   allValues[0] = myValue;
 #endif
 }
+
+void allGather( globalIndex const myValue, globalIndex_array & allValues )
+{
+#ifdef GEOSX_USE_MPI
+  int mpiRank;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
+  int mpiSize;
+  MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
+
+  allValues.resize( mpiSize );
+  array1d<long long int> tmpArray( mpiSize );
+
+  long long int tmpValue = integer_conversion<long long int>( myValue );
+
+  MPI_Allgather( &tmpValue, 1, MPI_LONG_LONG, tmpArray.data(), 1, MPI_LONG_LONG, MPI_COMM_GEOSX );
+
+  for( globalIndex i = 0 ; i < tmpArray.size() ; ++i )
+    allValues[i] = integer_conversion<globalIndex>( tmpArray[i] );
+#else
+  int mpiRank = 0;
+  allValues.resize(1);
+  allValues[0] = myValue;
+#endif
+}
 }
 
 // .... DOF MANAGER :: CONSTRUCTOR
@@ -230,13 +254,7 @@ void DofManager::addField( string const & field,
   last.regionPtrs.resize( numActiveRegions );
   for( localIndex er = 0 ; er < numActiveRegions ; ++er )
   {
-    //if( numActiveRegions < numTotalRegions )
     last.regionPtrs[er] = elemManager->GetRegion( last.regionNames[er] ); // get by name
-    /*
-     else
-     last.regionPtrs[er] = elemManager->GetRegion( er ); // get by index
-     */
-
     GEOS_ERROR_IF( last.regionPtrs[er] == nullptr, "Specified element region not found" );
   }
 
@@ -304,17 +322,19 @@ void DofManager::addField( string const & field,
 void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
                                                      localIndex_array const & activeRegionsInput ) const
                                                      {
-  // step 0. register an index array with default = -1
+  // step 0. register an index array with default = LocationStatus::notAssigned
   ObjectManagerBase * baseManager =
       field.location == Location::Node ?
                                          static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() ) :
                                          static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
 
   baseManager->RegisterViewWrapper<globalIndex_array>( field.key )->
-                                                                  setApplyDefaultValue( -1 )->
-                                                                                            setPlotLevel(
-      dataRepository::PlotLevel::LEVEL_1 )->
-                                          setDescription( field.docstring );
+                                                                  setApplyDefaultValue(
+      static_cast<globalIndex>( LocationStatus::notAssigned ) )->
+                                                               setPlotLevel(
+                                                                             dataRepository::PlotLevel::LEVEL_1 )
+      ->
+      setDescription( field.docstring );
 
   globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>( field.key );
 
@@ -330,6 +350,7 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   //         determine number of local rows
   //         and sequentially number objects
   field.numLocalNodes = 0;
+  localIndex numLocalNodesWithGhost = 0;
   globalIndex numLocalConnectivity = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
@@ -351,22 +372,23 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
         for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
           if( !( ghostRank[e] < 0 ) and ghostRank[e] < mpiRank )
             for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
-              indexArray[map[e][n]] = globalIndexMax;
+              indexArray[map[e][n]] = static_cast<globalIndex>( LocationStatus::notMyGhostLocation );
 
         for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
-          if( ghostRank[e] < 0 )
+        {
+          for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
           {
-            for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
+            localIndex i = map[e][n];
+            if( indexArray[i] == static_cast<globalIndex>( LocationStatus::notAssigned ) )
             {
-              localIndex i = map[e][n];
-              if( indexArray[i] == -1 )
-              {
-                indexArray[i] = field.numLocalNodes;
-                field.numLocalNodes++;
-              }
+              indexArray[i] = numLocalNodesWithGhost;
+              numLocalNodesWithGhost++;
+              if( ghostRank[e] < 0 )
+                ++field.numLocalNodes;
             }
-            ++numLocalConnectivity;
           }
+          ++numLocalConnectivity;
+        }
       }
     }
 
@@ -392,7 +414,7 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
 
   // step 3. adjust local values to reflect processor offset
   for( localIndex n = 0 ; n < indexArray.size() ; ++n )
-    if( indexArray[n] != -1 )
+    if( indexArray[n] != static_cast<globalIndex>( LocationStatus::notAssigned ) )
       indexArray[n] += field.firstLocalRow;
 
   // step 4. synchronize across ranks
@@ -412,10 +434,10 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   field.numGlobalRows *= field.numComponents;
   field.firstLocalRow *= field.numComponents;
 
-  // Replace globalIndexMax with -1
+  // Replace LocationStatus::notMyGhostLocation with LocationStatus::notAssigned (if any)
   for( localIndex i = 0 ; i < indexArray.size() ; ++i )
-    if( indexArray[i] == globalIndexMax )
-      indexArray[i] = -1;
+    if( indexArray[i] == static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
+      indexArray[i] = static_cast<globalIndex>( LocationStatus::notAssigned );
 }
 
 // .... DOF MANAGER :: CREATE INDEX ARRAY :: ELEMENT VERSION
@@ -451,7 +473,6 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   // step 3. loop again (sequential policy)
   //         allocate the index array
   //         set unique global indices
-  globalIndex const isUnset = -1;
   globalIndex count = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
@@ -460,9 +481,10 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
       CellBlockSubRegion * subRegion = field.regionPtrs[er]->GetSubRegion( esr );
 
       subRegion->RegisterViewWrapper<globalIndex_array>( field.key )->
-                                                                    setApplyDefaultValue( isUnset )->
-                                                                                                   setPlotLevel(
-          dataRepository::PlotLevel::LEVEL_1 )-> // TODO: level 1 or 2?
+                                                                    setApplyDefaultValue(
+          static_cast<globalIndex>( LocationStatus::notAssigned ) )->
+                                                                   setPlotLevel(
+                                                                                 dataRepository::PlotLevel::LEVEL_1 )-> // TODO: level 1 or 2?
           setDescription( field.docstring );
 
       globalIndex_array & indexArray = subRegion->getReference<globalIndex_array>( field.key );
@@ -501,7 +523,7 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   field.firstLocalRow *= field.numComponents;
 }
 
-// Create the sparsity pattern (location-location)
+// Create the sparsity pattern (location-location). High level interface
 void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                      string const & rowField,
                                      string const & colField ) const
@@ -531,7 +553,23 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     colFieldIndex = -1;
 
   if( rowFieldIndex * colFieldIndex < 0 )
-    GEOS_ERROR( "getSparsityPattern acceptes both two field names and none, instead just one is provided." );
+    GEOS_ERROR( "getSparsityPattern accepts both two field names and none, instead just one is provided." );
+
+  // Call the low level routine
+  getSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex );
+}
+
+// Create the sparsity pattern (location-location). Low level interface
+void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
+                                     localIndex const rowFieldIndex,
+                                     localIndex const colFieldIndex ) const
+                                     {
+  if( rowFieldIndex * colFieldIndex < 0 )
+  {
+    string msg = string( "getSparsityPattern accepts both two existing field indices (positive values) and " ) +
+        string( "two negative values (entire Jacobian rows/columns), instead just one index is positive." );
+    GEOS_ERROR( msg );
+  }
 
   if( rowFieldIndex >= 0 and colFieldIndex == rowFieldIndex )
   {
@@ -644,6 +682,23 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
         }
   }
   locLocDistr.close();
+}
+
+// Permute the GLOBAL sparsity pattern (location-location). Low level interface
+void DofManager::permuteSparsityPattern( ParallelMatrix const & locLocDistr,
+                                         ParallelMatrix const & permutation,
+                                         ParallelMatrix & permutedMatrix ) const
+                                         {
+  // Performe the product B = P^t*A*P
+  // Matrix C = A*P
+  ParallelMatrix productStep1;
+
+  productStep1.createWithGlobalSize( locLocDistr.globalRows(), permutation.globalCols(), 1 );
+  MatrixMatrixMultiply( locLocDistr, false, permutation, false, productStep1 );
+
+  // Matrix B = P*C
+  permutedMatrix.createWithGlobalSize( permutation.globalCols(), productStep1.globalCols(), 1 );
+  MatrixMatrixMultiply( permutation, true, productStep1, false, permutedMatrix );
 }
 
 // Just an interface to allow only three parameters
@@ -922,6 +977,44 @@ void DofManager::getIndices( globalIndex_array & indices,
         indices[i] += m_fields[fieldIdx].fieldOffset;
     }
   }
+}
+
+// Create the permutation that collects together all DoFs of each MPI process
+void DofManager::createPermutation( ParallelMatrix & permutation ) const
+                                    {
+
+  globalIndex sumGlobalDofs = 0;
+  globalIndex_array ilower( m_fields.size() );
+  globalIndex_array iupper( m_fields.size() );
+  globalIndex offset = 0;
+  for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  {
+    sumGlobalDofs += m_fields[i].numGlobalRows;
+    ParallelMatrix pattern;
+    getSparsityPattern( pattern, i, i );
+    ilower[i] = pattern.ilower();
+    iupper[i] = pattern.iupper();
+    offset += iupper[i] - ilower[i];
+  }
+
+  // Create parallel vector with global size
+  permutation.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1 );
+
+  globalIndex_array gather;
+  CommTools::allGather( offset, gather );
+
+  offset = 0;
+  for( localIndex p = 0 ; p < mpiRank ; ++p )
+    offset += gather[p];
+
+  globalIndex k = offset;
+  for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  {
+    globalIndex fieldOffset = m_fields[i].fieldOffset;
+    for( globalIndex j = ilower[i] ; j < iupper[i] ; ++j )
+      permutation.insert( fieldOffset + j, k++, 1 );
+  }
+  permutation.close();
 }
 
 // Add the specified sparsity pattern between rowField and colField to m_sparsityPattern
@@ -1456,30 +1549,47 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
     }
   }
 
-  // Sort the pairs
-  sort( pairs.begin(), pairs.end(), pairComparison() );
+  // Check if there is at least one entry
+  bool emptyPairs = ( pairs.size() == 0 );
 
-  // Remove duplicates (if someone is present)
-  array1d<indexPair>::const_iterator endPairs = std::unique( pairs.begin(), pairs.end() );
-  pairs.resize( endPairs - pairs.begin() );
+  if( !emptyPairs )
+  {
+    // Sort the pairs
+    sort( pairs.begin(), pairs.end(), pairComparison() );
+
+    // Remove duplicates (if someone is present)
+    array1d<indexPair>::const_iterator endPairs = std::unique( pairs.begin(), pairs.end() );
+    pairs.resize( endPairs - pairs.begin() );
+  }
+
+  localIndex nRowsLoc = ( emptyPairs ) ? 0 : pairs.back().first;
+  localIndex nColsLoc = ( emptyPairs ) ? 0 : pairs.back().second;
 
   // Find the global number of rows
   localIndex_array gather;
-  CommTools::allGather( pairs.back().first, gather );
+  CommTools::allGather( nRowsLoc, gather );
   localIndex nRows = gather[0];
   for( localIndex p = 1 ; p < mpiSize ; ++p )
     nRows = ( gather[p] > nRows ) ? gather[p] : nRows;
   ++nRows;
 
   // Find the global number of columns
-  CommTools::allGather( pairs.back().second, gather );
+  CommTools::allGather( nColsLoc, gather );
   localIndex nCols = gather[0];
   for( localIndex p = 1 ; p < mpiSize ; ++p )
     nCols = ( gather[p] > nCols ) ? gather[p] : nCols;
   ++nCols;
 
   // From the vector of pairs form a sparsity pattern
-  vectorOfPairsToCSR( pairs, nRows, nCols, connLocPatt );
+  if( !emptyPairs )
+    vectorOfPairsToCSR( pairs, nRows, nCols, connLocPatt );
+  else
+  {
+    connLocPatt.nRows = nRows;
+    connLocPatt.nCols = nCols;
+    connLocPatt.rowLengths.resize( nRows + 1 );
+    connLocPatt.rowLengths = 0;
+  }
 }
 
 // Convert a COO matrix in CSR format

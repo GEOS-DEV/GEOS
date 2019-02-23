@@ -99,6 +99,16 @@ public:
   };
 
   /**
+   * Define the possibile status of a location: undefined or belonging to ghost locations
+   * of this MPI process
+   */
+  enum class LocationStatus : globalIndex
+  {
+    notAssigned = -1,
+    notMyGhostLocation = -2
+  };
+
+  /**
    * Assign a mesh
    */
   void setMesh( DomainPartition * const domain,
@@ -223,6 +233,13 @@ public:
                            string const & colField = "" ) const;
 
   /**
+   * Get a sparsity pattern. Low level version
+   */
+  void getSparsityPattern( ParallelMatrix & locLocDistr,
+                           localIndex const rowFieldIndex,
+                           localIndex const colFieldIndex ) const;
+
+  /**
    * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
    * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only
    * implement appropriate combinations.
@@ -251,6 +268,18 @@ public:
                    Connectivity const connectivity,
                    localIndex const index,
                    string const & field = "" ) const;
+
+  /**
+   * Create the permutation that collects together all DoFs of each MPI process
+   */
+  void createPermutation( ParallelMatrix & permutation ) const;
+
+  /**
+   * Permute the GLOBAL sparsity pattern (location-location). Low level interface
+   */
+  void permuteSparsityPattern( ParallelMatrix const & locLocDistr,
+                               ParallelMatrix const & permutation,
+                               ParallelMatrix & permutedMatrix ) const;
 
   /**
    * Print the global connectivity matrix
@@ -416,11 +445,6 @@ private:
                            localIndex const nRows,
                            localIndex const nCols,
                            SparsityPattern & pattern ) const;
-
-  /**
-   * Just a local INT_MAX
-   */
-  globalIndex const globalIndexMax = std::numeric_limits<globalIndex>::max();
 
   /**
    * Map a global row index to local row index
