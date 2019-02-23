@@ -521,6 +521,8 @@ private:
 
   dataRepository::PlotLevel m_plotLevel;
 
+  bool m_ghostFlags;
+
   /**
    *
    * @return returns the ordering of nodes for a silo zone type.

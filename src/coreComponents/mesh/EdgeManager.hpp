@@ -76,9 +76,14 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( set<localIndex> const & receivedEdges,
+                         array1d< array1d< localIndex > > const & facesToEdges );
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,

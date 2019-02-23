@@ -422,9 +422,9 @@ localIndex Unpack( char const *& buffer,
                    set<localIndex> & var,
                    set<globalIndex> & unmappedGlobalIndices,
                    map<globalIndex,localIndex> const & globalToLocalMap,
-                   bool const clearFlag )
+                   bool const clearExistingSet )
 {
-  if( clearFlag )
+  if( clearExistingSet )
   {
     var.clear();
   }
@@ -703,6 +703,88 @@ Unpack( char const *& buffer,
 template< bool DO_PACKING >
 localIndex
 Pack( char*& buffer,
+      arrayView1d<localIndex const> const & var,
+      arrayView1d<localIndex const> const & indices,
+      arrayView1d<globalIndex const> const & localToGlobalMap,
+      arrayView1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
+{
+  localIndex sizeOfPackedChars=0;
+
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex const li = indices[a];
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    if( var[li] != -1 )
+    {
+      sizeOfPackedChars += Pack<DO_PACKING>( buffer,
+                                             relatedObjectLocalToGlobalMap[var[li]] );
+    }
+    else
+    {
+      sizeOfPackedChars += Pack<DO_PACKING>( buffer,
+                                             localIndex(-1) );
+    }
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+inline
+localIndex
+Unpack( char const *& buffer,
+        arrayView1d<localIndex> & var,
+        array1d<localIndex> const & indices,
+        map<globalIndex,localIndex> const & globalToLocalMap,
+        map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
+{
+  localIndex numIndicesUnpacked;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
+
+  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
+
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                 "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
+    {
+      GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                     <<li<<" for localIndex "<<li<<" on this rank");
+    }
+    else
+    {
+      li = globalToLocalMap.at(gi);
+    }
+
+    globalIndex mappedGlobalIndex;
+    sizeOfUnpackedChars += Unpack( buffer, mappedGlobalIndex );
+    if( mappedGlobalIndex != -1 )
+    {
+      var[li] = relatedObjectGlobalToLocalMap.at( mappedGlobalIndex );
+    }
+    else
+    {
+      var[li] = -1;
+    }
+
+  }
+  return sizeOfUnpackedChars;
+}
+
+
+
+
+template< bool DO_PACKING >
+localIndex
+Pack( char*& buffer,
       arrayView1d<localIndex_array const> const & var,
       map< localIndex, array1d<globalIndex> > const & unmappedGlobalIndices,
       arrayView1d<localIndex const> const & indices,
@@ -775,10 +857,89 @@ Unpack( char const *& buffer,
     }
 
     array1d<globalIndex> unmappedIndices;
+#if 1
     sizeOfUnpackedChars += Unpack( buffer,
                                    var[li],
                                    unmappedIndices,
                                    relatedObjectGlobalToLocalMap );
+#else
+    array1d<globalIndex> tempUnmappedIndices;
+    array1d<localIndex> unpackedIndices;
+    set<localIndex> unpackedIndicesSet;
+
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   unpackedIndices,
+                                   tempUnmappedIndices,
+                                   relatedObjectGlobalToLocalMap );
+    unmappedIndices.resize( tempUnmappedIndices.size() );
+    bool const unmappedFlag = tempUnmappedIndices.size()>0 ? true : false;
+
+    if( var[li].size() == 0 )
+    {
+      var[li] = unpackedIndices;
+      unmappedIndices = tempUnmappedIndices;
+    }
+    else if( var[li].size() == unpackedIndices.size() )
+    {
+      localIndex const numElems = var[li].size();
+      for( localIndex c=0 ; c<numElems ; ++c )
+      {
+        unpackedIndicesSet.insert(unpackedIndices[c]);
+      }
+      bool isSame = true;
+      for( localIndex c=0 ; c<numElems ; ++c )
+      {
+        if( unpackedIndicesSet.count(var[li][c])==0 )
+        {
+          isSame = false;
+        }
+      }
+      if( !isSame )
+      {
+        localIndex shift = INT_MIN;
+        for( localIndex b=0 ; b<numElems ; ++b )
+        {
+          localIndex existingIndex = var[li][b];
+          for( localIndex c=0 ; c<numElems ; ++c )
+          {
+            localIndex newIndex = unpackedIndices[c];
+            if( existingIndex==newIndex )
+            {
+              shift = c - b;
+              break;
+            }
+          }
+          if( shift != INT_MIN )
+          {
+            break;
+          }
+        }
+        GEOS_ERROR_IF( shift==INT_MIN, "Trying to unpack indices with no valid localIndices...can't set order.");
+        for( localIndex b=0 ; b<numElems ; ++b )
+        {
+          localIndex c = b + shift;
+          if( c < 0 )
+          {
+            c += numElems;
+          }
+          else if( c >= numElems )
+          {
+            c -= numElems;
+          }
+          var[li][b] = unpackedIndices[c];
+          if( unmappedFlag )
+          {
+            unmappedIndices[b] = tempUnmappedIndices[c];
+          }
+        }
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "Unpacked indices do not match the expected size of unpacked indices");
+    }
+#endif
+
     if( unmappedIndices.size() > 0 )
     {
       unmappedGlobalIndices[li] = unmappedIndices;

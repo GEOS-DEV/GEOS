@@ -99,9 +99,16 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( set<localIndex> const & receivedNodes,
+                         array2d< localIndex > const & edgesToNodes,
+                         array1d< array1d< localIndex > > const & facesToNodes,
+                         ElementRegionManager const & elemRegionManager );
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {

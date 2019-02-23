@@ -310,7 +310,9 @@ SiloFile::SiloFile():
   m_restartFileRoot("restart"),
   m_fileName(),
   m_baseFileName()
-{}
+{
+  m_ghostFlags = false;
+}
 
 // *********************************************************************************************************************
 /// Destructor
@@ -550,8 +552,10 @@ void SiloFile::WriteMeshObject(string const & meshName,
   }
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-  DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
-
+  if( m_ghostFlags )
+  {
+    DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
+  }
 
   int numTotZones = 0;
   int lnodelist = 0;
@@ -637,7 +641,10 @@ void SiloFile::WriteMeshObject(string const & meshName,
     int hi_offset = 0;
 
 
-    DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
+    if( m_ghostFlags )
+    {
+      DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
+    }
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
                     hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize2.data()),

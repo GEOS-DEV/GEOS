@@ -397,10 +397,10 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndex ),
-                 reinterpret_cast<char*>( &(object.m_maxGlobalIndex) ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 
@@ -447,10 +447,10 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndex ),
-                 reinterpret_cast<char*>( &(object.m_maxGlobalIndex) ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 }
@@ -550,16 +550,16 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.RebuildSyncLists( meshLevel, commID );
   }
 
-  meshLevel->getNodeManager()->FixUpDownMaps(true);
-  meshLevel->getEdgeManager()->FixUpDownMaps(true);
-  meshLevel->getFaceManager()->FixUpDownMaps(true);
+  meshLevel->getNodeManager()->FixUpDownMaps(false);
+  meshLevel->getEdgeManager()->FixUpDownMaps(false);
+  meshLevel->getFaceManager()->FixUpDownMaps(false);
   for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
   {
     ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(esr);
-      subRegion->FixUpDownMaps(true);
+      subRegion->FixUpDownMaps(false);
     }
   }
 
