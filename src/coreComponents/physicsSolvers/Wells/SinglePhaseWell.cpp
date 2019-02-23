@@ -621,8 +621,6 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       eqnRowIndices = -1;
       dDensMean_dP = 0.0;
 
-      // TODO: add localFlux / localFluxJacobian
-
       // 1) Reservoir side
 
       // get the reservoir (sub)region and element indices
@@ -657,11 +655,14 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
       localIndex const iwelem = 0; // this is a hack
 
+      // below, we insert the well mass balance equations at wellDofNumber + 1,
+      // the +1 is needed because the control equations are at wellDofNumber
+      
       // row index on well side
-      eqnRowIndices[ElemTag::WELL] = wellDofNumber[iwelem];
+      eqnRowIndices[ElemTag::WELL] = wellDofNumber[iwelem]+1;
 
       // column index on well side
-      dofColIndices[ElemTag::WELL] = wellDofNumber[iwelem];
+      dofColIndices[ElemTag::WELL] = wellDofNumber[iwelem]+1;
 
       // get well variables
       pressure[ElemTag::WELL]  = wellPressure[iwelem] + dWellPressure[iwelem];
@@ -680,9 +681,10 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       dDensMean_dP[ElemTag::WELL] = densWeight[weightIndex[ElemTag::WELL]] * dDensity_dP[ElemTag::WELL];
 
       //***** calculation of flux *****
-
+      
       // TODO: use distinct treatments for injector and producer
-
+      // TODO: account for depth difference between well element center and perforation
+      
       // get transmissibility at the interface
       Perforation * perforation = perforationData->getPerforation( iperf ); 
       const real64 trans = perforation->getTransmissibility(); // TODO: change to an array of transmissibilities in PerforationData
@@ -740,6 +742,9 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       // TODO:
       // save flux from/into the perforation for constraint and calculating well totals
     }
+
+    FormControlEquation( domain, jacobian, residual );
+    
   });
 
   std::cout << "SinglePhaseWell::AssembleSourceTerms complete" << std::endl;
@@ -925,6 +930,67 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
 
   std::cout << "SinglePhaseWell::ResetViews complete" << std::endl;
 }
+
+void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
+                                           Epetra_FECrsMatrix * const jacobian,
+                                           Epetra_FEVector * const residual )
+{
+  WellManager * const wellManager = domain->getWellManager();
+  
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get local index of the reference element where the control eqn will be formed
+    localIndex const iwelemRef = wellElementSubRegion->getReferenceElem();
+    if (iwelemRef >= 0)
+    {
+    
+      // get well control
+      Well::Control control = well->getWellControl();
+
+      // get the degrees of freedom 
+      array1d<globalIndex> const & wellDofNumber =
+        wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+    
+      // get pressure data
+      array1d<real64> const & wellPressure =
+        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+      array1d<real64> const & dWellPressure =
+        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+      real64 controlEqn        = 0;
+      real64 dControlEqn_dPres = 0;
+    
+      // BHP control
+      if (control == Well::Control::BHP)
+      {
+
+        real64 const currentBHP = wellPressure[iwelemRef] + dWellPressure[iwelemRef];
+        real64 const targetBHP  = well->getTargetBHP();
+
+        controlEqn = currentBHP - targetBHP;
+        dControlEqn_dPres = 1;
+
+      }
+      // rate control
+      else 
+      {
+        // TODO: implement this
+        controlEqn = 0;
+        dControlEqn_dPres = 0;
+      }
+
+      // the control equation is the first equation of the element block 
+      globalIndex welemRefDOF = wellDofNumber[iwelemRef];
+    
+      // add contribution to global residual and jacobian
+      residual->SumIntoGlobalValues( 1, &welemRefDOF, &controlEqn );
+      jacobian->SumIntoGlobalValues( 1, &welemRefDOF, 1, &welemRefDOF, &dControlEqn_dPres );
+    }
+  });
+}
+
   
 void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
                                             real64 const & dt,

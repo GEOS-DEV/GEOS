@@ -117,6 +117,14 @@ void WellSolverBase::ResetViews( DomainPartition * const domain )
   m_resGravDepth =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FlowSolverBase::viewKeyStruct::gravityDepthString );
 }
+
+void WellSolverBase::FormControlEquation( DomainPartition * const domain,
+                                          Epetra_FECrsMatrix * const jacobian,
+                                          Epetra_FEVector * const residual )
+{
+  // TODO
+}
+
   
 WellSolverBase::~WellSolverBase() = default;
 

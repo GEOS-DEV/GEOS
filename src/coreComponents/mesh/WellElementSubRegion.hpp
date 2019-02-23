@@ -53,6 +53,9 @@ public:
 
   WellElement const * getWellElement( localIndex iwelem ) const;
   WellElement *       getWellElement( localIndex iwelem );
+
+  localIndex getReferenceElem() const
+  { return 0; } // TODO: this is a hack for single-segmented well
   
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                                    const NodeManager& nodeManager,

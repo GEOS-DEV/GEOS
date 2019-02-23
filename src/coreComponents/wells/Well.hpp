@@ -40,6 +40,9 @@ public:
 
   enum class Type { PRODUCER, INJECTOR };
 
+  enum class Control { BHP, GASRATE, OILRATE, WATERRATE };
+  
+  
   explicit Well( string const & name, dataRepository::ManagedGroup * const parent );
   ~Well() override;
 
@@ -66,12 +69,6 @@ public:
 
   virtual void PostProcessInput() override;
 
-  localIndex numWellElementsLocal() const { return m_wellElementSubRegion.size(); }
-  
-  localIndex numConnectionsLocal()  const { return m_connectionData.numConnectionsLocal(); }
-
-  localIndex numPerforationsLocal()  const { return m_perforationData.numPerforationsLocal(); }
-
   WellElementSubRegion * getWellElements()             { return &m_wellElementSubRegion; }
   WellElementSubRegion const * getWellElements() const { return &m_wellElementSubRegion; }
   
@@ -83,18 +80,32 @@ public:
   
   R1Tensor const & getGravityVector() const;
 
-  real64 getReferenceDepth() const { return m_referenceDepth; }
+  real64 const & getReferenceDepth() const { return m_referenceDepth; }
+
   Type getType() const { return m_type; }
 
+  void setWellControl( Control control ) { m_currentControl = control; }
+  Control getWellControl() const { return m_currentControl; }
+
+  real64 const & getTargetBHP() const { return m_targetBHP; }
+
+  real64 const & getTargetRate() const { return m_targetRate; }
+  
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
 
     static constexpr auto referenceDepthString = "referenceDepth";
     static constexpr auto typeString           = "type";
-
-    dataRepository::ViewKey referenceDepth             = { referenceDepthString };
-    dataRepository::ViewKey type                       = { typeString };
-
+    static constexpr auto controlString        = "control";
+    static constexpr auto targetBHPString      = "targetBHP";
+    static constexpr auto targetRateString     = "targetRate";
+    
+    dataRepository::ViewKey referenceDepth = { referenceDepthString };
+    dataRepository::ViewKey type           = { typeString };
+    dataRepository::ViewKey control        = { controlString };
+    dataRepository::ViewKey targetBHP      = { targetBHPString };
+    dataRepository::ViewKey targetRate     = { targetRateString };
+    
   } viewKeysWell;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
@@ -115,18 +126,27 @@ public:
 
 protected:
 
+  // segments
   WellElementSubRegion m_wellElementSubRegion;
   WellElementManager m_wellElementManager;
-  
+  // connection between segments
   ConnectionData  m_connectionData;
-
+  // perforation
   PerforationData    m_perforationData;
   PerforationManager m_perforationManager;
-  
-  real64 m_referenceDepth;
-  string m_typeString;
-  Type   m_type;
 
+  // depth
+  real64 m_referenceDepth;
+  
+  // well type
+  string  m_typeString;
+  Type    m_type;
+
+  // well controls
+  string  m_controlString;
+  Control m_currentControl;
+  real64  m_targetBHP;
+  real64  m_targetRate;
 };
 
 } //namespace geosx

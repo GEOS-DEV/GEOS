@@ -377,6 +377,11 @@ private:
    */
   void ResetViews( DomainPartition * const domain ) override;
 
+  void FormControlEquation( DomainPartition * const domain,
+                            Epetra_FECrsMatrix * const jacobian,
+                            Epetra_FEVector * const residual ) override;
+
+  
   /// the max number of fluid phases
   localIndex m_numPhases;
 

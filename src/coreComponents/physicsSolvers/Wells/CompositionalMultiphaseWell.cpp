@@ -817,12 +817,14 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
       for (localIndex ic = 0; ic < NC; ++ic)
       {
         eqnRowIndices[ElemTag::RES  * NC + ic] = resOffset + ic;
-        eqnRowIndices[ElemTag::WELL * NC + ic] = wellOffset + ic;
+        eqnRowIndices[ElemTag::WELL * NC + ic] = wellOffset + ic + 1;
       }
       for (localIndex jdof = 0; jdof < resNDOF; ++jdof)
       {
-        dofColIndices[ElemTag::RES  * resNDOF + jdof] = resOffset  + jdof;
-        dofColIndices[ElemTag::WELL  * resNDOF + jdof] = wellOffset + jdof;
+        // below, we insert the well mass balance equations at wellDofNumber + 1,
+        // the +1 is needed because the control equations are at wellDofNumber
+        dofColIndices[ElemTag::RES  * resNDOF + jdof] = resOffset  + jdof + 1;
+        dofColIndices[ElemTag::WELL * resNDOF + jdof] = wellOffset + jdof + 1;
       }
       
       // loop over phases, compute and upwind phase flux
@@ -955,6 +957,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 	
         // TODO: use distinct treatments for injector and producer
 	// TODO: multiply mobility of injector by total reservoir mobility
+        // TODO: account for depth difference between well element center and perforation
 	
         // get transmissibility at the interface
         Perforation * perforation = perforationData->getPerforation( iperf ); 
@@ -1107,7 +1110,9 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
                                      Epetra_FECrsMatrix::ROW_MAJOR );
 
     }
-      
+
+    FormControlEquation( domain, jacobian, residual );
+    
   });
 }
 
@@ -1341,6 +1346,68 @@ void CompositionalMultiphaseWell::ResetViews(DomainPartition * const domain)
     elemManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString,
                                                                                       constitutiveManager );
 }
+
+
+void CompositionalMultiphaseWell::FormControlEquation( DomainPartition * const domain,
+                                                       Epetra_FECrsMatrix * const jacobian,
+                                                       Epetra_FEVector * const residual )
+{
+  WellManager * const wellManager = domain->getWellManager();
+  
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get local index of the reference element where the control eqn will be formed
+    localIndex const iwelemRef = wellElementSubRegion->getReferenceElem();
+    if (iwelemRef >= 0)
+    {
+    
+      // get well control
+      Well::Control control = well->getWellControl();
+
+      // get the degrees of freedom 
+      array1d<globalIndex> const & wellDofNumber =
+        wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+    
+      // get pressure data
+      array1d<real64> const & wellPressure =
+        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+      array1d<real64> const & dWellPressure =
+        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+      real64 controlEqn        = 0;
+      real64 dControlEqn_dPres = 0;
+    
+      // BHP control
+      if (control == Well::Control::BHP)
+      {
+
+        real64 const currentBHP = wellPressure[iwelemRef] + dWellPressure[iwelemRef];
+        real64 const targetBHP  = well->getTargetBHP();
+
+        controlEqn = currentBHP - targetBHP;
+        dControlEqn_dPres = 1;
+
+      }
+      // rate control
+      else 
+      {
+        // TODO: implement this
+        controlEqn = 0;
+        dControlEqn_dPres = 0;
+      }
+
+      // the control equation is the first equation of the element block 
+      globalIndex welemRefDOF = wellDofNumber[iwelemRef];
+    
+      // add contribution to global residual and jacobian
+      residual->SumIntoGlobalValues( 1, &welemRefDOF, &controlEqn );
+      jacobian->SumIntoGlobalValues( 1, &welemRefDOF, 1, &welemRefDOF, &dControlEqn_dPres );
+    }
+  });
+}
+
 
 void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
                                                               real64 const & dt,

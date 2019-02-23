@@ -97,6 +97,9 @@
   <Wells>
     <Well name="prod1"
           type="producer"
+	  control="BHP"
+	  targetBHP="100"
+	  targetRate="1"
           referenceDepth="0.5">
       <Segments>
 	<Segment name="prod1_unique_seg" />
@@ -123,6 +126,9 @@
     
     <Well name="inj1"
           type="injector"
+  	  control="BHP"
+	  targetBHP="100"
+	  targetRate="1"
           referenceDepth="0.5">
       <Segments>
 	<Segment name="inj1_unique_seg" />
