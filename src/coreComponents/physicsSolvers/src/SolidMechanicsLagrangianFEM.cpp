@@ -228,6 +228,14 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
                     "initial estimate for the incremental displacement of the current step.");
+
+  RegisterViewWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
+    setApplyDefaultValue(10)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
+                    "For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. "
+                    "However if a new surface is generated, then the mechanics solve must be executed again due to the "
+                    "change in topology.");
 }
 
 void SolidMechanics_LagrangianFEM::PostProcessInput()
@@ -355,17 +363,23 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
     ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-
-    dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
-                                      getLinearSystemRepository() );
-
-    ImplicitStepComplete( time_n, dt,  domain );
-
-    if( surfaceGenerator!=nullptr )
+    for( integer solveIter=0 ; solveIter<m_maxNumResolves ; ++solveIter )
     {
-      surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
+      dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
+                                        getLinearSystemRepository() );
+      if( surfaceGenerator!=nullptr )
+      {
+        if( !( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 ) )
+        {
+          solveIter=m_maxNumResolves;
+        }
+      }
+      else
+      {
+        solveIter=m_maxNumResolves;
+      }
     }
-
+    ImplicitStepComplete( time_n, dt,  domain );
   }
 
   return dtReturn;
