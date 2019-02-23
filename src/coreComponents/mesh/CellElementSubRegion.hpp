@@ -60,9 +60,11 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
