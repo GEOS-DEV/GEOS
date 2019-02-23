@@ -230,6 +230,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      const int cycleNumber,
                                      DomainPartition * domain )
 {
+  int rval = 0;
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
@@ -244,15 +245,15 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
       SpatialPartition & partition = domain->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
 
 
-      SeparationDriver( meshLevel,
-                        neighbors,
-                        partition.GetColor(),
-                        partition.NumColor(),
-                        0,
-                        time_n );
+      rval = SeparationDriver( meshLevel,
+                               neighbors,
+                               partition.GetColor(),
+                               partition.NumColor(),
+                               0,
+                               time_n );
     }
   }
-  return 0;
+  return rval;
 }
 
 
