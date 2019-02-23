@@ -6,7 +6,7 @@
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
-    <ReservoirWellsSystem name="reservoirWell"
+    <ReservoirWellsSystem name="reservoirWellsSystem"
 		   flowSolverName="SinglePhaseFlow"
                    wellSolverName="SinglePhaseWell"
                    verboseLevel="1"
@@ -59,7 +59,7 @@
   <Events maxTime="100.0">
     <PeriodicEvent name="solverApplications"
                    forceDt="20.0"
-                   target="/Solvers/reservoirWell" />
+                   target="/Solvers/reservoirWellsSystem" />
 
     <PeriodicEvent name="outputs"
                    timeFrequency="100.0"
@@ -111,11 +111,11 @@
       </Connections> 
       <Perforations>
         <Perforation name="prod1_p0"
-		     location="0.5 0.5 0.5"
+		     location="9.5 0.5 0.5"
 		     transmissibility="1e-15"
 		     segmentName="prod1_unique_seg" />
 	<Perforation name="prod1_p1"
-		     location="1.5 0.5 0.5"
+		     location="8.5 0.5 0.5"
 		     transmissibility="1e-15"
 		     segmentName="prod1_unique_seg" />
       </Perforations> 
@@ -144,8 +144,8 @@
 		     location="1.5 0.5 0.5"
 		     transmissibility="1e-15"
 		     segmentName="inj1_unique_seg" />
-	<Perforation name="inj1_p1"
-		     location="1.5 0.5 0.5"
+	<Perforation name="inj1_p2"
+		     location="2.5 0.5 0.5"
 		     transmissibility="1e-15"
 		     segmentName="inj1_unique_seg" />
       </Perforations> 

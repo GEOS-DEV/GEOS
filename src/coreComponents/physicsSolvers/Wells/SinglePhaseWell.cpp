@@ -320,7 +320,7 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
     arrayView1d<localIndex const> const & resElementIndex =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // 1) Insert the entries corresponding to reservoir-well perforations
     //    This will fill J_WW, J_WR, and J_RW
@@ -336,6 +336,12 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( resNDOF + wellNDOF );
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( resNDOF + wellNDOF );
 
+      std::cout << "er = "   << er
+		<< " esr = " << esr
+		<< " ei = "  << ei
+		<< " resDofNumber = " << resDofNumber[er][esr][ei]
+		<< std::endl;
+      
       // get the offset of the reservoir element equation
       globalIndex const resOffset  = resNDOF * resDofNumber[er][esr][ei];
       // specify the reservoir equation number
@@ -576,7 +582,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
     arrayView1d<localIndex const> const & resElementIndex =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     real64 const densWeight[2] = { 1.0, 0.0 }; // cell / well weights
 

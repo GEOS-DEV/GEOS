@@ -464,7 +464,7 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
     arrayView1d<localIndex const> const & resElementIndex =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // 1) Insert the entries corresponding to reservoir-well perforations
     //    This will fill J_WW, J_WR, and J_RW
@@ -760,7 +760,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
     arrayView1d<localIndex const> const & resElementIndex =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
     
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
     {

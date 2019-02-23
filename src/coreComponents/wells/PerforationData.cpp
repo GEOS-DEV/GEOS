@@ -131,7 +131,7 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
   {
     Perforation const * perforation = perforationManager->getPerforation( iperf );
     R1Tensor const & loc = perforation->getLocation();
-    /*
+
     auto ret = minLocOverElemsInMesh( mesh, [&] ( localIndex er,
                                                   localIndex esr,
                                                   localIndex ei ) -> real64
@@ -144,11 +144,12 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
     m_reservoirElementRegion[num_conn_local]    = std::get<0>(ret.second);
     m_reservoirElementSubregion[num_conn_local] = std::get<1>(ret.second);
     m_reservoirElementIndex[num_conn_local]     = std::get<2>(ret.second);
-    m_reservoirPerforationIndex[num_conn_local] = num_conn_global++;
-    */
-    m_perforationIndex[num_conn_local] = num_conn_local;
-    ++num_conn_local;
 
+    std::cout << "iperf = " << m_reservoirElementIndex[num_conn_local] << std::endl;
+    
+    m_perforationIndex[num_conn_local] = num_conn_global++;
+
+    num_conn_local++;
   }
   resize( num_conn_local );
 }

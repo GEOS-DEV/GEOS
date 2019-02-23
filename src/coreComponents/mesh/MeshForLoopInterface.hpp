@@ -167,6 +167,57 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 }
 
 
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+std::pair<NUMBER, localIndex>
+minloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceMinLoc<REDUCE_POLICY, NUMBER> minval(std::numeric_limits<NUMBER>::max());
+
+  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {
+    minval.minloc(body(index), index);
+  });
+
+  return std::make_pair(minval.get(), minval.getLoc());
+}
+
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
+minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  NUMBER minVal = std::numeric_limits<NUMBER>::max();
+  localIndex minReg = -1, minSubreg = -1, minIndex = -1;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      ElementSubRegionBase const * const cellBlock = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      auto ret = minloc_in_range<NUMBER,EXEC_POLICY,REDUCE_POLICY>(0, cellBlock->size(), ebody);
+      if (ret.first < minVal)
+      {
+        minVal    = ret.first;
+        minReg    = er;
+        minSubreg = esr;
+        minIndex  = ret.second;
+      }
+    }
+  }
+
+  return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
+}
+
+
 }
 
 

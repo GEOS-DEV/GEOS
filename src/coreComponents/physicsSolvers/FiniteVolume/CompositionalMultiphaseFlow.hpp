@@ -274,7 +274,7 @@ public:
    * @param sparsity the sparsity pattern matrix
    */
   void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
+                           Epetra_FECrsGraph * const sparsity ) override;
 
   /**
    * @brief sets the dof indices for this solver
@@ -289,7 +289,7 @@ public:
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex offset );
+                                     localIndex offset ) override;
   
   /**@}*/
 

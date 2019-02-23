@@ -233,7 +233,7 @@ public:
   void SetSparsityPattern( DomainPartition const * const domain,
                            Epetra_FECrsGraph * const sparsity,
 			   globalIndex firstWellElemDofNumber,
-			   localIndex numDofPerResElement );
+			   localIndex numDofPerResElement ) override;
 
   /**
    * @brief sets the dof indices for this solver
@@ -248,7 +248,7 @@ public:
   void SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex offset );
+                                     localIndex offset ) override;
   
   void CheckWellControlSwitch( DomainPartition * const domain );
   
