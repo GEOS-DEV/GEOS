@@ -25,6 +25,7 @@
 
 #include "FiniteElementDiscretization.hpp"
 
+#include "../mesh/CellElementSubRegion.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
@@ -35,7 +36,6 @@
 #include "codingUtilities/Utilities.hpp"
 
 // TODO make this not dependent on this header...need better key implementation
-#include "mesh/CellBlockSubRegion.hpp"
 
 namespace geosx
 {
@@ -46,6 +46,8 @@ using namespace dataRepository;
 FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
   RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
   RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
 }
@@ -73,7 +75,7 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( dataRepository::Manag
   array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
   dNdX.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
 
-  auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString)->reference();
+  auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellElementSubRegion::viewKeyStruct::constitutiveMapString)->reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
   constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
@@ -82,16 +84,16 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( dataRepository::Manag
 }
 
 void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
-                                                          dataRepository::ManagedGroup * const cellBlock ) const
+                                                                   dataRepository::ManagedGroup * const elementSubRegion ) const
 {
-  arrayView3d<R1Tensor> & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
-  arrayView2d<real64> & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
-  FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
+  arrayView3d<R1Tensor> & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
+  arrayView2d<real64> & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+  FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
 
   array1d<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
   R1Tensor const * const restrict X_ptr = X;
 
-  for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
+  for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
   {
     CopyGlobalToLocal<R1Tensor>(elemsToNodes[k], X, X_elemLocal);
     m_finiteElement->reinit(X_elemLocal);
@@ -119,8 +121,8 @@ void FiniteElementDiscretization::PostProcessInput()
   ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
   ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
   
-  m_basis = &(basisManager->getReference<BasisBase>(basisName));
-  m_quadrature = &(quadratureManager->getReference<QuadratureBase>(quadratureName));
+  m_basis = basisManager->GetGroup<BasisBase>(basisName);
+  m_quadrature = quadratureManager->GetGroup<QuadratureBase>(quadratureName);
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 }
 

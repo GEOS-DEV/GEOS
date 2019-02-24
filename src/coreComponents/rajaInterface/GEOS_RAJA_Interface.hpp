@@ -107,5 +107,10 @@ RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, 
 }
 
 }
-  
+
+#define FOR_ALL_IN_SET( POLICY, INDICES_SET, INDEX ) \
+    geosx::forall_in_set<POLICY>( INDICES_SET.data(), \
+                                  INDICES_SET.size(), \
+                                  GEOSX_LAMBDA ( INDEX )->void
+
 #endif

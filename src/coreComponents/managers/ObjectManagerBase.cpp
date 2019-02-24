@@ -428,6 +428,21 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
     packedSize += bufferOps::Pack<DOPACK>( buffer, globalIndices );
   }
 
+  array1d<localIndex> const * const
+  parentIndices = this->getPointer<array1d<localIndex>>( viewKeyStruct::parentIndexString );
+  if( parentIndices != nullptr )
+  {
+    packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::parentIndexString) );
+    packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                           *parentIndices,
+                                           packList,
+                                           this->m_localToGlobalMap,
+                                           this->m_localToGlobalMap );
+  }
+
+
+
+
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
@@ -534,6 +549,21 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     packList = unpackedLocalIndices;
   }
 
+
+  arrayView1d<localIndex> * const parentIndices = this->getPointer<array1d<localIndex>>( viewKeyStruct::parentIndexString );
+  if( parentIndices != nullptr )
+  {
+    string parentIndicesString;
+    unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
+    GEOS_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect");
+    unpackedSize += bufferOps::Unpack( buffer,
+                                       *parentIndices,
+                                       packList,
+                                       this->m_globalToLocalMap,
+                                       this->m_globalToLocalMap );
+  }
+
+
   if( recursive > 0 )
   {
     string subGroups;
@@ -567,6 +597,8 @@ void ObjectManagerBase::ViewPackingExclusionList( set<localIndex> & exclusionLis
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::localToGlobalMapString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::globalToLocalMapString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::ghostRankString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::parentIndexString));
+
 }
 
 
@@ -696,13 +728,72 @@ void ObjectManagerBase::SetMaxGlobalIndex()
   {
     maxGlobalIndexLocally = std::max( maxGlobalIndexLocally, m_localToGlobalMap[a] );
   }
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndexLocally ),
-                 reinterpret_cast<char*>( &m_maxGlobalIndex ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndexLocally,
+                 &m_maxGlobalIndex,
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 }
 
+void ObjectManagerBase::CleanUpMap( set<localIndex> const & targetIndices,
+                                    array1d<set<localIndex> > & upmap,
+                                    array2d<localIndex> const & downmap )
+{
+  for( auto const & targetIndex : targetIndices )
+  {
+    set<localIndex> eraseList;
+    for( auto const & compositeIndex : upmap[targetIndex] )
+    {
+      bool hasTargetIndex = false;
+      for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+      {
+        localIndex const compositeLocalIndex = downmap[compositeIndex][a];
+        if( compositeLocalIndex==targetIndex )
+        {
+          hasTargetIndex=true;
+        }
+      }
+      if( !hasTargetIndex )
+      {
+        eraseList.insert(compositeIndex);
+      }
+    }
+    for( auto const & val : eraseList )
+    {
+      upmap[targetIndex].erase(val);
+    }
+  }
+}
+
+void ObjectManagerBase::CleanUpMap( set<localIndex> const & targetIndices,
+                                    array1d<set<localIndex> > & upmap,
+                                    array1d< array1d<localIndex> > const & downmap )
+{
+  for( auto const & targetIndex : targetIndices )
+  {
+    set<localIndex> eraseList;
+    for( auto const & compositeIndex : upmap[targetIndex] )
+    {
+      bool hasTargetIndex = false;
+      for( localIndex a=0 ; a<downmap[compositeIndex].size() ; ++a )
+      {
+        localIndex const compositeLocalIndex = downmap[compositeIndex][a];
+        if( compositeLocalIndex==targetIndex )
+        {
+          hasTargetIndex=true;
+        }
+      }
+      if( !hasTargetIndex )
+      {
+        eraseList.insert(compositeIndex);
+      }
+    }
+    for( auto const & val : eraseList )
+    {
+      upmap[targetIndex].erase(val);
+    }
+  }
+}
 
 } /* namespace geosx */

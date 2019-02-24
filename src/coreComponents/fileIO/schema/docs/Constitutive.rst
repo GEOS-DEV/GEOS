@@ -1,16 +1,16 @@
 
 
-=============================== ==== ======= === ====================================== 
-Name                            Type Default Use Description                            
-=============================== ==== ======= === ====================================== 
-VanGenuchtenCapillaryPressure   node             `XML_VanGenuchtenCapillaryPressure`_   
-BlackOilFluid                   node             `XML_BlackOilFluid`_                   
-BrooksCoreyCapillaryPressure    node             `XML_BrooksCoreyCapillaryPressure`_    
-BrooksCoreyRelativePermeability node             `XML_BrooksCoreyRelativePermeability`_ 
-CompositionalMultiphaseFluid    node             `XML_CompositionalMultiphaseFluid`_    
-PoreVolumeCompressibleSolid     node             `XML_PoreVolumeCompressibleSolid`_     
-CompressibleSinglePhaseFluid    node             `XML_CompressibleSinglePhaseFluid`_    
-LinearElasticIsotropic          node             `XML_LinearElasticIsotropic`_          
-=============================== ==== ======= === ====================================== 
+=============================== ==== ======= ========================================== 
+Name                            Type Default Description                                
+=============================== ==== ======= ========================================== 
+CompositionalMultiphaseFluid    node         :ref:`XML_CompositionalMultiphaseFluid`    
+BlackOilFluid                   node         :ref:`XML_BlackOilFluid`                   
+VanGenuchtenCapillaryPressure   node         :ref:`XML_VanGenuchtenCapillaryPressure`   
+PoreVolumeCompressibleSolid     node         :ref:`XML_PoreVolumeCompressibleSolid`     
+CompressibleSinglePhaseFluid    node         :ref:`XML_CompressibleSinglePhaseFluid`    
+BrooksCoreyCapillaryPressure    node         :ref:`XML_BrooksCoreyCapillaryPressure`    
+BrooksCoreyRelativePermeability node         :ref:`XML_BrooksCoreyRelativePermeability` 
+LinearElasticIsotropic          node         :ref:`XML_LinearElasticIsotropic`          
+=============================== ==== ======= ========================================== 
 
 

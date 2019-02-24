@@ -33,7 +33,9 @@ using namespace dataRepository;
 
 FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 FiniteElementDiscretizationManager::~FiniteElementDiscretizationManager()
 {
@@ -48,6 +50,15 @@ ManagedGroup * FiniteElementDiscretizationManager::CreateChild( string const & c
   return this->RegisterGroup( childName, std::move(fem) );
 }
 
+
+void FiniteElementDiscretizationManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from ManagedGroup here
+  for (auto& catalogIter: ManagedGroup::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
 
 
 } /* namespace geosx */

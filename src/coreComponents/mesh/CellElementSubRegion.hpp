@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CellBlockSubRegion.hpp
- *
- *  Created on: May 11, 2017
- *      Author: rrsettgast
- */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_CELLBLOCKSUBREGION_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_CELLBLOCKSUBREGION_HPP_
@@ -31,13 +25,16 @@
 namespace geosx
 {
 
-class CellBlockSubRegion : public CellBlock
+class CellElementSubRegion : public CellBlock
 {
 public:
-  CellBlockSubRegion( string const & name, ManagedGroup * const parent );
-  virtual ~CellBlockSubRegion() override;
+  CellElementSubRegion( string const & name, ManagedGroup * const parent );
+  virtual ~CellElementSubRegion() override;
 
   void CopyFromCellBlock( CellBlock const * source );
+
+  void ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
+                                      string const & setName );
 
   template< typename LAMBDA >
   void forMaterials( LAMBDA lambda )
@@ -63,9 +60,11 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
 
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
@@ -83,13 +82,6 @@ public:
 
   } m_CellBlockSubRegionViewKeys;
 
-  struct groupKeyStruct : public CellBlock::groupKeyStruct
-  {
-    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
-//    constitutiveModelsString = constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString;
-
-
-  } m_CellBlockSubRegionGroupKeys;
 
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
@@ -107,14 +99,8 @@ public:
 
   array3d< R1Tensor > m_dNdX;
 
-  dataRepository::ManagedGroup const * GetConstitutiveModels() const
-  { return &m_constitutiveModels; }
-
-  dataRepository::ManagedGroup * GetConstitutiveModels()
-  { return &m_constitutiveModels; }
 
 private:
-  dataRepository::ManagedGroup m_constitutiveModels;
 
   map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInNodelist;
   map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInFacelist;

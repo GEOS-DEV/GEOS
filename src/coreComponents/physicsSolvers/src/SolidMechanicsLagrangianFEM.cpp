@@ -189,43 +189,53 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
   m_nonSendOrRecieveNodes(),
   m_icomm()
 {
-  getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
+  // To generate the schema, multiple solvers of that use this command are constructed
+  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
+  // getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
 
 
   RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of \\gamma in the Newmark Method for time integration");
+    setDescription("Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option");
 
   RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
     setApplyDefaultValue(0.25)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of \\beta in the Newmark Method for time integration. "
+    setDescription("Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
           "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
 
   RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of mass based damping coefficient in equations of motion. ");
+    setDescription("Value of mass based damping coefficient. ");
 
   RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value of stiffness based damping coefficient in equations of motion. ");
+    setDescription("Value of stiffness based damping coefficient. ");
 
   RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
     setInputFlag(InputFlags::FALSE)->
-    setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+    setDescription("Time integration enum class value.");
 
   RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Time integration method. Options are QuasiStatic, ImplicitDynamic, ExplicitDynamic");
+    setDescription("Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic");
 
   RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Flag to indicate the use of the incremental displacement from the previous step as an "
-          "initial estimate for the incremental displacement of the current step.");
+    setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
+                    "initial estimate for the incremental displacement of the current step.");
+
+  RegisterViewWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
+    setApplyDefaultValue(10)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
+                    "For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. "
+                    "However if a new surface is generated, then the mechanics solve must be executed again due to the "
+                    "change in topology.");
 }
 
 void SolidMechanics_LagrangianFEM::PostProcessInput()
@@ -260,6 +270,13 @@ void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const Mesh
 }
 
 
+void SolidMechanics_LagrangianFEM::InitializePreSubGroups(ManagedGroup * const rootGroup)
+{
+  SolverBase::InitializePreSubGroups(rootGroup);
+
+  // set the blockID for the block system interface
+  getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
+}
 
 
 void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
@@ -288,14 +305,12 @@ void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups(
     m_elemsAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
     m_elemsNotAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
 
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      CellBlockSubRegion const * const cellBlock = elemRegion->GetSubRegion(esr);
-
-      arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
       arrayView2d<localIndex> const & elemsToNodes =
-        cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+        elementSubRegion->nodeList();
 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
@@ -305,7 +320,7 @@ void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups(
         }
 
         bool isAttachedToGhostNode = false;
-        for( localIndex a=0 ; a<cellBlock->numNodesPerElement() ; ++a )
+        for( localIndex a=0 ; a<elementSubRegion->numNodesPerElement() ; ++a )
         {
           if( nodes->GhostRank()[elemsToNodes[k][a]] >= -1 )
           {
@@ -327,7 +342,7 @@ void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups(
           m_elemsNotAttachedToSendOrReceiveNodes[er][esr].insert(k);
         }
       }
-    }
+    });
   }
 }
 
@@ -348,17 +363,23 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
     ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-
-    dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
-                                      getLinearSystemRepository() );
-
-    ImplicitStepComplete( time_n, dt,  domain );
-
-    if( surfaceGenerator!=nullptr )
+    for( integer solveIter=0 ; solveIter<m_maxNumResolves ; ++solveIter )
     {
-      surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
+      dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
+                                        getLinearSystemRepository() );
+      if( surfaceGenerator!=nullptr )
+      {
+        if( !( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 ) )
+        {
+          solveIter=m_maxNumResolves;
+        }
+      }
+      else
+      {
+        solveIter=m_maxNumResolves;
+      }
     }
-
+    ImplicitStepComplete( time_n, dt,  domain );
   }
 
   return dtReturn;
@@ -449,15 +470,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
+      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      arrayView3d< R1Tensor > const & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
+      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
-
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
+      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -483,7 +502,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       GEOSX_MARK_END(externalElemsLoop);
 
-    } //Element Region
+    }); //Element Region
 
   } //Element Manager
 
@@ -508,15 +527,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
+      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      arrayView3d< R1Tensor > const & dNdX = cellBlock->getReference< array3d< R1Tensor > >(keys::dNdX);
+      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
-
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();
+      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -542,7 +559,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       GEOSX_MARK_END(internalElemsLoop);
 
-    } //Element Region
+    }); //Element Region
 
   } //Element Manager
 
@@ -1062,12 +1079,10 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion(er);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-
-      CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(esr);
-      localIndex const numElems = cellBlock->size();
-      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getReference<array2d<localIndex>>(keys::nodeList);
+      localIndex const numElems = elementSubRegion->size();
+      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);
@@ -1090,7 +1105,7 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
                                         elementLocalDofIndex.data());
         }
       }
-    }
+    });
   }
 }
 
@@ -1152,16 +1167,14 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      CellBlockSubRegion * const cellBlock = elementRegion->GetSubRegion(esr);
-
       array3d<R1Tensor> const &
-      dNdX = cellBlock->getReference< array3d<R1Tensor> >(keys::dNdX);
+      dNdX = elementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
 
-      arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d< localIndex > const & elemsToNodes = cellBlock->nodeList();
+      arrayView2d< localIndex > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       u_local.resize(numNodesPerElement);
@@ -1178,12 +1191,12 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
                                                     dim*static_cast<int>(numNodesPerElement));
       Epetra_SerialDenseVector     element_dof_np1 (dim*static_cast<int>(numNodesPerElement));
 
-      array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+      array1d<integer> const & elemGhostRank = elementSubRegion->m_ghostRank;
 
 
       GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 
-      for( localIndex k=0 ; k<cellBlock->size() ; ++k )
+      for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
       {
 
         real64 stiffness[6][6];
@@ -1249,7 +1262,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
                                     element_rhs);
         }
       }
-    }
+    });
   }
 
 

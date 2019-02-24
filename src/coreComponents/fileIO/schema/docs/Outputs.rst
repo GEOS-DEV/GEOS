@@ -1,12 +1,12 @@
 
 
-========= ==== ======= === ================ 
-Name      Type Default Use Description      
-========= ==== ======= === ================ 
-ChomboIO  node             `XML_ChomboIO`_  
-Blueprint node             `XML_Blueprint`_ 
-Restart   node             `XML_Restart`_   
-Silo      node             `XML_Silo`_      
-========= ==== ======= === ================ 
+========= ==== ======= ==================== 
+Name      Type Default Description          
+========= ==== ======= ==================== 
+Blueprint node         :ref:`XML_Blueprint` 
+Restart   node         :ref:`XML_Restart`   
+ChomboIO  node         :ref:`XML_ChomboIO`  
+Silo      node         :ref:`XML_Silo`      
+========= ==== ======= ==================== 
 
 

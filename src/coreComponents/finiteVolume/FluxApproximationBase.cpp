@@ -37,6 +37,8 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
     m_boundaryFieldName(),
     m_coeffName()
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
   m_boundarySetData = this->RegisterGroup(groupKeyStruct::boundarySetDataString);
 
   RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->
@@ -47,11 +49,18 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of boundary (face) field");
 
+  RegisterViewWrapper(viewKeyStruct::fratureRegionNameString, &m_fractureRegionName, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Names of the fracture region that will have a fracture stencil generated for them.");
+
   RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of coefficient field");
 
   RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
+
+  RegisterViewWrapper<CellStencil>(viewKeyStruct::fratureStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
 }
 
@@ -65,6 +74,13 @@ FluxApproximationBase::GetCatalog()
 void FluxApproximationBase::compute(DomainPartition * domain)
 {
   computeMainStencil(domain, getStencil());
+
+  if( !m_fractureRegionName.empty() )
+  {
+    computeFractureStencil( *domain,
+                            this->getReference<CellStencil>(viewKeyStruct::fratureStencilString),
+                            getStencil() );
+  }
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 

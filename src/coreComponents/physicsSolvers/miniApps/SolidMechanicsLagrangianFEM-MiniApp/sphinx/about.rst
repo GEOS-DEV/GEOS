@@ -69,9 +69,9 @@ dimension index. More precisely storing as an array of objects would take the fo
 while storing as an object of arrays would take the form of
 
 .. math::
-  \text{dNdX_x[elem][quad][dof]} \\
-  \text{dNdX_y[elem][quad][dof]} \\
-  \text{dNdX_z[elem][quad][dof]}
+  \text{dNdX\_x[elem][quad][dof]} \\
+  \text{dNdX\_y[elem][quad][dof]} \\
+  \text{dNdX\_z[elem][quad][dof]}
 
 In addition, the proxy has the capability to compute shape function derivatives
 within the kernel reliving the need of additional storage. Computation of the shape function derivatives

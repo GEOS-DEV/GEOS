@@ -17,8 +17,7 @@
  */
 
 /**
- * @file FaceManager.h
- * @author settgast1
+ * @file FaceManager.hpp
  */
 
 #ifndef FACEMANAGER_H_
@@ -32,7 +31,7 @@ namespace geosx
 
 class NodeManager;
 class ElementRegionManager;
-class CellBlockSubRegion;
+class CellElementSubRegion;
 
 class FaceManager : public ObjectManagerBase
 {
@@ -82,9 +81,14 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override final;
+  void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( set<localIndex> const & receivedFaces,
+                         ElementRegionManager const & elemRegionManager );
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 

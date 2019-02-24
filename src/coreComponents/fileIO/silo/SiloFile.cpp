@@ -310,7 +310,9 @@ SiloFile::SiloFile():
   m_restartFileRoot("restart"),
   m_fileName(),
   m_baseFileName()
-{}
+{
+  m_ghostFlags = false;
+}
 
 // *********************************************************************************************************************
 /// Destructor
@@ -550,8 +552,10 @@ void SiloFile::WriteMeshObject(string const & meshName,
   }
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-  DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
-
+  if( m_ghostFlags )
+  {
+    DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
+  }
 
   int numTotZones = 0;
   int lnodelist = 0;
@@ -637,7 +641,10 @@ void SiloFile::WriteMeshObject(string const & meshName,
     int hi_offset = 0;
 
 
-    DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
+    if( m_ghostFlags )
+    {
+      DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
+    }
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
                     hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize2.data()),
@@ -789,7 +796,7 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
   ElementRegionManager::ElementViewAccessor< std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> > > const
   constitutiveMap = elementManager->ConstructViewAccessor< std::pair< array2d<localIndex>, array2d<localIndex> >, 
                                                            std::pair< arrayView2d<localIndex>, arrayView2d<localIndex> >
-      >( std::string(CellBlockSubRegion::viewKeyStruct::constitutiveMapString) );
+      >( std::string(CellElementSubRegion::viewKeyStruct::constitutiveMapString) );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
@@ -818,7 +825,7 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+      CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
@@ -948,15 +955,14 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
 
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
       if( numMatInRegion > 1 )
       {
         mixlen += subRegion->size() * numMatInRegion;
       }
       dims += subRegion->size();
-    }
+    });
   }
 
   array1d<integer> matlist( dims );
@@ -981,10 +987,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                       getIndexInParent();
     }
 
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
-
       if( numMatInRegion == 1 )
       {
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
@@ -1014,7 +1018,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
           }
         }
       }
-    }
+    });
   }
 
   {
@@ -1593,9 +1597,9 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   {
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     viewPointers[er].resize( elemRegion->numSubRegions() );
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
+                                               auto const * const subRegion )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
       numElems += subRegion->size();
 
       for( auto const & wrapperIter : subRegion->wrappers() )
@@ -1628,7 +1632,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
           });
         }
       }
-    }
+    });
   }
   fakeGroup.resize(numElems);
 
@@ -1651,7 +1655,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
       {
         ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-        for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+        elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
+                                                   auto const * const subRegion )
         {
           ViewWrapper<arrayType> const &
           sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
@@ -1659,7 +1664,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
           targetArray.copy(counter, sourceArray );
           counter += sourceArray.size(0);
-        }
+        });
       }
     });
   }
@@ -1784,22 +1789,21 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       ElementRegion const * const region = elementManager->GetRegion(er);
 
-      for( localIndex esr=0 ; esr<region->numSubRegions() ; ++esr )
+      region->forElementSubRegions([&]( auto const * const elementSubRegion )
       {
-        CellBlockSubRegion const * cellBlock = region->GetSubRegion(esr);
+        TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
 
-        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+        // TODO HACK. this isn't correct for variable relations.
+        elementToNodeMap[count].resize( elemsToNodes.size(0), elementSubRegion->numNodesPerElement(0) );
 
-        elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
-
-        integer_array const & elemGhostRank = cellBlock->GhostRank();
+        integer_array const & elemGhostRank = elementSubRegion->GhostRank();
 
 
-        string elementType = cellBlock -> GetElementType();
+        string elementType = elementSubRegion -> GetElementType();
         integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
-        for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
+        for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
         {
-          integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
+          integer numNodesPerElement = integer_conversion<int>( elementSubRegion->numNodesPerElement(k));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
             elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
@@ -1820,7 +1824,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
-        shapecnt[count] = static_cast<int>(cellBlock->size());
+        shapecnt[count] = static_cast<int>(elementSubRegion->size());
 
 
       if (! elementType.compare(0, 4, "C3D8") )
@@ -1862,9 +1866,9 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 // geometry type " + elementRegion.m_elementGeometryID + " \n");
 //      }
 
-        shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
+        shapesize[count] = integer_conversion<int>( elementSubRegion->numNodesPerElement(0) );
         count++;
-      }
+      });
     }
 
 
