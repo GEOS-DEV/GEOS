@@ -57,7 +57,7 @@ BlasMatrix::~BlasMatrix()
 
 }
 
-//-----------------------------------------------------Shaping/sizing methods---
+//-------------------------------------------Shaping/sizing/permuting methods---
 void BlasMatrix::resize( localIndex nRows,
                          localIndex nCols )
 {
@@ -143,7 +143,7 @@ void BlasMatrix::permuteCols( array1d<int> permVector,
 }
 
 //-------------------------------------------------------Mathematical methods---
-// determinant calculation
+
 real64 BlasMatrix::determinant() const
 {
   // --- check that matrix is square
@@ -218,14 +218,12 @@ real64 BlasMatrix::determinant() const
   }
 }
 
-// computes inverse matrix
 void BlasMatrix::computeInverse( BlasMatrix & dst )
 {
   real64 det;
   this->computeInverse( dst, det );
 }
 
-// computes inverse matrix
 void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
 {
   // --- Check that source matrix is square
@@ -346,10 +344,6 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
   }
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Inf-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the infinity norm of the matrix.
 real64 BlasMatrix::normInf() const
 {
   return LAPACKE_dlange( LAPACK_COL_MAJOR,
@@ -361,10 +355,6 @@ real64 BlasMatrix::normInf() const
 
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// 1-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the one norm of the matrix.
 real64 BlasMatrix::norm1() const
 {
   return LAPACKE_dlange( LAPACK_COL_MAJOR,
@@ -376,10 +366,6 @@ real64 BlasMatrix::norm1() const
 
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Frobenius-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the Frobenius norm of the matrix.
 real64 BlasMatrix::normFrobenius() const
 {
   return LAPACKE_dlange( LAPACK_COL_MAJOR,
@@ -391,7 +377,6 @@ real64 BlasMatrix::normFrobenius() const
 
 }
 
-// matrix-matrix sum (optional scaling)
 void BlasMatrix::matrixAdd( BlasMatrix const & A,
                             real64 const scalarA )
 {
@@ -408,7 +393,6 @@ void BlasMatrix::matrixAdd( BlasMatrix const & A,
   return;
 }
 
-// in-place scalar-matrix product
 void BlasMatrix::scale(real64 scalarThis)
 {
   // Call to BLAS using CBLAS interface
@@ -419,7 +403,6 @@ void BlasMatrix::scale(real64 scalarThis)
   return;
 }
 
-// matrix-matrix multiplication (optional scaling/accumulation)
 void BlasMatrix::matrixMultiply( BlasMatrix const &src,
                                  BlasMatrix &dst,
                                  real64 const scalarThisSrc,
@@ -451,7 +434,6 @@ void BlasMatrix::matrixMultiply( BlasMatrix const &src,
                M );
 }
 
-// transpose(matrix)-matrix multiplication (optional scaling/accumulation)
 void BlasMatrix::TmatrixMultiply( BlasMatrix const &src,
                                   BlasMatrix &dst,
                                   real64 const scalarThisSrc,
@@ -483,7 +465,6 @@ void BlasMatrix::TmatrixMultiply( BlasMatrix const &src,
                M );
 }
 
-// transpose(matrix)-matrix multiplication (optional scaling/accumulation)
 void BlasMatrix::matrixTMultiply( BlasMatrix const &src,
                                   BlasMatrix &dst,
                                   real64 const scalarThisSrc,
@@ -515,8 +496,6 @@ void BlasMatrix::matrixTMultiply( BlasMatrix const &src,
                M );
 }
 
-// transpose(matrix)-transpose(matrix) multiplication
-// (optional scaling/accumulation)
 void BlasMatrix::TmatrixTMultiply( BlasMatrix const &src,
                                    BlasMatrix &dst,
                                    real64 const scalarThisSrc,
@@ -548,7 +527,6 @@ void BlasMatrix::TmatrixTMultiply( BlasMatrix const &src,
                M );
 }
 
-// matrix-vector multiplication
 void BlasMatrix::vectorMultiply(BlasVector const &src,
                                 BlasVector &dst,
                                 real64 const scalarThisSrc,
@@ -579,7 +557,6 @@ void BlasMatrix::vectorMultiply(BlasVector const &src,
   return;
 }
 
-// transpose(matrix)-vector multiplication
 void BlasMatrix::TvectorMultiply(BlasVector const &src,
                                  BlasVector &dst,
                                  real64 const scalarThisSrc,
@@ -610,8 +587,6 @@ void BlasMatrix::TvectorMultiply(BlasVector const &src,
   return;
 }
 
-
-//
 //------------------------------------------------------Data Accessor methods---
 
 // Returns number of matrix rows.
