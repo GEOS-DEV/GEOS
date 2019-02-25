@@ -51,7 +51,7 @@ BlasVector::~BlasVector()
 
 }
 
-//-----------------------------------------------------Shaping/sizing methods---
+//-------------------------------------------Shaping/sizing/permuting methods---
 void BlasVector::resize( localIndex length )
 {
   GEOS_ASSERT_MSG( length > 0, "Vector size must be > 0" );
@@ -112,10 +112,6 @@ void BlasVector::permute( array1d<int> permVector,
 
 //-------------------------------------------------------Mathematical methods---
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// 1-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the one-norm of the vector.
 real64 BlasVector::norm1() const
 {
   return cblas_dasum( integer_conversion<int>(m_size),
@@ -123,10 +119,6 @@ real64 BlasVector::norm1() const
                       1);
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// 2-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the two-norm of the vector.
 real64 BlasVector::norm2() const
 {
   return cblas_dnrm2( integer_conversion<int>(m_size),
@@ -134,10 +126,6 @@ real64 BlasVector::norm2() const
                       1);
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Infinity-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the infinity-norm of the vector.
 real64 BlasVector::normInf() const
 {
   int ind = cblas_idamax( integer_conversion<int>(m_size),
@@ -146,7 +134,6 @@ real64 BlasVector::normInf() const
   return std::abs(m_values[ind]);
 }
 
-// matrix-matrix sum (optional scaling)
 void BlasVector::vectorAdd( BlasVector const & Vec,
                             real64 const scalarVec )
 {
@@ -163,7 +150,6 @@ void BlasVector::vectorAdd( BlasVector const & Vec,
   return;
 }
 
-// in-place scalar-vector product
 void BlasVector::scale(real64 scalarThis)
 {
   // Call to BLAS using CBLAS interface
@@ -174,7 +160,6 @@ void BlasVector::scale(real64 scalarThis)
   return;
 }
 
-// Dot product with the vector vec.
 real64 BlasVector::dot( BlasVector const &vec )
 {
   GEOS_ASSERT_MSG( vec.getSize() == m_size,
@@ -188,7 +173,6 @@ real64 BlasVector::dot( BlasVector const &vec )
              1);
 }
 
-// in-place scalar-vector product
 void BlasVector::copy( BlasVector const &vec )
 {
   GEOS_ASSERT_MSG( vec.getSize() == m_size,
@@ -206,16 +190,11 @@ void BlasVector::copy( BlasVector const &vec )
 //
 //------------------------------------------------------Data Accessor methods---
 
-// Returns number of matrix rows.
 localIndex BlasVector::getSize() const
 {
   return m_size;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get unwrapped pointer
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get pointer to raw Epetra object, with const and non-const versions.
 array1d<real64> const * BlasVector::getValues() const
 {
   return &m_values;
