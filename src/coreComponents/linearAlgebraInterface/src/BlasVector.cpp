@@ -38,10 +38,10 @@ BlasVector::BlasVector( localIndex length )
   this->resize( length);
 }
 
-BlasVector::BlasVector( BlasVector const & src )
+BlasVector::BlasVector( BlasVector const & vec )
 :
-    m_size( src.m_size ),
-    m_values( src.m_values )
+    m_size( vec.m_size ),
+    m_values( vec.m_values )
 {
 
 }
@@ -57,7 +57,6 @@ void BlasVector::resize( localIndex length )
   GEOS_ASSERT_MSG( length > 0, "Vector size must be > 0" );
   m_size = length;
   m_values.resizeDefault( length );
-  this->zero();
 }
 
 void BlasVector::zero()
@@ -69,6 +68,29 @@ BlasVector &BlasVector::operator=(double value)
 {
    m_values = value;
    return *this;
+}
+
+void BlasVector::rand()
+{
+  std::default_random_engine generator;
+  std::uniform_real_distribution<real64>  distribution(0.0, 0.1);
+
+  for (localIndex i = 0; i < m_size; ++i)
+    m_values[i] = distribution(generator);
+
+  return;
+}
+
+void BlasVector::rand(real64 const rangeFrom,
+                      real64 const rangeTo)
+{
+  std::default_random_engine generator;
+  std::uniform_real_distribution<real64>  distribution(rangeFrom, rangeTo);
+
+  for (localIndex i = 0; i < m_size; ++i)
+    m_values[i] = distribution(generator);
+
+  return;
 }
 
 void BlasVector::permute( array1d<int> permVector,
@@ -118,12 +140,10 @@ real64 BlasVector::norm2() const
 // Returns the infinity-norm of the vector.
 real64 BlasVector::normInf() const
 {
-  real64 max = 0.0;
-  for (localIndex i = 0; i < m_size; i++)
-  {
-     max = std::max(std::abs(m_values[i]), max);
-  }
-  return max;
+  int ind = cblas_idamax( integer_conversion<int>(m_size),
+                          m_values.data(),
+                          1);
+  return std::abs(m_values[ind]);
 }
 
 // matrix-matrix sum (optional scaling)
@@ -171,6 +191,9 @@ real64 BlasVector::dot( BlasVector const &vec )
 // in-place scalar-vector product
 void BlasVector::copy( BlasVector const &vec )
 {
+  GEOS_ASSERT_MSG( vec.getSize() == m_size,
+                   "Vector dimensions not compatible for copying" );
+
   // Call to BLAS using CBLAS interface
   cblas_dcopy(integer_conversion<int>(m_values.size()),
               vec.m_values.data(),

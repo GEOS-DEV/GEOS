@@ -66,7 +66,6 @@ void BlasMatrix::resize( localIndex nRows,
   m_numRows = nRows;
   m_numCols = nCols;
   m_values.resizeDefault( m_numRows * m_numCols );
-  this->zero();
 }
 
 void BlasMatrix::resize( localIndex order )
@@ -78,6 +77,30 @@ void BlasMatrix::zero()
 {
   m_values = 0;
 }
+
+void BlasMatrix::rand()
+{
+  std::default_random_engine generator;
+  std::uniform_real_distribution<real64>  distribution(0.0, 0.1);
+
+  for (localIndex i = 0; i < m_numRows*m_numCols; ++i)
+    m_values[i] = distribution(generator);
+
+  return;
+}
+
+void BlasMatrix::rand(real64 const rangeFrom,
+                      real64 const rangeTo)
+{
+  std::default_random_engine generator;
+  std::uniform_real_distribution<real64>  distribution(rangeFrom, rangeTo);
+
+  for (localIndex i = 0; i < m_numRows*m_numCols; ++i)
+    m_values[i] = distribution(generator);
+
+  return;
+}
+
 
 BlasMatrix &BlasMatrix::operator=(double value)
 {

@@ -4,7 +4,7 @@
 
 set( linearAlgebraInterface_tests
      testLAOperations.cpp 
-     testDenseLAOperations.cpp)
+     testSerialLAOperations.cpp)
 
 #
 # Add gtest C++ based tests

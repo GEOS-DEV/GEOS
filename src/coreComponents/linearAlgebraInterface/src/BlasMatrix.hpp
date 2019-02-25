@@ -23,12 +23,7 @@
 #ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASMATRIX_HPP_
 #define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASMATRIX_HPP_
 
-#include "common/DataTypes.hpp"
 #include "BlasVector.hpp"
-#include "Logger.hpp"
-
-#include "cblas.h"
-#include "lapacke.h"
 
 namespace geosx
 {
@@ -96,22 +91,26 @@ public:
   //@{
 
   /**
-   * @brief Resize matrix. All entries set to zero
+   * @brief Resize matrix.
    *
    * \param IN
    * nRows - New number of matrix rows.
    * \param IN
    * nCols - New number of matrix cols.
    *
+   * @note Values are not initialized to 0.
+   *
    */
   void resize( localIndex numRows,
                localIndex numCols );
 
   /**
-   * @brief Resize matrix. All entries set to zero
+   * @brief Resize matrix.
    *
    * \param IN
    * order - Matrix order
+   *
+   * @note Values are not initialized to 0.
    *
    */
   void resize( localIndex order );
@@ -123,6 +122,25 @@ public:
    *
    */
   void zero();
+
+  /**
+   * @brief Set matrix elements to uniformly distributed random
+   *        entries in the interval [0.0, 1.0).
+   *
+   */
+  void rand();
+
+  /**
+   * @brief Set matrix elements to uniformly distributed random
+   *        entries in the interval [\a rangeFrom, \a rangeTo)r.
+   *
+   * * \param IN
+   * \a rangeFrom - Interval left bound
+   * \a rangeTo - Interval right bound
+   *
+   */
+  void rand(real64 const rangeFrom,
+            real64 const rangeTo);
 
   /**
    * @brief Operator that sets all matrix entries equal to a constant value
