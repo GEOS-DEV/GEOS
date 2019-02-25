@@ -405,6 +405,11 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
     ParallelTopologyChange::SyncronizeTopologyChange( mesh,
                                                       neighbors,
                                                       modifiedObjects);
+#else
+    AssignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
+    AssignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
+    AssignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
+
 #endif
 
 //    CalculateKinkAngles(faceManager, edgeManager, nodeManager, modifiedObjects, false);
@@ -3354,6 +3359,21 @@ int SurfaceGenerator::CheckNodeSplitability( const localIndex nodeID,
   //  {
   //    return (0);
   //  }
+}
+
+void SurfaceGenerator::AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
+                                                     set<localIndex> const & indexList )
+{
+  for( localIndex a=0 ; a<indexList.size() ; ++a )
+  {
+    localIndex const newLocalIndex = indexList[a];
+    globalIndex const newGlobalIndex = object.m_maxGlobalIndex + 1;
+
+    object.m_localToGlobalMap[newLocalIndex] = newGlobalIndex;
+    object.m_globalToLocalMap[newGlobalIndex] = newLocalIndex;
+
+    object.m_maxGlobalIndex = newGlobalIndex;
+  }
 }
 
 
