@@ -134,7 +134,7 @@ and calculate the location of the nodes on each invocation of the kernel.
 * ``PRE_COMPUTE_P`` - If enabled, a pre-computation step will be taken which stores the evaluation of the shape
 function derivatives at the quadrature points with respect to the parent coordinate system.
 
-* ``USE_CUDA`` - If CUDA is available the kernel will be offloaded to the device.
+* ``USE_GPU`` - If CUDA is available the kernel will be offloaded to the device.
 
 The layout header also has the ability to change whether the element index is the slowest or fastest index
 for structures which the element index plays a role. The following preprocessors will either assume
