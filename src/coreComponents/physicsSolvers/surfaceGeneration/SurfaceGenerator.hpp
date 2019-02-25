@@ -123,6 +123,9 @@ public:
                         const bool prefrac,
                         const realT time );
 
+  void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
+                                     set<localIndex> const & indexList );
+
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
 
