@@ -48,12 +48,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{}
-}
-
 using namespace dataRepository;
 using namespace constitutive;
 using namespace systemSolverInterface;
@@ -435,7 +429,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                              dNdX,
                              detJ,
                              u,
-                             uhat,
                              vel,
                              acc,
                              constitutiveRelations,
@@ -493,7 +486,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                              dNdX,
                              detJ,
                              u,
-                             uhat,
                              vel,
                              acc,
                              constitutiveRelations,
@@ -558,7 +550,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelLaunchSelector( localIn
                                                             arrayView3d< R1Tensor > const & dNdX,
                                                             arrayView2d<real64> const & detJ,
                                                             arrayView1d<R1Tensor> const & u,
-                                                            arrayView1d<R1Tensor> const & uhat,
                                                             arrayView1d<R1Tensor> const & vel,
                                                             arrayView1d<R1Tensor> & acc,
                                                             ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
@@ -575,7 +566,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelLaunchSelector( localIn
                                                                             dNdX,
                                                                             detJ,
                                                                             u,
-                                                                            uhat,
                                                                             vel,
                                                                             acc,
                                                                             constitutiveRelations,
@@ -595,7 +585,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelLaunch( localIndex cons
                                                             arrayView3d< R1Tensor > const & dNdX,
                                                             arrayView2d<real64> const & detJ,
                                                             arrayView1d<R1Tensor> const & u,
-                                                            arrayView1d<R1Tensor> const & uhat,
                                                             arrayView1d<R1Tensor> const & vel,
                                                             arrayView1d<R1Tensor> & acc,
                                                             ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations,
@@ -611,20 +600,21 @@ real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelLaunch( localIndex cons
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex k) mutable
   {
-    r1_array uhat_local( NUM_NODES_PER_ELEM );
+    r1_array v_local( NUM_NODES_PER_ELEM );
     r1_array u_local( NUM_NODES_PER_ELEM );
     r1_array f_local( NUM_NODES_PER_ELEM );
 
     CopyGlobalToLocal<R1Tensor,NUM_NODES_PER_ELEM>( elemsToNodes[k],
-                                                    u, uhat,
-                                                    u_local, uhat_local );
+                                                    u, vel,
+                                                    u_local, v_local );
 
     //Compute Quadrature
     for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
     {
 
       R2Tensor dUhatdX, dUdX;
-      CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, uhat_local, u_local, dNdX[k][q]);
+      CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, dNdX[k][q]);
+      dUhatdX *= dt;
 
       R2Tensor F,Ldt, Finv;
 
@@ -1605,5 +1595,5 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
 
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, std::string const &, ManagedGroup * const )
-} /* namespace ANST */
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::ManagedGroup * const )
+}
