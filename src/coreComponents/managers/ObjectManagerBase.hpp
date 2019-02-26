@@ -288,11 +288,11 @@ public:
                              map< localIndex, set<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped  );
 
-  static void CleanUpMap( set<localIndex> const & targetIndices,
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
                           array2d<localIndex> const & downmap );
 
-  static void CleanUpMap( set<localIndex> const & targetIndices,
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
                           array1d< array1d<localIndex > > const & downmap );
 

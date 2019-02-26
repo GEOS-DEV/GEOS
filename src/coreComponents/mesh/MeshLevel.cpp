@@ -93,7 +93,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
     elementAdjacencySet[a].resize( elemManager->GetRegion(a)->numSubRegions() );
   }
 
-  nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
+  nodeAdjacencySet.insert( seedNodeList.data(), seedNodeList.size() );
 
   for( integer d=0 ; d<depth ; ++d )
   {

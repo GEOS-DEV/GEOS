@@ -280,7 +280,7 @@ void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
 
 }
 
-void NodeManager::depopulateUpMaps( set<localIndex> const & receivedNodes,
+void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
                                     array2d< localIndex > const & edgesToNodes,
                                     array1d< array1d< localIndex > > const & facesToNodes,
                                     ElementRegionManager const & elemRegionManager )

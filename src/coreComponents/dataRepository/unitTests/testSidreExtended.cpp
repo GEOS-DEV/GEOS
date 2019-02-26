@@ -142,7 +142,7 @@ ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
   localIndex expected_size = data.size() * sizeof(T);
 
   /* Set the data */
-  view->reference().insert(data.begin(), data.end());
+  view->reference().insert(data.values(), data.size());
 
   /* Check that the ViewWrapper size and byteSize return the proper values */
   EXPECT_EQ(view->size(), data.size());
@@ -152,7 +152,7 @@ ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
   EXPECT_TRUE(view->reference().isSorted());
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view->dataPtr(), view->reference().data());
+  EXPECT_EQ(view->dataPtr(), view->reference().values());
 
   return view;
 }
@@ -195,14 +195,15 @@ ViewWrapper<string> * createStringView(ManagedGroup * parent, const string & nam
 }
 
 
-void checkStringView(const ViewWrapper<string> * view, const int sfp, const string & str) {
+void checkStringView(const ViewWrapper<string> * view, const int sfp, const string & str)
+{
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->reference(), str);
 }
 
 
 ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const string & name,
-                                                int sfp, const string_array & arr)
+                                                  int sfp, const string_array & arr)
 {
   ViewWrapper<string_array> * view = parent->RegisterViewWrapper<string_array>(name);
   view->setSizedFromParent(sfp);

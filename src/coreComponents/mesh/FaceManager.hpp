@@ -87,7 +87,7 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
-  void depopulateUpMaps( set<localIndex> const & receivedFaces,
+  void depopulateUpMaps( std::set<localIndex> const & receivedFaces,
                          ElementRegionManager const & elemRegionManager );
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );

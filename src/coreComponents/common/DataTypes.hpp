@@ -181,7 +181,7 @@ template< typename T, int MAXSIZE >
 using stackArray5d = stack_array<T, 5, MAXSIZE>;
 
 template< typename T >
-using set = SortedArray<T,localIndex>;
+using set = LvArray::SortedArray<T,localIndex>;
 
 template< typename TKEY, typename TVAL >
 using map = std::map<TKEY,TVAL>;

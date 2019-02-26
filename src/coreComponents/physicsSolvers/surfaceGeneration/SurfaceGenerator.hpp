@@ -31,13 +31,13 @@ namespace geosx
 
 struct ModifiedObjectLists
 {
-  set<localIndex> newNodes;
-  set<localIndex> newEdges;
-  set<localIndex> newFaces;
-  set<localIndex> modifiedNodes;
-  set<localIndex> modifiedEdges;
-  set<localIndex> modifiedFaces;
-  std::map< std::string, set<localIndex> > modifiedElements;
+  std::set<localIndex> newNodes;
+  std::set<localIndex> newEdges;
+  std::set<localIndex> newFaces;
+  std::set<localIndex> modifiedNodes;
+  std::set<localIndex> modifiedEdges;
+  std::set<localIndex> modifiedFaces;
+  std::map< std::string, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
 };
@@ -124,7 +124,7 @@ public:
                         const realT time );
 
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
-                                     set<localIndex> const & indexList );
+                                     std::set<localIndex> const & indexList );
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
@@ -204,8 +204,8 @@ private:
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager & elementManager,
-                                array1d<set<localIndex> >& nodesToRupturedFaces,
-                                array1d<set<localIndex> >& edgesToRupturedFaces );
+                                array1d<std::set<localIndex> >& nodesToRupturedFaces,
+                                array1d<std::set<localIndex> >& edgesToRupturedFaces );
 
   /**
    *
@@ -258,8 +258,8 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    arrayView1d<set<localIndex> >& nodesToRupturedFaces,
-                    arrayView1d<set<localIndex> >& edgesToRupturedFaces,
+                    arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
+                    arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists& modifiedObjects,
                     const bool prefrac );
@@ -284,9 +284,9 @@ private:
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
                            ElementRegionManager & elemManager,
-                           const arrayView1d<set<localIndex> >& nodesToRupturedFaces,
-                           const arrayView1d<set<localIndex> >& edgesToRupturedFaces,
-                           set<localIndex>& separationPathFaces,
+                           const arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
+                           const arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                           std::set<localIndex>& separationPathFaces,
                            map<localIndex, int>& edgeLocations,
                            map<localIndex, int>& faceLocations,
                            map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
@@ -313,9 +313,9 @@ private:
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists& modifiedObjects,
-                        arrayView1d<set<localIndex> >& nodesToRupturedFaces,
-                        arrayView1d<set<localIndex> >& edgesToRupturedFaces,
-                        const set<localIndex>& separationPathFaces,
+                        arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
+                        arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                        const std::set<localIndex>& separationPathFaces,
                         const map<localIndex, int>& edgeLocations,
                         const map<localIndex, int>& faceLocations,
                         const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
@@ -339,10 +339,10 @@ private:
    * @param elemLocations
    * @return
    */
-  bool SetLocations( const set<localIndex>& separationPathFaces,
+  bool SetLocations( const std::set<localIndex>& separationPathFaces,
                      ElementRegionManager & elemManager,
                      const FaceManager & faceManager,
-                     const set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
+                     const std::set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
                      const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                      map<localIndex, int>& edgeLocations,
                      map<localIndex, int>& faceLocations,
@@ -364,10 +364,10 @@ private:
    */
   bool SetElemLocations( const int side,
                          const std::pair<CellElementSubRegion*, localIndex >& elem,
-                         const set<localIndex>& separationPathFaces,
+                         const std::set<localIndex>& separationPathFaces,
                          ElementRegionManager & elemManager,
                          const FaceManager & faceManager,
-                         const set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
+                         const std::set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
                          const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
                          map<localIndex, int>& edgeLocations,
                          map<localIndex, int>& faceLocations,
