@@ -44,20 +44,20 @@ class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
-class SolidMechanics_LagrangianFEM : public SolverBase
+class SolidMechanicsLagrangianFEM : public SolverBase
 {
 public:
-  SolidMechanics_LagrangianFEM( const std::string& name,
+  SolidMechanicsLagrangianFEM( const std::string& name,
                                 ManagedGroup * const parent );
 
 
-  SolidMechanics_LagrangianFEM( SolidMechanics_LagrangianFEM const & ) = delete;
-  SolidMechanics_LagrangianFEM( SolidMechanics_LagrangianFEM && ) = default ;
+  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
+  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default ;
 
-  SolidMechanics_LagrangianFEM& operator=( SolidMechanics_LagrangianFEM const & ) = delete;
-  SolidMechanics_LagrangianFEM& operator=( SolidMechanics_LagrangianFEM && ) = delete ;
+  SolidMechanicsLagrangianFEM& operator=( SolidMechanicsLagrangianFEM const & ) = delete;
+  SolidMechanicsLagrangianFEM& operator=( SolidMechanicsLagrangianFEM && ) = delete ;
 
-  virtual ~SolidMechanics_LagrangianFEM() override;
+  virtual ~SolidMechanicsLagrangianFEM() override;
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
@@ -140,52 +140,80 @@ public:
                                  DomainPartition * const domain ) override;
 
   /**@}*/
+  virtual real64
+  ExplicitElementKernelLaunchSelector( localIndex const er,
+                                       localIndex const esr,
+                                       set<localIndex> const & elementList,
+                                       arrayView2d<localIndex> const & elemsToNodes,
+                                       arrayView3d< R1Tensor > const & dNdX,
+                                       arrayView2d<real64> const & detJ,
+                                       arrayView1d<R1Tensor> const & u,
+                                       arrayView1d<R1Tensor> const & uhat,
+                                       arrayView1d<R1Tensor> const & vel,
+                                       arrayView1d<R1Tensor> & acc,
+                                       ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
+                                       ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                                       ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+                                       real64 const dt,
+                                       localIndex NUM_NODES_PER_ELEM,
+                                       localIndex NUM_QUADRATURE_POINTS );
 
-  real64 ElementKernelSelector( localIndex const er,
-                                localIndex const esr,
-                                set<localIndex> const & elementList,
-                                arrayView2d<localIndex> const & elemsToNodes,
-                                arrayView3d< R1Tensor > const & dNdX,
-                                arrayView2d<real64> const & detJ,
-                                arrayView1d<R1Tensor> const & u,
-                                arrayView1d<R1Tensor> const & uhat,
-                                arrayView1d<R1Tensor> & acc,
-                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
-                                ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-                                ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
-                                real64 const dt,
-                                localIndex NUM_NODES_PER_ELEM,
-                                localIndex NUM_QUADRATURE_POINTS );
+  template< typename LEAFCLASS >
+  real64
+  ExplicitElementKernelLaunchSelectorT( localIndex const er,
+                                        localIndex const esr,
+                                        set<localIndex> const & elementList,
+                                        arrayView2d<localIndex> const & elemsToNodes,
+                                        arrayView3d< R1Tensor > const & dNdX,
+                                        arrayView2d<real64> const & detJ,
+                                        arrayView1d<R1Tensor> const & u,
+                                        arrayView1d<R1Tensor> const & uhat,
+                                        arrayView1d<R1Tensor> const & vel,
+                                        arrayView1d<R1Tensor> & acc,
+                                        ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
+                                        ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                                        ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+                                        real64 const dt,
+                                        localIndex NUM_NODES_PER_ELEM,
+                                        localIndex NUM_QUADRATURE_POINTS );
 
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
-  real64 ExplicitElementKernel( localIndex const er,
-                                localIndex const esr,
-                                set<localIndex> const & elementList,
-                                arrayView2d<localIndex> const & elemsToNodes,
-                                arrayView3d< R1Tensor > const & dNdX,
-                                arrayView2d<real64> const & detJ,
-                                arrayView1d<R1Tensor> const & u,
-                                arrayView1d<R1Tensor> const & uhat,
-                                arrayView1d<R1Tensor> & acc,
-                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-                                ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-                                ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
-                                real64 const dt );
+  static real64
+  ExplicitElementKernelLaunch( localIndex const er,
+                               localIndex const esr,
+                               set<localIndex> const & elementList,
+                               arrayView2d<localIndex> const & elemsToNodes,
+                               arrayView3d< R1Tensor > const & dNdX,
+                               arrayView2d<real64> const & detJ,
+                               arrayView1d<R1Tensor> const & u,
+                               arrayView1d<R1Tensor> const & uhat,
+                               arrayView1d<R1Tensor> const & vel,
+                               arrayView1d<R1Tensor> & acc,
+                               ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+                               ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                               ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+                               real64 const dt );
+
+  realT ElementResidualAndJacobianKernel( real64 const density,
+                                          FiniteElementBase const * const fe,
+                                          arraySlice2d<R1Tensor const> const& dNdX,
+                                          arraySlice1d<realT const> const& detJ,
+                                          R2SymTensor const * const refStress,
+                                          r1_array const& u,
+                                          r1_array const& uhat,
+                                          r1_array const& uhattilde,
+                                          r1_array const& vtilde,
+                                          realT const dt,
+                                          Epetra_SerialDenseMatrix& dRdU,
+                                          Epetra_SerialDenseVector& R,
+                                          real64 c[6][6] );
 
 
-  realT CalculateElementResidualAndDerivative( real64 const density,
-                                               FiniteElementBase const * const fe,
-                                               arraySlice2d<R1Tensor const> const& dNdX,
-                                               arraySlice1d<realT const> const& detJ,
-                                               R2SymTensor const * const refStress,
-                                               r1_array const& u,
-                                               r1_array const& uhat,
-                                               r1_array const& uhattilde,
-                                               r1_array const& vtilde,
-                                               realT const dt,
-                                               Epetra_SerialDenseMatrix& dRdU,
-                                               Epetra_SerialDenseVector& R,
-                                               real64 c[6][6] );
+
+
+
+
+
 
   void ApplyDisplacementBC_implicit( real64 const time,
                                      DomainPartition & domain,
@@ -244,6 +272,7 @@ public:
     static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
+    static constexpr auto strainTheoryString = "strainTheory";
 
 
     dataRepository::ViewKey vTilde = { vTildeString };
@@ -268,7 +297,7 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
 
-private:
+protected:
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
@@ -279,6 +308,7 @@ private:
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
+  integer m_strainTheory;
 
   array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
@@ -286,11 +316,74 @@ private:
   set<localIndex> m_nonSendOrRecieveNodes;
   MPI_iCommData m_icomm;
 
-  SolidMechanics_LagrangianFEM();
+  SolidMechanicsLagrangianFEM();
 
 };
 
 
+
+template< int N >
+void Integrate( const R2SymTensor& fieldvar,
+                arraySlice1d<R1Tensor const> const & dNdX,
+                real64 const& detJ,
+                real64 const& detF,
+                const R2Tensor& Finv,
+                arraySlice1d<R1Tensor> & result)
+{
+  real64 const integrationFactor = detJ * detF;
+
+  R2Tensor P;
+  P.AijBkj( fieldvar,Finv);
+  P *= integrationFactor;
+
+  for( int a=0 ; a<N ; ++a )  // loop through all shape functions in element
+  {
+    result[a].minusAijBj( P, dNdX[a] );
+  }
+}
+
+
+template< typename LEAFCLASS >
+real64 SolidMechanicsLagrangianFEM::
+ExplicitElementKernelLaunchSelectorT( localIndex const er,
+                                      localIndex const esr,
+                                      set<localIndex> const & elementList,
+                                      arrayView2d<localIndex> const & elemsToNodes,
+                                      arrayView3d< R1Tensor > const & dNdX,
+                                      arrayView2d<real64> const & detJ,
+                                      arrayView1d<R1Tensor> const & u,
+                                      arrayView1d<R1Tensor> const & uhat,
+                                      arrayView1d<R1Tensor> const & vel,
+                                      arrayView1d<R1Tensor> & acc,
+                                      ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
+                                      ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+                                      ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+                                      real64 const dt,
+                                      localIndex NUM_NODES_PER_ELEM,
+                                      localIndex NUM_QUADRATURE_POINTS )
+{
+  real64 rval = 0;
+
+  if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
+  {
+    rval = LEAFCLASS::template ExplicitElementKernelLaunch<8,8>( er,
+                                                                 esr,
+                                                                 elementList,
+                                                                 elemsToNodes,
+                                                                 dNdX,
+                                                                 detJ,
+                                                                 u,
+                                                                 uhat,
+                                                                 vel,
+                                                                 acc,
+                                                                 constitutiveRelations,
+                                                                 meanStress,
+                                                                 devStress,
+                                                                 dt );
+  }
+
+  return rval;
+}
 
 } /* namespace geosx */
 

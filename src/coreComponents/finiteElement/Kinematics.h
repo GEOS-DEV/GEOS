@@ -85,6 +85,53 @@ inline void CalculateGradients( R2Tensor& Gradient0,
   }
 }
 
+inline void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
+{
+
+  real64 * restrict const Dadt_data = Dadt.Data();
+  real64 * restrict const Rot_data = Rot.Data();
+  real64 const * restrict const G_data = G.Data();
+
+
+  //Dadt = 0.5*(G + GT);
+  Dadt_data[0] = G_data[0];
+
+  Dadt_data[1] = 0.5*(G_data[1] + G_data[3]);
+  Dadt_data[2] = G_data[4];
+
+  Dadt_data[3] = 0.5*(G_data[6] + G_data[2]);
+  Dadt_data[4] = 0.5*(G_data[7] + G_data[5]);
+  Dadt_data[5] = G_data[8];
+
+
+  //Omega = 0.5*(G - GT);
+  real64 const w12 = 0.5*(G_data[1] - G_data[3]);
+  real64 const w13 = 0.5*(G_data[2] - G_data[6]);
+  real64 const w23 = 0.5*(G_data[5] - G_data[7]);
+
+  real64 const w12w12div4 = 0.25*w12*w12;
+  real64 const w13w13div4 = 0.25*w13*w13;
+  real64 const w23w23div4 = 0.25*w23*w23;
+  real64 const w12w13div2 = 0.5*(w12*w13);
+  real64 const w12w23div2 = 0.5*(w12*w23);
+  real64 const w13w23div2 = 0.5*(w13*w23);
+  real64 const invDetIplusOmega = 1.0 / ( 1 + ( w12w12div4 + w13w13div4 + w23w23div4 ) );
+
+  Rot_data[0] = ( 1.0 + (-w12w12div4 - w13w13div4 + w23w23div4) ) * invDetIplusOmega;
+  Rot_data[1] = ( w12 - w13w23div2 ) * invDetIplusOmega;
+  Rot_data[2] = ( w13 + w12w23div2 ) * invDetIplusOmega;
+
+  Rot_data[3] = (-w12 - w13w23div2 ) * invDetIplusOmega;
+  Rot_data[4] = ( 1.0 + (-w12w12div4 + w13w13div4 - w23w23div4) ) * invDetIplusOmega;
+  Rot_data[5] = ( w23 - w12w13div2 ) * invDetIplusOmega;
+
+  Rot_data[6] = (-w13 + w12w23div2 ) * invDetIplusOmega;
+  Rot_data[7] = (-w23 - w12w13div2 ) * invDetIplusOmega;
+  Rot_data[8] = ( 1.0 + ( w12w12div4 - w13w13div4 - w23w23div4) ) * invDetIplusOmega;
+
+
+}
+
 }
 
 #endif
