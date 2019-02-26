@@ -142,6 +142,14 @@ void ElementRegionManager::GenerateFractureMesh( FaceManager const * const faceM
   });
 }
 
+void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager )
+{
+  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  {
+    elemRegion->GenerateAggregates( faceManager );
+  });
+}
+
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {

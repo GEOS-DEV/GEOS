@@ -28,6 +28,11 @@
 #include "CellBlockManager.hpp"
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
+#include "AggregateElementSubRegion.hpp"
+
+#include "cxx-utilities/src/src/SparsityPattern.hpp"
+
+#include "metis.h"
 //#include "constitutive/ConstitutiveManager.hpp"
 //#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 //#include "finiteElement/basis/BasisBase.hpp"
@@ -62,6 +67,9 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
     setInputFlag(InputFlags::OPTIONAL);
 
   RegisterViewWrapper( viewKeyStruct::fractureSetString, &m_fractureSetNames, false )->
+    setInputFlag(InputFlags::OPTIONAL);
+
+  RegisterViewWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
     setInputFlag(InputFlags::OPTIONAL);
 
 }
@@ -191,6 +199,109 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
   }
 }
 
+void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
+{
+  std::cout << "Coarsening ratio is : " << m_coarseningRatio << std::endl;
+  if(m_coarseningRatio == 0.)
+  {
+    return;
+  }
+  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  AggregateElementSubRegion * const aggregateSubRegion =
+    elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
+
+  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
+  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
+  array2d<localIndex> const & elemList           = faceManager->elementList();
+  constexpr localIndex numElems = 2;
+
+  // Counting the total number of cell and number of vertices  
+  localIndex nbCellElements = 0;
+  localIndex nbTotalVertices = 0;
+  localIndex nbVertices = 0;
+  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+    {
+      nbCellElements += elementSubRegion->size();
+      nbTotalVertices += elementSubRegion->size() * elementSubRegion->numNodesPerElement(0);
+    });
+  // Number of aggregate computation
+  localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
+  GEOS_LOG_RANK_0("Generating " +  std::to_string(nbAggregates) + " aggregates on region " + this->getName());
+
+  /*
+   * THIS USE MESH APPROACH
+  
+  // METIS variable declarations
+  idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
+  METIS_SetDefaultOptions(options);                                 // ... That are set by default
+  idx_t ne = integer_conversion< idx_t >( nbCellElements );         // Number of connectivity graph nodes
+  idx_t nn = integer_conversion< idx_t >( nbCellElements );         // Number of connectivity graph nodes
+  idx_t nconst = 1;                                                 // Number of balancy constraints
+  idx_t objval;                                                     // Total communication volume
+  idx_t * parts = new idx_t(nnodes);                                // Map element index -> aggregate index
+  idx_t nparts = integer_conversion< idx_t >( nbAggregates );        // Number of aggregates to be generated
+  // METIS mesh structure
+  idx_t * eptr = new idx_t(nnodes);
+  idx_t * eind = new idx_t( integer_conversion< idx_t >( nbVertices ) );
+
+  localIndex elementIndexRegion = 0;
+  eptr[0] = 0;
+  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+    {
+      localIndex nbVerticesPerElement = elementSubRegion->numNodesPerElement(0);
+      for( localIndex cellIndex = 0; cellIndex < elementSubRegion->size(); cellIndex++ )
+      {
+        eptr[cellIndex+1] = integer_conversion< idx_t >( eptr[cellIndex] + nbVerticesPerElement);
+        auto nodeList = elementSubRegion->nodeList(cellIndex);
+        for( localIndex vertexIndexInCell = 0; vertexIndexInCell < nbVerticesPerElement; vertexIndexInCell++)
+        {
+          eind[cellIndex + vertexIndexInCell] = integer_conversion< idx_t >(
+              nodeList[nbVerticesPerElement*cellIndex+vertexIndexInCell]);
+        }
+      }
+    });
+
+    */
+  // METIS variable declarations
+  idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
+  METIS_SetDefaultOptions(options);                                 // ... That are set by default
+  idx_t nnodes = integer_conversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
+  idx_t nconst = 1;                                                 // Number of balancy constraints
+  idx_t objval;                                                     // Total communication volume
+  idx_t * parts = new idx_t(nnodes);                                // Map element index -> aggregate index
+  idx_t nparts = integer_conversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
+  // METIS graph structure
+  idx_t * xadjs = new idx_t(nnodes);
+  idx_t * adjncy = new idx_t( integer_conversion< idx_t >(faceManager->size() ) );
+
+  // Compute the connectivity graph
+  
+  FixedOneToManyRelation graph;
+  graph.resize(nbCellElements);
+  // Fill the METIS graph structure
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    //TODO maybe :
+    // f (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1) continue
+    for (localIndex ke = 0; ke < numElems; ++ke)
+    {
+      if (elemRegionList[kf][ke] != -1)
+      {
+        localIndex const er  = elemRegionList[kf][ke];
+        if( er == this->getIndexInParent())
+        {
+          localIndex const esr = elemSubRegionList[kf][ke];
+          localIndex const ei  = elemList[kf][ke];
+        }
+      }
+    }
+  }
+
+  // METIS partitionning
+  //METIS_PartGraphRecursive( &nnodes, &nconst, xadjs, adjncy, nullptr, nullptr, nullptr, &nparts,
+  //                          nullptr, nullptr, options, &objval, parts);
+}
+
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )
  {
 
@@ -248,6 +359,7 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
      OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
 
      localIndex kfe = 0;
+     std::cout << faceMap[0][0] << " " << faceMap[0][1] << std::endl;
      for( auto const faceIndex : targetSet )
      {
        faceMap[kfe][0] = faceIndex;

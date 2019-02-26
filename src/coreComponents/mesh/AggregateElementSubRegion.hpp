@@ -39,9 +39,18 @@ public:
     return AggregateElementSubRegion::CatalogName();
   }
 
+  AggregateElementSubRegion( string const & name,
+                          dataRepository::ManagedGroup * const parent );
+
+  virtual ~AggregateElementSubRegion() override;
+
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                      const NodeManager& nodeManager,
-                                     const bool useReferencePos = true) const override;
+                                     const bool useReferencePos = true) const override
+  {
+    //TODO ?
+    return m_elementCenter[k];
+  }
 
   virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
                                      array1d<R1Tensor> const & X ) override
@@ -49,7 +58,10 @@ public:
       //TODO ?
   }
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
+  {
+    //TODO ?
+  }
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {

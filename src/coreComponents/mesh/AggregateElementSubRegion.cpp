@@ -22,4 +22,13 @@
 
 namespace geosx
 {
+AggregateElementSubRegion::AggregateElementSubRegion( string const & name,
+                                                dataRepository::ManagedGroup * const parent):
+  ElementSubRegionBase( name, parent )
+{
+}
+
+AggregateElementSubRegion::~AggregateElementSubRegion()
+{
+}
 }
