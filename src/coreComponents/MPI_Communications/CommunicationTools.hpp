@@ -51,7 +51,7 @@ public:
                                    array1d<NeighborCommunicator> & neighbors );
 
   static void AssignNewGlobalIndices( ObjectManagerBase & object,
-                                      set<localIndex> const & indexList );
+                                      std::set<localIndex> const & indexList );
 
 
   static void FindGhosts( MeshLevel * const meshLevel,

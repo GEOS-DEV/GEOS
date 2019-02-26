@@ -3368,11 +3368,10 @@ int SurfaceGenerator::CheckNodeSplitability( const localIndex nodeID,
 }
 
 void SurfaceGenerator::AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
-                                                     set<localIndex> const & indexList )
+                                                     std::set<localIndex> const & indexList )
 {
-  for( localIndex a=0 ; a<indexList.size() ; ++a )
+  for( localIndex const newLocalIndex : indexList )
   {
-    localIndex const newLocalIndex = indexList[a];
     globalIndex const newGlobalIndex = object.m_maxGlobalIndex + 1;
 
     object.m_localToGlobalMap[newLocalIndex] = newGlobalIndex;

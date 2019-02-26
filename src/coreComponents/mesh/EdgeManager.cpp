@@ -797,7 +797,7 @@ void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
 }
 
 
-void EdgeManager::depopulateUpMaps( set<localIndex> const & receivedEdges,
+void EdgeManager::depopulateUpMaps( std::set<localIndex> const & receivedEdges,
                                     array1d< array1d< localIndex > > const & facesToEdges )
 {
   ObjectManagerBase::CleanUpMap( receivedEdges, m_toFacesRelation, facesToEdges );

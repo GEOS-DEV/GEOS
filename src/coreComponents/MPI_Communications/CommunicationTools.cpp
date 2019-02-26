@@ -407,7 +407,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 }
 
 void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
-                                                 set<localIndex> const & indexList )
+                                                 std::set<localIndex> const & indexList )
 {
   int const thisRank = MPI_Rank( MPI_COMM_GEOSX );
   int const commSize = MPI_Size( MPI_COMM_GEOSX );
@@ -429,17 +429,18 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
     glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
   }
 
-  for( localIndex a=0 ; a<indexList.size() ; ++a )
+  localIndex nIndicesAssigned = 0;
+  for ( localIndex const newLocalIndex : indexList )
   {
-    localIndex const newLocalIndex = indexList[a];
     GEOS_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
-                   "existing object.m_localToGlobalMap[a]="<<object.m_localToGlobalMap[newLocalIndex]<<
-                   ", but it should equal -1.");
+                   "Local object " << newLocalIndex << " should be new but already has a global index "
+                   << object.m_localToGlobalMap[newLocalIndex] );
 
-    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + a + 1;
+    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
     object.m_globalToLocalMap[object.m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
-  }
 
+    nIndicesAssigned += 1;
+  }
 
   globalIndex maxGlobalIndex = -1;
   for( localIndex a=0 ; a<object.m_localToGlobalMap.size() ; ++a )

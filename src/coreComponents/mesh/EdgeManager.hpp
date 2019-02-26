@@ -82,7 +82,7 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
-  void depopulateUpMaps( set<localIndex> const & receivedEdges,
+  void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
                          array1d< array1d< localIndex > > const & facesToEdges );
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
