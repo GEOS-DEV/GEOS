@@ -507,13 +507,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   } //Element Manager
 
   //Compute Force : Point-wise computations
-  forall_in_set(m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a) mutable
+  forall_in_set(m_sendOrRecieveNodes.values(), m_sendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a) mutable
   {
     acc[a] /=mass[a];
   });
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_sendOrRecieveNodes.data(), m_sendOrRecieveNodes.size() );
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_sendOrRecieveNodes.values(), m_sendOrRecieveNodes.size() );
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -566,13 +566,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOSX_GET_TIME( t4 );
 
   //Compute Force : Point-wise computations
-  forall_in_set(m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a)
+  forall_in_set(m_nonSendOrRecieveNodes.values(), m_nonSendOrRecieveNodes.size(), GEOSX_LAMBDA (localIndex a)
   {
     acc[a] /=mass[a];
   });
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_nonSendOrRecieveNodes.data(), m_nonSendOrRecieveNodes.size());
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_nonSendOrRecieveNodes.values(), m_nonSendOrRecieveNodes.size());
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -664,9 +664,9 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
   ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
   void * data = nullptr;
   constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
-  forall_in_set<elemPolicy>( elementList.data(),
-                                   elementList.size(),
-                                   GEOSX_LAMBDA ( localIndex k) mutable
+  forall_in_set<elemPolicy>( elementList.values(),
+                             elementList.size(),
+                             GEOSX_LAMBDA ( localIndex k) mutable
   {
     r1_array uhat_local( NUM_NODES_PER_ELEM );
     r1_array u_local( NUM_NODES_PER_ELEM );
