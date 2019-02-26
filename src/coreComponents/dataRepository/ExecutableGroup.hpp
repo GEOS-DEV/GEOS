@@ -49,11 +49,11 @@ public:
    * If the start criteria are satisfied, then the event manager
    * will call this method
    */
-  virtual void Execute( real64 const & time_n,
-                        real64 const & dt,
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         dataRepository::ManagedGroup * domain ) = 0;
 
   /*
@@ -67,10 +67,10 @@ public:
   /*
    * This method is called as the code exits the main run loop
    */
-  virtual void Cleanup( real64 const & time_n,
+  virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         dataRepository::ManagedGroup * domain ) {}
 
   /*
