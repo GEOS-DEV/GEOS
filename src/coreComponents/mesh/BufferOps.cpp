@@ -44,18 +44,23 @@ localIndex Pack( char*& buffer,
     sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, var.m_toElementRegion[index].size() );
     for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
     {
-      localIndex elemRegionIndex             = var.m_toElementRegion[index][b];
-      ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
-
-      localIndex elemSubRegionIndex                  = var.m_toElementSubRegion[index][b];
-      ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
-
-      localIndex elemIndex = var.m_toElementIndex[index][b];
+      localIndex elemRegionIndex    = var.m_toElementRegion[index][b];
+      localIndex elemSubRegionIndex = var.m_toElementSubRegion[index][b];
+      localIndex elemIndex          = var.m_toElementIndex[index][b];
 
       sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemRegionIndex );
       sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegionIndex );
-      sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
 
+      if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
+      {
+        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
+      }
+      else
+      {
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemIndex );
+      }
     }
   }
 
@@ -104,22 +109,32 @@ localIndex Unpack( char const * & buffer,
 
       localIndex elemRegionIndex;
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemRegionIndex );
-      ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
 
       localIndex elemSubRegionIndex;
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemSubRegionIndex );
 
       globalIndex globalElementIndex;
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
-      ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
 
-      localIndex localElementIndex = softMapLookup( elemSubRegion->m_globalToLocalMap,
-                                                    globalElementIndex,
-                                                    localIndex(-1) );
+      if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 )
+      {
+        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
 
-      values.insert( std::make_tuple( elemRegionIndex,
-                                      elemSubRegionIndex,
-                                      localElementIndex ) );
+        localIndex localElementIndex = softMapLookup( elemSubRegion->m_globalToLocalMap,
+                                                      globalElementIndex,
+                                                      localIndex(-1) );
+        if( localElementIndex!=-1 )
+        {
+          values.insert( std::make_tuple( elemRegionIndex,
+                                          elemSubRegionIndex,
+                                          localElementIndex ) );
+        }
+      }
+      else
+      {
+        values.insert( std::make_tuple( -1, -1, -1 ) );
+      }
     }
 
     localIndex const newSize = values.size();
@@ -159,26 +174,22 @@ localIndex Pack( char*& buffer,
     sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, var.m_toElementRegion.size(1) );
     for( localIndex b=0 ; b<var.m_toElementRegion.size(1) ; ++b )
     {
-      localIndex elemRegionIndex             = var.m_toElementRegion[index][b];
+      localIndex elemRegionIndex    = var.m_toElementRegion[index][b];
+      localIndex elemSubRegionIndex = var.m_toElementSubRegion[index][b];
+      localIndex elemIndex          = var.m_toElementIndex[index][b];
 
-      if( elemRegionIndex == -1 )
+      sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemRegionIndex );
+      sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegionIndex );
+
+      if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, localIndex(-1) );
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, localIndex(-1) );
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, localIndex(-1) );
+        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
       }
       else
       {
-        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
-
-        localIndex elemSubRegionIndex                  = var.m_toElementSubRegion[index][b];
-        ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
-
-        localIndex elemIndex = var.m_toElementIndex[index][b];
-
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemRegionIndex );
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegionIndex );
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemIndex );
       }
     }
   }
@@ -210,10 +221,11 @@ localIndex Unpack( char const * & buffer,
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
-    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-    GEOS_ERROR_IF( numIndicesUnpacked != var.m_toElementRegion.size(1), "");
+    localIndex numSubIndicesUnpacked;
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
+    GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size(1), "");
 
-    for( localIndex b=0 ; b<numIndicesUnpacked ; ++b )
+    for( localIndex b=0 ; b<numSubIndicesUnpacked ; ++b )
     {
       localIndex recvElemRegionIndex;
       localIndex recvElemSubRegionIndex;
@@ -223,7 +235,7 @@ localIndex Unpack( char const * & buffer,
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemSubRegionIndex );
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
 
-      if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-11 )
+      if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
       {
         ElementRegion const * const
         elemRegion = elementRegionManager->GetRegion(recvElemRegionIndex);
@@ -240,13 +252,30 @@ localIndex Unpack( char const * & buffer,
           localIndex & elemRegionIndex = var.m_toElementRegion[index][c];
           localIndex & elemSubRegionIndex = var.m_toElementSubRegion[index][c];
           localIndex & elemIndex = var.m_toElementIndex[index][c];
-          if( ( elemRegionIndex==-1 || elemSubRegionIndex==-1 || elemIndex==-1 ) )
+          if( ( elemRegionIndex==recvElemRegionIndex &&
+                elemSubRegionIndex==recvElemSubRegionIndex &&
+                elemIndex==recvElemIndex ) )
+          {
+            break;
+          }
+          else if( ( elemRegionIndex==-1 || elemSubRegionIndex==-1 || elemIndex==-1 ) )
           {
             elemRegionIndex = recvElemRegionIndex;
             elemSubRegionIndex = recvElemSubRegionIndex;
             elemIndex = recvElemIndex;
+            break;
+          }
+          else
+          {
+            //TODO need a better criteria and an error check here
           }
         }
+      }
+      else if( clearFlag )
+      {
+        var.m_toElementRegion[index][b] = -1;
+        var.m_toElementSubRegion[index][b] = -1;
+        var.m_toElementIndex[index][b] = -1;
       }
     }
   }

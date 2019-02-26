@@ -38,6 +38,8 @@ struct ModifiedObjectLists
   set<localIndex> modifiedEdges;
   set<localIndex> modifiedFaces;
   std::map< std::string, set<localIndex> > modifiedElements;
+
+  void clearNewFromModified();
 };
 
 
@@ -120,6 +122,9 @@ public:
                         int const numTileColors,
                         const bool prefrac,
                         const realT time );
+
+  void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
+                                     set<localIndex> const & indexList );
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
@@ -314,6 +319,13 @@ private:
                         const map<localIndex, int>& edgeLocations,
                         const map<localIndex, int>& faceLocations,
                         const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
+
+  void MapConsistencyCheck( const localIndex nodeID,
+                            NodeManager const & nodeManager,
+                            EdgeManager const & edgeManager,
+                            FaceManager const & faceManager,
+                            ElementRegionManager const & elementManager,
+                            const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
 
   /**
    * @brief function to set which side of the fracture plane all objects are on

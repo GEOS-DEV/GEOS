@@ -344,7 +344,8 @@ public:
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                        ElementReferenceAccessor<localIndex_array> & packList );
+                        ElementReferenceAccessor<localIndex_array> & packList,
+                        bool const overwriteMap );
 
 
 
