@@ -114,7 +114,7 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
     else
     {
       real64 forecast = (timeFrequency - (time - lastTime)) / dt;
-      SetForecast(static_cast<integer>(std::min(forecast, 1e9)));
+      SetForecast(static_cast<integer>(std::min(std::max(forecast, 0.0), 1e9)));
     }
   }
   else
