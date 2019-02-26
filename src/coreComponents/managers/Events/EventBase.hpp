@@ -69,11 +69,11 @@ public:
    *   - Superstep (allowSuperstep = 1).  The dt for the step will be set to (dt + time_n - lastTime)
    *   - Substep (allowSubstep = 1, substepFactor >= 1).  This will repeatedly step with timestep=dt/substepFactor
    */
-  virtual void Execute( real64 const & time_n,
-                        real64 const & dt,
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
                         integer const cycleNumber,
-                        integer const ,
-                        real64 const & ,
+                        integer const,
+                        real64 const,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -88,10 +88,10 @@ public:
   /*
    * This method is called as the code exits the main run loop
    */
-  virtual void Cleanup( real64 const & time_n,
+  virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**

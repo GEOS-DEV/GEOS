@@ -16,24 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-
 /**
  * @file ChomboIO.hpp
  */
@@ -65,31 +47,40 @@ public:
   static string CatalogName()
   { return "ChomboIO"; }
 
-
   /// This method will be called by the event manager if triggered
-  virtual void Execute( real64 const & time_n,
-                        real64 const & dt,
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
-                        dataRepository::ManagedGroup * domain ) final override;
+                        real64 const eventProgress,
+                        dataRepository::ManagedGroup * const domain ) final override;
 
   /// Write one final output as the code exits
-  virtual void Cleanup( real64 const & time_n,
+  virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
-                        dataRepository::ManagedGroup * domain ) final override 
+                        real64 const eventProgress,
+                        dataRepository::ManagedGroup * const domain ) final override 
   { Execute(time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain); }
 
+  void waitForInputCycle (integer cycleNumber );
   
   struct viewKeyStruct
   {
+    static constexpr auto outputPathString = "outputPath";
+    static constexpr auto inputPathString = "inputPath";
+    static constexpr auto waitForInputString = "waitForInput";
+
+    dataRepository::ViewKey outputPath = { outputPathString };
+    dataRepository::ViewKey inputPath = { inputPathString };
+    dataRepository::ViewKey waitForInput = { waitForInputString };
   } viewKeys;
 
 private:
   ChomboCoupler* m_coupler;
-
+  std::string m_outputPath;
+  std::string m_inputPath;
+  integer m_waitForInput;
 };
 
 
