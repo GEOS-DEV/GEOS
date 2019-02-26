@@ -57,7 +57,7 @@ real64 SolidMechanics_LagrangianSSLE::ExplicitElementKernelLaunch( localIndex co
   ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
   void * data = nullptr;
   constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
-  forall_in_set<elemPolicy>( elementList.data(),
+  forall_in_set<elemPolicy>( elementList.values(),
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex const k)
   {
