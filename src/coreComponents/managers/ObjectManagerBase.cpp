@@ -736,7 +736,7 @@ void ObjectManagerBase::SetMaxGlobalIndex()
                  MPI_COMM_GEOSX );
 }
 
-void ObjectManagerBase::CleanUpMap( set<localIndex> const & targetIndices,
+void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     array1d<set<localIndex> > & upmap,
                                     array2d<localIndex> const & downmap )
 {
@@ -766,7 +766,7 @@ void ObjectManagerBase::CleanUpMap( set<localIndex> const & targetIndices,
   }
 }
 
-void ObjectManagerBase::CleanUpMap( set<localIndex> const & targetIndices,
+void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     array1d<set<localIndex> > & upmap,
                                     array1d< array1d<localIndex> > const & downmap )
 {

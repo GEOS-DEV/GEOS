@@ -612,7 +612,7 @@ void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
 }
 
 
-void FaceManager::depopulateUpMaps( set<localIndex> const & receivedFaces,
+void FaceManager::depopulateUpMaps( std::set<localIndex> const & receivedFaces,
                                     ElementRegionManager const & elemRegionManager )
 {
   for( auto const & targetIndex : receivedFaces )
