@@ -279,6 +279,20 @@ template< localIndex N, typename T >
 inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
                               arraySlice1d< T > const & globalField1,
                               arraySlice1d< T > const & globalField2,
+                              T * const restrict localField1,
+                              T * const restrict localField2 )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    localField1[a] = globalField1[ globalToLocalRelation[a] ];
+    localField2[a] = globalField2[ globalToLocalRelation[a] ];
+  }
+}
+
+template< localIndex N, typename T >
+inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
+                              arraySlice1d< T > const & globalField1,
+                              arraySlice1d< T > const & globalField2,
                               arraySlice1d< T > const & globalField3,
                               T * const restrict localField1,
                               T * const restrict localField2,
