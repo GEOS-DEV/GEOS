@@ -24,12 +24,14 @@
 namespace geosx
 {
 
-class SolidMechanics_LagrangianSSLE : public SolidMechanicsLagrangianFEM
+class SolidMechanicsLagrangianSSLE : public SolidMechanicsLagrangianFEM
 {
 public:
-  SolidMechanics_LagrangianSSLE( string const & name,
-                                 ManagedGroup * const parent );
-  virtual ~SolidMechanics_LagrangianSSLE() override;
+  SolidMechanicsLagrangianSSLE( string const & name,
+                                ManagedGroup * const parent );
+  virtual ~SolidMechanicsLagrangianSSLE() override;
+
+  static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
   virtual real64
   ExplicitElementKernelLaunchSelector( localIndex const er,
@@ -39,7 +41,6 @@ public:
                                        arrayView3d< R1Tensor > const & dNdX,
                                        arrayView2d<real64> const & detJ,
                                        arrayView1d<R1Tensor> const & u,
-                                       arrayView1d<R1Tensor> const & uhat,
                                        arrayView1d<R1Tensor> const & vel,
                                        arrayView1d<R1Tensor> & acc,
                                        ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
@@ -49,14 +50,13 @@ public:
                                        localIndex NUM_NODES_PER_ELEM,
                                        localIndex NUM_QUADRATURE_POINTS ) override
   {
-    return ExplicitElementKernelLaunchSelectorT<SolidMechanics_LagrangianSSLE>( er,
+    return ExplicitElementKernelLaunchSelectorT<SolidMechanicsLagrangianSSLE>( er,
                                                                               esr,
                                                                               elementList,
                                                                               elemsToNodes,
                                                                               dNdX,
                                                                               detJ,
                                                                               u,
-                                                                              uhat,
                                                                               vel,
                                                                               acc,
                                                                               constitutiveRelations,
@@ -76,7 +76,6 @@ public:
                                arrayView3d< R1Tensor > const & dNdX,
                                arrayView2d<real64> const & detJ,
                                arrayView1d<R1Tensor> const & u,
-                               arrayView1d<R1Tensor> const & uhat,
                                arrayView1d<R1Tensor> const & vel,
                                arrayView1d<R1Tensor> & acc,
                                ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
