@@ -17,19 +17,16 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
+
+#include <vector>
+#include <math.h>
+#include <sys/time.h>
+
 #include "SolidMechanicsLagrangianFEMKernels_impl.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ConstitutiveUpdate_impl.hpp"
 
-#include <vector>
-#include <math.h>
-
-#include <sys/time.h>
-
 #include "common/TimingMacros.hpp"
-
-#include "dataRepository/ManagedGroup.hpp"
-#include <common/DataTypes.hpp>
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
@@ -81,73 +78,10 @@ void Integrate( const R2SymTensor& fieldvar,
   }
 }
 
-template< int N >
-void Integrate( const R2SymTensor& fieldvar,
-                arraySlice1d<R1Tensor const> const & dNdX,
-                real64 const& detJ,
-                real64 const& detF,
-                const R2Tensor& Finv,
-                arraySlice1d<R1Tensor> & result)
-{
-  real64 const integrationFactor = detJ * detF;
-
-  R2Tensor P;
-  P.AijBkj( fieldvar,Finv);
-  P *= integrationFactor;
-
-  for( int a=0 ; a<N ; ++a )  // loop through all shape functions in element
-  {
-    result[a].minusAijBj( P, dNdX[a] );
-  }
-}
 
 
-inline void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
-{
-
-  real64 * restrict const Dadt_data = Dadt.Data();
-  real64 * restrict const Rot_data = Rot.Data();
-  real64 const * restrict const G_data = G.Data();
 
 
-  //Dadt = 0.5*(G + GT);
-  Dadt_data[0] = G_data[0];
-  
-  Dadt_data[1] = 0.5*(G_data[1] + G_data[3]);
-  Dadt_data[2] = G_data[4];
-  
-  Dadt_data[3] = 0.5*(G_data[6] + G_data[2]);
-  Dadt_data[4] = 0.5*(G_data[7] + G_data[5]);
-  Dadt_data[5] = G_data[8];
-
-
-  //Omega = 0.5*(G - GT);
-  real64 const w12 = 0.5*(G_data[1] - G_data[3]);
-  real64 const w13 = 0.5*(G_data[2] - G_data[6]);
-  real64 const w23 = 0.5*(G_data[5] - G_data[7]);
-
-  real64 const w12w12div4 = 0.25*w12*w12;
-  real64 const w13w13div4 = 0.25*w13*w13;
-  real64 const w23w23div4 = 0.25*w23*w23;
-  real64 const w12w13div2 = 0.5*(w12*w13);
-  real64 const w12w23div2 = 0.5*(w12*w23);
-  real64 const w13w23div2 = 0.5*(w13*w23);
-  real64 const invDetIplusOmega = 1.0 / ( 1 + ( w12w12div4 + w13w13div4 + w23w23div4 ) );
-
-  Rot_data[0] = ( 1.0 + (-w12w12div4 - w13w13div4 + w23w23div4) ) * invDetIplusOmega;
-  Rot_data[1] = ( w12 - w13w23div2 ) * invDetIplusOmega;
-  Rot_data[2] = ( w13 + w12w23div2 ) * invDetIplusOmega;
-
-  Rot_data[3] = (-w12 - w13w23div2 ) * invDetIplusOmega;
-  Rot_data[4] = ( 1.0 + (-w12w12div4 + w13w13div4 - w23w23div4) ) * invDetIplusOmega;
-  Rot_data[5] = ( w23 - w12w13div2 ) * invDetIplusOmega;
-
-  Rot_data[6] = (-w13 + w12w23div2 ) * invDetIplusOmega;
-  Rot_data[7] = (-w23 - w12w13div2 ) * invDetIplusOmega;
-  Rot_data[8] = ( 1.0 + ( w12w12div4 - w13w13div4 - w23w23div4) ) * invDetIplusOmega;
-  
-  
-}
 
 inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & TotalStress, R2Tensor & Rot,
                                           localIndex i, real64 bulkModulus, real64 shearModulus,
@@ -172,8 +106,8 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 
 
 
-SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
-                                                            ManagedGroup * const parent ):
+SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& name,
+                                                          ManagedGroup * const parent ):
   SolverBase( name, parent ),
   m_newmarkGamma(0.5),
   m_newmarkBeta(0.25),
@@ -203,7 +137,7 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
     setApplyDefaultValue(0.25)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
-          "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
+                   "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
 
   RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
     setApplyDefaultValue(0.0)->
@@ -236,9 +170,19 @@ SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& n
                     "For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. "
                     "However if a new surface is generated, then the mechanics solve must be executed again due to the "
                     "change in topology.");
+
+  RegisterViewWrapper(viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription( "Indicates whether or not to use "
+                    "`Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or"
+                    "`Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:\n"
+                    " 0 - Infinitesimal Strain \n "
+                    " 1 - Finite Strain");
+
 }
 
-void SolidMechanics_LagrangianFEM::PostProcessInput()
+void SolidMechanicsLagrangianFEM::PostProcessInput()
 {
   if( !m_timeIntegrationOptionString.empty() )
   {
@@ -246,13 +190,13 @@ void SolidMechanics_LagrangianFEM::PostProcessInput()
   }
 }
 
-SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
+SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 {
   // TODO Auto-generated destructor stub
 }
 
 
-void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
@@ -270,7 +214,7 @@ void SolidMechanics_LagrangianFEM::RegisterDataOnMesh( ManagedGroup * const Mesh
 }
 
 
-void SolidMechanics_LagrangianFEM::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void SolidMechanicsLagrangianFEM::InitializePreSubGroups(ManagedGroup * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
@@ -279,7 +223,7 @@ void SolidMechanics_LagrangianFEM::InitializePreSubGroups(ManagedGroup * const r
 }
 
 
-void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -346,7 +290,7 @@ void SolidMechanics_LagrangianFEM::InitializePostInitialConditions_PreSubGroups(
   }
 }
 
-real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
+real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
                                              DomainPartition * domain )
@@ -385,7 +329,7 @@ real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
   return dtReturn;
 }
 
-real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
+real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                                    real64 const& dt,
                                                    const int cycleNumber,
                                                    DomainPartition * const domain )
@@ -484,7 +428,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       GEOSX_MARK_BEGIN(externalElemsLoop);
 
-      ElementKernelSelector( er, 
+      ExplicitElementKernelLaunchSelector( er,
                              esr,
                              this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
                              elemsToNodes,
@@ -492,6 +436,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                              detJ,
                              u,
                              uhat,
+                             vel,
                              acc,
                              constitutiveRelations,
                              meanStress,
@@ -541,7 +486,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
       GEOSX_MARK_BEGIN(internalElemsLoop);
 
-      ElementKernelSelector( er,
+      ExplicitElementKernelLaunchSelector( er,
                              esr,
                              this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
                              elemsToNodes,
@@ -549,6 +494,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
                              detJ,
                              u,
                              uhat,
+                             vel,
                              acc,
                              constitutiveRelations,
                              meanStress,
@@ -605,7 +551,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 }
 
 
-real64 SolidMechanics_LagrangianFEM::ElementKernelSelector( localIndex const er,
+real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelLaunchSelector( localIndex const er,
                                                             localIndex const esr,
                                                             set<localIndex> const & elementList,
                                                             arrayView2d<localIndex> const & elemsToNodes,
@@ -613,6 +559,7 @@ real64 SolidMechanics_LagrangianFEM::ElementKernelSelector( localIndex const er,
                                                             arrayView2d<real64> const & detJ,
                                                             arrayView1d<R1Tensor> const & u,
                                                             arrayView1d<R1Tensor> const & uhat,
+                                                            arrayView1d<R1Tensor> const & vel,
                                                             arrayView1d<R1Tensor> & acc,
                                                             ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
                                                             ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
@@ -621,32 +568,27 @@ real64 SolidMechanics_LagrangianFEM::ElementKernelSelector( localIndex const er,
                                                             localIndex NUM_NODES_PER_ELEM,
                                                             localIndex NUM_QUADRATURE_POINTS )
 {
-
-  real64 rval = 0;
-
-  if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
-  {
-    rval =
-    ExplicitElementKernel<8,8>( er,
-                                esr,
-                                elementList,
-                                elemsToNodes,
-                                dNdX,
-                                detJ,
-                                u,
-                                uhat,
-                                acc,
-                                constitutiveRelations,
-                                meanStress,
-                                devStress,
-                                dt );
-  }
-
-  return rval;
+  return ExplicitElementKernelLaunchSelectorT<SolidMechanicsLagrangianFEM>( er,
+                                                                            esr,
+                                                                            elementList,
+                                                                            elemsToNodes,
+                                                                            dNdX,
+                                                                            detJ,
+                                                                            u,
+                                                                            uhat,
+                                                                            vel,
+                                                                            acc,
+                                                                            constitutiveRelations,
+                                                                            meanStress,
+                                                                            devStress,
+                                                                            dt,
+                                                                            NUM_NODES_PER_ELEM,
+                                                                            NUM_QUADRATURE_POINTS );
 }
 
+
 template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
-real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
+real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelLaunch( localIndex const er,
                                                             localIndex const esr,
                                                             set<localIndex> const & elementList,
                                                             arrayView2d<localIndex> const & elemsToNodes,
@@ -654,6 +596,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
                                                             arrayView2d<real64> const & detJ,
                                                             arrayView1d<R1Tensor> const & u,
                                                             arrayView1d<R1Tensor> const & uhat,
+                                                            arrayView1d<R1Tensor> const & vel,
                                                             arrayView1d<R1Tensor> & acc,
                                                             ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations,
                                                             ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
@@ -723,7 +666,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitElementKernel( localIndex const er,
   return dt;
 }
 
-void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
+void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
                                                                  DomainPartition & domain,
                                                                  EpetraBlockSystem & blockSystem )
 {
@@ -752,7 +695,7 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
 }
 
 
-void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const domain,
+void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domain,
                                                     real64 const time,
                                                     systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
@@ -848,7 +791,7 @@ void SolidMechanics_LagrangianFEM::ApplyTractionBC( DomainPartition * const doma
 }
 
 void
-SolidMechanics_LagrangianFEM::
+SolidMechanicsLagrangianFEM::
 ImplicitStepSetup( real64 const& time_n, real64 const& dt, DomainPartition * const domain,
                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
@@ -913,7 +856,7 @@ ImplicitStepSetup( real64 const& time_n, real64 const& dt, DomainPartition * con
   SetupSystem( domain, blockSystem );
 }
 
-void SolidMechanics_LagrangianFEM::ImplicitStepComplete( real64 const & time_n,
+void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
                                                              real64 const & dt,
                                                              DomainPartition * const domain)
 {
@@ -955,7 +898,7 @@ void SolidMechanics_LagrangianFEM::ImplicitStepComplete( real64 const & time_n,
   }
 }
 
-void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
+void SolidMechanicsLagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
                                                                  localIndex & numLocalRows,
                                                                  globalIndex & numGlobalRows,
                                                                  localIndex_array& localIndices,
@@ -1017,7 +960,7 @@ void SolidMechanics_LagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * 
 }
 
 
-void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domain,
+void SolidMechanicsLagrangianFEM :: SetupSystem ( DomainPartition * const domain,
                                                    EpetraBlockSystem * const blockSystem )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -1064,7 +1007,7 @@ void SolidMechanics_LagrangianFEM :: SetupSystem ( DomainPartition * const domai
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 }
 
-void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * const domain,
+void SolidMechanicsLagrangianFEM::SetSparsityPattern( DomainPartition const * const domain,
                                                        Epetra_FECrsGraph * const sparsity )
 {
   int dim=3;
@@ -1110,7 +1053,7 @@ void SolidMechanics_LagrangianFEM::SetSparsityPattern( DomainPartition const * c
 }
 
 
-void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  domain,
+void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  domain,
                                                 EpetraBlockSystem * const blockSystem,
                                                 real64 const time_n,
                                                 real64 const dt )
@@ -1146,7 +1089,8 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   r1_array const uhattilde;
   r1_array const vtilde;
 
-  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
+  globalIndex_array const &
+  trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
 
   static array1d< R1Tensor > u_local(8);
   static array1d< R1Tensor > uhat_local(8);
@@ -1235,19 +1179,19 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
           {
             referenceStress.PlusIdentity( - biotCoefficient[er][esr][0] * (fluidPres[er][esr][k] + dPres[er][esr][k]));
           }
-          real64 maxElemForce = CalculateElementResidualAndDerivative( density[er][esr][0],
-                                                                       feDiscretization->m_finiteElement,
-                                                                       dNdX[k],
-                                                                       detJ[k],
-                                                                       &referenceStress,
-                                                                       u_local,
-                                                                       uhat_local,
-                                                                       uhattilde_local,
-                                                                       vtilde_local,
-                                                                       dt,
-                                                                       element_matrix,
-                                                                       element_rhs,
-                                                                       stiffness);
+          real64 maxElemForce = ElementResidualAndJacobianKernel( density[er][esr][0],
+                                                                  feDiscretization->m_finiteElement,
+                                                                  dNdX[k],
+                                                                  detJ[k],
+                                                                  &referenceStress,
+                                                                  u_local,
+                                                                  uhat_local,
+                                                                  uhattilde_local,
+                                                                  vtilde_local,
+                                                                  dt,
+                                                                  element_matrix,
+                                                                  element_rhs,
+                                                                  stiffness);
 
 
           if( maxElemForce > m_maxForce )
@@ -1278,7 +1222,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 }
 
 void
-SolidMechanics_LagrangianFEM::
+SolidMechanicsLagrangianFEM::
 ApplyBoundaryConditions( DomainPartition * const domain,
                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
                          real64 const time_n,
@@ -1339,7 +1283,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 }
 
 real64
-SolidMechanics_LagrangianFEM::
+SolidMechanicsLagrangianFEM::
 CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem, DomainPartition *const domain)
 {
 
@@ -1397,7 +1341,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
 
 }
 
-realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real64 const density,
+realT SolidMechanicsLagrangianFEM::ElementResidualAndJacobianKernel( real64 const density,
                                                                            FiniteElementBase const * const fe,
                                                                            arraySlice2d<R1Tensor const> const& dNdX,
                                                                            arraySlice1d<realT const> const& detJ,
@@ -1411,18 +1355,8 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
                                                                            Epetra_SerialDenseVector& R,
                                                                            real64 c[6][6] )
 {
-  const integer dim = 3;
+  constexpr integer dim = 3;
   realT maxForce = 0;
-  realT amass = getReference<real64>(solidMechanicsViewKeys.massDamping);
-  realT astiff = getReference<real64>(solidMechanicsViewKeys.stiffnessDamping);
-  real64 const newmarkBeta = getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
-  real64 const newmarkGamma = getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
-
-
-//  if( LagrangeSolverBase::m_2dOption==LagrangeSolverBase::PlaneStress )
-//  {
-//    lambda = 2*lambda*G / ( lambda + 2*G );
-//  }
 
   dRdU.Scale(0);
   R.Scale(0);
@@ -1458,48 +1392,33 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
 //        realT const * const dNdXb = dNdX(q,b).Data();
         dNdXb = dNdX[q][b];
 
-        if( dim==3 )
+        dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
+        dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
+        dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq;
+
+        dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq;
+        dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
+        dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq;
+
+        dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
+        dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
+        dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
+
+
+        if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
         {
-          dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
-          dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
-          dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq;
 
-          dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq;
-          dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
-          dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq;
+          double integrationFactor = density * N[a] * N[b] * detJq;
+          double temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * dt ) + 1.0 / ( m_newmarkBeta * dt * dt ) )* integrationFactor;
 
-          dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
-          dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
-          dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
-
-
-          if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+          for( int i=0 ; i<dim ; ++i )
           {
+            realT const acc = 1.0 / ( m_newmarkBeta * dt * dt ) * ( uhat[b][i] - uhattilde[b][i] );
+            realT const velb = vtilde[b][i] + m_newmarkGamma/( m_newmarkBeta * dt ) *( uhat[b][i] - uhattilde[b][i] );
 
-            double integrationFactor = density * N[a] * N[b] * detJq;
-            double temp1 = ( amass * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )* integrationFactor;
-
-            for( int i=0 ; i<dim ; ++i )
-            {
-              realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( uhat[b][i] - uhattilde[b][i] );
-              realT const velb = vtilde[b][i] + newmarkGamma/( newmarkBeta * dt ) *( uhat[b][i] - uhattilde[b][i] );
-
-              dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
-              R_InertiaMassDamping(a*dim+i) -= ( amass * velb + acc ) * integrationFactor;
-            }
+            dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
+            R_InertiaMassDamping(a*dim+i) -= ( m_massDamping * velb + acc ) * integrationFactor;
           }
-        }
-        else if( dim==2 )
-        {
-//          dRdU(a*dim+0,b*dim+0) -= ( dNdXa[1]*dNdXb[1]*G +
-// dNdXa[0]*dNdXb[0]*(2*G + lambda) ) * detJq;
-//          dRdU(a*dim+0,b*dim+1) -= ( dNdXa[1]*dNdXb[0]*G +
-// dNdXa[0]*dNdXb[1]*lambda ) * detJq;
-//
-//          dRdU(a*dim+1,b*dim+0) -= ( dNdXa[0]*dNdXb[1]*G +
-// dNdXa[1]*dNdXb[0]*lambda ) * detJq;
-//          dRdU(a*dim+1,b*dim+1) -= ( dNdXa[0]*dNdXb[0]*G +
-// dNdXa[1]*dNdXb[1]*(2*G + lambda) ) * detJq;
         }
       }
     }
@@ -1555,22 +1474,14 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
         {
           for( int j=0 ; j<dim ; ++j )
           {
-            R_StiffnessDamping(a*dim+i) += astiff * dRdU(a*dim+i,b*dim+j) * ( vtilde[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat[b][j]-uhattilde[b][j]) );
+            R_StiffnessDamping(a*dim+i) += m_stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde[b][j] + m_newmarkGamma/(m_newmarkBeta * dt)*(uhat[b][j]-uhattilde[b][j]) );
           }
         }
       }
 
     }
 
-    if (dim ==3)
-    {
-      nodeForce = std::max( std::max( R(a*dim+0), R(a*dim+1) ),  R(a*dim+2) );
-    }
-    else
-    {
-      nodeForce = std::max( R(a*dim+0), R(a*dim+1));
-    }
-//    std::cout<<"nodeForce["<<a<<"] = "<<nodeForce<<std::endl;
+    nodeForce = std::max( std::max( R(a*dim+0), R(a*dim+1) ),  R(a*dim+2) );
     if( fabs(nodeForce) > maxForce )
     {
       maxForce = fabs(nodeForce);
@@ -1581,7 +1492,7 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
     dRdU_StiffnessDamping = dRdU;
-    dRdU_StiffnessDamping.Scale( astiff * newmarkGamma / ( newmarkBeta * dt ) );
+    dRdU_StiffnessDamping.Scale( m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * dt ) );
 
     dRdU += dRdU_InertiaMassDamping;
     dRdU += dRdU_StiffnessDamping;
@@ -1595,7 +1506,7 @@ realT SolidMechanics_LagrangianFEM::CalculateElementResidualAndDerivative( real6
 
 
 
-void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+void SolidMechanicsLagrangianFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
                                                         real64 const scalingFactor,
                                                         DomainPartition * const domain )
 {
@@ -1654,7 +1565,7 @@ void SolidMechanics_LagrangianFEM::ApplySystemSolution( EpetraBlockSystem const 
 
 }
 
-void SolidMechanics_LagrangianFEM::SolveSystem( EpetraBlockSystem * const blockSystem,
+void SolidMechanicsLagrangianFEM::SolveSystem( EpetraBlockSystem * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const
@@ -1677,7 +1588,7 @@ void SolidMechanics_LagrangianFEM::SolveSystem( EpetraBlockSystem * const blockS
 
 }
 
-void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
@@ -1691,5 +1602,8 @@ void SolidMechanics_LagrangianFEM::ResetStateToBeginningOfStep( DomainPartition 
   });
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, ManagedGroup * const )
+
+
+
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, std::string const &, ManagedGroup * const )
 } /* namespace ANST */
