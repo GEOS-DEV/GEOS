@@ -421,6 +421,76 @@ void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( DomainPartition 
                                                                 globalIndex & numGlobalRows,
                                                                 localIndex offset )
 {
+  std::cout << "CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices started" << std::endl;
+  
+  int numMpiProcesses;
+  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
+
+  int thisMpiProcess = 0;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
+
+  localIndex numLocalRowsToSend = numLocalRows;
+  array1d<localIndex> gather(numMpiProcesses);
+
+  // communicate the number of local rows to each process
+  m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
+                                                &gather.front(),
+                                                1 );
+
+  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
+
+  // find the first local row on this partition, and find the number of total global rows.
+  localIndex firstLocalRow = 0;
+  numGlobalRows = 0;
+
+  for( integer p=0 ; p<numMpiProcesses ; ++p)
+  {
+    numGlobalRows += gather[p];
+    if(p<thisMpiProcess)
+      firstLocalRow += gather[p];
+  }
+
+  // TODO: double check this for multiple MPI processes
+  
+  // get the well information
+  WellManager const * const wellManager = domain->getWellManager();
+
+  localIndex localCount = 0;
+  wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
+  {
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+    
+    arrayView1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+    arrayView1d<integer> const & wellElemGhostRank =
+      wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  
+    // create trilinos dof indexing, setting initial values to -1 to indicate unset values.
+    for ( localIndex iwelem = 0; iwelem < wellElemGhostRank.size(); ++iwelem )
+    {
+      wellDofNumber[iwelem] = -1;
+    }
+
+    // loop over all well elements and set the dof number if the element is not a ghost
+    for ( localIndex iwelem = 0; iwelem < wellElemGhostRank.size(); ++iwelem )
+    {
+      if (wellElemGhostRank[iwelem] < 0 )
+      {
+        wellDofNumber[iwelem] = firstLocalRow + localCount + offset;
+	std::cout << "wells: currentDofNumber = " << firstLocalRow + localCount + offset << std::endl;
+        localCount += 1;
+      }
+      else
+      {
+        wellDofNumber[iwelem] = -1;
+      }
+    }
+  });
+  	    
+
+  GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
+
+  std::cout << "CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices complete" << std::endl;
 }
 
 void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * const domain,
@@ -435,10 +505,11 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
     elementRegionManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
-  // TODO: use that
-  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const & resElemGhostRank =
-    elementRegionManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  // save these numbers (reused to compute the well elem offsets in multiple functions)
+  m_firstWellElemDofNumber = firstWellElemDofNumber;
+  m_numDofPerResElement    = numDofPerResElement;
 
+  // set the number of degrees of freedom per element on both sides (reservoir and well)  
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
   localIndex constexpr maxNumDof  = maxNumComp + 2; // dofs are 1 pressure, NC comp densities (reservoir and well), 1 velocity (well only)
   localIndex const resNDOF  = numDofPerResElement; // reservoir dofs are 1 pressure and NC comp densities
@@ -1131,7 +1202,55 @@ real64
 CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
                                                     DomainPartition * const domain )
 {
-  return 0.0;
+  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+  Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+
+  // get a view into local residual vector
+  int localSizeInt;
+  double* localResidual = nullptr;
+  residual->ExtractView(&localResidual, &localSizeInt);
+ 
+  localIndex const resNDOF  = numDofPerResElement();   // dof is pressure
+  localIndex const wellNDOF = numDofPerElement()
+                            + numDofPerConnection(); // dofs are pressure and velocity
+  
+  WellManager * const wellManager = domain->getWellManager();
+
+  real64 localResidualNorm = 0;
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get the degree of freedom numbers
+    array1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+    arrayView1d<integer> const & wellElemGhostRank =
+      wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      if (wellElemGhostRank[iwelem] < 0)
+      {
+        globalIndex const firstElemDofNumber   = getFirstWellElementDofNumber();
+	globalIndex const currentElemDofNumber = wellDofNumber[iwelem];
+        globalIndex const currentElemOffset    = firstElemDofNumber * resNDOF // number of eqns in J_RR
+                                               + (currentElemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
+
+        for (localIndex idof = 0; idof < wellNDOF; ++idof)
+        {
+          int const lid = rowMap->LID(integer_conversion<int>(currentElemOffset + idof));
+          real64 const val = localResidual[lid];
+          localResidualNorm += val * val;
+        }
+      }
+    }
+  });
+
+  // compute global residual norm
+  real64 globalResidualNorm;
+  MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
+
+  return sqrt(globalResidualNorm);
 }
 
 bool
@@ -1159,12 +1278,20 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
   int dummy;
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
+
+  localIndex const resNDOF  = numDofPerResElement();   // dof is pressure
+  localIndex const wellNDOF = numDofPerElement()
+                            + numDofPerConnection(); // dofs are pressure and velocity
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     ConnectionData * connectionData = well->getConnections();
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
+    // get the degree of freedom numbers on segments
+    array1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+    
     // get a reference to the primary variables on segments
     array1d<real64> const & dWellPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
@@ -1176,35 +1303,47 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
     array1d<real64> const & dWellVelocity =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
 
+    // get the ghosting information on segments and on connections
+    arrayView1d<integer> const & wellConnGhostRank =
+      connectionData->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d<integer> const & wellElemGhostRank =
+      wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
 
-      // TODO: check for ghost segments
-
-      // extract solution and apply to dP
-      globalIndex const dummyOffset = 0;
-      int lid = rowMap->LID( integer_conversion<int>( dummyOffset ) );
-      dWellPressure[iwelem] += scalingFactor * local_solution[lid];
-
-      for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      if (wellElemGhostRank[iwelem] < 0)
       {
-        lid = rowMap->LID( integer_conversion<int>( dummyOffset + ic + 1 ) );
-        dWellGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
-      }
+        // extract solution and apply to dP
+       	globalIndex const firstElemDofNumber   = getFirstWellElementDofNumber();
+	globalIndex const currentElemDofNumber = wellDofNumber[iwelem];
+        globalIndex const currentElemOffset    = firstElemDofNumber * resNDOF // number of eqns in J_RR
+                                               + (currentElemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
 
+        int lid = rowMap->LID( integer_conversion<int>( currentElemOffset ) );
+        dWellPressure[iwelem] += scalingFactor * local_solution[lid];
+
+        for (localIndex ic = 0; ic < m_numComponents; ++ic)
+        {
+          lid = rowMap->LID( integer_conversion<int>( currentElemOffset + ic + 1 ) );
+          dWellGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
+        }
+      }
     }
 
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
 
-      // TODO: check for ghost connections if needed
       // TODO: check if there is a primary var defined on this connection
 
-      // extract solution and apply to dP
-      globalIndex const dummyDofNumber = 0;
-      int const lid = rowMap->LID( integer_conversion<int>( dummyDofNumber ) );
-      dWellVelocity[iconn] += scalingFactor * local_solution[lid];
-      
+      if (wellConnGhostRank[iconn] < 0)
+      {      
+        // extract solution and apply to dP
+        globalIndex const dummyDofNumber = 0;
+        int const lid = rowMap->LID( integer_conversion<int>( dummyDofNumber ) );
+        dWellVelocity[iconn] += scalingFactor * local_solution[lid];
+      }
     }
   });  
 
@@ -1224,6 +1363,12 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
     ConnectionData * connectionData = well->getConnections();
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
+    // get the ghosting information
+    arrayView1d<integer> const & wellElemGhostRank =
+      wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d<integer> const & wellConnGhostRank =
+      connectionData->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    
     // get a reference to the primary variables on segments
     array1d<real64> const & dWellPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
@@ -1237,23 +1382,21 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
-
-      // TODO: check for ghost segments
-
-      // extract solution and apply to dP
-      dWellPressure[iwelem] = 0;
-      for (localIndex ic = 0; ic < m_numComponents; ++ic)
-        dWellGlobalCompDensity[iwelem][ic] = 0;      
+      if (wellElemGhostRank[iwelem] < 0)
+      {
+        // extract solution and apply to dP
+        dWellPressure[iwelem] = 0;
+        for (localIndex ic = 0; ic < m_numComponents; ++ic)
+          dWellGlobalCompDensity[iwelem][ic] = 0;
+      }
     }
 
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
 
-      // TODO: check for ghost connections if needed
       // TODO: check if there is a primary var defined on this connection
-
-      // extract solution and apply to dP
-      dWellVelocity[iconn] = 0;
+      if (wellConnGhostRank[iconn] < 0)
+        dWellVelocity[iconn] = 0;
 
     }
   });
