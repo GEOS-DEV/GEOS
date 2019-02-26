@@ -100,11 +100,9 @@ public:
     node_fields["position"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, reference_pos_ptr);
     node_fields["displacement"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, displacement_ptr);
 
-    writeBoundaryFile(m_comm, m_file_path.c_str(), m_face_offset,
-                      m_n_faces_written, m_node_offset, 
-                      m_n_nodes_written, dt, n_faces,
-                      n_nodes, connectivity_array, ruptureState,
-                      face_fields, node_fields);
+    writeBoundaryFile(m_comm, m_file_path.c_str(), dt, ruptureState,
+      m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,
+      m_node_offset, m_n_nodes_written, n_nodes,                     node_fields);
 
     delete[] connectivity_array;
   }
