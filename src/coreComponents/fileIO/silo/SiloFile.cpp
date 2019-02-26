@@ -681,15 +681,11 @@ void SiloFile::WriteBeamMesh(string const & meshName,
 {
   // Connectivity.
   integer_array nodelist;
+  nodelist.reserve(2*node1.size());
+  for( localIndex i = 0 ; i < node1.size() ; ++i )
   {
-    nodelist.reserve(2*node1.size());
-    localIndex_array::const_iterator it2 = node2.begin();
-    for( localIndex_array::const_iterator it = node1.begin() ;
-         it != node1.end() ; ++it, ++it2 )
-    {
-      nodelist.push_back(static_cast<int>(*it));
-      nodelist.push_back(static_cast<int>(*it2));
-    }
+    nodelist.push_back(static_cast<int>(node1[i]));
+    nodelist.push_back(static_cast<int>(node2[i]));
   }
 
   WriteBeamMesh( meshName, nnodes, coords, nodelist, cycleNumber, problemTime);

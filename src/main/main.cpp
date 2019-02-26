@@ -26,8 +26,7 @@
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
 
-
-#ifdef USE_OPENMP
+#ifdef GEOSX_USE_OPENMP
 #include <omp.h>
 #endif
 

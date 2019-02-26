@@ -1227,7 +1227,7 @@ void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
 void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
               geosx::arraySlice1d<R1Tensor> & y,
               real64 const dx,
-              localIndex * const indices,
+              localIndex const * const indices,
               localIndex const length)
 {
   geosx::forall_in_set(indices, length, GEOSX_LAMBDA (localIndex a){

@@ -105,7 +105,7 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
-  void depopulateUpMaps( set<localIndex> const & receivedNodes,
+  void depopulateUpMaps( std::set<localIndex> const & receivedNodes,
                          array2d< localIndex > const & edgesToNodes,
                          array1d< array1d< localIndex > > const & facesToNodes,
                          ElementRegionManager const & elemRegionManager );
