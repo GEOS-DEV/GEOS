@@ -22,6 +22,8 @@
 #include <cstdint>
 #include <tuple>
 
+#include <cstdio>
+
 namespace geosx 
 {
 
@@ -64,13 +66,16 @@ void ChomboCoupler::write(double dt)
 
   /* Build the face FieldMap. */
   FieldMap_in face_fields;
-  real64* pressure_ptr = faces->getReference<real64_array>("Pressure").data();
+  real64 * pressure_ptr = faces->getReference<real64_array>("Pressure").data();
   face_fields["Pressure"] = std::make_tuple(H5T_NATIVE_DOUBLE, 1, pressure_ptr);
   
+  int rank;
+  MPI_Comm_rank(m_comm, &rank);
+
   /* Update the dummy pressure field */
   for (localIndex i = 0; i < n_faces; ++i)
   {
-    pressure_ptr[ i ] = (i + 1) * m_counter * 3.14159265359;
+    pressure_ptr[ i ] = (i + 1) * m_counter * rank * 2.25;
   }
 
   /* Build the node FieldMap. */
@@ -84,14 +89,49 @@ void ChomboCoupler::write(double dt)
   node_fields["position"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, reference_pos_ptr);
   node_fields["displacement"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, displacement_ptr);
 
-  writeBoundaryFile(m_comm, m_file_path.c_str(), dt, ruptureState,
+  writeBoundaryFile(m_comm, m_outputPath.data(), dt, ruptureState,
     m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,
     m_node_offset, m_n_nodes_written, n_nodes,                     node_fields);
 
   delete[] connectivity_array;
 }
 
-void ChomboCoupler::read()
-{}
+void ChomboCoupler::read(bool usePressures)
+{
+  GEOS_LOG_RANK_0("Waiting for file existence: " << m_inputPath);
+  waitForFileExistence(m_comm, m_inputPath.data());
+
+  int rank;
+  MPI_Comm_rank(m_comm, &rank);
+
+  if (usePressures)
+  {
+    FaceManager* faces = m_mesh.getFaceManager();
+    const localIndex n_faces = faces->size();
+    const localIndex n_nodes = m_mesh.getNodeManager()->size();
+
+    /* Build the face FieldMap. */
+    FieldMap_out face_fields;
+    real64 * pressure_ptr = faces->getReference<real64_array>("Pressure").data();
+    face_fields["Pressure"] = std::make_tuple(H5T_NATIVE_DOUBLE, 1, pressure_ptr);
+
+    FieldMap_out node_fields;
+
+    readBoundaryFile(m_comm, m_inputPath.data(),
+                     m_face_offset, m_n_faces_written, n_faces, face_fields,
+                     m_node_offset, m_n_nodes_written, n_nodes, node_fields);
+
+    for (localIndex i = 0; i < n_faces; ++i)
+    {
+      double expectedPressure = 2 * (i + 1) * m_counter * rank * 2.25;
+      GEOS_ERROR_IF(std::abs(pressure_ptr[ i ] - expectedPressure) > 1e-10, "i = " << i << ", pressure_ptr[i] = " << pressure_ptr[i] << ", expected = " << expectedPressure);
+    }
+  }
+
+  if (rank == 0)
+  {
+    std::remove(m_inputPath.data());
+  }
+}
 
 } // namespace geosx

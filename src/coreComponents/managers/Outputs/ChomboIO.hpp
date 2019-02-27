@@ -61,19 +61,22 @@ public:
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::ManagedGroup * const domain ) final override 
-  { Execute(time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain); }
+  { 
+    m_waitForInput = 0;
+    Execute(time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain);
+  }
 
-  void waitForInputCycle (integer cycleNumber );
-  
   struct viewKeyStruct
   {
     static constexpr auto outputPathString = "outputPath";
     static constexpr auto inputPathString = "inputPath";
     static constexpr auto waitForInputString = "waitForInput";
+    static constexpr auto useChomboPressuresString = "useChomboPressures";
 
     dataRepository::ViewKey outputPath = { outputPathString };
     dataRepository::ViewKey inputPath = { inputPathString };
     dataRepository::ViewKey waitForInput = { waitForInputString };
+    dataRepository::ViewKey useChomboPressures = { useChomboPressuresString };
   } viewKeys;
 
 private:
@@ -81,6 +84,7 @@ private:
   std::string m_outputPath;
   std::string m_inputPath;
   integer m_waitForInput;
+  integer m_useChomboPressures;
 };
 
 
