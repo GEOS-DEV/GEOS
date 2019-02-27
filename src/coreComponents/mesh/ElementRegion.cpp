@@ -31,6 +31,7 @@
 #include "AggregateElementSubRegion.hpp"
 
 #include "cxx-utilities/src/src/SparsityPattern.hpp"
+#include "cxx-utilities/src/src/CRSMatrix.hpp"
 
 #include "metis.h"
 //#include "constitutive/ConstitutiveManager.hpp"
@@ -228,78 +229,75 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
   GEOS_LOG_RANK_0("Generating " +  std::to_string(nbAggregates) + " aggregates on region " + this->getName());
 
-  /*
-   * THIS USE MESH APPROACH
-  
   // METIS variable declarations
-  idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
-  METIS_SetDefaultOptions(options);                                 // ... That are set by default
-  idx_t ne = integer_conversion< idx_t >( nbCellElements );         // Number of connectivity graph nodes
-  idx_t nn = integer_conversion< idx_t >( nbCellElements );         // Number of connectivity graph nodes
-  idx_t nconst = 1;                                                 // Number of balancy constraints
-  idx_t objval;                                                     // Total communication volume
-  idx_t * parts = new idx_t(nnodes);                                // Map element index -> aggregate index
-  idx_t nparts = integer_conversion< idx_t >( nbAggregates );        // Number of aggregates to be generated
-  // METIS mesh structure
-  idx_t * eptr = new idx_t(nnodes);
-  idx_t * eind = new idx_t( integer_conversion< idx_t >( nbVertices ) );
-
-  localIndex elementIndexRegion = 0;
-  eptr[0] = 0;
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
-    {
-      localIndex nbVerticesPerElement = elementSubRegion->numNodesPerElement(0);
-      for( localIndex cellIndex = 0; cellIndex < elementSubRegion->size(); cellIndex++ )
-      {
-        eptr[cellIndex+1] = integer_conversion< idx_t >( eptr[cellIndex] + nbVerticesPerElement);
-        auto nodeList = elementSubRegion->nodeList(cellIndex);
-        for( localIndex vertexIndexInCell = 0; vertexIndexInCell < nbVerticesPerElement; vertexIndexInCell++)
-        {
-          eind[cellIndex + vertexIndexInCell] = integer_conversion< idx_t >(
-              nodeList[nbVerticesPerElement*cellIndex+vertexIndexInCell]);
-        }
-      }
-    });
-
-    */
-  // METIS variable declarations
+  using idx_t = ::idx_t;
   idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
   METIS_SetDefaultOptions(options);                                 // ... That are set by default
   idx_t nnodes = integer_conversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
   idx_t nconst = 1;                                                 // Number of balancy constraints
   idx_t objval;                                                     // Total communication volume
-  idx_t * parts = new idx_t(nnodes);                                // Map element index -> aggregate index
+  idx_t * parts = new idx_t[nnodes];                                // Map element index -> aggregate index
   idx_t nparts = integer_conversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
   // METIS graph structure
-  idx_t * xadjs = new idx_t(nnodes);
-  idx_t * adjncy = new idx_t( integer_conversion< idx_t >(faceManager->size() ) );
+  //array1d< idx_t > xadjs(nnodes + 1);
+  idx_t * xadjs = new idx_t[nnodes+1];
 
   // Compute the connectivity graph
-  
-  FixedOneToManyRelation graph;
-  graph.resize(nbCellElements);
-  // Fill the METIS graph structure
+  LvArray::SparsityPattern< localIndex> graph(nbCellElements, nbCellElements);
+  localIndex nbConnections = 0;
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    //TODO maybe :
-    // f (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1) continue
-    for (localIndex ke = 0; ke < numElems; ++ke)
+    if( elemRegionList[kf][0] != -1 && elemRegionList[kf][1] != -1 )
     {
-      if (elemRegionList[kf][ke] != -1)
-      {
-        localIndex const er  = elemRegionList[kf][ke];
-        if( er == this->getIndexInParent())
-        {
-          localIndex const esr = elemSubRegionList[kf][ke];
-          localIndex const ei  = elemList[kf][ke];
-        }
-      }
+      localIndex const esr0 = elemSubRegionList[kf][0];
+      localIndex const ei0  = elemList[kf][0];
+      localIndex const esr1 = elemSubRegionList[kf][1];
+      localIndex const ei1  = elemList[kf][1];
+      graph.insertNonZero(ei0, ei1); //TODO : handle the case multiple region / element sub region
+      graph.insertNonZero(ei1, ei0); //TODO : handle the case multiple region / element sub region
+      nbConnections++;
+    }
+  }
+  //array1d< idx_t> adjncy(nbConnections*2);
+  idx_t * adjncy = new idx_t[integer_conversion< idx_t > (nbConnections*2)];
+  
+  // Fill the METIS graph structure
+  xadjs[0] = integer_conversion< idx_t >(0);
+  for( localIndex row = 0; row < nbCellElements; ++row )
+  {
+    localIndex numNonZeros = graph.numNonZeros( row );
+    auto columns = graph.getColumns( row );
+    xadjs[integer_conversion<idx_t>(row+1)] = xadjs[row] + integer_conversion< idx_t >( numNonZeros ) ;
+    //xadjs[0] = 0 ;
+    for(localIndex col = 0; col < numNonZeros; col++)
+    {
+      adjncy[xadjs[row]+col] = integer_conversion< idx_t >( columns[col] );
     }
   }
 
+  for(localIndex i = 1; i < nbCellElements+1; i++)
+  {
+  }
+
+  for(localIndex i = 0; i <  nbConnections*2 ; i++)
+  {
+  }
+
+  std::cout<< sizeof(idx_t) << std::endl;
+  std::cout<< sizeof(localIndex) << std::endl;
+  std::cout<< sizeof(nnodes) << std::endl;
+  std::cout<< sizeof(nconst) << std::endl;
+  std::cout<< sizeof(xadjs[0]) << std::endl;
+  std::cout<< sizeof(adjncy[0]) << std::endl;
+  std::cout<< sizeof(nparts) << std::endl;
+  std::cout<< sizeof(options[0]) << std::endl;
+  std::cout<< sizeof(objval) << std::endl;
+  std::cout<< sizeof(parts[0]) << std::endl;
   // METIS partitionning
-  //METIS_PartGraphRecursive( &nnodes, &nconst, xadjs, adjncy, nullptr, nullptr, nullptr, &nparts,
-  //                          nullptr, nullptr, options, &objval, parts);
+  METIS_PartGraphRecursive( &nnodes, &nconst, xadjs, adjncy, nullptr, nullptr, nullptr, &nparts,
+                            nullptr, nullptr, options, &objval, parts);
+  std::cout << "allo" << std::endl;
+  std::cout << "alluile" << std::endl;
 }
 
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )
