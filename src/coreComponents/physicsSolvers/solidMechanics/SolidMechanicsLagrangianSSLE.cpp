@@ -32,6 +32,7 @@ SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
                                                             ManagedGroup * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
+  this->m_strainTheory = 0;
 }
 
 SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
@@ -113,14 +114,28 @@ ExplicitElementKernelLaunch( localIndex const er,
       p_stress[1] -= dMeanStress;
       p_stress[2] -= dMeanStress;
 
-      real64 * const restrict p_devStres = devStress[er][esr][0][k][q].Data();
-      p_devStres[0] += p_stress[0];
-      p_devStres[2] += p_stress[1];
-      p_devStres[5] += p_stress[2];
-      p_devStres[4] += p_stress[3];
-      p_devStres[3] += p_stress[4];
-      p_devStres[1] += p_stress[5];
+      real64 * const restrict p_devStress = devStress[er][esr][0][k][q].Data();
+      p_devStress[0] += p_stress[0];
+      p_devStress[2] += p_stress[1];
+      p_devStress[5] += p_stress[2];
+      p_devStress[4] += p_stress[3];
+      p_devStress[3] += p_stress[4];
+      p_devStress[1] += p_stress[5];
 
+      for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+      {
+        const R1Tensor& dNdXa = dNdX[k][q][a];
+
+        f_local[a][0] -= ( p_devStress[1]*dNdXa[1]
+                      + p_devStress[3]*dNdXa[2]
+                      + dNdXa[0]*(p_devStress[0] + meanStress[er][esr][0][k][q]) ) * detJ[k][q];
+        f_local[a][1] -= ( p_devStress[1]*dNdXa[0]
+                      + p_devStress[4]*dNdXa[2]
+                      + dNdXa[1]*(p_devStress[2] + meanStress[er][esr][0][k][q]) ) * detJ[k][q];
+        f_local[a][2] -= ( p_devStress[3]*dNdXa[0]
+                      + p_devStress[4]*dNdXa[1]
+                      + dNdXa[2]*(p_devStress[5] + meanStress[er][esr][0][k][q]) ) * detJ[k][q];
+      }
     }//quadrature loop
 
 
