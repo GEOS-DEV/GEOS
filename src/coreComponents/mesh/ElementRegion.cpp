@@ -236,11 +236,12 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
   idx_t nnodes = integer_conversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
   idx_t nconst = 1;                                                 // Number of balancy constraints
   idx_t objval;                                                     // Total communication volume
-  idx_t * parts = new idx_t[nnodes];                                // Map element index -> aggregate index
+  array1d< idx_t > parts(nnodes);                                // Map element index -> aggregate index
+  //idx_t * parts = new idx_t[nnodes];                                // Map element index -> aggregate index
   idx_t nparts = integer_conversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
   // METIS graph structure
-  //array1d< idx_t > xadjs(nnodes + 1);
-  idx_t * xadjs = new idx_t[nnodes+1];
+  array1d< idx_t > xadjs(nnodes + 1);
+  //idx_t * xadjs = new idx_t[nnodes+1];
 
   // Compute the connectivity graph
   LvArray::SparsityPattern< localIndex> graph(nbCellElements, nbCellElements);
@@ -258,8 +259,8 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
       nbConnections++;
     }
   }
-  //array1d< idx_t> adjncy(nbConnections*2);
-  idx_t * adjncy = new idx_t[integer_conversion< idx_t > (nbConnections*2)];
+  array1d< idx_t> adjncy(nbConnections*2);
+  //idx_t * adjncy = new idx_t[integer_conversion< idx_t > (nbConnections*2)];
   
   // Fill the METIS graph structure
   xadjs[0] = integer_conversion< idx_t >(0);
@@ -274,30 +275,11 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
       adjncy[xadjs[row]+col] = integer_conversion< idx_t >( columns[col] );
     }
   }
-
-  for(localIndex i = 1; i < nbCellElements+1; i++)
-  {
-  }
-
-  for(localIndex i = 0; i <  nbConnections*2 ; i++)
-  {
-  }
-
-  std::cout<< sizeof(idx_t) << std::endl;
-  std::cout<< sizeof(localIndex) << std::endl;
-  std::cout<< sizeof(nnodes) << std::endl;
-  std::cout<< sizeof(nconst) << std::endl;
-  std::cout<< sizeof(xadjs[0]) << std::endl;
-  std::cout<< sizeof(adjncy[0]) << std::endl;
-  std::cout<< sizeof(nparts) << std::endl;
-  std::cout<< sizeof(options[0]) << std::endl;
-  std::cout<< sizeof(objval) << std::endl;
-  std::cout<< sizeof(parts[0]) << std::endl;
+  
   // METIS partitionning
-  METIS_PartGraphRecursive( &nnodes, &nconst, xadjs, adjncy, nullptr, nullptr, nullptr, &nparts,
-                            nullptr, nullptr, options, &objval, parts);
-  std::cout << "allo" << std::endl;
-  std::cout << "alluile" << std::endl;
+  METIS_PartGraphRecursive( &nnodes, &nconst, xadjs.data(), adjncy.data(), nullptr, nullptr, nullptr, &nparts,
+                            nullptr, nullptr, options, &objval, parts.data());
+  //aggregateSubRegion->CreateFromFineToCoarseMap(parts);
 }
 
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )

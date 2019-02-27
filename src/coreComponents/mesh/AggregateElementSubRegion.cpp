@@ -31,4 +31,10 @@ AggregateElementSubRegion::AggregateElementSubRegion( string const & name,
 AggregateElementSubRegion::~AggregateElementSubRegion()
 {
 }
+
+void AggregateElementSubRegion::CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse)
+{
+  this->resize( fineToCoarse.size() );
+  m_fineToCoarse = fineToCoarse;
+}
 }

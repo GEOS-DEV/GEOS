@@ -43,6 +43,8 @@ public:
                           dataRepository::ManagedGroup * const parent );
 
   virtual ~AggregateElementSubRegion() override;
+ 
+  void CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse);
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                      const NodeManager& nodeManager,
@@ -92,6 +94,8 @@ public:
 private:
   /// The elements to nodes relation is one to one relation.
   NodeMapType  m_toNodesRelation;
+
+  OneToOneRelation m_fineToCoarse;
 };
 }
 
