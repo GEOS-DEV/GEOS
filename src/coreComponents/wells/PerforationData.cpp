@@ -39,6 +39,7 @@ PerforationData::PerforationData(string const & name, ManagedGroup * const paren
   RegisterViewWrapper( viewKeyStruct::reservoirElementRegionString, &m_reservoirElementRegion, false );
   RegisterViewWrapper( viewKeyStruct::reservoirElementSubregionString, &m_reservoirElementSubregion, false );
   RegisterViewWrapper( viewKeyStruct::reservoirElementIndexString, &m_reservoirElementIndex, false );
+  RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::perforationIndexString, &m_perforationIndex, false );
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
 }
@@ -147,7 +148,9 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
 
     std::cout << "iperf = " << m_reservoirElementIndex[num_conn_local] << std::endl;
     
+    m_wellElementIndex[num_conn_local] = 0; // assume single-segmented well
     m_perforationIndex[num_conn_local] = num_conn_global++;
+    m_transmissibility[num_conn_local] = perforation->getTransmissibility();
 
     num_conn_local++;
   }

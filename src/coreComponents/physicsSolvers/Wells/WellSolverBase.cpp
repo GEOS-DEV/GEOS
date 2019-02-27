@@ -130,4 +130,17 @@ void WellSolverBase::FormControlEquation( DomainPartition * const domain,
   
 WellSolverBase::~WellSolverBase() = default;
 
+globalIndex WellSolverBase::getElementOffset( globalIndex welemDofNumber ) const
+{
+  localIndex const resNDOF  = numDofPerResElement(); // dof is pressure
+  localIndex const wellNDOF = numDofPerElement()
+                            + numDofPerConnection(); // dofs are pressure and rate
+
+  globalIndex const firstElemDofNumber = getFirstWellElementDofNumber();
+  globalIndex const currentElemOffset = firstElemDofNumber * resNDOF // number of eqns in J_RR
+                                      + (welemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
+
+  return currentElemOffset;
+}
+  
 } // namespace geosx

@@ -56,6 +56,18 @@ class SinglePhaseWell : public WellSolverBase
 {
 public:
 
+  struct ColOffset
+  {
+    static constexpr integer DPRES = 0;
+    static constexpr integer DRATE = 1;
+  };
+
+  struct RowOffset
+  {
+    static constexpr integer CONTROL = 0;
+    static constexpr integer MASSBAL = 1;
+  };
+
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
@@ -225,8 +237,8 @@ public:
     // primary solution field
     static constexpr auto pressureString      = "wellPressure";
     static constexpr auto deltaPressureString = "wellDeltaPressure";
-    static constexpr auto velocityString      = "wellVelocity";
-    static constexpr auto deltaVelocityString = "wellDeltaVelocity";
+    static constexpr auto rateString      = "wellRate";
+    static constexpr auto deltaRateString = "wellDeltaRate";
 
     // well control
     static constexpr auto flowRateString = "wellFlowRate";
@@ -239,8 +251,8 @@ public:
     // primary solution field
     ViewKey pressure      = { pressureString };
     ViewKey deltaPressure = { deltaPressureString };
-    ViewKey velocity      = { velocityString };
-    ViewKey deltaVelovity = { deltaVelocityString };
+    ViewKey rate          = { rateString };
+    ViewKey deltaVelovity = { deltaRateString };
 
     // well control
     ViewKey flowRate = { flowRateString };

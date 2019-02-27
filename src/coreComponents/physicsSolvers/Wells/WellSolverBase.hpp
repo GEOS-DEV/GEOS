@@ -84,6 +84,8 @@ public:
   localIndex numDofPerResElement() const { return m_numDofPerResElement; }
 
   globalIndex getFirstWellElementDofNumber() const { return m_firstWellElemDofNumber; }
+
+  globalIndex getElementOffset( globalIndex welemDofNumber ) const;
   
   /**
    * @brief default destructor

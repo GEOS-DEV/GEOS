@@ -462,6 +462,7 @@ void CompositionalMultiphaseWell::SetNumRowsAndTrilinosIndices( DomainPartition 
     
     arrayView1d<globalIndex> const & wellDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+
     arrayView1d<integer> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
   
@@ -512,9 +513,12 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
   // set the number of degrees of freedom per element on both sides (reservoir and well)  
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
   localIndex constexpr maxNumDof  = maxNumComp + 2; // dofs are 1 pressure, NC comp densities (reservoir and well), 1 velocity (well only)
-  localIndex const resNDOF  = numDofPerResElement; // reservoir dofs are 1 pressure and NC comp densities
+
+  // reservoir dofs are 1 pressure and NC comp densities
+  localIndex const resNDOF  = numDofPerResElement;
+  // well dofs are 1 pressure, NC comp densities, 1 velocity
   localIndex const wellNDOF = numDofPerElement()
-                            + numDofPerConnection(); // well dofs are 1 pressure, NC comp densities, 1 velocity
+                            + numDofPerConnection(); 
 
   //**** loop over all perforations. Fill in sparsity for all pairs of DOF/elem that are connected by a perforation
   wellManager->forSubGroups<Well>( [&] ( Well const * well ) -> void
@@ -526,6 +530,17 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
     // get the well degrees of freedom 
     array1d<globalIndex> const & wellDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+
+    // get the well element indices corresponding to each connect
+    arrayView1d<localIndex const> const & nextWellElementIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+
+    arrayView1d<localIndex const> const & prevWellElementIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
+    
+    // get the well element indices corresponding to each perforation
+    arrayView1d<localIndex const> const & wellElementIndex =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );    
     
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
@@ -574,16 +589,15 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
        * This is needed because resNDOF is not equal to wellNDOF
        */
 
-      localIndex const iwelem = 0; // this is a hack (we assume single-segmented wells)
+      localIndex const iwelem = wellElementIndex[iperf];
+      globalIndex const elemOffset = getElementOffset( wellDofNumber[iwelem] );
       
-      // get the offset of the well element equation
-      globalIndex const currentElemDofNumber = wellDofNumber[iwelem];
-      globalIndex const currentElemOffset    = firstWellElemDofNumber * resNDOF // number of eqns in J_RR
-                                             + (currentElemDofNumber - firstWellElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
       for (localIndex idof = 0; idof < wellNDOF; ++idof)
       {
-	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = currentElemOffset + idof;
-	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = currentElemOffset + idof;
+	// specify the well equation number
+	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
+	// specify the reservoir variable number
+	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
       }      
 
       sparsity->InsertGlobalIndices( integer_conversion<int>( resNDOF + wellNDOF ),
@@ -599,10 +613,10 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
     {
 
       // get previous segment index
-      localIndex iwelemPrev = -1; // TODO
+      localIndex iwelemPrev =  prevWellElementIndex[iconn];
 
       // get second segment index
-      localIndex iwelemNext = -1; // TODO
+      localIndex iwelemNext = nextWellElementIndex[iconn];
 
       // check if this is not an entry or exit
       if (iwelemPrev < 0 || iwelemNext < 0)
@@ -610,14 +624,11 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
       
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( 2 * wellNDOF );
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( 2 * wellNDOF );
-      
+
       // get the offset of the well element equations
-      globalIndex const prevElemDofNumber = wellDofNumber[iwelemPrev];
-      globalIndex const prevElemOffset    = firstWellElemDofNumber * resNDOF // number of eqns in J_RR
-                                          + (prevElemDofNumber - firstWellElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
-      globalIndex const nextElemDofNumber = wellDofNumber[iwelemNext];
-      globalIndex const nextElemOffset    = firstWellElemDofNumber * resNDOF // number of eqns in J_RR
-                                          + (nextElemDofNumber - firstWellElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
+      globalIndex const prevElemOffset = getElementOffset( wellDofNumber[iwelemPrev] );
+      globalIndex const nextElemOffset = getElementOffset( wellDofNumber[iwelemNext] );
+
       for (localIndex idof = 0; idof < wellNDOF; ++idof)
       {
 	elementLocalDofIndexRow[idof]            = prevElemOffset + idof;
@@ -652,6 +663,8 @@ void CompositionalMultiphaseWell::AssembleSystem( DomainPartition * const domain
   AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
   AssembleSourceTerms( domain, jacobian, residual, time_n, dt );
 
+  FormControlEquation( domain, jacobian, residual );
+  
   if( verboseLevel() >= 3 )
   {
     GEOS_LOG_RANK("After CompositionalMultiphaseWell::AssembleSystem");
@@ -667,12 +680,6 @@ void CompositionalMultiphaseWell::AssembleAccumulationTerms( DomainPartition * c
                                                              real64 const time_n,
                                                              real64 const dt )
 {
-  WellManager * const wellManager = domain->getWellManager();
-
-  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-  {
-    // loop over the segments
-  });  
 }
 
 void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const domain,
@@ -822,6 +829,12 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 
     array1d<real64> const & wellGravDepth =
       perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::gravityDepthString );
+
+    arrayView1d<localIndex const> const & wellElementIndex =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
+
+    arrayView1d<real64 const> const & wellTransmissibility =
+      perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::transmissibilityString );
 
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
@@ -973,7 +986,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 
         // 2) get well variables
 
-	localIndex const iwelem = 0; // this is a hack
+        localIndex const iwelem = wellElementIndex[iperf]; 
 	
 	// pressure
 	pressure[ElemTag::WELL]  = wellPressure[iwelem] + dWellPressure[iwelem];
@@ -1031,9 +1044,8 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
         // TODO: account for depth difference between well element center and perforation
 	
         // get transmissibility at the interface
-        Perforation * perforation = perforationData->getPerforation( iperf ); 
-        const real64 trans = perforation->getTransmissibility(); // TODO: change to an array of transmissibilities in PerforationData
-
+        real64 const trans = wellTransmissibility[iperf]; 
+	
 	// compute potential difference
         for (localIndex i = 0; i < 2; ++i)
         {
@@ -1182,8 +1194,6 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 
     }
 
-    FormControlEquation( domain, jacobian, residual );
-    
   });
 }
 
@@ -1210,10 +1220,6 @@ CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * co
   double* localResidual = nullptr;
   residual->ExtractView(&localResidual, &localSizeInt);
  
-  localIndex const resNDOF  = numDofPerResElement();   // dof is pressure
-  localIndex const wellNDOF = numDofPerElement()
-                            + numDofPerConnection(); // dofs are pressure and velocity
-  
   WellManager * const wellManager = domain->getWellManager();
 
   real64 localResidualNorm = 0;
@@ -1231,14 +1237,12 @@ CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * co
     {
       if (wellElemGhostRank[iwelem] < 0)
       {
-        globalIndex const firstElemDofNumber   = getFirstWellElementDofNumber();
-	globalIndex const currentElemDofNumber = wellDofNumber[iwelem];
-        globalIndex const currentElemOffset    = firstElemDofNumber * resNDOF // number of eqns in J_RR
-                                               + (currentElemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
+        globalIndex const elemOffset = getElementOffset( wellDofNumber[iwelem] );
 
+        localIndex const wellNDOF = numDofPerElement() + numDofPerConnection(); 
         for (localIndex idof = 0; idof < wellNDOF; ++idof)
         {
-          int const lid = rowMap->LID(integer_conversion<int>(currentElemOffset + idof));
+          int const lid = rowMap->LID(integer_conversion<int>( elemOffset + idof ));
           real64 const val = localResidual[lid];
           localResidualNorm += val * val;
         }
@@ -1279,10 +1283,6 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  localIndex const resNDOF  = numDofPerResElement();   // dof is pressure
-  localIndex const wellNDOF = numDofPerElement()
-                            + numDofPerConnection(); // dofs are pressure and velocity
-  
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     ConnectionData * connectionData = well->getConnections();
@@ -1303,9 +1303,11 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
     array1d<real64> const & dWellVelocity =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
 
+    // get a reference to the next well element index for each connection
+    arrayView1d<localIndex const> const & nextWellElementIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+
     // get the ghosting information on segments and on connections
-    arrayView1d<integer> const & wellConnGhostRank =
-      connectionData->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
     arrayView1d<integer> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
@@ -1316,17 +1318,14 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
       if (wellElemGhostRank[iwelem] < 0)
       {
         // extract solution and apply to dP
-       	globalIndex const firstElemDofNumber   = getFirstWellElementDofNumber();
-	globalIndex const currentElemDofNumber = wellDofNumber[iwelem];
-        globalIndex const currentElemOffset    = firstElemDofNumber * resNDOF // number of eqns in J_RR
-                                               + (currentElemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
+	globalIndex const elemOffset = getElementOffset( wellDofNumber[iwelem] );
 
-        int lid = rowMap->LID( integer_conversion<int>( currentElemOffset ) );
+        int lid = rowMap->LID( integer_conversion<int>( elemOffset ) );
         dWellPressure[iwelem] += scalingFactor * local_solution[lid];
 
         for (localIndex ic = 0; ic < m_numComponents; ++ic)
         {
-          lid = rowMap->LID( integer_conversion<int>( currentElemOffset + ic + 1 ) );
+          lid = rowMap->LID( integer_conversion<int>( elemOffset + ic + 1 ) );
           dWellGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
         }
       }
@@ -1334,14 +1333,18 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
 
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
+      // as a temporary solution, the connection variable is looked up with the next element's DOF number
+      localIndex iwelemNext = nextWellElementIndex[iconn];
 
-      // TODO: check if there is a primary var defined on this connection
+      // check if there is a variable defined here
+      if (iwelemNext < 0)
+        continue;
 
-      if (wellConnGhostRank[iconn] < 0)
+      if (wellElemGhostRank[iwelemNext] < 0)
       {      
-        // extract solution and apply to dP
-        globalIndex const dummyDofNumber = 0;
-        int const lid = rowMap->LID( integer_conversion<int>( dummyDofNumber ) );
+        // extract solution and apply to dQ
+	globalIndex const elemOffset = getElementOffset( wellDofNumber[iwelemNext] );
+        int const lid = rowMap->LID( integer_conversion<int>( elemOffset + m_numComponents + 1 ) );
         dWellVelocity[iconn] += scalingFactor * local_solution[lid];
       }
     }
@@ -1366,8 +1369,6 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
     // get the ghosting information
     arrayView1d<integer> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-    arrayView1d<integer> const & wellConnGhostRank =
-      connectionData->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
     
     // get a reference to the primary variables on segments
     array1d<real64> const & dWellPressure =
@@ -1380,6 +1381,10 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
     array1d<real64> const & dWellVelocity =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
 
+    // get a reference to the well element index for each connection
+    arrayView1d<localIndex const> const & nextWellElementIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+    
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
       if (wellElemGhostRank[iwelem] < 0)
@@ -1393,11 +1398,14 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
 
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
+      // as a temporary solution, the connection variable is looked up with the next element's DOF number
+      localIndex iwelemNext = nextWellElementIndex[iconn];
 
-      // TODO: check if there is a primary var defined on this connection
-      if (wellConnGhostRank[iconn] < 0)
-        dWellVelocity[iconn] = 0;
+      // check if there is a variable defined here
+      if (iwelemNext < 0)
+        continue;
 
+      dWellVelocity[iconn] = 0;
     }
   });
 
@@ -1499,54 +1507,51 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition * const d
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
+    ConnectionData * connectionData = well->getConnections();
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
-    // get local index of the reference element where the control eqn will be formed
-    localIndex const iwelemRef = wellElementSubRegion->getReferenceElem();
-    if (iwelemRef >= 0)
-    {
+    // get the degrees of freedom 
+    array1d<globalIndex> const & wellDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
     
-      // get well control
-      Well::Control control = well->getWellControl();
+    // TODO: check that the first connection is on my rank
+    
+    // the well control equation is defined on the first connection
+    localIndex iconnControl = 0;
+    // again we assume here that the first segment is on this MPI rank
+    localIndex iwelemControl = 0;
 
-      // get the degrees of freedom 
-      array1d<globalIndex> const & wellDofNumber =
-        wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
-    
+    // get well control
+    Well::Control control = well->getWellControl();
+
+    // BHP control
+    if (control == Well::Control::BHP)
+    {
       // get pressure data
-      array1d<real64> const & wellPressure =
+      array1d<real64 const> const & wellPressure =
         wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-      array1d<real64> const & dWellPressure =
+
+      array1d<real64 const> const & dWellPressure =
         wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-      real64 controlEqn        = 0;
-      real64 dControlEqn_dPres = 0;
-    
-      // BHP control
-      if (control == Well::Control::BHP)
-      {
+      // form the control equation now
+      real64 const currentBHP = wellPressure[iwelemControl] + dWellPressure[iwelemControl];
+      real64 const targetBHP  = well->getTargetBHP();
+      
+      real64 const controlEqn = currentBHP - targetBHP;
+      real64 const dControlEqn_dPres = 1;
 
-        real64 const currentBHP = wellPressure[iwelemRef] + dWellPressure[iwelemRef];
-        real64 const targetBHP  = well->getTargetBHP();
-
-        controlEqn = currentBHP - targetBHP;
-        dControlEqn_dPres = 1;
-
-      }
-      // rate control
-      else 
-      {
-        // TODO: implement this
-        controlEqn = 0;
-        dControlEqn_dPres = 0;
-      }
-
-      // the control equation is the first equation of the element block 
-      globalIndex welemRefDOF = wellDofNumber[iwelemRef];
-    
+      globalIndex const elemOffset  = getElementOffset( wellDofNumber[iwelemControl] );
+      globalIndex const eqnRowIndex = elemOffset;
+      globalIndex const dofColIndex = elemOffset;
+      
       // add contribution to global residual and jacobian
-      residual->SumIntoGlobalValues( 1, &welemRefDOF, &controlEqn );
-      jacobian->SumIntoGlobalValues( 1, &welemRefDOF, 1, &welemRefDOF, &dControlEqn_dPres );
+      residual->SumIntoGlobalValues( 1, &eqnRowIndex, &controlEqn );
+      jacobian->SumIntoGlobalValues( 1, &eqnRowIndex, 1, &dofColIndex, &dControlEqn_dPres );
+    }
+    // rate control
+    else
+    {
     }
   });
 }
@@ -1576,6 +1581,10 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
     array2d<real64> const & dWellGlobalCompDensity =
       wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
 
+    // get a reference to the next well element index
+    arrayView1d<localIndex const> const & nextWellElementIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+    
     // get a reference to the primary variables on connections
     array1d<real64> const & wellVelocity  =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureVelocityString );
@@ -1592,7 +1601,13 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
 
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
-      // TODO: check if there is a variable on this connection
+      // as a temporary solution, the connection variable is looked up with the next element's DOF number
+      localIndex iwelemNext = nextWellElementIndex[iconn];
+
+      // check if there is a variable defined here
+      if (iwelemNext < 0)
+        continue;
+
       wellVelocity[iconn] += dWellVelocity[iconn];
     }    
   }); 

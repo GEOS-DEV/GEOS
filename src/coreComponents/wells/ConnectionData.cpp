@@ -67,6 +67,10 @@ void ConnectionData::InitializePreSubGroups( ManagedGroup * const problemManager
 {
   // for now, assume that numConnectionsGlobal == numConnectionsLocal
   resize( m_connectionList.size() );
+
+  // assume single-segmented well
+  m_nextWellElementIndex[0] = 0;
+  m_prevWellElementIndex[0] = -1;
 }
 
 void ConnectionData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
