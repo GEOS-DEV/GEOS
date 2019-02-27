@@ -37,8 +37,9 @@ ChomboIO::ChomboIO(std::string const & name, ManagedGroup * const parent):
   OutputBase(name, parent),
   m_coupler(nullptr),
   m_outputPath(),
-  m_inputPath(),
-  m_waitForInput()
+  m_inputPath("/INVALID_INPUT_PATH"),
+  m_waitForInput(),
+  m_useChomboPressures()
 {
   RegisterViewWrapper(viewKeyStruct::outputPathString, &m_outputPath, false)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -50,7 +51,13 @@ ChomboIO::ChomboIO(std::string const & name, ManagedGroup * const parent):
 
   RegisterViewWrapper(viewKeyStruct::inputPathString, &m_inputPath, false)->
     setInputFlag(InputFlags::OPTIONAL)->
+    setDefaultValue("/INVALID_INPUT_PATH")->
     setDescription("Path at which the chombo to geosx file will be written.");
+
+  RegisterViewWrapper(viewKeyStruct::useChomboPressuresString, &m_useChomboPressures, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDefaultValue(0)->
+    setDescription("True iff geosx should use the pressures chombo writes out.");
 }
 
 ChomboIO::~ChomboIO()
@@ -66,12 +73,10 @@ void ChomboIO::Execute( real64 const time_n,
                         real64 const eventProgress,
                         dataRepository::ManagedGroup * const domain )
 {
-  GEOS_LOG("m_outputPath = " << m_outputPath);
-  GEOS_LOG("m_inputPath = " << m_inputPath);
-  GEOS_LOG("m_waitForInput = " << m_waitForInput);
-
   if (m_coupler == nullptr)
   {
+    GEOS_ERROR_IF(m_waitForInput && m_inputPath == "/INVALID_INPUT_PATH", "Waiting for input but no input path was specified.");
+
     DomainPartition * const domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
     MeshLevel * const meshLevel = domainPartition->getMeshBody(0)->getMeshLevel(0);
     m_coupler = new ChomboCoupler(MPI_COMM_GEOSX, m_outputPath, m_inputPath, *meshLevel);
@@ -81,7 +86,7 @@ void ChomboIO::Execute( real64 const time_n,
 
   if (m_waitForInput)
   {
-    m_coupler->read();
+    m_coupler->read(false);
   }
 }
 
