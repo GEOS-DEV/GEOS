@@ -35,7 +35,7 @@ public:
 
   void write(double dt);
 
-  void read();
+  void read(bool usePressures);
 
 private:
   MPI_Comm const m_comm;
