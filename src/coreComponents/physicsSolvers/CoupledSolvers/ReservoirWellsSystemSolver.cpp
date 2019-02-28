@@ -132,6 +132,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   // get the number of local well elements, and ghost elements...i.e. local rows and ghost rows
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
+    // well elements
     WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
     localIndex subRegionGhosts = wellElementSubRegion->GetNumberOfGhosts();
     numWellGhostRows += subRegionGhosts;
@@ -160,11 +161,6 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                                                     totalNumberOfDofs,
                                                     0,
                                                     m_linearSolverWrapper.m_epetraComm ) );
-
-  std::cout << "Total number of rows "
-	    << numResGlobalRows + numWellGlobalRows
-	    << " (reservoir: " << numResGlobalRows
-	    << ", wells: " << numWellGlobalRows << ")" << std::endl;
   
   // construct sparsity matrix, set a pointer to the sparsity pattern matrix
   Epetra_FECrsGraph * const
@@ -188,6 +184,8 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
 								BlockIDs::fluidPressureBlock );
+
+  // double-check sparsity pattern
   std::cout << *jacobian << std::endl;
   
   // construct solution vector
