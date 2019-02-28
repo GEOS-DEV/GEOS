@@ -48,7 +48,7 @@ public:
   {
     /* Create a dummy pressure field */
     FaceManager* faces = m_mesh.getFaceManager();
-    faces->AddKeylessDataField< array1d<double> >("Pressure");
+    faces->RegisterViewWrapper< array1d<double> >("Pressure");
   }
 
   const std::string& getPath() const
