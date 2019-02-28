@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file SolidMechanicsLagrangianSSLE.hpp
+ */
+
 #include "SolidMechanicsLagrangianSSLE.hpp"
 
 #include "codingUtilities/Utilities.hpp"

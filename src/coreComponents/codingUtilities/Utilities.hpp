@@ -276,9 +276,9 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLoc
 }
 
 template< localIndex N, typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
-                              arraySlice1d< T > const & globalField1,
-                              arraySlice1d< T > const & globalField2,
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const > const & globalToLocalRelation,
+                              arraySlice1d< T const > const & globalField1,
+                              arraySlice1d< T const > const & globalField2,
                               T * const restrict localField1,
                               T * const restrict localField2 )
 {
@@ -306,19 +306,17 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
   }
 }
 
-template< typename T >
+template< int N, typename T >
 inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & globalField1,
                               arraySlice1d< T const > const & globalField2,
                               arraySlice1d< T const > const & globalField3,
                               arraySlice1d< T const > const & globalField4,
-                              arrayView1d< T >& localField1,
-                              arraySlice1d< T >& localField2,
-                              arraySlice1d< T >& localField3,
-                              arraySlice1d< T >& localField4 )
+                              T * const localField1,
+                              T * const localField2,
+                              T * const localField3,
+                              T * const localField4 )
 {
-  const localIndex N = localField1.size();
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
