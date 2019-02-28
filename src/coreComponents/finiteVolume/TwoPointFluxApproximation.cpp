@@ -103,7 +103,7 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
       continue;
 
     faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
-    if( faceArea == 0. )
+    if( faceArea < std::numeric_limits<real64>::epsilon() )
       continue;
 
     faceWeightInv = 0.0;

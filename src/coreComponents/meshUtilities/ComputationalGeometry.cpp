@@ -67,7 +67,6 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
       v2 -= x0;
 
       R1Tensor triangleNormal;
-      triangleNormal = 0.;
       triangleNormal.Cross( v1,v2 );
       const real64 triangleArea = triangleNormal.Normalize();
       triangleNormal *= triangleArea;
@@ -79,14 +78,10 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
     if( area > 0.0 )
     {
       center /= (area * 3.0);
-      normal /= area;
+      normal.Normalize();
       area *= 0.5;
     }
-    else if( area == 0.0 )
-    {
-      return 0.;
-    }
-    else
+    else if( area < 0.0 )
     {
       for( localIndex a=0 ; a<n ; ++a )
         GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
@@ -94,6 +89,10 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                       << points[pointsIndices[a]](2) << " "
                       << pointsIndices[a]);
       GEOS_ERROR("Negative area found : " + std::to_string( area ) );
+    }
+    else
+    {
+      return 0.;
     }
   }
   else if( n==1 )
