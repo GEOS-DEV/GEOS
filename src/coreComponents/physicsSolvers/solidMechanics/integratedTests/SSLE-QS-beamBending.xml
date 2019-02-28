@@ -5,7 +5,7 @@
 
   
   <Solvers>
-    <SolidMechanics_LagrangianFEM name="lagsolve" 
+    <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   discretization="FE1"
                                   targetRegions="Region2"
@@ -16,7 +16,7 @@
                               newtonTol="1.0e-4"
                               maxIterNewton="8"
                               verbosityFlag="0"/>
-     </SolidMechanics_LagrangianFEM>
+     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
   

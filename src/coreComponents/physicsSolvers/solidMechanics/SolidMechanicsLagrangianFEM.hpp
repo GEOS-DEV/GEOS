@@ -191,19 +191,250 @@ public:
                                ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
                                real64 const dt );
 
-  realT ElementResidualAndJacobianKernel( real64 const density,
-                                          FiniteElementBase const * const fe,
-                                          arraySlice2d<R1Tensor const> const& dNdX,
-                                          arraySlice1d<realT const> const& detJ,
-                                          R2SymTensor const * const refStress,
-                                          r1_array const& u,
-                                          r1_array const& uhat,
-                                          r1_array const& uhattilde,
-                                          r1_array const& vtilde,
-                                          realT const dt,
-                                          Epetra_SerialDenseMatrix& dRdU,
-                                          Epetra_SerialDenseVector& R,
-                                          real64 c[6][6] );
+
+  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+  real64
+  ImplicitElementKernelLaunch( localIndex const numElems,
+                               real64 const dt,
+                               arrayView3d<R1Tensor const> const & dNdX,
+                               arrayView2d<real64 const > const& detJ,
+                               FiniteElementBase const * const fe,
+                               arrayView1d<constitutive::ConstitutiveBase *> const & constitutiveRelations,
+                               arrayView1d< integer const > const & elemGhostRank,
+                               arrayView2d< localIndex const > const & elemsToNodes,
+                               arrayView1d< globalIndex const > const & globalDofNumber,
+                               arrayView1d< R1Tensor const > const & disp,
+                               arrayView1d< R1Tensor const > const & uhat,
+                               arrayView1d< R1Tensor const > const & vtilde,
+                               arrayView1d< R1Tensor const > const & uhattilde,
+                               arrayView1d< real64 const > const & density,
+                               arrayView1d< real64 const > const & fluidPressure,
+                               arrayView1d< real64 const > const & deltaFluidPressure,
+                               arrayView1d< real64 const > const & biotCoefficient,
+                               Epetra_FECrsMatrix * const matrix,
+                               Epetra_FEVector * const rhs )
+  {
+    constexpr int dim = 3;
+    Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(NUM_NODES_PER_ELEM));
+    Epetra_SerialDenseVector     R     (dim*static_cast<int>(NUM_NODES_PER_ELEM));
+    Epetra_SerialDenseMatrix     dRdU  (dim*static_cast<int>(NUM_NODES_PER_ELEM),
+                                                  dim*static_cast<int>(NUM_NODES_PER_ELEM));
+    Epetra_SerialDenseVector     element_dof_np1 (dim*static_cast<int>(NUM_NODES_PER_ELEM));
+
+    Epetra_SerialDenseVector R_InertiaMassDamping(R);
+    Epetra_SerialDenseMatrix dRdU_InertiaMassDamping(dRdU);
+    Epetra_SerialDenseVector R_StiffnessDamping(R);
+    Epetra_SerialDenseMatrix dRdU_StiffnessDamping(dRdU);
+
+    real64 maxForce = 0;
+
+    for( localIndex k=0 ; k<numElems ; ++k )
+    {
+
+      R1Tensor u_local[NUM_NODES_PER_ELEM];
+      R1Tensor uhat_local[NUM_NODES_PER_ELEM];
+      R1Tensor vtilde_local[NUM_NODES_PER_ELEM];
+      R1Tensor uhattilde_local[NUM_NODES_PER_ELEM];
+
+      dRdU.Scale(0);
+      R.Scale(0);
+
+      dRdU_InertiaMassDamping.Scale(0);
+      R_InertiaMassDamping.Scale(0);
+      dRdU_StiffnessDamping.Scale(0);
+      R_StiffnessDamping.Scale(0);
+
+      real64 c[6][6];
+      constitutiveRelations[0]->GetStiffness( c );
+
+      if(elemGhostRank[k] < 0)
+      {
+        for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a)
+        {
+
+          localIndex localNodeIndex = elemsToNodes[k][a];
+
+          for( int i=0 ; i<dim ; ++i )
+          {
+            elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*globalDofNumber[localNodeIndex]+i;
+
+            // TODO must add last solution estimate for this to be valid
+            element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];
+          }
+        }
+
+        if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+        {
+          GEOS_ERROR("Option not supported");
+          CopyGlobalToLocal< NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
+                                       disp, uhat, vtilde, uhattilde,
+                                       u_local, uhat_local, vtilde_local, uhattilde_local );
+        }
+        else
+        {
+          CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k], disp, uhat, u_local, uhat_local );
+        }
+
+        R2SymTensor referenceStress;
+        if( !fluidPressure.empty() )
+        {
+          referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
+        }
+
+
+        R1Tensor dNdXa;
+        R1Tensor dNdXb;
+
+
+        for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
+        {
+          const realT detJq = detJ[k][q];
+          std::vector<double> const & N = fe->values(q);
+
+          for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+          {
+      //      realT const * const dNdXa = dNdX(q,a).Data();
+            dNdXa = dNdX[k][q][a];
+
+            for( integer b=0 ; b<NUM_NODES_PER_ELEM ; ++b )
+            {
+      //        realT const * const dNdXb = dNdX(q,b).Data();
+              dNdXb = dNdX[k][q][b];
+
+              dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
+              dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq;
+
+              dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq;
+              dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq;
+
+              dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
+
+
+              if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+              {
+
+                real64 integrationFactor = density[k] * N[a] * N[b] * detJq;
+                real64 temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * dt ) + 1.0 / ( m_newmarkBeta * dt * dt ) )* integrationFactor;
+
+                for( int i=0 ; i<dim ; ++i )
+                {
+                  realT const acc = 1.0 / ( m_newmarkBeta * dt * dt ) * ( uhat[b][i] - uhattilde[b][i] );
+                  realT const velb = vtilde[b][i] + m_newmarkGamma/( m_newmarkBeta * dt ) *( uhat[b][i] - uhattilde[b][i] );
+
+                  dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
+                  R_InertiaMassDamping(a*dim+i) -= ( m_massDamping * velb + acc ) * integrationFactor;
+                }
+              }
+            }
+          }
+        }
+
+
+
+          R1Tensor temp;
+          for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
+          {
+            const realT detJq = detJ[k][q];
+            R2SymTensor stress0 = referenceStress;
+            stress0 *= detJq;
+            for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+            {
+              dNdXa = dNdX[k][q][a];
+
+              temp.AijBj(stress0,dNdXa);
+              realT maxf = temp.MaxVal();
+              if( maxf > maxForce )
+              {
+                maxForce = maxf;
+              }
+
+              R(a*dim+0) -= temp[0];
+              R(a*dim+1) -= temp[1];
+              R(a*dim+2) -= temp[2];
+            }
+          }
+
+
+      // TODO It is simpler to do this...try it.
+      //  dRdU.Multiply(dof_np1,R);
+        for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+        {
+          realT nodeForce = 0;
+          for( integer b=0 ; b<NUM_NODES_PER_ELEM ; ++b )
+          {
+            for( int i=0 ; i<dim ; ++i )
+            {
+              for( int j=0 ; j<dim ; ++j )
+              {
+                R(a*dim+i) += dRdU(a*dim+i,b*dim+j) * u_local[b][j];
+              }
+            }
+
+            if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+            {
+              for( int i=0 ; i<dim ; ++i )
+              {
+                for( int j=0 ; j<dim ; ++j )
+                {
+                  R_StiffnessDamping(a*dim+i) += m_stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde[b][j] + m_newmarkGamma/(m_newmarkBeta * dt)*(uhat[b][j]-uhattilde[b][j]) );
+                }
+              }
+            }
+
+          }
+
+          nodeForce = std::max( std::max( R(a*dim+0), R(a*dim+1) ),  R(a*dim+2) );
+          if( fabs(nodeForce) > maxForce )
+          {
+            maxForce = fabs(nodeForce);
+          }
+        }
+
+
+        if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+        {
+          dRdU_StiffnessDamping = dRdU;
+          dRdU_StiffnessDamping.Scale( m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * dt ) );
+
+          dRdU += dRdU_InertiaMassDamping;
+          dRdU += dRdU_StiffnessDamping;
+          R    += R_InertiaMassDamping;
+          R    += R_StiffnessDamping;
+        }
+
+
+        if( maxForce > m_maxForce )
+        {
+          m_maxForce = maxForce;
+        }
+
+        matrix->SumIntoGlobalValues( elementLocalDofIndex,
+                                     dRdU);
+
+        rhs->SumIntoGlobalValues( elementLocalDofIndex,
+                                  R);
+      }
+    }
+  return maxForce;
+  }
+
+//  realT ElementResidualAndJacobianKernel( real64 const density,
+//                                          FiniteElementBase const * const fe,
+//                                          arraySlice2d<R1Tensor const> const& dNdX,
+//                                          arraySlice1d<realT const> const& detJ,
+//                                          R2SymTensor const * const refStress,
+//                                          r1_array const& u,
+//                                          r1_array const& uhat,
+//                                          r1_array const& uhattilde,
+//                                          r1_array const& vtilde,
+//                                          realT const dt,
+//                                          Epetra_SerialDenseMatrix& dRdU,
+//                                          Epetra_SerialDenseVector& R,
+//                                          real64 c[6][6] );
 
 
 
@@ -265,7 +496,7 @@ public:
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
-    static constexpr auto trilinosIndexString = "trilinosIndex";
+    static constexpr auto globalDofNumberString = "trilinosIndex";
     static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
@@ -279,7 +510,7 @@ public:
     dataRepository::ViewKey massDamping = { massDampingString };
     dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString };
     dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString };
-    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
+    dataRepository::ViewKey globalDofNumber = { globalDofNumberString };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString };
   } solidMechanicsViewKeys;
 
