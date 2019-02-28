@@ -29,8 +29,6 @@
 #include "ViewWrapper.hpp"
 #include "RestartFlags.hpp"
 
-#include "depricated/Common.h"
-
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
