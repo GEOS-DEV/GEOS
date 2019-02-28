@@ -230,7 +230,7 @@ public:
                                      globalIndex & numGlobalRows,
                                      localIndex offset ) override;
 
-  void InitializeWellState( DomainPartition * const domain );
+  void InitializeWells( DomainPartition * const domain );
   
   void CheckWellControlSwitch( DomainPartition * const domain );
   

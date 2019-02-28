@@ -169,7 +169,7 @@ void SinglePhaseWell::UpdateState( Well * const well )
   UpdateFluidModel( well );
 }
 
-void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
+void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 {
   WellManager * const wellManager = domain->getWellManager();
 
@@ -241,6 +241,8 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
       avgDensity += resDensity[er][esr][m_fluidIndex][ei][0];
     }
 
+    std::cout << "step 1 complete" << std::endl;
+    
     // TODO: communicate avgDens
     // TODO: collect individual dens and then communicate
     
@@ -266,6 +268,8 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 		    	          : 1.1 * targetBHP;
     }
 
+    std::cout << "step 2 complete" << std::endl;
+    
     // TODO: communicate ref pressure
     // TODO: communicate avgDens
     
@@ -278,11 +282,17 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
  	  + ( m_gravityFlag ? avgDensity * wellElemGravDepth[iwelem] - refGravDepth : 0 );
     }
 
+    std::cout << "step 3 complete" << std::endl;
+    
     // 4) Recompute the pressure-dependent properties
     UpdateState( well );
 
+    std::cout << "step 4 complete" << std::endl;
+
     // 5) Compute the perforation rates
     ComputeAllPerforationRates( well );
+
+    std::cout << "step 5 complete" << std::endl;
     
     // 6) Collect all the perforation rates
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -292,6 +302,8 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
       localIndex const iwelem = perfWellElemIndex[iperf];
       wellElemSumRates[iwelem] += perfRate[iperf];
     }
+
+    std::cout << "step 6 complete" << std::endl;
 
     // 7) Estimate the connection rates
     // TODO: implement this in parallel with the communication of wellElemSumRates
@@ -304,7 +316,17 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 	              - wellElemSumRates[iwelemNext] / wellElemDensity[iwelemNext][0];
       prevConnRate = connRate[iconn];
     }
-    
+
+   std::cout << "step 7 complete" << std::endl;
+
+   /*
+   for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+     std::cout << "wellElemPressure[" << iwelem << "] = " << wellElemPressure[iwelem] << std::endl;
+     
+   for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+     std::cout << "connRate[" << iconn << "] = " << connRate[iconn] << std::endl;
+   */	 
+   
   });
 }
 
@@ -316,8 +338,8 @@ void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
 
-  // update properties
-  UpdateStateAll( domain );
+  // Initialize the primary and secondary variables
+  InitializeWells( domain );
   
   std::cout << "SinglePhaseWell::InitializePostInitialConditions_PreSubGroups complete" << std::endl;
 }
