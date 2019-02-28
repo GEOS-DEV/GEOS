@@ -54,13 +54,11 @@ public:
   {
     static constexpr auto nextWellElementNameString = "nextSegmentName";
     static constexpr auto prevWellElementNameString = "prevSegmentName";
-    static constexpr auto areaString = "area";
     
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey nextWellElementName = { nextWellElementNameString };
     ViewKey prevWellElementName = { prevWellElementNameString };
-    ViewKey area = { areaString };
     
   } viewKeysConnection;
 
@@ -70,9 +68,6 @@ private:
   string m_nextWellElementName;
   string m_prevWellElementName;
 
-  // geometry
-  real64 m_area;
-  
 };
 
 } //namespace geosx

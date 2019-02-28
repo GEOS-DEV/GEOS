@@ -43,10 +43,6 @@ Connection::Connection(string const & name, ManagedGroup * const parent)
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Previous well element name");
 
-  RegisterViewWrapper( viewKeyStruct::areaString, &m_area, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Area of the cross section");
-
 }
 
 Connection::~Connection()

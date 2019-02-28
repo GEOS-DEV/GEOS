@@ -102,15 +102,13 @@
 	  targetRate="1"
           referenceDepth="0.5">
       <Segments>
-	<Segment name="prod1_unique_seg" />
+	<Segment name="prod1_unique_seg"
+		 location="9 0.5 0.5"/>
       </Segments> 
       <Connections>
 	<Connection name="prod1_first_conn"
 		    prevSegmentName=""
 		    nextSegmentName="prod1_unique_seg" />
-	<Connection name="prod1_last_conn"
-		    prevSegmentName="prod1_unique_seg"
-		    nextSegmentName="" />
       </Connections> 
       <Perforations>
         <Perforation name="prod1_p0"
@@ -131,15 +129,13 @@
 	  targetRate="1"
           referenceDepth="0.5">
       <Segments>
-	<Segment name="inj1_unique_seg" />
+	<Segment name="inj1_unique_seg"
+		 location="1.5 0.5 0.5"/>
       </Segments> 
       <Connections>
 	<Connection name="inj1_first_conn"
 		    prevSegmentName=""
 		    nextSegmentName="inj1_unique_seg" />
-	<Connection name="inj1_last_conn"
-		    prevSegmentName="inj1_unique_seg"
-		    nextSegmentName="" />
       </Connections> 
       <Perforations>
         <Perforation name="inj1_p0"

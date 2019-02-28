@@ -31,8 +31,12 @@ namespace geosx
 using namespace dataRepository;
 
 WellElement::WellElement(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent)
+  : ManagedGroup(name, parent),
+    m_location()
 {
+  RegisterViewWrapper( viewKeyStruct::locationString, &m_location, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Segment physical coordinates");
 }
 
 WellElement::~WellElement()

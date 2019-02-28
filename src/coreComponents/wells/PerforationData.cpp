@@ -41,6 +41,7 @@ PerforationData::PerforationData(string const & name, ManagedGroup * const paren
   RegisterViewWrapper( viewKeyStruct::reservoirElementIndexString, &m_reservoirElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::perforationIndexString, &m_perforationIndex, false );
+  RegisterViewWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false );
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
 }
 
@@ -80,11 +81,12 @@ Perforation * PerforationData::getPerforation( localIndex iperf )
   
 void PerforationData::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  std::cout << "PerforationData::InitializePreSubGroups" << std::endl;
+  std::cout << "PerforationData::InitializePreSubGroups started" << std::endl;
   DomainPartition const * domain
     = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ConnectToCells( mesh );
+  std::cout << "PerforationData::InitializePreSubGroups complete" << std::endl;
 }
 
 localIndex PerforationData::numPerforationsGlobal() const
@@ -146,12 +148,10 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
     m_reservoirElementSubregion[num_conn_local] = std::get<1>(ret.second);
     m_reservoirElementIndex[num_conn_local]     = std::get<2>(ret.second);
 
-    std::cout << "iperf = " << m_reservoirElementIndex[num_conn_local] << std::endl;
-    
     m_wellElementIndex[num_conn_local] = 0; // assume single-segmented well
     m_perforationIndex[num_conn_local] = num_conn_global++;
     m_transmissibility[num_conn_local] = perforation->getTransmissibility();
-
+    
     num_conn_local++;
   }
   resize( num_conn_local );

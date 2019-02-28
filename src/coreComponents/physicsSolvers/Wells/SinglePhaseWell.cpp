@@ -87,7 +87,7 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
 
     PerforationData * perforationData = well->getPerforations();
     perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::perforationRateString );
-    perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
+    perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
     
   });    
 
@@ -240,6 +240,10 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
       
       avgDensity += resDensity[er][esr][m_fluidIndex][ei][0];
     }
+
+    // TODO: communicate avgDens
+    // TODO: collect individual dens and then communicate
+    
     globalIndex const numPerforationsGlobal = perforationData->numPerforationsGlobal();
     avgDensity /= numPerforationsGlobal;
 
@@ -261,7 +265,10 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
                                   ? 0.9 * targetBHP
 		    	          : 1.1 * targetBHP;
     }
-      
+
+    // TODO: communicate ref pressure
+    // TODO: communicate avgDens
+    
     // 3) Estimate the pressures in the segments using this avgDensity
     // TODO: implement this in parallel with the communication of the pressures
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -288,16 +295,14 @@ void SinglePhaseWell::InitializeWellState( DomainPartition * const domain )
 
     // 7) Estimate the connection rates
     // TODO: implement this in parallel with the communication of wellElemSumRates
-    // TODO: improve this later
+    real64 prevConnRate = 0;
     localIndex const lastConnectionIndex = connectionData->numConnectionsLocal()-1;
     for (localIndex iconn = lastConnectionIndex; iconn >= 0; --iconn)
     {
       localIndex const iwelemNext = nextWellElemIndex[iconn];
-      connRate[iconn] = wellElemSumRates[iwelemNext] / wellElemDensity[iwelemNext][0];
-                      
-      localIndex const iwelemPrev = prevWellElemIndex[iconn];
-      if (iwelemPrev >= 0)
-	wellElemSumRates[iwelemPrev] += connRate[iconn];
+      connRate[iconn] = prevConnRate
+	              - wellElemSumRates[iwelemNext] / wellElemDensity[iwelemNext][0];
+      prevConnRate = connRate[iconn];
     }
     
   });
@@ -406,7 +411,6 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
       if (wellElemGhostRank[iwelem] < 0 )
       {
         wellElemDofNumber[iwelem] = firstLocalRow + localCount + offset;
-	std::cout << "wells: currentDofNumber = " << firstLocalRow + localCount + offset << std::endl;
         localCount += 1;
       }
       else
@@ -492,19 +496,12 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( resNDOF + wellNDOF );
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( resNDOF + wellNDOF );
 
-      std::cout << "er = "   << er
-		<< " esr = " << esr
-		<< " ei = "  << ei
-		<< " resDofNumber = " << resDofNumber[er][esr][ei]
-		<< std::endl;
-      
       // get the offset of the reservoir element equation
       globalIndex const resOffset  = resNDOF * resDofNumber[er][esr][ei];
       // specify the reservoir equation number
       elementLocalDofIndexRow[ElemTag::RES * wellNDOF] = resOffset;
       // specify the reservoir variable number
       elementLocalDofIndexCol[ElemTag::RES * wellNDOF] = resOffset;
-      std::cout << "iperf = " << iperf << " resOffset = " << resOffset << std::endl;
       
       /*
        * firstWellElemDofNumber denotes the first DOF number of the well segments, for all the wells (i.e., first segment of first well)
@@ -528,8 +525,6 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
 	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
 	// specify the reservoir variable number
 	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
-	std::cout << "iperf = " << iperf << " idof = " << idof << " wellOffset = "
-		  << elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] << std::endl;
       }      
 
       sparsity->InsertGlobalIndices( integer_conversion<int>( resNDOF + wellNDOF ),
@@ -544,6 +539,7 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
       // TODO: figure out how to do that with multiple MPI ranks
+      // TODO: 
       
       // get previous segment index
       localIndex iwelemPrev =  prevWellElemIndex[iconn];
@@ -555,6 +551,8 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
       if (iwelemPrev < 0 || iwelemNext < 0)
 	continue;
 
+      // TODO: 
+       
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexRow( 2 * wellNDOF );
       stackArray1d<globalIndex, 2 * maxNumDof > elementLocalDofIndexCol( 2 * wellNDOF );
       
@@ -870,7 +868,7 @@ SinglePhaseWell::CheckSystemSolution( EpetraBlockSystem const * const blockSyste
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
 
-  return false;
+  return true;
 }
 
 void
