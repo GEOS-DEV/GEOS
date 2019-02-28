@@ -30,8 +30,6 @@
 namespace geosx
 {
 
-class MeshLevel;
-
 namespace dataRepository
 {
 namespace keys
@@ -41,6 +39,7 @@ static constexpr auto perforationData = "PerforationData";
 }
 
 class DomainPartition;
+class MeshLevel;
 class Perforation;
 
 class PerforationData : public ObjectManagerBase
@@ -60,6 +59,7 @@ public:
 
   localIndex numPerforationsLocal()  const
   { return integer_conversion<localIndex>(size()); }
+  localIndex numPerforationsGlobal() const;
   
   Perforation const * getPerforation( localIndex iperf ) const;
   Perforation *       getPerforation( localIndex iperf );
@@ -98,7 +98,6 @@ protected:
 private:
 
   void ConnectToCells( MeshLevel const * domain );
-  void PrecomputeData( MeshLevel const * domain );
 
   array1d<localIndex> m_reservoirElementRegion;
   array1d<localIndex> m_reservoirElementSubregion;

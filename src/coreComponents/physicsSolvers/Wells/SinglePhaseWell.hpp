@@ -41,7 +41,8 @@ string const singlePhaseWell = "SinglePhaseWell";
 }
 }
 class SinglePhaseFlow;
-
+class Well;
+  
 namespace constitutive
 {
 class SingleFluidBase;
@@ -150,8 +151,14 @@ public:
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateFluidModelAll( DomainPartition * domain );
+  void UpdateFluidModel( Well * well );
 
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
+   * @param well the well containing the variables as 
+   */
+  void UpdateState( Well * well );
+  
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
@@ -235,14 +242,15 @@ public:
     static constexpr auto dofNumberString = "wellElementLocalDofNumber_SinglePhaseWell";
 
     // primary solution field
-    static constexpr auto pressureString      = "wellPressure";
-    static constexpr auto deltaPressureString = "wellDeltaPressure";
-    static constexpr auto rateString      = "wellRate";
-    static constexpr auto deltaRateString = "wellDeltaRate";
+    static constexpr auto pressureString      = "segmentPressure";
+    static constexpr auto deltaPressureString = "deltaSegmentPressure";
+    static constexpr auto rateString      = "connectionRate";
+    static constexpr auto deltaRateString = "deltaConnectionRate";
 
-    // well control
-    static constexpr auto flowRateString = "wellFlowRate";
-
+    // perforation rates
+    static constexpr auto perforationRateString = "perforationRate";
+    static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
+    
     using ViewKey = dataRepository::ViewKey;
 
     // degrees of freedom numbers of the well elements
@@ -254,9 +262,10 @@ public:
     ViewKey rate          = { rateString };
     ViewKey deltaVelovity = { deltaRateString };
 
-    // well control
-    ViewKey flowRate = { flowRateString };
-
+    // perforation rates
+    ViewKey perforationRate = { perforationRateString };
+    ViewKey dPerforationRate_dPres = { dPerforationRate_dPresString };
+    
   } viewKeysSinglePhaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -297,7 +306,9 @@ private:
 
   void FormControlEquation( DomainPartition * const domain,
                             Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual ) override;
+                            Epetra_FEVector * const residual );
+
+  void ComputeAllPerforationRates( Well * well );
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber; // TODO will move to DofManager
   

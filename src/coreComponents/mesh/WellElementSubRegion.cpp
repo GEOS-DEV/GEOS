@@ -29,6 +29,8 @@ WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * 
   ElementSubRegionBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
+  RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
+  RegisterViewWrapper( viewKeyStruct::sumRatesString, &m_sumRates, false );
 }
 
 
@@ -72,5 +74,16 @@ void WellElementSubRegion::InitializePreSubGroups( ManagedGroup * const problemM
   }
 }
 
+void WellElementSubRegion::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+{
+  R1Tensor const & gravity = getParent()->group_cast<Well *>()->getGravityVector();
+  arrayView1d<real64> & gravDepth = getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+
+  for (localIndex iwelem = 0; iwelem < size(); ++iwelem)
+  {
+    WellElement const * wellElement = getWellElement( iwelem );
+    gravDepth[iwelem] = Dot( wellElement->getLocation(), gravity );
+  }
+}
   
 }

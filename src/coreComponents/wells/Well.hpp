@@ -84,8 +84,8 @@ public:
 
   Type getType() const { return m_type; }
 
-  void setWellControl( Control control ) { m_currentControl = control; }
-  Control getWellControl() const { return m_currentControl; }
+  void setControl( Control control ) { m_currentControl = control; }
+  Control getControl() const { return m_currentControl; }
 
   real64 const & getTargetBHP() const { return m_targetBHP; }
 

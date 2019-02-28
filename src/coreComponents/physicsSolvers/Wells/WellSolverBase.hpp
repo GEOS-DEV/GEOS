@@ -167,10 +167,6 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
   virtual void ResetViews( DomainPartition * const domain );
-
-  virtual void FormControlEquation( DomainPartition * const domain,
-                                    Epetra_FECrsMatrix * const jacobian,
-                                    Epetra_FEVector * const residual );
   
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;

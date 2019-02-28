@@ -36,6 +36,8 @@ using namespace dataRepository;
 ConnectionData::ConnectionData(string const & name, ManagedGroup * const parent)
   : ObjectManagerBase(name, parent)
 {
+  RegisterViewWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
+  RegisterViewWrapper( viewKeyStruct::prevWellElementIndexString, &m_prevWellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::connectionIndexString, &m_connectionIndex, false );
 }
 
@@ -77,12 +79,6 @@ void ConnectionData::InitializePostInitialConditions_PreSubGroups( ManagedGroup 
 {
   DomainPartition const * domain = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  PrecomputeData( mesh );
-}
-
-void ConnectionData::PrecomputeData( MeshLevel const * mesh )
-{
-
 }
 
 Connection const * ConnectionData::getConnection( localIndex iconn ) const

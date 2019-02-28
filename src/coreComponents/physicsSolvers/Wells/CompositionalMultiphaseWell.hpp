@@ -41,7 +41,8 @@ string const compositionalMultiphaseWell = "CompositionalMultiphaseWell";
 }
 }
 class CompositionalMultiphaseFlow;
-
+class Well;
+  
 namespace constitutive
 {
 class MultiFluidBase;
@@ -131,28 +132,35 @@ public:
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
+   * @param well the well containing all the primary and dependent fields
    */
-  void UpdateComponentFractionAll( DomainPartition * domain );
+  void UpdateComponentFraction( Well * well );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
+   * @param well the well containing all the primary and dependent fields
    */
-  void UpdatePhaseVolumeFractionAll( DomainPartition * domain );
+  void UpdatePhaseVolumeFraction( Well * well );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
+   * @param well the well containing all the primary and dependent fields
    */
-  void UpdateFluidModelAll( DomainPartition * domain );
+  void UpdateFluidModel( Well * well );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
+   * @param well the well containing all the primary and dependent fields
    */
-  void UpdateRelPermModelAll( DomainPartition * domain );
+  void UpdateRelPermModel( Well * well );
 
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param well the well containing all the primary and dependent fields
+   */
+  void UpdateState( Well * well );
+
+  
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
@@ -379,7 +387,7 @@ private:
 
   void FormControlEquation( DomainPartition * const domain,
                             Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual ) override;
+                            Epetra_FEVector * const residual );
 
   
   /// the max number of fluid phases

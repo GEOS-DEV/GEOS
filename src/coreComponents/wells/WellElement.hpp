@@ -40,11 +40,21 @@ public:
   WellElement( WellElement const &) = delete;
   WellElement( WellElement && ) = delete;
 
+  R1Tensor const & getLocation() const
+  { return m_location; }
+  
   struct viewKeyStruct
   {
+    static constexpr auto locationString = "location";
+
+    dataRepository::ViewKey location = { locationString };
+    
   } viewKeysWellElement;
 
 private:
+
+  // geometry
+  R1Tensor m_location;
 
 };
 

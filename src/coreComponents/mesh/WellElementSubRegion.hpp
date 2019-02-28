@@ -94,21 +94,29 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto wellElementIndexString = "wellElementIndex";
-
+    static constexpr auto gravityDepthString = "gravityDepth";
+    static constexpr auto sumRatesString = "sumRates";
+    
     dataRepository::ViewKey wellElementIndex = { wellElementIndexString };
+    dataRepository::ViewKey gravityDepth = { gravityDepthString };
+    dataRepository::ViewKey sumRates = { sumRatesString };
     
   } viewKeysWellElementData;
   
 protected:
 
-  void InitializePreSubGroups( ManagedGroup * const problemManager ) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const problemManager ) override;
 
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override;
 
 private:
   /// The elements to nodes relation is one to one relation.
   NodeMapType  m_toNodesRelation;
 
   array1d<localIndex> m_wellElementIndex;
+
+  array1d<real64> m_gravityDepth;
+  array1d<real64> m_sumRates;
 };
 
 } /* namespace geosx */

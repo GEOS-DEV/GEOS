@@ -70,9 +70,11 @@ public:
     static constexpr auto connectionIndexString = "connectionIndex";
 
     using ViewKey = dataRepository::ViewKey;
-    
-    ViewKey connectionIndex = { connectionIndexString };
 
+    ViewKey nextWellElementIndex = { nextWellElementIndexString };
+    ViewKey prevWellElementIndex = { prevWellElementIndexString };
+    ViewKey connectionIndex = { connectionIndexString };
+    
   } viewKeysConnectionData;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
@@ -91,11 +93,10 @@ protected:
 
 private:
 
-  void PrecomputeData( MeshLevel const * domain );
-
   array1d<localIndex> m_nextWellElementIndex;
   array1d<localIndex> m_prevWellElementIndex;
   array1d<localIndex> m_connectionIndex;
+  
   string_array m_connectionList;
 
 };

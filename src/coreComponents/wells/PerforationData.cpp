@@ -68,7 +68,7 @@ Perforation const * PerforationData::getPerforation( localIndex iperf ) const
   return perforation;
 }
 
-Perforation * PerforationData::getPerforation( localIndex iperf )
+Perforation * PerforationData::getPerforation( localIndex iperf ) 
 {
   Well * parent = getParent()->group_cast<Well *>();
   PerforationManager * perforationManager
@@ -87,15 +87,15 @@ void PerforationData::InitializePreSubGroups( ManagedGroup * const problemManage
   ConnectToCells( mesh );
 }
 
-void PerforationData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+localIndex PerforationData::numPerforationsGlobal() const
 {
-  DomainPartition const * domain
-    = problemManager->GetGroup<DomainPartition>( keys::domain );
-  MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  PrecomputeData( mesh );
+  Well const * parent = getParent()->group_cast<Well const *>();
+  PerforationManager const * perforationManager
+    = parent->GetGroup<PerforationManager>( Well::groupKeyStruct::perforationsString );
+  return perforationManager->numPerforationsGlobal();
 }
-
-void PerforationData::PrecomputeData( MeshLevel const * mesh )
+  
+void PerforationData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
   R1Tensor const & gravity = getParent()->group_cast<Well *>()->getGravityVector();
   arrayView1d<real64> & gravDepth = getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
