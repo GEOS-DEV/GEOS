@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file SolidMechanicsLagrangianFEM.cpp
+ */
+
 #include "SolidMechanicsLagrangianFEM.hpp"
 
 #include <vector>
@@ -202,7 +206,7 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshB
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->setPlotLevel(PlotLevel::LEVEL_0);
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1);
     nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0);
-    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::trilinosIndexString )->setPlotLevel(PlotLevel::LEVEL_1);
+    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::globalDofNumberString )->setPlotLevel(PlotLevel::LEVEL_1);
 
   }
 }
@@ -677,7 +681,7 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                                                  time,
                                                  targetGroup,
                                                  fieldName,
-                                                 viewKeyStruct::trilinosIndexString,
+                                                 viewKeyStruct::globalDofNumberString,
                                                  3,
                                                  &blockSystem,
                                                  BlockIDs::displacementBlock );
@@ -699,7 +703,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
   array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
 
   arrayView1d<globalIndex> const & blockLocalDofNumber =
-    nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
+    nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
 
   Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
 
@@ -924,7 +928,7 @@ void SolidMechanicsLagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * c
 
   // create trilinos dof indexing
 
-  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
+  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
   integer_array& is_ghost       = nodeManager->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
   trilinos_index = -1;
@@ -965,7 +969,7 @@ void SolidMechanicsLagrangianFEM :: SetupSystem ( DomainPartition * const domain
   SetNumRowsAndTrilinosIndices( nodeManager, n_local_rows, n_global_rows, displacementIndices, 0 );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back(viewKeyStruct::trilinosIndexString);
+  fieldNames["node"].push_back(viewKeyStruct::globalDofNumberString);
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
@@ -1004,7 +1008,7 @@ void SolidMechanicsLagrangianFEM::SetSparsityPattern( DomainPartition const * co
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  arrayView1d<globalIndex> const & trilinos_index = nodeManager->getReference<array1d<globalIndex>>(solidMechanicsViewKeys.trilinosIndex);
+  arrayView1d<globalIndex> const & trilinos_index = nodeManager->getReference<array1d<globalIndex>>(solidMechanicsViewKeys.globalDofNumber);
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
@@ -1080,12 +1084,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
   r1_array const vtilde;
 
   globalIndex_array const &
-  trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.trilinosIndex);
+  trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
 
-  static array1d< R1Tensor > u_local(8);
-  static array1d< R1Tensor > uhat_local(8);
-  static array1d< R1Tensor > vtilde_local(8);
-  static array1d< R1Tensor > uhattilde_local(8);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
@@ -1111,91 +1111,29 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
       arrayView2d< localIndex > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-      u_local.resize(numNodesPerElement);
-      uhat_local.resize(numNodesPerElement);
-      vtilde_local.resize(numNodesPerElement);
-      uhattilde_local.resize(numNodesPerElement);
-
-
       // space for element matrix and rhs
       int dim = 3;
-      Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(numNodesPerElement));
-      Epetra_SerialDenseVector     element_rhs     (dim*static_cast<int>(numNodesPerElement));
-      Epetra_SerialDenseMatrix     element_matrix  (dim*static_cast<int>(numNodesPerElement),
-                                                    dim*static_cast<int>(numNodesPerElement));
-      Epetra_SerialDenseVector     element_dof_np1 (dim*static_cast<int>(numNodesPerElement));
 
-      array1d<integer> const & elemGhostRank = elementSubRegion->m_ghostRank;
+      ImplicitElementKernelLaunch<8,8>( elementSubRegion->size(),
+                                   dt,
+                                   dNdX,
+                                   detJ,
+                                   feDiscretization->m_finiteElement,
+                                   constitutiveRelations[er][esr],
+                                   elementSubRegion->m_ghostRank,
+                                   elemsToNodes,
+                                   trilinos_index,
+                                   disp,
+                                   uhat,
+                                   vtilde,
+                                   uhattilde,
+                                   density[er][esr],
+                                   fluidPres[er][esr],
+                                   dPres[er][esr],
+                                   biotCoefficient[er][esr],
+                                   matrix,
+                                   rhs );
 
-
-      GEOSX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-
-      for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
-      {
-
-        real64 stiffness[6][6];
-        constitutiveRelations[er][esr][0]->GetStiffness( stiffness );
-
-        if(elemGhostRank[k] < 0)
-        {
-          for( localIndex a=0 ; a<numNodesPerElement ; ++a)
-          {
-
-            localIndex localNodeIndex = elemsToNodes[k][a];
-
-            for( int i=0 ; i<dim ; ++i )
-            {
-              elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*trilinos_index[localNodeIndex]+i;
-
-              // TODO must add last solution estimate for this to be valid
-              element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];
-            }
-          }
-
-          if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
-          {
-            GEOS_ERROR("Option not supported");
-            CopyGlobalToLocal<R1Tensor>( elemsToNodes[k],
-                               disp, uhat, vtilde, uhattilde, u_local, uhat_local, vtilde_local, uhattilde_local,
-                               numNodesPerElement );
-          }
-          else
-          {
-            CopyGlobalToLocal<R1Tensor>( elemsToNodes[k], disp, uhat, u_local, uhat_local, numNodesPerElement );
-          }
-
-          R2SymTensor referenceStress;
-          if( !fluidPres[er][esr].empty() )
-          {
-            referenceStress.PlusIdentity( - biotCoefficient[er][esr][0] * (fluidPres[er][esr][k] + dPres[er][esr][k]));
-          }
-          real64 maxElemForce = ElementResidualAndJacobianKernel( density[er][esr][0],
-                                                                  feDiscretization->m_finiteElement,
-                                                                  dNdX[k],
-                                                                  detJ[k],
-                                                                  &referenceStress,
-                                                                  u_local,
-                                                                  uhat_local,
-                                                                  uhattilde_local,
-                                                                  vtilde_local,
-                                                                  dt,
-                                                                  element_matrix,
-                                                                  element_rhs,
-                                                                  stiffness);
-
-
-          if( maxElemForce > m_maxForce )
-          {
-            m_maxForce = maxElemForce;
-          }
-
-          matrix->SumIntoGlobalValues( elementLocalDofIndex,
-                                       element_matrix);
-
-          rhs->SumIntoGlobalValues( elementLocalDofIndex,
-                                    element_rhs);
-        }
-      }
     });
   }
 
@@ -1242,7 +1180,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                                                                time_n+dt,
                                                                targetGroup,
                                                                keys::TotalDisplacement, // TODO fix use of dummy name for
-                                                               viewKeyStruct::trilinosIndexString,
+                                                               viewKeyStruct::globalDofNumberString,
                                                                3,
                                                                blockSystem,
                                                                BlockIDs::displacementBlock );
@@ -1331,168 +1269,168 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
 
 }
 
-realT SolidMechanicsLagrangianFEM::ElementResidualAndJacobianKernel( real64 const density,
-                                                                           FiniteElementBase const * const fe,
-                                                                           arraySlice2d<R1Tensor const> const& dNdX,
-                                                                           arraySlice1d<realT const> const& detJ,
-                                                                           R2SymTensor const * const refStress,
-                                                                           r1_array const& u,
-                                                                           r1_array const& uhat,
-                                                                           r1_array const& uhattilde,
-                                                                           r1_array const& vtilde,
-                                                                           realT const dt,
-                                                                           Epetra_SerialDenseMatrix& dRdU,
-                                                                           Epetra_SerialDenseVector& R,
-                                                                           real64 c[6][6] )
-{
-  constexpr integer dim = 3;
-  realT maxForce = 0;
-
-  dRdU.Scale(0);
-  R.Scale(0);
-
-  Epetra_SerialDenseVector R_InertiaMassDamping(R);
-  Epetra_SerialDenseMatrix dRdU_InertiaMassDamping(dRdU);
-
-  Epetra_SerialDenseVector R_StiffnessDamping(R);
-  Epetra_SerialDenseMatrix dRdU_StiffnessDamping(dRdU);
-
-  dRdU_InertiaMassDamping.Scale(0);
-  R_InertiaMassDamping.Scale(0);
-
-  dRdU_StiffnessDamping.Scale(0);
-  R_StiffnessDamping.Scale(0);
-
-  R1Tensor dNdXa;
-  R1Tensor dNdXb;
-
-
-  for( integer q=0 ; q<fe->n_quadrature_points() ; ++q )
-  {
-    const realT detJq = detJ[q];
-    std::vector<double> const & N = fe->values(q);
-
-    for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
-    {
-//      realT const * const dNdXa = dNdX(q,a).Data();
-      dNdXa = dNdX[q][a];
-
-      for( integer b=0 ; b<fe->dofs_per_element() ; ++b )
-      {
-//        realT const * const dNdXb = dNdX(q,b).Data();
-        dNdXb = dNdX[q][b];
-
-        dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
-        dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
-        dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq;
-
-        dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq;
-        dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
-        dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq;
-
-        dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
-        dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
-        dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
-
-
-        if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
-        {
-
-          double integrationFactor = density * N[a] * N[b] * detJq;
-          double temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * dt ) + 1.0 / ( m_newmarkBeta * dt * dt ) )* integrationFactor;
-
-          for( int i=0 ; i<dim ; ++i )
-          {
-            realT const acc = 1.0 / ( m_newmarkBeta * dt * dt ) * ( uhat[b][i] - uhattilde[b][i] );
-            realT const velb = vtilde[b][i] + m_newmarkGamma/( m_newmarkBeta * dt ) *( uhat[b][i] - uhattilde[b][i] );
-
-            dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
-            R_InertiaMassDamping(a*dim+i) -= ( m_massDamping * velb + acc ) * integrationFactor;
-          }
-        }
-      }
-    }
-  }
-
-
-
-  if( refStress!=nullptr )
-  {
-    R1Tensor temp;
-    for( integer q=0 ; q<fe->n_quadrature_points() ; ++q )
-    {
-      const realT detJq = detJ[q];
-      R2SymTensor stress0 = *refStress;
-      stress0 *= detJq;
-      for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
-      {
-        dNdXa = dNdX[q][a];
-
-        temp.AijBj(stress0,dNdXa);
-        realT maxf = temp.MaxVal();
-        if( maxf > maxForce )
-        {
-          maxForce = maxf;
-        }
-
-        R(a*dim+0) -= temp[0];
-        R(a*dim+1) -= temp[1];
-        R(a*dim+2) -= temp[2];
-      }
-    }
-  }
-
-
-// TODO It is simpler to do this...try it.
-//  dRdU.Multiply(dof_np1,R);
-  for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
-  {
-    realT nodeForce = 0;
-    for( integer b=0 ; b<fe->dofs_per_element() ; ++b )
-    {
-      for( int i=0 ; i<dim ; ++i )
-      {
-        for( int j=0 ; j<dim ; ++j )
-        {
-          R(a*dim+i) += dRdU(a*dim+i,b*dim+j) * u[b][j];
-        }
-      }
-
-      if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
-      {
-        for( int i=0 ; i<dim ; ++i )
-        {
-          for( int j=0 ; j<dim ; ++j )
-          {
-            R_StiffnessDamping(a*dim+i) += m_stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde[b][j] + m_newmarkGamma/(m_newmarkBeta * dt)*(uhat[b][j]-uhattilde[b][j]) );
-          }
-        }
-      }
-
-    }
-
-    nodeForce = std::max( std::max( R(a*dim+0), R(a*dim+1) ),  R(a*dim+2) );
-    if( fabs(nodeForce) > maxForce )
-    {
-      maxForce = fabs(nodeForce);
-    }
-  }
-
-
-  if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
-  {
-    dRdU_StiffnessDamping = dRdU;
-    dRdU_StiffnessDamping.Scale( m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * dt ) );
-
-    dRdU += dRdU_InertiaMassDamping;
-    dRdU += dRdU_StiffnessDamping;
-    R    += R_InertiaMassDamping;
-    R    += R_StiffnessDamping;
-  }
-
-
-  return maxForce;
-}
+//realT SolidMechanicsLagrangianFEM::ElementResidualAndJacobianKernel( real64 const density,
+//                                                                           FiniteElementBase const * const fe,
+//                                                                           arraySlice2d<R1Tensor const> const& dNdX,
+//                                                                           arraySlice1d<realT const> const& detJ,
+//                                                                           R2SymTensor const * const refStress,
+//                                                                           r1_array const& u,
+//                                                                           r1_array const& uhat,
+//                                                                           r1_array const& uhattilde,
+//                                                                           r1_array const& vtilde,
+//                                                                           realT const dt,
+//                                                                           Epetra_SerialDenseMatrix& dRdU,
+//                                                                           Epetra_SerialDenseVector& R,
+//                                                                           real64 c[6][6] )
+//{
+//  constexpr integer dim = 3;
+//  realT maxForce = 0;
+//
+//  dRdU.Scale(0);
+//  R.Scale(0);
+//
+//  Epetra_SerialDenseVector R_InertiaMassDamping(R);
+//  Epetra_SerialDenseMatrix dRdU_InertiaMassDamping(dRdU);
+//
+//  Epetra_SerialDenseVector R_StiffnessDamping(R);
+//  Epetra_SerialDenseMatrix dRdU_StiffnessDamping(dRdU);
+//
+//  dRdU_InertiaMassDamping.Scale(0);
+//  R_InertiaMassDamping.Scale(0);
+//
+//  dRdU_StiffnessDamping.Scale(0);
+//  R_StiffnessDamping.Scale(0);
+//
+//  R1Tensor dNdXa;
+//  R1Tensor dNdXb;
+//
+//
+//  for( integer q=0 ; q<fe->n_quadrature_points() ; ++q )
+//  {
+//    const realT detJq = detJ[q];
+//    std::vector<double> const & N = fe->values(q);
+//
+//    for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
+//    {
+////      realT const * const dNdXa = dNdX(q,a).Data();
+//      dNdXa = dNdX[q][a];
+//
+//      for( integer b=0 ; b<fe->dofs_per_element() ; ++b )
+//      {
+////        realT const * const dNdXb = dNdX(q,b).Data();
+//        dNdXb = dNdX[q][b];
+//
+//        dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
+//        dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
+//        dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq;
+//
+//        dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq;
+//        dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
+//        dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq;
+//
+//        dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
+//        dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
+//        dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
+//
+//
+//        if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+//        {
+//
+//          double integrationFactor = density * N[a] * N[b] * detJq;
+//          double temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * dt ) + 1.0 / ( m_newmarkBeta * dt * dt ) )* integrationFactor;
+//
+//          for( int i=0 ; i<dim ; ++i )
+//          {
+//            realT const acc = 1.0 / ( m_newmarkBeta * dt * dt ) * ( uhat[b][i] - uhattilde[b][i] );
+//            realT const velb = vtilde[b][i] + m_newmarkGamma/( m_newmarkBeta * dt ) *( uhat[b][i] - uhattilde[b][i] );
+//
+//            dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
+//            R_InertiaMassDamping(a*dim+i) -= ( m_massDamping * velb + acc ) * integrationFactor;
+//          }
+//        }
+//      }
+//    }
+//  }
+//
+//
+//
+//  if( refStress!=nullptr )
+//  {
+//    R1Tensor temp;
+//    for( integer q=0 ; q<fe->n_quadrature_points() ; ++q )
+//    {
+//      const realT detJq = detJ[q];
+//      R2SymTensor stress0 = *refStress;
+//      stress0 *= detJq;
+//      for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
+//      {
+//        dNdXa = dNdX[q][a];
+//
+//        temp.AijBj(stress0,dNdXa);
+//        realT maxf = temp.MaxVal();
+//        if( maxf > maxForce )
+//        {
+//          maxForce = maxf;
+//        }
+//
+//        R(a*dim+0) -= temp[0];
+//        R(a*dim+1) -= temp[1];
+//        R(a*dim+2) -= temp[2];
+//      }
+//    }
+//  }
+//
+//
+//// TODO It is simpler to do this...try it.
+////  dRdU.Multiply(dof_np1,R);
+//  for( integer a=0 ; a<fe->dofs_per_element() ; ++a )
+//  {
+//    realT nodeForce = 0;
+//    for( integer b=0 ; b<fe->dofs_per_element() ; ++b )
+//    {
+//      for( int i=0 ; i<dim ; ++i )
+//      {
+//        for( int j=0 ; j<dim ; ++j )
+//        {
+//          R(a*dim+i) += dRdU(a*dim+i,b*dim+j) * u[b][j];
+//        }
+//      }
+//
+//      if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+//      {
+//        for( int i=0 ; i<dim ; ++i )
+//        {
+//          for( int j=0 ; j<dim ; ++j )
+//          {
+//            R_StiffnessDamping(a*dim+i) += m_stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde[b][j] + m_newmarkGamma/(m_newmarkBeta * dt)*(uhat[b][j]-uhattilde[b][j]) );
+//          }
+//        }
+//      }
+//
+//    }
+//
+//    nodeForce = std::max( std::max( R(a*dim+0), R(a*dim+1) ),  R(a*dim+2) );
+//    if( fabs(nodeForce) > maxForce )
+//    {
+//      maxForce = fabs(nodeForce);
+//    }
+//  }
+//
+//
+//  if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+//  {
+//    dRdU_StiffnessDamping = dRdU;
+//    dRdU_StiffnessDamping.Scale( m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * dt ) );
+//
+//    dRdU += dRdU_InertiaMassDamping;
+//    dRdU += dRdU_StiffnessDamping;
+//    R    += R_InertiaMassDamping;
+//    R    += R_StiffnessDamping;
+//  }
+//
+//
+//  return maxForce;
+//}
 
 
 
@@ -1510,7 +1448,7 @@ void SolidMechanicsLagrangianFEM::ApplySystemSolution( EpetraBlockSystem const *
   solution->ExtractView(&local_solution,&solutionLength);
 
 
-  globalIndex_array const& trilinos_index = nodeManager->getReference< globalIndex_array >(solidMechanicsViewKeys.trilinosIndex);
+  globalIndex_array const& trilinos_index = nodeManager->getReference< globalIndex_array >(solidMechanicsViewKeys.globalDofNumber);
 
   r1_array& X        = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
   r1_array& disp     = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
