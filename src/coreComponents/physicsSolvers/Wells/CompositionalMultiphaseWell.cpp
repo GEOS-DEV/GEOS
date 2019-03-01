@@ -116,9 +116,6 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBo
     connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureVelocityString );
     connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
 
-    PerforationData * perforationData = well->getPerforations();
-    perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::phaseFlowRateString );
-
   });    
 }
   

@@ -193,6 +193,11 @@ public:
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
                                      localIndex offset ) override;
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateConstitutiveModels( DomainPartition * const domain );
 
 
   /**@}*/
@@ -278,12 +283,6 @@ private:
   void ApplyFaceDirichletBC_implicit( DomainPartition * domain,
                                       real64 const time_n, real64 const dt,
                                       systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief Function to update all constitutive models
-   * @param domain the domain
-   */
-  void UpdateConstitutiveModels( DomainPartition * const domain );
 
   /// views into primary variable fields
 

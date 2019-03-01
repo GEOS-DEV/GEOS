@@ -239,7 +239,7 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // degrees of freedom numbers on the well elements
-    static constexpr auto dofNumberString = "wellElementLocalDofNumber_SinglePhaseWell";
+    static constexpr auto dofNumberString = "segmentLocalDofNumber";
 
     // primary solution field
     static constexpr auto pressureString      = "segmentPressure";
@@ -247,8 +247,11 @@ public:
     static constexpr auto rateString      = "connectionRate";
     static constexpr auto deltaRateString = "deltaConnectionRate";
 
+    // normalizer for the mass balance equations in well elements
+    static constexpr auto massBalanceNormalizerString = "segmentMassBalanceNormalizer";
+    
     // perforation rates
-    static constexpr auto perforationRateString = "perforationRate";
+    static constexpr auto perforationRateString        = "perforationRate";
     static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
     
     using ViewKey = dataRepository::ViewKey;
@@ -262,6 +265,9 @@ public:
     ViewKey rate          = { rateString };
     ViewKey deltaVelovity = { deltaRateString };
 
+    // normalizer for the mass balance equations in well elements
+    ViewKey massBalanceNormalizer = { massBalanceNormalizerString };
+    
     // perforation rates
     ViewKey perforationRate = { perforationRateString };
     ViewKey dPerforationRate_dPres = { dPerforationRate_dPresString };
@@ -297,7 +303,8 @@ private:
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
    */
-  void BackupFields( DomainPartition * const domain );
+  void BackupFields( DomainPartition * const domain,
+		     real64 const & dt );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step

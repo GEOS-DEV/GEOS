@@ -265,33 +265,31 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // degrees of freedom numbers on the well elements
-    static constexpr auto dofNumberString = "wellElementLocalDofNumber_CompositionalMultiphaseWell";
+    static constexpr auto dofNumberString = "segmentLocalDofNumber_CompositionalMultiphaseWell";
     
     // inputs
-    static constexpr auto temperatureString = "wellTemperature";
-    static constexpr auto useMassFlagString = "wellUseMass";
+    static constexpr auto temperatureString = "segmentTemperature";
+    static constexpr auto useMassFlagString = "useMass";
 
-    static constexpr auto relPermNameString  = "wellRelPermName";
-    static constexpr auto relPermIndexString = "wellRelPermIndex";
+    static constexpr auto relPermNameString  = "segmentRelPermName";
+    static constexpr auto relPermIndexString = "segmentRelPermIndex";
     
     // primary solution field
-    static constexpr auto pressureString               = "wellPressure";
-    static constexpr auto deltaPressureString          = "wellDeltaPressure";
-    static constexpr auto globalCompDensityString      = "wellGlobalCompDensity";
-    static constexpr auto deltaGlobalCompDensityString = "wellDeltaGlobalCompDensity";
-    static constexpr auto mixtureVelocityString        = "wellMixtureVelocity";
-    static constexpr auto deltaMixtureVelocityString   = "wellDeltaMixtureVelocity";
-
-    static constexpr auto phaseFlowRateString = "wellPhaseFlowRate";
+    static constexpr auto pressureString               = "segmentPressure";
+    static constexpr auto deltaPressureString          = "deltaSegmentPressure";
+    static constexpr auto globalCompDensityString      = "segmentGlobalCompDensity";
+    static constexpr auto deltaGlobalCompDensityString = "deltaSegmentGlobalCompDensity";
+    static constexpr auto mixtureVelocityString        = "segmentMixtureConnectionRate";
+    static constexpr auto deltaMixtureVelocityString   = "deltaSegmentMixtureConnectionRate";
 
     // saturations
-    static constexpr auto phaseVolumeFractionString = "wellPhaseVolumeFraction";
-    static constexpr auto dPhaseVolumeFraction_dPressureString = "dWellPhaseVolumeFraction_dPres";
-    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dWellPhaseVolumeFraction_dComp";
-    
+    static constexpr auto phaseVolumeFractionString = "segmentPhaseVolumeFraction";
+    static constexpr auto dPhaseVolumeFraction_dPressureString = "dSegmentPhaseVolumeFraction_dPres";
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dSegmentPhaseVolumeFraction_dComp";
+
     // intermediate values for constitutive model input
-    static constexpr auto globalCompFractionString                     = "wellGlobalComponentFraction";
-    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dWellGlobalComponentFraction_dGlobalCompDensity";
+    static constexpr auto globalCompFractionString                     = "segmentGlobalComponentFraction";
+    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dSegmentGlobalComponentFraction_dGlobalCompDensity";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -313,9 +311,6 @@ public:
     ViewKey mixtureVelocity        = { mixtureVelocityString };
     ViewKey deltaMixtureVelovity   = { deltaMixtureVelocityString };
     
-    // well controls
-    ViewKey phaseFlowRate = { phaseFlowRateString };
-
     // saturation
     ViewKey phaseVolFrac        = { phaseVolumeFractionString };
     ViewKey dPhaseVolFrac_dPres = { dPhaseVolumeFraction_dPressureString };
