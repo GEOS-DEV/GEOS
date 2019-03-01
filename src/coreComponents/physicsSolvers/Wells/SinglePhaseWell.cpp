@@ -356,7 +356,7 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain,
     ConnectionData const * const connectionData = well->getConnections();
     
     // get the normalizer for the mass balance equations on well elements
-    array1d<real64> const & wellElemMassBalanceNormalizer =
+    array1d<real64> const & massBalanceNormalizer =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
 
     // get a reference to the primary variables on connections
@@ -378,7 +378,7 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain,
     
     // set the normalizer to zero
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem) 
-      wellElemMassBalanceNormalizer[iwelem] = 0.0; // TODO: ask for a better way to do that!
+      massBalanceNormalizer[iwelem] = 0.0; // TODO: ask for a better way to do that!
 
     // loop over all connections and assign a normalizer to the well elements
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
@@ -392,29 +392,25 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain,
       if (iwelemPrev >= 0)
       {
 	// TODO: double-check the constant, maybe not a good choice (too small)
-	if (wellElemMassBalanceNormalizer[iwelemPrev] < std::numeric_limits<real64>::min())
+	if (massBalanceNormalizer[iwelemPrev] < std::numeric_limits<real64>::min())
 	{
 	  // get the normalizer
           real64 const absConnRate = fabs( connRate[iconn] );
 	  real64 const normalizer = dt * wellElemDensity[iwelemPrev][0] * absConnRate;
-	  //if (normalizer > std::numeric_limits<real64>::min())
-	  //wellElemMassBalanceNormalizer[iwelemPrev] = normalizer;
+	  if (normalizer > std::numeric_limits<real64>::min())
+	    massBalanceNormalizer[iwelemPrev] = normalizer;
 	}
       }
       if (iwelemNext >= 0)
       {
 	// TODO: double-check the constant, maybe not a good choice (too small)
-	if (wellElemMassBalanceNormalizer[iwelemNext] < std::numeric_limits<real64>::min())
+	if (massBalanceNormalizer[iwelemNext] < std::numeric_limits<real64>::min())
 	{
 	  // get the normalizer
 	  real64 const absConnRate = fabs( connRate[iconn] );
 	  real64 const normalizer = dt * wellElemDensity[iwelemNext][0] * absConnRate;
-	  
-	  std::cout << "init absConnRate = " << absConnRate << std::endl;	    
-
-	  
-	  //if (normalizer > std::numeric_limits<real64>::min())
-	  // wellElemMassBalanceNormalizer[iwelemNext] = normalizer;
+	  if (normalizer > std::numeric_limits<real64>::min())
+	    massBalanceNormalizer[iwelemNext] = normalizer;
 	}
       }
     }
@@ -733,7 +729,7 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
     // get the normalizer for the mass balance equations on well elements
-    array1d<real64 const> const & wellElemMassBalanceNormalizer =
+    array1d<real64 const> const & massBalanceNormalizer =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
     
     // get a reference to the next/prev well element index for each connection
@@ -770,8 +766,9 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 
 	// get the normalizer for the mass balance equation
 	real64 normalizer = 1.0;
-        if (wellElemMassBalanceNormalizer[iwelemNext] >= std::numeric_limits<real64>::min())
-          normalizer = 1.0 / wellElemMassBalanceNormalizer[iwelemNext]; 
+        if (m_normalizeMassBalanceEqnsFlag
+	    && massBalanceNormalizer[iwelemNext] >= std::numeric_limits<real64>::min())
+          normalizer = 1.0 / massBalanceNormalizer[iwelemNext]; 
 	
 	// TODO: make sure that naming is consistent (flux contains dt here?)
         real64 const currentConnRate = connRate[iconn] + dConnRate[iconn];
@@ -827,7 +824,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     array1d<globalIndex> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
-    array1d<real64 const> const & wellElemMassBalanceNormalizer =
+    array1d<real64 const> const & massBalanceNormalizer =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
     
     // get well variables on perforations
@@ -867,6 +864,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
 
       // get the well element index for this perforation
       localIndex const iwelem = perfWellElemIndex[iperf];
+      globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelem] );
       
       // row index on reservoir side
       eqnRowIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
@@ -875,15 +873,16 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       dofColIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
 
       // row index on well side
-      eqnRowIndices[ElemTag::WELL] = wellElemDofNumber[iwelem] + RowOffset::MASSBAL;
-
+      eqnRowIndices[ElemTag::WELL] = elemOffset + RowOffset::MASSBAL;
+      
       // column index on well side
-      dofColIndices[ElemTag::WELL] = wellElemDofNumber[iwelem] + ColOffset::DPRES;
+      dofColIndices[ElemTag::WELL] = elemOffset + ColOffset::DPRES;
 
       // get the normalizer for the mass balance equation
       real64 normalizer = 1.0;
-      if (wellElemMassBalanceNormalizer[iwelem] >= std::numeric_limits<real64>::min())
-        normalizer = 1.0 / wellElemMassBalanceNormalizer[iwelem]; 
+      if (m_normalizeMassBalanceEqnsFlag
+          && massBalanceNormalizer[iwelem] >= std::numeric_limits<real64>::min())
+        normalizer = 1.0 / massBalanceNormalizer[iwelem]; 
       
       // populate local flux vector and derivatives
       localFlux[ElemTag::RES]  =  dt * perfRate[iperf];
@@ -896,16 +895,16 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       }
 
       // Add to global residual/jacobian
-      jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 ),
-                                     eqnRowIndices.data(),
-                                     integer_conversion<int>( 2 ),
-                                     dofColIndices.data(),
-                                     localFluxJacobian.data() );
-
       residual->SumIntoGlobalValues( integer_conversion<int>( 2 ),
 				     eqnRowIndices.data(),
 				     localFlux.data() );
 
+      jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 ),
+                                     eqnRowIndices.data(),
+                                     integer_conversion<int>( 2 ),
+                                     dofColIndices.data(),
+                                     localFluxJacobian.data(),
+                                     Epetra_FECrsMatrix::ROW_MAJOR);
     }
     
   });
@@ -1399,8 +1398,12 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
       globalIndex const dofColIndex = elemOffset + ColOffset::DPRES;
       
       // add contribution to global residual and jacobian
-      residual->SumIntoGlobalValues( 1, &eqnRowIndex, &controlEqn );
-      jacobian->SumIntoGlobalValues( 1, &eqnRowIndex, 1, &dofColIndex, &dControlEqn_dPres );
+      residual->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                     &controlEqn );
+      
+      jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                     1, &dofColIndex,
+                                     &dControlEqn_dPres );
     }
     // rate control
     else
@@ -1428,8 +1431,12 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
       globalIndex const dofColIndex = elemOffset + ColOffset::DRATE;
 
       // add contribution to global residual and jacobian
-      residual->SumIntoGlobalValues( 1, &eqnRowIndex, &controlEqn );
-      jacobian->SumIntoGlobalValues( 1, &eqnRowIndex, 1, &dofColIndex, &dControlEqn_dRate );
+      residual->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                     &controlEqn );
+      
+      jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                     1, &dofColIndex,
+                                     &dControlEqn_dRate );
     }
   });
 

@@ -188,6 +188,9 @@ protected:
 
   /// the number of the first Degree of Freedom corresponding to a well var/eq
   globalIndex m_firstWellElemDofNumber;
+
+  /// flag to determine whether the well mass balance equations are normalized
+  integer m_normalizeMassBalanceEqnsFlag;
   
   /// views into reservoir constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_resGravDepth;

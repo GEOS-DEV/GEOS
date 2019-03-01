@@ -116,6 +116,37 @@
 		     segmentName="prod1_unique_seg" /> 
       </Perforations> 
     </Well>
+
+    <Well name="inj1"
+          type="injector"
+  	  control="oilRate" 
+	  targetBHP="1e8"
+	  targetRate="1e-6"
+          referenceDepth="0.5">
+      <Segments>
+	<Segment name="inj1_unique_seg"
+		 location="1.5 0.5 0.5"/>
+      </Segments> 
+      <Connections>
+	<Connection name="inj1_first_conn"
+		    prevSegmentName=""
+		    nextSegmentName="inj1_unique_seg" />
+      </Connections> 
+      <Perforations>
+        <Perforation name="inj1_p0"
+		     location="0.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj1_unique_seg" />
+	<Perforation name="inj1_p1"
+		     location="1.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj1_unique_seg" />
+	<Perforation name="inj1_p2"
+		     location="2.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj1_unique_seg" />
+      </Perforations> 
+    </Well>
     
   </Wells>
   
