@@ -116,10 +116,11 @@
 		     segmentName="prod1_unique_seg" />
       </Perforations> 
     </Well>
-    
+
+    <!-- will be oilRate here, BHP for debugging --> 
     <Well name="inj1"
           type="injector"
-  	  control="oilRate"
+  	  control="BHP" 
 	  targetBHP="1e8"
 	  targetRate="1"
           referenceDepth="0.5">
@@ -188,15 +189,15 @@
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="5e6"/>
-  <FieldSpecification/>
-    
+  </FieldSpecifications>
+  
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
   </Functions>
 
   <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
+  </Partition> 
 
   <Outputs>
       <Silo name="siloOutput"/>
