@@ -37,55 +37,26 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
-  virtual real64
-  ExplicitElementKernelLaunchSelector( localIndex const er,
-                                       localIndex const esr,
-                                       set<localIndex> const & elementList,
-                                       arrayView2d<localIndex> const & elemsToNodes,
-                                       arrayView3d< R1Tensor > const & dNdX,
-                                       arrayView2d<real64> const & detJ,
-                                       arrayView1d<R1Tensor> const & u,
-                                       arrayView1d<R1Tensor> const & vel,
-                                       arrayView1d<R1Tensor> & acc,
-                                       ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,
-                                       ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-                                       ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
-                                       real64 const dt,
-                                       localIndex NUM_NODES_PER_ELEM,
-                                       localIndex NUM_QUADRATURE_POINTS ) override
-  {
-    return ExplicitElementKernelLaunchSelectorT<SolidMechanicsLagrangianSSLE>( er,
-                                                                              esr,
-                                                                              elementList,
-                                                                              elemsToNodes,
-                                                                              dNdX,
-                                                                              detJ,
-                                                                              u,
-                                                                              vel,
-                                                                              acc,
-                                                                              constitutiveRelations,
-                                                                              meanStress,
-                                                                              devStress,
-                                                                              dt,
-                                                                              NUM_NODES_PER_ELEM,
-                                                                              NUM_QUADRATURE_POINTS );
-  }
+  EXPLICIT_ELEMENT_KERNEL_LAUNCH_SELECTOR(SolidMechanicsLagrangianSSLE::ExplicitElementKernelWrapper,override)
 
-  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
-  static real64
-  ExplicitElementKernelLaunch( localIndex const er,
-                               localIndex const esr,
-                               set<localIndex> const & elementList,
-                               arrayView2d<localIndex> const & elemsToNodes,
-                               arrayView3d< R1Tensor > const & dNdX,
-                               arrayView2d<real64> const & detJ,
-                               arrayView1d<R1Tensor> const & u,
-                               arrayView1d<R1Tensor> const & vel,
-                               arrayView1d<R1Tensor> & acc,
-                               ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-                               ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-                               ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
-                               real64 const dt );
+  struct ExplicitElementKernelWrapper
+  {
+    template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+    static real64
+    Launch( localIndex const er,
+            localIndex const esr,
+            set<localIndex> const & elementList,
+            arrayView2d<localIndex> const & elemsToNodes,
+            arrayView3d< R1Tensor > const & dNdX,
+            arrayView2d<real64> const & detJ,
+            arrayView1d<R1Tensor> const & u,
+            arrayView1d<R1Tensor> const & vel,
+            arrayView1d<R1Tensor> & acc,
+            ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
+            ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+            ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+            real64 const dt );
+  };
 };
 
 } /* namespace geosx */

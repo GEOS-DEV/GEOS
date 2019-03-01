@@ -43,20 +43,20 @@ SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
 
 template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
-real64 SolidMechanicsLagrangianSSLE::
-ExplicitElementKernelLaunch( localIndex const er,
-                             localIndex const esr,
-                             set<localIndex> const & elementList,
-                             arrayView2d<localIndex> const & elemsToNodes,
-                             arrayView3d< R1Tensor > const & dNdX,
-                             arrayView2d<real64> const & detJ,
-                             arrayView1d<R1Tensor> const & u,
-                             arrayView1d<R1Tensor> const & vel,
-                             arrayView1d<R1Tensor> & acc,
-                             ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations,
-                             ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-                             ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
-                             real64 const dt )
+real64 SolidMechanicsLagrangianSSLE::ExplicitElementKernelWrapper::
+Launch( localIndex const er,
+        localIndex const esr,
+        set<localIndex> const & elementList,
+        arrayView2d<localIndex> const & elemsToNodes,
+        arrayView3d< R1Tensor > const & dNdX,
+        arrayView2d<real64> const & detJ,
+        arrayView1d<R1Tensor> const & u,
+        arrayView1d<R1Tensor> const & vel,
+        arrayView1d<R1Tensor> & acc,
+        ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations,
+        ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
+        ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+        real64 const dt )
 {
 
   ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
@@ -66,7 +66,6 @@ ExplicitElementKernelLaunch( localIndex const er,
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex const k)
   {
-//    R1Tensor uhat_local[ NUM_NODES_PER_ELEM ];
     R1Tensor v_local[ NUM_NODES_PER_ELEM ];
     R1Tensor u_local[ NUM_NODES_PER_ELEM ];
     R1Tensor f_local[ NUM_NODES_PER_ELEM ];
@@ -74,9 +73,6 @@ ExplicitElementKernelLaunch( localIndex const er,
     real64 c[6][6];
     constitutiveRelations[er][esr][0]->GetStiffness( c );
 
-//    CopyGlobalToLocal<NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
-//                                           u, uhat, vel,
-//                                           u_local, uhat_local, v_local );
 
     CopyGlobalToLocal<NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
                                                      u, vel,
@@ -150,7 +146,7 @@ ExplicitElementKernelLaunch( localIndex const er,
 }
 template
 real64 SolidMechanicsLagrangianSSLE::
-ExplicitElementKernelLaunch<8l,8l>( localIndex const er,
+ExplicitElementKernelWrapper::Launch<8l,8l>( localIndex const er,
                                   localIndex const esr,
                                   set<localIndex> const & elementList,
                                   arrayView2d<localIndex> const & elemsToNodes,
