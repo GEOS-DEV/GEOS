@@ -70,9 +70,44 @@ void ConnectionData::InitializePreSubGroups( ManagedGroup * const problemManager
   // for now, assume that numConnectionsGlobal == numConnectionsLocal
   resize( m_connectionList.size() );
 
-  // assume single-segmented well
-  m_nextWellElementIndex[0] = 0;
-  m_prevWellElementIndex[0] = -1;
+  WellElementManager const * wellElementManager
+    = getParent()->GetGroup<WellElementManager>( Well::
+						 groupKeyStruct::
+						 wellElementsString );
+
+  // TODO: this will have to be rewritten from scratch
+  for (localIndex iconn = 0; iconn < numConnectionsLocal(); ++iconn)
+  {
+    Connection * conn = getConnection( iconn );
+    
+    string const nextWellElemName = conn->getNextWellElementName();
+    string const prevWellElemName = conn->getPrevWellElementName();
+
+    m_nextWellElementIndex[iconn] = - 1;
+    m_prevWellElementIndex[iconn] = - 1;
+ 
+    for (localIndex iwelem = 0; iwelem < wellElementManager->numWellElementsGlobal(); ++iwelem)
+    {
+      WellElement const * wellElem = wellElementManager->getWellElement( iwelem );
+
+      std::cout << wellElem->getName() << " " << nextWellElemName << " " << prevWellElemName << std::endl;
+      
+      if (wellElem->getName() == nextWellElemName &&
+	  m_nextWellElementIndex[iconn] == -1 )
+        m_nextWellElementIndex[iconn] = iwelem;
+      if (wellElem->getName() == prevWellElemName &&
+	  m_prevWellElementIndex[iconn] == -1 )
+	m_prevWellElementIndex[iconn] = iwelem;
+    }
+
+    std::cout << "Connection #" << iconn
+	      << " is in-between segment #" << m_prevWellElementIndex[iconn]
+	      << " and segment #" << m_nextWellElementIndex[iconn]
+	      << std::endl;
+    
+    // set global connection id
+    m_connectionIndex[iconn] = iconn;
+  }
 }
 
 void ConnectionData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )

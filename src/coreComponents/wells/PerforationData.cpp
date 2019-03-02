@@ -123,6 +123,11 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
     = getParent()->GetGroup<PerforationManager>( Well::
 						 groupKeyStruct::
 						 perforationsString );
+  WellElementManager const * wellElementManager
+    = getParent()->GetGroup<WellElementManager>( Well::
+						 groupKeyStruct::
+						 wellElementsString );
+
   resize( perforationManager->numPerforationsGlobal() );
   
   // TODO Until we can properly trace perforations to cells,
@@ -148,7 +153,26 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
     m_reservoirElementSubregion[num_conn_local] = std::get<1>(ret.second);
     m_reservoirElementIndex[num_conn_local]     = std::get<2>(ret.second);
 
-    m_wellElementIndex[num_conn_local] = 0; // assume single-segmented well
+    string const wellElementName = perforation->getWellElementName();
+
+    // TODO: rewrite this entirely
+    m_wellElementIndex[num_conn_local] = -1;
+    for (localIndex iwelem = 0; iwelem < wellElementManager->numWellElementsGlobal(); ++iwelem)
+    {
+      WellElement const * wellElem = wellElementManager->getWellElement( iwelem );
+      if (wellElem->getName() == wellElementName)
+      {
+	m_wellElementIndex[num_conn_local] = iwelem;
+	break;
+      }
+    }
+    if (m_wellElementIndex[num_conn_local] == -1)
+      GEOS_ERROR("Invalid well element name: " << wellElementName);
+    
+    std::cout << "I match perforation " << perforation->getName()
+	      << " with segment " << wellElementManager->getWellElement( m_wellElementIndex[num_conn_local] )->getName()
+	      << std::endl;
+    
     m_perforationIndex[num_conn_local] = num_conn_global++;
     m_transmissibility[num_conn_local] = perforation->getTransmissibility();
     

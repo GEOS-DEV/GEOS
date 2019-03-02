@@ -46,10 +46,16 @@ class WellSolverBase : public SolverBase
 {
 public:
 
-  struct ElemTag
+  struct SubRegionTag
   {
     static constexpr integer RES  = 0;
     static constexpr integer WELL = 1;
+  };
+
+  struct ElemTag
+  {
+    static constexpr integer PREV = 0;
+    static constexpr integer NEXT = 1;
   };
 
 /**

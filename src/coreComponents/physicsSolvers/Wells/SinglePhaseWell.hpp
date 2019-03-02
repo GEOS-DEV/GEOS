@@ -68,7 +68,7 @@ public:
     static constexpr integer CONTROL = 0;
     static constexpr integer MASSBAL = 1;
   };
-
+  
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
@@ -230,9 +230,14 @@ public:
                                      globalIndex & numGlobalRows,
                                      localIndex offset ) override;
 
-  void InitializeWells( DomainPartition * const domain );
+  void FormControlEquation( DomainPartition * const domain,
+                            Epetra_FECrsMatrix * const jacobian,
+                            Epetra_FEVector * const residual );
   
-  void CheckWellControlSwitch( DomainPartition * const domain );
+  void FormMomentumEquations( DomainPartition * const domain,
+                              Epetra_FECrsMatrix * const jacobian,
+                              Epetra_FEVector * const residual );
+
   
   /**@}*/
 
@@ -310,14 +315,14 @@ private:
    * @brief Setup stored reservoir views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
-
-  void FormControlEquation( DomainPartition * const domain,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual );
-
+  
   void ComputeAllPerforationRates( Well * well );
 
   void RecordWellData( Well * well );
+
+  void InitializeWells( DomainPartition * const domain );
+  
+  void CheckWellControlSwitch( DomainPartition * const domain );
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber; // TODO will move to DofManager
   

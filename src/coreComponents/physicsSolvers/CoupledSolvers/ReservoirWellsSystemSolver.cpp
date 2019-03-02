@@ -184,9 +184,6 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
 								BlockIDs::fluidPressureBlock );
-
-  // double-check sparsity pattern
-  std::cout << *jacobian << std::endl;
   
   // construct solution vector
   blockSystem->SetSolutionVector( BlockIDs::fluidPressureBlock,
@@ -232,7 +229,7 @@ void ReservoirWellsSystemSolver::AssembleSystem( DomainPartition * const domain,
   
   std::cout << "ReservoirWellsSystemSolver::AssembleSystem complete" << std::endl;
 }
-  
+
 void ReservoirWellsSystemSolver::ApplyBoundaryConditions( DomainPartition * const domain,
                                                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                           real64 const time,

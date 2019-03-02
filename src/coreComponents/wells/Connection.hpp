@@ -43,7 +43,7 @@ public:
   string const & getNextWellElementName() const
   { return m_nextWellElementName; }
   
-  string const & getPreviousWellElementName() const
+  string const & getPrevWellElementName() const
   { return m_prevWellElementName; }  
   
   // check if the connection is an exit

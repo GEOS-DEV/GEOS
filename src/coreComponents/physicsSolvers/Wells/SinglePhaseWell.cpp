@@ -120,8 +120,8 @@ SingleFluidBase * SinglePhaseWell::GetFluidModel( ManagedGroup * dataGroup ) con
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
   SingleFluidBase * const fluid = constitutiveModels->GetGroup<SingleFluidBase>( m_fluidName );
-  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
-
+  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" )
+;
   return fluid;
 }
 
@@ -375,6 +375,7 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain,
     arrayView1d<localIndex const> const & prevWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );
 
+    
     // get constitutive data on well elements to compute the normalizer
     SingleFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
     
@@ -486,10 +487,10 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
   {
     WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
 
-    arrayView1d<globalIndex> const & wellElemDofNumber =
+    array1d<globalIndex> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
-    arrayView1d<integer> const & wellElemGhostRank =
+    array1d<integer> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
   
     // create trilinos dof indexing, setting initial values to -1 to indicate unset values.
@@ -551,7 +552,7 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
     ConnectionData const * const connectionData   = well->getConnections();
 
     // get the well degrees of freedom 
-    array1d<globalIndex> const & wellElemDofNumber =
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
     // get the well element indices corresponding to each connection
@@ -592,9 +593,9 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
       // get the offset of the reservoir element equation
       globalIndex const resOffset  = resNDOF * resDofNumber[er][esr][ei];
       // specify the reservoir equation number
-      elementLocalDofIndexRow[ElemTag::RES * wellNDOF] = resOffset;
+      elementLocalDofIndexRow[SubRegionTag::RES * wellNDOF] = resOffset;
       // specify the reservoir variable number
-      elementLocalDofIndexCol[ElemTag::RES * wellNDOF] = resOffset;
+      elementLocalDofIndexCol[SubRegionTag::RES * wellNDOF] = resOffset;
       
       /*
        * firstWellElemDofNumber denotes the first DOF number of the well segments, for all the wells (i.e., first segment of first well)
@@ -615,9 +616,9 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
       for (localIndex idof = 0; idof < wellNDOF; ++idof)
       {
 	// specify the well equation number
-	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
+	elementLocalDofIndexRow[SubRegionTag::WELL * resNDOF + idof] = elemOffset + idof;
 	// specify the reservoir variable number
-	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
+	elementLocalDofIndexCol[SubRegionTag::WELL * resNDOF + idof] = elemOffset + idof;
       }      
 
       sparsity->InsertGlobalIndices( integer_conversion<int>( resNDOF + wellNDOF ),
@@ -690,7 +691,7 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
 
   // then assemble the connection equations
-  // AssembleMomentumBalanceTerms( domain, jacobian, residual, time_n, dt );
+  FormMomentumEquations( domain, jacobian, residual );
 
   // finally assemble the well control equation
   FormControlEquation( domain, jacobian, residual );
@@ -727,10 +728,13 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
     ConnectionData const * const connectionData = well->getConnections();
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
-    // get a reference to the degree of freedom numbers
-    array1d<globalIndex> const & wellElemDofNumber =
+    // get a reference to the degree-of-freedom numbers and to ghosting info
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
+    arrayView1d<integer const> const & wellElemGhostRank =
+      wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    
     // get the normalizer for the mass balance equations on well elements
     array1d<real64 const> const & massBalanceNormalizer =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
@@ -763,9 +767,9 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
       
       if (iwelemNext < 0) // nothing to do
 	continue;
-      else if (iwelemPrev < 0) // exit connection
-      {	
-        // get well secondary variables on segments
+      else 
+      {
+	// get well secondary variables on segments
         SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
 
         array2d<real64> const & wellElemDensity =
@@ -774,32 +778,127 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
         array2d<real64> const & dWellElemDensity_dPres =
           fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
-	// get the normalizer for the mass balance equation
-	real64 normalizer = 1.0;
-        if (m_normalizeMassBalanceEqnsFlag
-	    && massBalanceNormalizer[iwelemNext] >= std::numeric_limits<real64>::epsilon())
-          normalizer = 1.0 / massBalanceNormalizer[iwelemNext]; 
+        // 1) Compute the flux and its derivatives
 	
-	// TODO: make sure that naming is consistent (flux contains dt here?)
-        real64 const currentConnRate = connRate[iconn] + dConnRate[iconn];
-        real64 const flux = - dt * wellElemDensity[iwelemNext][0] * currentConnRate * normalizer;
-        real64 const dFlux_dRate = - dt * wellElemDensity[iwelemNext][0] * normalizer;
-	real64 const dFlux_dPres = - dt * dWellElemDensity_dPres[iwelemNext][0] * currentConnRate * normalizer;
+	real64 const currentConnRate = connRate[iconn] + dConnRate[iconn];
+        real64 const volFlux = dt * currentConnRate;
+        real64 const dVolFlux_dRate = dt;
 
-        globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelemNext] );
-	globalIndex const eqnRowIndex     = elemOffset + RowOffset::MASSBAL;
-        globalIndex const dofColIndexPres = elemOffset + ColOffset::DPRES;
-	globalIndex const dofColIndexRate = elemOffset + ColOffset::DRATE;
+	real64 densityUp = 0.0;
+	real64 dDensityUp_dPresPrev = 0.0;
+	real64 dDensityUp_dPresNext = 0.0;
 	
-        // add contribution to global residual and jacobian
-        residual->SumIntoGlobalValues( 1, &eqnRowIndex, &flux );
-        jacobian->SumIntoGlobalValues( 1, &eqnRowIndex, 1, &dofColIndexPres, &dFlux_dPres );
-        jacobian->SumIntoGlobalValues( 1, &eqnRowIndex, 1, &dofColIndexRate, &dFlux_dRate );
-		
-      }
-      else // connection between two segments
-      {
-        // not needed for now
+        if (iwelemPrev < 0 || // exit connection
+	    currentConnRate < 0) // iwelemNext is upstream
+	{	
+	  densityUp = wellElemDensity[iwelemNext][0];
+	  dDensityUp_dPresNext = dWellElemDensity_dPres[iwelemNext][0];
+	}
+	else // iwelemNext is downstream
+	{
+	  densityUp = wellElemDensity[iwelemPrev][0];
+	  dDensityUp_dPresPrev = dWellElemDensity_dPres[iwelemPrev][0];
+	}
+
+        real64 const flux = densityUp * volFlux;
+	real64 const dFlux_dRate = densityUp * dVolFlux_dRate;
+	real64 const dFlux_dPresPrev = dDensityUp_dPresPrev * volFlux;
+	real64 const dFlux_dPresNext = dDensityUp_dPresNext * volFlux;
+
+	// 2) Assemble the flux into residual and Jacobian
+
+        // TODO: check for ghost well elements
+			 
+	if ( iwelemPrev < 0)
+	{
+          real64 normalizer = 1;
+	  if (m_normalizeMassBalanceEqnsFlag
+              && massBalanceNormalizer[iwelemNext] >= std::numeric_limits<real64>::epsilon())
+            normalizer = 1.0 / massBalanceNormalizer[iwelemNext]; 
+
+	  // flux terms
+          real64 const localFlux = - flux * normalizer;
+	  real64 const localFluxJacobian_dRate = - dFlux_dRate * normalizer;
+	  real64 const localFluxJacobian_dPres = - dFlux_dPresNext * normalizer; 
+
+          // jacobian indices
+	  globalIndex const offset = getElementOffset( wellElemDofNumber[iwelemNext] );
+          globalIndex const eqnRowIndex = offset + RowOffset::MASSBAL;
+	  globalIndex const dofColIndex_dPres = offset + ColOffset::DPRES;
+	  globalIndex const dofColIndex_dRate = offset + ColOffset::DRATE;
+
+          // add contribution to global residual and jacobian
+          residual->SumIntoGlobalValues( 1, &eqnRowIndex, &localFlux );
+          jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+					 1, &dofColIndex_dPres,
+					 &localFluxJacobian_dPres );
+          jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+					 1, &dofColIndex_dRate,
+					 &localFluxJacobian_dRate );
+	  
+	}
+	else
+	{
+	  
+          // local working variables and arrays
+          stackArray1d<globalIndex, 2> eqnRowIndices( 2 );
+          globalIndex dofColIndex_dRate;
+          stackArray1d<globalIndex, 2> dofColIndices_dPres( 2 );
+	  
+          stackArray1d<real64, 2> localFlux( 2 );
+          stackArray1d<real64, 2> localFluxJacobian_dRate( 2 );
+	  stackArray2d<real64, 4> localFluxJacobian_dPres( 2, 2);
+
+	  stackArray1d<real64, 2> normalizer( 2 );
+          normalizer = 1.0;
+	  
+	  if (m_normalizeMassBalanceEqnsFlag)
+	  {
+	    if (massBalanceNormalizer[iwelemPrev] >= std::numeric_limits<real64>::epsilon())
+              normalizer[ElemTag::PREV] = 1.0 / massBalanceNormalizer[iwelemPrev]; 
+	    if (massBalanceNormalizer[iwelemNext] >= std::numeric_limits<real64>::epsilon())
+              normalizer[ElemTag::NEXT] = 1.0 / massBalanceNormalizer[iwelemNext]; 
+	  }
+	  
+	  // flux terms	  
+          localFlux[ElemTag::PREV] =   flux * normalizer[ElemTag::PREV];
+	  localFlux[ElemTag::NEXT] = - flux * normalizer[ElemTag::NEXT];
+
+          localFluxJacobian_dRate[ElemTag::PREV] =   dFlux_dRate * normalizer[ElemTag::PREV];
+	  localFluxJacobian_dRate[ElemTag::NEXT] = - dFlux_dRate * normalizer[ElemTag::NEXT];
+
+          localFluxJacobian_dPres[ElemTag::PREV][ElemTag::PREV] =   dFlux_dPresPrev * normalizer[ElemTag::PREV];
+          localFluxJacobian_dPres[ElemTag::PREV][ElemTag::NEXT] =   dFlux_dPresNext * normalizer[ElemTag::PREV];
+          localFluxJacobian_dPres[ElemTag::NEXT][ElemTag::PREV] = - dFlux_dPresPrev * normalizer[ElemTag::NEXT];
+          localFluxJacobian_dPres[ElemTag::NEXT][ElemTag::NEXT] = - dFlux_dPresNext * normalizer[ElemTag::NEXT];
+
+          // indices
+	  globalIndex const offsetNext = getElementOffset( wellElemDofNumber[iwelemNext] );
+	  globalIndex const offsetPrev = getElementOffset( wellElemDofNumber[iwelemPrev] );
+	  eqnRowIndices[ElemTag::PREV] = offsetPrev + RowOffset::MASSBAL;
+	  eqnRowIndices[ElemTag::NEXT] = offsetNext + RowOffset::MASSBAL;
+	  dofColIndex_dRate = offsetNext + ColOffset::DRATE; // this follows the convention used elsewhere
+	  dofColIndices_dPres[ElemTag::PREV] = offsetPrev + ColOffset::DPRES;
+	  dofColIndices_dPres[ElemTag::NEXT] = offsetNext + ColOffset::DPRES;
+
+	  // Add to global residual/jacobian
+          residual->SumIntoGlobalValues( integer_conversion<int>( 2 ),
+				         eqnRowIndices.data(),
+				         localFlux.data() );
+	  // Add rate derivatives
+	  jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 ),
+					 eqnRowIndices.data(),
+					 integer_conversion<int>( 1 ),
+					 &dofColIndex_dRate,
+                                         localFluxJacobian_dRate.data(),
+					 Epetra_FECrsMatrix::ROW_MAJOR);					 
+          jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 ),
+                                         eqnRowIndices.data(),
+                                         integer_conversion<int>( 2 ),
+                                         dofColIndices_dPres.data(),
+                                         localFluxJacobian_dPres.data(),
+                                         Epetra_FECrsMatrix::ROW_MAJOR);
+	}
       }
     }
   }); 
@@ -826,7 +925,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     ComputeAllPerforationRates( well );
     
     // get the degrees of freedom 
-    array1d<globalIndex> const & wellElemDofNumber =
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
     array1d<real64 const> const & massBalanceNormalizer =
@@ -872,16 +971,16 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelem] );
       
       // row index on reservoir side
-      eqnRowIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
+      eqnRowIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
 
       // column index on reservoir side
-      dofColIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
+      dofColIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
 
       // row index on well side
-      eqnRowIndices[ElemTag::WELL] = elemOffset + RowOffset::MASSBAL;
+      eqnRowIndices[SubRegionTag::WELL] = elemOffset + RowOffset::MASSBAL;
       
       // column index on well side
-      dofColIndices[ElemTag::WELL] = elemOffset + ColOffset::DPRES;
+      dofColIndices[SubRegionTag::WELL] = elemOffset + ColOffset::DPRES;
 
       // get the normalizer for the mass balance equation
       real64 normalizer = 1.0;
@@ -890,13 +989,13 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
         normalizer = 1.0 / massBalanceNormalizer[iwelem]; 
       
       // populate local flux vector and derivatives
-      localFlux[ElemTag::RES]  =  dt * perfRate[iperf];
-      localFlux[ElemTag::WELL] = -localFlux[ElemTag::RES] * normalizer;
+      localFlux[SubRegionTag::RES]  =  dt * perfRate[iperf];
+      localFlux[SubRegionTag::WELL] = -localFlux[SubRegionTag::RES] * normalizer;
 
       for (localIndex ke = 0; ke < 2; ++ke)
       {
-        localFluxJacobian[ElemTag::RES][ke]  = dt * dPerfRate_dPres[iperf][ke];
-        localFluxJacobian[ElemTag::WELL][ke] = - localFluxJacobian[ElemTag::RES][ke] * normalizer;
+        localFluxJacobian[SubRegionTag::RES][ke]  = dt * dPerfRate_dPres[iperf][ke];
+        localFluxJacobian[SubRegionTag::WELL][ke] = - localFluxJacobian[SubRegionTag::RES][ke] * normalizer;
       }
 
       // Add to global residual/jacobian
@@ -915,6 +1014,107 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
   });
 
   std::cout << "SinglePhaseWell::AssembleSourceTerms complete" << std::endl;
+}
+
+
+void SinglePhaseWell::FormMomentumEquations( DomainPartition * const domain,
+                                             Epetra_FECrsMatrix * const jacobian,
+                                             Epetra_FEVector * const residual )
+{
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    ConnectionData * connectionData = well->getConnections();
+    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+
+    // get the degrees of freedom 
+    array1d<globalIndex const> const & wellElemDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+
+    // get pressure data
+    array1d<real64 const> const & wellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+    array1d<real64 const> const & dWellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+    array1d<real64 const> const & wellElemGravDepth =
+      wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
+    
+    // get the well element indices corresponding to each connect
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+
+    arrayView1d<localIndex const> const & prevWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
+
+    // get well secondary variables on segments
+    SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
+
+    array2d<real64> const & wellElemDensity =
+      fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
+
+    array2d<real64> const & dWellElemDensity_dPres =
+      fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
+
+    
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+      localIndex const iwelemNext = nextWellElemIndex[iconn];
+      localIndex const iwelemPrev = prevWellElemIndex[iconn];
+
+      // TODO: check for ghost well elements
+      
+      if ( iwelemNext < 0 || // exit: nothing to do
+	   iwelemPrev < 0 )  // first connection: form control equation, not momentum
+	continue;
+      else 
+      {
+        // local working variables and arrays
+        stackArray1d<globalIndex, 2> dofColIndices( 2 );
+        stackArray1d<real64, 2> localFluxJacobian( 2 );
+ 
+        // compute avg density
+        real64 const avgDensity = 0.5 * ( wellElemDensity[iwelemPrev][0] + wellElemDensity[iwelemNext][0] );
+        real64 const dAvgDensity_dPresPrev = 0.5 * dWellElemDensity_dPres[iwelemPrev][0];
+        real64 const dAvgDensity_dPresNext = 0.5 * dWellElemDensity_dPres[iwelemNext][0];
+
+        // compute depth diff times acceleration
+	real64 const gravD = ( wellElemGravDepth[iwelemPrev] - wellElemGravDepth[iwelemNext] );
+
+	// compute the current pressure in the two well elements
+	real64 const pressurePrev = wellElemPressure[iwelemPrev] + dWellElemPressure[iwelemPrev];
+	real64 const pressureNext = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
+
+        // compute a coefficient to normalize the momentum equation
+	real64 normalizer = (pressurePrev > pressureNext)
+			  ? pressurePrev 
+			  : pressureNext;
+        normalizer = 1. / normalizer;
+	
+	// compute momentum flux and derivatives
+        real64 const localFlux = ( pressurePrev - pressureNext - avgDensity * gravD ) * normalizer;
+        localFluxJacobian[ElemTag::PREV] = ( 1 - dAvgDensity_dPresPrev * gravD ) * normalizer;
+	localFluxJacobian[ElemTag::NEXT] = (-1 - dAvgDensity_dPresNext * gravD ) * normalizer;
+
+        // TODO: add friction and acceleration terms
+	
+	// jacobian indices
+	globalIndex const offsetPrev = getElementOffset( wellElemDofNumber[iwelemPrev] ); 
+	globalIndex const offsetNext = getElementOffset( wellElemDofNumber[iwelemNext] ); 
+        globalIndex const eqnRowIndex = offsetNext + RowOffset::CONTROL; // according to convention used in this class
+	dofColIndices[ElemTag::PREV]  = offsetPrev + ColOffset::DPRES;
+	dofColIndices[ElemTag::NEXT]  = offsetNext + ColOffset::DPRES;
+
+        // add contribution to global residual and jacobian
+        residual->SumIntoGlobalValues( 1, &eqnRowIndex, &localFlux );
+        jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+				       integer_conversion<int>( 2 ), dofColIndices.data(),
+				       localFluxJacobian.data() );
+      }
+    }
+  });
 }
 
 void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
@@ -1025,10 +1225,10 @@ SinglePhaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSys
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
     // get the degree of freedom numbers
-    array1d<globalIndex> const & wellElemDofNumber =
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
-    arrayView1d<integer> const & wellElemGhostRank =
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -1130,7 +1330,7 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
       // as a temporary solution, the connection variable is looked up with the next element's DOF number
-      localIndex iwelemNext = nextWellElemIndex[iconn];
+      localIndex const iwelemNext = nextWellElemIndex[iconn];
 
       // check if there is a variable defined here
       if (iwelemNext < 0)
@@ -1263,7 +1463,7 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
   WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
   // get the degrees of freedom 
-  array1d<globalIndex> const & wellElemDofNumber =
+  array1d<globalIndex const> const & wellElemDofNumber =
     wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
   // get well primary variables on segments
@@ -1273,7 +1473,7 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
   array1d<real64> const & dWellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-  array1d<real64> const & wellElemGravDepth =
+  array1d<real64 const> const & wellElemGravDepth =
     wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
   
   // get well secondary variables on segments
@@ -1350,52 +1550,52 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
     localIndex const ei  = resElementIndex[iperf];
 
     // row index on reservoir side
-    eqnRowIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
+    eqnRowIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
 
     // column index on reservoir side
-    dofColIndices[ElemTag::RES] = resDofNumber[er][esr][ei];
+    dofColIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
 
     // get reservoir variables
-    density[ElemTag::RES] = resDensity[er][esr][m_fluidIndex][ei][0];
-    dDensity_dP[ElemTag::RES] = dResDensity_dPres[er][esr][m_fluidIndex][ei][0];
+    density[SubRegionTag::RES] = resDensity[er][esr][m_fluidIndex][ei][0];
+    dDensity_dP[SubRegionTag::RES] = dResDensity_dPres[er][esr][m_fluidIndex][ei][0];
 
-    viscosity[ElemTag::RES] = resViscosity[er][esr][m_fluidIndex][ei][0];
-    dViscosity_dP[ElemTag::RES] = dResViscosity_dPres[er][esr][m_fluidIndex][ei][0];
+    viscosity[SubRegionTag::RES] = resViscosity[er][esr][m_fluidIndex][ei][0];
+    dViscosity_dP[SubRegionTag::RES] = dResViscosity_dPres[er][esr][m_fluidIndex][ei][0];
 
     // TODO: ask about Ecl/Intersect treatment here
     // In AD-GPRS, depth difference between the reservoir elem center and perf is not accounted for
-    pressure[ElemTag::RES] = resPressure[er][esr][ei] + dResPressure[er][esr][ei];
-    dPressure_dP[ElemTag::RES] = 1;
+    pressure[SubRegionTag::RES] = resPressure[er][esr][ei] + dResPressure[er][esr][ei];
+    dPressure_dP[SubRegionTag::RES] = 1;
     
-    multiplier[ElemTag::RES] = 1;
+    multiplier[SubRegionTag::RES] = 1;
 
     // 2) Well side
 
     localIndex const iwelem = perfWellElemIndex[iperf]; 
 
     // row index on well side
-    eqnRowIndices[ElemTag::WELL] = wellElemDofNumber[iwelem] + RowOffset::MASSBAL;
+    eqnRowIndices[SubRegionTag::WELL] = wellElemDofNumber[iwelem] + RowOffset::MASSBAL;
 
     // column index on well side
-    dofColIndices[ElemTag::WELL] = wellElemDofNumber[iwelem] + ColOffset::DPRES;
+    dofColIndices[SubRegionTag::WELL] = wellElemDofNumber[iwelem] + ColOffset::DPRES;
 
     // get well variables
-    density[ElemTag::WELL] = wellElemDensity[iwelem][0];
-    dDensity_dP[ElemTag::WELL] = dWellElemDensity_dPres[iwelem][0];
+    density[SubRegionTag::WELL] = wellElemDensity[iwelem][0];
+    dDensity_dP[SubRegionTag::WELL] = dWellElemDensity_dPres[iwelem][0];
 
-    viscosity[ElemTag::WELL] = wellElemViscosity[iwelem][0];
-    dViscosity_dP[ElemTag::WELL] = dWellElemViscosity_dPres[iwelem][0];
+    viscosity[SubRegionTag::WELL] = wellElemViscosity[iwelem][0];
+    dViscosity_dP[SubRegionTag::WELL] = dWellElemViscosity_dPres[iwelem][0];
 
-    pressure[ElemTag::WELL] = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
-    pressure[ElemTag::WELL] += m_gravityFlag
-			     ? density[ElemTag::WELL] * ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] )
-			     : 0; 		
-    dPressure_dP[ElemTag::WELL] = 1;
-    dPressure_dP[ElemTag::WELL] += m_gravityFlag
-                                 ? dDensity_dP[ElemTag::WELL] * ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] )
-                                 : 0;
+    pressure[SubRegionTag::WELL] = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
+    pressure[SubRegionTag::WELL] += m_gravityFlag
+                                  ? density[SubRegionTag::WELL] * ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] )
+                                  : 0; 		
+    dPressure_dP[SubRegionTag::WELL] = 1;
+    dPressure_dP[SubRegionTag::WELL] += m_gravityFlag
+                                      ? dDensity_dP[SubRegionTag::WELL] * ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] )
+                                      : 0;
    
-    multiplier[ElemTag::WELL] = -1;
+    multiplier[SubRegionTag::WELL] = -1;
 
     //***** calculation of flux *****
       
@@ -1418,7 +1618,7 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
     // compute the final flux and derivatives
 
     // choose upstream cell
-    localIndex const k_up = (potDif >= 0) ? ElemTag::RES : ElemTag::WELL;
+    localIndex const k_up = (potDif >= 0) ? SubRegionTag::RES : SubRegionTag::WELL;
 
     perfRate[iperf] = mobility[k_up] * potDif;
     for (localIndex ke = 0; ke < 2; ++ke)
@@ -1442,7 +1642,7 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
     // get the degrees of freedom 
-    array1d<globalIndex> const & wellElemDofNumber =
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
     
     // TODO: check that the first connection is on my rank

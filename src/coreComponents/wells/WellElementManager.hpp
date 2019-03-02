@@ -63,7 +63,7 @@ public:
 
   WellElement const * getWellElement( globalIndex iwelem ) const;
   WellElement *       getWellElement( globalIndex iwelem );
-  
+
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
   } viewKeysWellElementManager;

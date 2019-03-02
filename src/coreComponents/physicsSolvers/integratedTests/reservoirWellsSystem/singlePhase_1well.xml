@@ -11,7 +11,8 @@
                    wellSolverName="SinglePhaseWell"
                    verboseLevel="1"
                    targetRegions="Region2">
-      <SystemSolverParameters maxIterNewton="40"
+      <SystemSolverParameters useDirectSolver="1"
+	                      maxIterNewton="40"
                               verbosityFlag="2"/>
     </ReservoirWellsSystem>
   
@@ -22,7 +23,7 @@
                      fluidName="water"
                      solidName="rock"
                      targetRegions="Region2">
-      <SystemSolverParameters krylovTol="1.0e-10"
+      <SystemSolverParameters useDirectSolver="1"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
@@ -32,7 +33,7 @@
                      gravityFlag="1"
                      fluidName="water"
                      targetRegions="Region2">
-      <SystemSolverParameters krylovTol="1.0e-10"
+      <SystemSolverParameters useDirectSolver="1"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseWell>

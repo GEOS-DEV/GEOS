@@ -563,9 +563,9 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
       for (localIndex idof = 0; idof < resNDOF; ++idof)
       {
 	// specify the reservoir equation number
-        elementLocalDofIndexRow[ElemTag::RES * wellNDOF + idof] = resOffset + idof;
+        elementLocalDofIndexRow[SubRegionTag::RES * wellNDOF + idof] = resOffset + idof;
 	// specify the reservoir variable number
-	elementLocalDofIndexCol[ElemTag::RES * wellNDOF + idof] = resOffset + idof;
+	elementLocalDofIndexCol[SubRegionTag::RES * wellNDOF + idof] = resOffset + idof;
       }
 
       /*
@@ -587,9 +587,9 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
       for (localIndex idof = 0; idof < wellNDOF; ++idof)
       {
 	// specify the well equation number
-	elementLocalDofIndexRow[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
+	elementLocalDofIndexRow[SubRegionTag::WELL * resNDOF + idof] = elemOffset + idof;
 	// specify the reservoir variable number
-	elementLocalDofIndexCol[ElemTag::WELL * resNDOF + idof] = elemOffset + idof;
+	elementLocalDofIndexCol[SubRegionTag::WELL * resNDOF + idof] = elemOffset + idof;
       }      
 
       sparsity->InsertGlobalIndices( integer_conversion<int>( resNDOF + wellNDOF ),
@@ -891,15 +891,15 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
       globalIndex const wellOffset = 0; // temp
       for (localIndex ic = 0; ic < NC; ++ic)
       {
-        eqnRowIndices[ElemTag::RES  * NC + ic] = resOffset + ic;
-        eqnRowIndices[ElemTag::WELL * NC + ic] = wellOffset + ic + 1;
+        eqnRowIndices[SubRegionTag::RES  * NC + ic] = resOffset + ic;
+        eqnRowIndices[SubRegionTag::WELL * NC + ic] = wellOffset + ic + 1;
       }
       for (localIndex jdof = 0; jdof < resNDOF; ++jdof)
       {
         // below, we insert the well mass balance equations at wellElemDofNumber + 1,
         // the +1 is needed because the control equations are at wellElemDofNumber
-        dofColIndices[ElemTag::RES  * resNDOF + jdof] = resOffset  + jdof + 1;
-        dofColIndices[ElemTag::WELL * resNDOF + jdof] = wellOffset + jdof + 1;
+        dofColIndices[SubRegionTag::RES  * resNDOF + jdof] = resOffset  + jdof + 1;
+        dofColIndices[SubRegionTag::WELL * resNDOF + jdof] = wellOffset + jdof + 1;
       }
       
       // loop over phases, compute and upwind phase flux
@@ -917,7 +917,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
 	// 1) get reservoir variables
 
 	// pressure
-	pressure[ElemTag::RES]  = resPressure[er][esr][ei] + dResPressure[er][esr][ei];
+	pressure[SubRegionTag::RES]  = resPressure[er][esr][ei] + dResPressure[er][esr][ei];
 	
 	// TODO: check m_fluidIndex from reservoir and see if this is right
 	
@@ -947,27 +947,27 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
         }
 
         // mobility and pressure derivative
-        mobility[ElemTag::RES] = resRelPerm * resDensity / resViscosity;
-        dMobility_dP[ElemTag::RES] = dResRelPerm_dP * resDensity / resViscosity
-                                   + mobility[ElemTag::RES] * (dResDens_dP / resDensity - dResVisc_dP / resViscosity);
+        mobility[SubRegionTag::RES] = resRelPerm * resDensity / resViscosity;
+        dMobility_dP[SubRegionTag::RES] = dResRelPerm_dP * resDensity / resViscosity
+          + mobility[SubRegionTag::RES] * (dResDens_dP / resDensity - dResVisc_dP / resViscosity);
 
         // compositional derivatives
         for (localIndex jc = 0; jc < NC; ++jc)
         {
-          dDensMean_dC[ElemTag::RES][jc] = densWeight[ElemTag::RES] * dDens_dC[jc];
+          dDensMean_dC[SubRegionTag::RES][jc] = densWeight[SubRegionTag::RES] * dDens_dC[jc];
 
-          dMobility_dC[ElemTag::RES][jc] = dRelPerm_dC[jc] * resDensity / resViscosity
-	                                 + mobility[ElemTag::RES] * (dDens_dC[jc] / resDensity - dVisc_dC[jc] / resViscosity);
+          dMobility_dC[SubRegionTag::RES][jc] = dRelPerm_dC[jc] * resDensity / resViscosity
+	    + mobility[SubRegionTag::RES] * (dDens_dC[jc] / resDensity - dVisc_dC[jc] / resViscosity);
         }
 
-	multiplier[ElemTag::RES] = 1;
+	multiplier[SubRegionTag::RES] = 1;
 
         // 2) get well variables
 
         localIndex const iwelem = perfWellElemIndex[iperf]; 
 	
 	// pressure
-	pressure[ElemTag::WELL]  = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
+	pressure[SubRegionTag::WELL]  = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
 	
         // density
         real64 const wellDensity  = wellElemPhaseDens[iwelem][0][ip];
@@ -995,18 +995,18 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
         }
 
         // mobility and pressure derivative
-        mobility[ElemTag::WELL] = wellRelPerm * wellDensity / wellViscosity;
-        dMobility_dP[ElemTag::WELL] = dWellRelPerm_dP * wellDensity / wellViscosity
-                                    + mobility[ElemTag::WELL] * (dWellDens_dP / wellDensity - dWellVisc_dP / wellViscosity);
+        mobility[SubRegionTag::WELL] = wellRelPerm * wellDensity / wellViscosity;
+        dMobility_dP[SubRegionTag::WELL] = dWellRelPerm_dP * wellDensity / wellViscosity
+          + mobility[SubRegionTag::WELL] * (dWellDens_dP / wellDensity - dWellVisc_dP / wellViscosity);
 
         // compositional derivatives
         for (localIndex jc = 0; jc < NC; ++jc)
         {
-          dMobility_dC[ElemTag::WELL][jc] = dRelPerm_dC[jc] * wellDensity / wellViscosity
-	                                  + mobility[ElemTag::WELL] * (dDens_dC[jc] / wellDensity - dVisc_dC[jc] / wellViscosity);
+          dMobility_dC[SubRegionTag::WELL][jc] = dRelPerm_dC[jc] * wellDensity / wellViscosity
+	    + mobility[SubRegionTag::WELL] * (dDens_dC[jc] / wellDensity - dVisc_dC[jc] / wellViscosity);
         }
 
-	multiplier[ElemTag::WELL] = -1;
+	multiplier[SubRegionTag::WELL] = -1;
 	
         //***** calculation of flux *****
 	
@@ -1035,7 +1035,7 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
         real64 potGrad = presGrad;
 
         // choose upstream cell
-        localIndex const k_up = (potGrad >= 0) ? ElemTag::RES : ElemTag::WELL;
+        localIndex const k_up = (potGrad >= 0) ? SubRegionTag::RES : SubRegionTag::WELL;
 
         // skip the phase flux if phase not present or immobile upstream
         if (std::fabs(mobility[k_up]) < 1e-20) // TODO better constant
@@ -1112,20 +1112,20 @@ void CompositionalMultiphaseWell::AssembleSourceTerms( DomainPartition * const d
  
       for (localIndex ic = 0; ic < NC; ++ic)
       {
-        localFlux[ElemTag::RES  * NC + ic] =  dt * compFlux[ic];
-        localFlux[ElemTag::WELL * NC + ic] = -dt * compFlux[ic];
+        localFlux[SubRegionTag::RES  * NC + ic] =  dt * compFlux[ic];
+        localFlux[SubRegionTag::WELL * NC + ic] = -dt * compFlux[ic];
  
         for (localIndex ke = 0; ke < 2; ++ke)
         {
           localIndex const localDofIndexPres = ke * resNDOF;
-          localFluxJacobian[ElemTag::RES  * NC + ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
-          localFluxJacobian[ElemTag::WELL * NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
+          localFluxJacobian[SubRegionTag::RES  * NC + ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
+          localFluxJacobian[SubRegionTag::WELL * NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
 
           for (localIndex jc = 0; jc < NC; ++jc)
           {
             localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-            localFluxJacobian[ElemTag::RES  * NC + ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
-            localFluxJacobian[ElemTag::WELL * NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
+            localFluxJacobian[SubRegionTag::RES  * NC + ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
+            localFluxJacobian[SubRegionTag::WELL * NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
           }
         }
       } 

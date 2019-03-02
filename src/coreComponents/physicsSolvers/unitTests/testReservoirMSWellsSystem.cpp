@@ -478,7 +478,7 @@ protected:
     char buf[2][1024];
 
     char const * workdir  = global_argv[1];
-    char const * filename = "testReservoirWellsSystem.xml";
+    char const * filename = "testReservoirMSWellsSystem.xml";
 
     strcpy(buf[0], "-i");
     sprintf(buf[1], "%s/%s", workdir, filename);
@@ -594,6 +594,32 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Control)
   
 }
 
+TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Momentum)
+{
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const tol = 1e-1; // 10% error margin
+
+  real64 const time = 0.0;
+  real64 const dt = 1e4;
+
+  DomainPartition   * domain = problemManager.getDomainPartition();
+  EpetraBlockSystem * system = solver->getLinearSystemRepository();
+
+  solver->ImplicitStepSetup( time, dt, domain, system );
+
+  SinglePhaseWell * wellSolver = (solver->getParent()->GetGroup("singlePhaseWell")->group_cast<SinglePhaseWell*>());
+  SinglePhaseFlow * flowSolver = (solver->getParent()->GetGroup("singlePhaseFlow")->group_cast<SinglePhaseFlow*>());
+
+  testNumericalJacobian( solver, flowSolver, wellSolver, domain, system, eps, tol,
+                         [&] ( SinglePhaseWell * const targetSolver,
+			       DomainPartition * const targetDomain,
+                               Epetra_FECrsMatrix * const targetJacobian,
+                               Epetra_FEVector * const targetResidual ) -> void
+                         {
+			   targetSolver->FormMomentumEquations( targetDomain, targetJacobian, targetResidual );
+                         });
+  
+}
 
 int main(int argc, char** argv)
 {
