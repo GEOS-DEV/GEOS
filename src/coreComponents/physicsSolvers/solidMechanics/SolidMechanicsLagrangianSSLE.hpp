@@ -86,8 +86,8 @@ public:
             real64 const massDamping,
             real64 const newmarkBeta,
             real64 const newmarkGamma,
-            Epetra_FECrsMatrix * const matrix,
-            Epetra_FEVector * const rhs );
+            Epetra_FECrsMatrix * const dRdU,
+            Epetra_FEVector * const residual );
   };
 };
 
@@ -222,8 +222,8 @@ ImplicitElementKernelWrapper::Launch( localIndex const numElems,
                              real64 const massDamping,
                              real64 const newmarkBeta,
                              real64 const newmarkGamma,
-                             Epetra_FECrsMatrix * const matrix,
-                             Epetra_FEVector * const rhs )
+                             Epetra_FECrsMatrix * const globaldRdU,
+                             Epetra_FEVector * const globalResidual )
 {
   constexpr int dim = 3;
   Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(NUM_NODES_PER_ELEM));
@@ -417,10 +417,10 @@ ImplicitElementKernelWrapper::Launch( localIndex const numElems,
         R    += R_StiffnessDamping;
       }
 
-      matrix->SumIntoGlobalValues( elementLocalDofIndex,
+      globaldRdU->SumIntoGlobalValues( elementLocalDofIndex,
                                    dRdU);
 
-      rhs->SumIntoGlobalValues( elementLocalDofIndex,
+      globalResidual->SumIntoGlobalValues( elementLocalDofIndex,
                                 R);
     }
   }
