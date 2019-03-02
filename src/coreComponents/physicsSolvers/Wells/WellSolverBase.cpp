@@ -42,7 +42,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
     m_numDofPerConnection(0),
     m_numDofPerResElement(0),
     m_firstWellElemDofNumber(-1),
-    m_normalizeMassBalanceEqnsFlag(0)
+    m_normalizeMassBalanceEqnsFlag(1)
 {
   RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
     setApplyDefaultValue(1)->

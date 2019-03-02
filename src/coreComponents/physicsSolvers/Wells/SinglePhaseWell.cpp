@@ -391,25 +391,23 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain,
       
       if (iwelemPrev >= 0)
       {
-	// TODO: double-check the constant, maybe not a good choice (too small)
-	if (massBalanceNormalizer[iwelemPrev] < std::numeric_limits<real64>::min())
+	if (massBalanceNormalizer[iwelemPrev] < std::numeric_limits<real64>::epsilon())
 	{
 	  // get the normalizer
           real64 const absConnRate = fabs( connRate[iconn] );
 	  real64 const normalizer = dt * wellElemDensity[iwelemPrev][0] * absConnRate;
-	  if (normalizer > std::numeric_limits<real64>::min())
+	  if (normalizer > std::numeric_limits<real64>::epsilon())
 	    massBalanceNormalizer[iwelemPrev] = normalizer;
 	}
       }
       if (iwelemNext >= 0)
       {
-	// TODO: double-check the constant, maybe not a good choice (too small)
-	if (massBalanceNormalizer[iwelemNext] < std::numeric_limits<real64>::min())
+	if (massBalanceNormalizer[iwelemNext] < std::numeric_limits<real64>::epsilon())
 	{
 	  // get the normalizer
 	  real64 const absConnRate = fabs( connRate[iconn] );
 	  real64 const normalizer = dt * wellElemDensity[iwelemNext][0] * absConnRate;
-	  if (normalizer > std::numeric_limits<real64>::min())
+	  if (normalizer > std::numeric_limits<real64>::epsilon())
 	    massBalanceNormalizer[iwelemNext] = normalizer;
 	}
       }
@@ -767,7 +765,7 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 	// get the normalizer for the mass balance equation
 	real64 normalizer = 1.0;
         if (m_normalizeMassBalanceEqnsFlag
-	    && massBalanceNormalizer[iwelemNext] >= std::numeric_limits<real64>::min())
+	    && massBalanceNormalizer[iwelemNext] >= std::numeric_limits<real64>::epsilon())
           normalizer = 1.0 / massBalanceNormalizer[iwelemNext]; 
 	
 	// TODO: make sure that naming is consistent (flux contains dt here?)
@@ -776,11 +774,6 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
         real64 const dFlux_dRate = dt * wellElemDensity[iwelemNext][0] * normalizer;
 	real64 const dFlux_dPres = dt * dWellElemDensity_dPres[iwelemNext][0] * currentConnRate * normalizer;
 
-	std::cout << "currentConnRate = " << currentConnRate
-		  << " dFlux_dRate = " << dFlux_dRate
-		  << " normalizer = " << normalizer
-		  << std::endl;
-	
         globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelemNext] );
 	globalIndex const eqnRowIndex     = elemOffset + RowOffset::MASSBAL;
         globalIndex const dofColIndexPres = elemOffset + ColOffset::DPRES;
@@ -881,7 +874,7 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       // get the normalizer for the mass balance equation
       real64 normalizer = 1.0;
       if (m_normalizeMassBalanceEqnsFlag
-          && massBalanceNormalizer[iwelem] >= std::numeric_limits<real64>::min())
+          && massBalanceNormalizer[iwelem] >= std::numeric_limits<real64>::epsilon())
         normalizer = 1.0 / massBalanceNormalizer[iwelem]; 
       
       // populate local flux vector and derivatives
@@ -1386,7 +1379,7 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
       // form the control equation now
       real64 const currentBHP = wellElemPressure[iwelemControl] + dWellElemPressure[iwelemControl];
       real64 const targetBHP  = well->getTargetBHP();
-      real64 const normalizer = targetBHP > std::numeric_limits<real64>::min()
+      real64 const normalizer = targetBHP > std::numeric_limits<real64>::epsilon()
 	                      ? 1.0 / targetBHP
 	                      : 1.0;
       

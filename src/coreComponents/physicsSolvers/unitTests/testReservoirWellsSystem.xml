@@ -108,11 +108,11 @@
       <Perforations>
         <Perforation name="prod1_p0"
 		     location="9.5 0.5 0.5"
-		     transmissibility="1e-15"
+		     transmissibility="1e-12"
 		     segmentName="prod1_unique_seg" />
         <Perforation name="prod1_p1"
 		     location="8.5 0.5 0.5"
-		     transmissibility="1e-15"
+		     transmissibility="1e-12"
 		     segmentName="prod1_unique_seg" /> 
       </Perforations> 
     </Well>
@@ -135,15 +135,15 @@
       <Perforations>
         <Perforation name="inj1_p0"
 		     location="0.5 0.5 0.5"
-		     transmissibility="1e-15"
+		     transmissibility="1e-12"
 		     segmentName="inj1_unique_seg" />
 	<Perforation name="inj1_p1"
 		     location="1.5 0.5 0.5"
-		     transmissibility="1e-15"
+		     transmissibility="1e-12"
 		     segmentName="inj1_unique_seg" />
 	<Perforation name="inj1_p2"
 		     location="2.5 0.5 0.5"
-		     transmissibility="1e-15"
+		     transmissibility="1e-12"
 		     segmentName="inj1_unique_seg" />
       </Perforations> 
     </Well>
