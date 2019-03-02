@@ -316,6 +316,8 @@ private:
                             Epetra_FEVector * const residual );
 
   void ComputeAllPerforationRates( Well * well );
+
+  void RecordWellData( Well * well );
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber; // TODO will move to DofManager
   

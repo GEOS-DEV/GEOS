@@ -174,6 +174,8 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 {
   WellManager * const wellManager = domain->getWellManager();
 
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & resPressure = m_resPressure;
+  
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & resDensity = m_resDensity;
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
@@ -259,14 +261,24 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     if (well->getControl() == Well::Control::BHP)
     {
       // if pressure constraint, set the ref pressure at the constraint
-      wellElemPressure[iwelemRef] = 0.5 * targetBHP;
+      wellElemPressure[iwelemRef] = targetBHP;
     }
     else // rate control
-    {  
+    {
+      real64 resPres = well->getTargetBHP();
+      if (perforationData->numPerforationsLocal() > 0)
+      {
+        // TODO: again, this will need to be improved
+        // we have to make sure that iperf = 0 is the first perforation
+        localIndex const er  = resElementRegion[0];
+        localIndex const esr = resElementSubRegion[0];
+        localIndex const ei  = resElementIndex[0];
+        resPres = resPressure[er][esr][ei];
+      }
       // if rate constraint, set the ref pressure slightly above/below the target pressure
       wellElemPressure[iwelemRef] = (well->getType() == Well::Type::PRODUCER)
-                                  ? 0.9 * targetBHP
-		    	          : 1.1 * targetBHP;
+	                          ? 0.9 * resPres
+		    	          : 1.1 * resPres;
     }
 
     std::cout << "step 2 complete" << std::endl;
@@ -319,13 +331,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     }
 
    std::cout << "step 7 complete" << std::endl;
-
-
-   for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
-     std::cout << "wellElemPressure[" << iwelem << "] = " << wellElemPressure[iwelem] << std::endl;
-     
-   for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
-     std::cout << "connRate[" << iconn << "] = " << connRate[iconn] << std::endl;	 
    
   });
 }
@@ -690,12 +695,12 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
   // finally assemble the well control equation
   FormControlEquation( domain, jacobian, residual );
   
-  if( verboseLevel() >= 3 )
-  {
+  //  if( verboseLevel() >= 3 )
+  //{
     GEOS_LOG_RANK("After SinglePhaseWell::AssembleSystem");
     GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
     GEOS_LOG_RANK("\nResidual:\n" << *residual);
-  }
+  //}
 
   std::cout << "SinglePhaseWell: AssembleSystem complete" << std::endl;
 }
@@ -743,7 +748,14 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 
     array1d<real64 const> const & dConnRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaRateString );
-      
+
+    /* @Francois try to remember
+     *  Q > 0 flow from prev to next; Q < 0 flow from next to prev
+     *  We assume that prev is the top segment / next is to bottom segment
+     *  With this assumption, production implies Q < 0 and injection Q > 0
+     *  Remember that in the residual, +Q in prev and -Q in next
+     */
+    
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {
       localIndex const iwelemNext = nextWellElemIndex[iconn];
@@ -770,9 +782,9 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 	
 	// TODO: make sure that naming is consistent (flux contains dt here?)
         real64 const currentConnRate = connRate[iconn] + dConnRate[iconn];
-        real64 const flux = dt * wellElemDensity[iwelemNext][0] * currentConnRate * normalizer;
-        real64 const dFlux_dRate = dt * wellElemDensity[iwelemNext][0] * normalizer;
-	real64 const dFlux_dPres = dt * dWellElemDensity_dPres[iwelemNext][0] * currentConnRate * normalizer;
+        real64 const flux = - dt * wellElemDensity[iwelemNext][0] * currentConnRate * normalizer;
+        real64 const dFlux_dRate = - dt * wellElemDensity[iwelemNext][0] * normalizer;
+	real64 const dFlux_dPres = - dt * dWellElemDensity_dPres[iwelemNext][0] * currentConnRate * normalizer;
 
         globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelemNext] );
 	globalIndex const eqnRowIndex     = elemOffset + RowOffset::MASSBAL;
@@ -910,9 +922,86 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-  {
-    // check if the well control needs to be switched
-  });
+  {    
+    // if isViable is true at the end of the following checks, no need to switch
+    bool controlIsViable = false;
+
+    // get well control and type
+    Well::Control const currentControl = well->getControl();
+    Well::Type const type = well->getType();
+    
+    // BHP control
+    if (currentControl == Well::Control::BHP)
+    {
+      PerforationData * perforationData = well->getPerforations();
+
+      arrayView1d<real64> const & perfRate =
+        perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
+
+      // compute the local rates for this well
+      // TODO: this is a waste of computations, we only need to know the sign of the potential difference
+      ComputeAllPerforationRates( well );
+
+      // the control is viable if at least one of the  perforations can inject / produce without cross flow
+      // TODO: this loop will require communication
+      for (localIndex iperf = 0; !controlIsViable && iperf < perforationData->numPerforationsLocal(); ++iperf)
+      {	
+	// producer should have positive difference; injector should have negative difference
+	controlIsViable = ( ( type == Well::Type::PRODUCER && perfRate[iperf] > 0 ) ||
+                            ( type == Well::Type::INJECTOR && perfRate[iperf] < 0 ) );		
+      }
+    }
+    else // rate control
+    {
+      WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+      
+      // get pressure data
+      array1d<real64 const> const & wellElemPressure =
+        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+      array1d<real64 const> const & dWellElemPressure =
+        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+      // again we assume here that the first segment is on this MPI rank
+      localIndex const iwelemRef = 0;
+      
+      // the control is viable if the reference pressure is below/above the max/min pressure
+      real64 const refPressure = wellElemPressure[iwelemRef] + dWellElemPressure[iwelemRef];
+
+      if ( type == Well::Type::PRODUCER )
+      {
+        real64 const minPressure = well->getTargetBHP(); // targetBHP specifies a min pressure here
+	controlIsViable = ( refPressure >= minPressure );
+      }
+      else
+      {
+        real64 const maxPressure = well->getTargetBHP(); // targetBHP specifies a max pressure here
+	controlIsViable = ( refPressure <= maxPressure );
+      }
+    }
+
+    if (!controlIsViable)
+    {
+      if ( currentControl == Well::Control::BHP )
+      {
+	well->setControl( Well::Control::OILRATE );
+        if ( m_verboseLevel >= 1 )
+        {
+          GEOS_LOG_RANK_0( "Control switch for well " << well->getName()
+			   << " from BHP constraint to rate constraint" );
+        }
+      }
+      else // rate control
+      {
+	well->setControl( Well::Control::BHP );
+	if ( m_verboseLevel >= 1 )
+        {
+          GEOS_LOG_RANK_0( "Control switch for well " << well->getName()
+			   << " from rate constraint to BHP constraint" );
+        }
+      }
+    }
+  });    
 }
 
 
@@ -1033,7 +1122,7 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
         // extract solution and apply to dP
         globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelem] );
         int const lid = rowMap->LID( integer_conversion<int>( elemOffset + ColOffset::DPRES) );
-	std::cout << "local_solution " << local_solution[lid] << std::endl;
+	std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
         dWellElemPressure[iwelem] += scalingFactor * local_solution[lid];
       }
     }
@@ -1052,7 +1141,7 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
         // extract solution and apply to dQ
 	globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelemNext] );
         int const lid = rowMap->LID( integer_conversion<int>( elemOffset + ColOffset::DRATE ) );
-	std::cout << "local_solution " << local_solution[lid] << std::endl;
+	std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
         dConnRate[iconn] += scalingFactor * local_solution[lid];
       }
     }
@@ -1359,12 +1448,12 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
     // TODO: check that the first connection is on my rank
     
     // the well control equation is defined on the first connection
-    localIndex iconnControl = 0;
+    localIndex const iconnControl = 0;
     // again we assume here that the first segment is on this MPI rank
-    localIndex iwelemControl = 0;
+    localIndex const iwelemControl = 0;
 
     // get well control
-    Well::Control control = well->getControl();
+    Well::Control const control = well->getControl();
 
     // BHP control
     if (control == Well::Control::BHP)
@@ -1433,12 +1522,9 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
     }
   });
 
-
-  std::cout << *residual << std::endl;
-  std::cout << *jacobian << std::endl;
 }
 
-  
+
 void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
                                             real64 const & dt,
                                             DomainPartition * const domain )
@@ -1448,7 +1534,7 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-  {
+  { 
     ConnectionData * connectionData = well->getConnections();
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
     
@@ -1485,12 +1571,85 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
         continue;
 
       connRate[iconn] += dConnRate[iconn];
-    }    
+    }
+
+    RecordWellData( well );
   });
 
   std::cout << "SinglePhaseWell::ImplicitStepComplete complete" << std::endl;
 }
 
+
+void SinglePhaseWell::RecordWellData( Well * well )
+{
+  ConnectionData * connectionData = well->getConnections();
+  WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+  PerforationData * perforationData = well->getPerforations();
+
+  array1d<real64 const> const & wellElemPressure =
+    wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+  array1d<real64 const> const & connRate =
+    connectionData->getReference<array1d<real64>>( viewKeyStruct::rateString );
+
+  array1d<real64 const> const & perfRate =
+    perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
+
+  // here, we will save the well info
+  // for now, brute force: output to terminal
+
+  std::cout << "Well : " << well->getName() << std::endl;
+  if (well->getType() == Well::Type::PRODUCER)
+    std::cout << "Type : PRODUCER" << std::endl;
+  else 
+    std::cout << "Type : INJECTOR" << std::endl;
+  if (well->getControl() == Well::Control::BHP)
+    std::cout << "Control : BHP" << std::endl;
+  else
+    std::cout << "Control : RATE" << std::endl;
+  
+  // output perforation rates
+  for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+  {
+    std::cout << "Rate at perforation #" << iperf << ": " << perfRate[iperf] << std::endl;
+  }
+
+  // output the reference pressure
+  localIndex const iwelemRef = 0; // be careful here for the parallel case
+  real64 const pressure = wellElemPressure[iwelemRef];
+  real64 const targetPressure = well->getTargetBHP();
+
+  if (well->getControl() == Well::Control::BHP)
+  {
+    std::cout << "Current reference pressure = " << pressure
+  	      << ", targetPressure = "           << targetPressure
+	      << std::endl;
+  }
+  else
+  {
+    if (well->getType() == Well::Type::PRODUCER)
+    {
+      std::cout << "Current reference pressure = " << pressure
+		<< ", min pressure = " << targetPressure
+		<< std::endl;
+    }
+    else
+    {
+      std::cout << "Current reference pressure = " << pressure
+		<< ", max pressure = " << targetPressure
+		<< std::endl;
+    }
+  }
+    
+  for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+  {
+    if (well->getControl() == Well::Control::BHP)
+      std::cout << "Rate at connec #" << iconn << ": " << connRate[iconn] << std::endl;
+    else
+      std::cout << "Rate at connection #" << iconn << ": " << connRate[iconn]
+		<< ", target rate : " << well->getTargetRate() << std::endl;
+  }
+}
 
 REGISTER_CATALOG_ENTRY(SolverBase, SinglePhaseWell, string const &, ManagedGroup * const)
 }// namespace geosx

@@ -93,7 +93,7 @@
     <Well name="prod1"
           type="producer"
 	  control="BHP"
-	  targetBHP="1e6"
+	  targetBHP="4e6"
 	  targetRate="1"
           referenceDepth="0.5">
       <Segments>
@@ -117,12 +117,11 @@
       </Perforations> 
     </Well>
 
-    <!-- will be oilRate here, BHP for debugging --> 
     <Well name="inj1"
           type="injector"
-  	  control="BHP" 
-	  targetBHP="1e8"
-	  targetRate="1"
+  	  control="oilRate" 
+	  targetBHP="1e7"
+	  targetRate="1e-6"
           referenceDepth="0.5">
       <Segments>
 	<Segment name="inj1_unique_seg"

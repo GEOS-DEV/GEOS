@@ -51,9 +51,9 @@
   </Mesh>
 
 
-  <Events maxTime="20.0">
+  <Events maxTime="20">
     <PeriodicEvent name="solverApplications"
-                   forceDt="20.0"
+                   forceDt="20"
                    target="/Solvers/reservoirWellsSystem" />
 
     <PeriodicEvent name="outputs"
@@ -94,7 +94,7 @@
           type="producer"
 	  control="BHP"
 	  targetBHP="4e6"
-	  targetRate="1"
+	  targetRate="0"
           referenceDepth="0.5">
       <Segments>
 	<Segment name="prod1_unique_seg"
@@ -108,12 +108,12 @@
       <Perforations>
         <Perforation name="prod1_p0"
 		     location="9.5 0.5 0.5"
-		     transmissibility="1e-15"
+		     transmissibility="1e-10"
 		     segmentName="prod1_unique_seg" />
-	<Perforation name="prod1_p1"
+        <Perforation name="prod1_p1"
 		     location="8.5 0.5 0.5"
-		     transmissibility="1e-15"
-		     segmentName="prod1_unique_seg" />
+		     transmissibility="1e-10"
+		     segmentName="prod1_unique_seg" /> 
       </Perforations> 
     </Well>
     
@@ -165,7 +165,7 @@
 
   <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
+  </Partition> 
 
   <Outputs>
       <Silo name="siloOutput"/>
