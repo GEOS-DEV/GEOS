@@ -428,8 +428,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
-                                   er,
-                                   esr,
                                    this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -437,9 +435,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   constitutiveRelations,
-                                   meanStress,
-                                   devStress,
+                                   constitutiveRelations[er][esr],
+                                   meanStress[er][esr],
+                                   devStress[er][esr],
                                    dt );
 
       GEOSX_MARK_END(externalElemsLoop);
@@ -485,8 +483,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
-                                   er,
-                                   esr,
                                    this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -494,9 +490,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   constitutiveRelations,
-                                   meanStress,
-                                   devStress,
+                                   constitutiveRelations[er][esr],
+                                   meanStress[er][esr],
+                                   devStress[er][esr],
                                    dt);
 
       GEOSX_MARK_END(internalElemsLoop);

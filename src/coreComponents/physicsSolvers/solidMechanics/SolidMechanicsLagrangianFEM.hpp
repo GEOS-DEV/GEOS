@@ -182,6 +182,22 @@ public:
                                      localIndex_array& localIndices,
                                      localIndex offset );
 
+  /**
+   * @brief Function to select which templated kernel function to call.
+   * @tparam KERNELWRAPPER A struct or class that contains a "Launch<NUM_NODES_PER_ELEM,NUM_QUADRATURE_POINTS>()"
+   *                       function to launch the kernel.
+   * @tparam PARAMS Varaidic parameter pack to pass arguments to Launch function.
+   * @param NUM_NODES_PER_ELEM The number of nodes in an element.
+   * @param NUM_QUADRATURE_POINTS The number of quadrature points in an element.
+   * @param params Variadic parameter list to hold all parameters that are forwarded to the kernel function.
+   * @return Depends on the kernel.
+   */
+  template< typename KERNELWRAPPER, typename ... PARAMS >
+  real64
+  ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
+                                localIndex NUM_QUADRATURE_POINTS,
+                                PARAMS&&... params );
+
 /**
  * @param WRAPPER The class/struct that contains the Launch() function that launches the kernel
  * @param OVERRIDE An optional argument to add the override specifier to the function definiton. For the base class
@@ -197,24 +213,20 @@ public:
     ExplicitElementKernelLaunch(\
         localIndex NUM_NODES_PER_ELEM,\
         localIndex NUM_QUADRATURE_POINTS,\
-        localIndex const er,\
-        localIndex const esr,\
         set<localIndex> const & elementList,\
-        arrayView2d<localIndex> const & elemsToNodes,\
-        arrayView3d< R1Tensor > const & dNdX,\
-        arrayView2d<real64> const & detJ,\
-        arrayView1d<R1Tensor> const & u,\
-        arrayView1d<R1Tensor> const & vel,\
-        arrayView1d<R1Tensor> & acc,\
-        ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase>& constitutiveRelations,\
-        ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,\
-        ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,\
+        arrayView2d<localIndex const> const & elemsToNodes,\
+        arrayView3d< R1Tensor const> const & dNdX,\
+        arrayView2d<real64 const> const & detJ,\
+        arrayView1d<R1Tensor const> const & u,\
+        arrayView1d<R1Tensor const> const & vel,\
+        arrayView1d<R1Tensor> const & acc,\
+        arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations, \
+        arrayView1d< arrayView2d<real64> const > const & meanStress, \
+        arrayView1d< arrayView2d<R2SymTensor> const> const & devStress, \
         real64 const dt ) OVERRIDE\
     {\
       return ElementKernelLaunchSelector<WRAPPER>( NUM_NODES_PER_ELEM,\
                                                              NUM_QUADRATURE_POINTS,\
-                                                             er,\
-                                                             esr,\
                                                              elementList,\
                                                              elemsToNodes,\
                                                              dNdX,\
@@ -302,32 +314,40 @@ public:
 
   IMPLICIT_ELEMENT_KERNEL_LAUNCH(SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper,)
 
-
-  template< typename KERNELWRAPPER, typename ... PARAMS >
-  real64
-  ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
-                                localIndex NUM_QUADRATURE_POINTS,
-                                PARAMS&&... params );
-
   /**
    * @struct Structure to wrap templated functions that support the explicit time integration kernels.
    */
   struct ExplicitElementKernelWrapper
   {
+    /**
+     * @brief Launch of the element processing kernel for explicit time integration.
+     * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
+     * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
+     * @param elementList The list of elements to be processed
+     * @param elemsToNodes The map from the elements to the nodes that form that element.
+     * @param dNdX The derivitaves of the shape functions wrt the reference configuration.
+     * @param detJ The determinant of the transformation matrix (Jacobian) to the parent element.
+     * @param u The nodal array of total displacements.
+     * @param vel The nodal array of velocity.
+     * @param acc The nodal array of force/acceleration.
+     * @param constitutiveRelations An array of pointers to the constitutitve relations that are used on this region.
+     * @param meanStress The mean stress at each element quadrature point
+     * @param devStress The deviator stress at each element quadrature point.
+     * @param dt The timestep
+     * @return The achieved timestep.
+     */
     template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
     static real64
-    Launch( localIndex const er,
-            localIndex const esr,
-            set<localIndex> const & elementList,
-            arrayView2d<localIndex> const & elemsToNodes,
-            arrayView3d< R1Tensor > const & dNdX,
-            arrayView2d<real64> const & detJ,
-            arrayView1d<R1Tensor> const & u,
-            arrayView1d<R1Tensor> const & vel,
-            arrayView1d<R1Tensor> & acc,
-            ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-            ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-            ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+    Launch( set<localIndex> const & elementList,
+            arrayView2d<localIndex const> const & elemsToNodes,
+            arrayView3d< R1Tensor const> const & dNdX,
+            arrayView2d<real64 const> const & detJ,
+            arrayView1d<R1Tensor const> const & u,
+            arrayView1d<R1Tensor const> const & vel,
+            arrayView1d<R1Tensor> const & acc,
+            arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations,
+            arrayView1d< arrayView2d<real64> const > const & meanStress,
+            arrayView1d< arrayView2d<R2SymTensor> const> const & devStress,
             real64 const dt );
   };
 
@@ -541,24 +561,22 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 
 template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
 real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelWrapper::
-Launch( localIndex const er,
-        localIndex const esr,
-        set<localIndex> const & elementList,
-        arrayView2d<localIndex> const & elemsToNodes,
-        arrayView3d< R1Tensor > const & dNdX,
-        arrayView2d<real64> const & detJ,
-        arrayView1d<R1Tensor> const & u,
-        arrayView1d<R1Tensor> const & vel,
-        arrayView1d<R1Tensor> & acc,
-        ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-        ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-        ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+Launch( set<localIndex> const & elementList,
+        arrayView2d<localIndex const> const & elemsToNodes,
+        arrayView3d< R1Tensor const> const & dNdX,
+        arrayView2d<real64 const> const & detJ,
+        arrayView1d<R1Tensor const> const & u,
+        arrayView1d<R1Tensor const> const & vel,
+        arrayView1d<R1Tensor> const & acc,
+        arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations,
+        arrayView1d< arrayView2d<real64> const > const & meanStress,
+        arrayView1d< arrayView2d<R2SymTensor> const> const & devStress,
         real64 const dt )
 {
 
-  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
+  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[0]->GetStateUpdateFunctionPointer();
   void * data = nullptr;
-  constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
+  constitutiveRelations[0]->SetParamStatePointers( data );
   forall_in_set<elemPolicy>( elementList.values(),
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex k) mutable
@@ -603,11 +621,11 @@ Launch( localIndex const er,
       R2SymTensor Dadt;
       HughesWinget(Rot, Dadt, Ldt);
 
-      constitutiveRelations[er][esr][0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
+      constitutiveRelations[0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
 
       R2SymTensor TotalStress;
-      TotalStress = devStress[er][esr][0][k][q];
-      TotalStress.PlusIdentity( meanStress[er][esr][0][k][q] );
+      TotalStress = devStress[0][k][q];
+      TotalStress.PlusIdentity( meanStress[0][k][q] );
 
       Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, Finv, f_local );
     }//quadrature loop
