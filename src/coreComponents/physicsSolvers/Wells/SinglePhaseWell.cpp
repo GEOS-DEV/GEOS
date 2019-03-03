@@ -1807,6 +1807,9 @@ void SinglePhaseWell::RecordWellData( Well * well )
     std::cout << "Control : BHP" << std::endl;
   else
     std::cout << "Control : RATE" << std::endl;
+
+  std::cout << "Below, positive perforation rate means flow from reservoir to well" << std::endl;
+  std::cout << "Negative perforation rate means flow from well to reservoir" << std::endl;
   
   // output perforation rates
   for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
@@ -1840,11 +1843,14 @@ void SinglePhaseWell::RecordWellData( Well * well )
 		<< std::endl;
     }
   }
-    
+
+  std::cout << "Below, negative connection rate means production" << std::endl;
+  std::cout << "Positive connection rate means injection" << std::endl;
+  
   for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
   {
-    if (well->getControl() == Well::Control::BHP)
-      std::cout << "Rate at connec #" << iconn << ": " << connRate[iconn] << std::endl;
+    if (well->getControl() == Well::Control::BHP || iconn > 0)
+      std::cout << "Rate at connection #" << iconn << ": " << connRate[iconn] << std::endl;
     else
       std::cout << "Rate at connection #" << iconn << ": " << connRate[iconn]
 		<< ", target rate : " << well->getTargetRate() << std::endl;
