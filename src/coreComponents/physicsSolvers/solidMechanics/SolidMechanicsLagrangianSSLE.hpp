@@ -28,6 +28,12 @@
 namespace geosx
 {
 
+/**
+ * @class SolidMechanicsLagrangianSSLE
+ *
+ * This class contains an implementation of a small strain linear elastic solution to the equations of motion which are
+ * called through the interface in SolidMechanicsLagrangianFEM.
+ */
 class SolidMechanicsLagrangianSSLE : public SolidMechanicsLagrangianFEM
 {
 public:
@@ -41,27 +47,80 @@ public:
 
   IMPLICIT_ELEMENT_KERNEL_LAUNCH(SolidMechanicsLagrangianSSLE::ImplicitElementKernelWrapper,override)
 
+  /**
+   * @struct Structure to wrap templated functions that support the explicit time integration kernels.
+   */
   struct ExplicitElementKernelWrapper
   {
+    /**
+     * @brief Launch of the element processing kernel for explicit time integration when under small strain linear
+     *        elastic assumption.
+     * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
+     * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
+     * @param elementList The list of elements to be processed
+     * @param elemsToNodes The map from the elements to the nodes that form that element.
+     * @param dNdX The derivitaves of the shape functions wrt the reference configuration.
+     * @param detJ The determinant of the transformation matrix (Jacobian) to the parent element.
+     * @param u The nodal array of total displacements.
+     * @param vel The nodal array of velocity.
+     * @param acc The nodal array of force/acceleration.
+     * @param constitutiveRelations An array of pointers to the constitutitve relations that are used on this region.
+     * @param meanStress The mean stress at each element quadrature point
+     * @param devStress The deviator stress at each element quadrature point.
+     * @param dt The timestep
+     * @return The achieved timestep.
+     */
     template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
     static real64
-    Launch( localIndex const er,
-            localIndex const esr,
-            set<localIndex> const & elementList,
-            arrayView2d<localIndex> const & elemsToNodes,
-            arrayView3d< R1Tensor > const & dNdX,
-            arrayView2d<real64> const & detJ,
-            arrayView1d<R1Tensor> const & u,
-            arrayView1d<R1Tensor> const & vel,
-            arrayView1d<R1Tensor> & acc,
-            ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-            ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-            ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+    Launch( set<localIndex> const & elementList,
+            arrayView2d<localIndex const> const & elemsToNodes,
+            arrayView3d< R1Tensor const> const & dNdX,
+            arrayView2d<real64 const> const & detJ,
+            arrayView1d<R1Tensor const> const & u,
+            arrayView1d<R1Tensor const> const & vel,
+            arrayView1d<R1Tensor> const & acc,
+            arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations,
+            arrayView1d< arrayView2d<real64> const > const & meanStress,
+            arrayView1d< arrayView2d<R2SymTensor> const> const & devStress,
             real64 const dt );
   };
 
+  /**
+   * @struct Structure to wrap templated functions that support the implicit time integration kernels.
+   */
   struct ImplicitElementKernelWrapper
   {
+    /**
+     * @brief Launch of the element processing kernel for implicit time integration when under small strain linear
+     *        elastic assumption.
+     * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
+     * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
+     * @param numElems The number of elements the kernel will process.
+     * @param dt The timestep.
+     * @param dNdX The derivitaves of the shape functions wrt the reference configuration.
+     * @param detJ The determinant of the transformation matrix (Jacobian) to the parent element.
+     * @param fe A pointer to the finite element class used in this kernel.
+     * @param constitutiveRelations An array of pointers to the constitutitve relations that are used on this region.
+     * @param elemGhostRank An array containing the values of the owning ranks for ghost elements.
+     * @param elemsToNodes The map from the elements to the nodes that form that element.
+     * @param globalDofNumber The map from localIndex to the globalDOF number.
+     * @param disp The array of total displacements.
+     * @param uhat The array of incremental displacements (displacement for this step).
+     * @param vtilde The array for the velocity predictor.
+     * @param uhattilde The array for the incremental displacement predictor.
+     * @param density The array containing the density
+     * @param fluidPressure Array containing element fluid pressure at the beginning of the step.
+     * @param deltaFluidPressure Array containing the change in element fluid pressure over this step.
+     * @param biotCoefficient The biotCoefficient used to calculate effective stress.
+     * @param tiOption The time integration option used for the integration.
+     * @param stiffnessDamping The stiffness damping coefficient for the Newmark method assuming Rayleigh damping.
+     * @param massDamping The mass damping coefficient for the Newmark method assuming Rayleigh damping.
+     * @param newmarkBeta The value of \beta in the Newmark update.
+     * @param newmarkGamma The value of \gamma in the Newmark update.
+     * @param globaldRdU  Pointer to the sparse matrix containing the derivatives of the residual wrt displacement.
+     * @param globalResidual Pointer to the parallel vector containing the global residual.
+     * @return The maximum nodal force contribution from all elements.
+     */
     template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
     static real64
     Launch( localIndex const numElems,
@@ -86,8 +145,8 @@ public:
             real64 const massDamping,
             real64 const newmarkBeta,
             real64 const newmarkGamma,
-            Epetra_FECrsMatrix * const dRdU,
-            Epetra_FEVector * const residual );
+            Epetra_FECrsMatrix * const globaldRdU,
+            Epetra_FEVector * const globalResidual );
   };
 };
 
@@ -96,24 +155,22 @@ public:
 template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
 real64
 SolidMechanicsLagrangianSSLE::ExplicitElementKernelWrapper::
-Launch( localIndex const er,
-        localIndex const esr,
-        set<localIndex> const & elementList,
-        arrayView2d<localIndex> const & elemsToNodes,
-        arrayView3d< R1Tensor > const & dNdX,
-        arrayView2d<real64> const & detJ,
-        arrayView1d<R1Tensor> const & u,
-        arrayView1d<R1Tensor> const & vel,
-        arrayView1d<R1Tensor> & acc,
-        ElementRegionManager::ConstitutiveRelationAccessor<constitutive::ConstitutiveBase> constitutiveRelations,
-        ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & meanStress,
-        ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const & devStress,
+Launch( set<localIndex> const & elementList,
+        arrayView2d<localIndex const> const & elemsToNodes,
+        arrayView3d< R1Tensor const> const & dNdX,
+        arrayView2d<real64 const> const & detJ,
+        arrayView1d<R1Tensor const> const & u,
+        arrayView1d<R1Tensor const> const & vel,
+        arrayView1d<R1Tensor> const & acc,
+        arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations,
+        arrayView1d< arrayView2d<real64> const > const & meanStress,
+        arrayView1d< arrayView2d<R2SymTensor> const> const & devStress,
         real64 const dt )
 {
 
-  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[er][esr][0]->GetStateUpdateFunctionPointer();
+  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[0]->GetStateUpdateFunctionPointer();
   void * data = nullptr;
-  constitutiveRelations[er][esr][0]->SetParamStatePointers( data );
+  constitutiveRelations[0]->SetParamStatePointers( data );
   forall_in_set<elemPolicy>( elementList.values(),
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex const k)
@@ -123,7 +180,7 @@ Launch( localIndex const er,
     R1Tensor f_local[ NUM_NODES_PER_ELEM ];
 
     real64 c[6][6];
-    constitutiveRelations[er][esr][0]->GetStiffness( c );
+    constitutiveRelations[0]->GetStiffness( c );
 
 
     CopyGlobalToLocal<NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
@@ -160,13 +217,13 @@ Launch( localIndex const er,
 //        p_Cdamp[5] += ( v_a[1]*dNdXb[0] + v_a[0]*dNdXb[1] )*c[5][5];
       }
       real64 const dMeanStress = ( p_stress[0] + p_stress[1] + p_stress[2] )/3.0;
-      meanStress[er][esr][0][k][q] += dMeanStress;
+      meanStress[0][k][q] += dMeanStress;
 
       p_stress[0] -= dMeanStress;
       p_stress[1] -= dMeanStress;
       p_stress[2] -= dMeanStress;
 
-      real64 * const restrict p_devStress = devStress[er][esr][0][k][q].Data();
+      real64 * const restrict p_devStress = devStress[0][k][q].Data();
       p_devStress[0] += p_stress[0];
       p_devStress[2] += p_stress[1];
       p_devStress[5] += p_stress[2];
@@ -180,13 +237,13 @@ Launch( localIndex const er,
 
         f_local[a][0] -= ( p_devStress[1]*dNdXa[1]
                       + p_devStress[3]*dNdXa[2]
-                      + dNdXa[0]*(p_devStress[0] + meanStress[er][esr][0][k][q]) ) * detJ[k][q];
+                      + dNdXa[0]*(p_devStress[0] + meanStress[0][k][q]) ) * detJ[k][q];
         f_local[a][1] -= ( p_devStress[1]*dNdXa[0]
                       + p_devStress[4]*dNdXa[2]
-                      + dNdXa[1]*(p_devStress[2] + meanStress[er][esr][0][k][q]) ) * detJ[k][q];
+                      + dNdXa[1]*(p_devStress[2] + meanStress[0][k][q]) ) * detJ[k][q];
         f_local[a][2] -= ( p_devStress[3]*dNdXa[0]
                       + p_devStress[4]*dNdXa[1]
-                      + dNdXa[2]*(p_devStress[5] + meanStress[er][esr][0][k][q]) ) * detJ[k][q];
+                      + dNdXa[2]*(p_devStress[5] + meanStress[0][k][q]) ) * detJ[k][q];
       }
     }//quadrature loop
 
