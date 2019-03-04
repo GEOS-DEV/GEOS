@@ -173,7 +173,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
 
-  if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
     GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }
@@ -181,7 +181,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   // for the trivial OneWaySpecificPressure case, we just do a pass through to 
   // a solidSolver call.
 
-  if( m_couplingTypeOption == couplingTypeOption::OneWaySpecifiedPressure )
+  else if( m_couplingTypeOption == couplingTypeOption::OneWaySpecifiedPressure )
   {
     SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
     dtReturn = solidSolver.SolverStep(time_n, dt, cycleNumber, domain);
