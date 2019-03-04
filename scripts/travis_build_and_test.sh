@@ -24,6 +24,7 @@ if [[ "$DO_BUILD" == "yes" ]] ; then
            -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_Fortran_COMPILER=${MPIFC} -DMPIEXEC=${MPIEXEC} -DMPIEXEC_EXECUTABLE=${MPIEXEC} \
            -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR} \
            -DENABLE_SPHINX=OFF \
+           -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
            ${CMAKE_EXTRA_FLAGS} ../src
 
 #    if [[ ${CMAKE_EXTRA_FLAGS} == *COVERAGE* ]] ; then
