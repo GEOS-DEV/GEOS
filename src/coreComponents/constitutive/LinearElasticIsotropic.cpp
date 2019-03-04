@@ -117,10 +117,12 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
     setDescription("ReferencePressure");
 
   RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
+    setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Stress Deviator stress");
 
   RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
     setApplyDefaultValue(-1)->
+    setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Mean stress");
 
 

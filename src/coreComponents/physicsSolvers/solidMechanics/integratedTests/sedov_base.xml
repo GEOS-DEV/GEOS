@@ -1,17 +1,3 @@
-<?xml version="1.0" ?>
-<!--# # -->
-
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
-
-  
-  <Solvers>
-    <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  cflFactor="0.25"
-                                  discretization="FE1"
-                                  targetRegions="Region2"/>
-  </Solvers>
-
-  
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
@@ -146,5 +132,3 @@
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
-
-</Problem>

@@ -18,7 +18,7 @@
     </Poroelastic>
 
   
-    <SolidMechanics_LagrangianFEM name="lagsolve" 
+    <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="1"
                                   discretization="FE1"
@@ -28,7 +28,7 @@
                               newtonTol="1.0e-6"
                               maxIterNewton="5"
                               verbosityFlag="2"/>
-    </SolidMechanics_LagrangianFEM>
+    </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                      verboseLevel="1"

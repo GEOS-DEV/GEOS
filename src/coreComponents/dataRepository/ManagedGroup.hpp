@@ -29,8 +29,6 @@
 #include "ViewWrapper.hpp"
 #include "RestartFlags.hpp"
 
-#include "depricated/Common.h"
-
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
@@ -624,7 +622,7 @@ public:
    *        file and put them into the wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
+  void ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode );
 
   /**
    * @brief Recursively call PostProcessInput() to apply post processing after
