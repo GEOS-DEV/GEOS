@@ -1,5 +1,4 @@
 /*
-
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
@@ -104,8 +103,6 @@ public:
   static string CatalogName() { return dataRepository::keys::singlePhaseWell; }
 
   virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
-  
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -148,27 +145,28 @@ public:
                                      DomainPartition * const domain ) override;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
+   * @brief Update all relevant fluid models using current values of pressure
+   * @param well the well containing the well elements and their associated fields
    */
   void UpdateFluidModel( Well * well );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
-   * @param well the well containing the variables as 
+   * @param well the well containing the well elements and their associated fields
    */
   void UpdateState( Well * well );
   
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
+   * @param domain the domain containing the well manager to update all wells
    */
   void UpdateStateAll( DomainPartition * domain );
 
   /**
-   * @brief assembles the accumulation terms for all segments
+   * @brief assembles the accumulation terms for all well elements
    * @param domain the physical domain object
-   * @param blockSystem the entire block system
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
    * @param time_n previous time value
    * @param dt time step
    */
@@ -179,9 +177,10 @@ public:
                                   real64 const dt );
 
   /**
-   * @brief assembles the flux terms for all connections
+   * @brief assembles the flux terms for all connections between well elements
    * @param domain the physical domain object
-   * @param blockSystem the entire block system
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
    * @param time_n previous time value
    * @param dt time step
    */
@@ -195,7 +194,8 @@ public:
   /**
    * @brief assembles the perforation rate terms 
    * @param domain the physical domain object
-   * @param blockSystem the entire block system
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
    * @param time_n previous time value
    * @param dt time step
    */
@@ -204,7 +204,27 @@ public:
                             Epetra_FEVector * const residual,
                             real64 const time_n,
                             real64 const dt );
+  
+  /**
+   * @brief assembles the momentum at all connections except the first global connection
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   */
+  void FormMomentumEquations( DomainPartition * const domain,
+                              Epetra_FECrsMatrix * const jacobian,
+                              Epetra_FEVector * const residual );
 
+  /**
+   * @brief assembles the control equation for the first global connection
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   */
+  void FormControlEquation( DomainPartition * const domain,
+                            Epetra_FECrsMatrix * const jacobian,
+                            Epetra_FEVector * const residual );
+  
   /**
    * @brief set the sparsity pattern for the linear system
    * @param domain the domain partition
@@ -229,15 +249,6 @@ public:
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
                                      localIndex offset ) override;
-
-  void FormControlEquation( DomainPartition * const domain,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual );
-  
-  void FormMomentumEquations( DomainPartition * const domain,
-                              Epetra_FECrsMatrix * const jacobian,
-                              Epetra_FEVector * const residual );
-
   
   /**@}*/
 
@@ -249,8 +260,8 @@ public:
     // primary solution field
     static constexpr auto pressureString      = "segmentPressure";
     static constexpr auto deltaPressureString = "deltaSegmentPressure";
-    static constexpr auto rateString      = "connectionRate";
-    static constexpr auto deltaRateString = "deltaConnectionRate";
+    static constexpr auto rateString          = "connectionRate";
+    static constexpr auto deltaRateString     = "deltaConnectionRate";
 
     // normalizer for the mass balance equations in well elements
     static constexpr auto massBalanceNormalizerString = "segmentMassBalanceNormalizer";
@@ -274,7 +285,7 @@ public:
     ViewKey massBalanceNormalizer = { massBalanceNormalizerString };
     
     // perforation rates
-    ViewKey perforationRate = { perforationRateString };
+    ViewKey perforationRate        = { perforationRateString };
     ViewKey dPerforationRate_dPres = { dPerforationRate_dPresString };
     
   } viewKeysSinglePhaseWell;
@@ -287,6 +298,7 @@ protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
 private:
 
@@ -306,22 +318,40 @@ private:
   
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
+   * @param domain the domain containing the well manager to access individual wells
+   * @param dt time step
    */
   void BackupFields( DomainPartition * const domain,
 		     real64 const & dt );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
+   * @param domain the domain containing the well manager to access individual wells
    */
   void ResetViews( DomainPartition * const domain ) override;
-  
+
+  /**
+   * @brief Compute the perforation rates for this well
+   * @param well the well with its perforations
+   */
   void ComputeAllPerforationRates( Well * well );
 
+  /**
+   * @brief Save all the rates and pressures in the well for reporting purposes
+   * @param well the well with its perforations
+   */
   void RecordWellData( Well * well );
 
+  /**
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
+   */
   void InitializeWells( DomainPartition * const domain );
-  
+
+  /**
+   * @brief Check if the controls are viable; if not, switch the controls
+   * @param domain the domain containing the well manager to access individual wells
+   */
   void CheckWellControlSwitch( DomainPartition * const domain );
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber; // TODO will move to DofManager

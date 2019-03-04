@@ -46,19 +46,21 @@ class WellSolverBase : public SolverBase
 {
 public:
 
+  // tag to access well and reservoir elements in perforation rates computation
   struct SubRegionTag
   {
     static constexpr integer RES  = 0;
     static constexpr integer WELL = 1;
   };
 
+  // tag to access the next and previous well elements of a connection
   struct ElemTag
   {
     static constexpr integer PREV = 0;
     static constexpr integer NEXT = 1;
   };
 
-/**
+  /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
@@ -136,9 +138,6 @@ public:
     static constexpr auto fluidNameString  = "fluidName";
     static constexpr auto fluidIndexString = "fluidIndex";
 
-    // bhp control
-    static constexpr auto bhpString = "BHP";
-
     using ViewKey = dataRepository::ViewKey;
 
     // gravity term precomputed values
@@ -148,9 +147,6 @@ public:
     // misc inputs
     ViewKey fluidName  = { fluidNameString };
     ViewKey fluidIndex = { fluidIndexString };
-
-    // bhp control
-    ViewKey bhp = { bhpString }; 
   
   } viewKeysWellSolverBase;
 

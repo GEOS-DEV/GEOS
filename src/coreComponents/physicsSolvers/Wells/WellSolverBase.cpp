@@ -59,10 +59,6 @@ WellSolverBase::WellSolverBase( std::string const & name,
 void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
 {
   SolverBase::RegisterDataOnMesh( meshBodies );
-
-  WellManager * wellManager = meshBodies->getParent()->group_cast<DomainPartition *>()->getWellManager();
-  wellManager->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::bhpString );
-
 }
 
 void WellSolverBase::SetSparsityPattern( DomainPartition const * const domain,
@@ -109,7 +105,6 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup *
 
 void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 {
-  // TODO
 }
 
 void WellSolverBase::ResetViews( DomainPartition * const domain )

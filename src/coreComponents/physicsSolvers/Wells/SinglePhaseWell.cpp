@@ -67,8 +67,6 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 
 void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
 {
-  std::cout << "SinglePhaseWell::RegisterDataOnMesh started" << std::endl;
-  
   WellSolverBase::RegisterDataOnMesh(meshBodies);
 
   WellManager * wellManager = meshBodies->getParent()->group_cast<DomainPartition *>()->getWellManager();
@@ -91,14 +89,10 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
     perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
     
   });    
-
-  std::cout << "SinglePhaseWell::RegisterDataOnMesh complete" << std::endl;
 }
   
 void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
-  std::cout << "SinglePhaseWell: InitializePreSubGroups started" << std::endl;
-  
   WellSolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
@@ -109,8 +103,6 @@ void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
     PerforationData * perforationData = well->getPerforations();
     perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString ).resizeDimension<1>(2);
   });
-				   
-  std::cout << "SinglePhaseWell: InitializePreSubGroups complete" << std::endl;  
 }
 
 SingleFluidBase * SinglePhaseWell::GetFluidModel( ManagedGroup * dataGroup ) const
@@ -244,8 +236,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
       avgDensity += resDensity[er][esr][m_fluidIndex][ei][0];
     }
 
-    std::cout << "step 1 complete" << std::endl;
-    
     // TODO: communicate avgDens
     // TODO: collect individual dens and then communicate
     
@@ -281,8 +271,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 		    	          : 1.1 * resPres;
     }
 
-    std::cout << "step 2 complete" << std::endl;
-    
     // TODO: communicate ref pressure
     // TODO: communicate avgDens
     
@@ -294,18 +282,12 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
         wellElemPressure[iwelem] = wellElemPressure[iwelemRef]
  	  + ( m_gravityFlag ? avgDensity * wellElemGravDepth[iwelem] - refGravDepth : 0 );
     }
-
-    std::cout << "step 3 complete" << std::endl;
     
     // 4) Recompute the pressure-dependent properties
     UpdateState( well );
 
-    std::cout << "step 4 complete" << std::endl;
-
     // 5) Compute the perforation rates
     ComputeAllPerforationRates( well );
-
-    std::cout << "step 5 complete" << std::endl;
     
     // 6) Collect all the perforation rates
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -315,8 +297,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
       localIndex const iwelem = perfWellElemIndex[iperf];
       wellElemSumRates[iwelem] += perfRate[iperf];
     }
-
-    std::cout << "step 6 complete" << std::endl;
 
     // 7) Estimate the connection rates
     // TODO: implement this in parallel with the communication of wellElemSumRates
@@ -329,24 +309,17 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 	              - wellElemSumRates[iwelemNext] / wellElemDensity[iwelemNext][0];
       prevConnRate = connRate[iconn];
     }
-
-   std::cout << "step 7 complete" << std::endl;
-   
   });
 }
 
 void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
-  std::cout << "SinglePhaseWell::InitializePostInitialConditions_PreSubGroups started" << std::endl;
-  
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
 
   // Initialize the primary and secondary variables
   InitializeWells( domain );
-  
-  std::cout << "SinglePhaseWell::InitializePostInitialConditions_PreSubGroups complete" << std::endl;
 }
 
 void SinglePhaseWell::BackupFields( DomainPartition * const domain,
@@ -374,7 +347,6 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain,
 
     arrayView1d<localIndex const> const & prevWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );
-
     
     // get constitutive data on well elements to compute the normalizer
     SingleFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
@@ -426,8 +398,6 @@ SinglePhaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
                                     DomainPartition * const domain,
                                     EpetraBlockSystem * const blockSystem )
 {
-  std::cout << "SinglePhaseWell::ImplicitStepSetup started" << std::endl;
-  
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
 
@@ -440,7 +410,6 @@ SinglePhaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
   // the setup of dof numbers and linear system
   // is done in ReservoirWellSolver
 
-  std::cout << "SinglePhaseWell::ImplicitStepSetup" << std::endl;
 }
 
 void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
@@ -448,8 +417,6 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
                                                     globalIndex & numGlobalRows,
                                                     localIndex offset )
 {
-  std::cout << "SinglePhaseWell::SetNumRowsAndTrilinosIndices started" << std::endl;
-  
   int numMpiProcesses;
   MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
 
@@ -516,8 +483,6 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
   	    
 
   GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
-
-  std::cout << "SinglePhaseWell::SetNumRowsAndTrilinosIndices complete" << std::endl;
 }
 
 void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
@@ -525,8 +490,6 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
 					  globalIndex firstWellElemDofNumber,
 					  localIndex numDofPerResElement)
 {
-  std::cout << "SinglePhaseWell::SetSparsityPattern started" << std::endl;
-  
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
   WellManager const * const wellManager = domain->getWellManager();
@@ -667,8 +630,6 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
     }
     
   });
-  
-  std::cout << "SinglePhaseWell::SetSparsityPattern complete" << std::endl;
 }
 
   
@@ -676,8 +637,6 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
                                       EpetraBlockSystem * const blockSystem,
                                       real64 const time_n, real64 const dt )
 {
-  std::cout << "SinglePhaseWell: AssembleSystem started" << std::endl;
-
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                                 BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
@@ -702,8 +661,6 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
     GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
     GEOS_LOG_RANK("\nResidual:\n" << *residual);
   //}
-
-  std::cout << "SinglePhaseWell: AssembleSystem complete" << std::endl;
 }
 
 void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
@@ -726,7 +683,7 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     ConnectionData const * const connectionData = well->getConnections();
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get a reference to the degree-of-freedom numbers and to ghosting info
     array1d<globalIndex const> const & wellElemDofNumber =
@@ -901,7 +858,7 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 	}
       }
     }
-  }); 
+  });
 }
 
 void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
@@ -910,16 +867,14 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
                                            real64 const time_n,
                                            real64 const dt )
 {
-  std::cout << "SinglePhaseWell::AssembleSourceTerms started" << std::endl;
-  
   WellManager * const wellManager = domain->getWellManager();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber = m_resDofNumber;
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    PerforationData * perforationData = well->getPerforations();
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    PerforationData const * const perforationData = well->getPerforations();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // compute the local rates for this well
     ComputeAllPerforationRates( well );
@@ -932,10 +887,10 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
     
     // get well variables on perforations
-    array1d<real64> const & perfRate =
+    array1d<real64 const> const & perfRate =
       perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
-    array2d<real64> const & dPerfRate_dPres =
+    array2d<real64 const> const & dPerfRate_dPres =
       perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
 
     arrayView1d<localIndex const> const & perfWellElemIndex =
@@ -1012,8 +967,6 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     }
     
   });
-
-  std::cout << "SinglePhaseWell::AssembleSourceTerms complete" << std::endl;
 }
 
 
@@ -1025,8 +978,8 @@ void SinglePhaseWell::FormMomentumEquations( DomainPartition * const domain,
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    ConnectionData * connectionData = well->getConnections();
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    ConnectionData const * const connectionData = well->getConnections();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get the degrees of freedom 
     array1d<globalIndex const> const & wellElemDofNumber =
@@ -1052,10 +1005,10 @@ void SinglePhaseWell::FormMomentumEquations( DomainPartition * const domain,
     // get well secondary variables on segments
     SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
 
-    array2d<real64> const & wellElemDensity =
+    array2d<real64 const> const & wellElemDensity =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
 
-    array2d<real64> const & dWellElemDensity_dPres =
+    array2d<real64 const> const & dWellElemDensity_dPres =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
     
@@ -1133,9 +1086,9 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
     // BHP control
     if (currentControl == Well::Control::BHP)
     {
-      PerforationData * perforationData = well->getPerforations();
+      PerforationData * const perforationData = well->getPerforations();
 
-      arrayView1d<real64> const & perfRate =
+      arrayView1d<real64 const> const & perfRate =
         perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
       // compute the local rates for this well
@@ -1222,7 +1175,7 @@ SinglePhaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSys
   real64 localResidualNorm = 0;
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get the degree of freedom numbers
     array1d<globalIndex const> const & wellElemDofNumber =

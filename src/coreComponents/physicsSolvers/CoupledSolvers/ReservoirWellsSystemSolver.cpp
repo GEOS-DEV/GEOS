@@ -67,8 +67,6 @@ void ReservoirWellsSystemSolver::ImplicitStepSetup( real64 const& time_n,
                                                     DomainPartition * const domain,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem)
 {
-  std::cout << "ReservoirWellsSystemSolver::ImplicitStepSetup started" << std::endl;
-  
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
   
@@ -78,16 +76,12 @@ void ReservoirWellsSystemSolver::ImplicitStepSetup( real64 const& time_n,
 
   // setup the coupled linear system
   SetupSystem( domain, blockSystem );
-
-  std::cout << "ReservoirWellsSystemSolver::ImplicitStep complete" << std::endl;
 }
 
   
 void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                                                systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
-  std::cout << "ReservoirWellsSystemSolver::SetupSystem started" << std::endl;
-  
   // get the reservoir and well solvers
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
@@ -104,6 +98,8 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   localIndex  numWellLocalRows  = 0;
   globalIndex numResGlobalRows  = 0;
   globalIndex numWellGlobalRows = 0;
+
+  // 1) Communicate number of local reservoir rows
   
   // get the number of local reservoir elements, and ghost elements...i.e. local rows and ghost rows
   elementRegionManager->forElementSubRegions( [&]( ObjectManagerBase * const subRegion )
@@ -127,7 +123,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
   */
 
-  std::cout << "SinglePhaseFlow::SetNumRowsAndTrilinosIndices complete" << std::endl;
+  // 2) Communicate number of local well rows
 
   // get the number of local well elements, and ghost elements...i.e. local rows and ghost rows
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
@@ -201,8 +197,6 @@ void ReservoirWellsSystemSolver::AssembleSystem( DomainPartition * const domain,
                                                  real64 const time,
                                                  real64 const dt )
 {
-  std::cout << "ReservoirWellsSystemSolver::AssembleSystem started" << std::endl;
-  
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
@@ -226,8 +220,6 @@ void ReservoirWellsSystemSolver::AssembleSystem( DomainPartition * const domain,
     GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
     GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
-  
-  std::cout << "ReservoirWellsSystemSolver::AssembleSystem complete" << std::endl;
 }
 
 void ReservoirWellsSystemSolver::ApplyBoundaryConditions( DomainPartition * const domain,

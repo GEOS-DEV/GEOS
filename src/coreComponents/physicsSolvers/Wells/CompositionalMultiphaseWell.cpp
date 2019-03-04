@@ -113,8 +113,8 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBo
     wellElementSubRegion->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
     ConnectionData * connectionData = well->getConnections();
-    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureVelocityString );
-    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureRateString );
+    connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
 
   });    
 }
@@ -1252,7 +1252,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
 
     // get a reference to the primary variables on connections
     array1d<real64> const & dConnRate =
-      connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+      connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
 
     // get a reference to the next well element index for each connection
     arrayView1d<localIndex const> const & nextWellElemIndex =
@@ -1330,7 +1330,7 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
 
     // get a reference to the primary variables on connections
     array1d<real64> const & dConnRate =
-      connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+      connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
 
     // get a reference to the well element index for each connection
     arrayView1d<localIndex const> const & nextWellElemIndex =
@@ -1538,10 +1538,10 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
     
     // get a reference to the primary variables on connections
     array1d<real64> const & connRate =
-      connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureVelocityString );
+      connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureRateString );
 
     array1d<real64> const & dConnRate =
-      connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureVelocityString );
+      connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {

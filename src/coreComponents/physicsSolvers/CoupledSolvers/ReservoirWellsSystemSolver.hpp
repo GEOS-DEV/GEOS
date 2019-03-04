@@ -42,6 +42,13 @@ public:
    */
   static string CatalogName() { return "ReservoirWellsSystem"; }
 
+  /**
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   */
+  /**@{*/
+  
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
                                   DomainPartition * const domain,
@@ -85,12 +92,12 @@ public:
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition * domain ) override;
-
-  
   
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    // solver that assembles the reservoir equations
     constexpr static auto flowSolverNameString = "flowSolverName";
+    // solver that assembles the well
     constexpr static auto wellSolverNameString = "wellSolverName";
   } reservoirWellsSystemSolverViewKeys;
 
@@ -108,8 +115,10 @@ private:
    */
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
-  
+
+  // solver that assembles the reservoir equations
   string m_flowSolverName;
+  // solver that assembles the well
   string m_wellSolverName;
 
 };

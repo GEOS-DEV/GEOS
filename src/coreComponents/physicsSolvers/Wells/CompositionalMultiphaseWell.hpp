@@ -265,7 +265,7 @@ public:
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     // degrees of freedom numbers on the well elements
-    static constexpr auto dofNumberString = "segmentLocalDofNumber_CompositionalMultiphaseWell";
+    static constexpr auto dofNumberString = "segmentLocalDofNumber";
     
     // inputs
     static constexpr auto temperatureString = "segmentTemperature";
@@ -279,8 +279,8 @@ public:
     static constexpr auto deltaPressureString          = "deltaSegmentPressure";
     static constexpr auto globalCompDensityString      = "segmentGlobalCompDensity";
     static constexpr auto deltaGlobalCompDensityString = "deltaSegmentGlobalCompDensity";
-    static constexpr auto mixtureVelocityString        = "segmentMixtureConnectionRate";
-    static constexpr auto deltaMixtureVelocityString   = "deltaSegmentMixtureConnectionRate";
+    static constexpr auto mixtureRateString        = "segmentMixtureConnectionRate";
+    static constexpr auto deltaMixtureRateString   = "deltaSegmentMixtureConnectionRate";
 
     // saturations
     static constexpr auto phaseVolumeFractionString = "segmentPhaseVolumeFraction";
@@ -308,8 +308,8 @@ public:
     ViewKey deltaPressure          = { deltaPressureString };
     ViewKey globalCompDensity      = { globalCompDensityString };
     ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
-    ViewKey mixtureVelocity        = { mixtureVelocityString };
-    ViewKey deltaMixtureVelovity   = { deltaMixtureVelocityString };
+    ViewKey mixtureRate            = { mixtureRateString };
+    ViewKey deltaMixtureVelovity   = { deltaMixtureRateString };
     
     // saturation
     ViewKey phaseVolFrac        = { phaseVolumeFractionString };
