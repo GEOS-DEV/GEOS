@@ -62,7 +62,7 @@ localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
   return m_quadrature->size();
 }
 
-void FiniteElementDiscretization::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
+void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase * const cellBlock ) const
 {
 
   // TODO THis crap needs to get cleaned up and worked out in the data structure
@@ -70,6 +70,12 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( dataRepository::Manag
   // Need to provide some mechanism to set the sizedFromParent during the
   // registration, or only allow documentation node
   // registration.
+
+  std::unique_ptr<FiniteElementBase>
+  fe = FiniteElementBase::CatalogInterface::Factory( cellBlock->GetElementTypeString(),
+                                                     *m_basis,
+                                                     *m_quadrature,
+                                                     0 );
 
   //Ensure data is contiguous
   array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();

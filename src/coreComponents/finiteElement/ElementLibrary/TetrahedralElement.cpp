@@ -102,5 +102,6 @@ void TetrahedralElement::reinit( array1d<R1TensorT<3> > const & mapped_support_p
 
 
 }
+REGISTER_CATALOG_ENTRY( FiniteElementBase, TetrahedralElement, BasisBase const &, QuadratureBase const &, const int )
 
 }

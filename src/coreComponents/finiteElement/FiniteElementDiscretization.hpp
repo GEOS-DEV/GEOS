@@ -33,6 +33,7 @@ namespace geosx
 
 class NodeManager;
 class CellBlockManager;
+class ElementSubRegionBase;
 
 namespace dataRepository
 {
@@ -69,7 +70,7 @@ public:
   ///@}
 
 
-  void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
+  void ApplySpaceToTargetCells( ElementSubRegionBase * const group ) const;
 
 
 

@@ -1795,7 +1795,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         integer_array const & elemGhostRank = elementSubRegion->GhostRank();
 
 
-        string elementType = elementSubRegion -> GetElementType();
+        string elementType = elementSubRegion -> GetElementTypeString();
         integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
         {
