@@ -422,7 +422,7 @@ private:
   typedef std::pair<localIndex, globalIndex> indexPair;
 
   /**
-   * Structure used to create CSR matrix from COO format
+   * Compare structure used to create CSR matrix from COO format
    */
   struct pairComparison
   {
@@ -434,6 +434,18 @@ private:
         return lhs.second < rhs.second;
       else
         return false;
+    }
+    ;
+  };
+
+  /**
+   * Compare second element of a pair
+   */
+  struct pairSecondComparison
+  {
+    inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
+                            {
+      return ( lhs.second < rhs.second );
     }
     ;
   };

@@ -1563,7 +1563,8 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
   }
 
   localIndex nRowsLoc = ( emptyPairs ) ? 0 : pairs.back().first;
-  localIndex nColsLoc = ( emptyPairs ) ? 0 : pairs.back().second;
+  localIndex nColsLoc =
+      ( emptyPairs ) ? 0 : std::max_element( pairs.begin(), pairs.end(), pairSecondComparison() )->second;
 
   // Find the global number of rows
   localIndex_array gather;
