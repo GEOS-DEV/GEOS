@@ -124,7 +124,8 @@ public:
   enum class couplingTypeOption : int
   {
     FixedStress,
-    TightlyCoupled
+    TightlyCoupled,
+    OneWaySpecifiedPressure
   };
 
 

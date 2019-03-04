@@ -58,8 +58,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string& name,
 
   RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Coupling option: (FixedStress, TightlyCoupled)");
-
+    setDescription("Coupling option: (FixedStress, TightlyCoupled, OneWaySpecifiedPressure)");
 }
 
 void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
@@ -120,6 +119,10 @@ void PoroelasticSolver::PostProcessInput()
   {
     this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
   }
+  else if( ctOption == "OneWaySpecifiedPressure" )
+  {
+    this->m_couplingTypeOption = couplingTypeOption::OneWaySpecifiedPressure;
+  }
   else
   {
     GEOS_ERROR("invalid coupling type option");
@@ -169,10 +172,21 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+
+  if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
     GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }
+
+  // for the trivial OneWaySpecificPressure case, we just do a pass through to 
+  // a solidSolver call.
+
+  if( m_couplingTypeOption == couplingTypeOption::OneWaySpecifiedPressure )
+  {
+    SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+    dtReturn = solidSolver.SolverStep(time_n, dt, cycleNumber, domain);
+  }
+   
   return dtReturn;
 }
 
