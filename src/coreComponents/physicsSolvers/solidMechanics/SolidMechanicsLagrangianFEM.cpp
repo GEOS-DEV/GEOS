@@ -305,7 +305,9 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
     ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-    for( integer solveIter=0 ; solveIter<m_maxNumResolves ; ++solveIter )
+
+    localIndex const maxNumResolves = m_maxNumResolves;
+    for( integer solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
                                         getLinearSystemRepository() );
