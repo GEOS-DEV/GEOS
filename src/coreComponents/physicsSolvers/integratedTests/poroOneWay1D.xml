@@ -1,0 +1,118 @@
+
+<!-- Setup a one-dimensional, one-way coupled poromechanical problem:
+     Initial pressure is set to 1.0 everywhere in a unit cube. Elastic
+     properties are chosen so the unixial modulus is equal to 1.0.  The cube
+     is constrained so it can only expand uniaxially, along x. The resulting 
+     deformation should be linear, with a max displacement of 1.0. -->
+
+<Problem>
+
+  <Solvers
+    gravityVector="0.0, 0.0, 0.0">
+    <Poroelastic name="poroSolve" 
+                 solidSolverName="mechanicsSolver"
+                 fluidSolverName="none"
+                 couplingTypeOption="OneWaySpecifiedPressure"
+                 verboseLevel="2"
+                 discretization="finiteElementQ1"
+                 targetRegions="regionAll">
+    </Poroelastic>
+    <SolidMechanics_LagrangianFEM name="mechanicsSolver" 
+                                  timeIntegrationOption="QuasiStatic"
+                                  verboseLevel="1"
+                                  discretization="finiteElementQ1"
+                                  targetRegions="regionAll">
+      <SystemSolverParameters krylovTol="1.0e-8"
+                              newtonTol="1.0e-7"
+                              maxIterNewton="20"
+                              verbosityFlag="0"/>
+    </SolidMechanics_LagrangianFEM>
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh name="mesh"
+                  elementTypes="C3D8" 
+                  xCoords="0, 1"
+                  yCoords="0, 1"
+                  zCoords="0, 1"
+                  nx="32"
+                  ny="1"
+                  nz="1"
+                  cellBlockNames="subRegionAll"/>
+  </Mesh>
+
+  <Events maxTime="1">
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+    <PeriodicEvent name="solverApplication0"
+                   beginTime="0"
+                   endTime="1"   
+                   forceDt="1.0"
+                   target="/Solvers/poroSolve" />
+    <!--PeriodicEvent name="restarts"
+                   timeFrequency="1e99"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"
+                   endTime="-1" /-->
+  </Events>
+
+  <NumericalMethods>
+    <BasisFunctions>
+      <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+    <QuadratureRules>
+      <GaussQuadrature3 name="gaussian"   degree="2"  />
+    </QuadratureRules>
+    <FiniteElements>
+      <FiniteElementSpace name="finiteElementQ1" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <ElementRegion name="regionAll" cellBlocks="subRegionAll" materialList="rock" />
+  </ElementRegions>
+
+  <Constitutive>
+    <!---choose elastic coefficients so uniaxial modulus M=1.0-->
+    <LinearElasticIsotropic name="rock"
+                            density0="0"
+                            BulkModulus0="0.5"
+                            ShearModulus0="0.375"
+                            BiotCoefficient="1.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+     <FieldSpecification name="initialPressure"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/regionAll/elementSubRegions/subRegionAll"
+               fieldName="pressure"
+               scale="1.0"/>
+    <FieldSpecification name="xConstraint" 
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               component="0" 
+               scale="0.0" 
+               setNames="xneg"/>
+    <FieldSpecification name="yConstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               component="1" 
+               scale="0.0" 
+               setNames="yneg ypos"/>
+    <FieldSpecification name="zConstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               component="2" 
+               scale="0.0" 
+               setNames="zneg zpos"/>
+  </FieldSpecifications>
+
+  <Outputs>
+      <Silo name="siloOutput"/>
+      <Restart name="sidreRestart"/>
+  </Outputs>
+
+</Problem>

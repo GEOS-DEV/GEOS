@@ -53,7 +53,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string& name,
     setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
 
   RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
+    setInputFlag(InputFlags::REQUIRED)-> // not actually required if using OneWaySpecificPressure option, but leave anyway
     setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
 
   RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
@@ -67,14 +67,22 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const
   {
     ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
-
     elemManager->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
-      {
+    {
         elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
           setDescription("Total Mean Stress");
         elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
           setDescription("Total Mean Stress");
-      });
+
+        // if there is no actual flow solver object, we have to create the pressure and deltaPressure fields ourselves.
+        if(this->m_couplingTypeOption == couplingTypeOption::OneWaySpecifiedPressure)
+        {
+          elementSubRegion->template RegisterViewWrapper< array1d<real64> >( "pressure" ) //TODO: fragile, must be consistent with solid solver pressure string
+            ->setPlotLevel(PlotLevel::LEVEL_0);
+          elementSubRegion->template RegisterViewWrapper< array1d<real64> >( "deltaPressure" ) //TODO: fragile, must be consistent with solid solver pressure string
+            ->setPlotLevel(PlotLevel::LEVEL_2);
+        } 
+    });
   }
 }
 
@@ -132,6 +140,9 @@ void PoroelasticSolver::PostProcessInput()
 
 void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
 {
+  if(this->m_couplingTypeOption == couplingTypeOption::OneWaySpecifiedPressure)
+    return;
+
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
