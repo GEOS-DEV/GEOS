@@ -18,6 +18,7 @@ matrix:
     - MPIFC=mpifort
     - MPIEXEC=/usr/local/bin/mpirun
     - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
   - compiler: clang6-LC-toss3
     sudo: required
     services: docker
@@ -25,6 +26,7 @@ matrix:
     env:
     - IMG=clang6-LC-toss3
     - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
   - compiler: clang7-LC-toss3
     sudo: required
     services: docker
@@ -32,6 +34,15 @@ matrix:
     env:
     - IMG=clang7-LC-toss3
     - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
+  - compiler: clang7-LC-toss3-debug
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=clang7-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Debug
   - compiler: gcc7-ubuntu18
     sudo: required
     services: docker
@@ -39,6 +50,7 @@ matrix:
     env:
     - IMG=gcc7-ubuntu18
     - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
   - compiler: gcc8-ubuntu18
     sudo: required
     services: docker
@@ -46,6 +58,15 @@ matrix:
     env:
     - IMG=gcc8-ubuntu18
     - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
+  - compiler: gcc8-ubuntu18-debug
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=gcc8-ubuntu18
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Debug
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       pwd;
@@ -59,7 +80,7 @@ script:
       bash ${TRAVIS_BUILD_DIR}/scripts/travis_build_and_test.sh;
     else
       docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
-      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
+      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
     fi
 
 #- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
