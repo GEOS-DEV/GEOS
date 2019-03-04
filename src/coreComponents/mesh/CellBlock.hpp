@@ -86,6 +86,9 @@ public:
 
   virtual ~CellBlock() override;
 
+  virtual void SetElementType( string const & elementType ) override;
+
+
   /**
    * @brief function to return the localIndices of the nodes in a face of the element
    * @param elementIndex The localIndex of the target element
@@ -207,9 +210,6 @@ public:
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-  string GetElementType() const { return m_elementType; }
-
-  void SetElementType( string const & elementType);
 
 protected:
 
@@ -224,8 +224,6 @@ protected:
   FaceMapType  m_toFacesRelation;
 
 
-//  CellBlock& operator=(const CellBlock& rhs);
-  string m_elementType;
 
 };
 
