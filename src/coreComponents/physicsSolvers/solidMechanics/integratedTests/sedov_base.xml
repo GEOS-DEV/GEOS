@@ -40,7 +40,7 @@
     </BasisFunctions>
     
     <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+        <GaussQuadrature3 name="gaussian"   degree="2"  />
     </QuadratureRules>
     
     <FiniteElements>

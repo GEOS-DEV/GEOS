@@ -56,6 +56,7 @@ public:
 
   virtual ~FiniteElement(){}
 
+  static string CatalogName() { return "C3D8"; }
 
   virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points);
 
@@ -71,8 +72,8 @@ public:
  */
 
 template <int dim>
-FiniteElement<dim> :: FiniteElement( BasisBase const &basis,
-                                     QuadratureBase const &quadrature,
+FiniteElement<dim> :: FiniteElement( BasisBase const & basis,
+                                     QuadratureBase const & quadrature,
                                      const int num_zero_energy_modes ):
   FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 {
