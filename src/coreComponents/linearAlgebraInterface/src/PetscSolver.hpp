@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -26,86 +26,60 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_PETSCSOLVER_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_PETSCSOLVER_HPP_
 
-#include "PetscSparseMatrix.hpp"
-#include "PetscVector.hpp"
 #include <petscksp.h>
+
+#include "PetscSparseMatrix.hpp"
+// #include "PetscVector.hpp"
+#include "LinearSolverParameters.hpp"
 
 namespace geosx
 {
 
 /**
  * \class PetscSolver
- * \brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
+ * \brief This class creates and provides basic support for PETSc solvers.
  */
 
 class PetscSolver
 {
 public:
 
-  //! @name Constructor/Destructor Methods
-  //@{
   /**
-   * @brief Empty solver constructor.
+   * @brief Solver constructor, with parameter list reference
    *
    */
-  PetscSolver();
-
-  /**
-   * @brief Copy constructor.
-   *
-   */
-  PetscSolver( PetscSolver const &Solver );
+  PetscSolver( LinearSolverParameters const & parameters );
 
   /**
    * @brief Virtual destructor.
    *
    */
   virtual ~PetscSolver() = default;
-  //@}
 
-  //! @name Solvers
-  //@{
   /**
    * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
    *
-   * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
+   * Solve Ax=b with A an PetscMatrix, x and b PetscVector.
    */
-  void solve( MPI_Comm const comm,
-              PetscSparseMatrix &Mat,
+
+  void solve( PetscMatrix &mat,
               PetscVector &sol,
-              PetscVector &rhs,
-              integer const max_iter,
-              real64 const newton_tol,
-              PC Prec = nullptr );
+              PetscVector &rhs );
 
-  /**
-   * @brief Solve system using the ml preconditioner.
-   *
-   * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
-   */
-  void ml_solve( MPI_Comm const comm,
-                 PetscSparseMatrix &Mat,
-                 PetscVector &sol,
-                 PetscVector &rhs,
-                 integer const max_iter,
-                 real64 const newton_tol,
-                 PC MLPrec = nullptr );
+private:
 
-  /**
-   * @brief Solve system using a direct solver (KLU).
-   *
-   * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
-   */
-  void dsolve( MPI_Comm const comm,
-               PetscSparseMatrix &Mat,
-               PetscVector &sol,
-               PetscVector &rhs );
-  //@}
+  LinearSolverParameters const & m_parameters;
 
-protected:
+  void solve_direct( PetscMatrix &mat,
+                     PetscVector &sol,
+                     PetscVector &rhs );
+
+  void solve_krylov( PetscMatrix &mat,
+                     PetscVector &sol,
+                     PetscVector &rhs );
 
 };
 
-}
+} // end geosx namespace
 
 #endif /* PETSCSOLVER_HPP_ */

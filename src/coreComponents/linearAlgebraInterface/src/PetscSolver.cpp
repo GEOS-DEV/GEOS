@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -35,128 +35,50 @@
 // Put everything under the geosx namespace.
 namespace geosx
 {
-/**
- * @brief Empty solver constructor.
- *
- * Create an empty (distributed) vector.
- */
 
 // ----------------------------
 // Constructors
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Empty constructor
+// Constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-PetscSolver::PetscSolver()
+PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
+  :
+  m_parameters( parameters )
 {}
 
-/**
- * @brief Solve system.
- *
- * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector. Prec is an optional
- * pointer to a preconditioner.
- */
 
 // ----------------------------
-// Iterative solver
+// Top-Level Solver
 // ----------------------------
+// We switch between different solverTypes here
 
-void PetscSolver::solve( MPI_Comm const comm,
-                         PetscSparseMatrix &Mat,
+void PetscSolver::solve( PetscMatrix &mat,
                          PetscVector &sol,
-                         PetscVector &rhs,
-                         integer const max_iter,
-                         real64 const newton_tol,
-                         PC Prec )
+                         PetscVector &rhs )
 {
-  // create linear solver
-  KSP ksp;
-  KSPCreate(comm, &ksp);
-
-  KSPSetOperators(ksp, M.getMat(), M.getMat());
-  KSPSetType(ksp, KSPGMRES);
-
-  if (pc != NULL) 
-  {
-    // use given preconditioner
-    KSPGetPC(ksp, &pc);
-  } 
-
-  // solve with default preconditioner: block Jacobi with ILU(0) on each block
-  KSPSetTolerances(ksp, newton_tol, PETSC_DEFAULT, PETSC_DEFAULT, max_iter);
-  KSPSolve(ksp, rhs.getVec(), sol.getVec());
+  if( m_parameters.solverType == "direct" )
+    solve_direct( mat, sol, rhs );
+  else
+    solve_krylov( mat, sol, rhs );
 }
-
-/**
- * @brief Solve system using an ML preconditioner. (Testing purposes mostly)
- *
- * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
- */
-
-// ----------------------------
-// Iterative solver with ML
-// ----------------------------
-// Initial test of an ML-based preconditioner.
-
-void PetscSolver::ml_solve( MPI_Comm const comm,
-                            PetscSparseMatrix &Mat,
-                            PetscVector &sol,
-                            PetscVector &rhs,
-                            integer const max_iter,
-                            real64 const newton_tol,
-                            PC MLPrec )
-{
-  // create linear solver
-  KSP ksp;
-  KSPCreate(comm, &ksp);
-
-  KSPSetOperators(ksp, M.getMat(), M.getMat());
-  KSPSetType(ksp, KSPGMRES);
-
-  if (pc != NULL) 
-  {
-    // use given preconditioner
-    KSPGetPC(ksp, &pc);
-
-  } else {
-
-    // ML preconditioner
-    PC prec;
-    KSPGetPC(ksp, &prec);
-    PCSetType(prec, PCML);
-
-    // or use PETSc geometric algebraic multigrid
-    // PCSetType(prec, PCGAMG); 
-    // MatSetBlockSize(M.getMat(), M.myRows()); // must be the same on all processes
-  }
-
-  // solve system
-  KSPSetTolerances(ksp, newton_tol, PETSC_DEFAULT, PETSC_DEFAULT, max_iter);
-  KSPSolve(ksp, rhs.getVec(), sol.getVec());
-}
-
-/**
- * @brief Solve system using a direct solver (sequential!).
- *
- * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVectors.
- */
 
 // ----------------------------
 // Direct solver
 // ----------------------------
 
-void PetscSolver::dsolve( MPI_Comm const comm,
-                          PetscSparseMatrix &Mat,
-                          PetscVector &sol,
-                          PetscVector &rhs )
+void PetscSolver::solve_direct( MPI_Comm const comm,
+                                PetscMatrix &mat,
+                                PetscVector &sol,
+                                PetscVector &rhs )
 {
   // create linear solver
   KSP ksp;
   KSPCreate(comm, &ksp);
 
-  KSPSetOperators(ksp, M.getMat(), M.getMat());
+  KSPSetOperators(ksp, mat.getMat(), mat.getMat());
   KSPSetType(ksp, KSPPREONLY);
 
   // use direct solve preconditioner
@@ -170,4 +92,153 @@ void PetscSolver::dsolve( MPI_Comm const comm,
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
 
+
+// ----------------------------
+// Iterative solver
+// ----------------------------
+
+void PetscSolver::solve_krylov( MPI_Comm const comm,
+                                PetscMatrix &mat,
+                                PetscVector &sol,
+                                PetscVector &rhs )
+{
+  // create linear solver
+  KSP ksp;
+  KSPCreate(comm, &ksp);
+  KSPSetOperators(ksp, mat.getMat(), mat.getMat());
+  KSPGMRESSetRestart(ksp, m_parameters.krylov.maxRestart);
+  KSPSetTolerances(ksp, m_parameters.krylov.tolerance, PETSC_DEFAULT, PETSC_DEFAULT, m_parameters.krylov.maxIterations);
+
+  // Choose the solver type
+  if( m_parameters.solverType == "gmres" )
+  {
+    KSPSetType(ksp, KSPGMRES);
+  }
+  else if( m_parameters.solverType == "bicgstab" )
+  {
+    KSPSetType(ksp, KSPBCGS);
+  }
+  else if( m_parameters.solverType == "cg" )
+  {
+    KSPSetType(ksp, KSPCG);
+  }
+  else
+    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+
+  // Create a preconditioner
+  PC prec;
+  KSPGetPC(ksp, &prec);
+
+  // Choose the preconditioner type
+  if( m_parameters.preconditionerType == "none" )
+  {
+    PCSetType(prec, PCNONE);
+  }
+  else if( m_parameters.preconditionerType == "jacobi" )
+  {
+    PCSetType(prec, PCJACOBI);
+  }
+  else if( m_parameters.preconditionerType == "ilu" )
+  {
+    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+  }
+  else if( m_parameters.preconditionerType == "icc" )
+  {
+    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+  }
+  else if( m_parameters.preconditionerType == "ilut" )
+  {
+    PCSetType(prec, PCHYPRE);
+    PCHYPRESetType(prec, "ilut");
+  }
+  else if( m_parameters.preconditionerType == "amg" )
+  {
+    Teuchos::ParameterList list;
+
+    if( m_parameters.amg.isSymmetric )
+      ML_Petsc::SetDefaults( "SA", list );
+    else
+      ML_Petsc::SetDefaults( "NSSA", list );
+
+    std::map<string, string> translate; // maps GEOSX to ML syntax
+
+    translate.insert( std::make_pair( "V", "MGV" ));
+    translate.insert( std::make_pair( "W", "MGW" ));
+    translate.insert( std::make_pair( "direct", "Amesos-KLU" ));
+    translate.insert( std::make_pair( "jacobi", "Jacobi" ));
+    translate.insert( std::make_pair( "blockJacobi", "block Jacobi" ));
+    translate.insert( std::make_pair( "gaussSeidel", "Gauss-Seidel" ));
+    translate.insert( std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ));
+    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
+    translate.insert( std::make_pair( "ilu", "ILU" ));
+    translate.insert( std::make_pair( "ilut", "ILUT" ));
+
+    list.set( "ML output", m_parameters.verbosity );
+    list.set( "max levels", m_parameters.amg.maxLevels );
+    list.set( "aggregation: type", "Uncoupled" );
+    list.set( "PDE equations", m_parameters.dofsPerNode );
+    list.set( "smoother: sweeps", m_parameters.amg.numSweeps );
+    list.set( "prec type", translate[m_parameters.amg.cycleType] );
+    list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
+    list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
+
+    //TODO: add user-defined null space / rigid body mode support
+    //list.set("null space: type","pre-computed");
+    //list.set("null space: vectors",&rigid_body_modes[0]);
+    //list.set("null space: dimension", n_rbm);
+
+    ml_preconditioner.reset( new ML_Petsc::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+    solver.SetPrecOperator( ml_preconditioner.get() );
+  }
+  else
+    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+
+  // HANNAH: in PETSc? Ask for a convergence normalized by the right hand side
+  KSPSetNormType(prec, KSP_NORM_PRECONDITIONED);
+
+  // Control output
+  switch( m_parameters.verbosity )
+  {
+  case 1:
+    solver.SetAztecOption( AZ_output, AZ_summary );
+    solver.SetAztecOption( AZ_diagnostics, AZ_all );
+    break;
+  case 2:
+    solver.SetAztecOption( AZ_output, AZ_all );
+    solver.SetAztecOption( AZ_diagnostics, AZ_all );
+    break;
+  default:
+    solver.SetAztecOption( AZ_output, AZ_none );
+  }
+
+  // Actually solve
+  KSPSolve(ksp, rhs.getVec(), sol.getVec());
+
+  //TODO: should we return performance feedback to have GEOSX pretty print details?:
+  //      i.e. iterations to convergence, residual reduction, etc.
 }
+
+} // end geosx namespace
+
+// HANNAH: Trilinos options for ILU, ICC, ILUT
+
+// solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
+          // Domain decomposition preconditioner (additive
+          // Schwarz). That is, each processor augments its
+          // submatrix according to options[AZ overlap] and
+          // approximately “solves” the resulting subsystem
+          // using the solver specified by
+          // options[AZ subdomain solve].
+          // Note: options[AZ reorder] determines whether
+          // matrix equations are reordered (RCM) before
+          // “solving” submatrix problem.
+// solver.SetAztecOption( AZ_overlap, 0 );
+          // Determines the submatrices factored with the domain
+          // decomposition algorithms (see options[AZ precond]).
+          // DEFAULT: 0.
+// solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
+          // Specifies the solver to use on each subdomain when
+          // options[AZ precond] is set to AZ dom decomp DEFAULT: AZ ilut. 
+          // Similar to AZ ilu using icc(k) instead of ilu(k)
+// solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
+          // The level of graph fill-in (k) for incomplete factorizations: ilu(k), icc(k), bilu(k). DEFAULT: 0
