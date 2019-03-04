@@ -746,7 +746,7 @@ void ProblemManager::GenerateMesh()
 
       elemManager->GenerateFractureMesh( faceManager );
 
-      elemManager->GenerateAggregates( faceManager );
+      elemManager->GenerateAggregates( faceManager, nodeManager );
 
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );

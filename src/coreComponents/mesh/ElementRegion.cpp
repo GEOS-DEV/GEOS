@@ -200,7 +200,7 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
   }
 }
 
-void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
+void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
   std::cout << "Coarsening ratio is : " << m_coarseningRatio << std::endl;
   if(m_coarseningRatio == 0.)
@@ -218,12 +218,9 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
 
   // Counting the total number of cell and number of vertices  
   localIndex nbCellElements = 0;
-  localIndex nbTotalVertices = 0;
-  localIndex nbVertices = 0;
   this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
     {
       nbCellElements += elementSubRegion->size();
-      nbTotalVertices += elementSubRegion->size() * elementSubRegion->numNodesPerElement(0);
     });
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
@@ -279,7 +276,23 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
   // METIS partitionning
   METIS_PartGraphRecursive( &nnodes, &nconst, xadjs.data(), adjncy.data(), nullptr, nullptr, nullptr, &nparts,
                             nullptr, nullptr, options, &objval, parts.data());
-  //aggregateSubRegion->CreateFromFineToCoarseMap(parts);
+
+  // Compute Aggregate barycenters
+  array1d< R1Tensor > aggregateBarycenters(nparts);
+  array1d< localIndex > nbCellsPerAggregates(nparts);
+  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+    {
+      for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+      {
+        aggregateBarycenters[parts[cellIndex]] += elementSubRegion->calculateElementCenter( cellIndex, *nodeManager );
+        nbCellsPerAggregates[parts[cellIndex]]++;
+      }
+    });
+  for( localIndex aggregateIndex = 0; aggregateIndex < nparts; aggregateIndex++)
+  {
+    aggregateBarycenters[aggregateIndex] /= nbCellsPerAggregates[aggregateIndex];
+  }
+  aggregateSubRegion->CreateFromFineToCoarseMap(parts, aggregateBarycenters);
 }
 
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )

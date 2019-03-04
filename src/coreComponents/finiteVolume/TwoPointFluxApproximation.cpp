@@ -148,8 +148,9 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   stencil.compress();
 }
 
-
-
+void TwoPointFluxApproximation::computeAggregationStencil(DomainPartition * domain, CellStencil & stencil)
+{
+}
 
 void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & domain,
                                                         CellStencil & fractureStencil,

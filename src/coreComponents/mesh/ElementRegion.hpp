@@ -126,7 +126,7 @@ public:
 
   void GenerateFractureMesh( FaceManager const * const faceManager );
 
-  void GenerateAggregates( FaceManager const * const faceManager );
+  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
 
   subGroupMap & GetSubRegions()
   {

@@ -44,13 +44,13 @@ public:
 
   virtual ~AggregateElementSubRegion() override;
  
-  void CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse);
+  void CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse,
+                                  const array1d< R1Tensor >& barycenters);
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                      const NodeManager& nodeManager,
                                      const bool useReferencePos = true) const override
   {
-    //TODO ?
     return m_elementCenter[k];
   }
 
@@ -95,7 +95,8 @@ private:
   /// The elements to nodes relation is one to one relation.
   NodeMapType  m_toNodesRelation;
 
-  OneToOneRelation m_fineToCoarse;
+  array1d< localIndex > m_fineToCoarse;
+  array1d< R1Tensor > m_aggregateBarycenters;
 };
 }
 

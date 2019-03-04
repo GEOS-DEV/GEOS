@@ -32,9 +32,10 @@ AggregateElementSubRegion::~AggregateElementSubRegion()
 {
 }
 
-void AggregateElementSubRegion::CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse)
+void AggregateElementSubRegion::CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse,
+                                                           const array1d< R1Tensor >& barycenters)
 {
-  this->resize( fineToCoarse.size() );
   m_fineToCoarse = fineToCoarse;
+  m_elementCenter = barycenters;
 }
 }
