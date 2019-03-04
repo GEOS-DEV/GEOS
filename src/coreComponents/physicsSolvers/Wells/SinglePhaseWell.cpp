@@ -69,22 +69,22 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
 {
   WellSolverBase::RegisterDataOnMesh(meshBodies);
 
-  WellManager * wellManager = meshBodies->getParent()->group_cast<DomainPartition *>()->getWellManager();
+  WellManager * const wellManager = meshBodies->getParent()->group_cast<DomainPartition *>()->getWellManager();
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
     wellElementSubRegion->RegisterViewWrapper<array1d<globalIndex>>( viewKeyStruct::dofNumberString ); 
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
     
-    ConnectionData * connectionData = well->getConnections(); 
+    ConnectionData * const connectionData = well->getConnections(); 
     connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::rateString );
     connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaRateString );
 
-    PerforationData * perforationData = well->getPerforations();
+    PerforationData * const perforationData = well->getPerforations();
     perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::perforationRateString );
     perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
     
@@ -96,11 +96,11 @@ void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
   WellSolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  WellManager * wellManager = domain->getWellManager();
+  WellManager * const wellManager = domain->getWellManager();
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    PerforationData * perforationData = well->getPerforations();
+    PerforationData * const perforationData = well->getPerforations();
     perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString ).resizeDimension<1>(2);
   });
 }
@@ -316,7 +316,7 @@ void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup
 {
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
 
   // Initialize the primary and secondary variables
   InitializeWells( domain );
@@ -1230,8 +1230,6 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  std::cout << "SinglePhaseWell::ApplySystemSolution started" << std::endl;
-  
   WellManager * const wellManager = domain->getWellManager();
 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
@@ -1305,12 +1303,10 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   // update properties
   UpdateStateAll( domain );
 
-  std::cout << "SinglePhaseWell::ApplySystemSolution complete" << std::endl;
 }
 
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  std::cout << "SinglePhaseWell::ResetStateToBeginningOfStep started" << std::endl;
   
   WellManager * const wellManager = domain->getWellManager();
 
@@ -1357,13 +1353,10 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
   // call constitutive models
   UpdateStateAll( domain );
 
-  std::cout << "SinglePhaseWell::ResetStateToBeginningOfStep complete" << std::endl;
 }
 
 void SinglePhaseWell::ResetViews(DomainPartition * const domain)
 {
-  std::cout << "SinglePhaseWell::ResetViews started" << std::endl;
-  
   WellSolverBase::ResetViews(domain);
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -1391,8 +1384,6 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
   m_dResVisc_dPres =
     elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
                                                                                       constitutiveManager );
-
-  std::cout << "SinglePhaseWell::ResetViews complete" << std::endl;
 }
 
 
@@ -1682,8 +1673,6 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
                                             real64 const & dt,
                                             DomainPartition * const domain )
 {
-  std::cout << "SinglePhaseWell::ImplicitStepComplete started" << std::endl;
-  
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
@@ -1729,7 +1718,6 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
     RecordWellData( well );
   });
 
-  std::cout << "SinglePhaseWell::ImplicitStepComplete complete" << std::endl;
 }
 
 

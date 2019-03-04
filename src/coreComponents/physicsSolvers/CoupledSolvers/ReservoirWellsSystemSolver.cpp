@@ -142,8 +142,6 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
 
   // TODO: synchronize the well vars
   
-  std::cout << "SinglePhaseWell::SetNumRowsAndTrilinosIndices complete" << std::endl;
-  
   // construct row map, and set a pointer to the row map
   globalIndex const nResDOF  = flowSolver.numDofPerCell();
   globalIndex const nWellDOF = wellSolver.numDofPerElement()
@@ -189,7 +187,6 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   blockSystem->SetResidualVector( BlockIDs::fluidPressureBlock,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 
-  std::cout << "ReservoirWellsSystemSolver::SetupSystem complete" << std::endl;
 }
   
 void ReservoirWellsSystemSolver::AssembleSystem( DomainPartition * const domain,

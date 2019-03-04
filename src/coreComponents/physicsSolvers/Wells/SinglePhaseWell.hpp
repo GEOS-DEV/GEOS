@@ -304,14 +304,14 @@ private:
 
   /**
    * @brief Extract the fluid model used by this solver from a group
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @param dataGroup target group (e.g. wellElementSubRegion)
    * @return
    */
   constitutive::SingleFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
 
   /**
    * @brief Extract the fluid model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @param dataGroup target group (e.g. wellElementSubRegion)
    * @return
    */
   constitutive::SingleFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;

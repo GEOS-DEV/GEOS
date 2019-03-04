@@ -81,12 +81,10 @@ Perforation * PerforationData::getPerforation( localIndex iperf )
   
 void PerforationData::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  std::cout << "PerforationData::InitializePreSubGroups started" << std::endl;
   DomainPartition const * domain
     = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ConnectToCells( mesh );
-  std::cout << "PerforationData::InitializePreSubGroups complete" << std::endl;
 }
 
 localIndex PerforationData::numPerforationsGlobal() const

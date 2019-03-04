@@ -85,13 +85,14 @@ public:
    */
   virtual ~CompositionalMultiphaseWell() override = default;
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
-  
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseWell; }
+  
+  virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
+  
 
   /**
    * @defgroup Solver Interface Functions
@@ -147,7 +148,6 @@ public:
    * @param well the well containing all the primary and dependent fields
    */
   void UpdateFluidModel( Well * well );
-
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param well the well containing all the primary and dependent fields
@@ -180,9 +180,10 @@ public:
   localIndex numFluidPhases() const;
 
   /**
-   * @brief assembles the accumulation terms for all segments
+   * @brief assembles the accumulation terms for all well elements
    * @param domain the physical domain object
-   * @param blockSystem the entire block system
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
    * @param time_n previous time value
    * @param dt time step
    */
@@ -193,9 +194,10 @@ public:
                                   real64 const dt );
 
   /**
-   * @brief assembles the flux terms for all connections
+   * @brief assembles the flux terms for all connections between well elements
    * @param domain the physical domain object
-   * @param blockSystem the entire block system
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
    * @param time_n previous time value
    * @param dt time step
    */
@@ -206,23 +208,10 @@ public:
                           real64 const dt );
 
   /**
-   * @brief assembles the volume balance terms for all perforations
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  void AssembleVolumeBalanceTerms( DomainPartition * const domain,
-                                   Epetra_FECrsMatrix * const jacobian,
-                                   Epetra_FEVector * const residual,
-                                   real64 const time_n,
-                                   real64 const dt );
-
-
-  /**
    * @brief assembles the perforation rate terms 
    * @param domain the physical domain object
-   * @param blockSystem the entire block system
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
    * @param time_n previous time value
    * @param dt time step
    */
@@ -233,6 +222,40 @@ public:
                             real64 const time_n,
                             real64 const dt );
 
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleVolumeBalanceTerms( DomainPartition * const domain,
+                                   Epetra_FECrsMatrix * const jacobian,
+                                   Epetra_FEVector * const residual,
+                                   real64 const time_n,
+                                   real64 const dt );
+
+  /**
+   * @brief assembles the momentum at all connections except the first global connection
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   */
+  void FormMomentumEquations( DomainPartition * const domain,
+                              Epetra_FECrsMatrix * const jacobian,
+                              Epetra_FEVector * const residual );
+
+  /**
+   * @brief assembles the control equation for the first global connection
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   */
+  void FormControlEquation( DomainPartition * const domain,
+                            Epetra_FECrsMatrix * const jacobian,
+                            Epetra_FEVector * const residual );
+  
   /**
    * @brief set the sparsity pattern for the linear system
    * @param domain the domain partition
@@ -257,8 +280,6 @@ public:
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
                                      localIndex offset ) override;
-  
-  void CheckWellControlSwitch( DomainPartition * const domain );
   
   /**@}*/
 
@@ -290,7 +311,12 @@ public:
     // intermediate values for constitutive model input
     static constexpr auto globalCompFractionString                     = "segmentGlobalComponentFraction";
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dSegmentGlobalComponentFraction_dGlobalCompDensity";
-
+    
+    // perforation rates and derivatives
+    static constexpr auto compPerforationRateString = "compPerforationRate";
+    static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
+    static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
+    
     using ViewKey = dataRepository::ViewKey;
 
     // degrees of freedom numbers of the well elements
@@ -309,7 +335,7 @@ public:
     ViewKey globalCompDensity      = { globalCompDensityString };
     ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
     ViewKey mixtureRate            = { mixtureRateString };
-    ViewKey deltaMixtureVelovity   = { deltaMixtureRateString };
+    ViewKey deltaMixtureRate       = { deltaMixtureRateString };
     
     // saturation
     ViewKey phaseVolFrac        = { phaseVolumeFractionString };
@@ -318,8 +344,13 @@ public:
     
     // global composition to input injection stream
     ViewKey globalComponentFrac        = { globalCompFractionString };
-    ViewKey dGlobalComponentFrac_dComp = { dGlobalCompFraction_dGlobalCompDensityString };    
-        
+    ViewKey dGlobalComponentFrac_dComp = { dGlobalCompFraction_dGlobalCompDensityString };
+
+    // perforation rates
+    ViewKey compPerforationRate        = { compPerforationRateString };
+    ViewKey dCompPerforationRate_dPres = { dCompPerforationRate_dPresString };
+    ViewKey dCompPerforationRate_dComp = { dCompPerforationRate_dCompString };
+    
   } viewKeysCompMultiphaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -336,38 +367,31 @@ private:
 
   /**
    * @brief Extract the fluid model used by this solver from a group
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @param dataGroup target group (e.g. wellElementSubRegion)
    * @return
    */
   constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
 
   /**
    * @brief Extract the fluid model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @param dataGroup target group (e.g. wellElementSubRegion)
    * @return
    */
   constitutive::MultiFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
 
   /**
    * @brief Extract the relative permeability model used by this solver from a group
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @param dataGroup target group (e.g. wellElementSubRegion)
    * @return
    */
   constitutive::RelativePermeabilityBase * GetRelPermModel( ManagedGroup * const dataGroup ) const;
 
   /**
    * @brief Extract the relative permeability model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
+   * @param dataGroup target group (e.g. wellElementSubRegion)
    * @return
    */
   constitutive::RelativePermeabilityBase const * GetRelPermModel( ManagedGroup const * const dataGroup ) const;
-
-    /**
-   * @brief Initialize all well variables from initial conditions and injection stream
-   * @param domain the domain containing the mesh and fields
-   */
-
-  void InitializeWellState( DomainPartition * const domain );
   
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
@@ -380,10 +404,29 @@ private:
    */
   void ResetViews( DomainPartition * const domain ) override;
 
-  void FormControlEquation( DomainPartition * const domain,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual );
+  /**
+   * @brief Compute the perforation rates for this well
+   * @param well the well with its perforations
+   */
+  void ComputeAllPerforationRates( Well * well );
 
+  /**
+   * @brief Save all the rates and pressures in the well for reporting purposes
+   * @param well the well with its perforations
+   */
+  void RecordWellData( Well * well );
+
+  /**
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  void InitializeWells( DomainPartition * const domain );
+  
+  /**
+   * @brief Check if the controls are viable; if not, switch the controls
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  void CheckWellControlSwitch( DomainPartition * const domain );
   
   /// the max number of fluid phases
   localIndex m_numPhases;
