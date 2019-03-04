@@ -17,18 +17,21 @@
  */
 
 /**
- * @file SimpleTetrahedron.cpp
- * @author Fu, Pengcheng
- * @date Apr 30, 2012
+ * @file Tetrahedron.cpp
  */
 
-#include "SimpleTetrahedron.h"
-#include "ElementLibrary/LagrangeBasis.h"
-#include "ElementLibrary/GaussQuadrature.h"
+#include "TetrahedralElement.hpp"
 
+#include "finiteElement/basis/LagrangeBasis.hpp"
+#include "finiteElement/quadrature/GaussQuadrature.hpp"
 
-SimpleTetrahedron::SimpleTetrahedron():
-  FiniteElement<3>(1,4,0)
+namespace geosx
+{
+
+TetrahedralElement::TetrahedralElement( BasisBase const & basis,
+                                        QuadratureBase const & quadrature,
+                                        const int num_zero_energy_modes ):
+  FiniteElement<3>( basis, quadrature, num_zero_energy_modes )
 {
   m_nodeOrdering.resize(4);
 
@@ -39,35 +42,19 @@ SimpleTetrahedron::SimpleTetrahedron():
 
 }
 
-SimpleTetrahedron::~SimpleTetrahedron()
+TetrahedralElement::~TetrahedralElement()
+{}
+
+
+
+void TetrahedralElement::reinit( array1d<R1TensorT<3> > const & mapped_support_points )
 {
-  // TODO Auto-generated destructor stub
-}
-
-
-/**
- * Reinitialize the finite element basis on a particular element.
- * We use the coordinates of the support points in real space to
- * construct the forward mapping from the parent coordinate system.  The
- * support points are assumed to follow a lexicographic ordering:
- * On the parent element, we loop over the x-coordinate fastest,
- * the y, then z (depending on the desired spatial dimension of the
- * element).
- */
-
-void SimpleTetrahedron::reinit(const std::vector<R1TensorT<3> > &mapped_support_points)
-{
-  //See Chapter 16 of Adv. FEM of U Colorado by Carlos Felippa for detailed
-  // formulation.
-  //http://www.colorado.edu/engineering/cas/courses.d/AFEM.d/
-  //Accessed in July 2012
-
 
   assert(mapped_support_points.size() == n_dofs);
 
   const unsigned int q = 0;
 
-  const std::vector<R1TensorT<3> >& X = mapped_support_points;
+  array1d<R1TensorT<3> > const & X = mapped_support_points;
 
   realT V, a[4], b[4], c[4];
   const realT sixth = 1.0 / 6.0;
@@ -113,5 +100,7 @@ void SimpleTetrahedron::reinit(const std::vector<R1TensorT<3> > &mapped_support_
     data[q].mapped_gradients[iNd](2) = c[iNd] * sixth / data[q].jacobian_determinant;
   }
 
+
+}
 
 }

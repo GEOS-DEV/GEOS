@@ -43,7 +43,7 @@ public:
 
 
 
-  virtual void reinit( const array1d<R1TensorT<3> > &mapped_support_points) = 0;
+  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points) = 0;
 
 
 //  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
