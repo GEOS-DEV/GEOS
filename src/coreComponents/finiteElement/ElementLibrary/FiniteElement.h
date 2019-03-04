@@ -50,31 +50,17 @@ class FiniteElement : public FiniteElementBase
 {
 public:
 
-  FiniteElement( const int num_q_points,
-                 const int num_dofs,
+  FiniteElement( BasisBase const & basis,
+                 QuadratureBase const & quadrature,
                  const int num_zero_energy_modes = 0 );
-
-  FiniteElement(BasisBase const & basis,
-                QuadratureBase const & quadrature,
-                const int num_zero_energy_modes = 0 );
 
   virtual ~FiniteElement(){}
 
 
-  virtual void reinit(const array1d<R1TensorT<3> > &mapped_support_points);
-
-
+  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points);
 
 };
 
-
-
-template <int dim>
-FiniteElement<dim> :: FiniteElement(const int num_q_points,
-                                    const int num_dofs,
-                                    const int num_zero_energy_modes):
-  FiniteElementBase( dim, num_q_points, num_dofs, num_zero_energy_modes)
-{}
 
 
 /**
@@ -85,9 +71,9 @@ FiniteElement<dim> :: FiniteElement(const int num_q_points,
  */
 
 template <int dim>
-FiniteElement<dim> :: FiniteElement(BasisBase const &basis,
-                                    QuadratureBase const &quadrature,
-                                    const int num_zero_energy_modes ):
+FiniteElement<dim> :: FiniteElement( BasisBase const &basis,
+                                     QuadratureBase const &quadrature,
+                                     const int num_zero_energy_modes ):
   FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 {
 

@@ -17,26 +17,28 @@
  */
 
 /**
- * @file QuadrilateralShell.h
- * @This element is implemented so that flow network has something to attach on.
- * @No mechanical behavior of real shell is implemented.
- * @m_elementGeometryID is "S4R".
- * @author Fu, Pengcheng
- * @date July 12, 2012
+ * @file Tetrahedron.h
  */
 
-#include "legacy/ElementLibrary/FiniteElement.h"
+#include "finiteElement/ElementLibrary/FiniteElement.h"
 
-#ifndef QUADRILATERALSHELL_H_
-#define QUADRILATERALSHELL_H_
+#ifndef TETRAHEDRON_H_
+#define TETRAHEDRON_H_
 
-class QuadrilateralShell : public FiniteElement<3>
+namespace geosx
+{
+class TetrahedralElement : public FiniteElement<3>
 {
 public:
-  QuadrilateralShell();
-  virtual ~QuadrilateralShell();
-  void reinit(const std::vector<R1TensorT<3> > &mapped_support_points);
+  TetrahedralElement( BasisBase const & basis,
+                      QuadratureBase const & quadrature,
+                      const int num_zero_energy_modes );
+
+  virtual ~TetrahedralElement();
+
+  void reinit( array1d<R1TensorT<3> > const & mapped_support_points );
 
 };
+}
 
-#endif /* QUADRILATERALSHELL_H_ */
+#endif /* TETRAHEDRON_H_ */
