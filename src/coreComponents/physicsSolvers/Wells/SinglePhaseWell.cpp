@@ -1011,7 +1011,6 @@ void SinglePhaseWell::FormMomentumEquations( DomainPartition * const domain,
 
     array2d<real64 const> const & dWellElemDensity_dPres =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
-
     
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
     {

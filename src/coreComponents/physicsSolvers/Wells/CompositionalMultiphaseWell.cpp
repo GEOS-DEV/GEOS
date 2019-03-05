@@ -757,7 +757,7 @@ void CompositionalMultiphaseWell::SetSparsityPattern( DomainPartition const * co
 
   // set the number of degrees of freedom per element on both sides (reservoir and well)  
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
-  localIndex constexpr maxNumDof  = maxNumComp + 2; // dofs are 1 pressure, NC comp densities (reservoir and well), 1 connection rate (well only)
+  localIndex constexpr maxNumDof  = maxNumComp + 1; // dofs are 1 pressure, NC comp densities (reservoir and well), no connection rate needed
 
   // reservoir dofs are 1 pressure and NC comp densities
   localIndex const resNDOF  = numDofPerResElement;
@@ -1377,7 +1377,141 @@ void CompositionalMultiphaseWell::FormMomentumEquations( DomainPartition * const
 							 Epetra_FECrsMatrix * const jacobian,
 							 Epetra_FEVector * const residual )
 {
+  WellManager * const wellManager = domain->getWellManager();
 
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
+  localIndex constexpr maxNumDof  = maxNumComp + 1; // here, dofs are 1 pressure, NC comp densities (reservoir and well)
+  
+  localIndex const resNDOF  = numDofPerResElement();
+
+  localIndex const NC = m_numComponents;
+  localIndex const NP = m_numPhases;
+  
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    ConnectionData const * const connectionData = well->getConnections();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
+
+    // get the degrees of freedom 
+    array1d<globalIndex const> const & wellElemDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+
+    // get pressure data
+    array1d<real64 const> const & wellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+    array1d<real64 const> const & dWellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+    array1d<real64 const> const & wellElemGravDepth =
+      wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
+    
+    // get the well element indices corresponding to each connect
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+
+    arrayView1d<localIndex const> const & prevWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
+
+    // get well secondary variables on segments
+    MultiFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
+
+    array3d<real64 const> const & wellElemPhaseDens =
+      fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
+
+    array3d<real64 const> const & dWellElemPhaseDens_dPres =
+      fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseFraction_dPressureString );
+
+    array4d<real64 const> const & dWellElemPhaseDens_dComp =
+      fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseFraction_dGlobalCompFractionString );
+    
+    for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
+    {
+      localIndex const iwelemNext = nextWellElemIndex[iconn];
+      localIndex const iwelemPrev = prevWellElemIndex[iconn];
+
+      // TODO: check for ghost well elements
+      
+      if ( iwelemNext < 0 || // exit: nothing to do
+	   iwelemPrev < 0 )  // first connection: form control equation, not momentum
+	continue;
+      else 
+      {
+        // local working variables and arrays
+        stackArray1d<globalIndex, 2 * maxNumDof > dofColIndices( 2 * resNDOF );
+        stackArray1d<real64, 2 * maxNumDof > localFluxJacobian( 2 * resNDOF );
+   
+        stackArray1d<real64, maxNumComp> dAvgDensity_dCompPrev( NC );
+	stackArray1d<real64, maxNumComp> dAvgDensity_dCompNext( NC );
+        real64 dAvgDensity_dPresPrev = 0.0;
+	real64 dAvgDensity_dPresNext = 0.0;
+	
+	// clear working arrays
+	dAvgDensity_dCompPrev = 0.0;
+	dAvgDensity_dCompNext = 0.0;
+	
+        real64 avgDensity = 0;
+
+	// TODO: precompte avg densities somewhere before this
+	for (localIndex ip = 0; ip < NP; ++ip)
+	{
+          avgDensity += 0.5 * ( wellElemPhaseDens[iwelemPrev][0][ip]
+			      + wellElemPhaseDens[iwelemNext][0][ip] ) / NP;
+          dAvgDensity_dPresPrev += 0.5 * dWellElemPhaseDens_dPres[iwelemPrev][0][ip] / NP;	  
+	  dAvgDensity_dPresNext += 0.5 * dWellElemPhaseDens_dPres[iwelemNext][0][ip] / NP;
+
+	  for (localIndex ic = 0; ic < NC; ++ic)
+	  {
+	    dAvgDensity_dCompPrev[ic] += 0.5 * dWellElemPhaseDens_dComp[iwelemPrev][0][ip][ic] / NP;
+            dAvgDensity_dCompNext[ic] += 0.5 * dWellElemPhaseDens_dComp[iwelemNext][0][ip][ic] / NP;
+	  }
+	}
+	
+        // compute depth diff times acceleration
+	real64 const gravD = ( wellElemGravDepth[iwelemPrev] - wellElemGravDepth[iwelemNext] );
+
+	// compute the current pressure in the two well elements
+	real64 const pressurePrev = wellElemPressure[iwelemPrev] + dWellElemPressure[iwelemPrev];
+	real64 const pressureNext = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
+
+	// compute momentum flux and derivatives
+	localIndex const localDofIndexPresPrev = ElemTag::PREV * resNDOF;
+	localIndex const localDofIndexPresNext = ElemTag::NEXT * resNDOF;
+
+	globalIndex const offsetPrev = getElementOffset( wellElemDofNumber[iwelemPrev] ); 
+	globalIndex const offsetNext = getElementOffset( wellElemDofNumber[iwelemNext] );
+
+	globalIndex const eqnRowIndex = offsetNext + RowOffset::CONTROL; // according to convention used in this class
+	dofColIndices[localDofIndexPresPrev]  = offsetPrev + ColOffset::DPRES;
+	dofColIndices[localDofIndexPresNext]  = offsetNext + ColOffset::DPRES;
+
+	real64 const localFlux = ( pressurePrev - pressureNext - avgDensity * gravD );
+        localFluxJacobian[localDofIndexPresPrev] = ( 1 - dAvgDensity_dPresPrev * gravD );
+	localFluxJacobian[localDofIndexPresNext] = (-1 - dAvgDensity_dPresNext * gravD );
+
+        for (localIndex ic = 0; ic < NC; ++ic)
+	{
+          localIndex const localDofIndexCompPrev = localDofIndexPresPrev + ic + 1;
+	  localIndex const localDofIndexCompNext = localDofIndexPresNext + ic + 1;
+
+	  dofColIndices[localDofIndexCompPrev] = offsetPrev + ColOffset::DPRES + ic + 1;
+	  dofColIndices[localDofIndexCompNext] = offsetNext + ColOffset::DPRES + ic + 1;
+	  
+          localFluxJacobian[localDofIndexCompPrev] = - dAvgDensity_dCompPrev[ic] * gravD;  
+          localFluxJacobian[localDofIndexCompNext] = - dAvgDensity_dCompNext[ic] * gravD;
+	}
+	  
+        // TODO: add friction and acceleration terms
+	
+        // add contribution to global residual and jacobian
+        residual->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                       &localFlux );
+        jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+				       integer_conversion<int>( 2 * resNDOF ), dofColIndices.data(),
+				       localFluxJacobian.data() );
+      }
+    }
+  });
 }
   
 void CompositionalMultiphaseWell::FormControlEquation( DomainPartition * const domain,
@@ -1497,7 +1631,7 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
 void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
 {
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
-  localIndex constexpr maxNumDof  = maxNumComp + 2; // dofs are 1 pressure, NC comp densities (reservoir and well), 1 connection rate (well only)
+  localIndex constexpr maxNumDof  = maxNumComp + 1; // here, dofs are 1 pressure, NC comp densities (reservoir and well), no connection rate needed
 
   localIndex const resNDOF  = numDofPerResElement();
   
@@ -1639,9 +1773,6 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
     stackArray1d<real64, 2>              dMobility_dP( 2 );
     stackArray2d<real64, 2 * maxNumComp> dMobility_dC( 2, NC );
 
-    stackArray1d<real64, 2>              dDensMean_dP( 2 );
-    stackArray2d<real64, 2 * maxNumComp> dDensMean_dC( 2, NC );
-
     stackArray1d<real64, 2>              dPresGrad_dP( 2 );
 
     stackArray1d<real64, 2> multiplier( 2 );
@@ -1710,8 +1841,6 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
       // compositional derivatives
       for (localIndex jc = 0; jc < NC; ++jc)
       {
-        dDensMean_dC[SubRegionTag::RES][jc] = dDens_dC[jc];
-
         dMobility_dC[SubRegionTag::RES][jc] = dRelPerm_dC[jc] * resDensity / resViscosity
 	  + mobility[SubRegionTag::RES] * (dDens_dC[jc] / resDensity - dVisc_dC[jc] / resViscosity);
       }
