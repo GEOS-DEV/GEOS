@@ -554,6 +554,10 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
   {
     rval = KERNELWRAPPER::template Launch<8,8>( std::forward<PARAMS>(params)...);
   }
+  else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
+  {
+    rval = KERNELWRAPPER::template Launch<4,1>( std::forward<PARAMS>(params)...);
+  }
 
   return rval;
 }

@@ -62,6 +62,14 @@ localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
   return m_quadrature->size();
 }
 
+std::unique_ptr<FiniteElementBase> FiniteElementDiscretization::getFiniteElement( string const & catalogName ) const
+{
+  return FiniteElementBase::CatalogInterface::Factory( catalogName,
+                                                       *m_basis,
+                                                       *m_quadrature,
+                                                       0 );
+}
+
 void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase * const cellBlock ) const
 {
 
@@ -71,15 +79,11 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   // registration, or only allow documentation node
   // registration.
 
-  std::unique_ptr<FiniteElementBase>
-  fe = FiniteElementBase::CatalogInterface::Factory( cellBlock->GetElementTypeString(),
-                                                     *m_basis,
-                                                     *m_quadrature,
-                                                     0 );
+  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( cellBlock->GetElementTypeString() );
 
   //Ensure data is contiguous
   array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
-  dNdX.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
+  dNdX.resize( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
 
   auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellElementSubRegion::viewKeyStruct::constitutiveMapString)->reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
@@ -90,26 +94,28 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
 }
 
 void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
-                                                                   dataRepository::ManagedGroup * const elementSubRegion ) const
+                                                                   ElementSubRegionBase * const elementSubRegion ) const
 {
   arrayView3d<R1Tensor> & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
   arrayView2d<real64> & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
   FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
 
-  array1d<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
+  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( elementSubRegion->GetElementTypeString() );
+
+  array1d<R1Tensor> X_elemLocal( fe->dofs_per_element() );
   R1Tensor const * const restrict X_ptr = X;
 
   for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
   {
     CopyGlobalToLocal<R1Tensor>(elemsToNodes[k], X, X_elemLocal);
-    m_finiteElement->reinit(X_elemLocal);
+    fe->reinit(X_elemLocal);
 
-    for( localIndex q = 0 ; q < m_finiteElement->n_quadrature_points() ; ++q )
+    for( localIndex q = 0 ; q < fe->n_quadrature_points() ; ++q )
     {
-      detJ(k, q) = m_finiteElement->JxW(q);
-      for (localIndex b = 0 ; b < m_finiteElement->dofs_per_element() ; ++b)
+      detJ(k, q) = fe->JxW(q);
+      for (localIndex b = 0 ; b < fe->dofs_per_element() ; ++b)
       {
-        dNdX[k][q][b] =  m_finiteElement->gradient(b, q);
+        dNdX[k][q][b] =  fe->gradient(b, q);
       }
     }
   }

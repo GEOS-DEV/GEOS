@@ -31,7 +31,8 @@ namespace geosx
 TetrahedralElement::TetrahedralElement( BasisBase const & basis,
                                         QuadratureBase const & quadrature,
                                         const int num_zero_energy_modes ):
-  FiniteElement<3>( basis, quadrature, num_zero_energy_modes )
+//  FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
+  FiniteElementBase( 3, 1, 4, 0)
 {
   m_nodeOrdering.resize(4);
 
