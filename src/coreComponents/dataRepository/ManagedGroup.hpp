@@ -655,7 +655,8 @@ public:
    * deviations between the xml and GEOS data structures.
    */
   virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent) {}
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) {}
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 

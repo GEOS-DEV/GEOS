@@ -518,13 +518,18 @@ void ProblemManager::GenerateDocumentation()
     // Generate an extensive data structure
     GenerateDataStructureSkeleton(0);
 
-    SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this);
+    // Generate schema
+    SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
+
+    // Generate non-schema documentation
+    SchemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1);
   }
 }
 
 
 void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                         xmlWrapper::xmlNode schemaParent)
+                                         xmlWrapper::xmlNode schemaParent,
+                                         integer documentationType)
 {
   xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
   if( targetChoiceNode.empty() )
@@ -539,20 +544,20 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   DomainPartition * domain  = getDomainPartition();
 
   m_functionManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode, documentationType);
 
   FieldSpecificationManager * bcManager = FieldSpecificationManager::get();
   bcManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode, documentationType);
 
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode, documentationType);
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshLevels(domain);
   ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
   elementManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode, documentationType);
 
   // Add entries that are only used in the pre-processor
   xmlWrapper::xmlNode targetIncludeNode = targetChoiceNode.append_child("xsd:element");
