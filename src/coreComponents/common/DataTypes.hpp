@@ -339,7 +339,17 @@ public:
       {std::type_index(typeid(string_array)), "string_array"},
       {std::type_index(typeid(mapPair_array)), "mapPair_array"}
     };
-    return type_names.at(key);
+
+    // If the data type is not defined here, return type_info.name()
+    auto tmp = type_names.find(key);
+    if (tmp != type_names.end())
+    {
+      return type_names.at(key);
+    }
+    else
+    {
+      return cxx_utilities::demangle(key.name());
+    }
   }
 
 
