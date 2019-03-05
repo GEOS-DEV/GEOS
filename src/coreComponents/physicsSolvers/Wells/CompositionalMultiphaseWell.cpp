@@ -112,6 +112,8 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBo
     wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
     wellElementSubRegion->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
+    wellElementSubRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::sumCompPerforationRateString );
+    
     ConnectionData * const connectionData = well->getConnections();
     connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureRateString );
     connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
@@ -152,6 +154,8 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( ManagedGroup * const r
     wellElementSubRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionString).resizeDimension<1>(NP);
     wellElementSubRegion->getReference<array2d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dPressureString).resizeDimension<1>(NP);
     wellElementSubRegion->getReference<array3d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString).resizeDimension<1,2>(NP, NC);
+
+    wellElementSubRegion->getReference<array2d<real64>>(viewKeyStruct::sumCompPerforationRateString).resizeDimension<1>(NC);
     
     PerforationData * const perforationData = well->getPerforations();
     perforationData->getReference<array3d<real64>>( viewKeyStruct::compPerforationRateString ).resizeDimension<1,2>( NP, NC );
@@ -253,7 +257,7 @@ void CompositionalMultiphaseWell::UpdateComponentFraction( Well * well )
 
 void CompositionalMultiphaseWell::UpdatePhaseVolumeFraction( Well * well )
 {
-  WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();  
+  WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
   MultiFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
 
   arrayView2d<real64> const & wellElemPhaseVolFrac =
@@ -397,6 +401,235 @@ void CompositionalMultiphaseWell::UpdateStateAll( DomainPartition * const domain
   });
 }
 
+void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domain )
+{
+  WellManager * const wellManager = domain->getWellManager();
+
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex const NC = m_numComponents;
+  localIndex const NP = m_numPhases;
+  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & resPressure = m_resPressure;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & resCompDens = m_resGlobalCompDensity;
+  
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & resPhaseDens     = m_resPhaseDens;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & resPhaseVisc     = m_resPhaseVisc;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & resPhaseCompFrac = m_resPhaseCompFrac;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & resPhaseRelPerm  = m_resPhaseRelPerm;
+
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+    ConnectionData const * const connectionData = well->getConnections();
+    PerforationData const * const perforationData = well->getPerforations();
+
+    // get well primary variables on segments
+    array1d<real64> const & wellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+    array2d<real64> const & wellElemCompDens =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
+    
+    // get the info stored on segments
+    array2d<real64> const & wellElemCompFrac =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
+
+    array2d<real64> const & wellElemSumCompPerfRates =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::sumCompPerforationRateString );
+
+    array1d<real64 const> const & wellElemGravDepth =
+      wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
+    
+    // get a reference to the primary variables on connections
+    array1d<real64> const & connRate =
+      connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureRateString );
+
+    // get the well element indices corresponding to each connect
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+
+    arrayView1d<localIndex const> const & prevWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
+    
+    // get well data on perforations
+    array2d<real64> const & compPerfRate =
+      perforationData->getReference<array2d<real64>>( viewKeyStruct::compPerforationRateString );
+
+    arrayView1d<localIndex const> const & perfWellElemIndex =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );    
+    
+    // get the element region, subregion, index
+    arrayView1d<localIndex const> const & resElementRegion =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
+
+    arrayView1d<localIndex const> const & resElementSubRegion =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+
+    arrayView1d<localIndex const> const & resElementIndex =
+      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
+
+    // TODO: fix this in the case of multiple MPI ranks working on the same well
+    // In particular, steps 1), 3) and 7) will need to be rewritten
+    
+    // 1) Loop over all perforations to compute an average mixture density and component fraction
+    real64 avgTotalDensity   = 0.0;
+    real64 avgMixtureDensity = 0.0;
+    stackArray1d<real64, maxNumComp> avgCompFrac;
+    
+    avgCompFrac = 0.0;
+    
+    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+    {
+      // get the reservoir (sub)region and element indices
+      localIndex const er  = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei  = resElementIndex[iperf];
+
+      // compute the total mobility
+      real64 resTotalMobility = 0.;
+      for (localIndex ip = 0; ip < NP; ++ip)
+      {
+        real64 const resViscosity = resPhaseVisc[er][esr][m_fluidIndex][ei][0][ip];
+        real64 const resRelPerm   = resPhaseRelPerm[er][esr][m_relPermIndex][ei][0][ip];
+	
+	resTotalMobility += resRelPerm / resViscosity;
+      }
+      
+      // increment the average mixture density
+      for (localIndex ip = 0; ip < NP; ++ip)
+      {
+        real64 const resDensity   = resPhaseDens[er][esr][m_fluidIndex][ei][0][ip];
+        real64 const resViscosity = resPhaseVisc[er][esr][m_fluidIndex][ei][0][ip];
+        real64 const resRelPerm   = resPhaseRelPerm[er][esr][m_relPermIndex][ei][0][ip];
+	
+        real64 const resMobility = resRelPerm / resViscosity;
+	avgMixtureDensity += resMobility * resDensity / resTotalMobility;
+      }
+
+
+      // increment the average global component fraction
+      real64 perfTotalDensity = 0.0;
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        perfTotalDensity += resCompDens[er][esr][ei][ic];
+      }
+
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        avgCompFrac[ic] += resCompDens[er][esr][ei][ic] / perfTotalDensity;
+      }
+      avgTotalDensity += perfTotalDensity;
+    }
+    
+    globalIndex const numPerforationsGlobal = perforationData->numPerforationsGlobal();
+
+    // compute average densities
+    avgMixtureDensity /= numPerforationsGlobal;
+    avgTotalDensity   /= numPerforationsGlobal;
+
+    // compute average component fraction
+    if ( well->getType() == Well::Type::PRODUCER )
+    {
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        avgCompFrac[ic] /= numPerforationsGlobal; // use average comp frac from reservoir
+      }  
+    }
+    else // injector
+    {
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        avgCompFrac[ic] = well->getInjectionStream( ic ); // use average comp frac from XML file
+      }
+    }
+
+    // set the global component fractions to avgCompFrac
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); iwelem++)
+    {
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        wellElemCompFrac[iwelem][ic] = avgCompFrac[ic];
+	wellElemCompDens[iwelem][ic] = avgCompFrac[ic] * avgTotalDensity;
+      }
+    }
+
+    // get the reference data for this well
+    localIndex const iwelemRef = 0; // here, we assume that the first segment is on this MPI rank, which will NOT be the case in general
+    real64 const refGravDepth = well->getReferenceDepth();
+    
+    // 2) Initialize the reference pressure
+    real64 const targetBHP = well->getTargetBHP();
+    if (well->getControl() == Well::Control::BHP)
+    {
+      // if pressure constraint, set the ref pressure at the constraint
+      wellElemPressure[iwelemRef] = targetBHP;
+    }
+    else // rate control
+    {
+      real64 resPres = well->getTargetBHP();
+      if (perforationData->numPerforationsLocal() > 0)
+      {
+        // TODO: again, this will need to be improved
+        // we have to make sure that iperf = 0 is the first perforation
+        localIndex const er  = resElementRegion[0];
+        localIndex const esr = resElementSubRegion[0];
+        localIndex const ei  = resElementIndex[0];
+        resPres = resPressure[er][esr][ei];
+      }
+      // if rate constraint, set the ref pressure slightly above/below the target pressure
+      wellElemPressure[iwelemRef] = (well->getType() == Well::Type::PRODUCER)
+	                          ? 0.9 * resPres
+		    	          : 1.1 * resPres;
+    }
+
+    // TODO: communicate ref pressure
+    // TODO: communicate avgDens
+    
+    // 3) Estimate the pressures in the segments using this avgDensity
+    // TODO: implement this in parallel with the communication of the pressures
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      if (iwelem != iwelemRef)
+        wellElemPressure[iwelem] = wellElemPressure[iwelemRef]
+ 	  + ( m_gravityFlag ? avgMixtureDensity * ( wellElemGravDepth[iwelem] - refGravDepth ) : 0 );
+    }
+
+    // 4) Recompute the pressure-dependent properties
+    UpdateState( well );
+
+    // 5) Compute the perforation rates
+    ComputeAllPerforationRates( well );
+
+    // 6) Collect all the perforation rates
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      for (localIndex ic = 0; ic < NC; ++ic)
+        wellElemSumCompPerfRates[iwelem][ic] = 0.0; // TODO: ask for a better way to do that!
+    }
+    
+    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+    {  
+      localIndex const iwelem = perfWellElemIndex[iperf];
+      for (localIndex ic = 0; ic < NC; ++ic)
+        wellElemSumCompPerfRates[iwelem][ic] += compPerfRate[iperf][ic];
+    }
+
+    // 7) Estimate the connection rates
+    // TODO: implement this in parallel with the communication of wellElemSumRates
+    real64 prevConnRate = 0;
+    localIndex const lastConnectionIndex = connectionData->numConnectionsLocal()-1;
+    for (localIndex iconn = lastConnectionIndex; iconn >= 0; --iconn)
+    {
+      localIndex const iwelemNext = nextWellElemIndex[iconn];
+
+      connRate[iconn] = prevConnRate;
+      for (localIndex ic = 0; ic < m_numComponents; ic++)
+        connRate[iconn] -= wellElemSumCompPerfRates[iwelemNext][ic] / wellElemCompDens[iwelemNext][ic];
+      
+      prevConnRate = connRate[iconn];
+    }
+  });
+}
 
 void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
@@ -1575,11 +1808,6 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
 }
 
 void CompositionalMultiphaseWell::RecordWellData( Well * well )
-{
-  // TODO
-}
-
-void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domain )
 {
   // TODO
 }

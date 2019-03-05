@@ -90,22 +90,27 @@ public:
   real64 const & getTargetBHP() const { return m_targetBHP; }
 
   real64 const & getTargetRate() const { return m_targetRate; }
+
+  real64 const & getInjectionStream( localIndex ic ) const
+  { return m_injectionStream[ic]; }
   
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
 
-    static constexpr auto referenceDepthString = "referenceDepth";
-    static constexpr auto typeString           = "type";
-    static constexpr auto controlString        = "control";
-    static constexpr auto targetBHPString      = "targetBHP";
-    static constexpr auto targetRateString     = "targetRate";
+    static constexpr auto referenceDepthString  = "referenceDepth";
+    static constexpr auto typeString            = "type";
+    static constexpr auto controlString         = "control";
+    static constexpr auto targetBHPString       = "targetBHP";
+    static constexpr auto targetRateString      = "targetRate";
+    static constexpr auto injectionStreamString = "injectionStream";
     
-    dataRepository::ViewKey referenceDepth = { referenceDepthString };
-    dataRepository::ViewKey type           = { typeString };
-    dataRepository::ViewKey control        = { controlString };
-    dataRepository::ViewKey targetBHP      = { targetBHPString };
-    dataRepository::ViewKey targetRate     = { targetRateString };
-    
+    dataRepository::ViewKey referenceDepth  = { referenceDepthString };
+    dataRepository::ViewKey type            = { typeString };
+    dataRepository::ViewKey control         = { controlString };
+    dataRepository::ViewKey targetBHP       = { targetBHPString };
+    dataRepository::ViewKey targetRate      = { targetRateString };
+    dataRepository::ViewKey injectionStrean = { injectionStreamString };
+
   } viewKeysWell;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
@@ -147,6 +152,9 @@ protected:
   Control m_currentControl;
   real64  m_targetBHP;
   real64  m_targetRate;
+
+  // global component fraction at the injector
+  array1d<real64>  m_injectionStream;
 };
 
 } //namespace geosx

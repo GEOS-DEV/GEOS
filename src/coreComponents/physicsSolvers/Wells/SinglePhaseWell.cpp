@@ -184,7 +184,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     array1d<real64 const> const & wellElemGravDepth =
       wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
 
-    array1d<real64> const & wellElemSumRates =
+    array1d<real64> const & wellElemSumPerfRates =
       wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::sumRatesString );
 
     // get a reference to the primary variables on connections
@@ -280,7 +280,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     {
       if (iwelem != iwelemRef)
         wellElemPressure[iwelem] = wellElemPressure[iwelemRef]
- 	  + ( m_gravityFlag ? avgDensity * wellElemGravDepth[iwelem] - refGravDepth : 0 );
+ 	  + ( m_gravityFlag ? avgDensity * ( wellElemGravDepth[iwelem] - refGravDepth ) : 0 );
     }
     
     // 4) Recompute the pressure-dependent properties
@@ -291,22 +291,22 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     
     // 6) Collect all the perforation rates
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
-      wellElemSumRates[iwelem] = 0.0; // TODO: ask for a better way to do that!
+      wellElemSumPerfRates[iwelem] = 0.0; // TODO: ask for a better way to do that!
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
     {  
       localIndex const iwelem = perfWellElemIndex[iperf];
-      wellElemSumRates[iwelem] += perfRate[iperf];
+      wellElemSumPerfRates[iwelem] += perfRate[iperf];
     }
 
     // 7) Estimate the connection rates
-    // TODO: implement this in parallel with the communication of wellElemSumRates
+    // TODO: implement this in parallel with the communication of wellElemSumPerfRates
     real64 prevConnRate = 0;
     localIndex const lastConnectionIndex = connectionData->numConnectionsLocal()-1;
     for (localIndex iconn = lastConnectionIndex; iconn >= 0; --iconn)
     {
       localIndex const iwelemNext = nextWellElemIndex[iconn];
       connRate[iconn] = prevConnRate
-	              - wellElemSumRates[iwelemNext] / wellElemDensity[iwelemNext][0];
+	              - wellElemSumPerfRates[iwelemNext] / wellElemDensity[iwelemNext][0];
       prevConnRate = connRate[iconn];
     }
   });

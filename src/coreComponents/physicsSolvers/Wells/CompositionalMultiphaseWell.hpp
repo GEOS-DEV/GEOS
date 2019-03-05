@@ -316,6 +316,7 @@ public:
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
+    static constexpr auto sumCompPerforationRateString = "sumCompPerforationRate";
     
     using ViewKey = dataRepository::ViewKey;
 
@@ -350,6 +351,7 @@ public:
     ViewKey compPerforationRate        = { compPerforationRateString };
     ViewKey dCompPerforationRate_dPres = { dCompPerforationRate_dPresString };
     ViewKey dCompPerforationRate_dComp = { dCompPerforationRate_dCompString };
+    ViewKey sumCompPerforationRate        = { compPerforationRateString };
     
   } viewKeysCompMultiphaseWell;
 

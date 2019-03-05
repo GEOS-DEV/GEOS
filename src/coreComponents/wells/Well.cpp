@@ -66,6 +66,10 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Well control (BHP/gasRate/oilRate/waterRate)");
 
+  RegisterViewWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Global component densities for the injection stream");
+  
   RegisterGroup( groupKeyStruct::wellElementDataString, &m_wellElementSubRegion, false );
   RegisterGroup( groupKeyStruct::wellElementsString,    &m_wellElementManager,   false );
   
