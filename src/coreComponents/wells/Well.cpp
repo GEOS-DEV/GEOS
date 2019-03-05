@@ -53,6 +53,8 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well control (BHP/gasRate/oilRate/waterRate)");
 
+  // TODO: here, double-check what should be REQUIRED/OPTIONAL
+  
   RegisterViewWrapper( viewKeyStruct::referenceDepthString, &m_referenceDepth, false )->
     setDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -129,6 +131,10 @@ void Well::PostProcessInput()
   else if (m_controlString == "waterRate")
   {
     m_currentControl = Control::WATERRATE;
+  }
+  else if (m_controlString == "liquidRate")
+  {
+    m_currentControl = Control::LIQUIDRATE;
   }
   else
   {

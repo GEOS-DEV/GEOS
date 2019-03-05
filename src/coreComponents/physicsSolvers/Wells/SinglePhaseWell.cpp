@@ -165,7 +165,7 @@ void SinglePhaseWell::UpdateState( Well * const well )
 void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 {
   WellManager * const wellManager = domain->getWellManager();
-
+  
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & resPressure = m_resPressure;
   
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & resDensity = m_resDensity;
@@ -223,6 +223,10 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     
     // TODO: fix this in the case of multiple MPI ranks working on the same well
     // In particular, steps 1), 3) and 7) will need to be rewritten
+ 
+   /*
+    * The methodology used here is based on Yifan Zhou's PhD dissertation, Stanford University
+    */
     
     // 1) Loop over all perforations to compute an average density
     real64 avgDensity = 0;
@@ -267,7 +271,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
       }
       // if rate constraint, set the ref pressure slightly above/below the target pressure
       wellElemPressure[iwelemRef] = (well->getType() == Well::Type::PRODUCER)
-	                          ? 0.9 * resPres
+ 	                          ? 0.9 * resPres // hard-coded values come from AD-GPRS
 		    	          : 1.1 * resPres;
     }
 
@@ -1137,7 +1141,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
     {
       if ( currentControl == Well::Control::BHP )
       {
-	well->setControl( Well::Control::OILRATE );
+	well->setControl( Well::Control::LIQUIDRATE );
         if ( m_verboseLevel >= 1 )
         {
           GEOS_LOG_RANK_0( "Control switch for well " << well->getName()
@@ -1634,7 +1638,7 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
       real64 const currentConnRate = connRate[iconnControl] + dConnRate[iconnControl];
       real64 const targetConnRate  = well->getTargetRate();
       real64 const normalizer      = targetConnRate > std::numeric_limits<real64>::min()
-	                           ? 1.0 / targetConnRate
+      	                           ? 1.0 / ( 1e-2 * targetConnRate ) // hard-coded value comes from AD-GPRS
 	                           : 1.0;
 
       real64 const controlEqn = ( currentConnRate - targetConnRate ) * normalizer;

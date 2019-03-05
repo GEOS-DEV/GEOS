@@ -38,9 +38,18 @@ class Well : public ObjectManagerBase
 {
 public:
 
-  enum class Type { PRODUCER, INJECTOR };
+  enum class Type {
+                    PRODUCER,
+		    INJECTOR
+                  };
 
-  enum class Control { BHP, GASRATE, OILRATE, WATERRATE };
+  enum class Control {
+                       BHP,
+                       GASRATE,
+                       OILRATE,
+                       WATERRATE,
+                       LIQUIDRATE
+                     };
   
   
   explicit Well( string const & name, dataRepository::ManagedGroup * const parent );

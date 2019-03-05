@@ -470,6 +470,10 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
     // TODO: fix this in the case of multiple MPI ranks working on the same well
     // In particular, steps 1), 3) and 7) will need to be rewritten
+
+   /*
+    * The methodology used here is based on Yifan Zhou's PhD dissertation, Stanford University
+    */
     
     // 1) Loop over all perforations to compute an average mixture density and component fraction
     real64 avgTotalDensity   = 0.0;
@@ -578,7 +582,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       }
       // if rate constraint, set the ref pressure slightly above/below the target pressure
       wellElemPressure[iwelemRef] = (well->getType() == Well::Type::PRODUCER)
-	                          ? 0.9 * resPres
+ 	                          ? 0.9 * resPres // hard-coded value comes from AD-GPRS
 		    	          : 1.1 * resPres;
     }
 
@@ -1474,6 +1478,12 @@ void CompositionalMultiphaseWell::FormMomentumEquations( DomainPartition * const
 	real64 const pressurePrev = wellElemPressure[iwelemPrev] + dWellElemPressure[iwelemPrev];
 	real64 const pressureNext = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
 
+        // compute a coefficient to normalize the momentum equation
+	real64 normalizer = (pressurePrev > pressureNext)
+			  ? pressurePrev 
+			  : pressureNext;
+        normalizer = 1. / normalizer;
+
 	// compute momentum flux and derivatives
 	localIndex const localDofIndexPresPrev = ElemTag::PREV * resNDOF;
 	localIndex const localDofIndexPresNext = ElemTag::NEXT * resNDOF;
@@ -1485,9 +1495,9 @@ void CompositionalMultiphaseWell::FormMomentumEquations( DomainPartition * const
 	dofColIndices[localDofIndexPresPrev]  = offsetPrev + ColOffset::DPRES;
 	dofColIndices[localDofIndexPresNext]  = offsetNext + ColOffset::DPRES;
 
-	real64 const localFlux = ( pressurePrev - pressureNext - avgDensity * gravD );
-        localFluxJacobian[localDofIndexPresPrev] = ( 1 - dAvgDensity_dPresPrev * gravD );
-	localFluxJacobian[localDofIndexPresNext] = (-1 - dAvgDensity_dPresNext * gravD );
+	real64 const localFlux = ( pressurePrev - pressureNext - avgDensity * gravD ) * normalizer;
+        localFluxJacobian[localDofIndexPresPrev] = ( 1 - dAvgDensity_dPresPrev * gravD ) * normalizer;
+	localFluxJacobian[localDofIndexPresNext] = (-1 - dAvgDensity_dPresNext * gravD ) * normalizer;
 
         for (localIndex ic = 0; ic < NC; ++ic)
 	{
@@ -1564,9 +1574,43 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition * const d
       residual->SumIntoGlobalValues( 1, &eqnRowIndex, &controlEqn );
       jacobian->SumIntoGlobalValues( 1, &eqnRowIndex, 1, &dofColIndex, &dControlEqn_dPres );
     }
-    // rate control
+    else if (control == Well::Control::LIQUIDRATE) // liquid rate control
+    {
+
+      // get a reference to the primary variables on connections
+      array1d<real64 const> const & connRate  =
+        connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureRateString );
+
+      array1d<real64 const> const & dConnRate =
+        connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
+      
+      // for the control equation here
+      real64 const currentConnRate = connRate[iconnControl] + dConnRate[iconnControl];
+      real64 const targetConnRate  = well->getTargetRate();
+      real64 const normalizer      = targetConnRate > std::numeric_limits<real64>::min()
+      	                           ? 1.0 / ( 1e-2 * targetConnRate ) // hard-coded value comes from AD-GPRS
+	                           : 1.0;
+
+      real64 const controlEqn = ( currentConnRate - targetConnRate ) * normalizer;
+      real64 const dControlEqn_dRate = normalizer;
+
+      globalIndex const elemOffset  = getElementOffset( wellElemDofNumber[iwelemControl] );
+      globalIndex const eqnRowIndex = elemOffset + RowOffset::CONTROL;
+      globalIndex const dofColIndex = elemOffset + ColOffset::DRATE;
+
+      // add contribution to global residual and jacobian
+      residual->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                     &controlEqn );
+      
+      jacobian->SumIntoGlobalValues( 1, &eqnRowIndex,
+                                     1, &dofColIndex,
+                                     &dControlEqn_dRate );
+
+    }
     else
     {
+      GEOS_ERROR_IF( (control != Well::Control::BHP) && (control != Well::Control::LIQUIDRATE),
+                     "Phase rate contraints for CompositionalMultiphaseWell will be implemented later" );
     }
   });
 }
