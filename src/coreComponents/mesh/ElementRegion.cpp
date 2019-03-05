@@ -279,18 +279,20 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
 
   // Compute Aggregate barycenters
   array1d< R1Tensor > aggregateBarycenters(nparts);
-  array1d< localIndex > nbCellsPerAggregates(nparts);
+  array1d< real64 > aggregateVolumes(nparts);
   this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
     {
       for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
       {
-        aggregateBarycenters[parts[cellIndex]] += elementSubRegion->calculateElementCenter( cellIndex, *nodeManager );
-        nbCellsPerAggregates[parts[cellIndex]]++;
+        R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
+        center *= elementSubRegion->getElementVolume()[cellIndex];
+        aggregateBarycenters[parts[cellIndex]] += center;
+        aggregateVolumes[parts[cellIndex]] += elementSubRegion->getElementVolume()[cellIndex];
       }
     });
   for( localIndex aggregateIndex = 0; aggregateIndex < nparts; aggregateIndex++)
   {
-    aggregateBarycenters[aggregateIndex] /= nbCellsPerAggregates[aggregateIndex];
+    aggregateBarycenters[aggregateIndex] /= aggregateVolumes[aggregateIndex];
   }
   aggregateSubRegion->CreateFromFineToCoarseMap(parts, aggregateBarycenters);
 }

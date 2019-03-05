@@ -746,7 +746,6 @@ void ProblemManager::GenerateMesh()
 
       elemManager->GenerateFractureMesh( faceManager );
 
-      elemManager->GenerateAggregates( faceManager, nodeManager );
 
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
@@ -766,6 +765,7 @@ void ProblemManager::GenerateMesh()
         });
 
       });
+      elemManager->GenerateAggregates( faceManager, nodeManager );
 //      elemManager->forElementSubRegions([&](CellBlockSubRegion * const subRegion)->void
 //      {
 //        subRegion->nodeList().SetRelatedObject(nodeManager);

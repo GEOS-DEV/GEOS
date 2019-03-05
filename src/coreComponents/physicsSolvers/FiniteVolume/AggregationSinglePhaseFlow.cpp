@@ -73,6 +73,9 @@ void AggregationSinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBod
     elemManager->forElementSubRegions([&]( ManagedGroup * const cellBlock) -> void
     {
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::elementaryPressureString1 )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::elementaryPressureString2 )->setPlotLevel(PlotLevel::LEVEL_0);
+      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::elementaryPressureString3 )->setPlotLevel(PlotLevel::LEVEL_0);
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
       cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityString );
@@ -192,6 +195,27 @@ void AggregationSinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( M
       } );
     }
   } );
+}
+
+void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
+                                          real64 const& dt,
+                                          integer const cycleNumber,
+                                          integer const eventCounter,
+                                          real64 const & eventProgress,
+                                          ManagedGroup * domain )
+{
+  std::cout << cycleNumber << std::endl;
+  /*
+  if( cycleNumber < 3 )
+  {
+    return;
+  }
+  */
+  if( dt > 0 )
+  {
+    std::cout << "SolverStep" << std::endl;
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+  }
 }
 
 real64 AggregationSinglePhaseFlow::SolverStep( real64 const& time_n,

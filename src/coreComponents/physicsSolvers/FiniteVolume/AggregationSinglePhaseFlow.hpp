@@ -85,6 +85,13 @@ public:
 
   virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
 
+  virtual void Execute( real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const & eventProgress,
+                        dataRepository::ManagedGroup * domain ) override;
+
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
@@ -178,6 +185,12 @@ public:
     static constexpr auto viscosityString = "viscosity";
     static constexpr auto porosityString  = "porosity";
     static constexpr auto oldPorosityString  = "oldPorosity";
+
+    // these are used to visualize the elementary pressure fields generated
+    static constexpr auto elementaryPressureString1      = "elementaryPressure1";
+    static constexpr auto elementaryPressureString2      = "elementaryPressure2";
+    static constexpr auto elementaryPressureString3      = "elementaryPressure3";
+    
 
     using ViewKey = dataRepository::ViewKey;
 
