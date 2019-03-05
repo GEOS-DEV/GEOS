@@ -238,6 +238,16 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > rho =
     elementRegionManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("density", constitutiveManager);
 
+
+  NumericalMethodsManager const *
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  FiniteElementDiscretizationManager const *
+  feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+
+  FiniteElementDiscretization const *
+  feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+
   m_elemsAttachedToSendOrReceiveNodes.resize( elementRegionManager->numRegions() );
   m_elemsNotAttachedToSendOrReceiveNodes.resize( elementRegionManager->numRegions() );
 
@@ -250,15 +260,21 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
 
-      arrayView2d<localIndex> const & elemsToNodes =
-        elementSubRegion->nodeList();
+      std::unique_ptr<FiniteElementBase>
+      fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
-        for( localIndex q=0 ; q< elemsToNodes.size(1) ; ++q )
+        real64 elemMass = 0;
+        for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
         {
-          mass[elemsToNodes[k][q]] += rho[er][esr][0][k][q] * detJ[k][q];
+          elemMass += rho[er][esr][0][k][q] * detJ[k][q];
+        }
+        for( localIndex a=0 ; a< elemsToNodes.size(1) ; ++a )
+        {
+          mass[elemsToNodes[k][a]] += elemMass/elemsToNodes.size(1);
         }
 
         bool isAttachedToGhostNode = false;
@@ -983,9 +999,11 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
   {
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
 
-    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+    FiniteElementDiscretization const *
+    feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+                                                                        CellElementSubRegion const * const elementSubRegion )
     {
       array3d<R1Tensor> const &
       dNdX = elementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
@@ -995,15 +1013,19 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
       arrayView2d< localIndex > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
+      std::unique_ptr<FiniteElementBase>
+      fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+
+
       // space for element matrix and rhs
       int dim = 3;
       m_maxForce = ImplicitElementKernelLaunchSelector( numNodesPerElement,
-                                                        8,
+                                                        fe->n_quadrature_points(),
                                                         elementSubRegion->size(),
                                                         dt,
                                                         dNdX,
                                                         detJ,
-                                                        feDiscretization->m_finiteElement,
+                                                        fe.get(),
                                                         constitutiveRelations[er][esr],
                                                         elementSubRegion->m_ghostRank,
                                                         elemsToNodes,

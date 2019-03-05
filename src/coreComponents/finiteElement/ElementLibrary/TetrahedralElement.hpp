@@ -20,14 +20,14 @@
  * @file Tetrahedron.h
  */
 
-#include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "finiteElement/ElementLibrary/FiniteElementBase.h"
 
 #ifndef TETRAHEDRON_H_
 #define TETRAHEDRON_H_
 
 namespace geosx
 {
-class TetrahedralElement : public FiniteElement<3>
+class TetrahedralElement : public FiniteElementBase
 {
 public:
   TetrahedralElement( BasisBase const & basis,
@@ -35,6 +35,8 @@ public:
                       const int num_zero_energy_modes );
 
   virtual ~TetrahedralElement();
+
+  static string CatalogName() { return "C3D4"; }
 
   void reinit( array1d<R1TensorT<3> > const & mapped_support_points );
 
