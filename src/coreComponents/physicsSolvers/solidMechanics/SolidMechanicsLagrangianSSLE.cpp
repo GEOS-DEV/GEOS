@@ -16,25 +16,35 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "FiniteElement.h"
+/**
+ * @file SolidMechanicsLagrangianSSLE.hpp
+ */
+
+#include "SolidMechanicsLagrangianSSLE.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "finiteElement/Kinematics.h"
+
 
 
 namespace geosx
 {
 
+using namespace constitutive;
 
-
-/**
- * Explicit instantiations
- */
-
-//template class FiniteElement<1>;
-//template class FiniteElement<2>;
-//template class FiniteElement<3>;
-
-typedef FiniteElement<3> FiniteElement3d;
-
-REGISTER_CATALOG_ENTRY( FiniteElementBase, FiniteElement3d, BasisBase const &, QuadratureBase const &, const int )
-
-
+SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
+                                                            ManagedGroup * const parent ):
+  SolidMechanicsLagrangianFEM( name, parent )
+{
+  this->m_strainTheory = 0;
 }
+
+SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
+{}
+
+
+
+
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::ManagedGroup * const )
+} /* namespace geosx */
+

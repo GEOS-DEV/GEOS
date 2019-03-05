@@ -160,7 +160,7 @@ void DomainPartition::GenerateSets(  )
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
-          localIndex const numNodes = subRegion->numNodesPerElement();
+          localIndex const numNodes = subRegion->numNodesPerElement( k );
           integer count = 0;
           for( localIndex a = 0 ; a<numNodes ; ++a )
           {
@@ -218,9 +218,8 @@ void DomainPartition::SetupCommunications()
 
 
 
-  NodeManager * nodeManager = meshLevel->getNodeManager();
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
-
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
   nodeManager->SetMaxGlobalIndex();
@@ -236,6 +235,24 @@ void DomainPartition::SetupCommunications()
                                                            allNeighbors );
 
   CommunicationTools::FindGhosts( meshLevel, allNeighbors );
+
+
+
+
+  faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
+  real64_array & faceArea  = faceManager->faceArea();
+  r1_array & faceNormal = faceManager->faceNormal();
+  r1_array & faceCenter = faceManager->faceCenter();
+  r1_array const & X = nodeManager->referencePosition();
+  array1d<array1d<localIndex> > const & nodeList = faceManager->nodeList();
+
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(nodeList[kf],
+                                                             X,
+                                                             faceCenter[kf],
+                                                             faceNormal[kf]);
+  }
 
 }
 

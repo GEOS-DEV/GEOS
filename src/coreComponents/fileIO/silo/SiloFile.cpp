@@ -310,7 +310,9 @@ SiloFile::SiloFile():
   m_restartFileRoot("restart"),
   m_fileName(),
   m_baseFileName()
-{}
+{
+  m_ghostFlags = false;
+}
 
 // *********************************************************************************************************************
 /// Destructor
@@ -550,8 +552,10 @@ void SiloFile::WriteMeshObject(string const & meshName,
   }
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-  DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
-
+  if( m_ghostFlags )
+  {
+    DBAddOption(optlist, DBOPT_GHOST_NODE_LABELS, const_cast<char*>(ghostNodeFlag) );
+  }
 
   int numTotZones = 0;
   int lnodelist = 0;
@@ -637,7 +641,10 @@ void SiloFile::WriteMeshObject(string const & meshName,
     int hi_offset = 0;
 
 
-    DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
+    if( m_ghostFlags )
+    {
+      DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast<char*>( ghostZoneFlag ) );
+    }
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
                     hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize2.data()),
@@ -674,15 +681,11 @@ void SiloFile::WriteBeamMesh(string const & meshName,
 {
   // Connectivity.
   integer_array nodelist;
+  nodelist.reserve(2*node1.size());
+  for( localIndex i = 0 ; i < node1.size() ; ++i )
   {
-    nodelist.reserve(2*node1.size());
-    localIndex_array::const_iterator it2 = node2.begin();
-    for( localIndex_array::const_iterator it = node1.begin() ;
-         it != node1.end() ; ++it, ++it2 )
-    {
-      nodelist.push_back(static_cast<int>(*it));
-      nodelist.push_back(static_cast<int>(*it2));
-    }
+    nodelist.push_back(static_cast<int>(node1[i]));
+    nodelist.push_back(static_cast<int>(node2[i]));
   }
 
   WriteBeamMesh( meshName, nnodes, coords, nodelist, cycleNumber, problemTime);
@@ -948,7 +951,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
 
-    elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
+    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
       if( numMatInRegion > 1 )
       {
@@ -980,7 +983,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                       getIndexInParent();
     }
 
-    elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
+    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
       if( numMatInRegion == 1 )
       {
@@ -1145,8 +1148,8 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     if (fieldName.second->get_typeid() == typeid( array2d<real64>))
     {
       ElementRegionManager::MaterialViewAccessor<arrayView2d<real64> > const field =
-        elementManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( fieldName.first,
-                                                                                              constitutiveManager);
+        elementManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( fieldName.first,
+                                                                                                  constitutiveManager);
 
       WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
                                      DB_ZONECENT, cycleNumber, problemTime, rootDirectory, string_array());
@@ -1590,8 +1593,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   {
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     viewPointers[er].resize( elemRegion->numSubRegions() );
-    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                            CellElementSubRegion const * const subRegion )
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
+                                               auto const * const subRegion )
     {
       numElems += subRegion->size();
 
@@ -1648,8 +1651,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
       {
         ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-        elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                                CellElementSubRegion const * const subRegion )
+        elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
+                                                   auto const * const subRegion )
         {
           ViewWrapper<arrayType> const &
           sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
@@ -1782,20 +1785,21 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     {
       ElementRegion const * const region = elementManager->GetRegion(er);
 
-      region->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const elementSubRegion )
+      region->forElementSubRegions([&]( auto const * const elementSubRegion )
       {
-        array2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+        TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
 
-        elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
+        // TODO HACK. this isn't correct for variable relations.
+        elementToNodeMap[count].resize( elemsToNodes.size(0), elementSubRegion->numNodesPerElement(0) );
 
         integer_array const & elemGhostRank = elementSubRegion->GhostRank();
 
 
-        string elementType = elementSubRegion -> GetElementType();
+        string elementType = elementSubRegion -> GetElementTypeString();
         integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
         {
-          integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
+          integer numNodesPerElement = integer_conversion<int>( elementSubRegion->numNodesPerElement(k));
           for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
             elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
@@ -1858,7 +1862,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 // geometry type " + elementRegion.m_elementGeometryID + " \n");
 //      }
 
-        shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
+        shapesize[count] = integer_conversion<int>( elementSubRegion->numNodesPerElement(0) );
         count++;
       });
     }

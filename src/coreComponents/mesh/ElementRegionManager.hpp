@@ -292,6 +292,12 @@ public:
   ConstructMaterialViewAccessor( string const & name,
                                  constitutive::ConstitutiveManager const * const cm ) const;
 
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  MaterialViewAccessor< LHS >
+  ConstructFullMaterialViewAccessor( string const & name,
+                                     constitutive::ConstitutiveManager const * const cm ) const;
+
+
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
@@ -342,7 +348,8 @@ public:
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                        ElementReferenceAccessor<localIndex_array> & packList );
+                        ElementReferenceAccessor<localIndex_array> & packList,
+                        bool const overwriteMap );
 
 
 
@@ -507,14 +514,54 @@ ConstructMaterialViewAccessor( string const & viewName,
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
       ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
-      dataRepository::ManagedGroup const * const
-      constitutiveGroup = subRegion->GetConstitutiveModels();
+      dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+      accessor[kReg][kSubReg].resize( constitutiveGroup->numSubGroups() );
+
+      for( localIndex matIndex=0 ; matIndex<constitutiveGroup->numSubGroups() ; ++matIndex )
+      {
+        dataRepository::ManagedGroup const * const
+        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
+        if( constitutiveRelation != nullptr )
+        {
+          dataRepository::ViewWrapper<VIEWTYPE> const * const
+          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
+
+          if( wrapper != nullptr )
+          {
+            accessor[kReg][kSubReg][matIndex] = wrapper->reference();
+          }
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+
+template< typename VIEWTYPE, typename LHS >
+ElementRegionManager::MaterialViewAccessor<LHS>
+ElementRegionManager::
+ConstructFullMaterialViewAccessor( string const & viewName,
+                                   constitutive::ConstitutiveManager const * const cm  ) const
+{
+  MaterialViewAccessor<LHS> accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    accessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );
 
       for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
       {
-        dataRepository::ManagedGroup const * const
-        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
+        string constitutiveName = cm->GetGroup(matIndex)->getName();
+        dataRepository::ManagedGroup const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
         if( constitutiveRelation != nullptr )
         {
           dataRepository::ViewWrapper<VIEWTYPE> const * const

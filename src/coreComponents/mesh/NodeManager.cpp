@@ -230,7 +230,9 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 //**************************************************************************************************
 localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array & packList )
+                                          localIndex_array & packList,
+                                          bool const overwriteUpMaps,
+                                          bool const )
 {
   localIndex unPackedSize = 0;
 
@@ -243,7 +245,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    m_unmappedGlobalIndicesInToEdges,
                                    this->m_globalToLocalMap,
                                    m_toEdgesRelation.RelatedObjectGlobalToLocal(),
-                                   false );
+                                   overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
@@ -253,7 +255,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    m_unmappedGlobalIndicesInToFaces,
                                    this->m_globalToLocalMap,
                                    m_toFacesRelation.RelatedObjectGlobalToLocal(),
-                                   false );
+                                   overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
@@ -261,12 +263,12 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                    this->m_toElements,
                                    packList,
                                    m_toElements.getElementRegionManager(),
-                                   false );
+                                   overwriteUpMaps );
 
   return unPackedSize;
 }
 
-void NodeManager::FixUpDownMaps(  bool const clearIfUnmapped )
+void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
                                     m_unmappedGlobalIndicesInToEdges,
@@ -276,10 +278,50 @@ void NodeManager::FixUpDownMaps(  bool const clearIfUnmapped )
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
 
-//  ObjectManagerBase::FixUpDownMaps( faceList(),
-//                                    m_unmappedGlobalIndicesInFacelist);
 }
 
+void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
+                                    array2d< localIndex > const & edgesToNodes,
+                                    array1d< array1d< localIndex > > const & facesToNodes,
+                                    ElementRegionManager const & elemRegionManager )
+{
+
+  ObjectManagerBase::CleanUpMap( receivedNodes, m_toEdgesRelation, edgesToNodes );
+  ObjectManagerBase::CleanUpMap( receivedNodes, m_toFacesRelation, facesToNodes );
+
+  for( auto const & targetIndex : receivedNodes )
+  {
+    set<std::tuple<localIndex,localIndex,localIndex> > eraseList;
+    for( localIndex k=0 ; k<m_toElements.m_toElementRegion[targetIndex].size() ; ++k )
+    {
+      localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];
+      localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
+      localIndex const elemIndex          = m_toElements.m_toElementIndex[targetIndex][k];
+
+      CellElementSubRegion const * subRegion = elemRegionManager.GetRegion(elemRegionIndex)->
+                                               GetSubRegion<CellElementSubRegion>(elemSubRegionIndex);
+      array2d<localIndex> const & downmap = subRegion->nodeList();
+      bool hasTargetIndex = false;
+
+      for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+      {
+        localIndex const compositeLocalIndex = downmap[elemIndex][a];
+        if( compositeLocalIndex==targetIndex )
+        {
+          hasTargetIndex=true;
+        }
+      }
+      if( !hasTargetIndex )
+      {
+        eraseList.insert(std::make_tuple(elemRegionIndex, elemSubRegionIndex, elemIndex) );
+      }
+    }
+    for( auto const & val : eraseList )
+    {
+      erase( m_toElements, targetIndex, std::get<0>(val), std::get<1>(val), std::get<2>(val) );
+    }
+  }
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
 

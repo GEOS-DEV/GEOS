@@ -25,12 +25,17 @@
 #include <vector>
 #include <algorithm>
 
+#if !defined(USE_GEOSX_ARRAY) && !defined(USE_RAJA_VIEW)
 #define VX(id,i) VX[i + 3*id]
+#endif
+
+
+#if !defined(USE_GEOSX_ARRAY) 
 #define elemToNodes(k, i) elemToNodes[i + 8*k]
+#endif
 
 int myrandom (int i) { return std::rand()%i;}
 
-using RAJA::localIndex;
 
 //Creates a domain on the bi-unit cube, i.e.  [-1, 1]^3
 
@@ -40,8 +45,10 @@ using RAJA::localIndex;
 //Populates:
 // VX with physical vertices
 // elemToNodes with the element to nodes list
-void meshGen(real64 * VX, localIndex * elemToNodes,
-             localIndex * RAJA_RESTRICT constitutiveMap, localIndex Kx){             
+template<typename W, typename T, typename U>
+void meshGen(W VX, T elemToNodes,
+             U constitutiveMap, size_t Kx)
+{
 
   std::srand ( unsigned ( std::time(0) ) );
   size_t nx = Kx+1;
@@ -60,7 +67,8 @@ void meshGen(real64 * VX, localIndex * elemToNodes,
       }
     }
   }
-  
+
+
   //shuffle array
   std::vector<int> rangeSeg(K);
   for(size_t i=0; i<K; ++i) rangeSeg[i] = i;
@@ -76,6 +84,7 @@ void meshGen(real64 * VX, localIndex * elemToNodes,
       for(unsigned int x=0; x<Kx; ++x){
 
         size_t tid = rangeSeg[iter];
+
         elemToNodes(tid, 0) = x + nx*(y + z*nx);
         elemToNodes(tid, 1) = (x+1) + nx*(y + z*nx);
         elemToNodes(tid, 2) = (x+1) + nx*((y+1) + z*nx);
@@ -88,14 +97,20 @@ void meshGen(real64 * VX, localIndex * elemToNodes,
 
         for(int q=0; q<8; ++q){
           localIndex id = q + 8*tid; 
+
+          //constitutiveMap.data()[id] = id;
+#if !defined(USE_RAJA_VIEW) && !defined(USE_GEOSX_ARRAY)
           constitutiveMap[id] = id;
+#else
+          constitutiveMap(tid,q) = id;
+#endif
         }
+
         
         iter++;
       }
     }
   }
-  
   
 }
 

@@ -84,7 +84,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core
+                   DEPENDS_ON geosx_core sidre
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )

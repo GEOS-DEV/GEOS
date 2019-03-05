@@ -171,7 +171,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       std::pair<globalIndex_array, globalIndex> tempComp;
 
       // fill the array with the remaining composition object global indices
-      tempComp.first.insert( tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
+      tempComp.first.insert(0, &nodeList[1], nodeList.size() - 1 );
 
       // set the second value of the pair to the localIndex of the object.
       tempComp.second = a;
@@ -397,17 +397,17 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndex ),
-                 reinterpret_cast<char*>( &(object.m_maxGlobalIndex) ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 
 }
 
 void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
-                                                 set<localIndex> const & indexList )
+                                                 std::set<localIndex> const & indexList )
 {
   int const thisRank = MPI_Rank( MPI_COMM_GEOSX );
   int const commSize = MPI_Size( MPI_COMM_GEOSX );
@@ -429,17 +429,18 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
     glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
   }
 
-  for( localIndex a=0 ; a<indexList.size() ; ++a )
+  localIndex nIndicesAssigned = 0;
+  for ( localIndex const newLocalIndex : indexList )
   {
-    localIndex const newLocalIndex = indexList[a];
     GEOS_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
-                   "existing object.m_localToGlobalMap[a]="<<object.m_localToGlobalMap[newLocalIndex]<<
-                   ", but it should equal -1.");
+                   "Local object " << newLocalIndex << " should be new but already has a global index "
+                   << object.m_localToGlobalMap[newLocalIndex] );
 
-    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + a + 1;
+    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
     object.m_globalToLocalMap[object.m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
-  }
 
+    nIndicesAssigned += 1;
+  }
 
   globalIndex maxGlobalIndex = -1;
   for( localIndex a=0 ; a<object.m_localToGlobalMap.size() ; ++a )
@@ -447,10 +448,10 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MPI_Allreduce( reinterpret_cast<char*>( &maxGlobalIndex ),
-                 reinterpret_cast<char*>( &(object.m_maxGlobalIndex) ),
-                 sizeof(globalIndex),
-                 MPI_CHAR,
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
                  MPI_MAX,
                  MPI_COMM_GEOSX );
 }
@@ -550,16 +551,16 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.RebuildSyncLists( meshLevel, commID );
   }
 
-  meshLevel->getNodeManager()->FixUpDownMaps(true);
-  meshLevel->getEdgeManager()->FixUpDownMaps(true);
-  meshLevel->getFaceManager()->FixUpDownMaps(true);
+  meshLevel->getNodeManager()->FixUpDownMaps(false);
+  meshLevel->getEdgeManager()->FixUpDownMaps(false);
+  meshLevel->getFaceManager()->FixUpDownMaps(false);
   for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
   {
     ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(esr);
-      subRegion->FixUpDownMaps(true);
+      subRegion->FixUpDownMaps(false);
     }
   }
 

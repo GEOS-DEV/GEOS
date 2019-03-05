@@ -612,6 +612,10 @@ void ProblemManager::ParseInputFile()
     GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
+
+  string::size_type const pos=inputFileName.find_last_of('/');
+  string path = inputFileName.substr( 0, pos + 1 );
+  xmlDocument.append_child(xmlWrapper::filePathString).append_attribute(xmlWrapper::filePathString) = path.c_str();
   xmlProblemNode = xmlDocument.child(this->getName().c_str());
 
   ProcessInputFileRecursive( xmlProblemNode );
@@ -742,9 +746,9 @@ void ProblemManager::GenerateMesh()
 
       faceManager->BuildFaces( nodeManager, elemManager );
 
-      elemManager->GenerateFractureMesh( faceManager );
-
       edgeManager->BuildEdges(faceManager, nodeManager );
+
+      elemManager->GenerateFractureMesh( faceManager );
 
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );

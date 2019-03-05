@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * xmlWrapper.cpp
- *
- *  Created on: Jun 3, 2017
- *      Author: rrsettgast
+/**
+ * @file xmlWrapper.cpp
  */
 
 #include "ArrayUtilities.hpp"
@@ -30,7 +27,7 @@
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-
+#include "fileIO/utils/utils.hpp"
 
 using namespace cxx_utilities;
 
@@ -70,5 +67,37 @@ void xmlWrapper::StringToInputVariable( R1Tensor & target, string inputValue )
   }
   GEOS_ERROR_IF(count!=3, "incorrect number of components specified for R1Tensor");
 }
+
+void xmlWrapper::addIncludedXML( xmlNode & targetNode )
+{
+
+  xmlNode rootNode = targetNode.root();
+  string path = rootNode.child( filePathString ).attribute( filePathString ).value();
+
+  xmlNode includedNode = targetNode.child("Included");
+
+  for (xmlWrapper::xmlNode childNode=includedNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    // Get the child tag and name
+    string childName = childNode.name();
+    GEOS_ERROR_IF( childName!="File", "Child nodes of \"Included\" should be named \"File\" ");
+
+    string filePathName = childNode.attribute("name").value();
+    if( filePathName[0] != '/' )
+    {
+      filePathName = path + filePathName;
+    }
+    xmlDocument includedXmlDocument;
+    xmlResult result;
+    result = includedXmlDocument.load_file(filePathName.c_str());
+    GEOS_ERROR_IF( !result, "Attempt to include file ("<<filePathName.c_str()<<") failed\n");
+
+    for ( xmlNode importNode=includedXmlDocument.first_child() ; importNode ; importNode=importNode.next_sibling())
+    {
+      targetNode.append_copy(importNode);
+    }
+  }
+}
+
 
 } /* namespace geosx */
