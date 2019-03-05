@@ -69,11 +69,13 @@ public:
   struct viewKeyStruct
   {
     static constexpr auto outputPathString = "outputPath";
+    static constexpr auto beginCycleString = "beginCycle";
     static constexpr auto inputPathString = "inputPath";
     static constexpr auto waitForInputString = "waitForInput";
     static constexpr auto useChomboPressuresString = "useChomboPressures";
 
     dataRepository::ViewKey outputPath = { outputPathString };
+    dataRepository::ViewKey beginCycle = { beginCycleString };
     dataRepository::ViewKey inputPath = { inputPathString };
     dataRepository::ViewKey waitForInput = { waitForInputString };
     dataRepository::ViewKey useChomboPressures = { useChomboPressuresString };
@@ -82,6 +84,7 @@ public:
 private:
   ChomboCoupler* m_coupler;
   std::string m_outputPath;
+  double m_beginCycle;
   std::string m_inputPath;
   integer m_waitForInput;
   integer m_useChomboPressures;

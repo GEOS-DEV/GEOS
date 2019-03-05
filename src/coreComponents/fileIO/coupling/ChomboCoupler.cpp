@@ -75,7 +75,7 @@ void ChomboCoupler::write(double dt)
   /* Update the dummy pressure field */
   for (localIndex i = 0; i < n_faces; ++i)
   {
-    pressure_ptr[ i ] = (i + 1) * m_counter * rank * 2.25;
+    pressure_ptr[ i ] = (i + 1) * m_counter * (rank + 1);
   }
 
   /* Build the node FieldMap. */
@@ -101,11 +101,15 @@ void ChomboCoupler::read(bool usePressures)
   GEOS_LOG_RANK_0("Waiting for file existence: " << m_inputPath);
   waitForFileExistence(m_comm, m_inputPath.data());
 
+  GEOS_LOG_RANK_0("File found: " << m_inputPath);
+  
   int rank;
   MPI_Comm_rank(m_comm, &rank);
 
   if (usePressures)
   {
+    GEOS_LOG_RANK_0("Reading pressures...");
+
     FaceManager* faces = m_mesh.getFaceManager();
     const localIndex n_faces = faces->size();
     const localIndex n_nodes = m_mesh.getNodeManager()->size();
@@ -121,10 +125,14 @@ void ChomboCoupler::read(bool usePressures)
                      m_face_offset, m_n_faces_written, n_faces, face_fields,
                      m_node_offset, m_n_nodes_written, n_nodes, node_fields);
 
+    integer_array const & ruptureState = faces->getReference<integer_array>("ruptureState");
     for (localIndex i = 0; i < n_faces; ++i)
     {
-      double expectedPressure = 2 * (i + 1) * m_counter * rank * 2.25;
-      GEOS_ERROR_IF(std::abs(pressure_ptr[ i ] - expectedPressure) > 1e-10, "i = " << i << ", pressure_ptr[i] = " << pressure_ptr[i] << ", expected = " << expectedPressure);
+      if (ruptureState[ i ] > 1)
+      {
+        double expectedPressure = 2 * (i + 1) * m_counter * (rank + 1);
+        GEOS_ERROR_IF(std::abs(pressure_ptr[ i ] - expectedPressure) > 1e-10, "i = " << i << ", pressure_ptr[i] = " << pressure_ptr[i] << ", expectedPressure = " << expectedPressure);
+      }
     }
   }
 

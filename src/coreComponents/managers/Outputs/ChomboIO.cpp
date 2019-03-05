@@ -37,6 +37,7 @@ ChomboIO::ChomboIO(std::string const & name, ManagedGroup * const parent):
   OutputBase(name, parent),
   m_coupler(nullptr),
   m_outputPath(),
+  m_beginCycle(0),
   m_inputPath("/INVALID_INPUT_PATH"),
   m_waitForInput(),
   m_useChomboPressures()
@@ -45,14 +46,19 @@ ChomboIO::ChomboIO(std::string const & name, ManagedGroup * const parent):
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Path at which the geosx to chombo file will be written.");
 
-  RegisterViewWrapper(viewKeyStruct::waitForInputString, &m_waitForInput, false)->
+  RegisterViewWrapper(viewKeyStruct::beginCycleString, &m_beginCycle, false)->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.");
+    setDescription("Cycle at which the coupling will commence.");
 
   RegisterViewWrapper(viewKeyStruct::inputPathString, &m_inputPath, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue("/INVALID_INPUT_PATH")->
-    setDescription("Path at which the chombo to geosx file will be written.");
+    setDescription("Path at which the chombo to geosx file will be written.");  
+
+  RegisterViewWrapper(viewKeyStruct::waitForInputString, &m_waitForInput, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDefaultValue(0)->
+    setDescription("True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.");
 
   RegisterViewWrapper(viewKeyStruct::useChomboPressuresString, &m_useChomboPressures, false)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -81,12 +87,17 @@ void ChomboIO::Execute( real64 const time_n,
     MeshLevel * const meshLevel = domainPartition->getMeshBody(0)->getMeshLevel(0);
     m_coupler = new ChomboCoupler(MPI_COMM_GEOSX, m_outputPath, m_inputPath, *meshLevel);
   }
+
+  if (cycleNumber < m_beginCycle)
+  {
+    return;
+  }
   
   m_coupler->write(dt);
 
   if (m_waitForInput)
   {
-    m_coupler->read(false);
+    m_coupler->read(m_useChomboPressures);
   }
 }
 
