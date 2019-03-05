@@ -435,7 +435,6 @@ private:
       else
         return false;
     }
-    ;
   };
 
   /**
@@ -447,7 +446,6 @@ private:
                             {
       return ( lhs.second < rhs.second );
     }
-    ;
   };
 
   /**

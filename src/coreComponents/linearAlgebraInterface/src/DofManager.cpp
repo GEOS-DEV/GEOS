@@ -108,7 +108,7 @@ void DofManager::setMesh( DomainPartition * const domain,
 {
   GEOS_ERROR_IF( m_meshLevel != nullptr, "A mesh is already assigned to this DofManager." );
   m_domain = domain;
-  m_meshLevel = m_domain->getMeshBodies()->GetGroup<MeshBody>( meshBodyIndex )->getMeshLevel( meshLevelIndex );
+  m_meshLevel = m_domain->getMeshBodies()->GetGroup<MeshBody>( meshBodyIndex )->getMeshLevel( integer_conversion< int >( meshLevelIndex ) );
   ;
 }
 
