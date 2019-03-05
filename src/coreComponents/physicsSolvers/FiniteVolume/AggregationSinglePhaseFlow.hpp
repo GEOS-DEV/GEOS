@@ -190,6 +190,9 @@ public:
     static constexpr auto elementaryPressureString1      = "elementaryPressure1";
     static constexpr auto elementaryPressureString2      = "elementaryPressure2";
     static constexpr auto elementaryPressureString3      = "elementaryPressure3";
+
+    // For the aggregation
+    static constexpr auto initialBCsString = "initialBCs";
     
 
     using ViewKey = dataRepository::ViewKey;
@@ -319,6 +322,9 @@ private:
 
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_bulkModulus;
   ElementRegionManager::MaterialViewAccessor<real64>              m_biotCoefficient;
+
+  /// For the aggregation
+  string_array m_initialBCs;
 };
 
 

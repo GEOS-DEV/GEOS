@@ -55,6 +55,12 @@ AggregationSinglePhaseFlow::AggregationSinglePhaseFlow( const std::string& name,
 {
   m_numDofPerCell = 1;
 
+  RegisterViewWrapper(viewKeyStruct::initialBCsString, &m_initialBCs, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Three boundary conditions that will be indepedently apply"
+                   " to compute bases pressure solution that will be combined"
+                   " after to determine the transmissibilites at the coarse scale");
+
   // set the blockID for the block system interface
   // To generate the schema, multiple solvers of that use this command are constructed
   // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
@@ -205,12 +211,14 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
                                           ManagedGroup * domain )
 {
   std::cout << cycleNumber << std::endl;
-  /*
   if( cycleNumber < 3 )
   {
+    auto fs = FieldSpecificationManager::get();
+    auto bp1 = fs->CreateChild("FieldSpecification", "boundaryPressure1")->group_cast<FieldSpecificationBase*>();
+    bp1->SetFunctionName("X");
+    
     return;
   }
-  */
   if( dt > 0 )
   {
     std::cout << "SolverStep" << std::endl;
@@ -848,6 +856,7 @@ void AggregationSinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * do
                                                  real64 const time_n, real64 const dt,
                                                  EpetraBlockSystem * const blockSystem )
 {
+  std::cout << "allo" << std::endl;
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
   // call the BoundaryConditionManager::ApplyField function that will check to see

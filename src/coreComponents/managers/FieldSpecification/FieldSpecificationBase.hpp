@@ -546,6 +546,15 @@ public:
   struct groupKeyStruct
   {} groupKeys;
 
+  void SetFunctionName( string const & functionName )
+  {
+    m_functionName = functionName;
+  }
+
+  void SetObjectPath( string const & functionName )
+  {
+    m_functionName = functionName;
+  }
 
   /**
    * Accessor
@@ -639,6 +648,9 @@ private:
 
   /// Time after which the bc will no longer be applied.
   real64 m_endTime;
+
+  /// Wether or not the Field is specified or not
+  bool m_enabled;
 
   /// the name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
