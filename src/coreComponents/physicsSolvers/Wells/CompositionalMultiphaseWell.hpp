@@ -57,6 +57,18 @@ class CompositionalMultiphaseWell : public WellSolverBase
 {
 public:
 
+  struct ColOffset
+  {
+    static constexpr integer DPRES = 0;
+    static constexpr integer DRATE = 1;
+  };
+
+  struct RowOffset
+  {
+    static constexpr integer CONTROL = 0;
+    static constexpr integer MASSBAL = 1;
+  };
+  
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository

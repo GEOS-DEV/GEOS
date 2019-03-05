@@ -669,6 +669,7 @@ void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
                                                  real64 const time_n,
                                                  real64 const dt )
 {
+  // will not be implemented
 }
 
 void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
@@ -1493,12 +1494,6 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
     localIndex const esr = resElementSubRegion[iperf];
     localIndex const ei  = resElementIndex[iperf];
 
-    // row index on reservoir side
-    eqnRowIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
-
-    // column index on reservoir side
-    dofColIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
-
     // get reservoir variables
     density[SubRegionTag::RES] = resDensity[er][esr][m_fluidIndex][ei][0];
     dDensity_dP[SubRegionTag::RES] = dResDensity_dPres[er][esr][m_fluidIndex][ei][0];
@@ -1516,12 +1511,6 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
     // 2) Well side
 
     localIndex const iwelem = perfWellElemIndex[iperf]; 
-
-    // row index on well side
-    eqnRowIndices[SubRegionTag::WELL] = wellElemDofNumber[iwelem] + RowOffset::MASSBAL;
-
-    // column index on well side
-    dofColIndices[SubRegionTag::WELL] = wellElemDofNumber[iwelem] + ColOffset::DPRES;
 
     // get well variables
     density[SubRegionTag::WELL] = wellElemDensity[iwelem][0];
@@ -1723,9 +1712,9 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
 
 void SinglePhaseWell::RecordWellData( Well * well )
 {
-  ConnectionData * connectionData = well->getConnections();
-  WellElementSubRegion * wellElementSubRegion = well->getWellElements();
-  PerforationData * perforationData = well->getPerforations();
+  ConnectionData const * const connectionData = well->getConnections();
+  WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+  PerforationData const * perforationData = well->getPerforations();
 
   array1d<real64 const> const & wellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
