@@ -267,6 +267,8 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
+
+        // TODO this integration needs to be be carried out properly.
         real64 elemMass = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
         {
