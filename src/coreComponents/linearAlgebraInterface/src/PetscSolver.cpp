@@ -133,6 +133,7 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   if( m_parameters.preconditionerType == "none" )
   {
     PCSetType(prec, PCNONE);
+
   }
   else if( m_parameters.preconditionerType == "jacobi" )
   {
@@ -150,46 +151,49 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   {
     PCSetType(prec, PCHYPRE);
     PCHYPRESetType(prec, "pilut");
-    // HANNAH: set options: PetscOptionsSetValue(NULL,"-ksp_max_it","1500");
+    // HYPRE Pilut Options
+    // -pc_hypre_pilut_maxiter <-2>: Number of iterations (None)
+    // -pc_hypre_pilut_tol <-2.>: Drop tolerance (None)
+    // -pc_hypre_pilut_factorrowsize <-2>: FactorRowSize (None)
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
-    Teuchos::ParameterList list;
 
-    if( m_parameters.amg.isSymmetric )
-      ML_Petsc::SetDefaults( "SA", list );
-    else
-      ML_Petsc::SetDefaults( "NSSA", list );
+    PCSetType(prec, GAMG);
 
-    std::map<string, string> translate; // maps GEOSX to ML syntax
+    // Options
+    if (m_parameters.amg.cycleType == "v"){
+      PCMGSetCycleType(prec, PC_MG_CYCLE_V);
+    } else {
+      PCMGSetCycleType(prec, PC_MG_CYCLE_W);
+    }
+  
+    // GAMG options
+    // -pc_gamg_type <agg>: Type of AMG method (one of) geo agg classical (PCGAMGSetType)
+    // -pc_gamg_repartition: <FALSE> Repartion coarse grids (PCGAMGSetRepartition)
+    // -pc_gamg_reuse_interpolation: <FALSE> Reuse prolongation operator (PCGAMGReuseInterpolation)
+    // -pc_gamg_asm_use_agg: <FALSE> Use aggregation aggregates for ASM smoother (PCGAMGASMSetUseAggs)
+    // -pc_gamg_use_parallel_coarse_grid_solver: <FALSE> Use parallel coarse grid solver (otherwise put last grid on one process) (PCGAMGSetUseParallelCoarseGridSolve)
+    // -pc_gamg_process_eq_limit <50>: Limit (goal) on number of equations per process on coarse grids (PCGAMGSetProcEqLim)
+    // -pc_gamg_coarse_eq_limit <50>: Limit on number of equations for the coarse grid (PCGAMGSetCoarseEqLim)
+    // -pc_gamg_threshold_scale <1.>: Scaling of threshold for each level not specified (PCGAMGSetThresholdScale)
+    // -pc_gamg_threshold <0.>: Relative threshold to use for dropping edges in aggregation graph (PCGAMGSetThreshold)
+    // -pc_mg_levels <30>: Set number of MG levels (PCGAMGSetNlevels)
+    // GAMG-AGG options
+    // -pc_gamg_agg_nsmooths <1>: smoothing steps for smoothed aggregation, usually 1 (PCGAMGSetNSmooths)
+    // -pc_gamg_sym_graph: <FALSE> Set for asymmetric matrices (PCGAMGSetSymGraph)
+    // -pc_gamg_square_graph <1>: Number of levels to square graph for faster coarsening and lower coarse grid complexity (PCGAMGSetSquareGraph)
+    // Matrix/graph coarsen (MatCoarsen) options -------------------------------------------------
+    // -mat_coarsen_type <mis>: Type of aggregator (one of) mis hem (MatCoarsenSetType)
 
-    translate.insert( std::make_pair( "V", "MGV" ));
-    translate.insert( std::make_pair( "W", "MGW" ));
-    translate.insert( std::make_pair( "direct", "Amesos-KLU" ));
-    translate.insert( std::make_pair( "jacobi", "Jacobi" ));
-    translate.insert( std::make_pair( "blockJacobi", "block Jacobi" ));
-    translate.insert( std::make_pair( "gaussSeidel", "Gauss-Seidel" ));
-    translate.insert( std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ));
-    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
-    translate.insert( std::make_pair( "ilu", "ILU" ));
-    translate.insert( std::make_pair( "ilut", "ILUT" ));
-
-    list.set( "ML output", m_parameters.verbosity );
-    list.set( "max levels", m_parameters.amg.maxLevels );
-    list.set( "aggregation: type", "Uncoupled" );
-    list.set( "PDE equations", m_parameters.dofsPerNode );
-    list.set( "smoother: sweeps", m_parameters.amg.numSweeps );
-    list.set( "prec type", translate[m_parameters.amg.cycleType] );
-    list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
-    list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
-
-    //TODO: add user-defined null space / rigid body mode support
-    //list.set("null space: type","pre-computed");
-    //list.set("null space: vectors",&rigid_body_modes[0]);
-    //list.set("null space: dimension", n_rbm);
-
-    ml_preconditioner.reset( new ML_Petsc::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
-    solver.SetPrecOperator( ml_preconditioner.get() );
+    // list.set( "ML output", m_parameters.verbosity );
+    // list.set( "max levels", m_parameters.amg.maxLevels );
+    // list.set( "aggregation: type", "Uncoupled" );
+    // list.set( "PDE equations", m_parameters.dofsPerNode );
+    // list.set( "smoother: sweeps", m_parameters.amg.numSweeps );
+    // list.set( "prec type", translate[m_parameters.amg.cycleType] );
+    // list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
+    // list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
   }
   else
     GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
@@ -209,9 +213,6 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
 
   // Actually solve
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
-
-  //TODO: should we return performance feedback to have GEOSX pretty print details?:
-  //      i.e. iterations to convergence, residual reduction, etc.
 }
 
 } // end geosx namespace
