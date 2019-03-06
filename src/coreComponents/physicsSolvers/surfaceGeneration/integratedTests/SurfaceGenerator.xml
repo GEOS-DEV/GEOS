@@ -12,6 +12,7 @@
                                   verboseLevel="0"
                                   discretization="FE1"
                                   targetRegions="Region2"
+                                  solidMaterialName="granite"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-3"

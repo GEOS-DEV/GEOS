@@ -23,6 +23,7 @@
                                   verboseLevel="1"
                                   discretization="FE1"
                                   targetRegions="Region2"
+                                  solidMaterialName="shale"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
