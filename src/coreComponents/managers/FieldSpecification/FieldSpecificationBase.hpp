@@ -539,12 +539,23 @@ public:
     constexpr static auto initialConditionString = "initialCondition";
     constexpr static auto beginTimeString = "beginTime";
     constexpr static auto endTimeString = "endTime";
+    constexpr static auto enabledString = "enabled";
 
 
   } viewKeys;
 
   struct groupKeyStruct
   {} groupKeys;
+
+  void Toggle( int enable )
+  {
+    m_enabled = enable;
+  }
+
+  void SetScale( real64 scale )
+  {
+    m_scale = scale;
+  }
 
   void SetFunctionName( string const & functionName )
   {
@@ -649,8 +660,8 @@ private:
   /// Time after which the bc will no longer be applied.
   real64 m_endTime;
 
-  /// Wether or not the Field is specified or not
-  bool m_enabled;
+  /// Wether or not the Field should be specified or not
+  int m_enabled;
 
   /// the name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
@@ -667,6 +678,8 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
                                                            string const & fieldName ) const
 {
 
+  if (!m_enabled)
+    return;
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -729,6 +742,8 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
                                                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                             systemSolverInterface::BlockIDs const blockID ) const
 {
+  if (!m_enabled)
+    return;
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( vw->get_typeid());
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
@@ -763,6 +778,8 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 systemSolverInterface::BlockIDs const blockID,
                                 LAMBDA && lambda ) const
 {
+  if (!m_enabled)
+    return;
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();

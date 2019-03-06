@@ -325,6 +325,9 @@ private:
 
   /// For the aggregation
   string_array m_initialBCs;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure1;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure2;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure3;
 };
 
 

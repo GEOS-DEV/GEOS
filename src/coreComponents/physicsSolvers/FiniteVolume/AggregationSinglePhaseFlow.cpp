@@ -210,12 +210,24 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
                                           real64 const & eventProgress,
                                           ManagedGroup * domain )
 {
-  std::cout << cycleNumber << std::endl;
-  if( cycleNumber < 3 )
+  std::cout << cycleNumber << " " << m_initialBCs.size() << std::endl;
+  if( cycleNumber == 0 )
   {
-    auto fs = FieldSpecificationManager::get();
-    auto bp1 = fs->CreateChild("FieldSpecification", "boundaryPressure1")->group_cast<FieldSpecificationBase*>();
-    bp1->SetFunctionName("X");
+    auto fc = FieldSpecificationManager::get();
+    auto bc = fc->GetGroup( m_initialBCs[0] )->group_cast< FieldSpecificationBase* >();
+    bc->Toggle(1);
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+
+    
+    return;
+  }
+  if( cycleNumber == 1 )
+  {
+    
+    return;
+  }
+  if( cycleNumber == 2 )
+  {
     
     return;
   }

@@ -89,6 +89,11 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, ManagedGrou
     setApplyDefaultValue(1.0e99)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("time at which bc will stop being applied");
+
+  RegisterViewWrapper( viewKeyStruct::enabledString, &m_enabled, 0 )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("BC should be applied");
 }
 
 
