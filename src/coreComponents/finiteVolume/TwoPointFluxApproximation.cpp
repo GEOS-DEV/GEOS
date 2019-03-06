@@ -63,7 +63,8 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 
 void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, CellStencil & stencil)
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshBody * const meshBody = domain->getMeshBodies()->GetGroup<MeshBody>(0);
+  MeshLevel * const mesh = meshBody->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
   FaceManager * const faceManager = mesh->getFaceManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -103,7 +104,7 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
       continue;
 
     faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
-    if( faceArea < std::numeric_limits<real64>::epsilon() )
+    if( faceArea < meshBody->GetTolerance() )
       continue;
 
     faceWeightInv = 0.0;
