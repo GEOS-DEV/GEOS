@@ -98,13 +98,14 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceManager->size(), 2);
+  real64 areaTolerance = meshBody->GetTolerance() * meshBody->GetTolerance();
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
     if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
       continue;
 
     faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
-    if( faceArea < meshBody->GetTolerance() )
+    if( faceArea < areaTolerance )
       continue;
 
     faceWeightInv = 0.0;
