@@ -1,53 +1,87 @@
-sudo: required
-services: docker
-dist: trusty
 language: cpp
 env:
   global:
-  - secure: xN+lGOH8LzepE1OoOrHelDgu1wf7nL/B7nBWhN7EnCB7S7hZJL/AakruHy4lMfQfF4XkrnPWmBlmc4wdLH+o6jPkUISm4nLRSTMnRV2L+Mjyzg3aIEua0xpO6rLUNgsShB8mfkieTJq+kSj3Yp2CM7GEzm+UNNxeJcY0VdUHy9msRRRbXiLViIrfwBEVC9He7xG9NWfqkpsORfoiPmVDm7YzuXALdB8qkX4AWggysz/BCVj0PwBMr754eEpOodQ9GeKDF2Kwy5vPAqK5f7zwshJtF9VevyA1A2M9y8BHJMymz4wGaSxLNMeUU85AmVIvmzX0weG94JQ7mlUVszNpO5CCIyjwCOF+IDUI8HCDJGOY7+gGnv4H2LhDwAXvFLD65FlMntQQe2e4KRTnFxtJvvghjv5FyxJSHwctLsgeDpr2uZDcAhK1yf8TNsqqMiXQj2yGLByJy8j5PjUyd8oN47uZo0T5DDMd5c3ztUppc5+DisIoqmoYQeom3lYbpeudaf492ZDBWEV4rS9COl1h7CnpanMBpXWLFc2zXyfTpRn3GifutiF8M3rSS2KHcPyb9JLePTrC4+itMkwB4SHo1VYk4H2RQAdPMDFHMKCeVs2Z4sF9pGPJR+JzRekaKFLDm73ihsuE0cnx1oPVQMjSWa0e7A1a9W4UQBvp9xR++i4=
   - OMP_NUM_THREADS=3
   - DO_BUILD=yes
   - DO_TEST=yes
+  - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
 matrix:
   include:
-#  - compiler: gcc7
-#    env:
-#    - IMG=gcc7
-#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-#  - compiler: clang4
-#    env:
-#    - IMG=clang4
-#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-#  - compiler: clang5
-#    env:
-#    - IMG=clang5
-#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
-#  - compiler: clang6
-#    env:
-#    - IMG=clang6
-#    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - os: osx
+    osx_image: xcode10
+    env:
+    - CC=clang
+    - CXX=clang++
+    - FC=gfortran
+    - MPICC=mpicc
+    - MPICXX=mpicxx
+    - MPIFC=mpifort
+    - MPIEXEC=/usr/local/bin/mpirun
+    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
+  - compiler: clang6-LC-toss3
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=clang6-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
+  - compiler: clang7-LC-toss3
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=clang7-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
+  - compiler: clang7-LC-toss3-debug
+    sudo: required
+    services: docker
+    dist: trusty
+    env:
+    - IMG=clang7-LC-toss3
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Debug
   - compiler: gcc7-ubuntu18
+    sudo: required
+    services: docker
+    dist: trusty
     env:
     - IMG=gcc7-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
   - compiler: gcc8-ubuntu18
+    sudo: required
+    services: docker
+    dist: trusty
     env:
     - IMG=gcc8-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - compiler: clang5-ubuntu18
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
+  - compiler: gcc8-ubuntu18-debug
+    sudo: required
+    services: docker
+    dist: trusty
     env:
-    - IMG=clang5-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - compiler: clang6-ubuntu18
-    env:
-    - IMG=clang6-ubuntu18
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - compiler: clang5-centos
-    env:
-    - IMG=clang5-centos
-    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-    - PATHMOD="/opt/rh/llvm-toolset-7/root/usr/bin:/opt/rh/llvm-toolset-7/root/usr/sbin:/usr/lib64/openmpi/bin"
-
+    - IMG=gcc8-ubuntu18
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Debug
 script: 
-- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
-- docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      pwd;
+      brew install openmpi > /dev/null 2>&1;
+      cd ..;
+      mkdir thirdPartyLibs;
+      cd thirdPartyLibs;
+      wget https://www.dropbox.com/s/dd7hvw2hfmws5ax/tpl-osx-clang10.tar.gz;
+      tar -xf tpl-osx-clang10.tar.gz;
+      cd ../GEOSX;
+      bash ${TRAVIS_BUILD_DIR}/scripts/travis_build_and_test.sh;
+    else
+      docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
+      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
+    fi
+
+#- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
+#- docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh

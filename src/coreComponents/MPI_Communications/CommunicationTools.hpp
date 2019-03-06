@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -49,6 +49,10 @@ public:
   static void AssignGlobalIndices( ObjectManagerBase & object,
                                    ObjectManagerBase const & compositionObject,
                                    array1d<NeighborCommunicator> & neighbors );
+
+  static void AssignNewGlobalIndices( ObjectManagerBase & object,
+                                      std::set<localIndex> const & indexList );
+
 
   static void FindGhosts( MeshLevel * const meshLevel,
                           array1d<NeighborCommunicator> & neighbors );

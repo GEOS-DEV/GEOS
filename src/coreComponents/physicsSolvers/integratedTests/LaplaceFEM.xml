@@ -8,7 +8,8 @@
     <LaplaceFEM name="laplace"
                 timeIntegrationOption="SteadyState"
                 fieldName="Temperature"
-                verboseLevel="3">
+                verboseLevel="3"
+                targetRegions="Region2">
     </LaplaceFEM>
   </Solvers>
 
@@ -54,56 +55,50 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
       <LinearElasticIsotropic name="shale" 
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                              ShearModulus0="4.16667e9"/>
   </Constitutive>
 
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
-  <BoundaryConditions>
-    <Dirichlet name="sourceTerm" 
-               fieldName="Temperature" 
-               dataType="Scalar" 
+  <FieldSpecifications>
+    <FieldSpecification name="sourceTerm" 
+               fieldName="Temperature"  
                objectPath="nodeManager" 
                scale="1000.0" 
                setNames="source"/>
                
-    <Dirichlet name="sinkTerm"   
-               fieldName="Temperature" 
-               dataType="Scalar" 
+    <FieldSpecification name="sinkTerm"   
+               fieldName="Temperature"  
                objectPath="nodeManager" 
                scale="0.0"    
                setNames="sink"/>
-  </BoundaryConditions>
+  </FieldSpecifications>
 
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
+    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
  
   <Outputs>
@@ -112,8 +107,8 @@
   
 
   <Geometry>
-    <Box name="source" type="0" xMin="-1.000, -1.000, -1.000" xMax="0.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 0.999,  -0.999,  -0.999" xMax="1.10, 1.10, 1.10"/>
+    <Box name="source" xMin="-1.000, -1.000, -1.000" xMax="0.01, 1.01, 1.01"/>
+    <Box name="sink"   xMin="0.999, -0.999, -0.999" xMax="1.10, 1.10, 1.10"/>
   </Geometry>
 
 </Problem>

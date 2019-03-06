@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -83,10 +83,6 @@ public:
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
 
-
-  void FillDocumentationNode() override final;
-
-
   void SetEdgeMaps( EdgeManager const * const edgeManager );
 
   void SetFaceMaps( FaceManager const * const faceManager );
@@ -103,7 +99,16 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
+
+  void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( std::set<localIndex> const & receivedNodes,
+                         array2d< localIndex > const & edgesToNodes,
+                         array1d< array1d< localIndex > > const & facesToNodes,
+                         ElementRegionManager const & elemRegionManager );
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -218,6 +223,12 @@ private:
 
   /// nodeToElement relation
   OrderedVariableToManyElementRelation m_toElements;
+
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< set<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+
+
 
   /// deleted constructor
   NodeManager() = delete;

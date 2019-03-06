@@ -4,16 +4,15 @@
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
 
     <Poroelastic name="poroSolve" 
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
                  verboseLevel="1"
-                 >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              maxIterNewton="40"
+                 targetRegions="Region2">
+      <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
     </Poroelastic>
 
@@ -21,9 +20,8 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="1"
-                                  >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+                                  targetRegions="Region2">
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="5"
                               verbosityFlag="2"/>
@@ -34,9 +32,9 @@
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
-                     solidName="shale">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+                     solidName="shale"
+                     targetRegions="Region2">
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
@@ -55,8 +53,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="boundaryBot" type="0" xMin="-0.1, -0.01, -0.01" xMax="2.1, 1.01, 1.01"/>
-    <Box name="boundaryTop" type="0" xMin="39.9, -0.01, -0.01" xMax="42.1, 1.01, 1.01"/>
+    <Box name="boundaryBot" xMin="-0.1, -0.01, -0.01" xMax="2.1, 1.01, 1.01"/>
+    <Box name="boundaryTop" xMin="39.9, -0.01, -0.01" xMax="42.1, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -95,7 +93,7 @@
     </QuadratureRules>
 
     <FiniteElements>
-      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
     
     <FiniteVolume>
@@ -106,7 +104,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" materialList="shale water" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" materialList="shale water" />
   </ElementRegions>
 
   <Constitutive>
@@ -130,105 +128,92 @@
                                   
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
 
-  <BoundaryConditions>
-    <Dirichlet name="permx"
+  <FieldSpecifications>
+    <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
-    <Dirichlet name="permy"
+    <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
-    <Dirichlet name="permz"
+    <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
-               dataType="R1Tensor"
                scale="4.963e-14"/>
 
-    <Dirichlet name="referencePorosity"
+    <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="referencePorosity"
-               dataType="real64"
                scale="0.3"/>
 
-    <Dirichlet name="initialPressure"
+    <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"/>
   
-    <Dirichlet name="xnegconstraint" 
+    <FieldSpecification name="xnegconstraint" 
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="0" 
                scale="0.0" 
                setNames="xneg"/>
 
-    <Dirichlet name="yconstraint"    
+    <FieldSpecification name="yconstraint"    
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="1" 
                scale="0.0" 
                setNames="yneg ypos"/>
                
-    <Dirichlet name="zconstraint"    
+    <FieldSpecification name="zconstraint"    
                objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               dataType="Vector" 
+               fieldName="TotalDisplacement"  
                component="2" 
                scale="0.0" 
                setNames="zneg zpos"/>
                
-    <Dirichlet name="xposconstraint" 
+    <FieldSpecification name="xposconstraint" 
                objectPath="faceManager" 
-               fieldName="Traction" 
-               dataType="Vector" 
+               fieldName="Traction"  
                component="0" 
                scale="-2.125e6" 
                setNames="xpos"
                functionName="timeFunction"/>
 
-    <Dirichlet name="boundaryPressure"
-               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+    <FieldSpecification name="boundaryPressure"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
-               dataType="real64"
                scale="2.125e6"
                setNames="boundaryBot boundaryTop"/>  
 
-  </BoundaryConditions>
+  </FieldSpecifications>
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
-    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
+    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
   <Outputs>
     <Silo name="siloOutput"/>

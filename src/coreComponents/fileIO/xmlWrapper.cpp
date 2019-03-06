@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,20 +16,18 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * xmlWrapper.cpp
- *
- *  Created on: Jun 3, 2017
- *      Author: rrsettgast
+/**
+ * @file xmlWrapper.cpp
  */
 
+#include "ArrayUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "xmlWrapper.hpp"
-#include "DocumentationNode.hpp"
+#include "IntegerConversion.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-
+#include "fileIO/utils/utils.hpp"
 
 using namespace cxx_utilities;
 
@@ -48,70 +46,58 @@ xmlWrapper::~xmlWrapper()
   // TODO Auto-generated destructor stub
 }
 
-
-
-void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
-                                      DocumentationNode const & subDocNode,
-                                      xmlNode const & targetNode )
+void xmlWrapper::StringToInputVariable( R1Tensor & target, string inputValue )
 {
-  std::string childType = subDocNode.getSchemaType();
-  rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
-  rtTypes::ApplyIntrinsicTypeLambda2 ( typeID,
-                                       [&]( auto a, auto b ) -> void
-    {
-      string defVal = subDocNode.getDefault();
+  string csvstr = inputValue;
+  std::istringstream ss( csvstr );
 
-      pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
-      ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
-      std::vector<decltype(b)> xmlVal;
-
-      if( !xmlatt.empty() )
-      {
-        as_type( xmlVal, xmlatt.value(), defVal );
-      }
-      else
-      {
-        GEOS_ERROR_IF(defVal == "REQUIRED", "variable " + subDocNode.getName() + " is required in " + targetNode.path() );
-        stringutilities::StringToType( xmlVal, defVal );
-      }
-      localIndex const size = LvArray::integer_conversion<localIndex>(xmlVal.size());
-      dataView.resize( size );
-      decltype(a) & data = dataView.reference();
-      cxx_utilities::equateStlVector(data, xmlVal);
-    });
-}
-
-
-
-R1Tensor xmlWrapper::as_type( xmlNode const & node, std::string const name, R1Tensor defValue )
-{
-  R1Tensor rval = defValue;
-  pugi::xml_attribute att = node.attribute( name.c_str() );
-
-  if( !att.empty() )
+  real64 value;
+  int count = 0;
+  while( ss.peek() == ',' || ss.peek() == ' ' )
   {
-    string inputValue = att.value();
-    if( inputValue!="" )
+    ss.ignore();
+  }
+  while( !((ss>>value).fail()) )
+  {
+    target[count++] = value ;
+    while( ss.peek() == ',' || ss.peek() == ' ' )
     {
-      std::string csvstr = inputValue;
-      std::istringstream ss( csvstr );
-
-      while( ss.peek() == ',' || ss.peek() == ' ' )
-      {
-        ss.ignore();
-      }
-      for( int i=0 ; i<3 ; ++i )
-      {
-        ss>>rval[i];
-        while( ss.peek() == ',' || ss.peek() == ' ' )
-        {
-          ss.ignore();
-        }
-      }
+      ss.ignore();
     }
   }
-
-  return rval;
+  GEOS_ERROR_IF(count!=3, "incorrect number of components specified for R1Tensor");
 }
+
+void xmlWrapper::addIncludedXML( xmlNode & targetNode )
+{
+
+  xmlNode rootNode = targetNode.root();
+  string path = rootNode.child( filePathString ).attribute( filePathString ).value();
+
+  xmlNode includedNode = targetNode.child("Included");
+
+  for (xmlWrapper::xmlNode childNode=includedNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    // Get the child tag and name
+    string childName = childNode.name();
+    GEOS_ERROR_IF( childName!="File", "Child nodes of \"Included\" should be named \"File\" ");
+
+    string filePathName = childNode.attribute("name").value();
+    if( filePathName[0] != '/' )
+    {
+      filePathName = path + filePathName;
+    }
+    xmlDocument includedXmlDocument;
+    xmlResult result;
+    result = includedXmlDocument.load_file(filePathName.c_str());
+    GEOS_ERROR_IF( !result, "Attempt to include file ("<<filePathName.c_str()<<") failed\n");
+
+    for ( xmlNode importNode=includedXmlDocument.first_child() ; importNode ; importNode=importNode.next_sibling())
+    {
+      targetNode.append_copy(importNode);
+    }
+  }
+}
+
 
 } /* namespace geosx */

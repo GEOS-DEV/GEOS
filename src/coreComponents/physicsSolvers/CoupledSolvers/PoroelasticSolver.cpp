@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -41,104 +41,40 @@ using namespace constitutive;
 
 PoroelasticSolver::PoroelasticSolver( const std::string& name,
                                       ManagedGroup * const parent ):
-  SolverBase(name,parent)
+  SolverBase(name,parent),
+  m_solidSolverName(),
+  m_flowSolverName(),
+  m_couplingTypeOptionString("FixedStress"),
+  m_couplingTypeOption()
+
 {
-  this->RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0);
-  this->RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0);
+  RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
+
+  RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
+
+  RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Coupling option: (FixedStress, TightlyCoupled)");
+
 }
 
-
-void PoroelasticSolver::FillDocumentationNode()
+void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example single phase flow solver");
-
-
-  docNode->AllocateChildNode( viewKeyStruct::fluidSolverNameString,
-                              viewKeyStruct::fluidSolverNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "name of fluid solver",
-                              "name of fluid solver",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::solidSolverNameString,
-                              viewKeyStruct::solidSolverNameString,
-                              -1,
-                              "string",
-                              "string",
-                              "name of solid solver",
-                              "name of solid solver",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeyStruct::couplingTypeOptionString,
-                              viewKeyStruct::couplingTypeOptionString,
-                              -1,
-                              "string",
-                              "string",
-                              "option for default coupling method",
-                              "option for default coupling method",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
-void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
-{
-
-  SolverBase::FillOtherDocumentationNodes( rootGroup );
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
+    ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
+    elemManager->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
       {
-        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-
-        docNode->AllocateChildNode( viewKeyStruct::totalMeanStressString,
-                                    viewKeyStruct::totalMeanStressString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Total Mean Stress",
-                                    "Total Mean Stress",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
-        docNode->AllocateChildNode( viewKeyStruct::oldTotalMeanStressString,
-                                    viewKeyStruct::oldTotalMeanStressString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Old total mean Stress",
-                                    "Old total mean Stress",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
+        elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
+          setDescription("Total Mean Stress");
+        elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
+          setDescription("Total Mean Stress");
       });
   }
 }
@@ -150,12 +86,6 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const& time_n,
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  SinglePhaseFlow &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
@@ -178,28 +108,28 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
 {
 }
 
-void PoroelasticSolver::ReadXML_PostProcess()
+void PoroelasticSolver::PostProcessInput()
 {
-  string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionString);
+  string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
 
   if( ctOption == "FixedStress" )
   {
     this->m_couplingTypeOption = couplingTypeOption::FixedStress;
   }
-  else if( ctOption == "FullyImplicit" )
+  else if( ctOption == "TightlyCoupled" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FullyImplicit;
+    this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
   }
   else
   {
     GEOS_ERROR("invalid coupling type option");
   }
 
-  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
 }
 
-void PoroelasticSolver::FinalInitialization( ManagedGroup * const problemManager )
+void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
 {
+  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
 }
@@ -207,6 +137,26 @@ void PoroelasticSolver::FinalInitialization( ManagedGroup * const problemManager
 PoroelasticSolver::~PoroelasticSolver()
 {
   // TODO Auto-generated destructor stub
+}
+
+void PoroelasticSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
+
+  //***** loop over all elements and initialize the derivative arrays *****
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
+  {
+    totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
+  });
 }
 
 real64 PoroelasticSolver::SolverStep( real64 const & time_n,
@@ -219,7 +169,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::FullyImplicit )
+  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
     GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }
@@ -243,8 +193,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   NumericalMethodsManager const * const numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteElementSpaceManager const * const feSpaceManager =
-    numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementDiscretizationManager const * const feDiscretizationManager =
+    numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -254,7 +204,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   arrayView1d<R1Tensor> const & uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex>> const elemsToNodes = 
-    elemManager->ConstructViewAccessor<FixedOneToManyRelation, arrayView2d<localIndex>>( CellBlockSubRegion::viewKeyStruct::nodeListString );
+    elemManager->ConstructViewAccessor<FixedOneToManyRelation, arrayView2d<localIndex>>( CellElementSubRegion::viewKeyStruct::nodeListString );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
@@ -295,25 +245,24 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
 
-    string const & numMethodName = elemRegion->getReference<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+      CellElementSubRegion const * const cellElementSubRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
 
-      arrayView3d<R1Tensor> const & dNdX = cellBlockSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
+      arrayView3d<R1Tensor> const & dNdX = cellElementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
 
       localIndex const numNodesPerElement = elemsToNodes[er][esr].size(1);
       r1_array u_local( numNodesPerElement );
       r1_array uhat_local( numNodesPerElement );
 
-      for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
+      for( localIndex ei=0 ; ei<cellElementSubRegion->size() ; ++ei )
       {
         CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
 
         real64 volumetricStrain = 0.0;
-        localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points() ;
+        localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points() ;
         for( localIndex q=0 ; q<numQuadraturePoints; ++q )
         {
           R2Tensor dUdX;
@@ -347,6 +296,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
                                              DomainPartition * const domain)
 {
   real64 dtReturn = dt;
+  real64 dtReturnTemporary = dtReturn;
+
   SolverBase &
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
@@ -360,31 +311,55 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   int iter = 0;
   while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
   {
+    if (iter == 0)
+    {
+      // reset the states of all slave solvers if any of them has been reset
+      fluidSolver.ResetStateToBeginningOfStep( domain );
+      solidSolver.ResetStateToBeginningOfStep( domain );
+      ResetStateToBeginningOfStep( domain );
+    }
     if (this->verboseLevel() >= 1)
     {
-      std::cout << "\tIteration: " << iter+1  << ", FlowSolver: "<< std::endl;
+      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
-    dtReturn = fluidSolver.NonlinearImplicitStep( time_n,
-                                                  dtReturn,
-                                                  cycleNumber,
-                                                  domain,
-                                                  getLinearSystemRepository() );
+    dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
+                                                          dtReturn,
+                                                          cycleNumber,
+                                                          domain,
+                                                          getLinearSystemRepository() );
 
-    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
+    if (dtReturnTemporary < dtReturn)
     {
+      iter = 0;
+      dtReturn = dtReturnTemporary;
+      continue;
+    }
+
+    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+    {
+      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
     if (this->verboseLevel() >= 1)
     {
-      std::cout << "\tIteration: " << iter+1  << ", MechanicsSolver: "<< std::endl;
+      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
     }
-    dtReturn = solidSolver.NonlinearImplicitStep( time_n,
-                                                  dtReturn,
-                                                  cycleNumber,
-                                                  domain,
-                                                  getLinearSystemRepository() );
-    this->UpdateDeformationForCoupling(domain);
+    dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
+                                                          dtReturn,
+                                                          cycleNumber,
+                                                          domain,
+                                                          getLinearSystemRepository() );
+    if (dtReturnTemporary < dtReturn)
+    {
+      iter = 0;
+      dtReturn = dtReturnTemporary;
+      continue;
+    }
+    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
+    {
+      this->UpdateDeformationForCoupling(domain);
+    }
     ++iter;
   }
 

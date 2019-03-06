@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -35,7 +35,11 @@
 #define EXAMPLES_MEMORYMANAGER_HPP
 
 #include "RAJA/RAJA.hpp"
-#include "RAJA/util/defines.hpp"
+#include "Layout.hpp"
+#if defined(RAJA_ENABLE_CHAI)
+#include "chai/ManagedArray.hpp"
+#include "chai/util/forall.hpp"
+#endif
 
 /*
   As RAJA does not manage memory we include a general purpose memory
@@ -51,7 +55,7 @@ namespace memoryManager{
     T *ptr;
     dataAlloc += size * sizeof(T);
 #if defined(RAJA_ENABLE_CUDA)
-    cudaMallocManaged((void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal);
+    cudaErrchk(cudaMallocManaged((void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal));               
 #else
     ptr = new T[size];
 #endif

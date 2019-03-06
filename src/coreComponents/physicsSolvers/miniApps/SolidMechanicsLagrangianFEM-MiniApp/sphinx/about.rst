@@ -69,9 +69,9 @@ dimension index. More precisely storing as an array of objects would take the fo
 while storing as an object of arrays would take the form of
 
 .. math::
-  \text{dNdX_x[elem][quad][dof]} \\
-  \text{dNdX_y[elem][quad][dof]} \\
-  \text{dNdX_z[elem][quad][dof]}
+  \text{dNdX\_x[elem][quad][dof]} \\
+  \text{dNdX\_y[elem][quad][dof]} \\
+  \text{dNdX\_z[elem][quad][dof]}
 
 In addition, the proxy has the capability to compute shape function derivatives
 within the kernel reliving the need of additional storage. Computation of the shape function derivatives
@@ -134,7 +134,7 @@ and calculate the location of the nodes on each invocation of the kernel.
 * ``PRE_COMPUTE_P`` - If enabled, a pre-computation step will be taken which stores the evaluation of the shape
 function derivatives at the quadrature points with respect to the parent coordinate system.
 
-* ``USE_CUDA`` - If CUDA is available the kernel will be offloaded to the device.
+* ``USE_GPU`` - If CUDA is available the kernel will be offloaded to the device.
 
 The layout header also has the ability to change whether the element index is the slowest or fastest index
 for structures which the element index plays a role. The following preprocessors will either assume

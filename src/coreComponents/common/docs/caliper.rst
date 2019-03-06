@@ -1,7 +1,6 @@
-###############################################################################
+*****************************
 Basic profiling with CALIPER
-###############################################################################
-
+*****************************
 
 GEOSX is equipped with `Caliper <https://github.com/LLNL/Caliper>`_ timers.
 We integrate Caliper into GEOSX by marking source-code sections of interest such as compuational kernels or initialization steps.

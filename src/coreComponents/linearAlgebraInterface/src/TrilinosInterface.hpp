@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,8 +24,8 @@
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 
 #include "TrilinosSolver.hpp"
-#include "TrilinosSparseMatrix.hpp"
-#include "TrilinosVector.hpp"
+#include "EpetraMatrix.hpp"
+#include "EpetraVector.hpp"
 
 namespace geosx
 {
@@ -39,14 +39,13 @@ class TrilinosInterface
 {
 public:
 
-  using laiLID = trilinosTypes::lid;
-  using laiGID = trilinosTypes::gid;
+  //using lid = trilinosTypes::lid; // no longer necessary
+  //using gid = trilinosTypes::gid; // no longer necessary
 
   // Epetra matrix and vector wrappers
-  using ParallelMatrix = EpetraSparseMatrix;
+  using ParallelMatrix = EpetraMatrix;
   using ParallelVector = EpetraVector;
-
-  using LinearSolver = TrilinosSolver;
+  using LinearSolver   = TrilinosSolver;
 
   //! @name Constructor/Destructor Methods
   //@{

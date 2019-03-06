@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -47,8 +47,8 @@ static constexpr auto Force = "Force";
 static constexpr auto Strain = "Strain";
 static constexpr auto Name = "name";
 static constexpr auto Size = "size";
-static constexpr auto ProblemManager = "ProblemManager";
-static constexpr auto ConstitutiveManager = "ConstitutiveManager";
+static constexpr auto ProblemManager = "Problem";
+static constexpr auto ConstitutiveManager = "Constitutive";
 static constexpr auto ConstitutiveBase = "ConstitutiveBase";
 static constexpr auto solverNames = "solverNames";
 
@@ -68,7 +68,7 @@ static constexpr auto FE_Space    = "FE_Space";
 //static constexpr auto FEM_Edges    = "FEM_Edges";
 //static constexpr auto FEM_Faces    = "FEM_Faces";
 //static constexpr auto FEM_Elements = "FEM_Elements";
-static constexpr auto cellManager = "cellMananger";
+static constexpr auto cellManager = "cellManager";
 static constexpr auto functionManager = "FunctionManager";
 
 }

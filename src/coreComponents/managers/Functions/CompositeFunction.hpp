@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -47,9 +47,6 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "CompositeFunction"; }
   
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
-  
   /// Function initialization
   virtual void InitializeFunction() override;
 
@@ -72,6 +69,11 @@ public:
   virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:
+
+  string_array m_functionNames;
+  string_array m_variableNames;
+  string       m_expression;
+
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
 

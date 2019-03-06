@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -40,9 +40,10 @@ public:
 
   virtual ~GeometricObjectManager() override;
 
-  virtual void FillDocumentationNode() override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
 private:
   GeometricObjectManager() = delete;

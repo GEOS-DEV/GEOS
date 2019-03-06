@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -183,7 +183,7 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
   }
 
   const ElementRegion* elem_region = m_elem_reg_manager.GetRegion(0);
-  const CellBlockSubRegion* cell_block = elem_region->GetSubRegion(0);
+  const CellElementSubRegion* cell_block = elem_region->GetSubRegion<CellElementSubRegion>(0);
   const array2d<localIndex>& connectivity = cell_block->nodeList().Base();
   const localIndex n_cells = connectivity.size(0);
   const localIndex n_nodes_per_cell = connectivity.size(1);

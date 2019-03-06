@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,7 +25,6 @@
 
 #include "pugixml.hpp"
 #include "common/DataTypes.hpp"
-#include <vector>
 
 /*!
  * @brief this class stands for the I/O of vtm file
@@ -68,97 +67,97 @@ class DumbMesh {
         /*!
          * @brief Returns the number of vertices
          */
-        globalIndex NumVertices() const;
+        localIndex NumVertices() const;
 
         /*!
          * @brief Returns the number of cells
          */
-        globalIndex NumCells() const;
+        localIndex NumCells() const;
 
         /*!
          * @brief Returns the number of tetrahedrons
          */
-        globalIndex NumTetra() const;
+        localIndex NumTetra() const;
 
         /*!
          * @brief Returns the number of hexahedrons
          */
-        globalIndex NumHex() const;
+        localIndex NumHex() const;
 
         /*!
          * @brief Returns the number of prisms
          */
-        globalIndex NumPrism() const;
+        localIndex NumPrism() const;
 
         /*!
          * @brief Returns the number of pyramids
          */
-        globalIndex NumPyr() const;
+        localIndex NumPyr() const;
 
         /*!
          * @brief Returns the number of triangles
          */
-        globalIndex NumTri() const;
+        localIndex NumTri() const;
 
         /*!
          * @brief Returns the number of quads
          */
-        globalIndex NumQuad() const;
+        localIndex NumQuad() const;
 
         /*!
          * @brief Returns the number of polygons
          */
-        globalIndex NumPolygons() const;
+        localIndex NumPolygons() const;
 
         /*!
          * @brief Returns the cell index within this mesh knowing the tetrahedron index
          * @param[in] tetIndex the index of the tetrahedron within this mesh
          */
-        globalIndex TetIndexToCellIndex(globalIndex const tetIndex);
+        localIndex TetIndexToCellIndex(localIndex const localIndex);
 
         /*!
          * @brief Returns the cell index within this mesh knowing the hexahedron index
          * @param[in] hexIndex the index of the hexahedron within this mesh
          */
-        globalIndex HexIndexToCellIndex(globalIndex const hexIndex);
+        localIndex HexIndexToCellIndex(localIndex const hexIndex);
 
         /*!
          * @brief Returns the cell index within this mesh knowing the prism index
          * @param[in] prismIndex the index of the prism within this mesh
          */
-        globalIndex PrismIndexToCellIndex(globalIndex const prismIndex);
+        localIndex PrismIndexToCellIndex(localIndex const prismIndex);
 
         /*!
          * @brief Returns the pyramid index within this mesh knowing the pyramid index
          * @param[in] pyrIndex the index of the tetrahedron within this mesh
          */
-        globalIndex PyrIndexToCellIndex(globalIndex const pyrIndex);
+        localIndex PyrIndexToCellIndex(localIndex const pyrIndex);
 
         /*!
          * @brief Returns the polygon index within this mesh knowing the triangle index
          * @param[in] triIndex the index of the triangle within this mesh
          */
-        globalIndex TriIndexToPolygonIndex(globalIndex const triIndex);
+        localIndex TriIndexToPolygonIndex(localIndex const triIndex);
 
         /*!
          * @brief Returns the polygon index within this mesh knowing the quad index
          * @param[in] quadIndex the index of the quad within this mesh
          */
-        globalIndex QuadIndexToPolygonIndex(globalIndex const quadIndex);
+        localIndex QuadIndexToPolygonIndex(localIndex const quadIndex);
 
         /*!
          * @brief return the number of vertices in a polygon
          * @param[in] polygonIndex the polygon index within the mesh part
          * @return the number of vertices within the polygon
          */
-        localIndex NumVerticesInPolygon(globalIndex const polygonIndex) const;
+        localIndex NumVerticesInPolygon(localIndex const polygonIndex) const;
 
         /*!
          * @brief return the number of vertices in a cell
          * @param[in] cellIndex the cell index within the mesh part
          * @return the number of vertices within the cell
          */
-        localIndex NumVerticesInCell(globalIndex const cellIndex) const;
+        localIndex NumVerticesInCell(localIndex const cellIndex) const;
 
         /*!
          * @brief return the index of a cell corner
@@ -166,7 +165,7 @@ class DumbMesh {
          * @param[in] localCornerIndex the index of the corner within the cell
          * @return the index of the vertex
          */
-        globalIndex CellVertexIndex(globalIndex const cellIndex,
+        localIndex CellVertexIndex(localIndex const cellIndex,
                 localIndex const localCornerIndex) const;
 
         /*!
@@ -175,7 +174,7 @@ class DumbMesh {
          * @param[in] localCornerIndex the index of the corner within the polygon
          * @return the index of the veertex
          */
-        globalIndex PolygonVertexIndex(globalIndex const polygonIndex,
+        localIndex PolygonVertexIndex(localIndex const polygonIndex,
                 localIndex const localCornerIndex) const;
 
         /*!
@@ -183,21 +182,21 @@ class DumbMesh {
          * @param[in] vertexIndex vertex index on this mesh part
          * @return a pointer to the first coordinate (X)
          */
-        real64 const * Vertex(globalIndex const vertexIndex) const;
+        real64 const * Vertex(localIndex const vertexIndex) const;
 
         /*!
          * @brief return the global index of a cell in the full mesh
          * @param[in] cellIndex the cell index on this mesh part
          * @return the cell index in the full mesh
          */
-        globalIndex GlobalCellIndex(globalIndex const cellIndex) const;
+        globalIndex GlobalCellIndex(localIndex const cellIndex) const;
 
         /*!
          * @brief return the global index of a polygon in the full mesh
          * @param[in] polygonIndex the polygon index on this mesh part
          * @return the polygon index in the full mesh
          */
-        globalIndex GlobalPolygonIndex(globalIndex const polygonIndex) const;
+        globalIndex GlobalPolygonIndex(localIndex const polygonIndex) const;
 
         string const & Name() const;
 
@@ -211,24 +210,24 @@ class DumbMesh {
          * vertices will be 3* numVertices
          * @param[in] numVertices the number of vertices
          */
-        void SetNumVertices(globalIndex const numVertices); 
+        void SetNumVertices(localIndex const numVertices); 
 
         /*!
          * @brief Set vertex coordinates
          * @param[in] vertexIndex the index of the vertex
          * @param[in] vertex a vector containing the three coordinates
          */
-        void SetVertex(globalIndex const vertexIndex,std::vector< real64 > const & vertex);
+        void SetVertex(localIndex const vertexIndex,real64_array const & vertex);
 
         /*!
          * @brief Set the number of cells and polygons
          */
-        void SetNumCellAndPolygons(globalIndex numTetra,
-                                       globalIndex numHex,
-                                       globalIndex numPrism,
-                                       globalIndex numPyr,
-                                       globalIndex numTri,
-                                       globalIndex numQuad);
+        void SetNumCellAndPolygons(localIndex numTetra,
+                                   localIndex numHex,
+                                   localIndex numPrism,
+                                   localIndex numPyr,
+                                   localIndex numTri,
+                                   localIndex numQuad);
 
         /*!
          * @brief add a cell to the mesh
@@ -236,7 +235,7 @@ class DumbMesh {
          * which compose the cell
          * @return the index of the cell
          */
-        void AddCell(std::vector<globalIndex> const & connectivity );
+        void AddCell(localIndex_array const & connectivity );
 
         /*!
          * @brief add a polygon to the mesh
@@ -244,14 +243,14 @@ class DumbMesh {
          * which compose the polygon
          * @return the index of the polygon
          */
-        void AddPolygon(std::vector<globalIndex> const & connectivity );
+        void AddPolygon(localIndex_array const & connectivity );
 
         /*!
          * @brief Set the original index, i.e. the index of a cell in the full mesh
          * @param[in] cellIndexInPartMesh the cell index within the part mesh
          * @param[in] cellIndexInFullMesh the cell index within the full mesh
          */
-        void SetCellOriginalIndex(globalIndex const cellIndexInPartMesh,
+        void SetCellOriginalIndex(localIndex const cellIndexInPartMesh,
                 globalIndex const cellIndexInFullMesh);
 
         /*!
@@ -259,7 +258,7 @@ class DumbMesh {
          * @param[in] polygonIndexInPartMesh the polygon index within the part mesh
          * @param[in] polygonIndexInFullMesh the polygon index within the full mesh
          */
-        void SetPolygonOriginalIndex(globalIndex const polygonIndexInPartMesh,
+        void SetPolygonOriginalIndex(localIndex const polygonIndexInPartMesh,
                 globalIndex const polygonIndexInFullMesh);
 
         void SetName( string const & name);
@@ -268,70 +267,70 @@ class DumbMesh {
 
     private:
         /// Number of vertices
-        globalIndex m_numVertices{0};
+        localIndex m_numVertices{0};
 
         /// Number of cells
-        globalIndex m_numCells{0};
+        localIndex m_numCells{0};
 
         /// Number of Tetra
-        globalIndex m_numTetra{0};
+        localIndex m_numTetra{0};
 
         /// Number of Hex
-        globalIndex m_numHex{0};
+        localIndex m_numHex{0};
 
         /// Number of Prisms
-        globalIndex m_numPrism{0};
+        localIndex m_numPrism{0};
 
         /// Number of Pyramids
-        globalIndex m_numPyr{0};
+        localIndex m_numPyr{0};
 
         /// Number of Triangles
-        globalIndex m_numTri{0};
+        localIndex m_numTri{0};
 
         /// Number of Quads
-        globalIndex m_numQuad{0};
+        localIndex m_numQuad{0};
 
         /// Number of polygons
-        globalIndex m_numPolygons{0};
+        localIndex m_numPolygons{0};
 
         /// Contains the 3D coordinates of the vertices
         real64_array m_vertices;
         
         /// Contains the cells connectivity
-        std::vector< globalIndex > m_cellsConnectivity;
+        localIndex_array m_cellsConnectivity;
         
         /// Contains the polygons connectivity
-        std::vector< globalIndex > m_polygonsConnectivity;
+        localIndex_array m_polygonsConnectivity;
 
         /// Size : numCells +1. Contains the first indexes to look at in m_cellsConnectivity
-        std::vector< globalIndex > m_cellsPtr{0};
+        localIndex_array m_cellsPtr{0};
         
         /// Size : numPolygons +1. Contains the first indexes to look at in m_cellsConnectivity
-        std::vector< globalIndex > m_polygonsPtr{0};
+        localIndex_array m_polygonsPtr{0};
 
         /// Contains the global indexes of the polygons in the full mesh
-        std::vector< globalIndex > m_globalPolygonIndexes;
+        globalIndex_array m_globalPolygonIndexes;
         
         /// Contains the global indexes of the cells in the full mesh
-        std::vector< globalIndex > m_globalCellIndexes;
+        globalIndex_array m_globalCellIndexes;
         
         /// Maps the index of a tetrahedron to its corresponding cell index in this mesih
-        std::vector< globalIndex > m_tetIndexToCellIndex;
+        localIndex_array m_tetIndexToCellIndex;
         
         /// Maps the index of a hexahedron to its corresponding cell index in this mesh
-        std::vector< globalIndex > m_hexIndexToCellIndex;
+        localIndex_array m_hexIndexToCellIndex;
 
         /// Maps the index of a prism to its corresponding cell index in this mesh
-        std::vector< globalIndex > m_prismIndexToCellIndex;
+        localIndex_array m_prismIndexToCellIndex;
 
         /// Maps the index of a pyramid to its corresponding cell index in this mesh
-        std::vector< globalIndex > m_pyrIndexToCellIndex;
+        localIndex_array m_pyrIndexToCellIndex;
 
         /// Maps the index of a triangle to its corresponding cell index in this mesh
-        std::vector< globalIndex > m_triIndexToPolygonIndex;
+        localIndex_array m_triIndexToPolygonIndex;
         
         /// Maps the index of a quad to its corresponding cell index in this mesh
-        std::vector< globalIndex > m_quadIndexToPolygonIndex;
+        localIndex_array m_quadIndexToPolygonIndex;
 
         /// The name of the mesh
         string m_name;
@@ -356,7 +355,7 @@ class VtuFile {
          * @param[in] fileName the name of the XML pvtu file to be loaded
          */
         void Load( string const & fileName,
-        std::map<string, std::vector< double > > & properties);
+        std::map<string, real64_array > & properties);
 
         /*!
          * @brief load a .vtu file
@@ -398,7 +397,7 @@ class VtuFile {
          * @param[in] pvtuDoc the XML document
          */
         void LoadProperties(pugi::xml_document const & pvtuDoc,
-                std::map<string, std::vector< double > >& properties);
+                std::map<string, real64_array >& properties);
 
 
         /*!
@@ -409,7 +408,7 @@ class VtuFile {
          */
         template<typename T, typename Lambda>
             void SplitNodeTextString( string const & in,
-                    std::vector< T >& out,
+                    array1d< T >& out,
                     Lambda && stringConvertor) const;
 };
 
@@ -418,16 +417,17 @@ class MeshBlock {
     public:
         MeshBlock( string fileName,
                 string blockName);
+        MeshBlock() {}
         void Load(bool loadMesh, bool loadProperties);
         DumbMesh const & mesh() const;
         bool IsARegionBlock() const;
-        std::map< string, std::vector< double > > const & PropertyMap() const;
+        std::map< string, real64_array > const & PropertyMap() const;
     private:
         string m_vtuFileName;
         string m_blockName;
         VtuFile m_vtuFile;
         DumbMesh m_mesh;
-        std::map< string, std::vector< double > > m_properties;
+        std::map< string, real64_array > m_properties;
 };
 
 class RankBlock {
@@ -438,7 +438,7 @@ class RankBlock {
         localIndex NumMeshBlocks() const;
         MeshBlock const & GetMeshBlock(localIndex const meshBlockIndex) const;
     private:
-        std::vector< MeshBlock > m_block;
+        array1d< MeshBlock > m_block;
 };
 class VtmFile {
     public:
@@ -476,9 +476,9 @@ class VtmFile {
          */
         void SetRanksAndBlocks(
                 pugi::xml_document const & vtmDoc,
-                std::vector< RankBlock >& rankBlocks);
+                array1d< RankBlock >& rankBlocks);
     private:
-        std::vector< RankBlock > m_rankBlocks;
+        array1d< RankBlock > m_rankBlocks;
         string m_fileName {""};
 };
 

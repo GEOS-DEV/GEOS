@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -17,8 +17,7 @@
  */
 
 /**
- * @file FaceManager.h
- * @author settgast1
+ * @file FaceManager.hpp
  */
 
 #ifndef FACEMANAGER_H_
@@ -32,7 +31,7 @@ namespace geosx
 
 class NodeManager;
 class ElementRegionManager;
-class CellBlockSubRegion;
+class CellElementSubRegion;
 
 class FaceManager : public ObjectManagerBase
 {
@@ -58,10 +57,6 @@ public:
   FaceManager( string const &, ManagedGroup * const parent );
   virtual ~FaceManager() override final;
 
-//  void Initialize(  ){}
-
-  virtual void FillDocumentationNode() override final;
-
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
@@ -86,8 +81,14 @@ public:
                                      arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
+  void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( std::set<localIndex> const & receivedFaces,
+                         ElementRegionManager const & elemRegionManager );
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
@@ -115,6 +116,16 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  array1d<real64> &       faceArea()       { return m_faceArea; }
+  array1d<real64> const & faceArea() const { return m_faceArea; }
+
+  array1d<R1Tensor> &       faceCenter()       { return m_faceCenter; }
+  array1d<R1Tensor> const & faceCenter() const { return m_faceCenter; }
+
+  array1d<R1Tensor> &       faceNormal()       { return m_faceNormal; }
+  array1d<R1Tensor> const & faceNormal() const { return m_faceNormal; }
+
+
   OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
   OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
 
@@ -131,6 +142,7 @@ public:
   array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
+
 private:
 
   template<bool DOPACK>
@@ -142,7 +154,12 @@ private:
   OrderedVariableOneToManyRelation m_edgeList;
   FixedToManyElementRelation m_toElements;
 
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+
+  array1d< real64 > m_faceArea;
   array1d< R1Tensor > m_faceCenter;
+  array1d< R1Tensor > m_faceNormal;
 
   constexpr static int MAX_FACE_NODES = 9;
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#if __clang_major__ >= 5
+#if __clang_major__ >= 5  && !defined(__APPLE__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
@@ -83,7 +83,7 @@ ViewWrapper<array2d<T>> * createArray2dView(ManagedGroup * parent, const string 
 
   /* Resize the array */
   localIndex expected_size = data.size() * sizeof(T);
-  long long dims[2];
+  localIndex dims[2];
   dims[0] = data.size(0);
   dims[1] = data.size(1);
   view->resize(2, dims);
@@ -142,7 +142,7 @@ ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
   localIndex expected_size = data.size() * sizeof(T);
 
   /* Set the data */
-  view->reference().insert(data.begin(), data.end());
+  view->reference().insert(data.values(), data.size());
 
   /* Check that the ViewWrapper size and byteSize return the proper values */
   EXPECT_EQ(view->size(), data.size());
@@ -152,7 +152,7 @@ ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
   EXPECT_TRUE(view->reference().isSorted());
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view->dataPtr(), view->reference().data());
+  EXPECT_EQ(view->dataPtr(), view->reference().values());
 
   return view;
 }
@@ -195,14 +195,15 @@ ViewWrapper<string> * createStringView(ManagedGroup * parent, const string & nam
 }
 
 
-void checkStringView(const ViewWrapper<string> * view, const int sfp, const string & str) {
+void checkStringView(const ViewWrapper<string> * view, const int sfp, const string & str)
+{
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->reference(), str);
 }
 
 
 ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const string & name,
-                                                int sfp, const string_array & arr)
+                                                  int sfp, const string_array & arr)
 {
   ViewWrapper<string_array> * view = parent->RegisterViewWrapper<string_array>(name);
   view->setSizedFromParent(sfp);

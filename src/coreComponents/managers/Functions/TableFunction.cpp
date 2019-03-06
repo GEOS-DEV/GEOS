@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -55,106 +55,42 @@ TableFunction::TableFunction( const std::string& name,
   m_indexIncrement(),
   m_corners(),
   m_numCorners(0)
-{}
+{
+  RegisterViewWrapper<real64_array>(keys::tableCoordinates)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Table coordinates inputs for 1D tables");
+
+  RegisterViewWrapper<real64_array>(keys::tableValues)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Table Values for 1D tables");
+
+  RegisterViewWrapper<string_array>(keys::coordinateFiles)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of coordinate file names");
+
+  RegisterViewWrapper<string>(keys::voxelFile)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Voxel file name");
+
+  RegisterViewWrapper<string>(keys::tableInterpolation)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Interpolation method");
+
+  RegisterViewWrapper<string>(keys::tableInterpolation)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Value Type");
+
+
+}
 
 TableFunction::~TableFunction()
 {}
-
-
-void TableFunction::FillDocumentationNode()
-{
-  FunctionBase::FillDocumentationNode();
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Table function");
-
-  docNode->AllocateChildNode( keys::tableCoordinates,
-                              keys::tableCoordinates,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Table coordinates",
-                              "Table coordinates inputs for 1D tables",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::tableValues,
-                              keys::tableValues,
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Table Values",
-                              "Table Values for 1D tables",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::coordinateFiles,
-                              keys::coordinateFiles,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "List of coordinate file names",
-                              "List of coordinate file names",
-                              "",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::voxelFile,
-                              keys::voxelFile,
-                              -1,
-                              "string",
-                              "string",
-                              "Voxel file name",
-                              "Voxel file name",
-                              "none",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::tableInterpolation,
-                              keys::tableInterpolation,
-                              -1,
-                              "string",
-                              "string",
-                              "Interpolation method",
-                              "Interpolation method",
-                              "linear",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::valueType,
-                              keys::valueType,
-                              -1,
-                              "string",
-                              "string",
-                              "Value Type",
-                              "Value Type",
-                              "real64",
-                              "",
-                              1,
-                              1,
-                              0 );
-}
-
 
 void TableFunction::InitializeFunction()
 {
   // Read in data
   string_array const & coordinateFiles = getReference<string_array>(keys::coordinateFiles);
-  if (coordinateFiles[0].empty())
+  if (coordinateFiles.empty())
   {
     // 1D Table
     m_dimensions = 1;
@@ -251,7 +187,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
       // Note: lower_bound uses a binary search...  If we assume coordinates are
       // evenly spaced, we can speed things up considerably
       auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
-      bounds[ii][1] = LvArray::integer_conversion<localIndex>(std::distance(m_coordinates[ii].begin(), lower));
+      bounds[ii][1] = integer_conversion<localIndex>(std::distance(m_coordinates[ii].begin(), lower));
       bounds[ii][0] = bounds[ii][1] - 1;
 
       real64 dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];

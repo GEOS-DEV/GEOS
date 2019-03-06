@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -37,23 +37,30 @@ namespace constitutive
 ConstitutiveManager::ConstitutiveManager( string const & name,
                                           ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 ConstitutiveManager::~ConstitutiveManager()
 {}
 
-void ConstitutiveManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName( "Constitutive" );
-  docNode->setSchemaType( "Node" );
-}
 
-void ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
-  ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( childName, std::move( material ) );
+  return RegisterGroup<ConstitutiveBase>( childName, std::move( material ) );
 }
+
+
+void ConstitutiveManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from ConstitutiveBase here
+  for (auto& catalogIter: ConstitutiveBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
+
 
 ConstitutiveBase *
 ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,

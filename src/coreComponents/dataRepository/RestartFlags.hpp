@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -19,30 +19,49 @@
 #ifndef RESTARTFLAGS_H_
 #define RESTARTFLAGS_H_
 
+/**
+ * @file RestartFlags.hpp
+ */
+
 namespace geosx
 {
 namespace dataRepository
 {
 
+/**
+ * @enum RestartFlags
+ *
+ * A scoped enum for the restart options.
+ */
 enum class RestartFlags : unsigned char
 {
-  NO_WRITE,
-  WRITE,
-  WRITE_AND_READ
+  NO_WRITE,     //!< NO_WRITE
+  WRITE,        //!< WRITE
+  WRITE_AND_READ//!< WRITE_AND_READ
 };
 
+/**
+ * @enum PlotLevel
+ *
+ * A scoped enum for the Plot options.
+ */
 enum class PlotLevel : int
 {
-  LEVEL_0,
-  LEVEL_1,
-  LEVEL_2,
-  LEVEL_3,
-  INVALID
+  LEVEL_0, ///< Write to plot always
+  LEVEL_1, ///< Write to plot when plotLevel>=1 is specified in input
+  LEVEL_2, ///< Write to plot when plotLevel>=2 is specified in input
+  LEVEL_3, ///< Write to plot when plotLevel>=3 is specified in input
+  NOPLOT   ///< Do not ever write to plot file
 };
 
+/**
+ * @brief Function to get a PlotLevel enum from an int
+ * @param val int that represents the PlotLevel
+ * @return The PlotLevel that corresponds to the input
+ */
 inline PlotLevel IntToPlotLevel( int const val )
 {
-  PlotLevel rval = PlotLevel::INVALID;
+  PlotLevel rval = PlotLevel::NOPLOT;
   switch( val )
   {
     case 0:
@@ -72,21 +91,46 @@ inline PlotLevel IntToPlotLevel( int const val )
   }
   return rval;
 }
+
+/**
+ * @brief boolean operator< for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left<right
+ */
 inline bool operator<( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) < static_cast<int>(right);
 }
 
+/**
+ * @brief boolean operator> for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left>right
+ */
 inline bool operator>( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) > static_cast<int>(right);
 }
 
+/**
+ * @brief boolean operator== for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left==right
+ */
 inline bool operator==( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) == static_cast<int>(right);
 }
 
+/**
+ * @brief boolean operator!= for PlotLevel
+ * @param[in] left
+ * @param[in] right
+ * @return boolean result of left!=right
+ */
 inline bool operator!=( PlotLevel const left, PlotLevel const right)
 {
   return static_cast<int>(left) != static_cast<int>(right);

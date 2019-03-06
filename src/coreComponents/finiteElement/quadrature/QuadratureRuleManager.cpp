@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * QuadratureRuleManager.cpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
- */
-
 #include "QuadratureRuleManager.hpp"
 #include "QuadratureBase.hpp"
 
@@ -32,38 +25,29 @@ using namespace dataRepository;
 
 QuadratureRuleManager::QuadratureRuleManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 QuadratureRuleManager::~QuadratureRuleManager()
 {
   // TODO Auto-generated destructor stub
 }
 
-void QuadratureRuleManager::FillDocumentationNode()
+
+ManagedGroup * QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("QuadratureRules");
-  docNode->setSchemaType("UniqueNode");
+  std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup<QuadratureBase>( childName, std::move(quadrature) );
 }
 
-void QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
-{
-  std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey );
-  this->RegisterViewWrapper( childName, std::move(quadrature) )->setRestartFlags(RestartFlags::NO_WRITE);
-}
 
-// Basis Base is not derived from ManagedGroup, so we need to do this manually:
-void QuadratureRuleManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void QuadratureRuleManager::ExpandObjectCatalogs()
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  // During schema generation, register one of each type derived from QuadratureBase here
+  for (auto& catalogIter: QuadratureBase::GetCatalog())
   {
-    std::string childName = childNode.attribute("name").value();
-    QuadratureBase * quadrature = this->getPointer<QuadratureBase>(childName);
-
-    if (quadrature != nullptr)
-    {
-      quadrature->ReadXML(childNode);
-    }
+    CreateChild( catalogIter.first, catalogIter.first );
   }
 }
 

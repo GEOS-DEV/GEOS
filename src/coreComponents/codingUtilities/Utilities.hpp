@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -275,19 +275,48 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLoc
   }
 }
 
-template< typename T >
+template< localIndex N, typename T >
+inline void CopyGlobalToLocal(arraySlice1d<localIndex const > const & globalToLocalRelation,
+                              arraySlice1d< T const > const & globalField1,
+                              arraySlice1d< T const > const & globalField2,
+                              T * const restrict localField1,
+                              T * const restrict localField2 )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    localField1[a] = globalField1[ globalToLocalRelation[a] ];
+    localField2[a] = globalField2[ globalToLocalRelation[a] ];
+  }
+}
+
+template< localIndex N, typename T >
+inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
+                              arraySlice1d< T > const & globalField1,
+                              arraySlice1d< T > const & globalField2,
+                              arraySlice1d< T > const & globalField3,
+                              T * const restrict localField1,
+                              T * const restrict localField2,
+                              T * const restrict localField3 )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    localField1[a] = globalField1[ globalToLocalRelation[a] ];
+    localField2[a] = globalField2[ globalToLocalRelation[a] ];
+    localField3[a] = globalField3[ globalToLocalRelation[a] ];
+  }
+}
+
+template< int N, typename T >
 inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & globalField1,
                               arraySlice1d< T const > const & globalField2,
                               arraySlice1d< T const > const & globalField3,
                               arraySlice1d< T const > const & globalField4,
-                              arrayView1d< T >& localField1,
-                              arraySlice1d< T >& localField2,
-                              arraySlice1d< T >& localField3,
-                              arraySlice1d< T >& localField4 )
+                              T * const localField1,
+                              T * const localField2,
+                              T * const localField3,
+                              T * const localField4 )
 {
-  const localIndex N = localField1.size();
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
@@ -327,7 +356,7 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    geosx::raja::atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
+    atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
   }
 }
 
@@ -341,12 +370,26 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
     real64 const * __restrict__ const lData = localField[a].Data();
-    geosx::raja::atomicAdd<atomicPol>( &gData[0], lData[0] );
-    geosx::raja::atomicAdd<atomicPol>( &gData[1], lData[1] );
-    geosx::raja::atomicAdd<atomicPol>( &gData[2], lData[2] );
+    atomicAdd<atomicPol>( &gData[0], lData[0] );
+    atomicAdd<atomicPol>( &gData[1], lData[1] );
+    atomicAdd<atomicPol>( &gData[2], lData[2] );
   }
 }
 
+template< localIndex N, typename atomicPol=atomicPolicy>
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              R1Tensor const * const restrict localField,
+                              arraySlice1d<R1Tensor> & globalField )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
+    real64 const * __restrict__ const lData = localField[a].Data();
+    atomicAdd<atomicPol>( &gData[0], lData[0] );
+    atomicAdd<atomicPol>( &gData[1], lData[1] );
+    atomicAdd<atomicPol>( &gData[2], lData[2] );
+  }
+}
 template< typename T, typename atomicPol=atomicPolicy >
 inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & localField1,
@@ -357,8 +400,8 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    geosx::raja::atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
-    geosx::raja::atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
+    atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
+    atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
   }
 }
 
@@ -748,6 +791,37 @@ T_VALUE softMapLookup( map<T_KEY,T_VALUE> const & theMap,
     rvalue = iter->second;
   }
   return rvalue;
+}
+
+// The code below should work with any subscriptable vector type, including 'array_view1d' and 'double *'
+// (so regardless of whether GEOSX_USE_ARRAY_BOUNDS_CHECK is defined)
+
+template<typename VEC1, typename VEC2>
+inline void copy( localIndex N, VEC1 && v1, VEC2 && v2 )
+{
+  for (localIndex i = 0; i < N; ++i)
+    v2[i] = v1[i];
+}
+
+template<typename MATRIX, typename VEC1, typename VEC2>
+inline void applyChainRule( localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 && df_dx )
+{
+  // this could use some dense linear algebra
+  for (localIndex i = 0; i < N; ++i)
+  {
+    df_dx[i] = 0.0;
+    for (localIndex j = 0; j < N; ++j)
+    {
+      df_dx[i] += df_dy[j] * dy_dx[j][i];
+    }
+  }
+}
+
+template<typename MATRIX, typename VEC1, typename VEC2>
+inline void applyChainRuleInPlace( localIndex N, MATRIX && dy_dx, VEC1 && df_dxy, VEC2 && work )
+{
+  applyChainRule( N, dy_dx, df_dxy, work );
+  copy( N, work, df_dxy );
 }
 
 }

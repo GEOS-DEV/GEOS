@@ -149,7 +149,8 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   else if( m_parameters.preconditionerType == "ilut" )
   {
     PCSetType(prec, PCHYPRE);
-    PCHYPRESetType(prec, "ilut");
+    PCHYPRESetType(prec, "pilut");
+    // HANNAH: set options: PetscOptionsSetValue(NULL,"-ksp_max_it","1500");
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
@@ -200,15 +201,10 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   switch( m_parameters.verbosity )
   {
   case 1:
-    solver.SetAztecOption( AZ_output, AZ_summary );
-    solver.SetAztecOption( AZ_diagnostics, AZ_all );
+    PetscOptionsSetValue(NULL, "-ksp_monitor_short", "");
     break;
   case 2:
-    solver.SetAztecOption( AZ_output, AZ_all );
-    solver.SetAztecOption( AZ_diagnostics, AZ_all );
-    break;
-  default:
-    solver.SetAztecOption( AZ_output, AZ_none );
+    PetscOptionsSetValue(NULL, "-ksp_monitor", "");
   }
 
   // Actually solve

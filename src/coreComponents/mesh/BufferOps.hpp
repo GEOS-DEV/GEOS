@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -48,12 +48,14 @@ localIndex Pack( char*& buffer,
 localIndex Unpack( char const * & buffer,
                    OrderedVariableToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
-                   ElementRegionManager const * const elementRegionManager );
+                   ElementRegionManager const * const elementRegionManager,
+                   bool const clearFlag );
 
 localIndex Unpack( char const * & buffer,
                    FixedToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
-                   ElementRegionManager const * const elementRegionManager );
+                   ElementRegionManager const * const elementRegionManager,
+                   bool const clearFlag );
 }
 }
 #endif

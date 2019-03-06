@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,6 +25,8 @@
 
 #include "CommunicationTools.hpp"
 
+#include <algorithm>
+
 #include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -48,15 +50,19 @@ CommunicationTools::~CommunicationTools()
 
 int CommunicationTools::MPI_Size( MPI_Comm const & comm )
 {
-  int size;
+  int size = 1;
+#ifdef GEOSX_USE_MPI
   MPI_Comm_size( comm, &size );
+#endif
   return size;
 }
 
 int CommunicationTools::MPI_Rank( MPI_Comm const & comm )
 {
-  int rank;
+  int rank = 1;
+#ifdef GEOSX_USE_MPI
   MPI_Comm_rank( comm, &rank );
+#endif
   return rank;
 }
 
@@ -165,7 +171,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       std::pair<globalIndex_array, globalIndex> tempComp;
 
       // fill the array with the remaining composition object global indices
-      tempComp.first.insert( tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
+      tempComp.first.insert(0, &nodeList[1], nodeList.size() - 1 );
 
       // set the second value of the pair to the localIndex of the object.
       tempComp.second = a;
@@ -384,6 +390,70 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   }
 
   object.ConstructGlobalToLocalMap();
+
+  globalIndex maxGlobalIndex = -1;
+  for( localIndex a=0 ; a<object.m_localToGlobalMap.size() ; ++a )
+  {
+    maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
+  }
+
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
+                 MPI_MAX,
+                 MPI_COMM_GEOSX );
+
+}
+
+void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
+                                                 std::set<localIndex> const & indexList )
+{
+  int const thisRank = MPI_Rank( MPI_COMM_GEOSX );
+  int const commSize = MPI_Size( MPI_COMM_GEOSX );
+  localIndex numberOfNewObjectsHere = indexList.size();
+  localIndex_array numberOfNewObjects( commSize );
+  localIndex_array glocalIndexOffset( commSize );
+  MPI_Allgather( reinterpret_cast<char*>( &numberOfNewObjectsHere ),
+                 sizeof(localIndex),
+                 MPI_CHAR,
+                 reinterpret_cast<char*>( numberOfNewObjects.data() ),
+                 sizeof(localIndex),
+                 MPI_CHAR,
+                 MPI_COMM_GEOSX );
+
+
+  glocalIndexOffset[0] = 0;
+  for( int rank = 1 ; rank < commSize ; ++rank )
+  {
+    glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
+  }
+
+  localIndex nIndicesAssigned = 0;
+  for ( localIndex const newLocalIndex : indexList )
+  {
+    GEOS_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
+                   "Local object " << newLocalIndex << " should be new but already has a global index "
+                   << object.m_localToGlobalMap[newLocalIndex] );
+
+    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
+    object.m_globalToLocalMap[object.m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
+
+    nIndicesAssigned += 1;
+  }
+
+  globalIndex maxGlobalIndex = -1;
+  for( localIndex a=0 ; a<object.m_localToGlobalMap.size() ; ++a )
+  {
+    maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
+  }
+
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(object.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
+                 MPI_MAX,
+                 MPI_COMM_GEOSX );
 }
 
 void
@@ -481,6 +551,20 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.RebuildSyncLists( meshLevel, commID );
   }
 
+  meshLevel->getNodeManager()->FixUpDownMaps(false);
+  meshLevel->getEdgeManager()->FixUpDownMaps(false);
+  meshLevel->getFaceManager()->FixUpDownMaps(false);
+  for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
+  {
+    ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(esr);
+      subRegion->FixUpDownMaps(false);
+    }
+  }
+
+
   CommunicationTools::releaseCommID( commID );
 }
 
@@ -518,7 +602,7 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
 
   MPI_iCommData sizeComm;
 
-  //  raja::forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,[&] ( int neighborIndex)->void
+  //  forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,[&] ( int neighborIndex)->void
   for( int neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
@@ -554,8 +638,8 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
   GEOSX_MARK_FUNCTION;
 
 #if 0
-//  raja::forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,
-//                                                      [&] ( int neighborIndex )->void
+//  forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,
+//                                                   [&] ( int neighborIndex )->void
 
 #pragma omp parallel for
   for( localIndex neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,7 +25,6 @@
 
 #include "PhysicsSolverManager.hpp"
 
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "SolverBase.hpp"
 
 namespace geosx
@@ -40,7 +39,12 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
   m_gravityVector( R1Tensor(0.0) ),
   m_blockSystemRepository()
 {
-  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+  setInputFlags(InputFlags::REQUIRED);
+
+  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
+    setApplyDefaultValue({0,0,0})->
+    setInputFlag(InputFlags::OPTIONAL);
+
   this->RegisterViewWrapper( viewKeyStruct::blockSystemRepositoryString, &m_blockSystemRepository, 0 )->setRestartFlags( RestartFlags::NO_WRITE );
 }
 
@@ -48,38 +52,27 @@ PhysicsSolverManager::~PhysicsSolverManager()
 {}
 
 
-void PhysicsSolverManager::FillDocumentationNode()
+ManagedGroup * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("Solvers");
-  docNode->setSchemaType("UniqueNode");
-  docNode->setShortDescription("Solver manager");
-
-  docNode->AllocateChildNode( viewKeyStruct::gravityVectorString,
-                              viewKeyStruct::gravityVectorString,
-                              -1,
-                              "R1Tensor",
-                              "R1Tensor",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0);
-}
-
-
-void PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
-{
+  ManagedGroup * rval = nullptr;
   if( SolverBase::CatalogInterface::hasKeyName(childKey) )
   {
     GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
-    this->RegisterGroup( childName,
-                         SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
+    rval = RegisterGroup( childName,
+                          SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
   }
+  return rval;
 }
 
+
+void PhysicsSolverManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from SolverBase here
+  for (auto& catalogIter: SolverBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
+}
 
 
 } /* namespace geosx */

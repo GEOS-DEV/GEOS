@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -42,9 +42,7 @@ public:
    */
   static string CatalogName() { return "Poroelastic"; }
 
-  virtual void FillDocumentationNode() override final;
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
@@ -55,7 +53,7 @@ public:
                                      real64 const& dt,
                                      DomainPartition * const domain) override final;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
@@ -114,7 +112,6 @@ public:
 //                                     real64 const & dt,
 //                                     DomainPartition * const domain );
 
-  virtual void ReadXML_PostProcess() override final;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
@@ -124,15 +121,18 @@ public:
                             DomainPartition * const domain);
 
 
-  enum class couplingTypeOption
+  enum class couplingTypeOption : int
   {
     FixedStress,
-    FullyImplicit
+    TightlyCoupled
   };
+
+
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto couplingTypeOptionString = "couplingTypeOption";
+    constexpr static auto couplingTypeOptionString = "couplingTypeOptionEnum";
+    constexpr static auto couplingTypeOptionStringString = "couplingTypeOption";
 
     constexpr static auto totalMeanStressString = "totalMeanStress";
     constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
@@ -142,11 +142,17 @@ public:
   } poroElasticSolverViewKeys;
 
 
+protected:
+  virtual void PostProcessInput() override final;
+
+  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
 
 
 private:
+
   string m_solidSolverName;
   string m_flowSolverName;
+  string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
 
 };

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -14,13 +14,6 @@
  * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-
-/*
- * QuadratureRuleManager.hpp
- *
- *  Created on: Apr 18, 2017
- *      Author: rrsettgast
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_QUADRATURERULEMANAGER_HPP_
@@ -46,9 +39,10 @@ public:
   QuadratureRuleManager(string const & name, ManagedGroup * const parent);
   virtual ~QuadratureRuleManager() override;
 
-  virtual void FillDocumentationNode() override;
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
 };
 

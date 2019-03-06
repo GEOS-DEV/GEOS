@@ -5,7 +5,11 @@ message( "CONFIG_NAME = ${CONFIG_NAME}" )
 
 set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++" CACHE PATH "")
+
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
+set(CMAKE_Fortran_COMPILER "/opt/local/bin/gfortran-mp-7" CACHE PATH "")
+
+
 set(ENABLE_MPI ON CACHE PATH "")
 set(MPI_C_COMPILER "/opt/local/bin/mpicc-openmpi-clang" CACHE PATH "")
 set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-openmpi-clang" CACHE PATH "")
@@ -13,6 +17,7 @@ set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-openmpi-clang" CACHE PATH "")
 set(MPIEXEC "mpirun-openmpi-gcc7" CACHE PATH "")
 
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+set(SPHINX_EXECUTABLE "/opt/local/bin/sphinx-build-2.7" CACHE PATH "" FORCE)
 
 #######################################
 # RAJA/CHAI SETUP

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -39,6 +39,11 @@ struct CellDescriptor
   localIndex region;
   localIndex subRegion;
   localIndex index;
+
+  bool operator==( CellDescriptor const & other )
+  {
+    return( region==other.region && subRegion==other.subRegion && index==other.index );
+  }
 };
 
 /**
@@ -84,10 +89,6 @@ public:
   using CellStencil     = StencilCollection<CellDescriptor, real64>;
   using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
 
-  void FillDocumentationNode() override;
-
-  void FinalInitialization(ManagedGroup * const rootGroup) override;
-
   FluxApproximationBase() = delete;
 
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
@@ -107,6 +108,11 @@ public:
   /// check if a stencil exists
   bool hasBoundaryStencil(string const & setName) const;
 
+
+  /// call a user-provided function for each boundary stencil
+  template<typename LAMBDA>
+  void forCellStencils(LAMBDA && lambda) const;
+
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
   void forBoundaryStencils(LAMBDA && lambda) const;
@@ -116,10 +122,12 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto fieldNameString         = "fieldName";
-    static constexpr auto boundaryFieldNameString = "boundaryFieldName";
-    static constexpr auto coeffNameString         = "coefficientName";
-    static constexpr auto cellStencilString       = "cellStencil";
+    static constexpr auto fieldNameString          = "fieldName";
+    static constexpr auto boundaryFieldNameString  = "boundaryFieldName";
+    static constexpr auto coeffNameString          = "coefficientName";
+    static constexpr auto cellStencilString        = "cellStencil";
+    static constexpr auto fratureRegionNameString = "fractureRegions";
+    static constexpr auto fratureStencilString     = "fractureStencil";
   };
 
   struct groupKeyStruct
@@ -128,9 +136,14 @@ public:
   };
 
 protected:
+  void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
+
+  virtual void computeFractureStencil( DomainPartition const & domain,
+                                       CellStencil & fractureStencil,
+                                       CellStencil & cellStencil ) = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;
@@ -147,15 +160,25 @@ protected:
   /// name of the coefficient field
   string m_coeffName;
 
+  /// names of the fracture regions
+  string m_fractureRegionName;
 };
+
+template<typename LAMBDA>
+void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
+{
+  this->forViewWrappersByType<CellStencil>([&] (auto const & vw) -> void
+  {
+    lambda(vw.reference());
+  });
+}
 
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
   this->forViewWrappersByType<BoundaryStencil>([&] (auto const & vw) -> void
   {
-    if (vw.getName() != viewKeyStruct::cellStencilString)
-      lambda(vw.reference());
+    lambda(vw.reference());
   });
 }
 

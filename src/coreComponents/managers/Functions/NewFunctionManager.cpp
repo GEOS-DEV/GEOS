@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -37,29 +37,32 @@ using namespace dataRepository;
 NewFunctionManager::NewFunctionManager( const std::string& name,
                                         ManagedGroup * const parent ):
   ManagedGroup( name, parent )
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL);
+}
 
 NewFunctionManager::~NewFunctionManager()
 {
   // TODO Auto-generated destructor stub
 }
 
-void NewFunctionManager::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName("Functions");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Function manager");
-}
-
-
-void NewFunctionManager::CreateChild( string const & functionCatalogKey,
+ManagedGroup * NewFunctionManager::CreateChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
   GEOS_LOG_RANK_0("   " << functionCatalogKey << ": " << functionName);
   std::unique_ptr<FunctionBase> function = FunctionBase::CatalogInterface::Factory( functionCatalogKey, functionName, this );
-  this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
+  return this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
+}
+
+
+void NewFunctionManager::ExpandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from FunctionBase here
+  for (auto& catalogIter: FunctionBase::GetCatalog())
+  {
+    CreateChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 } /* namespace ANST */

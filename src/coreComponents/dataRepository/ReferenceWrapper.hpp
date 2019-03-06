@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -94,6 +94,13 @@ public:
   {
     source.m_ref = nullptr;
   }
+
+  ReferenceWrapper& operator=( ReferenceWrapper const & source )
+  {
+    m_ref = source.m_ref;
+    return *this;
+  }
+
 
   /**
    * @tparam T_RHS type of the rhs

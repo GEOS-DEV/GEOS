@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -31,8 +31,8 @@ namespace geosx
 
 namespace trilinosTypes
 {
-using gid = long long;
-using lid = int;
+//using gid = long long;  // no longer necessary
+//using lid = int;        // no longer necessary
 }
 
 namespace hypreTypes

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -85,10 +85,7 @@ int main(int argc, char** argv)
 
 TEST(testXML,testXML)
 {
-  ProblemManager problemManager("ProblemManager",nullptr);
-
-  problemManager.BuildDataStructure(nullptr);
-  problemManager.SetDocumentationNodes();
+  ProblemManager problemManager("Problem",nullptr);
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( global_argc, global_argv );

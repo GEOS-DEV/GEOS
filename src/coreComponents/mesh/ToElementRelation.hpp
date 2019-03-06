@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -46,6 +46,11 @@ public:
   localIndex size() const
   {
     return m_toElementRegion.size();
+  }
+
+  localIndex size( int const dim ) const
+  {
+    return m_toElementRegion.size( dim );
   }
 
   void setElementRegionManager( ElementRegionManager const * const input )

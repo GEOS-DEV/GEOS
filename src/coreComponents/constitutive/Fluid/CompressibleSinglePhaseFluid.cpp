@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -31,190 +31,149 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
+static ExponentApproximationType stringToExponentType( string const & model )
+{
+  if (model == "linear")
+  {
+    return ExponentApproximationType::Linear;
+  }
+  else if (model == "quadratic")
+  {
+    return ExponentApproximationType::Quadratic;
+  }
+  else if (model == "exponential")
+  {
+    return ExponentApproximationType::Full;
+  }
+  GEOS_ERROR("Model type not supported: " << model);
+
+  // otherwise compilers complain about reaching the end of non-void function
+  return ExponentApproximationType::Full;
+}
 
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, ManagedGroup * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_densityRelation( ExponentApproximationType::Linear ),
-  m_viscosityRelation( ExponentApproximationType::Linear )
+  SingleFluidBase( name, parent )
 {
-  RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, 0 );
-  RegisterViewWrapper( viewKeys.viscosibility.Key(), &m_viscosibility, 0 );
-  RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
-  RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
-  RegisterViewWrapper( viewKeys.referenceViscosity.Key(), &m_referenceViscosity, 0 );
+  RegisterViewWrapper( viewKeyStruct::compressibilityString, &m_compressibility, false )->
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Fluid compressibility");
 
-  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->setPlotLevel(PlotLevel::LEVEL_0);
-  RegisterViewWrapper( viewKeyStruct::dDens_dPresString, &m_dDensity_dPressure, 0 );
+  RegisterViewWrapper( viewKeyStruct::viscosibilityString, &m_viscosibility, false )->
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Fluid viscosity exponential coefficient");
 
-  RegisterViewWrapper( viewKeyStruct::viscosityString, &m_viscosity, 0 );
-  RegisterViewWrapper( viewKeyStruct::dVisc_dPresString, &m_dViscosity_dPressure, 0 );
+  RegisterViewWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, false )->
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Reference pressure");
+
+  RegisterViewWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity, false )->
+    setApplyDefaultValue(1000.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Reference fluid density");
+
+  RegisterViewWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity, false )->
+    setApplyDefaultValue(0.001)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Reference fluid viscosity");
+
+  RegisterViewWrapper( viewKeyStruct::densityModelString, &m_densityModelString, false )->
+    setApplyDefaultValue("linear")->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Type of density model (linear, quadratic, exponential)");
+
+  RegisterViewWrapper( viewKeyStruct::viscosityModelString, &m_viscosityModelString, false )->
+    setApplyDefaultValue("linear")->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Type of viscosity model (linear, quadratic, exponential)");
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
+
+void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                                             localIndex const numConstitutivePointsPerParentIndex )
+{
+  SingleFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
+
+  m_density = m_referenceDensity;
+  m_viscosity = m_referenceViscosity;
+}
 
 std::unique_ptr<ConstitutiveBase>
 CompressibleSinglePhaseFluid::DeliverClone( string const & name,
                                             ManagedGroup * const parent ) const
 {
-  std::unique_ptr<CompressibleSinglePhaseFluid> newConstitutiveRelation =
+  std::unique_ptr<CompressibleSinglePhaseFluid> newFluid =
     std::make_unique<CompressibleSinglePhaseFluid>( name, parent );
 
-  newConstitutiveRelation->m_compressibility   = this->m_compressibility;
-  newConstitutiveRelation->m_viscosibility = this->m_viscosibility;
-  newConstitutiveRelation->m_referencePressure  = this->m_referencePressure;
-  newConstitutiveRelation->m_referenceDensity   = this->m_referenceDensity;
-  newConstitutiveRelation->m_referenceViscosity = this->m_referenceViscosity;
+  newFluid->m_compressibility      = this->m_compressibility;
+  newFluid->m_viscosibility        = this->m_viscosibility;
+  newFluid->m_referencePressure    = this->m_referencePressure;
+  newFluid->m_referenceDensity     = this->m_referenceDensity;
+  newFluid->m_referenceViscosity   = this->m_referenceViscosity;
+  newFluid->m_densityModelString   = this->m_densityModelString;
+  newFluid->m_viscosityModelString = this->m_viscosityModelString;
+  newFluid->m_densityModelType     = this->m_densityModelType;
+  newFluid->m_viscosityModelType   = this->m_viscosityModelType;
 
-  newConstitutiveRelation->m_densityRelation   = this->m_densityRelation;
-  newConstitutiveRelation->m_viscosityRelation = this->m_viscosityRelation;
-
-  std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
-
-  return rval;
+  return std::move(newFluid);
 }
 
-void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                                             localIndex const numConstitutivePointsPerParentIndex )
+void CompressibleSinglePhaseFluid::PostProcessInput()
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::PostProcessInput();
 
-  this->resize( parent->size() );
+  GEOS_ERROR_IF( m_compressibility < 0.0, "An invalid value of fluid compressibility ("
+                                          << m_compressibility << ") is specified" );
 
-  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dDensity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_density = this->m_referenceDensity;
+  GEOS_ERROR_IF( m_viscosibility < 0.0, "An invalid value of fluid viscosibility ("
+                                        << m_compressibility << ") is specified" );
 
-  m_viscosity.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dViscosity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_viscosity = this->m_referenceViscosity;
+  GEOS_ERROR_IF( m_referenceDensity <= 0.0, "An invalid value of fluid reference density ("
+                                            << m_compressibility << ") is specified" );
+
+  GEOS_ERROR_IF( m_referenceViscosity <= 0.0, "An invalid value of fluid reference viscosity ("
+                                              << m_compressibility << ") is specified" );
+
+  m_densityModelType   = stringToExponentType( m_densityModelString );
+  m_viscosityModelType = stringToExponentType( m_viscosityModelString );
 }
 
-void CompressibleSinglePhaseFluid::FillDocumentationNode()
+void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIndex const k, localIndex const q )
 {
-
-  DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->CatalogName());
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "Slightly compressible single phase fluid model" );
-
-  docNode->AllocateChildNode( viewKeys.compressibility.Key(),
-                              viewKeys.compressibility.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Fluid compressibility",
-                              "Fluid compressibility",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.viscosibility.Key(),
-                              viewKeys.viscosibility.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Fluid viscosity exponential coefficient",
-                              "Fluid viscosity exponential coefficient",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.referencePressure.Key(),
-                              viewKeys.referencePressure.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Reference pressure",
-                              "Reference pressure",
-                              "0",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.referenceDensity.Key(),
-                              viewKeys.referenceDensity.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Reference fluid density",
-                              "Reference fluid density",
-                              "1000",
-                              "",
-                              1,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.referenceViscosity.Key(),
-                              viewKeys.referenceViscosity.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "Reference fluid viscosity",
-                              "Reference fluid viscosity",
-                              "0.001",
-                              "",
-                              1,
-                              1,
-                              0 );
-
+  Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
 }
 
-void CompressibleSinglePhaseFluid::ReadXML_PostProcess()
+void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d<double const> const & pressure )
 {
-  if( m_compressibility < 0.0 )
+  makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
   {
-    string const message = "An invalid value of fluid compressibility ("+std::to_string( m_compressibility )+") is specified";
-    GEOS_ERROR( message );
-  }
-
-  if( m_viscosibility < 0.0 )
+    SingleFluidBase::BatchDensityUpdateKernel<CompressibleSinglePhaseFluid>( pressure, relation );
+  } );
+  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
   {
-    string const message = "An invalid value of fluid viscosibility ("+std::to_string( m_viscosibility )+") is specified";
-    GEOS_ERROR( message );
-  }
-
-  if( m_referenceDensity <= 0.0 )
-  {
-    string const message = "An invalid value of reference density ("+std::to_string( m_referenceDensity )+") is specified";
-    GEOS_ERROR( message );
-  }
-
-  if( m_referenceViscosity <= 0.0 )
-  {
-    string const message = "An invalid value of reference viscosity ("+std::to_string( m_referenceViscosity )+") is specified";
-    GEOS_ERROR( message );
-  }
+    SingleFluidBase::BatchDensityUpdateKernel<CompressibleSinglePhaseFluid>( pressure, relation );
+  } );
 }
 
-void CompressibleSinglePhaseFluid::FluidDensityCompute( real64 const & pres,
-                                                        localIndex const i,
-                                                        real64 & dens,
-                                                        real64 & dDens_dPres )
+void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
+                                            real64 & density, real64 & dDensity_dPressure,
+                                            real64 & viscosity, real64 & dViscosity_dPressure ) const
 {
-  m_densityRelation.Compute( pres, dens, dDens_dPres );
-}
-
-
-void CompressibleSinglePhaseFluid::FluidViscosityCompute( real64 const & pres,
-                                                          localIndex const i,
-                                                          real64 & visc,
-                                                          real64 & dVisc_dPres )
-{
-  m_viscosityRelation.Compute( pres, visc, dVisc_dPres );
-}
-
-void CompressibleSinglePhaseFluid::FinalInitialization( ManagedGroup *const parent )
-{
-  m_densityRelation.SetCoefficients( m_referencePressure, m_referenceDensity, m_compressibility );
-  m_viscosityRelation.SetCoefficients( m_referencePressure, m_referenceViscosity, m_viscosibility );
+  makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
+  {
+    Compute( pressure, density, dDensity_dPressure, relation );
+  } );
+  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
+  {
+    Compute( pressure, viscosity, dViscosity_dPressure, relation );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, ManagedGroup * const )
-}
+
+} /* namespace constitutive */
+
 } /* namespace geosx */

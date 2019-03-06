@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -68,12 +68,13 @@ public:
 
   static string CatalogName() { return "InternalMesh"; }
 
-
-  virtual void FillDocumentationNode() override;
+//  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
+//
+//
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
 
@@ -88,16 +89,19 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ReadXML_PostProcess() override final;
 //  int m_delayMeshDeformation;
 
-private:
+protected:
+  void PostProcessInput() override final;
 
+private:
 
   int m_dim;
   array1d<real64> m_vertices[3];
   integer_array m_nElems[3];
   array1d<real64> m_nElemScaling[3];
+
+  bool m_useBias = false;
   array1d<real64> m_nElemBias[3];
 
   string_array m_regionNames;
@@ -202,7 +206,7 @@ private:
 
       X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
 
-      if (( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
+      if ( m_useBias && ( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
       {
         GEOS_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
 
