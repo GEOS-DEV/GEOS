@@ -1157,7 +1157,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     if (fieldName.second->get_typeid() == typeid( array3d<real64>))
     {
       ElementRegionManager::MaterialViewAccessor<arrayView3d<real64> > const field =
-        elementManager->ConstructMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( fieldName.first,
+        elementManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( fieldName.first,
                                                                                               constitutiveManager);
 
       WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
@@ -1166,7 +1166,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     if (fieldName.second->get_typeid() == typeid( array4d<real64>))
     {
       ElementRegionManager::MaterialViewAccessor<arrayView4d<real64> > const field =
-        elementManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64> >( fieldName.first,
+        elementManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64> >( fieldName.first,
                                                                                               constitutiveManager);
 
       WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
