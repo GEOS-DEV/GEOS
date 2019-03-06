@@ -98,7 +98,7 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceManager->size(), 2);
-  real64 areaTolerance = meshBody->GetTolerance() * meshBody->GetTolerance();
+  real64 areaTolerance = meshBody->GetAreaTolerance();
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
     if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
