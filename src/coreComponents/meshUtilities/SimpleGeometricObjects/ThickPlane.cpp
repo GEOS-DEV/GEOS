@@ -62,7 +62,7 @@ void ThickPlane::PostProcessInput()
 bool ThickPlane::IsCoordInObject( const R1Tensor& coord ) const
 {
   real64 normalDistance = 0.0;
-  for(localIndex i=0; i<3; ++i)
+  for(int i=0; i<3; ++i)
   {
     normalDistance += m_normal[i]*(coord[i]-m_origin[i]);
   }
