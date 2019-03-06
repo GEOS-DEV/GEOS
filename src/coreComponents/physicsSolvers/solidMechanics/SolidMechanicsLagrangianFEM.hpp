@@ -220,9 +220,9 @@ public:
         arrayView1d<R1Tensor const> const & u,\
         arrayView1d<R1Tensor const> const & vel,\
         arrayView1d<R1Tensor> const & acc,\
-        arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations, \
-        arrayView1d< arrayView2d<real64> const > const & meanStress, \
-        arrayView1d< arrayView2d<R2SymTensor> const> const & devStress, \
+        constitutive::ConstitutiveBase * const constitutiveRelation, \
+        arrayView2d<real64> const & meanStress, \
+        arrayView2d<R2SymTensor> const & devStress, \
         real64 const dt ) OVERRIDE\
     {\
       return ElementKernelLaunchSelector<WRAPPER>( NUM_NODES_PER_ELEM,\
@@ -234,7 +234,7 @@ public:
                                                              u,\
                                                              vel,\
                                                              acc,\
-                                                             constitutiveRelations,\
+                                                             constitutiveRelation,\
                                                              meanStress,\
                                                              devStress,\
                                                              dt );\
@@ -263,7 +263,7 @@ public:
       arrayView3d<R1Tensor const> const & dNdX,\
       arrayView2d<real64 const > const& detJ,\
       FiniteElementBase const * const fe,\
-      arrayView1d<constitutive::ConstitutiveBase *> const & constitutiveRelations,\
+      constitutive::ConstitutiveBase const * const constitutiveRelation,\
       arrayView1d< integer const > const & elemGhostRank,\
       arrayView2d< localIndex const > const & elemsToNodes,\
       arrayView1d< globalIndex const > const & globalDofNumber,\
@@ -291,7 +291,7 @@ public:
                                            dNdX,\
                                            detJ,\
                                            fe,\
-                                           constitutiveRelations,\
+                                           constitutiveRelation,\
                                            elemGhostRank,\
                                            elemsToNodes,\
                                            globalDofNumber,\
@@ -330,7 +330,7 @@ public:
      * @param u The nodal array of total displacements.
      * @param vel The nodal array of velocity.
      * @param acc The nodal array of force/acceleration.
-     * @param constitutiveRelations An array of pointers to the constitutitve relations that are used on this region.
+     * @param constitutiveRelation An array of pointers to the constitutitve relations that are used on this region.
      * @param meanStress The mean stress at each element quadrature point
      * @param devStress The deviator stress at each element quadrature point.
      * @param dt The timestep
@@ -345,9 +345,9 @@ public:
             arrayView1d<R1Tensor const> const & u,
             arrayView1d<R1Tensor const> const & vel,
             arrayView1d<R1Tensor> const & acc,
-            arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations,
-            arrayView1d< arrayView2d<real64> const > const & meanStress,
-            arrayView1d< arrayView2d<R2SymTensor> const> const & devStress,
+            constitutive::ConstitutiveBase * const constitutiveRelation,
+            arrayView2d<real64> const & meanStress,
+            arrayView2d<R2SymTensor> const & devStress,
             real64 const dt );
   };
 
@@ -365,7 +365,7 @@ public:
      * @param dNdX The derivitaves of the shape functions wrt the reference configuration.
      * @param detJ The determinant of the transformation matrix (Jacobian) to the parent element.
      * @param fe A pointer to the finite element class used in this kernel.
-     * @param constitutiveRelations An array of pointers to the constitutitve relations that are used on this region.
+     * @param constitutiveRelation An array of pointers to the constitutitve relations that are used on this region.
      * @param elemGhostRank An array containing the values of the owning ranks for ghost elements.
      * @param elemsToNodes The map from the elements to the nodes that form that element.
      * @param globalDofNumber The map from localIndex to the globalDOF number.
@@ -393,7 +393,7 @@ public:
             arrayView3d<R1Tensor const> const & dNdX,
             arrayView2d<real64 const > const& detJ,
             FiniteElementBase const * const fe,
-            arrayView1d<constitutive::ConstitutiveBase *> const & constitutiveRelations,
+            constitutive::ConstitutiveBase const * const constitutiveRelation,
             arrayView1d< integer const > const & elemGhostRank,
             arrayView2d< localIndex const > const & elemsToNodes,
             arrayView1d< globalIndex const > const & globalDofNumber,
@@ -466,6 +466,8 @@ public:
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
+    static constexpr auto solidMaterialNameString = "solidMaterialName";
+    static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
 
 
     dataRepository::ViewKey vTilde = { vTildeString };
@@ -502,6 +504,8 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
+  string m_solidMaterialName;
+  localIndex m_solidMaterialFullIndex;
 
   array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
@@ -572,15 +576,15 @@ Launch( set<localIndex> const & elementList,
         arrayView1d<R1Tensor const> const & u,
         arrayView1d<R1Tensor const> const & vel,
         arrayView1d<R1Tensor> const & acc,
-        arrayView1d< constitutive::ConstitutiveBase * const> const & constitutiveRelations,
-        arrayView1d< arrayView2d<real64> const > const & meanStress,
-        arrayView1d< arrayView2d<R2SymTensor> const> const & devStress,
+        constitutive::ConstitutiveBase * const constitutiveRelation,
+        arrayView2d<real64> const & meanStress,
+        arrayView2d<R2SymTensor> const & devStress,
         real64 const dt )
 {
 
-  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelations[0]->GetStateUpdateFunctionPointer();
+  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelation->GetStateUpdateFunctionPointer();
   void * data = nullptr;
-  constitutiveRelations[0]->SetParamStatePointers( data );
+  constitutiveRelation->SetParamStatePointers( data );
   forall_in_set<elemPolicy>( elementList.values(),
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex k) mutable
@@ -625,11 +629,11 @@ Launch( set<localIndex> const & elementList,
       R2SymTensor Dadt;
       HughesWinget(Rot, Dadt, Ldt);
 
-      constitutiveRelations[0]->StateUpdatePoint( Dadt, Rot, k, q, 0);
+      constitutiveRelation->StateUpdatePoint( Dadt, Rot, k, q, 0);
 
       R2SymTensor TotalStress;
-      TotalStress = devStress[0][k][q];
-      TotalStress.PlusIdentity( meanStress[0][k][q] );
+      TotalStress = devStress[k][q];
+      TotalStress.PlusIdentity( meanStress[k][q] );
 
       Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, Finv, f_local );
     }//quadrature loop
@@ -650,7 +654,7 @@ ImplicitElementKernelWrapper::Launch( localIndex const numElems,
                              arrayView3d<R1Tensor const> const & dNdX,
                              arrayView2d<real64 const > const& detJ,
                              FiniteElementBase const * const fe,
-                             arrayView1d<constitutive::ConstitutiveBase *> const & constitutiveRelations,
+                             constitutive::ConstitutiveBase const * const constitutiveRelation,
                              arrayView1d< integer const > const & elemGhostRank,
                              arrayView2d< localIndex const > const & elemsToNodes,
                              arrayView1d< globalIndex const > const & globalDofNumber,
