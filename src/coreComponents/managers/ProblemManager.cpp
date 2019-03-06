@@ -125,7 +125,7 @@ ProblemManager::ProblemManager( const std::string& name,
                                      m_functionManager,
                                      false );
 
-
+  // Command line entries
   commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the input xml file.");
@@ -559,16 +559,25 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   elementManager->GenerateDataStructureSkeleton(0);
   SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode, documentationType);
 
-  // Add entries that are only used in the pre-processor
-  xmlWrapper::xmlNode targetIncludeNode = targetChoiceNode.append_child("xsd:element");
-  targetIncludeNode.append_attribute("name") = "Included";
-  targetIncludeNode.append_attribute("type") = "xsd:anyType";
-  targetIncludeNode.append_attribute("maxOccurs") = "1";
 
-  targetIncludeNode = targetChoiceNode.append_child("xsd:element");
-  targetIncludeNode.append_attribute("name") = "Parameters";
-  targetIncludeNode.append_attribute("type") = "xsd:anyType";
-  targetIncludeNode.append_attribute("maxOccurs") = "1";
+  // Add entries that are only used in the pre-processor
+  ManagedGroup * IncludedList = this->RegisterGroup<ManagedGroup>("Included");
+  IncludedList->setInputFlags(InputFlags::OPTIONAL);
+
+  ManagedGroup * includedFile = IncludedList->RegisterGroup<ManagedGroup>("File");
+  includedFile->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  
+  ManagedGroup * parameterList = this->RegisterGroup<ManagedGroup>("Parameters");
+  parameterList->setInputFlags(InputFlags::OPTIONAL);
+
+  ManagedGroup * parameter = parameterList->RegisterGroup<ManagedGroup>("Parameter");
+  parameter->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  parameter->RegisterViewWrapper<string>("value")->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Input parameter definition for the preprocessor");
+
+  SchemaUtilities::SchemaConstruction(IncludedList, schemaRoot, targetChoiceNode, documentationType);
+  SchemaUtilities::SchemaConstruction(parameterList, schemaRoot, targetChoiceNode, documentationType);
 }
 
 
