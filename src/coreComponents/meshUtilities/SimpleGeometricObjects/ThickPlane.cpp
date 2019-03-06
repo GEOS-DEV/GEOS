@@ -16,8 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ThickPlane.cpp
+/**
+ * @file ThickPlane.cpp
  */
 
 #include "ThickPlane.hpp"
