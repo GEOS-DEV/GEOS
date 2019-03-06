@@ -289,7 +289,7 @@ public:
 
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
-  ConstructMaterialViewAccessor( string const & name,
+  ConstructFullMaterialViewAccessor( string const & name,
                                  constitutive::ConstitutiveManager const * const cm ) const;
 
 //  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
@@ -300,7 +300,7 @@ public:
 
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
-  ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
+  ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
 
   using ManagedGroup::PackSize;
   using ManagedGroup::Pack;
@@ -541,8 +541,8 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::MaterialViewAccessor<LHS>
 ElementRegionManager::
-ConstructMaterialViewAccessor( string const & viewName,
-                               constitutive::ConstitutiveManager const * const cm  ) const
+ConstructFullMaterialViewAccessor( string const & viewName,
+                                   constitutive::ConstitutiveManager const * const cm  ) const
 {
   MaterialViewAccessor<LHS> accessor;
   accessor.resize( numRegions() );
@@ -580,7 +580,7 @@ ConstructMaterialViewAccessor( string const & viewName,
 
 template< typename CONSTITUTIVE_TYPE >
 ElementRegionManager::ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE>
-ElementRegionManager::ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm )
+ElementRegionManager::ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm )
 {
   ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE> accessor;
   accessor.resize( numRegions() );

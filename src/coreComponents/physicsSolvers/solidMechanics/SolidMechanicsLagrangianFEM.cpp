@@ -253,7 +253,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > rho =
-    elementRegionManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("density", constitutiveManager);
+    elementRegionManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("density", constitutiveManager);
 
 
   NumericalMethodsManager const *
@@ -432,13 +432,13 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   });
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > meanStress =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
+    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const devStress =
-    elemManager->ConstructMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >("DeviatorStress", constitutiveManager);
+    elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >("DeviatorStress", constitutiveManager);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-    elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+    elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   GEOSX_GET_TIME( t1 );
 
@@ -981,7 +981,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-    elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+    elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const fluidPres =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("pressure");
@@ -1009,10 +1009,10 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
 
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-  constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< real64 > const
-  density = elemManager->ConstructMaterialViewAccessor< real64 >( "density0",
+  density = elemManager->ConstructFullMaterialViewAccessor< real64 >( "density0",
                                                                   constitutiveManager );
 
   // begin region loop
