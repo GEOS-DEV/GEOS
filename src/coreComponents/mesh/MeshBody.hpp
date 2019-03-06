@@ -81,7 +81,7 @@ public:
 private:
   /// By default, an absolute tolerance
   /// Can be set to another value
-  real64 m_tolerance { std::numeric_limits<real64>::epsilon() };
+  real64 m_tolerance { 0. };
 
 
 };
