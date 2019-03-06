@@ -48,6 +48,16 @@ public:
   MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>(level); }
   MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>(level); }
 
+  void SetTolerance( real64 tolerance )
+  {
+    m_tolerance = tolerance;
+  }
+
+  real64 GetTolerance() const
+  {
+    return m_tolerance;
+  }
+
   struct viewKeysStruct
   {
 
@@ -57,6 +67,11 @@ public:
 
   struct groupStructKeys
   {} groupKeys;
+
+private:
+  /// By default, an absolute tolerance
+  /// Can be set to another value
+  real64 m_tolerance { std::numeric_limits<real64>::epsilon() };
 
 
 };
