@@ -366,7 +366,10 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
     R1Tensor temp1( m_min );
     R1Tensor temp2( m_max );
+
     partition.setSizes( temp1, temp2 );
+    temp2 -= temp1;
+    meshBody->SetTolerance( std::fabs( temp2.L2_Norm() / 1e8 ) );
   }
 
   // find elemCenters for even uniform element sizes
