@@ -1148,7 +1148,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     if (fieldName.second->get_typeid() == typeid( array2d<real64>))
     {
       ElementRegionManager::MaterialViewAccessor<arrayView2d<real64> > const field =
-        elementManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( fieldName.first,
+        elementManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( fieldName.first,
                                                                                                   constitutiveManager);
 
       WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
