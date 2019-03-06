@@ -58,6 +58,16 @@ public:
     return m_tolerance;
   }
 
+  real64 GetAreaTolerance() const
+  {
+    return m_tolerance * m_tolerance;
+  }
+
+  real64 GetVolumeTolerance() const
+  {
+    return m_tolerance * m_tolerance * m_tolerance;
+  }
+
   struct viewKeysStruct
   {
 
