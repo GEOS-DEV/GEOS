@@ -210,30 +210,73 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
                                           real64 const & eventProgress,
                                           ManagedGroup * domain )
 {
-  std::cout << cycleNumber << " " << m_initialBCs.size() << std::endl;
-  if( cycleNumber == 0 )
+  std::cout << "PRESSURE : " << m_pressure2[0][0][0] << std::endl;
+  if( cycleNumber == 1 )
   {
+    std::cout << "CYCLE1" << std::endl;
     auto fc = FieldSpecificationManager::get();
     auto bc = fc->GetGroup( m_initialBCs[0] )->group_cast< FieldSpecificationBase* >();
     bc->Toggle(1);
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
-
-    
-    return;
-  }
-  if( cycleNumber == 1 )
-  {
-    
+    for( localIndex  er = 0; er < m_pressure.size() ; er++ )
+    {
+      for( localIndex  esr = 0; esr < m_pressure[er].size() ; esr++ )
+      {
+        for( localIndex  ei = 0; ei < m_pressure[er][esr].size() ; ei++ )
+        {
+          m_pressure1[er][esr][ei] = m_pressure[er][esr][ei];
+        }
+      }
+    }
+    bc->Toggle(0);
     return;
   }
   if( cycleNumber == 2 )
   {
     
+    std::cout << "CYCLE2 " <<  time_n << std::endl;
+    auto fc = FieldSpecificationManager::get();
+    auto bc = fc->GetGroup( m_initialBCs[1] )->group_cast< FieldSpecificationBase* >();
+    bc->Toggle(1);
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+    std::cout << m_pressure.size() << std::endl;
+    for( localIndex  er = 0; er < m_pressure.size() ; er++ )
+    {
+    std::cout << m_pressure[er].size() << std::endl;
+      for( localIndex  esr = 0; esr < m_pressure[er].size() ; esr++ )
+      {
+    std::cout << m_pressure[er][esr].size() << std::endl;
+        for( localIndex  ei = 0; ei < m_pressure[er][esr].size() ; ei++ )
+        {
+          m_pressure2[er][esr][ei] = m_pressure[er][esr][ei];
+          std::cout <<  m_pressure2[er][esr][ei] << std::endl;
+        }
+      }
+    }
+    return;
+  }
+  if( cycleNumber == 3 )
+  {
+    std::cout << "CYCLE3 " <<  time_n << std::endl;
+    auto fc = FieldSpecificationManager::get();
+    auto bc = fc->GetGroup( m_initialBCs[2] )->group_cast< FieldSpecificationBase* >();
+    bc->Toggle(1);
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+    bc->Toggle(0);
+    for( localIndex  er = 0; er < m_pressure.size() ; er++ )
+    {
+      for( localIndex  esr = 0; esr < m_pressure[er].size() ; esr++ )
+      {
+        for( localIndex  ei = 0; ei < m_pressure[er][esr].size() ; ei++ )
+        {
+          m_pressure3[er][esr][ei] = m_pressure[er][esr][ei];
+        }
+      }
+    }
     return;
   }
   if( dt > 0 )
   {
-    std::cout << "SolverStep" << std::endl;
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
   }
 }
@@ -721,6 +764,9 @@ void AggregationSinglePhaseFlow::AssembleFluxTerms( DomainPartition const * cons
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber = m_dofNumber;
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres        = m_pressure;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres1        = m_pressure1;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres2        = m_pressure2;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres3        = m_pressure3;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dPres       = m_deltaPressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & gravDepth   = m_gravDepth;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens        = m_density;
@@ -1306,6 +1352,12 @@ void AggregationSinglePhaseFlow::ResetViews(DomainPartition * const domain)
     elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
   m_pressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::pressureString );
+  m_pressure1 =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::elementaryPressureString1 );
+  m_pressure2 =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::elementaryPressureString2 );
+  m_pressure3 =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::elementaryPressureString3 );
   m_deltaPressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::deltaPressureString );
   m_deltaVolume =
