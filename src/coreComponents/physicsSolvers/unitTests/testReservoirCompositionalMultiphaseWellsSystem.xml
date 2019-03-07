@@ -134,14 +134,13 @@
       </Perforations> 
     </Well>
 
-    <!-- This is not working yet
     <Well name="inj0"
           type="injector"
 	  control="liquidRate"
 	  targetBHP="4e7"
 	  targetRate="1e-6"
           referenceDepth="0.5"
-	  injectionStream="0.099 0.3 0.6 0.001">
+	  injectionStream="0.09 0.5 0.4 0.01">
       <Segments>
 	<Segment name="inj0_unique_seg"
 		 location="1 0.5 0.5"/>
@@ -156,13 +155,13 @@
 		     location="0.5 0.5 0.5"
 		     transmissibility="1e-12"
 		     segmentName="inj0_unique_seg" />
-<        <Perforation name="inj0_p1"
+        <Perforation name="inj0_p1"
 		     location="1.5 0.5 0.5"
 		     transmissibility="1e-12"
 		     segmentName="inj0_unique_seg" /> 
       </Perforations> 
     </Well>
-    -->
+
   </Wells>
 
   

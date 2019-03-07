@@ -385,7 +385,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
   }
 
   /////////////////////////////////////////////////
-  // Step 2) Compute the terms in J_WR and J_WW //
+  // Step 2) Compute the terms in J_RW and J_WW //
   /////////////////////////////////////////////////      
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
@@ -702,7 +702,7 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_VolumeBalance)
   
 }
 
-TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Momentun)
+TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Momentum)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-1; // 10% error margin

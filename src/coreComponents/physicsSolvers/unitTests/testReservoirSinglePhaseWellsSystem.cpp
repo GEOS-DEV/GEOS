@@ -346,7 +346,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
   }
 
   /////////////////////////////////////////////////
-  // Step 2) Compute the terms in J_WR and J_WW //
+  // Step 2) Compute the terms in J_RW and J_WW //
   /////////////////////////////////////////////////      
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
