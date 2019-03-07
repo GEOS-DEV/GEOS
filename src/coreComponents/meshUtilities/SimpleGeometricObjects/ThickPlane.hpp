@@ -54,7 +54,7 @@ private:
     static constexpr auto originString = "origin";
     static constexpr auto normalString = "normal";
     static constexpr auto thicknessString = "thickness";
-  } viewKeys;
+  };
 
 
 };
