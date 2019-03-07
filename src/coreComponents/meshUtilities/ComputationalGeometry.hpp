@@ -46,7 +46,8 @@ namespace computationalGeometry
 real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          const array1d<R1Tensor>& points,
                          R1Tensor& center,
-                         R1Tensor& normal );
+                         R1Tensor& normal,
+                         real64 const areaTolerance = 0.0 );
 
 /**
  * @author settgast
