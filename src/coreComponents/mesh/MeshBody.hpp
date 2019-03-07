@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshBody.hpp
- *
- *  Created on: Sep 13, 2017
- *      Author: settgast
+/**
+ * @file MeshBody.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHBODY_HPP_
@@ -48,24 +45,11 @@ public:
   MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>(level); }
   MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>(level); }
 
-  void SetTolerance( real64 tolerance )
-  {
-    m_tolerance = tolerance;
-  }
+  void setGlobalLengthScale( real64 scale );
 
-  real64 GetTolerance() const
+  real64 getGlobalLengthScale() const
   {
-    return m_tolerance;
-  }
-
-  real64 GetAreaTolerance() const
-  {
-    return m_tolerance * m_tolerance;
-  }
-
-  real64 GetVolumeTolerance() const
-  {
-    return m_tolerance * m_tolerance * m_tolerance;
+    return m_globalLengthScale;
   }
 
   struct viewKeysStruct
@@ -81,7 +65,7 @@ public:
 private:
   /// By default, an absolute tolerance
   /// Can be set to another value
-  real64 m_tolerance { 0. };
+  real64 m_globalLengthScale { 0. };
 
 
 };

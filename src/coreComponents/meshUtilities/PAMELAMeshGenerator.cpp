@@ -132,7 +132,7 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     }
   }
   xMax -= xMin;
-  meshBody->SetTolerance( std::fabs( xMax.L2_Norm() / 1e8 ) );
+  meshBody->setGlobalLengthScale( std::fabs( xMax.L2_Norm() / 1e8 ) );
   
   // First loop which iterate on the regions
   for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )

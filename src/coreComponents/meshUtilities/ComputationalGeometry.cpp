@@ -31,7 +31,6 @@ namespace computationalGeometry
 {
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
@@ -43,7 +42,8 @@ namespace computationalGeometry
 real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          const array1d<R1Tensor>& points,
                          R1Tensor& center,
-                         R1Tensor& normal )
+                         R1Tensor& normal,
+                         real64 const areaTolerance )
 {
   R1Tensor v1,v2,vc;
   const localIndex n = pointsIndices.size();
@@ -75,13 +75,13 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
       vc *= triangleArea;
       center += vc;
     }
-    if( area > 0.0 )
+    if( area > areaTolerance )
     {
       center /= (area * 3.0);
       normal.Normalize();
       area *= 0.5;
     }
-    else if( area < 0.0 )
+    else if( area < -areaTolerance )
     {
       for( localIndex a=0 ; a<n ; ++a )
         GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
@@ -119,7 +119,6 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
 }
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
