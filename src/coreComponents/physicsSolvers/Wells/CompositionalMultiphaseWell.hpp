@@ -305,7 +305,7 @@ public:
     static constexpr auto useMassFlagString = "useMass";
 
     static constexpr auto relPermNameString  = "segmentRelPermName";
-    static constexpr auto relPermIndexString = "segmentRelPermIndex";
+    static constexpr auto resRelPermIndexString  = "elementRelPermIndex";
     
     // primary solution field
     static constexpr auto pressureString               = "segmentPressure";
@@ -340,7 +340,7 @@ public:
     ViewKey useMassFlag = { useMassFlagString };
 
     ViewKey relPermName  = { relPermNameString };
-    ViewKey relPermIndex = { relPermIndexString };
+    ViewKey resRelPermIndex = { resRelPermIndexString };
     
     // primary solution field
     ViewKey pressure               = { pressureString };
@@ -363,7 +363,7 @@ public:
     ViewKey compPerforationRate        = { compPerforationRateString };
     ViewKey dCompPerforationRate_dPres = { dCompPerforationRate_dPresString };
     ViewKey dCompPerforationRate_dComp = { dCompPerforationRate_dCompString };
-    ViewKey sumCompPerforationRate        = { compPerforationRateString };
+    ViewKey sumCompPerforationRate     = { sumCompPerforationRateString };
     
   } viewKeysCompMultiphaseWell;
 
@@ -457,9 +457,9 @@ private:
   /// name of the rel perm constitutive model
   string m_relPermName;
 
-  /// index of the rel perm constitutive model
-  localIndex m_relPermIndex;
-
+  /// index of the rel perm constitutive model in the flow solver
+  localIndex m_resRelPermIndex;
+  
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber;
   
   /// views into reservoir primary variable fields

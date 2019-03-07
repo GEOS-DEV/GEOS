@@ -89,31 +89,32 @@
                                  compressibility="1e-9"/>
   </Constitutive>
 
-  <Wells>
-    <Well name="prod1"
+  <Wells name="wellGroup"
+	 materialList="water">
+    <Well name="prod0"
           type="producer"
 	  control="BHP"
 	  targetBHP="4e6"
 	  targetRate="0"
           referenceDepth="0.5">
       <Segments>
-	<Segment name="prod1_unique_seg"
+	<Segment name="prod0_unique_seg"
 		 location="9 0.5 0.5"/>
       </Segments> 
       <Connections>
-	<Connection name="prod1_first_conn"
+	<Connection name="prod0_first_conn"
 		    prevSegmentName=""
-		    nextSegmentName="prod1_unique_seg" />
+		    nextSegmentName="prod0_unique_seg" />
       </Connections> 
       <Perforations>
-        <Perforation name="prod1_p0"
+        <Perforation name="prod0_p0"
 		     location="9.5 0.5 0.5"
 		     transmissibility="1e-12"
-		     segmentName="prod1_unique_seg" />
-        <Perforation name="prod1_p1"
+		     segmentName="prod0_unique_seg" />
+        <Perforation name="prod0_p1"
 		     location="8.5 0.5 0.5"
 		     transmissibility="1e-12"
-		     segmentName="prod1_unique_seg" /> 
+		     segmentName="prod0_unique_seg" /> 
       </Perforations> 
     </Well>
 

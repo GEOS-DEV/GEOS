@@ -43,7 +43,7 @@
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/EventManager.hpp"
 #include "managers/DomainPartition.hpp"
@@ -51,8 +51,8 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/CoupledSolvers/ReservoirWellsSystemSolver.hpp"
-#include "physicsSolvers/Wells/SinglePhaseWell.hpp"
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
+#include "physicsSolvers/Wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp"
 #include "wells/Well.hpp"
 
 using namespace geosx;
@@ -243,21 +243,23 @@ void compareMatrices( Epetra_FECrsMatrix const * matrix1,
 
 template<typename LAMBDA>
 void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
-			    SinglePhaseFlow * flowSolver,
-			    SinglePhaseWell * wellSolver,
+			    CompositionalMultiphaseFlow * flowSolver,
+			    CompositionalMultiphaseWell * wellSolver,
                             DomainPartition * domain,
                             EpetraBlockSystem * blockSystem,
                             double perturbParameter,
                             double relTol,
                             LAMBDA && assembleFunction )
 {
+  localIndex const NC   = flowSolver->numFluidComponents();
+  
   localIndex const resNDOF  = wellSolver->numDofPerResElement();
   localIndex const wellNDOF = wellSolver->numDofPerElement()
                             + wellSolver->numDofPerConnection();
   
-  Epetra_FECrsMatrix * jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock );
-  Epetra_FEVector    * residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
-  Epetra_Map const   * rowMap   = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+  Epetra_FECrsMatrix * jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
+  Epetra_FEVector    * residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  Epetra_Map const   * rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
 
   // get the well manager to loop over wells later
   WellManager * const wellManager = domain->getWellManager();
@@ -299,22 +301,34 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
       arrayView1d<globalIndex> & dofNumber =
-        subRegion-> template getReference<array1d<globalIndex >>( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+        subRegion-> template getReference<array1d<globalIndex >>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
       arrayView1d<real64> & pres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
 
       arrayView1d<real64> & dPres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
+      arrayView2d<real64> & compDens =
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+
+      arrayView2d<real64> & dCompDens =
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+      
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei 
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)
       {
         if (elemGhostRank[ei] >= 0)
           continue;
 
-        globalIndex eiOffset = dofNumber[ei] * resNDOF;
+        globalIndex const eiOffset = dofNumber[ei] * resNDOF;
 
+        real64 totalDensity = 0.0;
+        for (localIndex ic = 0; ic < NC; ++ic)
+        {
+          totalDensity += compDens[ei][ic];
+        }
+	
         {
           solver->ResetStateToBeginningOfStep(domain);
 
@@ -322,7 +336,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
           dPres[ei] = dP;
 	  // after perturbing, update the pressure-dependent quantities in the reservoir
-          flowSolver->UpdateConstitutiveModels( domain );
+          flowSolver->UpdateStateAll( domain );
 
           residual->Scale( 0.0 );
           assembleFunction( wellSolver, domain, jacobian, residual );
@@ -341,6 +355,31 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
             }
           }
 	}
+
+        for (localIndex jc = 0; jc < NC; ++jc)
+        {
+          solver->ResetStateToBeginningOfStep(domain);
+
+          real64 const dRho = perturbParameter * totalDensity;
+          dCompDens[ei][jc] = dRho;
+          flowSolver->UpdateStateAll( domain );
+
+          residual->Scale( 0.0 );
+          assembleFunction( wellSolver, domain, jacobian, residual );
+
+          long long const dofIndex = integer_conversion<long long>( eiOffset + jc + 1);
+
+          for (int lid = 0; lid < localSizeInt; ++lid)
+          {
+	    // here is the perturbation in the density of the element
+            real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
+            if (std::fabs(dRdRho) > 0.0)
+            {
+              long long gid = rowMap->GID64(lid);
+              jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
+            }
+          }
+        }
       }
     });
   }
@@ -355,22 +394,28 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
     ConnectionData * connectionData = well->getConnections();
     
     array1d<globalIndex> const & wellElemDofNumber =
-      wellElementSubRegion->getReference<array1d<globalIndex>>( SinglePhaseWell::viewKeyStruct::dofNumberString );
+      wellElementSubRegion->getReference<array1d<globalIndex>>( CompositionalMultiphaseWell::viewKeyStruct::dofNumberString );
 
     arrayView1d<integer> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-    array1d<real64> const & wellElemPressure =
-      wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::pressureString );
+    arrayView1d<real64> const & wellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
 
-    array1d<real64> const & dWellElemPressure =
-      wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaPressureString );
+    arrayView1d<real64> const & dWellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
 
-    array1d<real64> const & connRate  =
-      connectionData->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::rateString );
+    arrayView2d<real64> const & wellElemCompDens =
+      wellElementSubRegion->getReference<array2d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
 
-    array1d<real64> const & dConnRate =
-      connectionData->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaRateString );
+    arrayView2d<real64> const & dWellElemCompDens =
+      wellElementSubRegion->getReference<array2d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
+    
+    arrayView1d<real64> const & connRate  =
+      connectionData->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::mixtureRateString );
+
+    arrayView1d<real64> const & dConnRate =
+      connectionData->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureRateString );
 
     arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
@@ -381,8 +426,14 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
       if (wellElemGhostRank[iwelem] >= 0)
         continue;
 
-      globalIndex iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
+      globalIndex const iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
 
+      real64 wellElemTotalDensity = 0.0;
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        wellElemTotalDensity += wellElemCompDens[iwelem][ic];
+      }
+      
       {
         solver->ResetStateToBeginningOfStep(domain);
 	
@@ -395,7 +446,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         residual->Scale( 0.0 );
         assembleFunction( wellSolver, domain, jacobian, residual );
 
-        long long const dofIndex = integer_conversion<long long>(iwelemOffset + SinglePhaseWell::ColOffset::DPRES );
+        long long const dofIndex = integer_conversion<long long>( iwelemOffset + CompositionalMultiphaseWell::ColOffset::DPRES );
 
 	// consider mass balance eq lid in RESERVOIR elems and WELL elems
 	//      this is computing J_RW and J_WW
@@ -406,6 +457,31 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
           {
             long long gid = rowMap->GID64(lid);
             jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
+          }
+        }
+      }
+
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        solver->ResetStateToBeginningOfStep(domain);
+
+        real64 const dRho = perturbParameter * wellElemTotalDensity;
+        dWellElemCompDens[iwelem][jc] = dRho;
+        wellSolver->UpdateStateAll( domain );
+
+        residual->Scale( 0.0 );
+        assembleFunction( wellSolver, domain, jacobian, residual );
+
+        long long const dofIndex = integer_conversion<long long>( iwelemOffset + CompositionalMultiphaseWell::ColOffset::DPRES + jc + 1);
+
+        for (int lid = 0; lid < localSizeInt; ++lid)
+        {
+	  // here is the perturbation in the density of the element
+          real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
+          if (std::fabs(dRdRho) > 0.0)
+          {
+            long long gid = rowMap->GID64(lid);
+            jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
           }
         }
       }
@@ -431,7 +507,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         residual->Scale( 0.0 );
         assembleFunction( wellSolver, domain, jacobian, residual );
 
-        long long const dofIndex = integer_conversion<long long>(iwelemOffset + SinglePhaseWell::ColOffset::DRATE );
+        long long const dofIndex = integer_conversion<long long>(iwelemOffset + CompositionalMultiphaseWell::ColOffset::DRATE );
 
       	// consider mass balance eq lid in RESERVOIR elems and WELL elems
 	//      this is computing J_RW and J_WW
@@ -478,7 +554,7 @@ protected:
     char buf[2][1024];
 
     char const * workdir  = global_argv[1];
-    char const * filename = "testReservoirMSWellsSystem.xml";
+    char const * filename = "testReservoirCompositionalMultiphaseMSWellsSystem.xml";
 
     strcpy(buf[0], "-i");
     sprintf(buf[1], "%s/%s", workdir, filename);
@@ -513,6 +589,7 @@ ProblemManager ReservoirWellsSystemSolverTest::problemManager("Problem", nullptr
 ReservoirWellsSystemSolver * ReservoirWellsSystemSolverTest::solver = nullptr;
 
 
+
 TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
@@ -526,11 +603,11 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
 
   solver->ImplicitStepSetup( time, dt, domain, system );
 
-  SinglePhaseWell * wellSolver = (solver->getParent()->GetGroup("singlePhaseWell")->group_cast<SinglePhaseWell*>());
-  SinglePhaseFlow * flowSolver = (solver->getParent()->GetGroup("singlePhaseFlow")->group_cast<SinglePhaseFlow*>());
+  CompositionalMultiphaseWell * wellSolver = (solver->getParent()->GetGroup("compositionalMultiphaseWell")->group_cast<CompositionalMultiphaseWell*>());
+  CompositionalMultiphaseFlow * flowSolver = (solver->getParent()->GetGroup("compositionalMultiphaseFlow")->group_cast<CompositionalMultiphaseFlow*>());
 
   testNumericalJacobian( solver, flowSolver, wellSolver, domain, system, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
+                         [&] ( CompositionalMultiphaseWell * const targetSolver,
 			       DomainPartition * const targetDomain,
                                Epetra_FECrsMatrix * const targetJacobian,
                                Epetra_FEVector * const targetResidual ) -> void
@@ -540,6 +617,8 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
   
 }
 
+
+/*
 TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Flux)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
@@ -553,11 +632,11 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Flux)
 
   solver->ImplicitStepSetup( time, dt, domain, system );
 
-  SinglePhaseWell * wellSolver = (solver->getParent()->GetGroup("singlePhaseWell")->group_cast<SinglePhaseWell*>());
-  SinglePhaseFlow * flowSolver = (solver->getParent()->GetGroup("singlePhaseFlow")->group_cast<SinglePhaseFlow*>());
+  CompositionalMultiphaseWell * wellSolver = (solver->getParent()->GetGroup("compositionalMultiphaseWell")->group_cast<CompositionalMultiphaseWell*>());
+  CompositionalMultiphaseFlow * flowSolver = (solver->getParent()->GetGroup("compositionalMultiphaseFlow")->group_cast<CompositionalMultiphaseFlow*>());
 
   testNumericalJacobian( solver, flowSolver, wellSolver, domain, system, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
+                         [&] ( CompositionalMultiphaseWell * const targetSolver,
 			       DomainPartition * const targetDomain,
                                Epetra_FECrsMatrix * const targetJacobian,
                                Epetra_FEVector * const targetResidual ) -> void
@@ -566,6 +645,8 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Flux)
                          });
   
 }
+*/
+
 
 TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Control)
 {
@@ -577,14 +658,14 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Control)
 
   DomainPartition   * domain = problemManager.getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
-
+  
   solver->ImplicitStepSetup( time, dt, domain, system );
-
-  SinglePhaseWell * wellSolver = (solver->getParent()->GetGroup("singlePhaseWell")->group_cast<SinglePhaseWell*>());
-  SinglePhaseFlow * flowSolver = (solver->getParent()->GetGroup("singlePhaseFlow")->group_cast<SinglePhaseFlow*>());
+  
+  CompositionalMultiphaseWell * wellSolver = (solver->getParent()->GetGroup("compositionalMultiphaseWell")->group_cast<CompositionalMultiphaseWell*>());
+  CompositionalMultiphaseFlow * flowSolver = (solver->getParent()->GetGroup("compositionalMultiphaseFlow")->group_cast<CompositionalMultiphaseFlow*>());
 
   testNumericalJacobian( solver, flowSolver, wellSolver, domain, system, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
+                         [&] ( CompositionalMultiphaseWell * const targetSolver,
 			       DomainPartition * const targetDomain,
                                Epetra_FECrsMatrix * const targetJacobian,
                                Epetra_FEVector * const targetResidual ) -> void
@@ -594,7 +675,7 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Control)
   
 }
 
-TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Momentum)
+TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_VolumeBalance)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-1; // 10% error margin
@@ -604,14 +685,41 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Momentum)
 
   DomainPartition   * domain = problemManager.getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
-
+  
   solver->ImplicitStepSetup( time, dt, domain, system );
-
-  SinglePhaseWell * wellSolver = (solver->getParent()->GetGroup("singlePhaseWell")->group_cast<SinglePhaseWell*>());
-  SinglePhaseFlow * flowSolver = (solver->getParent()->GetGroup("singlePhaseFlow")->group_cast<SinglePhaseFlow*>());
+  
+  CompositionalMultiphaseWell * wellSolver = (solver->getParent()->GetGroup("compositionalMultiphaseWell")->group_cast<CompositionalMultiphaseWell*>());
+  CompositionalMultiphaseFlow * flowSolver = (solver->getParent()->GetGroup("compositionalMultiphaseFlow")->group_cast<CompositionalMultiphaseFlow*>());
 
   testNumericalJacobian( solver, flowSolver, wellSolver, domain, system, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
+                         [&] ( CompositionalMultiphaseWell * const targetSolver,
+			       DomainPartition * const targetDomain,
+                               Epetra_FECrsMatrix * const targetJacobian,
+                               Epetra_FEVector * const targetResidual ) -> void
+                         {
+			   targetSolver->AssembleVolumeBalanceTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+                         });
+  
+}
+
+TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Momentun)
+{
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const tol = 1e-1; // 10% error margin
+
+  real64 const time = 0.0;
+  real64 const dt = 1e4;
+
+  DomainPartition   * domain = problemManager.getDomainPartition();
+  EpetraBlockSystem * system = solver->getLinearSystemRepository();
+  
+  solver->ImplicitStepSetup( time, dt, domain, system );
+  
+  CompositionalMultiphaseWell * wellSolver = (solver->getParent()->GetGroup("compositionalMultiphaseWell")->group_cast<CompositionalMultiphaseWell*>());
+  CompositionalMultiphaseFlow * flowSolver = (solver->getParent()->GetGroup("compositionalMultiphaseFlow")->group_cast<CompositionalMultiphaseFlow*>());
+
+  testNumericalJacobian( solver, flowSolver, wellSolver, domain, system, eps, tol,
+                         [&] ( CompositionalMultiphaseWell * const targetSolver,
 			       DomainPartition * const targetDomain,
                                Epetra_FECrsMatrix * const targetJacobian,
                                Epetra_FEVector * const targetResidual ) -> void
@@ -620,6 +728,8 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Momentum)
                          });
   
 }
+
+
 
 int main(int argc, char** argv)
 {

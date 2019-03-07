@@ -269,6 +269,7 @@ public:
     // perforation rates
     static constexpr auto perforationRateString        = "perforationRate";
     static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
+    static constexpr auto sumPerforationRateString     = "sumCompPerforationRate";
     
     using ViewKey = dataRepository::ViewKey;
 
@@ -287,6 +288,7 @@ public:
     // perforation rates
     ViewKey perforationRate        = { perforationRateString };
     ViewKey dPerforationRate_dPres = { dPerforationRate_dPresString };
+    ViewKey sumPerforationRate     = { sumPerforationRateString };
     
   } viewKeysSinglePhaseWell;
 

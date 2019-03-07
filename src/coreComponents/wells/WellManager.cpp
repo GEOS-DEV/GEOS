@@ -33,7 +33,13 @@ using namespace dataRepository;
 WellManager::WellManager(string const & name,
 			 dataRepository::ManagedGroup * const parent)
   : dataRepository::ManagedGroup(name, parent)
+  , m_numWells(0)
 {
+  
+  RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of materials present in the well regions"); 
+  
 }
 
 WellManager::~WellManager()
@@ -45,6 +51,7 @@ ManagedGroup * WellManager::CreateChild(string const & childKey, string const & 
 {
   if ( childKey == "Well")
   {
+    m_numWells++;
     std::cout << "Adding Well: " << childKey << ", " << childName << std::endl;
     return RegisterGroup<Well>( childName );
   }

@@ -62,7 +62,6 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 {
   m_numDofPerElement    = 1;
   m_numDofPerConnection = 1;
-
 }
 
 void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
@@ -79,6 +78,7 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
+    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::sumPerforationRateString );
     
     ConnectionData * const connectionData = well->getConnections(); 
     connectionData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::rateString );
@@ -134,10 +134,10 @@ void SinglePhaseWell::UpdateFluidModel( Well * const well )
   WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
   SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
 
-  array1d<real64 const> const & wellPressure =
+  arrayView1d<real64 const> const & wellPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-  array1d<real64 const> const & dWellPressure =
+  arrayView1d<real64 const> const & dWellPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
   for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -177,48 +177,48 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     PerforationData const * const perforationData = well->getPerforations();
 
     // get well primary variables on segments
-    array1d<real64> const & wellElemPressure =
+    arrayView1d<real64> const & wellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
     // get the info stored on segments
-    array1d<real64 const> const & wellElemGravDepth =
+    arrayView1d<real64 const> const & wellElemGravDepth =
       wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
 
-    array1d<real64> const & wellElemSumPerfRates =
-      wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::sumRatesString );
+    arrayView1d<real64> const & wellElemSumPerfRates =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::sumPerforationRateString );
 
     // get a reference to the primary variables on connections
-    array1d<real64> const & connRate  =
+    arrayView1d<real64> const & connRate  =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::rateString );
     
     // get the well element indices corresponding to each connect
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
 
-    array1d<localIndex const> const & prevWellElemIndex =
+    arrayView1d<localIndex const> const & prevWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
     
     // get well data on perforations
-    array1d<real64> const & perfRate =
+    arrayView1d<real64> const & perfRate =
       perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
-    array1d<localIndex const> const & perfWellElemIndex =
+    arrayView1d<localIndex const> const & perfWellElemIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );    
     
     // get the element region, subregion, index
-    array1d<localIndex const> const & resElementRegion =
+    arrayView1d<localIndex const> const & resElementRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
 
-    array1d<localIndex const> const & resElementSubRegion =
+    arrayView1d<localIndex const> const & resElementSubRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
-    array1d<localIndex const> const & resElementIndex =
+    arrayView1d<localIndex const> const & resElementIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // get constitutive data
     SingleFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
     
-    array2d<real64> const & wellElemDensity =
+    arrayView2d<real64> const & wellElemDensity =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
     
     // TODO: fix this in the case of multiple MPI ranks working on the same well
@@ -237,7 +237,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
       localIndex const esr = resElementSubRegion[iperf];
       localIndex const ei  = resElementIndex[iperf];
       
-      avgDensity += resDensity[er][esr][m_fluidIndex][ei][0];
+      avgDensity += resDensity[er][esr][m_resFluidIndex][ei][0];
     }
 
     // TODO: communicate avgDens
@@ -319,11 +319,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 void SinglePhaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
-
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-
-  // Initialize the primary and secondary variables
-  InitializeWells( domain );
 }
 
 void SinglePhaseWell::BackupFields( DomainPartition * const domain,
@@ -338,24 +333,24 @@ void SinglePhaseWell::BackupFields( DomainPartition * const domain,
     ConnectionData const * const connectionData = well->getConnections();
     
     // get the normalizer for the mass balance equations on well elements
-    array1d<real64> const & massBalanceNormalizer =
+    arrayView1d<real64> const & massBalanceNormalizer =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
 
     // get a reference to the primary variables on connections
-    array1d<real64 const> const & connRate =
+    arrayView1d<real64 const> const & connRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::rateString );
 
     // get the well element indices corresponding to each connection
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
 
-    array1d<localIndex const> const & prevWellElemIndex =
+    arrayView1d<localIndex const> const & prevWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );
     
     // get constitutive data on well elements to compute the normalizer
     SingleFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
     
-    array2d<real64 const> const & wellElemDensity =
+    arrayView2d<real64 const> const & wellElemDensity =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
     
     // set the normalizer to zero
@@ -405,12 +400,16 @@ SinglePhaseWell::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
 
+  // Initialize the primary and secondary variables
+  InitializeWells( domain );
+  
   // set deltas to zero and recompute dependent quantities
   ResetStateToBeginningOfStep( domain );
 
   // backup fields used in time derivative approximation
   BackupFields( domain, dt );
 
+  
   // the setup of dof numbers and linear system
   // is done in ReservoirWellSolver
 
@@ -458,10 +457,10 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
   {
     WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
 
-    array1d<globalIndex> const & wellElemDofNumber =
+    arrayView1d<globalIndex> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
-    array1d<integer> const & wellElemGhostRank =
+    arrayView1d<integer> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
   
     // create trilinos dof indexing, setting initial values to -1 to indicate unset values.
@@ -519,28 +518,28 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
     ConnectionData const * const connectionData   = well->getConnections();
 
     // get the well degrees of freedom 
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
     // get the well element indices corresponding to each connection
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
 
-    array1d<localIndex const> const & prevWellElemIndex =
+    arrayView1d<localIndex const> const & prevWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
     
     // get the well element indices corresponding to each perforation
-    array1d<localIndex const> const & perfWellElemIndex =
+    arrayView1d<localIndex const> const & perfWellElemIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );    
     
     // get the element region, subregion, index
-    array1d<localIndex const> const & resElementRegion =
+    arrayView1d<localIndex const> const & resElementRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
 
-    array1d<localIndex const> const & resElementSubRegion =
+    arrayView1d<localIndex const> const & resElementSubRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
-    array1d<localIndex const> const & resElementIndex =
+    arrayView1d<localIndex const> const & resElementIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // 1) Insert the entries corresponding to reservoir-well perforations
@@ -691,28 +690,28 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
     WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get a reference to the degree-of-freedom numbers and to ghosting info
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
-    array1d<integer const> const & wellElemGhostRank =
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
     
     // get the normalizer for the mass balance equations on well elements
-    array1d<real64 const> const & massBalanceNormalizer =
+    arrayView1d<real64 const> const & massBalanceNormalizer =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
     
     // get a reference to the next/prev well element index for each connection
-    array1d<localIndex const> const & prevWellElemIndex =
+    arrayView1d<localIndex const> const & prevWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );
     
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
 
     // get a reference to the primary variables on connections
-    array1d<real64 const> const & connRate  =
+    arrayView1d<real64 const> const & connRate  =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::rateString );
 
-    array1d<real64 const> const & dConnRate =
+    arrayView1d<real64 const> const & dConnRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaRateString );
 
     /* @Francois try to remember
@@ -734,13 +733,15 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 	// get well secondary variables on segments
         SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
 
-        array2d<real64> const & wellElemDensity =
+        arrayView2d<real64> const & wellElemDensity =
           fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
 
-        array2d<real64> const & dWellElemDensity_dPres =
+        arrayView2d<real64> const & dWellElemDensity_dPres =
           fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
         // 1) Compute the flux and its derivatives
+
+        // TODO: rewrite this with arrays to match ComputeAllPerforationRates
 	
 	real64 const currentConnRate = connRate[iconn] + dConnRate[iconn];
         real64 const volFlux = dt * currentConnRate;
@@ -885,30 +886,30 @@ void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
     ComputeAllPerforationRates( well );
     
     // get the degrees of freedom 
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
-    array1d<real64 const> const & massBalanceNormalizer =
+    arrayView1d<real64 const> const & massBalanceNormalizer =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::massBalanceNormalizerString );
     
     // get well variables on perforations
-    array1d<real64 const> const & perfRate =
+    arrayView1d<real64 const> const & perfRate =
       perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
-    array2d<real64 const> const & dPerfRate_dPres =
+    arrayView2d<real64 const> const & dPerfRate_dPres =
       perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
 
-    array1d<localIndex const> const & perfWellElemIndex =
+    arrayView1d<localIndex const> const & perfWellElemIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
     
     // get the element region, subregion, index
-    array1d<localIndex const> const & resElementRegion =
+    arrayView1d<localIndex const> const & resElementRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
 
-    array1d<localIndex const> const & resElementSubRegion =
+    arrayView1d<localIndex const> const & resElementSubRegion =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
-    array1d<localIndex const> const & resElementIndex =
+    arrayView1d<localIndex const> const & resElementIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // loop over the perforations and add the rates to the residual and jacobian
@@ -987,33 +988,33 @@ void SinglePhaseWell::FormMomentumEquations( DomainPartition * const domain,
     WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get the degrees of freedom 
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
     // get pressure data
-    array1d<real64 const> const & wellElemPressure =
+    arrayView1d<real64 const> const & wellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-    array1d<real64 const> const & dWellElemPressure =
+    arrayView1d<real64 const> const & dWellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-    array1d<real64 const> const & wellElemGravDepth =
+    arrayView1d<real64 const> const & wellElemGravDepth =
       wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
     
     // get the well element indices corresponding to each connect
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
 
-    array1d<localIndex const> const & prevWellElemIndex =
+    arrayView1d<localIndex const> const & prevWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
 
     // get well secondary variables on segments
     SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
 
-    array2d<real64 const> const & wellElemDensity =
+    arrayView2d<real64 const> const & wellElemDensity =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
 
-    array2d<real64 const> const & dWellElemDensity_dPres =
+    arrayView2d<real64 const> const & dWellElemDensity_dPres =
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
     
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
@@ -1092,7 +1093,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
     {
       PerforationData * const perforationData = well->getPerforations();
 
-      array1d<real64 const> const & perfRate =
+      arrayView1d<real64 const> const & perfRate =
         perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
       // compute the local rates for this well
@@ -1113,10 +1114,10 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
       WellElementSubRegion * wellElementSubRegion = well->getWellElements();
       
       // get pressure data
-      array1d<real64 const> const & wellElemPressure =
+      arrayView1d<real64 const> const & wellElemPressure =
         wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-      array1d<real64 const> const & dWellElemPressure =
+      arrayView1d<real64 const> const & dWellElemPressure =
         wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
       // again we assume here that the first segment is on this MPI rank
@@ -1182,10 +1183,10 @@ SinglePhaseWell::CalculateResidualNorm( EpetraBlockSystem const * const blockSys
     WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get the degree of freedom numbers
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
-    array1d<integer const> const & wellElemGhostRank =
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -1250,23 +1251,23 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
     // get the degree of freedom numbers on segments
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
     
     // get a reference to the primary variables on segments
-    array1d<real64> const & dWellElemPressure =
+    arrayView1d<real64> const & dWellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
     
     // get a reference to the primary variables on connections
-    array1d<real64> const & dConnRate =
+    arrayView1d<real64> const & dConnRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaRateString );
 
     // get a reference to the next well element index for each connection
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
     
     // get the ghosting information on segments and on connections
-    array1d<integer const> const & wellElemGhostRank =
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -1320,19 +1321,19 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
     // get the ghosting information
-    array1d<integer const> const & wellElemGhostRank =
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
     
     // get a reference to the primary variables on segments
-    array1d<real64> const & dWellElemPressure =
+    arrayView1d<real64> const & dWellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
     // get a reference to the primary variables on connections
-    array1d<real64> const & dConnRate =
+    arrayView1d<real64> const & dConnRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaRateString );
 
     // get a reference to the well element index for each connection
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
     
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -1411,58 +1412,58 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
   WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
   // get the degrees of freedom 
-  array1d<globalIndex const> const & wellElemDofNumber =
+  arrayView1d<globalIndex const> const & wellElemDofNumber =
     wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
 
   // get well primary variables on segments
-  array1d<real64> const & wellElemPressure =
+  arrayView1d<real64> const & wellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-  array1d<real64> const & dWellElemPressure =
+  arrayView1d<real64> const & dWellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-  array1d<real64 const> const & wellElemGravDepth =
+  arrayView1d<real64 const> const & wellElemGravDepth =
     wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
   
   // get well secondary variables on segments
   SingleFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
 
-  array2d<real64> const & wellElemDensity =
+  arrayView2d<real64> const & wellElemDensity =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
 
-  array2d<real64> const & dWellElemDensity_dPres =
+  arrayView2d<real64> const & dWellElemDensity_dPres =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
-  array2d<real64> const & wellElemViscosity =
+  arrayView2d<real64> const & wellElemViscosity =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::viscosityString );
 
-  array2d<real64> const & dWellElemViscosity_dPres =
+  arrayView2d<real64> const & dWellElemViscosity_dPres =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
   // get well variables on perforations
-  array1d<real64> const & perfGravDepth =
+  arrayView1d<real64> const & perfGravDepth =
     perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::gravityDepthString );
 
-  array1d<localIndex const> const & perfWellElemIndex =
+  arrayView1d<localIndex const> const & perfWellElemIndex =
     perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
 
-  array1d<real64 const> const & perfTransmissibility =
+  arrayView1d<real64 const> const & perfTransmissibility =
     perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::transmissibilityString );
 
-  array1d<real64> const & perfRate =
+  arrayView1d<real64> const & perfRate =
     perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
-  array2d<real64> const & dPerfRate_dPres =
+  arrayView2d<real64> const & dPerfRate_dPres =
     perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
   
   // get the element region, subregion, index
-  array1d<localIndex const> const & resElementRegion =
+  arrayView1d<localIndex const> const & resElementRegion =
     perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
 
-  array1d<localIndex const> const & resElementSubRegion =
+  arrayView1d<localIndex const> const & resElementSubRegion =
     perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
-  array1d<localIndex const> const & resElementIndex =
+  arrayView1d<localIndex const> const & resElementIndex =
     perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
   for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
@@ -1498,11 +1499,11 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
     localIndex const ei  = resElementIndex[iperf];
 
     // get reservoir variables
-    density[SubRegionTag::RES] = resDensity[er][esr][m_fluidIndex][ei][0];
-    dDensity_dP[SubRegionTag::RES] = dResDensity_dPres[er][esr][m_fluidIndex][ei][0];
+    density[SubRegionTag::RES] = resDensity[er][esr][m_resFluidIndex][ei][0];
+    dDensity_dP[SubRegionTag::RES] = dResDensity_dPres[er][esr][m_resFluidIndex][ei][0];
 
-    viscosity[SubRegionTag::RES] = resViscosity[er][esr][m_fluidIndex][ei][0];
-    dViscosity_dP[SubRegionTag::RES] = dResViscosity_dPres[er][esr][m_fluidIndex][ei][0];
+    viscosity[SubRegionTag::RES] = resViscosity[er][esr][m_resFluidIndex][ei][0];
+    dViscosity_dP[SubRegionTag::RES] = dResViscosity_dPres[er][esr][m_resFluidIndex][ei][0];
 
     // TODO: ask about Ecl/Intersect treatment here
     // In AD-GPRS, depth difference between the reservoir elem center and perf is not accounted for
@@ -1580,7 +1581,7 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
 
     // get the degrees of freedom 
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
     
     // TODO: check that the first connection is on my rank
@@ -1597,10 +1598,10 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
     if (control == Well::Control::BHP)
     {
       // get pressure data
-      array1d<real64 const> const & wellElemPressure =
+      arrayView1d<real64 const> const & wellElemPressure =
         wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-      array1d<real64 const> const & dWellElemPressure =
+      arrayView1d<real64 const> const & dWellElemPressure =
         wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
       // form the control equation now
@@ -1630,10 +1631,10 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
     {
 
       // get a reference to the primary variables on connections
-      array1d<real64 const> const & connRate  =
+      arrayView1d<real64 const> const & connRate  =
         connectionData->getReference<array1d<real64>>( viewKeyStruct::rateString );
 
-      array1d<real64 const> const & dConnRate =
+      arrayView1d<real64 const> const & dConnRate =
         connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaRateString );
       
       // for the control equation here
@@ -1675,21 +1676,21 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
     
     // get a reference to the primary variables on segments
-    array1d<real64> const & wellElemPressure  =
+    arrayView1d<real64> const & wellElemPressure  =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-    array1d<real64> const & dWellElemPressure =
+    arrayView1d<real64> const & dWellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
     // get a reference to the next well element index
-    array1d<localIndex const> const & nextWellElemIndex =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
       connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
     
     // get a reference to the primary variables on connections
-    array1d<real64> const & connRate  =
+    arrayView1d<real64> const & connRate  =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::rateString );
 
-    array1d<real64> const & dConnRate =
+    arrayView1d<real64> const & dConnRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaRateString );
 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -1721,13 +1722,13 @@ void SinglePhaseWell::RecordWellData( Well * well )
   WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
   PerforationData const * perforationData = well->getPerforations();
 
-  array1d<real64 const> const & wellElemPressure =
+  arrayView1d<real64 const> const & wellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-  array1d<real64 const> const & connRate =
+  arrayView1d<real64 const> const & connRate =
     connectionData->getReference<array1d<real64>>( viewKeyStruct::rateString );
 
-  array1d<real64 const> const & perfRate =
+  arrayView1d<real64 const> const & perfRate =
     perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
   // here, we will save the well info

@@ -852,14 +852,18 @@ void ProblemManager::ApplyNumericalMethods()
 
   localIndex const quadratureSize = 1;
   WellManager * const wellManager = domain->getWellManager();
-    
+
+  string_array const & wellMaterialList = wellManager->getMaterialList();
+  
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
-
-    // TODO: "water" should not be hard coded here,
-    // find a way to get the fluid constitutive model instead
-    constitutiveManager->HangConstitutiveRelation( "water", wellElementSubRegion, quadratureSize );
+    
+    for( auto & wellMaterialName : wellMaterialList )
+    {
+      // monitor what is going on here
+      constitutiveManager->HangConstitutiveRelation( wellMaterialName, wellElementSubRegion, quadratureSize );
+    }
   });
 }
 

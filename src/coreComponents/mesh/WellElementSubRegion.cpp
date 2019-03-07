@@ -30,7 +30,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * 
 {
   RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
-  RegisterViewWrapper( viewKeyStruct::sumRatesString, &m_sumRates, false );
+  RegisterViewWrapper( viewKeyStruct::wellElementVolumeString, &m_wellElementVolume, false );
 }
 
 
@@ -60,17 +60,13 @@ WellElement * WellElementSubRegion::getWellElement( localIndex iwelem )
 void WellElementSubRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
   // todo later: MPI partitioning
+  // @Francois: do not resize here!!!! otherwise you resize phaseNames, etc
   
-  // for now, don't bother with that
-  WellElementManager const * wellElementManager
-    = getParent()->GetGroup<WellElementManager>( Well::groupKeyStruct::wellElementsString );
-
-  // set the size to the number of global elements
-  resize( wellElementManager->numWellElementsGlobal() );
   // dummy map from local to global
   for (localIndex iwelem = 0; iwelem < size(); ++iwelem)
   {
     m_wellElementIndex[iwelem] = iwelem;
+    m_wellElementVolume[iwelem] = 1.;
   }
 }
 

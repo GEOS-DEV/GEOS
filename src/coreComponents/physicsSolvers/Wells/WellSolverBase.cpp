@@ -37,7 +37,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
   : SolverBase( name, parent ),
     m_gravityFlag(1),
     m_fluidName(),
-    m_fluidIndex(),
+    m_resFluidIndex(),
     m_numDofPerElement(0),
     m_numDofPerConnection(0),
     m_numDofPerResElement(0),
@@ -53,7 +53,8 @@ WellSolverBase::WellSolverBase( std::string const & name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of fluid constitutive object to use for this solver.");
 
-  this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
+  this->RegisterViewWrapper( viewKeyStruct::resFluidIndexString, &m_resFluidIndex, false );
+
 }
 
 void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
@@ -84,8 +85,8 @@ void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
 
   ConstitutiveBase const * fluid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
-  m_fluidIndex = fluid->getIndexInParent();
 
+  m_resFluidIndex = fluid->getIndexInParent(); // WARNING: assume same index, not sure it is true
 }
   
 void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
@@ -95,10 +96,10 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup *
   std::cout << "WellSolverBase: InitializePostInitialConditions_PreSubGroups" << std::endl;
   
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
+  
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
-
+  
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
 }
@@ -124,7 +125,7 @@ globalIndex WellSolverBase::getElementOffset( globalIndex welemDofNumber ) const
   localIndex const resNDOF  = numDofPerResElement(); // dof is pressure
   localIndex const wellNDOF = numDofPerElement()
                             + numDofPerConnection(); // dofs are pressure and rate
-
+  
   globalIndex const firstElemDofNumber = getFirstWellElementDofNumber();
   globalIndex const currentElemOffset = firstElemDofNumber * resNDOF // number of eqns in J_RR
                                       + (welemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations

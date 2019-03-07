@@ -83,7 +83,7 @@ public:
   /// deleted move operator
   WellSolverBase & operator=( WellSolverBase && ) = delete;
 
-  localIndex fluidIndex() const { return m_fluidIndex; }
+  localIndex resFluidIndex() const { return m_resFluidIndex; }
 
   localIndex numDofPerElement() const { return m_numDofPerElement; }
 
@@ -136,7 +136,7 @@ public:
 
     // misc inputs
     static constexpr auto fluidNameString  = "fluidName";
-    static constexpr auto fluidIndexString = "fluidIndex";
+    static constexpr auto resFluidIndexString  = "resFluidIndex";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -146,7 +146,7 @@ public:
 
     // misc inputs
     ViewKey fluidName  = { fluidNameString };
-    ViewKey fluidIndex = { fluidIndexString };
+    ViewKey resFluidIndex  = { resFluidIndexString };
   
   } viewKeysWellSolverBase;
 
@@ -176,9 +176,9 @@ protected:
   /// name of the fluid constitutive model
   string m_fluidName;
 
-  /// index of the fluid constitutive model
-  localIndex m_fluidIndex;
-
+  /// index of the fluid constitutive model in the flow solver class
+  localIndex m_resFluidIndex;
+  
   /// the number of Degrees of Freedom per well element
   localIndex m_numDofPerElement;
 

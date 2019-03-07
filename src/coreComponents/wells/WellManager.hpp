@@ -58,12 +58,25 @@ public:
 
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
   bool getGravityFlag() const { return m_gravityFlag; }
+
+  string_array const & getMaterialList() const {return m_materialList;}
+
+  globalIndex numWells() const { return m_numWells; }
+  
+  struct viewKeyStruct 
+  {
+    static constexpr auto materialListString = "materialList";
+  } m_ViewKeysWellManager;
+
   
 private:
 
+  globalIndex m_numWells;
+  
   R1Tensor m_gravityVector;
   bool m_gravityFlag;
 
+  string_array m_materialList;
 };
 
 }

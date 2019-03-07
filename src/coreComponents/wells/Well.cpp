@@ -96,11 +96,11 @@ dataRepository::ManagedGroup * Well::CreateChild(string const & childKey, string
 
 void Well::InitializePostSubGroups( ManagedGroup * const rootGroup )
 {
-  resize(1);
+  //resize(1);
 }
   
 void Well::PostProcessInput()
-{
+{  
   // set well type
   if (m_typeString == "producer")
   {
@@ -141,6 +141,14 @@ void Well::PostProcessInput()
     GEOS_ERROR("Invalid initial well control: " << m_controlString);
   }
 
+  // debug:
+  for (int ic = 0; ic < m_injectionStream.size(); ++ic)
+    std::cout << "ic = " << ic << " injectionStream[" << ic << "]= "
+	      << m_injectionStream[ic] << std::endl;
+  
+  // this is temporary
+  m_wellElementSubRegion.resize( m_wellElementManager.numWellElementsGlobal() );
+  
 }
 
 

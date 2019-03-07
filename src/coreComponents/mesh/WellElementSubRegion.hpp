@@ -95,11 +95,11 @@ public:
   {
     static constexpr auto wellElementIndexString = "wellElementIndex";
     static constexpr auto gravityDepthString = "gravityDepth";
-    static constexpr auto sumRatesString = "sumRates";
+    static constexpr auto wellElementVolumeString = "wellElementVolume";
     
     dataRepository::ViewKey wellElementIndex = { wellElementIndexString };
     dataRepository::ViewKey gravityDepth = { gravityDepthString };
-    dataRepository::ViewKey sumRates = { sumRatesString };
+    dataRepository::ViewKey wellElementVolume = { wellElementVolumeString };
     
   } viewKeysWellElementData;
   
@@ -115,8 +115,8 @@ private:
 
   array1d<localIndex> m_wellElementIndex;
 
+  array1d<real64> m_wellElementVolume; // TODO: this is redundant. use m_elementVolume instead
   array1d<real64> m_gravityDepth;
-  array1d<real64> m_sumRates;
 };
 
 } /* namespace geosx */

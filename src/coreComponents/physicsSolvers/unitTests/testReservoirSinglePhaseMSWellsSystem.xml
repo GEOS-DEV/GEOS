@@ -89,7 +89,8 @@
                                  compressibility="1e-9"/>
   </Constitutive>
 
-  <Wells>
+  <Wells name="wellGroup"
+	 materialList="water">
     <Well name="prod0"
           type="producer"
 	  control="BHP"
