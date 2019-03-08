@@ -1337,7 +1337,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       // skip the phase flux if phase not present or immobile upstream
       if (std::fabs(mobility[k_up]) < 1e-20) // TODO better constant
       {
-        break;
+        continue;
       }
 
       // pressure gradient depends on all points in the stencil
