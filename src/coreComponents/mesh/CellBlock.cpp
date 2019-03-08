@@ -22,6 +22,7 @@
  */
 
 #include "CellBlock.hpp"
+#include "MeshLevel.hpp"
 
 #include "NodeManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
@@ -32,16 +33,10 @@ using namespace dataRepository;
 
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_CellBlockViewKeys(),
-  m_numNodesPerElement(),
-  m_numEdgesPerElement(),
-  m_numFacesPerElement(),
+  ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
   m_toEdgesRelation(),
-  m_toFacesRelation(),
-  m_elementCenter(),
-  m_elementVolume()
+  m_toFacesRelation()
 {
   RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
   RegisterViewWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
@@ -61,7 +56,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               const localIndex localFaceIndex,
                               localIndex_array& nodeIndicies) const
 {
-  if (!m_elementType.compare(0, 4, "C3D8"))
+  if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     nodeIndicies.resize(4);
 
@@ -109,7 +104,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
     }
 
   }
-  else if (!m_elementType.compare(0, 4, "C3D6"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     if (localFaceIndex == 0)
     {
@@ -150,7 +145,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
       nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
     }
   }
-  else if (!m_elementType.compare(0, 4, "C3D4"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     nodeIndicies.resize(3);
 
@@ -179,7 +174,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
       nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
     }
   }
-  else if (!m_elementType.compare(0, 4, "C3D5"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     if (localFaceIndex == 0)
     {
@@ -318,98 +313,46 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 
 }
 
-R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
+R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
+                                                    const NodeManager& nodeManager,
+                                                    const bool ) const
 {
 
   r1_array const & X = nodeManager.referencePosition();
-  R1Tensor elementCenter(0.0);
+  m_elementCenter[k] = 0;
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
   {
     const localIndex b = m_toNodesRelation[k][a];
-    elementCenter += X[b];
-    if(!useReferencePos)
-      elementCenter += X[b];
+    m_elementCenter[k] += X[b];
   }
-  elementCenter /= numNodesPerElement();
+  m_elementCenter[k] /= numNodesPerElement();
 
-  return elementCenter;
+  return m_elementCenter[k];
 }
-
-
-void CellBlock::CalculateCellVolumes( array1d<localIndex> const & indices ) const
-{
-  R1Tensor Xlocal[100];
-
-  array1d<R1Tensor> const &
-  X = m_toNodesRelation.RelatedObject()->
-      getReference<array1d<R1Tensor> >(NodeManager::viewKeyStruct::referencePositionString);
-
-
-  if( indices.empty() )
-  {
-    for( localIndex k=0 ; k<size() ; ++k  )
-    {
-      R1Tensor & center = m_elementCenter[k];
-      center = 0.0;
-
-      // TODO different center options
-      for (localIndex a = 0; a < m_numNodesPerElement; ++a)
-      {
-        Xlocal[a] = X[m_toNodesRelation[k][a]];
-        center += Xlocal[a];
-      }
-      center /= m_numNodesPerElement;
-
-      if( m_numNodesPerElement == 8 )
-      {
-        m_elementVolume[k] = computationalGeometry::HexVolume(Xlocal);
-      }
-      else if( m_numNodesPerElement == 4)
-      {
-        m_elementVolume[k] = computationalGeometry::TetVolume(Xlocal);
-      }
-      else if( m_numNodesPerElement == 6)
-      {
-        m_elementVolume[k] = computationalGeometry::WedgeVolume(Xlocal);
-      }
-      else if ( m_numNodesPerElement == 5)
-      {
-        m_elementVolume[k] = computationalGeometry::PyramidVolume(Xlocal);
-      }
-      else
-      {
-          GEOS_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
-      }
-    }
-  }
-
-}
-
-
 
 void CellBlock::SetElementType( string const & elementType)
 {
-  m_elementType = elementType;
+  m_elementTypeString = elementType;
 
-  if (!m_elementType.compare(0, 4, "C3D8"))
+  if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     m_toNodesRelation.resize(0,8);
     m_toEdgesRelation.resize(0,12);
     m_toFacesRelation.resize(0,6);
   }
-  else if (!m_elementType.compare(0, 4, "C3D4"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     m_toNodesRelation.resize(0,4);
     m_toEdgesRelation.resize(0,6);
     m_toFacesRelation.resize(0,4);
   }
-  else if (!m_elementType.compare(0, 4, "C3D6"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     m_toNodesRelation.resize(0,6);
     m_toEdgesRelation.resize(0,9);
     m_toFacesRelation.resize(0,5);
   }
-  else if (!m_elementType.compare(0, 4, "C3D5"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     m_toNodesRelation.resize(0,5);
     m_toEdgesRelation.resize(0,8);
@@ -420,28 +363,36 @@ void CellBlock::SetElementType( string const & elementType)
     GEOS_ERROR("Error.  Don't know what kind of element this is.");
   }
 
-  if (!m_elementType.compare(0, 4, "C3D8"))
+  if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     this->numNodesPerElement() = 8;
     this->numFacesPerElement() = 6;
   }
-  else if (!m_elementType.compare(0, 4, "C3D4"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     this->numNodesPerElement() = 4;
     this->numFacesPerElement() = 4;
   }
-  else if (!m_elementType.compare(0, 4, "C3D6"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     this->numNodesPerElement() = 6;
     this->numFacesPerElement() = 5;
   }
-  else if (!m_elementType.compare(0, 4, "C3D5"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     this->numNodesPerElement() = 5;
     this->numFacesPerElement() = 5;
   }
 
 }
+
+void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
+{
+  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
+  this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
+  this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
 

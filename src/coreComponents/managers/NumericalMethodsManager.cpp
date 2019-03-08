@@ -37,6 +37,8 @@ using namespace dataRepository;
 NumericalMethodsManager::NumericalMethodsManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
+  setInputFlags(InputFlags::OPTIONAL);
+
   this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
   this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
   this->RegisterGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);

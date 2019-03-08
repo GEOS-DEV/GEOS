@@ -28,12 +28,13 @@
 //#include "Common.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "CellBlock.hpp"
-#include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 //#include "legacy/ArrayT/bufvector.h"
 #include "ElementRegion.hpp"
+#include "fileIO/schema/SchemaUtilities.hpp"
 
 namespace geosx
 {
@@ -97,9 +98,25 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlockManager );
 
+  void GenerateFractureMesh( FaceManager const * const faceManager );
+
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
+
+  /**
+   * This function is used to expand any objects in the data structure.
+   * Currently, there is only one type of element region
+   */
+  virtual void ExpandObjectCatalogs() override;
+
+  /**
+   * This function is used to inform the schema generator of any
+   * deviations between the xml and GEOS data structures.
+   */
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) override;
 
   using ManagedGroup::resize;
 
@@ -161,64 +178,92 @@ public:
     elementRegions->forSubGroups<ElementRegion>( lambda );
   }
 
+
   template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda )
+  void forElementSubRegions( LAMBDA && lambda )
+  {
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+  template< typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda ) const
+  {
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda )
   {
     ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-      for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
-      {
-        CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-        lambda( cellBlock );
-      }
+      ElementRegion * const elemRegion = region.second->group_cast<ElementRegion *>();
+      elemRegion->forElementSubRegions<SUBREGIONTYPE,SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
     }
   }
 
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda ) const
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda ) const
   {
     ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto const & region : elementRegions->GetSubGroups() )
+    for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+      ElementRegion const * const elemRegion = region.second->group_cast<ElementRegion const *>();
+      elemRegion->forElementSubRegions<SUBREGIONTYPE,SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
+    }
+  }
+
+
+  template< typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA lambda ) const
+  {
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+  template< typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA lambda )
+  {
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA lambda )
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion * const elementRegion = this->GetRegion(er);
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-        lambda( cellBlock );
+        ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
+
+        bool validCast =
+        ElementRegion::applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
       }
     }
   }
 
-  template< typename LAMBDA >
-  void forCellBlocksComplete( LAMBDA lambda )
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA lambda ) const
   {
     for( localIndex er=0 ; er<this->numRegions() ; ++er )
     {
-      ElementRegion * elementRegion = this->GetRegion(er);
+      ElementRegion const * const elementRegion = this->GetRegion(er);
 
       for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion * cellBlock = elementRegion->GetSubRegion(esr);
-        lambda( er, esr, elementRegion, cellBlock );
-      }
-    }
-  }
+        ElementSubRegionBase const * const subRegion = elementRegion->GetSubRegion(esr);
 
-  template< typename LAMBDA >
-  void forCellBlocksComplete( LAMBDA lambda ) const
-  {
-    for( localIndex er=0 ; er<this->numRegions() ; ++er )
-    {
-      ElementRegion const * elementRegion = this->GetRegion(er);
-
-      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
-      {
-        CellBlockSubRegion const * cellBlock = elementRegion->GetSubRegion(esr);
-        lambda( er, esr, elementRegion, cellBlock );
+        ElementRegion::applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
       }
     }
   }
@@ -245,12 +290,18 @@ public:
 
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
-  ConstructMaterialViewAccessor( string const & name,
+  ConstructFullMaterialViewAccessor( string const & name,
                                  constitutive::ConstitutiveManager const * const cm ) const;
+
+//  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+//  MaterialViewAccessor< LHS >
+//  ConstructFullMaterialViewAccessor( string const & name,
+//                                     constitutive::ConstitutiveManager const * const cm ) const;
+
 
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
-  ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
+  ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
 
   using ManagedGroup::PackSize;
   using ManagedGroup::Pack;
@@ -298,7 +349,8 @@ public:
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                        ElementReferenceAccessor<localIndex_array> & packList );
+                        ElementReferenceAccessor<localIndex_array> & packList,
+                        bool const overwriteMap );
 
 
 
@@ -447,11 +499,51 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
   return viewAccessor;
 }
 
+//template< typename VIEWTYPE, typename LHS >
+//ElementRegionManager::MaterialViewAccessor<LHS>
+//ElementRegionManager::
+//ConstructMaterialViewAccessor( string const & viewName,
+//                               constitutive::ConstitutiveManager const * const cm  ) const
+//{
+//  MaterialViewAccessor<LHS> accessor;
+//  accessor.resize( numRegions() );
+//  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
+//  {
+//    ElementRegion const * const elemRegion = GetRegion(kReg);
+//    accessor[kReg].resize( elemRegion->numSubRegions() );
+//
+//    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+//    {
+//      ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+//      dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+//      accessor[kReg][kSubReg].resize( constitutiveGroup->numSubGroups() );
+//
+//      for( localIndex matIndex=0 ; matIndex<constitutiveGroup->numSubGroups() ; ++matIndex )
+//      {
+//        dataRepository::ManagedGroup const * const
+//        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
+//        if( constitutiveRelation != nullptr )
+//        {
+//          dataRepository::ViewWrapper<VIEWTYPE> const * const
+//          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
+//
+//          if( wrapper != nullptr )
+//          {
+//            accessor[kReg][kSubReg][matIndex] = wrapper->reference();
+//          }
+//        }
+//      }
+//    }
+//  }
+//  return accessor;
+//}
+
+
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::MaterialViewAccessor<LHS>
 ElementRegionManager::
-ConstructMaterialViewAccessor( string const & viewName,
-                               constitutive::ConstitutiveManager const * const cm  ) const
+ConstructFullMaterialViewAccessor( string const & viewName,
+                                   constitutive::ConstitutiveManager const * const cm  ) const
 {
   MaterialViewAccessor<LHS> accessor;
   accessor.resize( numRegions() );
@@ -462,15 +554,15 @@ ConstructMaterialViewAccessor( string const & viewName,
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
-      dataRepository::ManagedGroup const * const
-      constitutiveGroup = subRegion->GetConstitutiveModels();
+      ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );
 
       for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
       {
-        dataRepository::ManagedGroup const * const
-        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
+        string constitutiveName = cm->GetGroup(matIndex)->getName();
+        dataRepository::ManagedGroup const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
         if( constitutiveRelation != nullptr )
         {
           dataRepository::ViewWrapper<VIEWTYPE> const * const
@@ -489,7 +581,7 @@ ConstructMaterialViewAccessor( string const & viewName,
 
 template< typename CONSTITUTIVE_TYPE >
 ElementRegionManager::ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE>
-ElementRegionManager::ConstructConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm )
+ElementRegionManager::ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm )
 {
   ConstitutiveRelationAccessor<CONSTITUTIVE_TYPE> accessor;
   accessor.resize( numRegions() );
@@ -500,15 +592,17 @@ ElementRegionManager::ConstructConstitutiveAccessor( constitutive::ConstitutiveM
 
     for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(kSubReg);
       dataRepository::ManagedGroup * const
       constitutiveGroup = subRegion->GetConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm->numSubGroups() );
 
       for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
       {
+        string const constitutiveName = cm->GetGroup(matIndex)->getName();
+
         CONSTITUTIVE_TYPE * const
-        constitutiveRelation = constitutiveGroup->GetGroup<CONSTITUTIVE_TYPE>(matIndex);
+        constitutiveRelation = constitutiveGroup->GetGroup<CONSTITUTIVE_TYPE>(constitutiveName);
         if( constitutiveRelation != nullptr )
         {
           accessor[kReg][kSubReg][matIndex] = constitutiveRelation;

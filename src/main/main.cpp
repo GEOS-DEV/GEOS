@@ -26,10 +26,9 @@
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
 
-
-//#ifdef USE_OPENMP
-//#include <omp.h>
-//#endif
+#ifdef GEOSX_USE_OPENMP
+#include <omp.h>
+#endif
 
 using namespace geosx;
 
@@ -63,9 +62,8 @@ int main( int argc, char *argv[] )
   }
 #endif
 
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  // cxx_utilities::setSignalHandling(cxx_utilities::handler1);
   cxx_utilities::SetFPE();
-
 
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
@@ -74,31 +72,40 @@ int main( int argc, char *argv[] )
     dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_GEOSX );
   }
 
-  ProblemManager problemManager( "ProblemManager", nullptr );
+  ProblemManager problemManager( "Problem", nullptr );
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
-  problemManager.ParseInputFile();
 
-  problemManager.ProblemSetup();
-
-  if (restart) {
-    problemManager.ReadRestartOverwrite( restartFileName );
+  if ( !problemManager.getSchemaFileName().empty() )
+  {
+    problemManager.GenerateDocumentation();
   }
+  else
+  {
+    problemManager.ParseInputFile();
 
-  MPI_Barrier(MPI_COMM_GEOSX);
-  GEOS_LOG_RANK_0("Running simulation");
+    problemManager.ProblemSetup();
 
-  gettimeofday(&tim, nullptr);
-  const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    if (restart) {
+      problemManager.ReadRestartOverwrite( restartFileName );
+    }
 
-  problemManager.RunSimulation();
+    MPI_Barrier(MPI_COMM_GEOSX);
+    GEOS_LOG_RANK_0("Running simulation");
 
-  gettimeofday(&tim, nullptr);
-  const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    gettimeofday(&tim, nullptr);
+    const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
-                  "s, run time = " << t_run-t_initialize << "s");
+    problemManager.RunSimulation();
+
+    gettimeofday(&tim, nullptr);
+    const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+    GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
+                    "s, run time = " << t_run-t_initialize << "s");
+  }
+  
 
   problemManager.ClosePythonInterpreter();
 

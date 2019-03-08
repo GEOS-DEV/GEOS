@@ -809,9 +809,9 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
               std::cout << elemRegManager->GetRegion(i)->getName() << std::endl;;
               std::cout<< "REGION FIN : " << i << std::endl;
           }
-          CellBlockSubRegion * const subRegion = elemRegManager->GetRegion( "Region2" )->RegisterGroup<CellBlockSubRegion>("cb1");
-          CellBlockSubRegion * const cellBlock =
-              elemRegManager->GetRegion( "Region2" )->GetSubRegion("HEX");
+          CellElementSubRegion * const subRegion = elemRegManager->GetRegion( "Region2" )->RegisterGroup<CellElementSubRegion>("cb1");
+          CellElementSubRegion * const cellBlock =
+              elemRegManager->GetRegion( "Region2" )->GetSubRegion<CellElementSubRegion>("HEX");
           std::cout << "HA" << std::endl;
           for(int i = 0 ; i < elemRegManager->GetRegion( "Region2" )->GetSubRegions().size();i++){
               std::cout << "SUBREGION : " << i << std::endl;

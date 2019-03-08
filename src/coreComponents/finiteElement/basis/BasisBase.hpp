@@ -24,9 +24,9 @@
 #ifndef BASIS_H
 #define BASIS_H
 
+#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
-#include "fileIO/xmlWrapper.hpp"
 
 /**
  * Pure virtual base class representing a space
@@ -38,17 +38,28 @@ namespace geosx
 {
 
 
-class BasisBase
+class BasisBase : public dataRepository::ManagedGroup
 {
 public:
+  /// Main constructor
+  explicit BasisBase( std::string const & name,
+                      ManagedGroup * const parent );
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< BasisBase >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  /// Destructor
+  virtual ~BasisBase() override;
 
+  // Catalog name interface
+  static string CatalogName() { return "BasisBase"; }
 
   BasisBase() = default;
+  BasisBase( BasisBase const & ) = default;
+  BasisBase( BasisBase &&) = default;
+  BasisBase& operator=( BasisBase const & ) = default;
+  BasisBase& operator=( BasisBase&& ) = default;
 
-  virtual ~BasisBase();
+
+  using CatalogInterface = cxx_utilities::CatalogInterface< BasisBase, std::string const &, ManagedGroup * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
 
   virtual int size() const = 0;
 
@@ -60,13 +71,6 @@ public:
 
   virtual R1Tensor support_point( const int index ) = 0;
 
-  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
-
-private:
-  BasisBase( BasisBase const & ) = delete;
-//  BasisBase( BasisBase && ) = delete;
-  BasisBase & operator=( BasisBase const & ) = delete;
-  BasisBase && operator=( BasisBase && ) = delete;
 };
 }
 #endif

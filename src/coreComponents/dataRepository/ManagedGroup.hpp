@@ -29,11 +29,10 @@
 #include "ViewWrapper.hpp"
 #include "RestartFlags.hpp"
 
-#include "depricated/Common.h"
-
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/InputFlags.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
 /// macro definition to specify whether or not to use dynamic_cast
@@ -552,10 +551,10 @@ public:
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      if ( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      ViewWrapper<Wrapped> * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
+      if ( wrapper != nullptr )
       {
-        auto & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
-        lambda(wrapper);
+        lambda(*wrapper);
       }
     }
   }
@@ -565,10 +564,10 @@ public:
   {
     for( auto const & wrapperIter : m_wrappers )
     {
-      if( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      ViewWrapper<Wrapped> const * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
+      if ( wrapper != nullptr )
       {
-        auto const & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
-        lambda(wrapper);
+        lambda(*wrapper);
       }
     }
   }
@@ -623,13 +622,41 @@ public:
    *        file and put them into the wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
+  void ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode );
 
   /**
    * @brief Recursively call PostProcessInput() to apply post processing after
    * reading input values.
    */
   void PostProcessInputRecursive();
+
+  /**
+   * This function is used to build a complete datastructure for schema generation
+   */
+  void GenerateDataStructureSkeleton(integer const level)
+  {
+    ExpandObjectCatalogs();
+    std::string indent( level*2, ' ');
+
+    for( auto const & subGroupIter : m_subGroups )
+    {
+      std::cout << indent << subGroupIter.second->getName() << std::endl;
+      subGroupIter.second->GenerateDataStructureSkeleton( level + 1 );
+    }
+  }
+
+  /**
+   * This function is used to expand any catalogs in the data structure
+   */
+  virtual void ExpandObjectCatalogs() {}
+
+  /**
+   * This function is used to inform the schema generator of any
+   * deviations between the xml and GEOS data structures.
+   */
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) {}
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 
@@ -801,6 +828,7 @@ public:
     return m_name;
   }
 
+
   virtual void resize( localIndex const newsize );
 
   virtual void reserve( indexType const newsize );
@@ -870,6 +898,10 @@ public:
 
   void setRestartFlags( RestartFlags flags ) { m_restart_flags = flags; } 
 
+  InputFlags getInputFlags() const { return m_input_flags; }
+
+  void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
+
   void prepareToWrite() const;
 
   void finishWriting() const;
@@ -919,6 +951,7 @@ private:
   indexType m_capacity;         ///< The capacity for wrappers in this group
   RestartFlags m_restart_flags; ///< Restart flag for this group...and
                                 ///< subsequently all wrappers in this group
+  InputFlags m_input_flags;     ///< Input flag for this group
   string m_name;                ///< the repository name of this group. This
                                 ///< is the key in the parent group.
 

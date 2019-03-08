@@ -27,6 +27,11 @@
 #include "InputFlags.hpp"
 #include "RestartFlags.hpp"
 
+#ifndef USE_DYNAMIC_CASTING
+/// macro definition to specify whether or not to use dynamic_cast
+#define USE_DYNAMIC_CASTING 1;
+#endif
+
 namespace axom
 {
 namespace sidre
@@ -392,6 +397,7 @@ public:
   {
     return m_description;
   }
+
 
 
 private:

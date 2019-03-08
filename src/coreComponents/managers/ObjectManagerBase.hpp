@@ -29,7 +29,6 @@ namespace geosx
 {
 class SiloFile;
 
-
 /**
  * @class ObjectManagerBase
  * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
@@ -43,10 +42,6 @@ public:
   explicit ObjectManagerBase( std::string const & name,
                               dataRepository::ManagedGroup * const parent );
 
-//  explicit ObjectManagerBase( std::string const & name,
-//                              dataRepository::ManagedGroup * const parent,
-//                              cxx_utilities::DocumentationNode * docNode );
-
   ~ObjectManagerBase() override;
 
   /**
@@ -59,8 +54,6 @@ public:
 
   virtual const string getCatalogName() const = 0;
   ///@}
-
-//  virtual void FillDocumentationNode() override;
 
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
@@ -108,7 +101,9 @@ public:
 
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       array1d<localIndex> & packList )
+                                       array1d<localIndex> & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps )
   { return 0;}
 
 
@@ -165,80 +160,6 @@ public:
                  const std::string& regionName = "none",
                  const localIndex_array& mask = localIndex_array() );
 
-  /// returns reference to specified field
-  template< FieldKey FIELDKEY>
-  array1d< typename Field<FIELDKEY>::Type >& GetFieldData()
-  {
-    return this->getReference< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
-  }
-
-  /// returns const reference to specified field
-  template< FieldKey FIELDKEY>
-  array1d< typename Field<FIELDKEY>::Type > const & GetFieldData() const
-  {
-    return this->getReference< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
-  }
-
-  /// returns reference to specified field
-  template< typename TYPE >
-  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype GetFieldData( const std::string& name )
-  {
-    return this->getReference< array1d<TYPE> >( name );
-  }
-
-  /// returns const reference to specified field
-  template< typename TYPE >
-  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype_const GetFieldData( const std::string& name ) const
-  {
-    return this->getReference< array1d<TYPE> >( name );
-  }
-
-  /// returns reference to specified field
-  template< FieldKey FIELDKEY>
-  typename Field<FIELDKEY>::Type * GetFieldDataPointer( )
-  {
-    return &this->getReference< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
-  }
-
-  /// returns const reference to specified field
-  template< FieldKey FIELDKEY>
-  typename Field<FIELDKEY>::Type const * GetFieldDataPointer( ) const
-  {
-    return &this->getReference< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
-  }
-
-  /// returns reference to specified field
-  template< typename TYPE >
-  TYPE * GetFieldDataPointer( const std::string& fieldName )
-  {
-    return &this->getReference< TYPE >( fieldName );
-  }
-
-  /// returns const reference to specified field
-  template< typename TYPE >
-  TYPE const * GetFieldDataPointer( const std::string& fieldName ) const
-  {
-    return &this->getReference< TYPE >( fieldName );
-  }
-
-  /// add a data field to a member
-  template< typename T >
-  int AddKeylessDataField( const std::string& name, const bool restart = false, const bool plot = false )
-  {
-    this->RegisterViewWrapper<T>(name);
-    (void)restart;
-    (void)plot;
-    return 0;
-  }
-
-  /// add a data field to a member
-  template< FieldKey FIELDKEY >
-  int AddKeyedDataField()
-  {
-    this->RegisterViewWrapper<typename Field<FIELDKEY>::Type>( Field<FIELDKEY>::Name() );
-    return 0;
-  }
-
   void CreateSet( const std::string& newSetName );
 
   /// builds a new set on this object given another objects set and the map
@@ -283,8 +204,6 @@ public:
 
   void SetMaxGlobalIndex();
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) {}
-
   template< typename TYPE_RELATION >
   static void FixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, array1d<globalIndex> > & unmappedIndices,
@@ -294,6 +213,27 @@ public:
   static void FixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, set<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped  );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          array1d<set<localIndex> > & upmap,
+                          array2d<localIndex> const & downmap );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          array1d<set<localIndex> > & upmap,
+                          array1d< array1d<localIndex > > const & downmap );
+
+  static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
+                                       localIndex const lookup )
+  {
+    localIndex rval = lookup;
+
+    while( parentIndices[rval] != -1 )
+    {
+      rval = parentIndices[rval];
+    }
+
+    return rval;
+  }
 
 
   //**********************************************************************************************************************
@@ -468,6 +408,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
   }
   unmappedIndices.clear();
 }
+
 
 
 } /* namespace geosx */

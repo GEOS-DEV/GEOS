@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshLevel.cpp
- *
- *  Created on: Sep 13, 2017
- *      Author: settgast
+/**
+ * @file MeshLevel.cpp
  */
 
 #include "MeshLevel.hpp"
@@ -93,7 +90,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
     elementAdjacencySet[a].resize( elemManager->GetRegion(a)->numSubRegions() );
   }
 
-  nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
+  nodeAdjacencySet.insert( seedNodeList.data(), seedNodeList.size() );
 
   for( integer d=0 ; d<depth ; ++d )
   {
@@ -114,7 +111,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
       for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+        CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(kSubReg);
 
         array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
         array2d<localIndex> const & elemsToFaces = subRegion->faceList();

@@ -101,6 +101,8 @@ ProblemManager::ProblemManager( const std::string& name,
   ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
 
+  setInputFlags(InputFlags::PROBLEM_ROOT);
+
   // Mandatory groups that read from the xml
   RegisterGroup<FieldSpecificationManager>( groupKeys.fieldSpecificationManager.Key(),
                                             FieldSpecificationManager::get(),
@@ -123,7 +125,7 @@ ProblemManager::ProblemManager( const std::string& name,
                                      m_functionManager,
                                      false );
 
-
+  // Command line entries
   commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the input xml file.");
@@ -164,14 +166,9 @@ ProblemManager::ProblemManager( const std::string& name,
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Flag to indicate partition number override");
 
-  commandLine->RegisterViewWrapper<string>( keys::schema )->
+  commandLine->RegisterViewWrapper<string>( viewKeys.schemaFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the output schema");
-
-  commandLine->RegisterViewWrapper<integer>( viewKeys.schemaLevel.Key() )->
-    setApplyDefaultValue(0)->
-    setRestartFlags(RestartFlags::WRITE)->
-    setDescription("Schema verbosity level (0=default, 1=development, 2=all)");
 }
 
 
@@ -222,9 +219,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   integer& yPartitionsOverride = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
   integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
   integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
-  std::string&  schemaName = commandLine->getReference<std::string>(keys::schema);
-  integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-  schemaLevel = 0;
+  std::string& schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
   std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
   std::string& outputDirectory = commandLine->getReference<std::string>(viewKeys.outputDirectory);
   outputDirectory = ".";
@@ -232,7 +227,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -243,7 +238,6 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -272,7 +266,10 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 
   if (options[INPUT].count() == 0)
   {
-    GEOS_ERROR("An input xml must be specified!");
+    if (options[SCHEMA].count() == 0)
+    {
+      GEOS_ERROR("An input xml must be specified!");
+    }
   }
 
 
@@ -310,9 +307,6 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     case SCHEMA:
       schemaName = opt.arg;
       break;
-    case SCHEMALEVEL:
-      schemaLevel = std::stoi(opt.arg);
-      break;
     case PROBLEMNAME:
       problemName = opt.arg;
       break;
@@ -322,30 +316,33 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     }
   }
 
-  getAbsolutePath(inputFileName, inputFileName);
-
-  if (problemName == "") 
+  if (schemaName.empty())
   {
-    if (inputFileName.length() > 4 && inputFileName.substr(inputFileName.length() - 4, 4) == ".xml")
+    getAbsolutePath(inputFileName, inputFileName);
+
+    if (problemName == "") 
     {
-      string::size_type start = inputFileName.find_last_of('/') + 1;
-      if (start >= inputFileName.length())
+      if (inputFileName.length() > 4 && inputFileName.substr(inputFileName.length() - 4, 4) == ".xml")
       {
-        start = 0;
+        string::size_type start = inputFileName.find_last_of('/') + 1;
+        if (start >= inputFileName.length())
+        {
+          start = 0;
+        }
+        problemName.assign(inputFileName, start, inputFileName.length() - 4 - start);
       }
-      problemName.assign(inputFileName, start, inputFileName.length() - 4 - start);
+      else {
+        problemName.assign(inputFileName);
+      }
     }
-    else {
-      problemName.assign(inputFileName);
-    }
-  }
 
-  if (outputDirectory != ".")
-  {
-    mkdir(outputDirectory.data(), 0755);
-    if (chdir(outputDirectory.data()) != 0)
+    if (outputDirectory != ".")
     {
-      GEOS_ERROR("Could not change to the ouput directory: " + outputDirectory);
+      mkdir(outputDirectory.data(), 0755);
+      if (chdir(outputDirectory.data()) != 0)
+      {
+        GEOS_ERROR("Could not change to the ouput directory: " + outputDirectory);
+      }
     }
   }
 }
@@ -354,7 +351,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFileName )
 {
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -365,7 +362,6 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {SCHEMALEVEL, 0, "l", "schema_level", Arg::NonEmpty, "\t-l, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -394,7 +390,10 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
 
   if (options[INPUT].count() == 0)
   {
-    GEOS_ERROR("An input xml must be specified!");
+    if (options[SCHEMA].count() == 0)
+    {
+      GEOS_ERROR("An input xml must be specified!");
+    }
   }
 
   // Iterate over the remaining inputs
@@ -421,8 +420,6 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
       case ZPAR:
         break;
       case SCHEMA:
-        break;
-      case SCHEMALEVEL:
         break;
       case PROBLEMNAME:
         break;
@@ -509,6 +506,81 @@ void ProblemManager::ClosePythonInterpreter()
 }
 
 
+void ProblemManager::GenerateDocumentation()
+{
+  // Documentation output
+  std::cout << "Trying to generate schema..." << std::endl;
+  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  std::string const & schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
+  
+  if (schemaName.empty() == 0)
+  {
+    // Generate an extensive data structure
+    GenerateDataStructureSkeleton(0);
+
+    // Generate schema
+    SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
+
+    // Generate non-schema documentation
+    SchemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1);
+  }
+}
+
+
+void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                         xmlWrapper::xmlNode schemaParent,
+                                         integer documentationType)
+{
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  if( targetChoiceNode.empty() )
+  {
+    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+    targetChoiceNode.append_attribute("minOccurs") = "0";
+    targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
+  }
+
+  // These objects are handled differently during the xml read step,
+  // so we need to explicitly add them into the schema structure
+  DomainPartition * domain  = getDomainPartition();
+
+  m_functionManager->GenerateDataStructureSkeleton(0);
+  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode, documentationType);
+
+  FieldSpecificationManager * bcManager = FieldSpecificationManager::get();
+  bcManager->GenerateDataStructureSkeleton(0);
+  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode, documentationType);
+
+  ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode, documentationType);
+
+  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+  meshManager->GenerateMeshLevels(domain);
+  ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+  elementManager->GenerateDataStructureSkeleton(0);
+  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode, documentationType);
+
+
+  // Add entries that are only used in the pre-processor
+  ManagedGroup * IncludedList = this->RegisterGroup<ManagedGroup>("Included");
+  IncludedList->setInputFlags(InputFlags::OPTIONAL);
+
+  ManagedGroup * includedFile = IncludedList->RegisterGroup<ManagedGroup>("File");
+  includedFile->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  
+  ManagedGroup * parameterList = this->RegisterGroup<ManagedGroup>("Parameters");
+  parameterList->setInputFlags(InputFlags::OPTIONAL);
+
+  ManagedGroup * parameter = parameterList->RegisterGroup<ManagedGroup>("Parameter");
+  parameter->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  parameter->RegisterViewWrapper<string>("value")->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Input parameter definition for the preprocessor");
+
+  SchemaUtilities::SchemaConstruction(IncludedList, schemaRoot, targetChoiceNode, documentationType);
+  SchemaUtilities::SchemaConstruction(parameterList, schemaRoot, targetChoiceNode, documentationType);
+}
+
+
 void ProblemManager::ParseInputFile()
 {
   GEOSX_MARK_FUNCTION;
@@ -554,14 +626,18 @@ void ProblemManager::ParseInputFile()
     GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
-  xmlProblemNode = xmlDocument.child("Problem");
+
+  string::size_type const pos=inputFileName.find_last_of('/');
+  string path = inputFileName.substr( 0, pos + 1 );
+  xmlDocument.append_child(xmlWrapper::filePathString).append_attribute(xmlWrapper::filePathString) = path.c_str();
+  xmlProblemNode = xmlDocument.child(this->getName().c_str());
 
   ProcessInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
   {
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child(constitutiveManager->getName().c_str());
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
     constitutiveManager->PostProcessInputRecursive();
 
@@ -569,18 +645,10 @@ void ProblemManager::ParseInputFile()
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
     meshManager->GenerateMeshLevels(domain);
 
-    topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+    topLevelNode = xmlProblemNode.child(elementManager->getName().c_str());
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
-  }
-
-  // Documentation output
-  std::string const & schemaName = commandLine->getReference<std::string>(keys::schema);
-  if (schemaName.empty() == 0)
-  {
-    integer& schemaLevel = commandLine->getReference<integer>(viewKeys.schemaLevel);
-//    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
   }
 }
 
@@ -694,6 +762,8 @@ void ProblemManager::GenerateMesh()
 
       edgeManager->BuildEdges(faceManager, nodeManager );
 
+      elemManager->GenerateFractureMesh( faceManager );
+
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
@@ -701,12 +771,24 @@ void ProblemManager::GenerateMesh()
 
       domain->GenerateSets();
 
-      elemManager->forCellBlocks([&](CellBlockSubRegion * const subRegion)->void
+      elemManager->forElementRegions( [&](ElementRegion * const region )->void
       {
-        subRegion->nodeList().SetRelatedObject(nodeManager);
-        subRegion->faceList().SetRelatedObject(faceManager);
-        subRegion->CalculateCellVolumes( array1d<localIndex>() );
+        ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+        subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
+        {
+          subRegion->setupRelatedObjectsInRelations( meshLevel );
+          subRegion->CalculateCellVolumes( array1d<localIndex>(),
+                                           nodeManager->referencePosition() );
+        });
+
       });
+//      elemManager->forElementSubRegions([&](CellBlockSubRegion * const subRegion)->void
+//      {
+//        subRegion->nodeList().SetRelatedObject(nodeManager);
+//        subRegion->faceList().SetRelatedObject(faceManager);
+//        subRegion->CalculateCellVolumes( array1d<localIndex>(),
+//                                         nodeManager->referencePosition() );
+//      });
 
     }
   }
@@ -759,7 +841,7 @@ void ProblemManager::ApplyNumericalMethods()
             string_array const & materialList = elemRegion->getMaterialList();
             localIndex quadratureSize = 1;
 
-            elemRegion->forCellBlocks([&]( CellBlockSubRegion * const subRegion )->void
+            elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
             {
               if( feDiscretization != nullptr )
               {

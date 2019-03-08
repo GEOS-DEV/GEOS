@@ -75,6 +75,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_size(0),
   m_capacity(0),
   m_restart_flags(RestartFlags::WRITE_AND_READ),
+  m_input_flags(InputFlags::INVALID),
   m_name(name)
 {}
 
@@ -152,8 +153,10 @@ void ManagedGroup::reserve( indexType const newsize )
   m_capacity = newsize;
 }
 
-void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode )
+void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
+  xmlWrapper::addIncludedXML(targetNode);
+
   // loop over the child nodes of the targetNode
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
