@@ -23,6 +23,7 @@
 #include "TwoPointFluxApproximation.hpp"
 
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/AggregateElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -148,8 +149,42 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   stencil.compress();
 }
 
-void TwoPointFluxApproximation::computeAggregationStencil(DomainPartition * domain, CellStencil & stencil)
+void TwoPointFluxApproximation::computeCoarseStencil(DomainPartition * domain, const CellStencil & fineStencil, CellStencil & coarseStencil)
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegion * const elemRegion = elemManager->GetRegion(0); // TODO : still one region / elemsubregion
+  AggregateElementSubRegion * const aggregateElement = elemRegion->GetGroup("coarse")->group_cast< AggregateElementSubRegion * >();
+  const array1d< localIndex > & fineToCoarse = aggregateElement->GetFineToCoarseMap();
+  // TODO : will it work for fractures ? (no)
+
+  array1d<CellDescriptor> stencilCells(2);
+  array1d<real64> stencilWeights(2);
+  fineStencil.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+  {
+    localIndex const stencilSize = stencil.size();
+    if( stencil.size() == 2)
+    {
+      CellDescriptor const & cell1 = stencil.connectedIndex(0);
+      CellDescriptor const & cell2 = stencil.connectedIndex(1);
+      localIndex aggregateNumber1 = fineToCoarse[cell1.index];
+      localIndex aggregateNumber2 = fineToCoarse[cell2.index];
+      if( aggregateNumber1 != aggregateNumber2 ) // We find two adjacent aggregates
+      {
+        stencilCells[0] = { cell1.region, 0, aggregateNumber1 }; // We can consider here that there is only 1 subregion
+        stencilCells[1] = { cell2.region, 0, aggregateNumber2 };
+
+        // Now we compute the transmissibilities
+        R1Tensor barycenter1 = aggregateElement->getElementCenter()[aggregateNumber1];
+        R1Tensor barycenter2 = aggregateElement->getElementCenter()[aggregateNumber2];
+        barycenter1 -= barycenter2; // normal between the two aggregates
+        barycenter1.Normalize();
+
+
+        coarseStencil.add(stencilCells.data(),stencilCells,stencilWeights,0);
+      }
+    }
+  });
 }
 
 void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & domain,

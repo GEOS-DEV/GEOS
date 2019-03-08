@@ -21,6 +21,8 @@
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
+#include "cxx-utilities/src/src/SparsityPattern.hpp"
+
 
 namespace geosx
 {
@@ -47,6 +49,11 @@ public:
   void CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse,
                                   const array1d< R1Tensor >& barycenters);
 
+  const array1d< localIndex >& GetFineToCoarseMap()
+  {
+    return m_fineToCoarse;
+  }
+  
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                      const NodeManager& nodeManager,
                                      const bool useReferencePos = true) const override

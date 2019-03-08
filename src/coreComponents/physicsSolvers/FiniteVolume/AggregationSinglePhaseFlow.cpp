@@ -210,10 +210,8 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
                                           real64 const & eventProgress,
                                           ManagedGroup * domain )
 {
-  std::cout << "PRESSURE : " << m_pressure2[0][0][0] << std::endl;
   if( cycleNumber == 1 )
   {
-    std::cout << "CYCLE1" << std::endl;
     auto fc = FieldSpecificationManager::get();
     auto bc = fc->GetGroup( m_initialBCs[0] )->group_cast< FieldSpecificationBase* >();
     bc->Toggle(1);
@@ -234,22 +232,17 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
   if( cycleNumber == 2 )
   {
     
-    std::cout << "CYCLE2 " <<  time_n << std::endl;
     auto fc = FieldSpecificationManager::get();
     auto bc = fc->GetGroup( m_initialBCs[1] )->group_cast< FieldSpecificationBase* >();
     bc->Toggle(1);
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
-    std::cout << m_pressure.size() << std::endl;
     for( localIndex  er = 0; er < m_pressure.size() ; er++ )
     {
-    std::cout << m_pressure[er].size() << std::endl;
       for( localIndex  esr = 0; esr < m_pressure[er].size() ; esr++ )
       {
-    std::cout << m_pressure[er][esr].size() << std::endl;
         for( localIndex  ei = 0; ei < m_pressure[er][esr].size() ; ei++ )
         {
           m_pressure2[er][esr][ei] = m_pressure[er][esr][ei];
-          std::cout <<  m_pressure2[er][esr][ei] << std::endl;
         }
       }
     }
@@ -257,7 +250,6 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
   }
   if( cycleNumber == 3 )
   {
-    std::cout << "CYCLE3 " <<  time_n << std::endl;
     auto fc = FieldSpecificationManager::get();
     auto bc = fc->GetGroup( m_initialBCs[2] )->group_cast< FieldSpecificationBase* >();
     bc->Toggle(1);
@@ -914,7 +906,6 @@ void AggregationSinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * do
                                                  real64 const time_n, real64 const dt,
                                                  EpetraBlockSystem * const blockSystem )
 {
-  std::cout << "allo" << std::endl;
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
   // call the BoundaryConditionManager::ApplyField function that will check to see

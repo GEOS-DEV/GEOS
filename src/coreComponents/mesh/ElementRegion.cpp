@@ -31,7 +31,6 @@
 #include "AggregateElementSubRegion.hpp"
 
 #include "cxx-utilities/src/src/SparsityPattern.hpp"
-#include "cxx-utilities/src/src/CRSMatrix.hpp"
 
 #include "metis.h"
 //#include "constitutive/ConstitutiveManager.hpp"
@@ -209,7 +208,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   }
   ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
   AggregateElementSubRegion * const aggregateSubRegion =
-    elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
+    elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse"); // TODO : const auto expr string
 
   array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();

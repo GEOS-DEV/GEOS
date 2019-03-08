@@ -43,7 +43,7 @@ protected:
 
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) override;
 
-  virtual void computeAggregationStencil(DomainPartition * domain, CellStencil & stencil) override;
+  virtual void computeCoarseStencil(DomainPartition * domain, const CellStencil & fineStencil, CellStencil & coarseStencil) override;
 
   virtual void computeFractureStencil( DomainPartition const & domain,
                                        CellStencil & fractureStencil,
