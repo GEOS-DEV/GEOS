@@ -111,7 +111,8 @@ public:
    * deviations between the xml and GEOS data structures.
    */
   virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent) override;
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) override;
 
 
   /**
