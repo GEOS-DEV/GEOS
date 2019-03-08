@@ -133,7 +133,8 @@ ManagedGroup * EventBase::CreateChild( string const & childKey, string const & c
 
 
 void EventBase::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                    xmlWrapper::xmlNode schemaParent)
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType)
 {
   // Create a choice node if necessary
   xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
@@ -147,7 +148,7 @@ void EventBase::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   // Enable recursion in the schema
   this->getParent()->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
   {
-    SchemaUtilities::SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
+    SchemaUtilities::SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
   });
 }
 
