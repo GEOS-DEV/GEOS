@@ -146,7 +146,7 @@
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               scale="0.3"/>
+               scale="0.399"/>
 
     <FieldSpecification name="initialComposition_water"
                initialCondition="1"
@@ -154,7 +154,7 @@
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               scale="0.1"/>
+               scale="0.001"/>
 
     <!-- Injection pressure: ~10 bar -->
 
@@ -209,14 +209,14 @@
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="1"
-               scale="0.3"/>
+               scale="0.399"/>
 
     <FieldSpecification name="sinkTermComposition_water"
                setNames="sink"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="globalCompFraction"
                component="2"
-               scale="0.1"/>
+               scale="0.001"/>
 
   </FieldSpecifications>
 
