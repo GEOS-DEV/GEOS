@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
+/**
  * @file TwoPointFluxApproximation.cpp
  *
  */
@@ -63,7 +63,8 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 
 void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, CellStencil & stencil)
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshBody * const meshBody = domain->getMeshBodies()->GetGroup<MeshBody>(0);
+  MeshLevel * const mesh = meshBody->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
   FaceManager * const faceManager = mesh->getFaceManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -97,12 +98,16 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceManager->size(), 2);
+  real64 const areaTolerance = pow( meshBody->getGlobalLengthScale() * this->m_areaRelTol, 2 );
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
     if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
       continue;
 
-    faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
+    faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+
+    if( faceArea < areaTolerance )
+      continue;
 
     faceWeightInv = 0.0;
 
