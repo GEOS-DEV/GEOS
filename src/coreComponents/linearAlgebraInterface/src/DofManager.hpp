@@ -99,7 +99,7 @@ public:
   };
 
   /**
-   * Define the possibile status of a location: undefined or belonging to ghost locations
+   * Define the possible status of a location: undefined or belonging to ghost locations
    * of this MPI process
    */
   enum class LocationStatus : globalIndex

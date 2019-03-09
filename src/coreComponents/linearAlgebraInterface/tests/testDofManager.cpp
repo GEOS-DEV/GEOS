@@ -76,7 +76,7 @@ protected:
   static ProblemManager problemManager;
 };
 
-ProblemManager DofManagerTest::problemManager( "ProblemManager", nullptr );
+ProblemManager DofManagerTest::problemManager( "Problem", nullptr );
 
 TEST_F(DofManagerTest, TestOne)
 {
