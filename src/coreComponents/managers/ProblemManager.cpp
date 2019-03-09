@@ -904,10 +904,12 @@ void ProblemManager::ApplyInitialConditions()
   GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
 
-  FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const * fieldSpecificationManager = FieldSpecificationManager::get();
 
-  boundaryConditionManager->ApplyInitialConditions( domain );
+  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
 
+  fieldSpecificationManager->ApplyInitialConditions( domain );
+  fieldSpecificationManager->ApplyInitialConditionsFromMesh( domain, meshManager );
 }
 
 void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )

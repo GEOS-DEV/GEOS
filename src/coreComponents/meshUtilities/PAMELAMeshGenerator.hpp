@@ -28,8 +28,9 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/Utilities.hpp"
 
-//This is an include of PAMELA
 #include "Mesh/Mesh.hpp"
+#include "MeshDataWriters/MeshParts.hpp"
+#include "MeshDataWriters/Writer.hpp"
 
 #include "MeshGeneratorBase.hpp"
 
@@ -40,18 +41,14 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const filePath = "file";
-}
-}
-
-
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
+  struct viewKeyStruct
+  {
+    constexpr static auto fileString = "file";
+    constexpr static auto fieldsToImportString = "fieldsToImport";
+  } viewKeys;
   PAMELAMeshGenerator( const std::string& name,
                        ManagedGroup * const parent );
 
@@ -74,6 +71,9 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
+  virtual const real64_array GetPropertyArray( const std::string& propertyName,
+                                               CellBlock * cellBlock) const override;
+
 protected:
   void PostProcessInput() override final;
 
@@ -81,6 +81,9 @@ private:
 
   /// Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+
+  /// Mesh partitionned and filled with property inside PAMELA
+  std::unique_ptr< PAMELA::Writer > m_pamelaPartitionnedMesh;
 
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =
@@ -94,6 +97,13 @@ private:
     { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
     { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
     };
+
+  std::unordered_map<std::string, PAMELA::SubPart<PAMELA::Polyhedron *> * > m_cellBlockUniqueIdToPAMELACellBlock_;
+  std::unordered_map<std::string, PAMELA::Part<PAMELA::Polyhedron *> * > m_cellBlockUniqueIdToPAMELARegion_;
+
+  string_array m_fieldsToImport;
+
+  string m_filePath;
 };
 
 }

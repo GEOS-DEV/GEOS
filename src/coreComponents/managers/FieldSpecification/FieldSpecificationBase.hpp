@@ -29,7 +29,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
-
 namespace geosx
 {
 class Function;
@@ -441,6 +440,25 @@ public:
    *             application of the value.
    * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
    * @param[in] fieldname the name of the field to apply the value to.
+   * @param[in] fieldArray an external array that will used to fill the field
+   *
+   * This function applies the value to a field variable. This function is typically
+   * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
+   */
+template< typename FIELD_OP >
+void ApplyFieldValue( set<localIndex> const & targetSet,
+                      real64 const time,
+                      ManagedGroup * dataGroup,
+                      string const & fieldName,
+                      real64_array const & fieldArray) const;
+
+  /**
+   * @tparam FIELD_OP type that contains static functions to apply the value to the field
+   * @param[in] targetSet the set of indices which the value will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the value.
+   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] fieldname the name of the field to apply the value to.
    *
    * This function applies the value to a field variable. This function is typically
    * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
@@ -539,8 +557,8 @@ public:
     constexpr static auto initialConditionString = "initialCondition";
     constexpr static auto beginTimeString = "beginTime";
     constexpr static auto endTimeString = "endTime";
-
-
+    constexpr static auto readFromString = "readFrom";
+    constexpr static auto nameFromString = "nameFrom";
   } viewKeys;
 
   struct groupKeyStruct
@@ -599,6 +617,9 @@ public:
   real64 GetScale() const
   { return m_scale; }
 
+  std::string GetNameFrom() const
+  { return m_nameFrom ; }
+
 
 protected:
   void PostProcessInput() override final;
@@ -643,6 +664,11 @@ private:
   /// the name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
+  /// Name on the mesh on which the property is.
+  string m_readFrom;
+
+  /// Tag or name of the property on the imported mesh
+  string m_nameFrom;
 
 };
 
@@ -650,13 +676,14 @@ private:
 
 template< typename FIELD_OP >
 void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
-                                                           real64 const time,
-                                                           ManagedGroup * dataGroup,
-                                                           string const & fieldName ) const
+                                              real64 const time,
+                                              ManagedGroup * dataGroup,
+                                              string const & fieldName,
+                                              real64_array const & fieldArray) const
 {
-
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
+  string const & readFrom = getReference<string>( viewKeyStruct::readFromString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
@@ -669,14 +696,43 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
       fieldType & field = view.reference();
-      if( functionName.empty() )
+      GEOS_ERROR_IF( targetSet.size() != fieldArray.size(), "Target set is not the same size than given array for setting " + fieldName);
+      for( auto a : targetSet )
+      {
+        FIELD_OP::SpecifyFieldValue( field, a, component, fieldArray[a] );
+      }
+    } );
+}
+template< typename FIELD_OP >
+void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
+                                                           real64 const time,
+                                                           ManagedGroup * dataGroup,
+                                                           string const & fieldName ) const
+{
+
+  integer const component = GetComponent();
+  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
+  string const & readFrom = getReference<string>( viewKeyStruct::readFromString );
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( vw->get_typeid());
+
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                  false,
+                                  [&]( auto type, auto baseType ) -> void
+    {
+      using fieldType = decltype(type);
+      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
+      fieldType & field = view.reference();
+      if( functionName.empty() && readFrom.empty() )
       {
         for( auto a : targetSet )
         {
           FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
         }
       }
-      else
+      else if( !functionName.empty() && readFrom.empty() )
       {
         FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
 
@@ -701,6 +757,14 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
             ++count;
           }
         }
+      }
+      else if( functionName.empty() && !readFrom.empty() ) 
+      {
+        // Property is assigned elsewhere
+      }
+      else
+      {
+        GEOS_ERROR("Unvalid Field Specification definition.");
       }
     } );
 }

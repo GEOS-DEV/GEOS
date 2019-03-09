@@ -83,5 +83,19 @@ void FieldSpecificationManager::ApplyInitialConditions( ManagedGroup * domain ) 
       bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldName );
     } );
 }
+void FieldSpecificationManager::ApplyInitialConditionsFromMesh( dataRepository::ManagedGroup * domain,
+                                                                MeshManager * meshManager) const
+{
+  ApplyFromMesh( 0.0, domain, "", "", meshManager,
+         [&]( FieldSpecificationBase const * const bc,
+         string const &,
+         set<localIndex> const & targetSet,
+         ManagedGroup * const targetGroup,
+         string const fieldName,
+         const real64_array& fieldArray)
+    {
+      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldName, fieldArray );
+    } );
+}
 
 } /* namespace geosx */
