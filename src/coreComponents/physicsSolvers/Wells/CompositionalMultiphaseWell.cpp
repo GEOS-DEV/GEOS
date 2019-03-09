@@ -173,7 +173,7 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( ManagedGroup * const r
   RelativePermeabilityBase const * relPerm = cm->GetConstitituveRelation<RelativePermeabilityBase>( m_relPermName );
   GEOS_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
  
-  m_resRelPermIndex = relPerm->getIndexInParent(); // WARNING: assume same index, not sure it is true
+  m_resRelPermIndex = relPerm->getIndexInParent(); 
 
 }
 
@@ -388,7 +388,7 @@ void CompositionalMultiphaseWell::UpdateRelPermModel( Well * well )
   WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
   RelativePermeabilityBase * const relPerm = GetRelPermModel( wellElementSubRegion );
 
-  arrayView2d<real64> const & wellElemPhaseVolFrac =
+  arrayView2d<real64 const> const & wellElemPhaseVolFrac =
     wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
 
   relPerm->BatchUpdate( wellElemPhaseVolFrac );
@@ -450,6 +450,9 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
     arrayView1d<real64 const> const & wellElemGravDepth =
       wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
+
+    arrayView2d<real64> const & wellElemPhaseVolFrac =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
     
     // get a reference to the primary variables on connections
     arrayView1d<real64> const & connRate =
@@ -479,9 +482,19 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     arrayView1d<localIndex const> const & resElementIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
+    // get well secondary variables on segments
+    MultiFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
+   
+    arrayView3d<real64 const> const & wellElemPhaseDens =
+      fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
+
+    arrayView4d<real64 const> const & wellElemPhaseCompFrac =
+      fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::phaseCompFractionString );
+
+    
     // TODO: fix this in the case of multiple MPI ranks working on the same well
     // In particular, steps 1), 3) and 7) will need to be rewritten
-
+    
    /*
     * The methodology used here is based on Yifan Zhou's PhD dissertation, Stanford University
     */
@@ -591,6 +604,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
         resPres = resPressure[er][esr][ei];
       }
       // if rate constraint, set the ref pressure slightly above/below the target pressure
+      
       wellElemPressure[iwelemRef] = (well->getType() == Well::Type::PRODUCER)
  	                          ? 0.9 * resPres // hard-coded value comes from AD-GPRS
 	                          : 1.1 * resPres; 
@@ -630,6 +644,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
     // 7) Estimate the connection rates
     // TODO: implement this in parallel with the communication of wellElemSumRates
+    // WARNING FRANCOIS: this assumes that connections are ordered!!!
     real64 prevConnRate = 0;
     localIndex const lastConnectionIndex = connectionData->numConnectionsLocal()-1;
     for (localIndex iconn = lastConnectionIndex; iconn >= 0; --iconn)
@@ -637,9 +652,23 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       localIndex const iwelemNext = nextWellElemIndex[iconn];
 
       connRate[iconn] = prevConnRate;
-      for (localIndex ic = 0; ic < m_numComponents; ic++)
-        connRate[iconn] -= wellElemSumCompPerfRates[iwelemNext][ic] / wellElemCompDens[iwelemNext][ic];
-      
+      for (localIndex ip = 0; ip < NP; ++ip)
+      {
+	// TODO: put this constant somewhere
+        if ( wellElemPhaseVolFrac[iwelemNext][ip] > 0.1 )
+	{
+  	  real64 multiplier = wellElemPhaseDens[iwelemNext][0][ip]
+	                    * wellElemPhaseVolFrac[iwelemNext][ip];
+          for (localIndex ic = 0; ic < NC; ++ic)
+          {
+	    multiplier *= wellElemPhaseCompFrac[iwelemNext][0][ip][ic];
+	    if ( wellElemPhaseCompFrac[iwelemNext][0][ip][ic] > 0.1 )
+	    {
+              connRate[iconn] -= wellElemSumCompPerfRates[iwelemNext][ic] / multiplier;
+	    }
+	  }
+        }
+      }
       prevConnRate = connRate[iconn];
     }
   });
@@ -955,6 +984,13 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
 {
   WellManager * const wellManager = domain->getWellManager();
 
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex constexpr maxNumDof  = maxNumComp + 1;
+  
+  localIndex const NC      = m_numComponents;
+  localIndex const NP      = m_numPhases;
+  localIndex const resNDOF = numDofPerResElement();
+  
   // loop over the wells
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
@@ -967,13 +1003,35 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
 
     arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-        
-    // get a reference to the next/prev well element index for each connection
-    arrayView1d<localIndex const> const & prevWellElemIndex =
-      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );
+
+    // get a reference to the primary variables on segments
+    arrayView1d<real64 const> const & wellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+    arrayView1d<real64> const & dWellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+    arrayView2d<real64 const> const & wellElemCompDens =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
+
+    arrayView2d<real64> const & dWellElemCompDens =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
     
-    arrayView1d<localIndex const> const & nextWellElemIndex =
-      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+    // get the info stored on segments
+    arrayView2d<real64> const & wellElemCompFrac =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
+
+    arrayView3d<real64 const> const & dWellElemCompFrac_dCompDens =
+      wellElementSubRegion->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+
+    arrayView2d<real64> const & wellElemPhaseVolFrac =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+
+    arrayView2d<real64> const & dWellElemPhaseVolFrac_dPres =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+
+    arrayView3d<real64> const & dWellElemPhaseVolFrac_dComp =
+      wellElementSubRegion->getReference<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
     // get a reference to the primary variables on connections
     arrayView1d<real64 const> const & connRate  =
@@ -982,6 +1040,60 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
     arrayView1d<real64 const> const & dConnRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
 
+    // get the well element indices corresponding to each connect
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+
+    arrayView1d<localIndex const> const & prevWellElemIndex =
+      connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::prevWellElementIndexString );    
+    
+    // get well secondary variables on segments
+    MultiFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
+   
+    arrayView2d<real64> const & wellElemTotalDens =
+      fluid->getReference<array2d<real64>>( MultiFluidBase::viewKeyStruct::totalDensityString );
+
+    arrayView3d<real64 const> const & wellElemPhaseDens =
+      fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
+
+    arrayView3d<real64 const> const & dWellElemPhaseDens_dPres =
+      fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
+
+    arrayView4d<real64 const> const & dWellElemPhaseDens_dComp =
+      fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
+    
+    arrayView4d<real64 const> const & wellElemPhaseCompFrac =
+      fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::phaseCompFractionString );
+
+    arrayView4d<real64 const> const & dWellElemPhaseCompFrac_dPres =
+      fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dPressureString );
+
+    arrayView5d<real64 const> const & dWellElemPhaseCompFrac_dComp =
+      fluid->getReference<array5d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString );
+
+    // create local work arrays
+    stackArray1d<real64, maxNumComp> dDens_dC( NC );
+    stackArray1d<real64, maxNumComp> dVolFrac_dC( NC );
+    stackArray1d<real64, maxNumComp> dPhaseFlux_dCompDensUp( NC );
+
+    stackArray1d<real64, maxNumComp>              phaseCompFrac( NC );
+    stackArray1d<real64, maxNumComp>              dPhaseCompFrac_dP( NC );
+    stackArray2d<real64, maxNumComp * maxNumComp> dPhaseCompFrac_dC( NC, NC );
+
+    stackArray1d<real64, maxNumComp> dPhaseCompFrac_dCompDens( NC );
+
+    stackArray1d<real64, maxNumComp>              compFlux( NC );
+    stackArray1d<real64, maxNumComp>              dCompFlux_dRate( NC );
+    stackArray1d<real64, maxNumComp>              dCompFlux_dPresUp( NC );
+    stackArray2d<real64, maxNumComp * maxNumComp> dCompFlux_dCompDensUp( NC, NC );
+    
+    stackArray1d<real64, 2 * maxNumComp>             localFlux( 2 * NC );
+    stackArray1d<real64, 2 * maxNumComp>             localFluxJacobian_dRate( 2 * NC );
+    stackArray2d<real64, 2 * maxNumComp * maxNumDof> localFluxJacobian_dPresCompUp( 2 * NC, resNDOF );
+
+    stackArray1d<long long, 2 * maxNumComp> eqnRowIndices( 2 * NC );
+    stackArray1d<long long, maxNumDof>      dofColIndices_dPresCompUp( resNDOF );
+    
     /* @Francois try to remember
      *  Q > 0 flow from prev to next; Q < 0 flow from next to prev
      *  We assume that prev is the top segment / next is to bottom segment
@@ -999,38 +1111,293 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
       else 
       {
 
-        // 1) Compute the flux and its derivatives
-	
+	// Step 1) prepare variables
+
+        if (iwelemPrev < 0 && well->getType() == Well::Type::INJECTOR)
+	{
+	  
+	  // get the global component fraction from XML file input
+          for (localIndex ic = 0; ic < NC; ++ic)
+          {
+            wellElemCompFrac[iwelemNext][ic] = well->getInjectionStream( ic );
+	  }
+
+	  
+	  // TODO: improve that later
+	  /*
+          real64 const currentDeltaPressure = dWellElemPressure[iwelemNext];
+	  dWellElemPressure[iwelemNext] = well->getTargetBHP()
+	    - wellElemPressure[iwelemNext];
+	  */
+	  stackArray1d<real64, maxNumComp> currentDeltaCompDens( NC );
+	  for (localIndex ic = 0; ic < NC; ++ic)
+	    currentDeltaCompDens[ic] = dWellElemCompDens[iwelemNext][ic];
+	  
+	  // update fluid model
+          fluid->PointUpdate( wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext],
+ 	 		      m_temperature,
+			      wellElemCompFrac[iwelemNext],
+			      iwelemNext,
+			      0 );
+	  
+	  
+	  // back calculate the component densities
+          for (localIndex ic = 0; ic < NC; ++ic)
+          {
+ 	    dWellElemCompDens[iwelemNext][ic] = wellElemCompFrac[iwelemNext][ic] * wellElemTotalDens[iwelemNext][0]
+	                                      - wellElemCompDens[iwelemNext][ic];
+          }
+
+	  
+	  // reupdate the constitutive variables to get the correct derivative
+	  // TODO: allow pointwise update in the well elements to reduce cost
+	  UpdateState( well );
+
+	  // restore to current delta values
+	  //dWellElemPressure[iwelemNext] = currentDeltaPressure;
+	  for (localIndex ic = 0; ic < NC; ++ic)
+	    dWellElemCompDens[iwelemNext][ic] = currentDeltaCompDens[ic];
+	  
+	}
+
+	// Step 2) decide the upwind segment
+
 	real64 const currentConnRate = connRate[iconn] + dConnRate[iconn];
-        real64 const volFlux = dt * currentConnRate;
-        real64 const dVolFlux_dRate = dt;
-	
+
+	localIndex iwelemUp = -1;
+	  
         if (iwelemPrev < 0 || // exit connection
 	    currentConnRate < 0) // iwelemNext is upstream
 	{	
-
+          iwelemUp = iwelemNext;
 	}
 	else // iwelemNext is downstream
 	{
-
+          iwelemUp = iwelemPrev;
 	}
 
+	// Step 3) compute upstream transport coefficient
 
-	// 2) Assemble the flux into residual and Jacobian
+        compFlux = 0.0;
+	dCompFlux_dRate = 0.0;
+	dCompFlux_dPresUp = 0.0;
+        dCompFlux_dCompDensUp = 0.0;
+	
+        for (localIndex ip = 0; ip < NP; ++ip)
+	{ 
+          dDens_dC = 0.0;
+	  dVolFrac_dC = 0.0;
+	  dPhaseCompFrac_dC = 0.0;
+          dPhaseFlux_dCompDensUp = 0.0;
+	  
+	  // density
+          real64 const density  = wellElemPhaseDens[iwelemUp][0][ip];
+          real64 const dDens_dP = dWellElemPhaseDens_dPres[iwelemUp][0][ip];
+          applyChainRule( NC, dWellElemCompFrac_dCompDens[iwelemUp], dWellElemPhaseDens_dComp[iwelemUp][0][ip], dDens_dC );
+
+          // volume fraction
+          real64 const volFrac = wellElemPhaseVolFrac[iwelemUp][ip];
+          real64 const dVolFrac_dP = dWellElemPhaseVolFrac_dPres[iwelemUp][ip];
+          for (localIndex ic = 0; ic < NC; ++ic)
+          {
+            dVolFrac_dC[ic] = dWellElemPhaseVolFrac_dComp[iwelemUp][ip][ic];
+          }
+	  
+          // component phase fractions 
+          for (localIndex ic = 0; ic < NC; ++ic)
+          {
+            phaseCompFrac[ic] = wellElemPhaseCompFrac[iwelemUp][0][ip][ic];
+            dPhaseCompFrac_dP[ic] = dWellElemPhaseCompFrac_dPres[iwelemUp][0][ip][ic];
+	    
+            for (localIndex jc = 0; jc < NC; ++jc)
+	    {
+              dPhaseCompFrac_dC[ic][jc] = dWellElemPhaseCompFrac_dComp[iwelemUp][0][ip][ic][jc];
+	    }
+          }
+
+          // compute phase flux
+	  real64 const phaseFlux          = volFrac * density * currentConnRate;
+	  real64 const dPhaseFlux_dRate   = volFrac * density;
+	  real64 const dPhaseFlux_dPresUp = (dVolFrac_dP * density + volFrac * dDens_dP ) * currentConnRate;
+	  
+	  for ( localIndex ic = 0; ic < NC; ++ic)
+	  {
+	    dPhaseFlux_dCompDensUp[ic] = (dVolFrac_dC[ic] * density + volFrac * dDens_dC[ic] )
+	      * currentConnRate;
+	  }
+	  
+	  // compute component flux
+	  for (localIndex ic = 0; ic < NC; ++ic)
+	  {
+            compFlux[ic]          += phaseCompFrac[ic] * phaseFlux;
+	    dCompFlux_dRate[ic]   += phaseCompFrac[ic] * dPhaseFlux_dRate;
+	    dCompFlux_dPresUp[ic] += dPhaseCompFrac_dP[ic] * phaseFlux + phaseCompFrac[ic] * dPhaseFlux_dPresUp;
+
+	    applyChainRule( NC, dWellElemCompFrac_dCompDens[iwelemUp], dPhaseCompFrac_dC[ic], dPhaseCompFrac_dCompDens );
+	    for (localIndex jc = 0; jc < NC; ++jc)
+	    {
+	      dCompFlux_dCompDensUp[ic][jc] += dPhaseCompFrac_dCompDens[jc] * phaseFlux
+		+ phaseCompFrac[ic] * dPhaseFlux_dCompDensUp[jc];
+	    }
+	  }
+	}  
 
         // TODO: check for ghost well elements
-			 
-	if ( iwelemPrev < 0)
+	
+	globalIndex const offsetUp   = getElementOffset( wellElemDofNumber[iwelemUp] );
+	globalIndex const offsetNext = getElementOffset( wellElemDofNumber[iwelemNext] );
+
+        if ( iwelemPrev < 0 )
 	{
+
+	  // for this case, we only need NC mass conservation equations
+	  // TODO: see if that would be better to just resize the main vectors
+	  stackArray1d<real64, maxNumComp>             oneSidedFlux( NC );
+          stackArray1d<real64, maxNumComp>             oneSidedFluxJacobian_dRate( NC );
+          stackArray2d<real64, maxNumComp * maxNumDof> oneSidedFluxJacobian_dPresCompUp( NC, resNDOF );
+
+          stackArray1d<long long, maxNumComp> oneSidedEqnRowIndices( NC );
+          stackArray1d<long long, maxNumDof>  oneSidedDofColIndices_dPresCompUp( resNDOF );
+
+	  
 	  // flux terms
+	  for (localIndex ic = 0; ic < NC; ++ic)
+	  {
+            oneSidedFlux[ic] = - dt * compFlux[ic];
+
+	    // derivative with respect to rate
+	    oneSidedFluxJacobian_dRate[ic] = - dt * dCompFlux_dRate[ic];
+	  
+	    // derivative with respect to upstream pressure
+	    oneSidedFluxJacobian_dPresCompUp[ic][ColOffset::DPRES] = - dt * dCompFlux_dPresUp[ic];
+	  
+	    // derivatives with respect to upstream component densities
+	    for (localIndex jdof = 0; jdof < NC; ++jdof)
+	    {
+	      oneSidedFluxJacobian_dPresCompUp[ic][ColOffset::DPRES + jdof + 1] = - dt * dCompFlux_dCompDensUp[ic][jdof];
+	    }
+	    
+	  }
 
           // jacobian indices
+	  for (localIndex ic = 0; ic < NC; ++ic )
+	  {
+	    // mass balance equations for all components
+            oneSidedEqnRowIndices[ic] = offsetUp + RowOffset::MASSBAL + ic;
+	  }
+	  
+	  // dof is always the rate
+	  // note1: following the convention used elsewhere in the well solver, this goes in the block of iwelemNext
+	  // note2: NC+1 because there are 1 pressure dof and NC compDens dofs before the rate dof in this block
+	  globalIndex const oneSidedDofColIndices_dRate = offsetNext + NC + 1; 
+	  
+	  for (localIndex jdof = 0; jdof < resNDOF; ++jdof)
+          {
+	    // compositions are given by injection stream,  hence no derivatives
+	    if ( well->getType() == Well::Type::INJECTOR &&
+		 jdof > 1 )
+	      continue; 
 
-          // add contribution to global residual and jacobian
+	    // dofs are the **upstream** pressure and component densities
+            oneSidedDofColIndices_dPresCompUp[jdof] = offsetUp + ColOffset::DPRES + jdof;
+          }
+
+          // Add to global residual/jacobian
+          residual->SumIntoGlobalValues( integer_conversion<int>( NC ),
+	  			         oneSidedEqnRowIndices.data(),
+				         oneSidedFlux.data() );
+
+	  // derivatives with respect to rate
+          jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
+                                         oneSidedEqnRowIndices.data(),
+                                         1,
+                                         &oneSidedDofColIndices_dRate,
+                                         oneSidedFluxJacobian_dRate.data(),
+                                         Epetra_FECrsMatrix::ROW_MAJOR );
+
+	  // derivatives with respect to upstream pressure and component densities
+          jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
+                                         oneSidedEqnRowIndices.data(),
+                                         integer_conversion<int>( resNDOF ),
+                                         oneSidedDofColIndices_dPresCompUp.data(),
+                                         oneSidedFluxJacobian_dPresCompUp.data(),
+                                         Epetra_FECrsMatrix::ROW_MAJOR );
+	
+	  if ( well->getType() == Well::Type::INJECTOR )
+	  {
+	    // reupdate the constitutive variables to get the correct derivative
+	    // TODO: allow pointwise update in the well elements to reduce cost
+	    UpdateState( well );
+	  }
 	  
 	}
 	else
 	{
+
+    	  globalIndex const offsetPrev = getElementOffset( wellElemDofNumber[iwelemPrev] );
+	  
+	  // flux terms
+	  for (localIndex ic = 0; ic < NC; ++ic)
+	  {
+            localFlux[ElemTag::PREV * NC + ic] =   dt * compFlux[ic];
+            localFlux[ElemTag::NEXT * NC + ic] = - dt * compFlux[ic];
+
+	    // derivative with respect to rate
+	    localFluxJacobian_dRate[ElemTag::PREV * NC + ic] =   dt * dCompFlux_dRate[ic];
+	    localFluxJacobian_dRate[ElemTag::NEXT * NC + ic] = - dt * dCompFlux_dRate[ic];
+	  
+	    // derivative with respect to upstream pressure
+            localFluxJacobian_dPresCompUp[ElemTag::PREV * NC + ic][ColOffset::DPRES] =    dt * dCompFlux_dPresUp[ic];
+            localFluxJacobian_dPresCompUp[ElemTag::NEXT * NC + ic][ColOffset::DPRES] =  - dt * dCompFlux_dPresUp[ic];
+	  
+	    // derivatives with respect to upstream component densities
+	    for (localIndex jdof = 0; jdof < NC; ++jdof)
+	    {
+	      localFluxJacobian_dPresCompUp[ElemTag::PREV * NC + ic][ColOffset::DPRES + jdof + 1] =   dt * dCompFlux_dCompDensUp[ic][jdof];
+              localFluxJacobian_dPresCompUp[ElemTag::NEXT * NC + ic][ColOffset::DPRES + jdof + 1] = - dt * dCompFlux_dCompDensUp[ic][jdof];
+	    }
+	    
+	  }
+
+          // jacobian indices
+	  for (localIndex ic = 0; ic < NC; ++ic )
+	  {
+	    // mass balance equations for all components
+            eqnRowIndices[ElemTag::PREV * NC + ic] = offsetPrev + RowOffset::MASSBAL + ic;
+	    eqnRowIndices[ElemTag::NEXT * NC + ic] = offsetNext + RowOffset::MASSBAL + ic;
+	  }
+	  
+	  // dof is always the rate
+	  // note1: following the convention used elsewhere in the well solver, this goes in the block of iwelemNext
+	  // note2: NC+1 because there are 1 pressure dof and NC compDens dofs before the rate dof in this block
+	  globalIndex const dofColIndices_dRate = offsetNext + NC + 1;
+	  
+	  for (localIndex jdof = 0; jdof < resNDOF; ++jdof)
+          {
+	    // dofs are the **upstream** pressure and component densities
+            dofColIndices_dPresCompUp[jdof] = offsetUp + ColOffset::DPRES + jdof;
+          }
+
+          // Add to global residual/jacobian
+          residual->SumIntoGlobalValues( integer_conversion<int>( 2 * NC ),
+	  			         eqnRowIndices.data(),
+				         localFlux.data() );
+
+	  // derivatives with respect to rate
+          jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 * NC ),
+                                         eqnRowIndices.data(),
+                                         1,
+                                         &dofColIndices_dRate,
+                                         localFluxJacobian_dRate.data(),
+                                         Epetra_FECrsMatrix::ROW_MAJOR );
+
+	  // derivatives with respect to upstream pressure and component densities
+          jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 * NC ),
+                                         eqnRowIndices.data(),
+                                         integer_conversion<int>( resNDOF ),
+                                         dofColIndices_dPresCompUp.data(),
+                                         localFluxJacobian_dPresCompUp.data(),
+                                         Epetra_FECrsMatrix::ROW_MAJOR );
 	  
 	}
       }
@@ -1072,7 +1439,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition * 
     arrayView2d<real64 const> const & dWellElemPhaseVolFrac_dPres =
       wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
 
-    arrayView3d<real64 const> const & dWellElemPhaseVolFrac_dCompDens =
+    arrayView3d<real64 const> const & dWellElemPhaseVolFrac_dComp =
       wellElementSubRegion->getReference<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
     arrayView1d<real64 const> const & wellElemVolume =
@@ -1108,7 +1475,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( DomainPartition * 
 
         for (localIndex jc = 0; jc < NC; ++jc)
         {
-          localVolBalanceJacobian[jc+1] -= dWellElemPhaseVolFrac_dCompDens[iwelem][ip][jc];
+          localVolBalanceJacobian[jc+1] -= dWellElemPhaseVolFrac_dComp[iwelem][ip][jc];
         }
       }
 
@@ -1294,6 +1661,9 @@ CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * co
         {
           int const lid = rowMap->LID(integer_conversion<int>( elemOffset + idof ));
           real64 const val = localResidual[lid];
+
+	  std::cout << "lid = " << lid << " localResidual = " << localResidual[lid] << std::endl;
+	  
           localResidualNorm += val * val;
         }
       }
@@ -1315,7 +1685,7 @@ CompositionalMultiphaseWell::CheckSystemSolution( EpetraBlockSystem const * cons
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
 
-  return false;
+  return true;
 }
 
 void
@@ -1372,11 +1742,13 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
 
         int lid = rowMap->LID( integer_conversion<int>( elemOffset ) );
         dWellElemPressure[iwelem] += scalingFactor * local_solution[lid];
-
+	std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
+	
         for (localIndex ic = 0; ic < m_numComponents; ++ic)
         {
           lid = rowMap->LID( integer_conversion<int>( elemOffset + ic + 1 ) );
           dWellElemGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
+	  std::cout << "compDens #" << ic << ": local_solution " << local_solution[lid] << std::endl;
         }
       }
     }
@@ -1396,6 +1768,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
 	globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelemNext] );
         int const lid = rowMap->LID( integer_conversion<int>( elemOffset + m_numComponents + 1 ) );
         dConnRate[iconn] += scalingFactor * local_solution[lid];
+	std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
       }
     }
   });  
@@ -1759,7 +2132,8 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition * const d
     }
     else if (control == Well::Control::LIQUIDRATE) // liquid rate control
     {
-
+      localIndex const NC = m_numComponents;
+      
       // get a reference to the primary variables on connections
       arrayView1d<real64 const> const & connRate  =
         connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureRateString );
@@ -1779,7 +2153,7 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition * const d
 
       globalIndex const elemOffset  = getElementOffset( wellElemDofNumber[iwelemControl] );
       globalIndex const eqnRowIndex = elemOffset + RowOffset::CONTROL;
-      globalIndex const dofColIndex = elemOffset + ColOffset::DRATE;
+      globalIndex const dofColIndex = elemOffset + NC + 1;
 
       // add contribution to global residual and jacobian
       residual->SumIntoGlobalValues( 1, &eqnRowIndex,
@@ -1851,7 +2225,9 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
         continue;
 
       connRate[iconn] += dConnRate[iconn];
-    }    
+    }
+
+    RecordWellData( well );
   });  
 }
 
@@ -2167,7 +2543,7 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
       real64 const dWellVisc_dP  = dWellElemPhaseVisc_dPres[iwelem][0][ip];
       applyChainRule( NC, dWellElemCompFrac_dCompDens[iwelem], dWellElemPhaseVisc_dComp[iwelem][0][ip], dVisc_dC );
 
-      //relative permeability
+      // relative permeability
       real64 const wellRelPerm = wellElemPhaseRelPerm[iwelem][0][ip];
       real64 dWellRelPerm_dP = 0.0;
       dRelPerm_dC = 0.0;
@@ -2236,7 +2612,7 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
       // skip the phase flux if phase not present or immobile upstream
       if (std::fabs(mobility[k_up]) < 1e-20) // TODO better constant
       {
-        break;
+        continue;
       }
 
       // Step 4) computation of the phase flux
@@ -2306,6 +2682,9 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
 
 void CompositionalMultiphaseWell::RecordWellData( Well * well )
 {
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+
+  localIndex const NP = m_numPhases;
   localIndex const NC = m_numComponents;
   
   ConnectionData const * const connectionData = well->getConnections();
@@ -2315,12 +2694,29 @@ void CompositionalMultiphaseWell::RecordWellData( Well * well )
   arrayView1d<real64 const> const & wellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
+  arrayView2d<real64> const & wellElemPhaseVolFrac =
+    wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+
   arrayView1d<real64 const> const & connRate =
     connectionData->getReference<array1d<real64>>( viewKeyStruct::mixtureRateString );
 
+    // get the well element indices corresponding to each connect
+  arrayView1d<localIndex const> const & nextWellElemIndex =
+    connectionData->getReference<array1d<localIndex>>( ConnectionData::viewKeyStruct::nextWellElementIndexString );    
+  
   arrayView2d<real64 const> const & compPerfRate =
     perforationData->getReference<array2d<real64>>( viewKeyStruct::compPerforationRateString );
+  
+  // get well secondary variables on segments
+  MultiFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
 
+  arrayView3d<real64 const> const & wellElemPhaseDens =
+    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
+
+  arrayView4d<real64 const> const & wellElemPhaseCompFrac =
+    fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::phaseCompFractionString );
+
+  
   // here, we will save the well info
   // for now, brute force: output to terminal
 
@@ -2341,7 +2737,7 @@ void CompositionalMultiphaseWell::RecordWellData( Well * well )
   for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
   {
     for (localIndex ic = 0; ic < NC; ++ic)
-      std::cout << "Rate at perforation #" << iperf << " for component #" << ic << ": " << compPerfRate[iperf][ic] << std::endl;
+      std::cout << "Mass rate at perforation #" << iperf << " for component #" << ic << ": " << compPerfRate[iperf][ic] << std::endl;
   }
 
   // output the reference pressure
@@ -2377,10 +2773,47 @@ void CompositionalMultiphaseWell::RecordWellData( Well * well )
   for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
   {
     if (well->getControl() == Well::Control::BHP || iconn > 0)
-      std::cout << "Rate at connection #" << iconn << ": " << connRate[iconn] << std::endl;
+      std::cout << "Volumetric rate at connection #" << iconn << ": " << connRate[iconn] << std::endl;
     else
-      std::cout << "Rate at connection #" << iconn << ": " << connRate[iconn]
+    {
+      std::cout << "Volumetric at connection #" << iconn << ": " << connRate[iconn]
 		<< ", target rate : " << well->getTargetRate() << std::endl;
+    }
+  
+    if (iconn > 0)
+      continue;
+    
+    stackArray1d<real64, maxNumComp> compStream( NC );
+    compStream  = 0.0;
+
+    localIndex const iwelemNext = nextWellElemIndex[iconn];
+
+    for (localIndex ip = 0; ip < NP; ++ip)
+    {
+      real64 const phaseDens = wellElemPhaseDens[iwelemNext][0][ip];
+      real64 const volFrac = wellElemPhaseVolFrac[iwelemNext][ip];
+      real64 const phaseStream = volFrac * phaseDens * connRate[iconn];
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        real64 const phaseCompFrac = wellElemPhaseCompFrac[iwelemNext][0][ip][ic];
+        compStream[ic] += phaseCompFrac * phaseStream;
+      }
+    }
+
+    if (well->getType() == Well::Type::INJECTOR)
+    {
+      for (localIndex ic = 0; ic < NC; ++ic)
+	std::cout << "Mass injection rate for component #" << ic
+		  << " at connection #" << iconn
+		  << ": " << compStream[ic] << std::endl;
+    }
+    else
+    {
+      for (localIndex ic = 0; ic < NC; ++ic)
+	std::cout << "Mass production rate for component #" << ic
+	          << " at connection #" << iconn
+	          << ": " << compStream[ic] << std::endl;
+    }
   }
 }
 
@@ -2446,11 +2879,15 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
       {
         real64 const minPressure = well->getTargetBHP(); // targetBHP specifies a min pressure here
 	controlIsViable = ( refPressure >= minPressure );
+
+	std::cout << "refPressure = " << refPressure
+		  << " maxPressure = " << minPressure << std::endl;
+
       }
       else
       {
         real64 const maxPressure = well->getTargetBHP(); // targetBHP specifies a max pressure here
-	controlIsViable = ( refPressure <= maxPressure );
+        controlIsViable = ( refPressure <= maxPressure );
       }
     }
 
@@ -2458,7 +2895,7 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
     {
       if ( currentControl == Well::Control::BHP )
       {
-	well->setControl( Well::Control::OILRATE );
+	well->setControl( Well::Control::LIQUIDRATE );
         if ( m_verboseLevel >= 1 )
         {
           GEOS_LOG_RANK_0( "Control switch for well " << well->getName()

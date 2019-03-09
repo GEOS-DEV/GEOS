@@ -802,6 +802,8 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
 	}
 	else
 	{
+
+          // TODO: rethink that: for a large number of segments, this could be initialized above
 	  
           // local working variables and arrays
           stackArray1d<globalIndex, 2> eqnRowIndices( 2 );
@@ -1750,7 +1752,7 @@ void SinglePhaseWell::RecordWellData( Well * well )
   // output perforation rates
   for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
   {
-    std::cout << "Rate at perforation #" << iperf << ": " << perfRate[iperf] << std::endl;
+    std::cout << "Mass rate at perforation #" << iperf << ": " << perfRate[iperf] << std::endl;
   }
 
   // output the reference pressure
@@ -1786,9 +1788,9 @@ void SinglePhaseWell::RecordWellData( Well * well )
   for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)
   {
     if (well->getControl() == Well::Control::BHP || iconn > 0)
-      std::cout << "Rate at connection #" << iconn << ": " << connRate[iconn] << std::endl;
+      std::cout << "Volumetric rate at connection #" << iconn << ": " << connRate[iconn] << std::endl;
     else
-      std::cout << "Rate at connection #" << iconn << ": " << connRate[iconn]
+      std::cout << "Volumetric rate at connection #" << iconn << ": " << connRate[iconn]
 		<< ", target rate : " << well->getTargetRate() << std::endl;
   }
 
