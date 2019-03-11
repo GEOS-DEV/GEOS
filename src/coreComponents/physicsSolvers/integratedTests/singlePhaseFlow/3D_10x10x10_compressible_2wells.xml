@@ -1,0 +1,180 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  <Solvers
+    gravityVector="0.0,0.0,-9.81">
+  
+    <SinglePhaseFlow name="SinglePhaseFlow"
+                     verboseLevel="1"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock"
+                     targetRegions="Region2">
+      <SystemSolverParameters name="SystemSolverParameters"
+                              krylovTol="1.0e-10"
+                              newtonTol="1.0e-6"
+                              maxIterNewton="8"/>
+    </SinglePhaseFlow>
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="C3D8" 
+                  xCoords="0, 10"
+                  yCoords="0, 10"
+                  zCoords="0, 10"
+                  nx="10"
+                  ny="10"
+                  nz="10"
+                  cellBlockNames="cb1"/>
+  </Mesh>
+
+
+  <Events maxTime="5000.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="20.0"
+                   target="/Solvers/SinglePhaseFlow" />
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="100.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <ElementRegion name="Region2"
+                   cellBlocks="cb1"
+                   materialList="water rock"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid name="water"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
+  </Constitutive>
+
+  <Wells>
+    <SimpleWell name="prod1"
+                type="producer"
+                referenceDepth="0.0">
+      <Perforations>
+        <!--<Perforation name="prod1_p0" location="0.5 0.5 0.5" transmissibility="1e-15"/>.-->
+        <!--<Perforation name="prod1_p1" location="0.5 0.5 1.5" transmissibility="1e-15"/>-->
+        <Perforation name="prod1_p2" location="0.5 0.5 2.5" transmissibility="1e-15"/>
+        <Perforation name="prod1_p3" location="0.5 0.5 3.5" transmissibility="1e-15"/>
+        <Perforation name="prod1_p4" location="0.5 0.5 4.5" transmissibility="1e-15"/>
+        <Perforation name="prod1_p5" location="0.5 0.5 5.5" transmissibility="1e-15"/>
+        <Perforation name="prod1_p6" location="0.5 0.5 6.5" transmissibility="1e-15"/>
+        <Perforation name="prod1_p7" location="0.5 0.5 7.5" transmissibility="1e-15"/>
+        <!--<Perforation name="prod1_p8" location="0.5 0.5 8.5" transmissibility="1e-15"/>-->
+        <!--<Perforation name="prod1_p9" location="0.5 0.5 9.5" transmissibility="1e-15"/>-->
+      </Perforations>
+    </SimpleWell>
+
+    <SimpleWell name="inj1"
+                type="injector"
+                referenceDepth="0.0">
+      <Perforations>
+        <!--<Perforation name="inj1_p0" location="9.5 9.5 0.5" transmissibility="1e-15"/>-->
+        <!--<Perforation name="inj1_p1" location="9.5 9.5 1.5" transmissibility="1e-15"/>-->
+        <Perforation name="inj1_p2" location="9.5 9.5 2.5" transmissibility="1e-15"/>
+        <Perforation name="inj1_p3" location="9.5 9.5 3.5" transmissibility="1e-15"/>
+        <Perforation name="inj1_p4" location="9.5 9.5 4.5" transmissibility="1e-15"/>
+        <Perforation name="inj1_p5" location="9.5 9.5 5.5" transmissibility="1e-15"/>
+        <Perforation name="inj1_p6" location="9.5 9.5 6.5" transmissibility="1e-15"/>
+        <Perforation name="inj1_p7" location="9.5 9.5 7.5" transmissibility="1e-15"/>
+        <!--<Perforation name="inj1_p8" location="9.5 9.5 8.5" transmissibility="1e-15"/>-->
+        <!--<Perforation name="inj1_p9" location="9.5 9.5 9.5" transmissibility="1e-15"/>-->
+      </Perforations>
+    </SimpleWell>
+  </Wells>
+
+  <FieldSpecifications>
+    <FieldSpecification name="permx"
+               component="0"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
+
+    <FieldSpecification name="permy"
+               component="1"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
+
+    <FieldSpecification name="permz"
+               component="2"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
+
+    <FieldSpecification name="referencePorosity"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="referencePorosity"
+               scale="0.05"/>
+
+    <FieldSpecification name="initialPressure"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
+               scale="5e6"/>
+
+    <FieldSpecification name="injPressure"
+               objectPath="Wells/inj1"
+               fieldName="bhp"
+               scale="1e7"
+               setNames="all"/>
+
+    <FieldSpecification name="prodPressure"
+               objectPath="Wells/prod1"
+               fieldName="bhp"
+               scale="0.0"
+               setNames="all"/>
+  </FieldSpecifications>
+
+  <Functions>
+
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition>
+
+  <Outputs>
+      <Silo name="siloOutput"/>
+  </Outputs>
+
+</Problem>

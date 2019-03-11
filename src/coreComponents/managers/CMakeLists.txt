@@ -25,7 +25,8 @@ set(managers_headers
     NumericalMethodsManager.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
-    FieldSpecification/DirichletBoundaryCondition.hpp)
+    FieldSpecification/DirichletBoundaryCondition.hpp
+    )
 
 
 #
@@ -54,7 +55,8 @@ set(managers_sources
     NumericalMethodsManager.cpp
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
-    FieldSpecification/DirichletBoundaryCondition.cpp)
+    FieldSpecification/DirichletBoundaryCondition.cpp
+    )
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )

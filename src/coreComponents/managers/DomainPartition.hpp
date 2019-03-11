@@ -26,6 +26,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "wells/WellManager.hpp"
 namespace geosx
 {
 
@@ -108,10 +109,13 @@ public:
   {
     static constexpr auto meshBodiesString = "MeshBodies";
     static constexpr auto constitutiveManagerString = "Constitutive";
+    static constexpr auto wellManagerString = "Wells";
 
     dataRepository::GroupKey meshBodies           = { meshBodiesString };
     dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
-    dataRepository::GroupKey communicationManager    = { "communicationManager" };
+    dataRepository::GroupKey communicationManager = { "communicationManager" };
+    dataRepository::GroupKey wellManager          = { wellManagerString };
+    
   } groupKeys;
 
 
@@ -121,7 +125,12 @@ public:
   constitutive::ConstitutiveManager * getConstitutiveManager()
   { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
 
+  WellManager const * getWellManager() const	
+  { return this->GetGroup<WellManager>(groupKeys.wellManager); }	
 
+  WellManager * getWellManager()	
+  { return this->GetGroup<WellManager>(groupKeys.wellManager); }	
+  
   ManagedGroup const * getMeshBodies() const
   { return this->GetGroup(groupKeys.meshBodies); }
   ManagedGroup * getMeshBodies()

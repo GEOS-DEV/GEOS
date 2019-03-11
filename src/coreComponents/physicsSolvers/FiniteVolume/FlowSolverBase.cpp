@@ -41,6 +41,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_fluidIndex(),
     m_solidIndex(),
     m_poroElasticFlag(0),
+    m_reservoirWellsSystemFlag(0),
     m_numDofPerCell(0),
     m_elemGhostRank(),
     m_volume(),
@@ -51,7 +52,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Flag that enables/disables gravity");
-
+  
   this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of discretization object to use for this solver.");
@@ -66,8 +67,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
 
   this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
   this->RegisterViewWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
-
-
+  
 }
 
 void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
@@ -89,6 +89,18 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     FaceManager * const faceManager = meshLevel->getFaceManager();
     faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
   }
+}
+
+void FlowSolverBase::SetSparsityPattern( DomainPartition const * const domain,
+                                         Epetra_FECrsGraph * const sparsity )
+{
+}
+
+void FlowSolverBase::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                                   localIndex & numLocalRows,
+                                                   globalIndex & numGlobalRows,
+                                                   localIndex offset )
+{
 }
 
 void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)

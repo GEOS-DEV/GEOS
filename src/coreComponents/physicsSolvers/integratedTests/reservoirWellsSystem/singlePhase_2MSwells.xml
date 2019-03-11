@@ -1,0 +1,231 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  <Solvers
+    gravityVector="0.0, 0.0, -9.81">
+
+    <ReservoirWellsSystem name="reservoirWellsSystem"
+		   flowSolverName="SinglePhaseFlow"
+                   wellSolverName="SinglePhaseWell"
+                   verboseLevel="1"
+                   targetRegions="Region2">
+      <SystemSolverParameters useDirectSolver="1"
+	                      maxIterNewton="40"
+                              verbosityFlag="2"/>
+    </ReservoirWellsSystem>
+  
+    <SinglePhaseFlow name="SinglePhaseFlow"
+                     verboseLevel="1"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock"
+                     targetRegions="Region2">
+      <SystemSolverParameters useDirectSolver="1"
+                              newtonTol="1.0e-6"
+                              maxIterNewton="8"/>
+    </SinglePhaseFlow>
+
+    <SinglePhaseWell name="SinglePhaseWell"
+                     verboseLevel="1"
+                     gravityFlag="1"
+                     fluidName="water"
+                     targetRegions="Region2">
+      <SystemSolverParameters useDirectSolver="1"
+                              newtonTol="1.0e-6"
+                              maxIterNewton="8"/>
+    </SinglePhaseWell>
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="C3D8" 
+                  xCoords="0, 10"
+                  yCoords="0, 1"
+                  zCoords="0, 1"
+                  nx="10"
+                  ny="1"
+                  nz="1"
+                  cellBlockNames="cb1"/>
+  </Mesh>
+
+
+  <Events maxTime="100.0">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="20.0"
+                   target="/Solvers/reservoirWellsSystem" />
+
+    <PeriodicEvent name="outputs"
+                   timeFrequency="100.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <ElementRegion name="Region2"
+                   cellBlocks="cb1"
+                   materialList="water rock"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid name="water"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
+  </Constitutive>
+
+  <Wells>
+    <Well name="prod0"
+          type="producer"
+	  control="BHP"
+	  targetBHP="4e6"
+	  targetRate="1"
+          referenceDepth="0.5">
+      <Segments>
+	<Segment name="prod0_seg0"
+		 location="9.5 0.5 0.5"/>
+        <Segment name="prod0_seg1"
+		 location="8.5 0.5 0.5"/>
+	<Segment name="prod0_seg2"
+		 location="7.5 0.5 0.5"/>
+	<Segment name="prod0_seg3"
+		 location="6.5 0.5 0.5"/>
+      </Segments> 
+      <Connections>
+	<Connection name="prod0_conn0"
+		    prevSegmentName=""
+		    nextSegmentName="prod0_seg0" />
+        <Connection name="prod0_conn1"
+		    prevSegmentName="prod0_seg0"
+		    nextSegmentName="prod0_seg1" />
+	<Connection name="prod0_conn2"
+		    prevSegmentName="prod0_seg1"
+		    nextSegmentName="prod0_seg2" />
+        <Connection name="prod0_conn3"
+		    prevSegmentName="prod0_seg2"
+		    nextSegmentName="prod0_seg3" />
+      </Connections> 
+      <Perforations>
+        <Perforation name="prod0_p0"
+		     location="6.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="prod0_seg3" />
+	<Perforation name="prod0_p1"
+		     location="7.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="prod0_seg2" />
+      </Perforations> 
+    </Well>
+
+    <Well name="inj0"
+          type="injector"
+  	  control="oilRate" 
+	  targetBHP="1e7"
+	  targetRate="1e-6"
+          referenceDepth="0.5">
+      <Segments>
+	<Segment name="inj0_seg0"
+		 location="0.5 0.5 0.5"/>
+        <Segment name="inj0_seg1"
+		 location="1.5 0.5 0.5"/>
+	<Segment name="inj0_seg2"
+		 location="2.4 0.5 0.5"/>
+      </Segments> 
+      <Connections>
+	<Connection name="inj0_conn0"
+		    prevSegmentName=""
+		    nextSegmentName="inj0_seg0" />
+        <Connection name="inj0_conn1"
+		    prevSegmentName="inj0_seg0"
+		    nextSegmentName="inj0_seg1" />
+	<Connection name="inj0_conn2"
+		    prevSegmentName="inj0_seg1"
+		    nextSegmentName="inj0_seg2" />
+      </Connections> 
+      <Perforations>
+        <Perforation name="inj0_p0"
+		     location="0.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj0_seg0" />
+	<Perforation name="inj0_p1"
+		     location="2.45 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj0_seg2" />
+	<Perforation name="inj0_p2"
+		     location="2.5 0.5 0.5"
+		     transmissibility="1e-15"
+		     segmentName="inj0_seg2" />
+      </Perforations> 
+    </Well>
+
+  </Wells>
+  
+  <FieldSpecifications>
+    <FieldSpecification name="permx"
+               component="0"
+               initialCondition="1"  
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
+
+    <FieldSpecification name="permy"
+               component="1"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
+
+    <FieldSpecification name="permz"
+               component="2"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
+
+    <FieldSpecification name="referencePorosity"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="referencePorosity"
+               scale="0.05"/>
+
+    <FieldSpecification name="initialPressure"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="pressure"
+               scale="5e6"/>
+  </FieldSpecifications>
+  
+  <Functions>
+    <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition> 
+
+  <Outputs>
+      <Silo name="siloOutput"/>
+  </Outputs>
+
+</Problem>

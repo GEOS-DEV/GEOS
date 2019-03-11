@@ -158,6 +158,36 @@ public:
                           real64 const time_n,
                           real64 const dt );
 
+    /**
+   * @brief set the sparsity pattern for the linear system
+   * @param domain the domain partition
+   * @param sparsity the sparsity pattern matrix
+   */
+  void SetSparsityPattern( DomainPartition const * const domain,
+                           Epetra_FECrsGraph * const sparsity ) override;
+
+  /**
+   * @brief sets the dof indices for this solver
+   * @param meshLevel the mesh object (single level only)
+   * @param numLocalRows the number of local rows on this partition
+   * @param numGlobalRows the number of global rows in the problem
+   * @param localIndices unused TODO delete
+   * @param offset the DOF offset for this solver in the case of a non-block system
+   *
+   * This function sets the number of global rows, and sets the dof numbers for
+   * this solver. dof numbers are referred to trilinosIndices currently.
+   */
+  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                     localIndex & numLocalRows,
+                                     globalIndex & numGlobalRows,
+                                     localIndex offset ) override;
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateConstitutiveModels( DomainPartition * const domain );
+
+
   /**@}*/
 
 
@@ -218,30 +248,6 @@ private:
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param localIndices unused TODO delete
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
-
-  /**
    * @brief Setup stored views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
@@ -265,12 +271,6 @@ private:
   void ApplyFaceDirichletBC_implicit( DomainPartition * domain,
                                       real64 const time_n, real64 const dt,
                                       systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief Function to update all constitutive models
-   * @param domain the domain
-   */
-  void UpdateConstitutiveModels( DomainPartition * const domain );
 
   /// views into primary variable fields
 

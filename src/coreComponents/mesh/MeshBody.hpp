@@ -25,7 +25,6 @@
 
 #include "MeshLevel.hpp"
 
-
 namespace geosx
 {
 
@@ -52,6 +51,7 @@ public:
     return m_globalLengthScale;
   }
 
+
   struct viewKeysStruct
   {
 
@@ -60,7 +60,8 @@ public:
   } viewKeys;
 
   struct groupStructKeys
-  {} groupKeys;
+  {
+  } groupKeys;
 
 private:
   /// By default, an absolute tolerance

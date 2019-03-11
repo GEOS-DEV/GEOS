@@ -7,10 +7,14 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      CoupledSolvers/PoroelasticSolver.hpp
+     CoupledSolvers/ReservoirWellsSystemSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
      FiniteVolume/FlowSolverBase.hpp
      FiniteVolume/SinglePhaseFlow.hpp
      FiniteVolume/CompositionalMultiphaseFlow.hpp
+     Wells/WellSolverBase.hpp
+     Wells/SinglePhaseWell.hpp
+     Wells/CompositionalMultiphaseWell.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      surfaceGeneration/SurfaceGenerator.hpp
@@ -24,10 +28,14 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
      CoupledSolvers/PoroelasticSolver.cpp
+     CoupledSolvers/ReservoirWellsSystemSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
      FiniteVolume/FlowSolverBase.cpp
      FiniteVolume/SinglePhaseFlow.cpp
      FiniteVolume/CompositionalMultiphaseFlow.cpp
+     Wells/WellSolverBase.cpp
+     Wells/SinglePhaseWell.cpp
+     Wells/CompositionalMultiphaseWell.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp

@@ -6,7 +6,8 @@ set(mesh_headers
     BufferOps.hpp
     CellBlockManager.hpp
     CellBlock.hpp
-    CellElementSubRegion.hpp    
+    CellElementSubRegion.hpp
+    WellElementSubRegion.hpp
     EdgeManager.hpp
     ElementSubRegionBase.hpp
     ElementRegion.hpp
@@ -29,6 +30,7 @@ set(mesh_sources
     CellBlockManager.cpp
     CellBlock.cpp
     CellElementSubRegion.cpp
+    WellElementSubRegion.cpp
     EdgeManager.cpp
     ElementSubRegionBase.cpp
     ElementRegion.cpp

@@ -78,14 +78,40 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
 
+  /**
+   * @brief set the sparsity pattern for the linear system
+   * @param domain the domain partition
+   * @param sparsity the sparsity pattern matrix
+   */
+  virtual void SetSparsityPattern( DomainPartition const * const domain,
+                                   Epetra_FECrsGraph * const sparsity );
+
+  /**
+   * @brief sets the dof indices for this solver
+   * @param meshLevel the mesh object (single level only)
+   * @param numLocalRows the number of local rows on this partition
+   * @param numGlobalRows the number of global rows in the problem
+   * @param localIndices unused TODO delete
+   * @param offset the DOF offset for this solver in the case of a non-block system
+   *
+   * This function sets the number of global rows, and sets the dof numbers for
+   * this solver. dof numbers are referred to trilinosIndices currently.
+   */
+  virtual void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                             localIndex & numLocalRows,
+                                             globalIndex & numGlobalRows,
+                                             localIndex offset );
+  
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
+  void setReservoirWellsSystemCoupling() { m_reservoirWellsSystemFlag = 1; }
+  
   localIndex fluidIndex() const { return m_fluidIndex; }
 
   localIndex solidIndex() const { return m_solidIndex; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
-
+  
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // input data
@@ -101,7 +127,7 @@ public:
     static constexpr auto solidNameString      = "solidName";
     static constexpr auto fluidIndexString     = "fluidIndex";
     static constexpr auto solidIndexString     = "solidIndex";
-
+    
     using ViewKey = dataRepository::ViewKey;
 
     // input data
@@ -163,9 +189,13 @@ protected:
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
+  /// flag to determine whether or not coupled with wells
+  integer m_reservoirWellsSystemFlag;
+  
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
