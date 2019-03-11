@@ -12,6 +12,7 @@ set(meshUtilities_headers
     SimpleGeometricObjects/GeometricObjectManager.hpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
     SimpleGeometricObjects/Box.hpp
+    SimpleGeometricObjects/ThickPlane.hpp
     StructuredGridUtilities.hpp
    )
 
@@ -28,6 +29,7 @@ set(meshUtilities_sources
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp
     SimpleGeometricObjects/Box.cpp
+    SimpleGeometricObjects/ThickPlane.cpp
    )
 
 

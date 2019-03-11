@@ -87,12 +87,6 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const& time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  SinglePhaseFlow &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
 
@@ -143,6 +137,26 @@ void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(ManagedGrou
 PoroelasticSolver::~PoroelasticSolver()
 {
   // TODO Auto-generated destructor stub
+}
+
+void PoroelasticSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
+
+  //***** loop over all elements and initialize the derivative arrays *****
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
+  {
+    totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
+  });
 }
 
 real64 PoroelasticSolver::SolverStep( real64 const & time_n,
@@ -217,13 +231,13 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const bulkModulus = 
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( "BulkModulus", constitutiveManager);
+    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( "BulkModulus", constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const pvmult =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString, 
+    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
                                                                                         constitutiveManager );
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-    elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+    elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
   localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
 
@@ -282,6 +296,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
                                              DomainPartition * const domain)
 {
   real64 dtReturn = dt;
+  real64 dtReturnTemporary = dtReturn;
+
   SolverBase &
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
@@ -295,31 +311,55 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   int iter = 0;
   while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
   {
+    if (iter == 0)
+    {
+      // reset the states of all slave solvers if any of them has been reset
+      fluidSolver.ResetStateToBeginningOfStep( domain );
+      solidSolver.ResetStateToBeginningOfStep( domain );
+      ResetStateToBeginningOfStep( domain );
+    }
     if (this->verboseLevel() >= 1)
     {
-      std::cout << "\tIteration: " << iter+1  << ", FlowSolver: "<< std::endl;
+      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
-    dtReturn = fluidSolver.NonlinearImplicitStep( time_n,
-                                                  dtReturn,
-                                                  cycleNumber,
-                                                  domain,
-                                                  getLinearSystemRepository() );
+    dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
+                                                          dtReturn,
+                                                          cycleNumber,
+                                                          domain,
+                                                          getLinearSystemRepository() );
 
-    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
+    if (dtReturnTemporary < dtReturn)
     {
+      iter = 0;
+      dtReturn = dtReturnTemporary;
+      continue;
+    }
+
+    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+    {
+      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
     if (this->verboseLevel() >= 1)
     {
-      std::cout << "\tIteration: " << iter+1  << ", MechanicsSolver: "<< std::endl;
+      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
     }
-    dtReturn = solidSolver.NonlinearImplicitStep( time_n,
-                                                  dtReturn,
-                                                  cycleNumber,
-                                                  domain,
-                                                  getLinearSystemRepository() );
-    this->UpdateDeformationForCoupling(domain);
+    dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
+                                                          dtReturn,
+                                                          cycleNumber,
+                                                          domain,
+                                                          getLinearSystemRepository() );
+    if (dtReturnTemporary < dtReturn)
+    {
+      iter = 0;
+      dtReturn = dtReturnTemporary;
+      continue;
+    }
+    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
+    {
+      this->UpdateDeformationForCoupling(domain);
+    }
     ++iter;
   }
 

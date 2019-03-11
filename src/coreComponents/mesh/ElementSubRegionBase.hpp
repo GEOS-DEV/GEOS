@@ -9,7 +9,7 @@
 #define SRC_CORECOMPONENTS_MESH_CELLBASE_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
-
+#include "finiteElement/ElementLibrary/FiniteElementBase.h"
 namespace geosx
 {
 
@@ -36,6 +36,7 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) {}
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -69,6 +70,8 @@ public:
    * @return number of nodes per element
    */
   localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
+
+  virtual localIndex numNodesPerElement( localIndex const ) const { return m_numNodesPerElement; }
 
   /**
    * @return number of edges per element
@@ -106,6 +109,12 @@ public:
   dataRepository::ManagedGroup * GetConstitutiveModels()
   { return &m_constitutiveModels; }
 
+  virtual string GetElementTypeString() const { return m_elementTypeString; }
+
+  FiniteElementBase::ElementType GetElementType() const { return m_elementType; }
+
+  virtual void SetElementType( string const & elementType );
+
 private:
   dataRepository::ManagedGroup m_constitutiveModels;
 
@@ -125,6 +134,9 @@ protected:
   /// The member level field for the element volume
   array1d< real64 > m_elementVolume;
 
+  string m_elementTypeString;
+
+  FiniteElementBase::ElementType m_elementType;
 //  template< LAMBDA lambda >
 //  void numNodesPerElemSwitchyard() const;
 };

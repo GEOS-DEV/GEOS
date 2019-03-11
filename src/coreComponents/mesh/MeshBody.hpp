@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshBody.hpp
- *
- *  Created on: Sep 13, 2017
- *      Author: settgast
+/**
+ * @file MeshBody.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHBODY_HPP_
@@ -46,7 +43,15 @@ public:
 
   MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>(level); }
   MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>(level); }
-  
+
+  void setGlobalLengthScale( real64 scale );
+
+  real64 getGlobalLengthScale() const
+  {
+    return m_globalLengthScale;
+  }
+
+
   struct viewKeysStruct
   {
 
@@ -57,6 +62,11 @@ public:
   struct groupStructKeys
   {
   } groupKeys;
+
+private:
+  /// By default, an absolute tolerance
+  /// Can be set to another value
+  real64 m_globalLengthScale { 0. };
 
 
 };

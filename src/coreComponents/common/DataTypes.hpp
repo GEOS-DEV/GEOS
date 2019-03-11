@@ -53,24 +53,6 @@
 #include <mpi.h>
 #endif
 
-#ifdef __INTEL_COMPILER
-/**
- * @brief this function is standard, but is missing on the intel compiler
- * @tparam T the type that the unique_ptr will wrap
- * @param args variadic args to the constructor of T
- * @return a std::unique_ptr<T> whose constructor was called with args...
- */
-namespace std
-{
-  template<typename T, typename... Args>
-  std::unique_ptr<T> make_unique(Args&&... args)
-  {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-  }
-
-}
-#endif
-
 
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
@@ -199,7 +181,7 @@ template< typename T, int MAXSIZE >
 using stackArray5d = stack_array<T, 5, MAXSIZE>;
 
 template< typename T >
-using set = SortedArray<T,localIndex>;
+using set = LvArray::SortedArray<T,localIndex>;
 
 template< typename TKEY, typename TVAL >
 using map = std::map<TKEY,TVAL>;
@@ -357,7 +339,17 @@ public:
       {std::type_index(typeid(string_array)), "string_array"},
       {std::type_index(typeid(mapPair_array)), "mapPair_array"}
     };
-    return type_names.at(key);
+
+    // If the data type is not defined here, return type_info.name()
+    auto tmp = type_names.find(key);
+    if (tmp != type_names.end())
+    {
+      return type_names.at(key);
+    }
+    else
+    {
+      return cxx_utilities::demangle(key.name());
+    }
   }
 
 

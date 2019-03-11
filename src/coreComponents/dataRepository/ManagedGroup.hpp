@@ -29,8 +29,6 @@
 #include "ViewWrapper.hpp"
 #include "RestartFlags.hpp"
 
-#include "depricated/Common.h"
-
 #include "MappedVector.hpp"
 
 #include "fileIO/xmlWrapper.hpp"
@@ -553,10 +551,10 @@ public:
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      if ( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      ViewWrapper<Wrapped> * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
+      if ( wrapper != nullptr )
       {
-        auto & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
-        lambda(wrapper);
+        lambda(*wrapper);
       }
     }
   }
@@ -566,10 +564,10 @@ public:
   {
     for( auto const & wrapperIter : m_wrappers )
     {
-      if( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      ViewWrapper<Wrapped> const * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
+      if ( wrapper != nullptr )
       {
-        auto const & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
-        lambda(wrapper);
+        lambda(*wrapper);
       }
     }
   }
@@ -624,7 +622,7 @@ public:
    *        file and put them into the wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode );
+  void ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode );
 
   /**
    * @brief Recursively call PostProcessInput() to apply post processing after
@@ -657,7 +655,8 @@ public:
    * deviations between the xml and GEOS data structures.
    */
   virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent) {}
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) {}
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
 

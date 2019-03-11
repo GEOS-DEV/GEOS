@@ -5,10 +5,11 @@ set( finiteElement_headers
      FiniteElementDiscretization.hpp
      ElementLibrary/FiniteElement.h
      ElementLibrary/FiniteElementBase.h
+     ElementLibrary/TetrahedralElement.hpp
      Kinematics.h
      basis/BasisBase.hpp
      basis/LagrangeBasis.hpp
-     basis/Polynomial.hpp    
+     basis/Polynomial.hpp
      quadrature/QuadratureBase.hpp
      quadrature/GaussQuadrature.hpp
      FiniteElementDiscretizationManager.hpp
@@ -22,10 +23,11 @@ set( finiteElement_sources
      FiniteElementDiscretization.cpp
      ElementLibrary/FiniteElement.cpp
      ElementLibrary/FiniteElementBase.cpp
+     ElementLibrary/TetrahedralElement.cpp
      Kinematics.cpp
      basis/BasisBase.cpp
      basis/LagrangeBasis.cpp
-     basis/Polynomial.cpp    
+     basis/Polynomial.cpp
      quadrature/QuadratureBase.cpp
      quadrature/GaussQuadrature.cpp
      FiniteElementDiscretizationManager.cpp

@@ -15,7 +15,8 @@ set( physicsSolvers_headers
      Wells/WellSolverBase.hpp
      Wells/SinglePhaseWell.hpp
      Wells/CompositionalMultiphaseWell.hpp
-     src/SolidMechanicsLagrangianFEM.hpp
+     solidMechanics/SolidMechanicsLagrangianFEM.hpp
+     solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      src/DummySolver.hpp
      )
@@ -35,7 +36,8 @@ set( physicsSolvers_sources
      Wells/WellSolverBase.cpp
      Wells/SinglePhaseWell.cpp
      Wells/CompositionalMultiphaseWell.cpp
-     src/SolidMechanicsLagrangianFEM.cpp
+     solidMechanics/SolidMechanicsLagrangianFEM.cpp
+     solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      src/DummySolver.cpp
      )
