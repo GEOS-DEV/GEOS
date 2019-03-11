@@ -55,9 +55,11 @@ RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Ma
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of fluid phases");
 
-  RegisterViewWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false );
+  RegisterViewWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false )->
+    setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false );
+  RegisterViewWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false )->
+    setSizedFromParent(0);
 
   RegisterViewWrapper( viewKeyStruct::phaseRelPermString, &m_phaseRelPerm, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString, &m_dPhaseRelPerm_dPhaseVolFrac, false );
