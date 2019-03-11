@@ -74,23 +74,17 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * 
   {
     for( auto & wrapper : group.second->wrappers() )
     {
-      if( wrapper.second->sizedFromParent() )
-      {
-        string const wrapperName = wrapper.first;
-        std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-        parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
-      }
+      string const wrapperName = wrapper.first;
+      std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+      parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
     }
   }
 
   for( auto & wrapper : this->wrappers() )
   {
-    if( wrapper.second->sizedFromParent() )
-    {
-      string const wrapperName = wrapper.first;
-      std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-      parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
-    }
+    string const wrapperName = wrapper.first;
+    std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+    parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
   }
 
 }
