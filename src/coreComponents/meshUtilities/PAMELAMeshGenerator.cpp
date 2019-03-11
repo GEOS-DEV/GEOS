@@ -104,6 +104,13 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
   // Vertices are written first
   r1_array const & X = nodeManager->referencePosition();
   nodeManager->resize(m_pamelaMesh->get_PointCollection()->size_all());
+    R1Tensor xMax( std::numeric_limits< real64 >::min(),
+                   std::numeric_limits< real64 >::min(),
+                   std::numeric_limits< real64 >::min());
+
+    R1Tensor xMin( std::numeric_limits< real64 >::max(),
+                   std::numeric_limits< real64 >::max(),
+                   std::numeric_limits< real64 >::max());
   for( auto verticesIterator : *m_pamelaMesh->get_PointCollection()) {
     localIndex vertexLocalIndex = verticesIterator->get_localIndex();
     globalIndex vertexGlobalIndex = verticesIterator->get_globalIndex();
@@ -112,7 +119,20 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     pointData[1] = verticesIterator->get_coordinates().y;
     pointData[2] = verticesIterator->get_coordinates().z;
     nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
+    for( int i = 0; i < 3 ; i++ )
+    {
+      if( pointData[i] > xMax[i] )
+      {
+        xMax[i] = pointData[i] ;
+      }
+      if( pointData[i] < xMin[i] )
+      {
+        xMin[i] = pointData[i] ;
+      }
+    }
   }
+  xMax -= xMin;
+  meshBody->setGlobalLengthScale( std::fabs( xMax.L2_Norm() ) );
   
   // First loop which iterate on the regions
   for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
