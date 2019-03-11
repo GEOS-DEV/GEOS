@@ -554,7 +554,7 @@ protected:
     char buf[2][1024];
 
     char const * workdir  = global_argv[1];
-    char const * filename = "testReservoirCompositionalMultiphaseMSWellsSystem.xml";
+    char const * filename = "testReservoirCompositionalMultiphaseMSWellsSystemSimplerInj.xml";
 
     strcpy(buf[0], "-i");
     sprintf(buf[1], "%s/%s", workdir, filename);
@@ -588,7 +588,7 @@ protected:
 ProblemManager ReservoirWellsSystemSolverTest::problemManager("Problem", nullptr);
 ReservoirWellsSystemSolver * ReservoirWellsSystemSolverTest::solver = nullptr;
 
-
+/*
 TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
@@ -615,7 +615,7 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
                          });
   
 }
-
+*/
 
 /*
 TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Flux)

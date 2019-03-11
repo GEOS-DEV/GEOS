@@ -12,7 +12,7 @@
                    verboseLevel="1"
                    targetRegions="Region2">
       <SystemSolverParameters useDirectSolver="1"
-			      maxIterNewton="40"
+	                      maxIterNewton="40"
                               verbosityFlag="2"/>
     </ReservoirWellsSystem>
     
@@ -95,70 +95,90 @@
 
     <Well name="prod0"
           type="producer"
-	  control="liquidRate"
-	  targetBHP="1e6"
-	  targetRate="-1e-6"
+	  control="BHP" 
+	  targetBHP="1e6" 
+	  targetRate="-1e-6" 
           referenceDepth="0.5">
       <Segments>
-	<Segment name="prod0_unique_seg"
-		 location="5 0.5 0.5"/>
+        <Segment name="prod0_seg0"
+		 location="9.5 0.5 0.5"/>
+	<Segment name="prod0_seg1"
+		 location="8.5 0.5 0.5"/>
+        <Segment name="prod0_seg2"
+		 location="7.5 0.5 0.5"/>
       </Segments> 
       <Connections>
-	<Connection name="prod0_first_conn"
+	<Connection name="prod0_conn0"
 		    prevSegmentName=""
-		    nextSegmentName="prod0_unique_seg" />
-      </Connections> 
-      <Perforations>
+		    nextSegmentName="prod0_seg0" />
+        <Connection name="prod0_conn1"
+		    prevSegmentName="prod0_seg0"
+		    nextSegmentName="prod0_seg1" />
+        <Connection name="prod0_conn2"
+		    prevSegmentName="prod0_seg1"
+		    nextSegmentName="prod0_seg2" />
+      </Connections>
+      <Perforations> 
 	<Perforation name="prod0_p0"
-		     location="3.5 0.5 0.5"
+		     location="9.5 0.5 0.5"
 		     transmissibility="1e-12"
-		     segmentName="prod0_unique_seg" />
+		     segmentName="prod0_seg0" />
         <Perforation name="prod0_p1"
-		     location="4.5 0.5 0.5"
+		     location="8.5 0.5 0.5"
 		     transmissibility="1e-12"
-		     segmentName="prod0_unique_seg" />
+		     segmentName="prod0_seg1" />
         <Perforation name="prod0_p2"
-		     location="3.5 0.5 0.5"
+		     location="7.5 0.5 0.5"
 		     transmissibility="1e-12"
-		     segmentName="prod0_unique_seg" />
-	<Perforation name="prod0_p3"
-		     location="6.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="prod0_unique_seg" /> 
+		     segmentName="prod0_seg2" />
       </Perforations> 
     </Well>
 
-
+    
     <Well name="inj0"
           type="injector"
 	  control="liquidRate"
 	  targetBHP="1e7"
 	  targetRate="1e-8"
           referenceDepth="0.5"
-	  injectionStream="0.1 0.1 0.1 0.7">
+	  injectionStream="0.099 0.08 0.691 0.13" > <!-- pending issues here -->
       <Segments>
-	<Segment name="inj0_unique_seg"
-		 location="1 0.5 0.5"/>
+	<Segment name="inj0_seg0"
+		 location="-1.5 0.5 0.5"/>
+	<Segment name="inj0_seg1"
+		 location="-0.5 0.5 0.5"/>
+	<Segment name="inj0_seg2"
+		 location="0.5 0.5 0.5"/>
+	<Segment name="inj0_seg3"
+		 location="1.5 0.5 0.5"/>
       </Segments> 
       <Connections>
-	<Connection name="inj0_first_conn"
+	<Connection name="inj0_conn0"
 		    prevSegmentName=""
-		    nextSegmentName="inj0_unique_seg" />
+		    nextSegmentName="inj0_seg0" />
+        <Connection name="inj0_conn1"
+		    prevSegmentName="inj0_seg0"
+		    nextSegmentName="inj0_seg1" />
+        <Connection name="inj0_conn2"
+		    prevSegmentName="inj0_seg1"
+		    nextSegmentName="inj0_seg2" />
+	<Connection name="inj0_conn3"
+		    prevSegmentName="inj0_seg2"
+		    nextSegmentName="inj0_seg3" />
       </Connections> 
       <Perforations>
 	<Perforation name="inj0_p0"
 		     location="0.5 0.5 0.5"
 		     transmissibility="1e-12"
-		     segmentName="inj0_unique_seg" />
-        <Perforation name="inj0_p1"
+		     segmentName="inj0_seg2" /> 
+	<Perforation name="inj0_p1"
 		     location="1.5 0.5 0.5"
 		     transmissibility="1e-12"
-		     segmentName="inj0_unique_seg" /> 
+		     segmentName="inj0_seg3" /> 
       </Perforations> 
-    </Well>
-
+      </Well>
+  
   </Wells>
-
   
   <Constitutive>
     <CompositionalMultiphaseFluid name="fluid1"

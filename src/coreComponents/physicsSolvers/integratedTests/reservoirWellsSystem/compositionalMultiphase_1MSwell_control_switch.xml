@@ -141,40 +141,6 @@
       </Perforations> 
     </Well>
 
-    <!-- I am working on rate-controlled injection now
-    <Well name="inj0"
-          type="injector"
-	  control="liquidRate"
-	  targetBHP="1e7"
-	  targetRate="1e-8"
-          referenceDepth="0.5"
-	  injectionStream="0.1 0.1 0.1 0.7">
-      <Segments>
-	<Segment name="inj0_seg1"
-		 location="0.5 0.5 0.5"/>
-  	<Segment name="inj0_seg0"
-		 location="1.5 0.5 0.5"/>
-      </Segments> 
-      <Connections>
-	<Connection name="inj0_conn0"
-		    prevSegmentName=""
-		    nextSegmentName="inj0_seg1" />
-        <Connection name="inj0_conn1"
-		    prevSegmentName="inj0_seg1"
-		    nextSegmentName="inj0_seg0" />
-      </Connections> 
-      <Perforations>
-	<Perforation name="inj0_p0"
-		     location="0.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="inj0_seg1" />
-        <Perforation name="inj0_p1"
-		     location="1.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="inj0_seg0" /> 
-      </Perforations> 
-      </Well>
-  -->
   </Wells>
   
   <Constitutive>

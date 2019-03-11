@@ -141,7 +141,6 @@
       </Perforations> 
     </Well>
 
-    <!-- I am working on rate-controlled injection now
     <Well name="inj0"
           type="injector"
 	  control="liquidRate"
@@ -174,7 +173,7 @@
 		     segmentName="inj0_seg0" /> 
       </Perforations> 
       </Well>
-  -->
+  
   </Wells>
   
   <Constitutive>
