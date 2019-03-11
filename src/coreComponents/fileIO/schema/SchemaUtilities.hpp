@@ -43,9 +43,9 @@ public:
 SchemaUtilities();
 virtual ~SchemaUtilities();
 
-static void ConvertDocumentationToSchema(std::string const & fname, dataRepository::ManagedGroup * const group);
+static void ConvertDocumentationToSchema(std::string const & fname, dataRepository::ManagedGroup * const group, integer documentationType);
 static void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
-static void SchemaConstruction(dataRepository::ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent);
+static void SchemaConstruction(dataRepository::ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent, integer documentationType);
 
 
 
