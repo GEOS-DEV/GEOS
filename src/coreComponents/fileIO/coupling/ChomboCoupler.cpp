@@ -39,8 +39,8 @@ ChomboCoupler::ChomboCoupler(MPI_Comm const comm, const std::string& outputPath,
   m_counter(0)
 {
   /* Create a dummy pressure field */
-  FaceManager* faces = m_mesh.getFaceManager();
-  faces->AddKeylessDataField< array1d<double> >("Pressure");
+  FaceManager * faces = m_mesh.getFaceManager();
+  faces->RegisterViewWrapper< array1d<real64> >("Pressure");
 }
 
 void ChomboCoupler::write(double dt)
