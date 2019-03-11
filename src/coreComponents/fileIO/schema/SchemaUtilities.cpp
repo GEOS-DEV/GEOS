@@ -45,7 +45,9 @@ SchemaUtilities::~SchemaUtilities()
 }
 
 
-void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname, ManagedGroup * const group)
+void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname,
+                                                   ManagedGroup * const group,
+                                                   integer documentationType)
 {
   GEOS_LOG_RANK_0("Generating XML Schema...");
 
@@ -53,7 +55,7 @@ void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname, Ma
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
   <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
   <xsd:annotation>\
-  <xsd:documentation xml:lang=\"en\">New schema for GEOS</xsd:documentation>\
+  <xsd:documentation xml:lang=\"en\">GEOSX Input Schema</xsd:documentation>\
   </xsd:annotation>\
   </xsd:schema>";
 
@@ -67,7 +69,7 @@ void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname, Ma
 
   // Recursively build the schema from the data structure skeleton
   GEOS_LOG_RANK_0("  Data structure layout");
-  SchemaConstruction(group, schemaRoot, schemaRoot);
+  SchemaConstruction(group, schemaRoot, schemaRoot, documentationType);
 
   // Write the schema to file
   GEOS_LOG_RANK_0("  Saving file");
@@ -103,12 +105,15 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 }
 
 
-void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent)
+void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
+                                         xmlWrapper::xmlNode schemaRoot,
+                                         xmlWrapper::xmlNode schemaParent,
+                                         integer documentationType)
 {
   // Get schema details
   InputFlags schemaType = group->getInputFlags();
   
-  if (schemaType != InputFlags::INVALID)
+  if ((schemaType != InputFlags::INVALID) || (documentationType == 1))
   {
     string targetName = group->getName();
     string typeName = targetName + "Type";
@@ -152,13 +157,13 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
             // Add children of the group
             group->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
             {
-              SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
+              SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
             });
           }
         }
 
         // Add schema deviations
-        group->SetSchemaDeviations(schemaRoot, targetTypeDefNode);
+        group->SetSchemaDeviations(schemaRoot, targetTypeDefNode, documentationType);
 
         // Add attributes
         for ( auto wrapperPair : group->wrappers() )
@@ -166,7 +171,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
           ViewWrapperBase * const wrapper = wrapperPair.second;
           InputFlags flag = wrapper->getInputFlag();
           
-          if (( flag == InputFlags::OPTIONAL ) || ( flag == InputFlags::REQUIRED ))
+          if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
           {
             string attributeName = wrapper->getName();
 
@@ -209,17 +214,15 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group, xmlWrapper:
                 }
               });
             }
-            else
+            else if (documentationType == 0)
             {
               attributeNode.append_attribute("use") = "required";
             }
-
-
           }
         }
 
         // Elements that are nonunique require the use of the name attribute
-        if((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE))
+        if (((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE)) && (documentationType == 0))
         {
           xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
           commentNode.set_value("name = A name is required for any non-unique nodes");

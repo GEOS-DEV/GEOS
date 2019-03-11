@@ -52,7 +52,7 @@ CellElementSubRegion::~CellElementSubRegion()
 
 void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
-  this->SetElementType(source->GetElementType());
+  this->SetElementType(source->GetElementTypeString());
   this->numNodesPerElement() = source->numNodesPerElement();
   this->numFacesPerElement() = source->numFacesPerElement();
   this->resize(source->size());
