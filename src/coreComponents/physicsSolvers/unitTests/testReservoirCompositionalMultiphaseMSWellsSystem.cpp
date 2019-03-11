@@ -554,7 +554,7 @@ protected:
     char buf[2][1024];
 
     char const * workdir  = global_argv[1];
-    char const * filename = "testReservoirCompositionalMultiphaseMSWellsSystemSimplerInj.xml";
+    char const * filename = "testReservoirCompositionalMultiphaseMSWellsSystem.xml";
 
     strcpy(buf[0], "-i");
     sprintf(buf[1], "%s/%s", workdir, filename);
