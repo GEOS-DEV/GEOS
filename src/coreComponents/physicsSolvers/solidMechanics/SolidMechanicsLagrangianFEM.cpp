@@ -341,8 +341,8 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
   {
     ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 
-    localIndex const maxNumResolves = m_maxNumResolves;
-    for( integer solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
+    int const maxNumResolves = m_maxNumResolves;
+    for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
                                         getLinearSystemRepository() );
@@ -352,6 +352,13 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
         {
           solveIter=m_maxNumResolves;
         }
+        int temp = solveIter;
+        MPI_Allreduce( &temp,
+                       &solveIter,
+                       1,
+                       MPI_INT,
+                       MPI_MAX,
+                       MPI_COMM_GEOSX);
       }
       else
       {
