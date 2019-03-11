@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FiniteElementBase.cpp
- *
- *  Created on: Nov 20, 2012
- *      Author: settgast
+/**
+ * @file FiniteElementBase.cpp
  */
 
 #include "FiniteElementBase.h"
