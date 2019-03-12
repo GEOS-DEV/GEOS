@@ -60,10 +60,10 @@
                   cellBlockNames="cb1"/>
   </Mesh>
 
-  <Events maxTime="1e5">
+  <Events maxTime="5e4">
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e4"
+                   forceDt="5e3"
                    target="/Solvers/reservoirWellsSystem" />
 
     <PeriodicEvent name="outputs"
@@ -141,7 +141,7 @@
 	  targetBHP="1e7"
 	  targetRate="1e-8"
           referenceDepth="0.5"
-	  injectionStream="0.099 0.08 0.691 0.13" > <!-- pending issues here -->
+	  injectionStream="0.1 0.1 0.1 0.7" > 
       <Segments>
 	<Segment name="inj0_seg0"
 		 location="-1.5 0.5 0.5"/>
@@ -214,7 +214,7 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
-               scale="2.0e-16"/>
+               scale="2.0e-15"/>
 
     <FieldSpecification name="permy"
                component="1"
@@ -222,7 +222,7 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
-               scale="2.0e-16"/>
+               scale="2.0e-15"/>
 
     <FieldSpecification name="permz"
                component="2"
@@ -230,7 +230,7 @@
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
-               scale="2.0e-16"/>
+               scale="2.0e-15"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
