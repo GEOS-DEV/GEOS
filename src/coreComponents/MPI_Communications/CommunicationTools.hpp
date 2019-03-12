@@ -96,10 +96,10 @@ public:
     MPI_Datatype MPI_TYPE;
     switch( sizeof(T) )
     {
-      case 8:
+      case 4:
         MPI_TYPE = MPI_INT;
         break;
-      case 16:
+      case 8:
         MPI_TYPE = MPI_LONG_LONG;
         break;
       default:
