@@ -699,7 +699,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
       GEOS_ERROR_IF( targetSet.size() != fieldArray.size(), "Target set is not the same size than given array for setting " + fieldName);
       for( auto a : targetSet )
       {
-        FIELD_OP::SpecifyFieldValue( field, a, component, fieldArray[a] );
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale * fieldArray[a] );
       }
     } );
 }
