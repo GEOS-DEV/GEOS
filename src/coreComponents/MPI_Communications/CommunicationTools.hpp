@@ -85,6 +85,39 @@ public:
                                  array1d<NeighborCommunicator> & neighbors,
                                  MPI_iCommData & icomm );
 
+  template<typename T>
+  static void allGather( T const myValue, array1d<T> & allValues )
+  {
+#ifdef GEOSX_USE_MPI
+    int mpiSize = MPI_Size( MPI_COMM_GEOSX );
+    allValues.resize( mpiSize );
+    array1d<T> tmpArray( mpiSize );
+
+    MPI_Datatype MPI_TYPE;
+    switch( sizeof(T) )
+    {
+      case 8:
+        MPI_TYPE = MPI_INT;
+        break;
+      case 16:
+        MPI_TYPE = MPI_LONG_LONG;
+        break;
+      default:
+        GEOS_ERROR( "CommunicationTools::allGather> invalid type!" );
+    }
+
+    MPI_Allgather( &myValue, 1, MPI_TYPE, tmpArray.data(), 1, MPI_TYPE, MPI_COMM_GEOSX );
+
+    for( localIndex i = 0 ; i < tmpArray.size() ; ++i )
+    {
+      allValues[i] = integer_conversion<localIndex>( tmpArray[i] );
+    }
+#else
+    allValues.resize(1);
+    allValues[0] = myValue;
+#endif
+  }
+
 };
 
 

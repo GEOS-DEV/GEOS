@@ -25,80 +25,38 @@
 namespace geosx
 {
 
-// .... COMM TOOLS :: ALL GATHER
-//      TODO: move to CommunicationTools
-
-namespace CommTools
-{
-void allGather( localIndex const myValue, localIndex_array & allValues )
-{
-#ifdef GEOSX_USE_MPI
-  int mpiRank;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
-  int mpiSize;
-  MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
-
-  allValues.resize( mpiSize );
-  array1d<int> tmpArray( mpiSize );
-
-  int tmpValue = integer_conversion<int>( myValue );
-
-  MPI_Allgather( &tmpValue, 1, MPI_INT, tmpArray.data(), 1, MPI_INT, MPI_COMM_GEOSX );
-
-  for( localIndex i = 0 ; i < tmpArray.size() ; ++i )
-    allValues[i] = integer_conversion<localIndex>( tmpArray[i] );
-#else
-  int mpiRank = 0;
-  allValues.resize(1);
-  allValues[0] = myValue;
-#endif
-}
-
-void allGather( globalIndex const myValue, globalIndex_array & allValues )
-{
-#ifdef GEOSX_USE_MPI
-  int mpiRank;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
-  int mpiSize;
-  MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
-
-  allValues.resize( mpiSize );
-  array1d<long long int> tmpArray( mpiSize );
-
-  long long int tmpValue = integer_conversion<long long int>( myValue );
-
-  MPI_Allgather( &tmpValue, 1, MPI_LONG_LONG, tmpArray.data(), 1, MPI_LONG_LONG, MPI_COMM_GEOSX );
-
-  for( globalIndex i = 0 ; i < tmpArray.size() ; ++i )
-    allValues[i] = integer_conversion<globalIndex>( tmpArray[i] );
-#else
-  int mpiRank = 0;
-  allValues.resize(1);
-  allValues[0] = myValue;
-#endif
-}
-}
-
 // .... DOF MANAGER :: CONSTRUCTOR
 DofManager::DofManager()
 {
+        /*
   MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
   MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
+  */
+  mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
+  mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
 
   // we pre-allocate an oversized array to store connectivity type
   // instead of resizing it dynamically as fields are added.
   m_connectivity.resize( MAX_NUM_FIELDS, MAX_NUM_FIELDS );
 
   for( localIndex i = 0 ; i < MAX_NUM_FIELDS ; ++i )
+  {
     for( localIndex j = 0 ; j < MAX_NUM_FIELDS ; ++j )
+    {
       m_connectivity[i][j] = Connectivity::None;
+    }
+  }
 
   // we pre-allocate an oversized array to store sparsity pattern type
   // instead of resizing it dynamically as fields are added.
   m_sparsityPattern.resize( MAX_NUM_FIELDS, MAX_NUM_FIELDS );
   for( localIndex i = 0 ; i < MAX_NUM_FIELDS ; ++i )
+  {
     for( localIndex j = 0 ; j < MAX_NUM_FIELDS ; ++j )
+    {
       m_sparsityPattern[i][j] = std::make_pair( nullptr, nullptr );
+    }
+  }
 }
 
 // .... DOF MANAGER :: SET MESH
@@ -108,17 +66,20 @@ void DofManager::setMesh( DomainPartition * const domain,
 {
   GEOS_ERROR_IF( m_meshLevel != nullptr, "A mesh is already assigned to this DofManager." );
   m_domain = domain;
-  m_meshLevel = m_domain->getMeshBodies()->GetGroup<MeshBody>( meshBodyIndex )->getMeshLevel(
-      integer_conversion<int>( meshLevelIndex ) );
-  ;
+  m_meshLevel = m_domain->getMeshBodies()->GetGroup<MeshBody>( meshBodyIndex )->
+                getMeshLevel( integer_conversion<int>( meshLevelIndex ) );
 }
 
 // .... DOF MANAGER :: FIELD INDEX
 localIndex DofManager::fieldIndex( string const & key ) const
                                    {
   for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  {
     if( m_fields[i].name == key )
+    {
       return i;
+    }
+  }
   GEOS_ERROR( "Field's string key not found in list of active fields." );
   return -1;
 }
@@ -127,8 +88,12 @@ localIndex DofManager::fieldIndex( string const & key ) const
 bool DofManager::keyInUse( string const & key ) const
                            {
   for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  {
     if( m_fields[i].name == key )
+    {
       return true;
+    }
+  }
   return false;
 }
 
@@ -149,7 +114,9 @@ globalIndex DofManager::numGlobalDofs( string const & field ) const
   {
     globalIndex sumGlobalDofs = 0;
     for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+    {
       sumGlobalDofs += m_fields[i].numGlobalRows;
+    }
     return sumGlobalDofs;
   }
 }
@@ -171,7 +138,9 @@ localIndex DofManager::numLocalDofs( string const & field ) const
   {
     localIndex sumLocalDofs = 0;
     for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+    {
       sumLocalDofs += m_fields[i].numLocalRows;
+    }
     return sumLocalDofs;
   }
 }
@@ -222,7 +191,9 @@ void DofManager::addField( string const & field,
   description.docstring = field + " dof indices";
 
   if( components > 1 )
+  {
     description.docstring += " (with " + std::to_string( components ) + "-component blocks)";
+  }
 
   // save pointers to "active" element regions
   ElementRegionManager * const elemManager = m_meshLevel->getElemManager();
@@ -234,12 +205,16 @@ void DofManager::addField( string const & field,
     string_array regionNames( regionListPtr.size() );
 
     for( auto& regionPtr : regionListPtr )
+    {
       regionNames[regionPtr.second] = regionPtr.first;
+    }
 
     description.regionNames = regionNames;
   }
   else
+  {
     description.regionNames = regions;
+  }
 
   m_fields.push_back( description );
 
@@ -255,7 +230,8 @@ void DofManager::addField( string const & field,
   last.regionPtrs.resize( numActiveRegions );
   for( localIndex er = 0 ; er < numActiveRegions ; ++er )
   {
-    last.regionPtrs[er] = elemManager->GetRegion( last.regionNames[er] ); // get by name
+    // Get region by name
+    last.regionPtrs[er] = elemManager->GetRegion( last.regionNames[er] );
     GEOS_ERROR_IF( last.regionPtrs[er] == nullptr, "Specified element region not found" );
   }
 
@@ -282,7 +258,9 @@ void DofManager::addField( string const & field,
     last.fieldOffset = prev.fieldOffset + prev.numGlobalRows;
   }
   else
+  {
     last.fieldOffset = 0;
+  }
 
   // save field's connectivity type (self-to-self)
   m_connectivity[numFields - 1][numFields - 1] = connectivity;
@@ -294,8 +272,10 @@ void DofManager::addField( string const & field,
   // TRILINOS interface
   localIndex maxEntriesPerRow = 0;
   for( localIndex i = 0 ; i < connLocPattLocal.nRows ; ++i )
+  {
     maxEntriesPerRow = std::max( maxEntriesPerRow,
-                                 connLocPattLocal.rowLengths[i + 1] - connLocPattLocal.rowLengths[i] );
+                       connLocPattLocal.rowLengths[i + 1] - connLocPattLocal.rowLengths[i] );
+  }
 
   last.connLocPattern = new ParallelMatrix();
   ParallelMatrix* connLocPattDistr = last.connLocPattern;
@@ -308,7 +288,7 @@ void DofManager::addField( string const & field,
       real64_array values( nnz );
       values = 1;
       connLocPattDistr->insert( i, connLocPattLocal.colIndices.data( connLocPattLocal.rowLengths[i] ), values.data(),
-                                nnz );
+        nnz );
     }
   }
   connLocPattDistr->close();
@@ -324,18 +304,15 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
                                                      localIndex_array const & activeRegionsInput ) const
                                                      {
   // step 0. register an index array with default = LocationStatus::notAssigned
-  ObjectManagerBase * baseManager =
-      field.location == Location::Node ?
-                                         static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() ) :
-                                         static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
+  ObjectManagerBase *
+  baseManager = field.location == Location::Node ?
+                static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() ) :
+                static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() ) ;
 
   baseManager->RegisterViewWrapper<globalIndex_array>( field.key )->
-                                                                  setApplyDefaultValue(
-      static_cast<globalIndex>( LocationStatus::notAssigned ) )->
-                                                               setPlotLevel(
-                                                                             dataRepository::PlotLevel::LEVEL_1 )
-      ->
-      setDescription( field.docstring );
+    setApplyDefaultValue( static_cast<globalIndex>( LocationStatus::notAssigned ) )->
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
+    setDescription( field.docstring );
 
   globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>( field.key );
 
@@ -355,6 +332,7 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   globalIndex numLocalConnectivity = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
+  {
     if( activeRegions[er] >= 0 )
     {
       for( localIndex esr = 0 ; esr < field.regionPtrs[er]->numSubRegions() ; esr++ )
@@ -362,18 +340,22 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
         CellElementSubRegion const * const subRegion = field.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
         integer_array const & ghostRank = subRegion->m_ghostRank;
 
-        localIndex_array2d const & map = (
-            field.location == Location::Node ?
-                                               subRegion->getWrapper<FixedOneToManyRelation>(
-                                                   subRegion->viewKeys().nodeListString )->reference() :
-                                               subRegion->getWrapper<FixedOneToManyRelation>(
-                                                   subRegion->viewKeys().faceListString )->reference() );
+        localIndex_array2d const &
+        map = field.location == Location::Node ?
+              subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference() :
+              subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference() ;
 
         // Set which process owns the boundary nodes/faces
         for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+        {
           if( !( ghostRank[e] < 0 ) and ghostRank[e] < mpiRank )
+          {
             for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
+            {
               indexArray[map[e][n]] = static_cast<globalIndex>( LocationStatus::notMyGhostLocation );
+            }
+          }
+        }
 
         for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
         {
@@ -385,50 +367,67 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
               indexArray[i] = numLocalNodesWithGhost;
               numLocalNodesWithGhost++;
               if( ghostRank[e] < 0 )
+              {
                 ++field.numLocalNodes;
+              }
             }
           }
           ++numLocalConnectivity;
         }
       }
     }
+  }
 
   // step 2. gather row counts across ranks
-  localIndex_array gather;
+  localIndex_array localGather;
 
-  CommTools::allGather( field.numLocalNodes, gather );
+  CommunicationTools::allGather( field.numLocalNodes, localGather );
 
   field.numGlobalRows = 0;
   for( localIndex p = 0 ; p < mpiSize ; ++p )
-    field.numGlobalRows += gather[p];
+  {
+    field.numGlobalRows += localGather[p];
+  }
 
   field.firstLocalRow = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
-    field.firstLocalRow += gather[p];
+  {
+    field.firstLocalRow += localGather[p];
+  }
 
   // for starting the connectivity numbering
-  CommTools::allGather( numLocalConnectivity, gather );
+  globalIndex_array globalGather;
+  CommunicationTools::allGather( numLocalConnectivity, globalGather );
 
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
-    field.firstLocalConnectivity += gather[p];
+  {
+    field.firstLocalConnectivity += globalGather[p];
+  }
 
   // step 3. adjust local values to reflect processor offset
   for( localIndex n = 0 ; n < indexArray.size() ; ++n )
+  {
     if( indexArray[n] != static_cast<globalIndex>( LocationStatus::notAssigned ) )
+    {
       indexArray[n] += field.firstLocalRow;
+    }
+  }
 
   // step 4. synchronize across ranks
   std::map<string, string_array> fieldNames;
 
   if( field.location == Location::Node )
+  {
     fieldNames["node"].push_back( field.key );
+  }
   else
+  {
     fieldNames["face"].push_back( field.key );
+  }
 
-  CommunicationTools::SynchronizeFields(
-      fieldNames, m_meshLevel,
-      m_domain->getReference<array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields( fieldNames, m_meshLevel,
+    m_domain->getReference<array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
 
   // step 5. scale row counts by number of vector components
   field.numLocalRows = field.numLocalNodes * field.numComponents;
@@ -437,8 +436,12 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
 
   // Replace LocationStatus::notMyGhostLocation with LocationStatus::notAssigned (if any)
   for( localIndex i = 0 ; i < indexArray.size() ; ++i )
+  {
     if( indexArray[i] == static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
+    {
       indexArray[i] = static_cast<globalIndex>( LocationStatus::notAssigned );
+    }
+  }
 }
 
 // .... DOF MANAGER :: CREATE INDEX ARRAY :: ELEMENT VERSION
@@ -459,17 +462,21 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   }
 
   // step 2. gather row counts across ranks
-  localIndex_array gather;
+  localIndex_array localGather;
 
-  CommTools::allGather( field.numLocalNodes, gather );
+  CommunicationTools::allGather( field.numLocalNodes, localGather );
 
   field.numGlobalRows = 0;
   for( localIndex p = 0 ; p < mpiSize ; ++p )
-    field.numGlobalRows += gather[p];
+  {
+    field.numGlobalRows += localGather[p];
+  }
 
   field.firstLocalRow = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
-    field.firstLocalRow += gather[p];
+  {
+    field.firstLocalRow += localGather[p];
+  }
 
   // step 3. loop again (sequential policy)
   //         allocate the index array
@@ -477,16 +484,15 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   globalIndex count = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
+  {
     for( localIndex esr = 0 ; esr < field.regionPtrs[er]->numSubRegions() ; esr++ )
     {
       CellElementSubRegion * const subRegion = field.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
 
       subRegion->RegisterViewWrapper<globalIndex_array>( field.key )->
-                                                                    setApplyDefaultValue(
-          static_cast<globalIndex>( LocationStatus::notAssigned ) )->
-                                                                   setPlotLevel(
-                                                                                 dataRepository::PlotLevel::LEVEL_1 )-> // TODO: level 1 or 2?
-          setDescription( field.docstring );
+        setApplyDefaultValue( static_cast<globalIndex>( LocationStatus::notAssigned ) )->
+        setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
+        setDescription( field.docstring );
 
       globalIndex_array & indexArray = subRegion->getReference<globalIndex_array>( field.key );
       integer_array const & ghostRank = subRegion->m_ghostRank;
@@ -494,29 +500,35 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
       GEOS_ERROR_IF( indexArray.size() != ghostRank.size(), "Mismatch in ghost rank and index array sizes." );
 
       for( localIndex elem = 0 ; elem < ghostRank.size() ; ++elem )
+      {
         if( ghostRank[elem] < 0 )
         {
           indexArray[elem] = field.firstLocalRow + count;
           count++;
         }
+      }
     }
+  }
 
   GEOS_ERROR_IF( count != field.numLocalNodes, "Mismatch during assignment of local row indices" );
 
   // for starting the connectivity numbering
-  CommTools::allGather( count, gather );
+  globalIndex_array globalGather;
+
+  CommunicationTools::allGather( count, globalGather );
 
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
-    field.firstLocalConnectivity += gather[p];
+  {
+    field.firstLocalConnectivity += globalGather[p];
+  }
 
   // step 4. synchronize across ranks
   std::map<string, string_array> fieldNames;
   fieldNames["elem"].push_back( field.key );
 
-  CommunicationTools::SynchronizeFields(
-      fieldNames, m_meshLevel,
-      m_domain->getReference<array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields( fieldNames, m_meshLevel,
+    m_domain->getReference<array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
 
   // step 5. scale row counts by number of vector components
   field.numLocalRows = field.numLocalNodes * field.numComponents;
@@ -540,7 +552,9 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     rowFieldIndex = fieldIndex( rowField );
   }
   else
+  {
     rowFieldIndex = -1;
+  }
 
   if( colField.length() > 0 )
   {
@@ -551,10 +565,14 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     colFieldIndex = fieldIndex( colField );
   }
   else
+  {
     colFieldIndex = -1;
+  }
 
   if( rowFieldIndex * colFieldIndex < 0 )
+  {
     GEOS_ERROR( "getSparsityPattern accepts both two field names and none, instead just one is provided." );
+  }
 
   // Call the low level routine
   getSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex );
@@ -567,8 +585,9 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                      {
   if( rowFieldIndex * colFieldIndex < 0 )
   {
-    string msg = string( "getSparsityPattern accepts both two existing field indices (positive values) and " ) +
-        string( "two negative values (entire Jacobian rows/columns), instead just one index is positive." );
+    string
+    msg = string( "getSparsityPattern accepts both two existing field indices (positive values) and " ) +
+          string( "two negative values (entire Jacobian rows/columns), instead just one index is positive." );
     GEOS_ERROR( msg );
   }
 
@@ -615,15 +634,19 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     // Create the global matrix
     globalIndex sumGlobalDofs = 0;
     for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+    {
       sumGlobalDofs += m_fields[i].numGlobalRows;
+    }
     locLocDistr.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1 );
 
     ParallelMatrix localPattern;
 
     // Loop over all fields
     for( localIndex iGlo = 0 ; iGlo < m_fields.size() ; ++iGlo )
+    {
       // Loop over all fields
       for( localIndex jGlo = 0 ; jGlo < m_fields.size() ; ++jGlo )
+      {
         if( iGlo == jGlo )
         {
           // Diagonal block
@@ -640,7 +663,9 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
             if( indices.size() > 0 )
             {
               for( globalIndex j = 0 ; j < indices.size() ; ++j )
+              {
                 indices[j] += m_fields[jGlo].fieldOffset;
+              }
               locLocDistr.insert( i + m_fields[iGlo].fieldOffset, indices, values );
             }
           }
@@ -676,11 +701,15 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
             if( indices.size() > 0 )
             {
               for( globalIndex j = 0 ; j < indices.size() ; ++j )
+              {
                 indices[j] += m_fields[jGlo].fieldOffset;
+              }
               locLocDistr.insert( i + m_fields[iGlo].fieldOffset, indices, values );
             }
           }
         }
+      }
+    }
   }
   locLocDistr.close();
 }
@@ -774,11 +803,9 @@ void DofManager::addCoupling( string const & rowField,
     regionsList.resize( rowFieldRegionNames.size() + colFieldRegionNames.size() );
 
     // Find common regions
-    string_array::iterator it = std::set_intersection( rowFieldRegionNamesSorted.begin(),
-                                                       rowFieldRegionNamesSorted.end(),
-                                                       colFieldRegionNamesSorted.begin(),
-                                                       colFieldRegionNamesSorted.end(),
-                                                       regionsList.begin() );
+    string_array::iterator
+    it = std::set_intersection( rowFieldRegionNamesSorted.begin(), rowFieldRegionNamesSorted.end(),
+         colFieldRegionNamesSorted.begin(), colFieldRegionNamesSorted.end(), regionsList.begin() );
     regionsList.resize( it - regionsList.begin() );
   }
 
@@ -799,31 +826,37 @@ void DofManager::addCoupling( string const & rowField,
     for( array1d<string>::const_iterator regionName = regionsList.begin() ; regionName != regionsList.end() ;
         ++regionName )
     {
-      localIndex rowID = std::find( rowFieldRegionNames.begin(), rowFieldRegionNames.end(), *regionName ) -
-          rowFieldRegionNames.begin();
+      localIndex
+      rowID = std::find( rowFieldRegionNames.begin(), rowFieldRegionNames.end(), *regionName ) -
+              rowFieldRegionNames.begin();
       bool rowDefined = rowID < rowFieldRegionNames.size();
       if( rowDefined )
+      {
         rowFieldRegionIndex[rowID] = rowNameIndex++;
+      }
       areDefinedRegions &= rowDefined;
-      localIndex colID = std::find( colFieldRegionNames.begin(), colFieldRegionNames.end(), *regionName ) -
-          colFieldRegionNames.begin();
+      localIndex
+      colID = std::find( colFieldRegionNames.begin(), colFieldRegionNames.end(), *regionName ) -
+              colFieldRegionNames.begin();
       bool colDefined = colID < colFieldRegionNames.size();
       if( colDefined )
+      {
         colFieldRegionIndex[colID] = colNameIndex++;
+      }
       areDefinedRegions &= colDefined;
     }
 
     if( !areDefinedRegions )
     {
       GEOS_ERROR_IF( !areDefinedRegions,
-                     "addCoupling: regions where coupling is defined have to belong to already existing fields." );
+        "addCoupling: regions where coupling is defined have to belong to already existing fields." );
       return;
     }
   }
   else
   {
     GEOS_ERROR_IF( !areDefinedRegions,
-                   "addCoupling: regions where coupling is defined have to belong to already existing fields." );
+      "addCoupling: regions where coupling is defined have to belong to already existing fields." );
     return;
   }
 
@@ -845,13 +878,14 @@ void DofManager::addCoupling( string const & rowField,
 
     // add sparsity pattern
     addExtraDiagSparsityPattern( rowPattern, colPattern, rowFieldIndex, colFieldIndex, rowFieldRegionIndex,
-                                 colFieldRegionIndex,
-                                 connectivity );
+      colFieldRegionIndex, connectivity );
   }
 
   // Set connectivity with active symmetry flag
   if( symmetric )
+  {
     m_connectivity[colFieldIndex][rowFieldIndex] = connectivity;
+  }
 }
 
 // Get global indices for dofs connected by the connectivity type in the given
@@ -868,7 +902,9 @@ void DofManager::getIndices( globalIndex_array & indices,
   indices.resize( 0 );
 
   if( connectivity != Connectivity::Elem )
+  {
     getIndices( indices, connectivity, index, field );
+  }
   else
   {
     // check if the field name is already added
@@ -886,30 +922,41 @@ void DofManager::getIndices( globalIndex_array & indices,
       globalIndex_array firstLocalConnectivity( fieldDesc.regionPtrs.size() );
 
       if( region < fieldDesc.regionPtrs.size() )
+      {
         if( subregion < fieldDesc.regionPtrs[region]->numSubRegions() )
+        {
           for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
           {
-            globalIndex localCount = 0;
+            localIndex localCount = 0;
             for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
             {
-              CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]
-                  ->GetSubRegion<CellElementSubRegion>( esr );
+              CellElementSubRegion const * const
+              subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
               integer_array const & ghostRank = subRegion->m_ghostRank;
 
               for( localIndex elem = 0 ; elem < ghostRank.size() ; ++elem )
+              {
                 if( ghostRank[elem] < 0 )
+                {
                   ++localCount;
+                }
+              }
             }
 
-            localIndex_array gather;
-            CommTools::allGather( localCount, gather );
+            localIndex_array localGather;
+            CommunicationTools::allGather( localCount, localGather );
 
             firstLocalConnectivity[er] = 0;
             for( localIndex p = 0 ; p < mpiRank ; ++p )
-              firstLocalConnectivity[er] += gather[p];
+            {
+              firstLocalConnectivity[er] += localGather[p];
+            }
           }
+        }
+      }
 
       if( region < fieldDesc.regionPtrs.size() )
+      {
         if( subregion < fieldDesc.regionPtrs[region]->numSubRegions() )
         {
           globalIndex globalCount = fieldDesc.firstLocalConnectivity;
@@ -918,17 +965,17 @@ void DofManager::getIndices( globalIndex_array & indices,
             globalIndex localCount = firstLocalConnectivity[er];
             for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
             {
-              CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]
-                  ->GetSubRegion<CellElementSubRegion>( esr );
+              CellElementSubRegion const * const
+              subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
               integer_array const & ghostRank = subRegion->m_ghostRank;
 
               for( localIndex elem = 0 ; elem < ghostRank.size() ; ++elem )
+              {
                 if( ghostRank[elem] < 0 )
                 {
                   if( er == region && esr == subregion && index == localCount )
                   {
                     localIndex localRow = ParallelMatrixGetLocalRowID( *fieldDesc.connLocPattern, globalCount );
-                    //localIndex localRow = fieldDesc.connLocPattern->unwrappedPointer()->LRID( globalCount );
                     if( localRow >= 0 )
                     {
                       // Retrieve row
@@ -936,15 +983,19 @@ void DofManager::getIndices( globalIndex_array & indices,
                       fieldDesc.connLocPattern->getRowCopy( globalCount, indices, values );
                       // Add offset
                       for( localIndex i = 0 ; i < indices.size() ; ++i )
+                      {
                         indices[i] += m_fields[fieldIdx].fieldOffset;
+                      }
                     }
                   }
                   ++localCount;
                   ++globalCount;
                 }
+              }
             }
           }
         }
+      }
     }
   }
 }
@@ -977,7 +1028,9 @@ void DofManager::getIndices( globalIndex_array & indices,
       fieldDesc.connLocPattern->getRowCopy( index, indices, values );
       // Add offset
       for( localIndex i = 0 ; i < indices.size() ; ++i )
+      {
         indices[i] += m_fields[fieldIdx].fieldOffset;
+      }
     }
   }
 }
@@ -1003,19 +1056,23 @@ void DofManager::createPermutation( ParallelMatrix & permutation ) const
   // Create parallel vector with global size
   permutation.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1 );
 
-  globalIndex_array gather;
-  CommTools::allGather( offset, gather );
+  globalIndex_array globalGather;
+  CommunicationTools::allGather( offset, globalGather );
 
   offset = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
-    offset += gather[p];
+  {
+    offset += globalGather[p];
+  }
 
   globalIndex k = offset;
   for( localIndex i = 0 ; i < m_fields.size() ; ++i )
   {
     globalIndex fieldOffset = m_fields[i].fieldOffset;
     for( globalIndex j = ilower[i] ; j < iupper[i] ; ++j )
+    {
       permutation.insert( fieldOffset + j, k++, 1 );
+    }
   }
   permutation.close();
 }
@@ -1046,8 +1103,10 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
   // Pattern of connections and row locations
   localIndex maxEntriesPerRow = 0;
   for( localIndex i = 0 ; i < rowPatternLocal.nRows ; ++i )
+  {
     maxEntriesPerRow = std::max( maxEntriesPerRow,
-                                 rowPatternLocal.rowLengths[i + 1] - rowPatternLocal.rowLengths[i] );
+                       rowPatternLocal.rowLengths[i + 1] - rowPatternLocal.rowLengths[i] );
+  }
 
   rowConnLocPattDistr = new ParallelMatrix();
   rowConnLocPattDistr->createWithGlobalSize( rowPatternLocal.nRows, rowPatternLocal.nCols, maxEntriesPerRow );
@@ -1059,7 +1118,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
       real64_array values( nnz );
       values = 1;
       rowConnLocPattDistr->insert( i, rowPatternLocal.colIndices.data( rowPatternLocal.rowLengths[i] ), values.data(),
-                                   nnz );
+        nnz );
     }
   }
   rowConnLocPattDistr->close();
@@ -1075,7 +1134,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
       real64_array values( nnz );
       values = 1;
       colConnLocPattDistr->insert( i, colPatternLocal.colIndices.data( colPatternLocal.rowLengths[i] ), values.data(),
-                                   nnz );
+        nnz );
     }
   }
   colConnLocPattDistr->close();
@@ -1117,110 +1176,139 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       // Case of connectivity = Elem and location = Elem
       globalIndex elemIndex = 0;
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             for( localIndex e = 0 ; e < ghostRank.size() ; ++e )
+            {
               if( ghostRank[e] < 0 )
+              {
                 ++elemIndex;
+              }
+            }
           }
+        }
+      }
 
-      localIndex_array gather;
-      CommTools::allGather( elemIndex, gather );
+      globalIndex_array globalGather;
+      CommunicationTools::allGather( elemIndex, globalGather );
 
       globalIndex firstLocalConnectivity = 0;
       for( localIndex p = 0 ; p < mpiRank ; ++p )
-        firstLocalConnectivity += gather[p];
+      {
+        firstLocalConnectivity += globalGather[p];
+      }
 
       elemIndex = 0;
       globalIndex count = 0;
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
         {
-          CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-              esr );
+          CellElementSubRegion const * const
+          subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
           integer_array const & ghostRank = subRegion->m_ghostRank;
 
           for( localIndex e = 0 ; e < ghostRank.size() ; ++e )
+          {
             if( ghostRank[e] < 0 )
             {
               if( activeRegions[er] >= 0 )
               {
                 for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
-                  pairs.push_back(
-                      std::make_pair(
-                          firstLocalConnectivity + count,
-                          fieldDesc.numComponents * ( fieldDesc.firstLocalConnectivity + elemIndex ) + i ) );
+                {
+                  pairs.push_back( std::make_pair( firstLocalConnectivity + count,
+                    fieldDesc.numComponents * ( fieldDesc.firstLocalConnectivity + elemIndex ) + i ) );
+                }
                 ++count;
               }
               ++elemIndex;
             }
+          }
         }
+      }
     }
     else
     {
       // Case of connectivity = Elem and location = Node or Face
-      ObjectManagerBase * baseManager =
-          fieldDesc.location == Location::Node ?
-                                                 static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() ) :
-                                                 static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
+      ObjectManagerBase *
+      baseManager = fieldDesc.location == Location::Node ?
+                    static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() ) :
+                    static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() ) ;
 
       globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>( fieldDesc.key );
 
       globalIndex elemIndex = 0;
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             for( localIndex e = 0 ; e < ghostRank.size() ; ++e )
+            {
               if( ghostRank[e] < 0 )
+              {
                 ++elemIndex;
+              }
+            }
           }
+        }
+      }
 
-      localIndex_array gather;
-      CommTools::allGather( elemIndex, gather );
+      globalIndex_array globalGather;
+      CommunicationTools::allGather( elemIndex, globalGather );
 
       globalIndex firstLocalConnectivity = 0;
       for( localIndex p = 0 ; p < mpiRank ; ++p )
-        firstLocalConnectivity += gather[p];
+      {
+        firstLocalConnectivity += globalGather[p];
+      }
 
       elemIndex = 0;
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
         {
-          CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-              esr );
+          CellElementSubRegion const * const
+          subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
           integer_array const & ghostRank = subRegion->m_ghostRank;
 
-          localIndex_array2d const & map = (
-              fieldDesc.location == Location::Node ?
-                                                     subRegion->getWrapper<FixedOneToManyRelation>(
-                                                         subRegion->viewKeys().nodeListString )->reference() :
-                                                     subRegion->getWrapper<FixedOneToManyRelation>(
-                                                         subRegion->viewKeys().faceListString )->reference() );
+          localIndex_array2d const &
+          map = fieldDesc.location == Location::Node ?
+                subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference() :
+                subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference() ;
 
           for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+          {
             if( ghostRank[e] < 0 )
             {
               if( activeRegions[er] >= 0 )
               {
                 for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
+                {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
-                    pairs.push_back(
-                                     std::make_pair( firstLocalConnectivity + elemIndex,
-                                                     fieldDesc.numComponents * indexArray[map[e][n]] + i ) );
+                  {
+                    pairs.push_back( std::make_pair( firstLocalConnectivity + elemIndex,
+                      fieldDesc.numComponents * indexArray[map[e][n]] + i ) );
+                  }
+                }
                 ++elemIndex;
               }
             }
+          }
         }
+      }
     }
   }
   else if( connectivity == Connectivity::Face )
@@ -1233,8 +1321,12 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       // Create a name decoration with all region names
       string nameDecoration = "";
       for( localIndex i = 0 ; i < fieldDesc.regionNames.size() ; ++i )
+      {
         if( activeRegions[i] >= 0 )
+        {
           nameDecoration += fieldDesc.regionNames[i];
+        }
+      }
 
       fieldTmp.regionNames = fieldDesc.regionNames;
       fieldTmp.regionPtrs = fieldDesc.regionPtrs;
@@ -1263,25 +1355,38 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Face
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
-            localIndex_array2d const & map = subRegion->getWrapper<FixedOneToManyRelation>(
-                subRegion->viewKeys().faceListString )->reference();
+            localIndex_array2d const &
+            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+            {
               if( ghostRank[e] < 0 )
+              {
                 for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
+                {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
+                  {
                     if( indexArrayFace[map[e][n]] >= 0 )
-                      pairs.push_back(
-                                       std::make_pair( indexArrayFace[map[e][n]],
-                                                       fieldDesc.numComponents * indexArrayFaceOrig[map[e][n]] + i ) );
+                    {
+                      pairs.push_back( std::make_pair( indexArrayFace[map[e][n]],
+                        fieldDesc.numComponents * indexArrayFaceOrig[map[e][n]] + i ) );
+                    }
+                  }
+                }
+              }
+            }
           }
+        }
+      }
     }
     else if( fieldDesc.location == Location::Elem )
     {
@@ -1291,8 +1396,12 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       // Create a name decoration with all region names
       string nameDecoration = "";
       for( localIndex i = 0 ; i < fieldDesc.regionNames.size() ; ++i )
+      {
         if( activeRegions[i] >= 0 )
+        {
           nameDecoration += fieldDesc.regionNames[i];
+        }
+      }
 
       fieldTmp.regionNames = fieldDesc.regionNames;
       fieldTmp.regionPtrs = fieldDesc.regionPtrs;
@@ -1308,26 +1417,40 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Face
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
             globalIndex_array const & indexArrayElem = subRegion->getReference<globalIndex_array>( fieldDesc.key );
 
-            localIndex_array2d const & map = subRegion->getWrapper<FixedOneToManyRelation>(
-                subRegion->viewKeys().faceListString )->reference();
+            localIndex_array2d const &
+            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+            {
               if( ghostRank[e] < 0 )
+              {
                 for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
+                {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
+                  {
                     if( indexArrayFace[map[e][n]] >= 0 )
+                    {
                       pairs.push_back(
                                        std::make_pair( indexArrayFace[map[e][n]],
                                                        fieldDesc.numComponents * indexArrayElem[e] + i ) );
+                    }
+                  }
+                }
+              }
+            }
           }
+        }
+      }
     }
     else
     {
@@ -1337,8 +1460,12 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       // Create a name decoration with all region names
       string nameDecoration = "";
       for( localIndex i = 0 ; i < fieldDesc.regionNames.size() ; ++i )
+      {
         if( activeRegions[i] >= 0 )
+        {
           nameDecoration += fieldDesc.regionNames[i];
+        }
+      }
 
       fieldTmp.regionNames = fieldDesc.regionNames;
       fieldTmp.regionPtrs = fieldDesc.regionPtrs;
@@ -1359,18 +1486,21 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       indexArrayFaceMarker = 1;
 
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
-            localIndex_array2d const & map = subRegion->getWrapper<FixedOneToManyRelation>(
-                subRegion->viewKeys().faceListString )->reference();
+            localIndex_array2d const &
+            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
             localIndex_array nodeIndices;
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+            {
               if( ghostRank[e] < 0 )
               {
                 for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
@@ -1382,13 +1512,20 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
                     // Mark this face as already visited
                     indexArrayFaceMarker( faceId ) = -1;
                     for( localIndex j = 0 ; j < nodeIndices.size() ; ++j )
+                    {
                       for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
-                        pairs.push_back(
-                            std::make_pair( faceId, fieldDesc.numComponents * indexArrayNode[nodeIndices[j]] + i ) );
+                      {
+                        pairs.push_back( std::make_pair( faceId,
+                          fieldDesc.numComponents * indexArrayNode[nodeIndices[j]] + i ) );
+                      }
+                    }
                   }
                 }
               }
+            }
           }
+        }
+      }
     }
   }
   else
@@ -1401,8 +1538,12 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       // Create a name decoration with all region names
       string nameDecoration = "";
       for( localIndex i = 0 ; i < fieldDesc.regionNames.size() ; ++i )
+      {
         if( activeRegions[i] >= 0 )
+        {
           nameDecoration += fieldDesc.regionNames[i];
+        }
+      }
 
       fieldTmp.regionNames = fieldDesc.regionNames;
       fieldTmp.regionPtrs = fieldDesc.regionPtrs;
@@ -1431,26 +1572,35 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Node
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
-            localIndex_array2d const & map = subRegion->getWrapper<FixedOneToManyRelation>(
-                subRegion->viewKeys().nodeListString )->reference();
+            localIndex_array2d const &
+            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference();
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+            {
               if( ghostRank[e] < 0 )
               {
                 for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
+                {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
-                    pairs.push_back(
-                                     std::make_pair( indexArrayNode[map[e][n]],
-                                                     fieldDesc.numComponents * indexArrayNodeOrig[map[e][n]] + i ) );
+                  {
+                    pairs.push_back( std::make_pair( indexArrayNode[map[e][n]],
+                      fieldDesc.numComponents * indexArrayNodeOrig[map[e][n]] + i ) );
+                  }
+                }
               }
+            }
           }
+        }
+      }
     }
     else if( fieldDesc.location == Location::Elem )
     {
@@ -1460,8 +1610,12 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       // Create a name decoration with all region names
       string nameDecoration = "";
       for( localIndex i = 0 ; i < fieldDesc.regionNames.size() ; ++i )
+      {
         if( activeRegions[i] >= 0 )
+        {
           nameDecoration += fieldDesc.regionNames[i];
+        }
+      }
 
       fieldTmp.regionNames = fieldDesc.regionNames;
       fieldTmp.regionPtrs = fieldDesc.regionPtrs;
@@ -1477,27 +1631,36 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Node
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
             globalIndex_array const & indexArrayElem = subRegion->getReference<globalIndex_array>( fieldDesc.key );
 
-            localIndex_array2d const & map = subRegion->getWrapper<FixedOneToManyRelation>(
-                subRegion->viewKeys().nodeListString )->reference();
+            localIndex_array2d const &
+            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference();
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+            {
               if( ghostRank[e] < 0 )
               {
                 for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
+                {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
-                    pairs.push_back(
-                                     std::make_pair( indexArrayNode[map[e][n]],
-                                                     fieldDesc.numComponents * indexArrayElem[e] + i ) );
+                  {
+                    pairs.push_back( std::make_pair( indexArrayNode[map[e][n]],
+                      fieldDesc.numComponents * indexArrayElem[e] + i ) );
+                  }
+                }
               }
+            }
           }
+        }
+      }
     }
     else
     {
@@ -1507,8 +1670,12 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
       // Create a name decoration with all region names
       string nameDecoration = "";
       for( localIndex i = 0 ; i < fieldDesc.regionNames.size() ; ++i )
+      {
         if( activeRegions[i] >= 0 )
+        {
           nameDecoration += fieldDesc.regionNames[i];
+        }
+      }
 
       fieldTmp.regionNames = fieldDesc.regionNames;
       fieldTmp.regionPtrs = fieldDesc.regionPtrs;
@@ -1530,19 +1697,23 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Face and Location::Node
       for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+      {
         if( activeRegions[er] >= 0 )
+        {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>(
-                esr );
+            CellElementSubRegion const * const
+            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
-            localIndex_array2d const & map = subRegion->getWrapper<FixedOneToManyRelation>(
-                subRegion->viewKeys().faceListString )->reference();
+            localIndex_array2d const &
+            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
             localIndex_array nodeIndices;
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
+            {
               if( ghostRank[e] < 0 )
+              {
                 for( localIndex n = 0 ; n < map.size( 1 ) ; ++n )
                 {
                   globalIndex faceId = indexArrayFace[map[e][n]];
@@ -1552,13 +1723,20 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
                     // Mark this face as already visited
                     indexArrayFaceMarker( faceId ) = -1;
                     for( localIndex j = 0 ; j < nodeIndices.size() ; ++j )
+                    {
                       for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
-                        pairs.push_back(
-                                         std::make_pair( indexArrayNode[nodeIndices[j]],
-                                                         fieldDesc.numComponents * faceId + i ) );
+                      {
+                        pairs.push_back( std::make_pair( indexArrayNode[nodeIndices[j]],
+                          fieldDesc.numComponents * faceId + i ) );
+                      }
+                    }
                   }
                 }
+              }
+            }
           }
+        }
+      }
     }
   }
 
@@ -1576,27 +1754,34 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
   }
 
   localIndex nRowsLoc = ( emptyPairs ) ? 0 : pairs.back().first;
-  localIndex nColsLoc =
-      ( emptyPairs ) ? 0 : std::max_element( pairs.begin(), pairs.end(), pairSecondComparison() )->second;
+  localIndex nColsLoc = ( emptyPairs ) ?
+                        0 :
+                        std::max_element( pairs.begin(), pairs.end(), pairSecondComparison() )->second ;
 
   // Find the global number of rows
-  localIndex_array gather;
-  CommTools::allGather( nRowsLoc, gather );
-  localIndex nRows = gather[0];
+  localIndex_array localGather;
+  CommunicationTools::allGather( nRowsLoc, localGather );
+  localIndex nRows = localGather[0];
   for( localIndex p = 1 ; p < mpiSize ; ++p )
-    nRows = ( gather[p] > nRows ) ? gather[p] : nRows;
+  {
+    nRows = ( localGather[p] > nRows ) ? localGather[p] : nRows;
+  }
   ++nRows;
 
   // Find the global number of columns
-  CommTools::allGather( nColsLoc, gather );
-  localIndex nCols = gather[0];
+  CommunicationTools::allGather( nColsLoc, localGather );
+  localIndex nCols = localGather[0];
   for( localIndex p = 1 ; p < mpiSize ; ++p )
-    nCols = ( gather[p] > nCols ) ? gather[p] : nCols;
+  {
+    nCols = ( localGather[p] > nCols ) ? localGather[p] : nCols;
+  }
   ++nCols;
 
   // From the vector of pairs form a sparsity pattern
   if( !emptyPairs )
+  {
     vectorOfPairsToCSR( pairs, nRows, nCols, connLocPatt );
+  }
   else
   {
     connLocPatt.nRows = nRows;
@@ -1633,14 +1818,18 @@ void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs, localInde
     if( irow1 > irow0 )
     {
       for( localIndex j = irow0 ; j < irow1 ; ++j )
+      {
         pattern.rowLengths[j + 1] = i;
+      }
       irow0 = irow1;
     }
   }
   ++irow0;
   // Add final entries to rowLengths
   for( localIndex j = irow0 ; j <= nRows ; ++j )
+  {
     pattern.rowLengths[j] = nnz;
+  }
 }
 
 // Perform the matrix-matrix product A*src = dst.
@@ -1651,19 +1840,18 @@ void DofManager::MatrixMatrixMultiply( EpetraMatrix const &A,
                                        EpetraMatrix &C,
                                        bool const call_FillComplete ) const
                                        {
-  int err = EpetraExt::MatrixMatrix::Multiply( *A.unwrappedPointer(),
-                                               transA,
-                                               *B.unwrappedPointer(),
-                                               transB,
-                                               *C.unwrappedPointer(),
-                                               call_FillComplete );
+  int
+  err = EpetraExt::MatrixMatrix::Multiply( *A.unwrappedPointer(), transA,
+        *B.unwrappedPointer(), transB, *C.unwrappedPointer(), call_FillComplete );
 
   GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
 
   // Using "call_FillComplete_on_result = false" with rectangular matrices because in this
   // case the function does not work. After the multiplication is performed, call close().
   if( !call_FillComplete )
+  {
     C.close();
+  }
 }
 
 // Map a global row index to local row index
@@ -1676,15 +1864,21 @@ localIndex DofManager::ParallelMatrixGetLocalRowID( EpetraMatrix const &A, globa
 void DofManager::cleanUp() const
 {
   for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  {
     delete m_fields[i].connLocPattern;
+  }
 
   for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  {
     for( localIndex j = 0 ; j < m_fields.size() ; ++j )
+    {
       if( m_sparsityPattern[i][j].first != nullptr )
       {
         delete m_sparsityPattern[i][j].first;
         delete m_sparsityPattern[i][j].second;
       }
+    }
+  }
 }
 
 // Print a CSR pattern on file
@@ -1692,7 +1886,7 @@ void DofManager::printConnectivityLocationPattern( string const & field, string 
                                                    {
   // check if the field name is already added
   GEOS_ERROR_IF( !keyInUse( field ),
-                 "printConnectivityLocationPattern: requested field name must be already existing." );
+    "printConnectivityLocationPattern: requested field name must be already existing." );
 
   // get field index
   localIndex fieldIdx = fieldIndex( field );
@@ -1702,9 +1896,13 @@ void DofManager::printConnectivityLocationPattern( string const & field, string 
 
   string name;
   if( fileName.length() == 0 )
+  {
     name = "pattern_" + field + ".mtx";
+  }
   else
+  {
     name = fileName;
+  }
 
   // Print the selected pattern
   printParallelMatrix( *pattern, name );
@@ -1716,7 +1914,9 @@ void DofManager::printParallelMatrix( ParallelMatrix const & matrix, string cons
   // Ensure the ".mtx" extension
   string name( fileName );
   if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" )
+  {
     name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
+  }
 
   EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *matrix.unwrappedPointer() );
 }
@@ -1728,9 +1928,15 @@ void DofManager::printSparsityPattern( SparsityPattern const & pattern, string c
   {
     // If on screen, only processor 0 write
     if( mpiRank == 0 )
+    {
       for( localIndex i = 0 ; i < pattern.nRows ; ++i )
+      {
         for( localIndex j = pattern.rowLengths[i] ; j < pattern.rowLengths[i + 1] ; ++j )
+        {
           std::cout << i + 1 << " " << pattern.colIndices[j] + 1 << std::endl;
+        }
+      }
+    }
   }
   else
   {
@@ -1739,8 +1945,12 @@ void DofManager::printSparsityPattern( SparsityPattern const & pattern, string c
     fid.open( fileName, std::ofstream::out );
     fid << "# " << pattern.nRows << " " << pattern.nCols << std::endl;
     for( localIndex i = 0 ; i < pattern.nRows ; ++i )
+    {
       for( localIndex j = pattern.rowLengths[i] ; j < pattern.rowLengths[i + 1] ; ++j )
+      {
         fid << i + 1 << " " << pattern.colIndices[j] + 1 << " " << 1 << std::endl;
+      }
+    }
     fid.close();
   }
 }
@@ -1773,13 +1983,17 @@ void DofManager::printConnectivityMatrix() const
             break;
         }
         if( j < numFields - 1 )
+        {
           std::cout << "|";
+        }
       }
       std::cout << std::endl;
       if( i < numFields - 1 )
       {
         for( localIndex j = 0 ; j < numFields - 1 ; ++j )
+        {
           std::cout << "---|";
+        }
         std::cout << "---";
       }
       std::cout << std::endl;
