@@ -1133,7 +1133,8 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
 
 	// Step 1) prepare variables
 	
-        if (0/*iwelemPrev < 0 && well->getType() == Well::Type::INJECTOR*/)
+         /*
+        if (iwelemPrev < 0 && well->getType() == Well::Type::INJECTOR)
 	{
 	  
 	  // get the global component fraction from XML file input
@@ -1180,7 +1181,8 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( DomainPartition * const dom
 	    dWellElemCompDens[iwelemNext][ic] = currentDeltaCompDens[ic];
 	  
 	}
-
+*/
+          
 	// Step 2) decide the upwind segment
 
 	real64 const currentConnRate = connRate[iconn] + dConnRate[iconn];
