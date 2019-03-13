@@ -711,6 +711,41 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
   });
 }
 
+void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DomainPartition * const domain,
+                                                       systemSolverInterface::EpetraBlockSystem & blockSystem )
+{
+  FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
+  NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
+
+  arrayView1d<real64 const> const & faceArea  = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceNormal  = faceManager->faceNormal();
+  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+
+  arrayView1d<globalIndex> const &
+  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+
+  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
+  arrayView1d<real64 const> const & facePressure = faceManager->getReference< array1d<real64> >("Pressure");
+
+  for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
+  {
+    globalIndex nodeDOF[20];
+    real64 nodeRHS[20];
+
+    int const numNodes = integer_conversion<int>(facesToNodes[kf].size());
+    for( int a=0 ; a<numNodes ; ++a )
+    {
+      for( int component=0 ; component<3 ; ++component )
+      {
+        nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
+        nodeRHS[3*a+component] = - facePressure[kf] * faceNormal[kf][component] * faceArea[kf] / numNodes;
+      }
+    }
+    rhs->SumIntoGlobalValues( numNodes*3, nodeDOF, nodeRHS );
+  }
+
+}
+
 void
 SolidMechanicsLagrangianFEM::
 ImplicitStepSetup( real64 const& time_n, real64 const& dt, DomainPartition * const domain,
