@@ -24,6 +24,7 @@
 
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mesh/AggregateElementSubRegion.hpp"
+#include "Epetra_SerialDenseMatrix.h"
 
 namespace geosx
 {
@@ -179,7 +180,46 @@ void TwoPointFluxApproximation::computeCoarseStencil(DomainPartition * domain, c
         R1Tensor barycenter2 = aggregateElement->getElementCenter()[aggregateNumber2];
         barycenter1 -= barycenter2; // normal between the two aggregates
         barycenter1.Normalize();
+        
+        int systemSize = integer_conversion< int >(aggregateElement->GetNbCellsPerAggregate( aggregateNumber1 )
+                                                 + aggregateElement->GetNbCellsPerAggregate( aggregateNumber2 ));
+        Epetra_SerialDenseMatrix A(systemSize, 4);
 
+        /// Get the elementary pressures
+        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure1 = 
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementarPressure1" );
+        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure2 = 
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementarPressure2" );
+        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure3 = 
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementarPressure3" );
+        aggregateElement->forFineCellsInAggregate( aggregateNumber1,
+                                                   [&] ( localIndex fineCellIndex )
+        {
+          int fineCellIndexInt = integer_conversion< int >( fineCellIndex );
+          A[fineCellIndexInt][0] = pressure1[cell1.region][cell1.subRegion][fineCellIndex];
+          A[fineCellIndexInt][1] = pressure2[cell1.region][cell1.subRegion][fineCellIndex];
+          A[fineCellIndexInt][2] = pressure3[cell1.region][cell1.subRegion][fineCellIndex];
+          A[fineCellIndexInt][3] = 1.;
+        });
+        aggregateElement->forFineCellsInAggregate( aggregateNumber2,
+                                                   [&] ( localIndex fineCellIndex )
+        {
+          int fineCellIndexInt = integer_conversion< int >( fineCellIndex );
+          A[fineCellIndexInt][0] = pressure1[cell2.region][cell2.subRegion][fineCellIndex];
+          A[fineCellIndexInt][1] = pressure2[cell2.region][cell2.subRegion][fineCellIndex];
+          A[fineCellIndexInt][2] = pressure3[cell2.region][cell2.subRegion][fineCellIndex];
+          A[fineCellIndexInt][3] = 1.;
+        });
+        for( int i = 0; i < systemSize ;i++)
+        {
+          A[i][3] = 1.;
+          for( int j = 0; j < 3; j++)
+          {
+            A[i][j] = 0.0;
+          }
+        }
+        std::ofstream debug("debug");
+        A.Print(debug);
 
         coarseStencil.add(stencilCells.data(),stencilCells,stencilWeights,0);
       }

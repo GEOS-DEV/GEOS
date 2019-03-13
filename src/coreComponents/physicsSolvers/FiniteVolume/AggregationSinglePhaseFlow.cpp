@@ -29,7 +29,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/TwoPointFluxApproximation.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -267,6 +267,15 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
     }
     return;
   }
+  NumericalMethodsManager const * numericalMethodManager = domain->
+    getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  FiniteVolumeManager const * fvManager = numericalMethodManager->
+    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+
+  TwoPointFluxApproximation  * fluxApprox = fvManager->getFluxApproximation(m_discretizationName)->group_cast< TwoPointFluxApproximation * >();
+  fluxApprox->computeCoarseStencil();
+
   if( dt > 0 )
   {
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());

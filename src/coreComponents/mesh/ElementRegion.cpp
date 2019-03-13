@@ -293,7 +293,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   {
     aggregateBarycenters[aggregateIndex] /= aggregateVolumes[aggregateIndex];
   }
-  aggregateSubRegion->CreateFromFineToCoarseMap(parts, aggregateBarycenters);
+  aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, parts, aggregateBarycenters);
 }
 
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )

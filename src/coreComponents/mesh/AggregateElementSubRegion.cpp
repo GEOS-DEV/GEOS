@@ -32,10 +32,34 @@ AggregateElementSubRegion::~AggregateElementSubRegion()
 {
 }
 
-void AggregateElementSubRegion::CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse,
+void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregates,
+                                                           const array1d< localIndex >& fineToCoarse,
                                                            const array1d< R1Tensor >& barycenters)
 {
   m_fineToCoarse = fineToCoarse;
   m_elementCenter = barycenters;
+  m_nbFineCellsPerCoarseCell.resize( nbAggregates + 1 );
+  m_orderedFineToCoarseIndex.resize( fineToCoarse.size() );
+  
+  /// First loop to count the number of fine cells per coarse cell
+  for( localIndex fineCell = 0; fineCell < fineToCoarse.size(); fineCell++ )
+  {
+    m_nbFineCellsPerCoarseCell[1 + fineToCoarse[fineCell]]++;
+  }
+
+  /// Second loop to cumulate the number of fine cells
+  for( localIndex coarseCell = 1; coarseCell <= nbAggregates; coarseCell++ )
+  {
+    m_nbFineCellsPerCoarseCell[coarseCell] += m_nbFineCellsPerCoarseCell[coarseCell-1]; 
+  }
+
+  /// Third loop to order the index of the fine cells
+  array1d< localIndex > offset( nbAggregates );
+  for( localIndex fineCell = 0; fineCell < fineToCoarse.size(); fineCell++ )
+  {
+    localIndex coarseCell = fineToCoarse[fineCell];
+    m_orderedFineToCoarseIndex[m_nbFineCellsPerCoarseCell[coarseCell] + offset[coarseCell]++] = fineCell;
+
+  }
 }
 }

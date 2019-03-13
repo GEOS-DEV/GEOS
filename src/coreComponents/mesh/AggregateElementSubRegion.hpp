@@ -41,12 +41,28 @@ public:
     return AggregateElementSubRegion::CatalogName();
   }
 
+  template< typename LAMBDA >
+  void forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
+  {
+    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex+1]; 
+        fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++)
+    {
+      lambda(m_orderedFineToCoarseIndex[fineCell]);
+    }
+  }
+
+  localIndex GetNbCellsPerAggregate( localIndex aggregateIndex ) const
+  {
+    return m_nbFineCellsPerCoarseCell[aggregateIndex + 1] - m_nbFineCellsPerCoarseCell[aggregateIndex];
+  }
+
   AggregateElementSubRegion( string const & name,
                           dataRepository::ManagedGroup * const parent );
 
   virtual ~AggregateElementSubRegion() override;
  
-  void CreateFromFineToCoarseMap( const array1d< localIndex >& fineToCoarse,
+  void CreateFromFineToCoarseMap( localIndex nbAggregates,
+                                  const array1d< localIndex >& fineToCoarse,
                                   const array1d< R1Tensor >& barycenters);
 
   const array1d< localIndex >& GetFineToCoarseMap()
@@ -103,6 +119,11 @@ private:
   NodeMapType  m_toNodesRelation;
 
   array1d< localIndex > m_fineToCoarse;
+
+  array1d< localIndex > m_orderedFineToCoarseIndex;
+
+  array1d< localIndex > m_nbFineCellsPerCoarseCell;
+
   array1d< R1Tensor > m_aggregateBarycenters;
 };
 }
