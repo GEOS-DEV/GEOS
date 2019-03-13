@@ -560,7 +560,7 @@ void testRectangularMatrixOperations()
   globalIndex nCols = 2 * nRows;
 
   ParallelMatrix A;
-  A.createWithGlobalSize( nRows, nCols, 1 );
+  A.createWithGlobalSize( nRows, nCols, 1, MPI_COMM_WORLD );
 
   for( globalIndex i = A.ilower() ; i < A.iupper() ; ++i )
   {
@@ -619,26 +619,26 @@ TEST(testLAOperations,testEpetraLAOperations)
 /*! @function testHypreLAOperations.
  * @brief Runs all tests using the Hypre interface.
  */
-TEST(testLAOperations,testHypreLAOperations)
-{
+//TEST(testLAOperations,testHypreLAOperations)
+//{
   //MPI_Init( nullptr, nullptr );
   //testInterfaceSolvers<HypreInterface>();
   //testGEOSXSolvers<HypreInterface>();
   //testGEOSXBlockSolvers<HypreInterface>();
   //MPI_Finalize();
-}
+//}
 
 /*! @function testPETScLAOperations.
  * @brief Runs all tests using the PETSc interface.
  */
-TEST(testLAOperations,testPETScLAOperations)
-{
+//TEST(testLAOperations,testPETScLAOperations)
+//{
   //MPI_Init( nullptr, nullptr );
   //testInterfaceSolvers<PETScInterface>();
   //testGEOSXSolvers<PETScInterface>();
   //testGEOSXBlockSolvers<PETScInterface>();
   //MPI_Finalize();
-}
+//}
 
 //@}
 

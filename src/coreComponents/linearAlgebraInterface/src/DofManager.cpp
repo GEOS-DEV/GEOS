@@ -608,7 +608,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
         ParallelMatrix const * rowConnLocPattDistr = m_sparsityPattern[rowFieldIndex][colFieldIndex].first;
         ParallelMatrix const * colConnLocPattDistr = m_sparsityPattern[rowFieldIndex][colFieldIndex].second;
 
-        locLocDistr.createWithGlobalSize( rowConnLocPattDistr->globalCols(), colConnLocPattDistr->globalCols(), 1 );
+        locLocDistr.createWithGlobalSize( rowConnLocPattDistr->globalCols(),
+                                          colConnLocPattDistr->globalCols(),
+                                          1,
+                                          MPI_COMM_GEOSX );
         MatrixMatrixMultiply( *rowConnLocPattDistr, true, *colConnLocPattDistr, false, locLocDistr, false );
       }
       else
@@ -616,7 +619,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
         ParallelMatrix const * rowConnLocPattDistr = m_sparsityPattern[colFieldIndex][rowFieldIndex].first;
         ParallelMatrix const * colConnLocPattDistr = m_sparsityPattern[colFieldIndex][rowFieldIndex].second;
 
-        locLocDistr.createWithGlobalSize( colConnLocPattDistr->globalCols(), rowConnLocPattDistr->globalCols(), 1 );
+        locLocDistr.createWithGlobalSize( colConnLocPattDistr->globalCols(),
+                                          rowConnLocPattDistr->globalCols(),
+                                          1,
+                                          MPI_COMM_GEOSX );
         MatrixMatrixMultiply( *colConnLocPattDistr, true, *rowConnLocPattDistr, false, locLocDistr, false );
       }
     }
@@ -625,7 +631,7 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
       // Empty block
       globalIndex nRows = m_fields[rowFieldIndex].connLocPattern->globalCols();
       globalIndex nCols = m_fields[colFieldIndex].connLocPattern->globalCols();
-      locLocDistr.createWithGlobalSize( nRows, nCols, 0 );
+      locLocDistr.createWithGlobalSize( nRows, nCols, 0, MPI_COMM_GEOSX );
     }
   }
   else if( rowFieldIndex < 0 and colFieldIndex < 0 )
@@ -636,7 +642,7 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     {
       sumGlobalDofs += m_fields[i].numGlobalRows;
     }
-    locLocDistr.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1 );
+    locLocDistr.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1, MPI_COMM_GEOSX );
 
     ParallelMatrix localPattern;
 
@@ -678,7 +684,7 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
             ParallelMatrix const * colConnLocPattDistr = m_sparsityPattern[iGlo][jGlo].second;
 
             localPattern.createWithGlobalSize( rowConnLocPattDistr->globalCols(), colConnLocPattDistr->globalCols(),
-                                               1 );
+                                               1, MPI_COMM_GEOSX );
             MatrixMatrixMultiply( *rowConnLocPattDistr, true, *colConnLocPattDistr, false, localPattern, false );
           }
           else
@@ -687,7 +693,7 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
             ParallelMatrix const * colConnLocPattDistr = m_sparsityPattern[jGlo][iGlo].second;
 
             localPattern.createWithGlobalSize( colConnLocPattDistr->globalCols(), rowConnLocPattDistr->globalCols(),
-                                               1 );
+                                               1, MPI_COMM_GEOSX );
             MatrixMatrixMultiply( *colConnLocPattDistr, true, *rowConnLocPattDistr, false, localPattern, false );
           }
 
@@ -722,11 +728,11 @@ void DofManager::permuteSparsityPattern( ParallelMatrix const & locLocDistr,
   // Matrix C = A*P
   ParallelMatrix productStep1;
 
-  productStep1.createWithGlobalSize( locLocDistr.globalRows(), permutation.globalCols(), 1 );
+  productStep1.createWithGlobalSize( locLocDistr.globalRows(), permutation.globalCols(), 1, MPI_COMM_GEOSX );
   MatrixMatrixMultiply( locLocDistr, false, permutation, false, productStep1 );
 
   // Matrix B = P*C
-  permutedMatrix.createWithGlobalSize( permutation.globalCols(), productStep1.globalCols(), 1 );
+  permutedMatrix.createWithGlobalSize( permutation.globalCols(), productStep1.globalCols(), 1, MPI_COMM_GEOSX );
   MatrixMatrixMultiply( permutation, true, productStep1, false, permutedMatrix );
 }
 
@@ -1053,7 +1059,7 @@ void DofManager::createPermutation( ParallelMatrix & permutation ) const
   }
 
   // Create parallel vector with global size
-  permutation.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1 );
+  permutation.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1, MPI_COMM_GEOSX );
 
   globalIndex_array globalGather;
   CommunicationTools::allGather( offset, globalGather );

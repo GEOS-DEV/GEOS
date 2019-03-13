@@ -46,6 +46,9 @@ public:
   CommunicationTools();
   ~CommunicationTools();
 
+  template< typename T >
+  static MPI_Datatype getMpiType();
+
   static void AssignGlobalIndices( ObjectManagerBase & object,
                                    ObjectManagerBase const & compositionObject,
                                    array1d<NeighborCommunicator> & neighbors );
@@ -86,37 +89,7 @@ public:
                                  MPI_iCommData & icomm );
 
   template<typename T>
-  static void allGather( T const myValue, array1d<T> & allValues )
-  {
-#ifdef GEOSX_USE_MPI
-    int mpiSize = MPI_Size( MPI_COMM_GEOSX );
-    allValues.resize( mpiSize );
-    array1d<T> tmpArray( mpiSize );
-
-    MPI_Datatype MPI_TYPE;
-    switch( sizeof(T) )
-    {
-      case 4:
-        MPI_TYPE = MPI_INT;
-        break;
-      case 8:
-        MPI_TYPE = MPI_LONG_LONG;
-        break;
-      default:
-        GEOS_ERROR( "CommunicationTools::allGather> invalid type!" );
-    }
-
-    MPI_Allgather( &myValue, 1, MPI_TYPE, tmpArray.data(), 1, MPI_TYPE, MPI_COMM_GEOSX );
-
-    for( localIndex i = 0 ; i < tmpArray.size() ; ++i )
-    {
-      allValues[i] = integer_conversion<localIndex>( tmpArray[i] );
-    }
-#else
-    allValues.resize(1);
-    allValues[0] = myValue;
-#endif
-  }
+  static void allGather( T const myValue, array1d<T> & allValues );
 
 };
 
@@ -181,6 +154,29 @@ public:
   array1d<MPI_Status>  mpiSizeSendBufferStatus;
   array1d<MPI_Status>  mpiSizeRecvBufferStatus;
 };
+
+
+template<> inline MPI_Datatype CommunicationTools::getMpiType<double>()         { return MPI_DOUBLE; }
+template<> inline MPI_Datatype CommunicationTools::getMpiType<int>()            { return MPI_INT; }
+template<> inline MPI_Datatype CommunicationTools::getMpiType<long int>()       { return MPI_LONG; }
+template<> inline MPI_Datatype CommunicationTools::getMpiType<long long int>()  { return MPI_LONG_LONG; }
+
+template<typename T>
+void CommunicationTools::allGather( T const myValue, array1d<T> & allValues )
+{
+#ifdef GEOSX_USE_MPI
+  int const mpiSize = MPI_Size( MPI_COMM_GEOSX );
+  allValues.resize( mpiSize );
+
+  MPI_Datatype const MPI_TYPE = getMpiType<T>();
+
+  MPI_Allgather( &myValue, 1, MPI_TYPE, allValues.data(), 1, MPI_TYPE, MPI_COMM_GEOSX );
+
+#else
+  allValues.resize(1);
+  allValues[0] = myValue;
+#endif
+}
 
 } /* namespace geosx */
 
