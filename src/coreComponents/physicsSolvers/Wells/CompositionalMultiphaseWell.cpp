@@ -687,8 +687,6 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 	  }
         }
       }
-      std::cout << "Predicted connection rate at #" << iconn
-		<< " = " << connRate[iconn] << std::endl;
       prevConnRate = connRate[iconn];
     }
   });
@@ -1684,10 +1682,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( EpetraBlockSystem const * co
         for (localIndex idof = 0; idof < wellNDOF; ++idof)
         {
           int const lid = rowMap->LID(integer_conversion<int>( elemOffset + idof ));
-          real64 const val = localResidual[lid];
-
-	  std::cout << "lid = " << lid << " localResidual = " << localResidual[lid] << std::endl;
-	  
+          real64 const val = localResidual[lid];	  
           localResidualNorm += val * val;
         }
       }
@@ -1766,13 +1761,11 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
 
         int lid = rowMap->LID( integer_conversion<int>( elemOffset ) );
         dWellElemPressure[iwelem] += scalingFactor * local_solution[lid];
-	std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
 	
         for (localIndex ic = 0; ic < m_numComponents; ++ic)
         {
           lid = rowMap->LID( integer_conversion<int>( elemOffset + ic + 1 ) );
           dWellElemGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
-	  std::cout << "compDens #" << ic << ": local_solution " << local_solution[lid] << std::endl;
         }
       }
     }
@@ -1792,7 +1785,6 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
 	globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelemNext] );
         int const lid = rowMap->LID( integer_conversion<int>( elemOffset + m_numComponents + 1 ) );
         dConnRate[iconn] += scalingFactor * local_solution[lid];
-	std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
       }
     }
   });  
@@ -2232,11 +2224,23 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
     arrayView1d<real64> const & dConnRate =
       connectionData->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureRateString );
 
+    arrayView2d<real64> const & wellElemCompFrac =
+      wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
+
+
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
       wellElemPressure[iwelem] += dWellElemPressure[iwelem];
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
+      {
 	wellElemGlobalCompDensity[iwelem][ic] += dWellElemGlobalCompDensity[iwelem][ic];
+ 	if (iwelem == 0)
+	{
+	  std::cout << ";wellElemCompFrac[" << iwelem << "][" << ic << "] = "
+		    << wellElemCompFrac[iwelem][ic]
+		    << std::endl;
+	}
+      }
     }
 
     for (localIndex iconn = 0; iconn < connectionData->numConnectionsLocal(); ++iconn)

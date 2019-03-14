@@ -658,12 +658,12 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
   // finally assemble the well control equation
   FormControlEquation( domain, jacobian, residual );
   
-  //  if( verboseLevel() >= 3 )
-  //{
+  if( verboseLevel() >= 3 )
+  {
     GEOS_LOG_RANK("After SinglePhaseWell::AssembleSystem");
     GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
     GEOS_LOG_RANK("\nResidual:\n" << *residual);
-  //}
+  }
 }
 
 void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
