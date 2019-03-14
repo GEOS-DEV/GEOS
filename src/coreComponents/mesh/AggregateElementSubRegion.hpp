@@ -44,7 +44,8 @@ public:
   template< typename LAMBDA >
   void forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
   {
-    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex+1]; 
+    std::cout << "allo1" << std::endl;
+    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex]; 
         fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++)
     {
       lambda(m_orderedFineToCoarseIndex[fineCell]);

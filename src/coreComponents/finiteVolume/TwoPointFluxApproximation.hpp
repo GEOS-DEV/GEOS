@@ -39,11 +39,14 @@ public:
 
   TwoPointFluxApproximation(std::string const & name, dataRepository::ManagedGroup * const parent);
 
+  /// TODO : is public the right place for that ?
+  void computeCoarseStencil( DomainPartition * domain,
+                             const CellStencil & fineStencil,
+                             CellStencil & coarseStencil) const;
+
 protected:
 
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) override;
-
-  virtual void computeCoarseStencil(DomainPartition * domain, const CellStencil & fineStencil, CellStencil & coarseStencil) override;
 
   virtual void computeFractureStencil( DomainPartition const & domain,
                                        CellStencil & fractureStencil,

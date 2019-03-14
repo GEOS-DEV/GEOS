@@ -33,6 +33,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/AggregateElementSubRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
@@ -96,6 +97,9 @@ void AggregationSinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBod
       faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::densityString );
       faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::viscosityString );
     }
+    /// Register the fields at the coarse scal
+    AggregateElementSubRegion * aggregateElement = elemManager->GetRegion(0)->GetSubRegion("coarse")->group_cast<AggregateElementSubRegion *>();
+    aggregateElement->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::coarsePorosityString )->setPlotLevel(PlotLevel::LEVEL_1);
   }
 }
 
@@ -265,16 +269,21 @@ void AggregationSinglePhaseFlow::Execute( real64 const& time_n,
         }
       }
     }
+    
+    /// Compute coarse porosity
+    
+    
+    /// Compute coarse stencil
+    NumericalMethodsManager  * numericalMethodManager = domain->
+      getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+    FiniteVolumeManager  * fvManager = numericalMethodManager->
+      GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+    TwoPointFluxApproximation  const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName)->group_cast< const TwoPointFluxApproximation * >();
+    fluxApprox->computeCoarseStencil(domain->group_cast< DomainPartition * >(),fluxApprox->getStencil(),
+        m_coarseStencil);
     return;
   }
-  NumericalMethodsManager const * numericalMethodManager = domain->
-    getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-
-  FiniteVolumeManager const * fvManager = numericalMethodManager->
-    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
-
-  TwoPointFluxApproximation  * fluxApprox = fvManager->getFluxApproximation(m_discretizationName)->group_cast< TwoPointFluxApproximation * >();
-  fluxApprox->computeCoarseStencil();
 
   if( dt > 0 )
   {

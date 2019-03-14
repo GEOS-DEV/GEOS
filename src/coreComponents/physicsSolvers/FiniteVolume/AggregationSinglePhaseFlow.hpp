@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_AGGREGATIONSINGLEPHASEFLOW_HPP_
 
 #include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 
 class Epetra_FECrsGraph;
 
@@ -184,6 +185,7 @@ public:
     static constexpr auto densityString   = "density";
     static constexpr auto viscosityString = "viscosity";
     static constexpr auto porosityString  = "porosity";
+    static constexpr auto coarsePorosityString  = "coarsePorosity";
     static constexpr auto oldPorosityString  = "oldPorosity";
 
     // these are used to visualize the elementary pressure fields generated
@@ -328,6 +330,9 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure1;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure2;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure3;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_coarsePorosity;
+  StencilCollection< CellDescriptor, real64 > m_coarseStencil;
+
 };
 
 

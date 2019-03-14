@@ -135,13 +135,13 @@ public:
     static constexpr auto boundarySetDataString = "BoundarySetData";
   };
 
+
 protected:
   void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
 
-  virtual void computeCoarseStencil(DomainPartition * domain, const CellStencil & fineStencil, CellStencil & coarseStencil) = 0;
 
   virtual void computeFractureStencil( DomainPartition const & domain,
                                        CellStencil & fractureStencil,

@@ -25,6 +25,9 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mesh/AggregateElementSubRegion.hpp"
 #include "Epetra_SerialDenseMatrix.h"
+#include "Teuchos_SerialDenseMatrix.hpp"
+#include "Teuchos_SerialDenseVector.hpp"
+#include "Teuchos_LAPACK.hpp"
 
 namespace geosx
 {
@@ -150,12 +153,14 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   stencil.compress();
 }
 
-void TwoPointFluxApproximation::computeCoarseStencil(DomainPartition * domain, const CellStencil & fineStencil, CellStencil & coarseStencil)
+void TwoPointFluxApproximation::computeCoarseStencil( DomainPartition * domain,
+                                                      const CellStencil & fineStencil,
+                                                      CellStencil & coarseStencil) const
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   ElementRegion * const elemRegion = elemManager->GetRegion(0); // TODO : still one region / elemsubregion
-  AggregateElementSubRegion * const aggregateElement = elemRegion->GetGroup("coarse")->group_cast< AggregateElementSubRegion * >();
+  AggregateElementSubRegion * const aggregateElement = elemRegion->GetSubRegion("coarse")->group_cast< AggregateElementSubRegion * >();
   const array1d< localIndex > & fineToCoarse = aggregateElement->GetFineToCoarseMap();
   // TODO : will it work for fractures ? (no)
 
@@ -183,45 +188,59 @@ void TwoPointFluxApproximation::computeCoarseStencil(DomainPartition * domain, c
         
         int systemSize = integer_conversion< int >(aggregateElement->GetNbCellsPerAggregate( aggregateNumber1 )
                                                  + aggregateElement->GetNbCellsPerAggregate( aggregateNumber2 ));
-        Epetra_SerialDenseMatrix A(systemSize, 4);
+
+
+
+        Teuchos::LAPACK< int, real64 > lapack;
+        Teuchos::SerialDenseMatrix< int, real64 > A(systemSize, 4);
+        Teuchos::SerialDenseVector< int, real64 > pTarget(systemSize);
+
 
         /// Get the elementary pressures
         ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure1 = 
-          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementarPressure1" );
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementaryPressure1" );
         ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure2 = 
-          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementarPressure2" );
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementaryPressure2" );
         ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure3 = 
-          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementarPressure3" );
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "elementaryPressure3" );
+        int count =0;
         aggregateElement->forFineCellsInAggregate( aggregateNumber1,
                                                    [&] ( localIndex fineCellIndex )
         {
-          int fineCellIndexInt = integer_conversion< int >( fineCellIndex );
-          A[fineCellIndexInt][0] = pressure1[cell1.region][cell1.subRegion][fineCellIndex];
-          A[fineCellIndexInt][1] = pressure2[cell1.region][cell1.subRegion][fineCellIndex];
-          A[fineCellIndexInt][2] = pressure3[cell1.region][cell1.subRegion][fineCellIndex];
-          A[fineCellIndexInt][3] = 1.;
+          A(count,0) = pressure1[cell1.region][cell1.subRegion][fineCellIndex];
+          A(count,1) = pressure2[cell1.region][cell1.subRegion][fineCellIndex];
+          A(count,2) = pressure3[cell1.region][cell1.subRegion][fineCellIndex];
+          A(count,3) = 1.;
+          R1Tensor barycenterFineCell = elemRegion->GetSubRegion(cell1.subRegion)->getElementCenter()[fineCellIndex];
+          pTarget(count++) = barycenterFineCell[0]*barycenter1[0]
+                             + barycenterFineCell[1]*barycenter1[1]
+                             + barycenterFineCell[2]*barycenter1[2];
         });
         aggregateElement->forFineCellsInAggregate( aggregateNumber2,
                                                    [&] ( localIndex fineCellIndex )
         {
-          int fineCellIndexInt = integer_conversion< int >( fineCellIndex );
-          A[fineCellIndexInt][0] = pressure1[cell2.region][cell2.subRegion][fineCellIndex];
-          A[fineCellIndexInt][1] = pressure2[cell2.region][cell2.subRegion][fineCellIndex];
-          A[fineCellIndexInt][2] = pressure3[cell2.region][cell2.subRegion][fineCellIndex];
-          A[fineCellIndexInt][3] = 1.;
+          A(count,0) = pressure1[cell2.region][cell2.subRegion][fineCellIndex];
+          A(count,1) = pressure2[cell2.region][cell2.subRegion][fineCellIndex];
+          A(count,2) = pressure3[cell2.region][cell2.subRegion][fineCellIndex];
+          A(count,3) = 1.;
+          R1Tensor barycenterFineCell = elemRegion->GetSubRegion(cell1.subRegion)->getElementCenter()[fineCellIndex];
+          pTarget(count++) = barycenterFineCell[0]*barycenter1[0]
+                             + barycenterFineCell[1]*barycenter1[1]
+                             + barycenterFineCell[2]*barycenter1[2];
         });
-        for( int i = 0; i < systemSize ;i++)
-        {
-          A[i][3] = 1.;
-          for( int j = 0; j < 3; j++)
-          {
-            A[i][j] = 0.0;
-          }
-        }
-        std::ofstream debug("debug");
-        A.Print(debug);
 
-        coarseStencil.add(stencilCells.data(),stencilCells,stencilWeights,0);
+        int info;
+        real64  rwork1;
+        real64 svd[4];
+        int rank;
+        lapack.GELSS(systemSize,4,1,A.values(),A.stride(),pTarget.values(),pTarget.stride(),svd,-1,&rank,&rwork1,-1,&info);
+        int lwork = static_cast< int > ( rwork1 );
+        real64 * rwork = new real64[lwork];
+        lapack.GELSS(systemSize,4,1,A.values(),A.stride(),pTarget.values(),pTarget.stride(),svd,-1,&rank,rwork,lwork,&info);
+        pTarget.print(std::cout);
+        GEOS_ERROR("stop");
+
+       coarseStencil.add(stencilCells.data(),stencilCells,stencilWeights,0);
       }
     }
   });
