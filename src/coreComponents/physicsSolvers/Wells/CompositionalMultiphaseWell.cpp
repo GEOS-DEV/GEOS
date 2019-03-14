@@ -328,10 +328,10 @@ void CompositionalMultiphaseWell::UpdatePhaseVolumeFraction( Well * well )
     {
       // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
       real64 const wellElemPhaseDensInv = 1.0 / wellElemPhaseDens[iwelem][0][ip];
-
+      
       // compute saturation and derivatives except multiplying by the total density
       wellElemPhaseVolFrac[iwelem][ip] = wellElemPhaseFrac[iwelem][0][ip] * wellElemPhaseDensInv;
-
+      
       dWellElemPhaseVolFrac_dPres[iwelem][ip] =
         (dWellElemPhaseFrac_dPres[iwelem][0][ip] - wellElemPhaseVolFrac[iwelem][ip] * dWellElemPhaseDens_dPres[iwelem][0][ip])
 	* wellElemPhaseDensInv;
@@ -355,6 +355,7 @@ void CompositionalMultiphaseWell::UpdatePhaseVolumeFraction( Well * well )
 
       wellElemPhaseVolFrac[iwelem][ip] *= wellElemTotalDensity;
       dWellElemPhaseVolFrac_dPres[iwelem][ip] *= wellElemTotalDensity;
+
     }
   }
 }
@@ -430,7 +431,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
     ConnectionData const * const connectionData = well->getConnections();
     PerforationData const * const perforationData = well->getPerforations();
 
@@ -483,8 +484,11 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // get well secondary variables on segments
-    MultiFluidBase const * const fluid = GetFluidModel( wellElementSubRegion );
-   
+    MultiFluidBase * const fluid = GetFluidModel( wellElementSubRegion );
+
+    arrayView2d<real64> const & totalDens =
+      fluid->getReference<array2d<real64>>( MultiFluidBase::viewKeyStruct::totalDensityString );
+    
     arrayView3d<real64 const> const & wellElemPhaseDens =
       fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
 
@@ -576,7 +580,6 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       for (localIndex ic = 0; ic < NC; ++ic)
       {
         wellElemCompFrac[iwelem][ic] = avgCompFrac[ic];
-	wellElemCompDens[iwelem][ic] = avgCompFrac[ic] * avgTotalDensity;
       }
     }
 
@@ -604,10 +607,9 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
         resPres = resPressure[er][esr][ei];
       }
       // if rate constraint, set the ref pressure slightly above/below the target pressure
-      
       wellElemPressure[iwelemRef] = (well->getType() == Well::Type::PRODUCER)
  	                          ? 0.9 * resPres // hard-coded value comes from AD-GPRS
-	                          : 1.1 * resPres; 
+                                  : 1.1 * resPres; 
     }
 
     // TODO: communicate ref pressure
@@ -622,13 +624,27 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
  	  + ( m_gravityFlag ? avgMixtureDensity * ( wellElemGravDepth[iwelem] - refGravDepth ) : 0 );
     }
     
-    // 4) Recompute the pressure-dependent properties
+    // 4) Back calculate component densities
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        fluid->PointUpdate( wellElemPressure[iwelem],
+			    m_temperature,
+			    wellElemCompFrac[iwelem],
+			    iwelem,
+			    0 );
+        wellElemCompDens[iwelem][ic] = avgCompFrac[ic] * totalDens[iwelem][0];
+      }
+    }
+
+    // 5) Recompute all the pressure-dependent properties
     UpdateState( well );
     
-    // 5) Compute the perforation rates
+    // 6) Compute the perforation rates
     ComputeAllPerforationRates( well );
 
-    // 6) Collect all the perforation rates
+    // 7) Collect all the perforation rates
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
       for (localIndex ic = 0; ic < NC; ++ic)
@@ -644,7 +660,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       }
     }
 
-    // 7) Estimate the connection rates
+    // 8) Estimate the connection rates
     // TODO: implement this in parallel with the communication of wellElemSumRates
     // WARNING FRANCOIS: this assumes that connections are ordered!!!
     real64 prevConnRate = 0;
@@ -656,12 +672,6 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       connRate[iconn] = prevConnRate;
       for (localIndex ip = 0; ip < NP; ++ip)
       {
-	// TODO: put this constant somewhere
-	//if (well->getType() == Well::Type::INJECTOR)
-	//{
-
-	  //}
-	
         if ( wellElemPhaseVolFrac[iwelemNext][ip] > 0.1 &&
 	     wellElemPhaseDens[iwelemNext][0][ip] > std::numeric_limits<real64>::epsilon() )
 	{
@@ -2611,7 +2621,7 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
       {
         dVolFrac_dC[ic] = dWellElemPhaseVolFrac_dComp[iwelem][ip][ic];
       }
-
+      
       // component phase fractions and pressure derivatives
       for (localIndex ic = 0; ic < NC; ++ic)
       {
@@ -2624,7 +2634,7 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
           dPhaseCompFrac_dC[SubRegionTag::WELL][ic][jc] = dWellElemPhaseCompFrac_dComp[iwelem][0][ip][ic][jc];
 	}
       }
-
+      
       // mobility and pressure derivative
       mobility[SubRegionTag::WELL] = wellVolFrac * wellDensity * resTotalMobility;
       dMobility_dP[SubRegionTag::WELL][SubRegionTag::RES]  = wellVolFrac * wellDensity * dResTotalMobility_dP;
