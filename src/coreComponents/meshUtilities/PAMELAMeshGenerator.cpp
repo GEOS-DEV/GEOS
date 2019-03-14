@@ -56,6 +56,10 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * co
   RegisterViewWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fields to be imported from the external mesh file");
+  RegisterViewWrapper(viewKeyStruct::scaleString, &m_scale, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDefaultValue(1.)->
+    setDescription("Scale the coordinates of the vertices");
 }
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
@@ -119,9 +123,9 @@ void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const dom
     localIndex vertexLocalIndex = verticesIterator->get_localIndex();
     globalIndex vertexGlobalIndex = verticesIterator->get_globalIndex();
     real64 * const pointData = X[verticesIterator->get_localIndex()].Data();
-    pointData[0] = verticesIterator->get_coordinates().x;
-    pointData[1] = verticesIterator->get_coordinates().y;
-    pointData[2] = verticesIterator->get_coordinates().z;
+    pointData[0] = verticesIterator->get_coordinates().x*m_scale;
+    pointData[1] = verticesIterator->get_coordinates().y*m_scale;
+    pointData[2] = verticesIterator->get_coordinates().z*m_scale;
     nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
     for( int i = 0; i < 3 ; i++ )
     {
