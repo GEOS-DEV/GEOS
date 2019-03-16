@@ -153,6 +153,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Allow non-converged solution to be accepted");
 
+  RegisterViewWrapper( viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Line search option");  
 
   RegisterViewWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
     setApplyDefaultValue(0)->
