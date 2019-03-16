@@ -1,0 +1,2 @@
+DensityFun BrineCO2Density 1e6 1.5e7 5e4 20 30 10 0
+ViscosityFun BrineViscosity 0

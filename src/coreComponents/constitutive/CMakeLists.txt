@@ -9,6 +9,14 @@ set( constitutive_headers
      Fluid/SingleFluidBase.hpp
      Fluid/MultiFluidBase.hpp
      Fluid/CompressibleSinglePhaseFluid.hpp
+     Fluid/MultiPhaseMultiComponentFluid.hpp
+     Fluid/PVTFunctions/BrineCO2DensityFunction.hpp
+     Fluid/PVTFunctions/BrineViscosityFunction.hpp
+     Fluid/PVTFunctions/CO2SolubilityFunction.hpp     
+     Fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     Fluid/PVTFunctions/PVTFunction.hpp
+     Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
+     Fluid/PVTFunctions/UtilityFunctions.hpp     
      Solid/PoreVolumeCompressibleSolid.hpp
      RelPerm/RelativePermeabilityBase.hpp
      RelPerm/BrooksCoreyRelativePermeability.hpp
@@ -26,6 +34,14 @@ set( constitutive_sources
      Fluid/SingleFluidBase.cpp
      Fluid/MultiFluidBase.cpp
      Fluid/CompressibleSinglePhaseFluid.cpp
+     Fluid/MultiPhaseMultiComponentFluid.cpp     
+     Fluid/PVTFunctions/BrineCO2DensityFunction.cpp
+     Fluid/PVTFunctions/BrineViscosityFunction.cpp 
+     Fluid/PVTFunctions/CO2SolubilityFunction.cpp
+     Fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
+     Fluid/PVTFunctions/PVTFunction.cpp
+     Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
+     Fluid/PVTFunctions/UtilityFunctions.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
      RelPerm/RelativePermeabilityBase.cpp
      RelPerm/BrooksCoreyRelativePermeability.cpp

@@ -260,6 +260,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
   bool const allowNonConverged = solverParams->allowNonConverged() > 0;
 
+  bool const doLineSearch = solverParams->doLineSearch() > 0;  
+
   // a flag to denote whether we have converged
   integer isConverged = 0;
 
@@ -294,7 +296,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if ( residualNorm < newtonTol )
+      if ( residualNorm < newtonTol && k != 0)
       {
         isConverged = 1;
         break;
@@ -302,7 +304,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
 
       // do line search in case residual has increased
-      if( residualNorm > lastResidual )
+      if( residualNorm > lastResidual && doLineSearch)
       {
 
         residualNorm = lastResidual;
@@ -314,7 +316,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           break;
         }
       }
-
+    
       // call the default linear solver on the system
       SolveSystem( blockSystem, getSystemSolverParameters() );
 
