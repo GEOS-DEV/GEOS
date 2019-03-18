@@ -312,7 +312,7 @@ ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, stri
  * @param partition
  * @param domain
  */
-void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
+void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
   // This cannot find groupkeys:
   // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
