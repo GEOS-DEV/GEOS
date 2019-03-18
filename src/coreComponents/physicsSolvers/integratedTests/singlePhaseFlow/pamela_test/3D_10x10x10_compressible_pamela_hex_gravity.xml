@@ -21,7 +21,7 @@
   
   <Mesh>
       <PAMELAMeshGenerator name="CubeHex"
-          file="cube_10x10x10_hex.msh"/>
+          file="cube_10x1x1_hex.msh"/>
   </Mesh>
 
   <Geometry>

@@ -94,8 +94,10 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
   return nullptr;
 }
 
-void PAMELAMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
+void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
+  domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
+
   std::cout << "nb attributes " << m_fieldsToImport.size() << std::endl;
   ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );

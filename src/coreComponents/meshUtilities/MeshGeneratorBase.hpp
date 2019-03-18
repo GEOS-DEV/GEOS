@@ -58,7 +58,7 @@ public:
 
   virtual void GenerateElementRegions( DomainPartition& domain ) = 0;
 
-  virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) = 0;
+  virtual void GenerateMesh( DomainPartition * const domain ) = 0;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) = 0;
