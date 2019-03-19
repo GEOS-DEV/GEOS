@@ -8,6 +8,9 @@ set( LAI_tests
 set( LAI_tests_with_xml
      testDofManager.cpp )
 
+set( LAI_tests_with_xml_routines
+     createConnLocPattern.cpp )
+
 set( nranks 2 )
 
 #
@@ -38,7 +41,7 @@ foreach(test ${LAI_tests_with_xml})
   message("processing test_name ${test_name}")
 	
   blt_add_executable( NAME ${test_name}  
-                      SOURCES ${test}
+                      SOURCES ${test} ${LAI_tests_with_xml_routines}
 	              OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
 	              DEPENDS_ON geosx_core gtest linearAlgebraInterface )
 

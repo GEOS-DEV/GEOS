@@ -43,10 +43,10 @@ namespace geosx
  *
  * TODO: replace with proper CrsArray
  */
-struct SparsityPattern
+struct Dof_SparsityPattern
 {
   // Set default values (empty matrix)
-  SparsityPattern() :
+  Dof_SparsityPattern() :
       nRows( 0 ),
       nCols( 0 )
   {
@@ -85,7 +85,7 @@ public:
    */
   enum class Location
   {
-    Elem, Face, Node
+    Elem, Face, Node, USER_DEFINED
   };
 
   /**
@@ -95,7 +95,7 @@ public:
    */
   enum class Connectivity
   {
-    Elem, Face, Node, None
+    Elem, Face, Node, None, USER_DEFINED
   };
 
   /**
@@ -168,6 +168,35 @@ public:
                  Connectivity const connectivity,
                  localIndex const components,
                  string_array const & regions );
+
+  /*
+   * addField: allow the usage of a predefine location-connection pattern (user-defined)
+   * Interface to allow only two parameters
+   */
+  void addField( string const & field,
+                 ParallelMatrix const & connLocInput );
+
+  /*
+   * Just another interface to allow three parameters (no connectivity)
+   */
+  void addField( string const & field,
+                 ParallelMatrix const & connLocInput,
+                 localIndex const components );
+
+  /*
+   * Just another interface to allow three parameters (no components)
+   */
+  void addField( string const & field,
+                 ParallelMatrix const & connLocInput,
+                 Connectivity const connectivity );
+
+  /*
+   * The real function
+   */
+  void addField( string const & field,
+                 ParallelMatrix const & connLocInput,
+                 localIndex const components,
+                 Connectivity const connectivity );
 
   /**
    * Add coupling between two fields.
@@ -300,7 +329,7 @@ public:
   /**
    * Print a CSR pattern on file or on screen
    */
-  void printSparsityPattern( SparsityPattern const & pattern, string const & fileName = "" ) const;
+  void printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName = "" ) const;
 
   /**
    * Release internal storage
@@ -399,7 +428,7 @@ private:
    * Create sparsity pattern for a field with itself (diagonal entries in the
    * connectivity matrix)
    */
-  void addDiagSparsityPattern( SparsityPattern & connLocPatt,
+  void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                                localIndex const & fieldIdx,
                                Connectivity const connectivity,
                                localIndex_array const & activeRegionsInput = localIndex_array() ) const;
@@ -454,12 +483,13 @@ private:
   void vectorOfPairsToCSR( array1d<indexPair> const & pairs,
                            localIndex const nRows,
                            localIndex const nCols,
-                           SparsityPattern & pattern ) const;
+                           Dof_SparsityPattern & pattern ) const;
 
   /**
    * Map a global row index to local row index
    */
-  localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A, globalIndex const index ) const;
+  localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A,
+                                          globalIndex const index ) const;
 
   /**
    * Performe a matrix matrix product with Parallel Matrix
@@ -470,6 +500,11 @@ private:
                              bool const transB,
                              EpetraMatrix &C,
                              bool const call_FillComplete = true ) const;
+
+  /**
+   * Return the local number of columns on each processor
+   */
+  localIndex numMyCols( EpetraMatrix const &A ) const;
 
 };
 

@@ -262,7 +262,7 @@ void DofManager::addField( string const & field,
   m_connectivity[numFields - 1][numFields - 1] = connectivity;
 
   // add sparsity pattern (LC matrix)
-  SparsityPattern connLocPattLocal;
+  Dof_SparsityPattern connLocPattLocal;
   addDiagSparsityPattern( connLocPattLocal, numFields - 1, connectivity );
 
   // TRILINOS interface
@@ -293,6 +293,135 @@ void DofManager::addField( string const & field,
     }
   }
   connLocPattDistr->close();
+
+  // log some basic info
+  GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
+  GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
+  GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+}
+
+
+// addField: allow the usage of a predefine location-connection pattern (user-defined)
+// Interface to allow only two parameters
+void DofManager::addField( string const & field,
+                           ParallelMatrix const & connLocInput )
+{
+  DofManager::addField( field,
+                        connLocInput,
+                        1,
+                        Connectivity::USER_DEFINED );
+}
+
+// Just another interface to allow three parameters (no connectivity)
+void DofManager::addField( string const & field,
+               ParallelMatrix const & connLocInput,
+               localIndex const components )
+{
+  DofManager::addField( field,
+                        connLocInput,
+                        components,
+                        Connectivity::USER_DEFINED );
+}
+
+// Just another interface to allow three parameters (no components)
+void DofManager::addField( string const & field,
+               ParallelMatrix const & connLocInput,
+               Connectivity const connectivity )
+{
+  DofManager::addField( field,
+                        connLocInput,
+                        1,
+                        connectivity );
+}
+
+// The real function
+void DofManager::addField( string const & field,
+                           ParallelMatrix const & connLocInput,
+                           localIndex const components,
+                           Connectivity const connectivity )
+{
+  // check if the field name is already being used
+  GEOS_ERROR_IF( keyInUse( field ), "Requested field name matches an existing field in the DofManager." );
+
+  // save field description to list of active fields
+  FieldDescription description;
+
+  description.name = field;
+  description.location = Location::USER_DEFINED;
+  description.numComponents = components;
+  description.key = field + "_dof_indices";
+  description.docstring = field + " dof indices";
+
+  if( components > 1 )
+  {
+    description.docstring += " (with " + std::to_string( components ) + "-component blocks)";
+  }
+
+  m_fields.push_back( description );
+
+  localIndex numFields = m_fields.size();
+  GEOS_ERROR_IF( numFields > MAX_NUM_FIELDS, "Limit on DofManager's MAX_NUM_FIELDS exceeded." );
+
+  // temp reference to last field
+  FieldDescription & last = m_fields[numFields - 1];
+
+  // determine field's global offset
+  if( numFields > 1 )
+  {
+    FieldDescription & prev = m_fields[numFields - 2];
+    last.fieldOffset = prev.fieldOffset + prev.numGlobalRows;
+  }
+  else
+  {
+    last.fieldOffset = 0;
+  }
+
+  // save field's connectivity type (self-to-self)
+  m_connectivity[numFields - 1][numFields - 1] = connectivity;
+
+  // save the user-provided location-connectivity matrix
+  last.connLocPattern = new ParallelMatrix(connLocInput);
+
+  // compute useful values (number of local and global rows)
+  last.numLocalRows = numMyCols(connLocInput);
+  last.numLocalNodes = last.numLocalRows / components;
+
+  localIndex_array localGather;
+
+  CommunicationTools::allGather( last.numLocalNodes, localGather );
+
+  last.numGlobalRows = 0;
+  for( localIndex p = 0 ; p < mpiSize ; ++p )
+  {
+    last.numGlobalRows += localGather[p];
+  }
+  last.numGlobalRows *= components;
+
+  last.firstLocalRow = 0;
+  for( localIndex p = 0 ; p < mpiRank ; ++p )
+  {
+    last.firstLocalRow += localGather[p];
+  }
+  last.firstLocalRow *= components;
+
+  if ( connectivity == Connectivity::Elem )
+  {
+    globalIndex_array globalGather;
+
+    last.firstLocalConnectivity = connLocInput.unwrappedPointer()->NumMyRows();
+
+    CommunicationTools::allGather( last.firstLocalConnectivity, globalGather );
+
+    last.firstLocalConnectivity = 0;
+    for( localIndex p = 0 ; p < mpiRank ; ++p )
+    {
+      last.firstLocalConnectivity += globalGather[p];
+    }
+  }
+  else
+  {
+    last.firstLocalConnectivity = 0;
+  }
 
   // log some basic info
   GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
@@ -1099,7 +1228,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
   FieldDescription const & colFieldDesc = m_fields[colFieldIndex];
 
   // Compute the CL matrices for row and col fields
-  SparsityPattern rowPatternLocal, colPatternLocal;
+  Dof_SparsityPattern rowPatternLocal, colPatternLocal;
   addDiagSparsityPattern( rowPatternLocal, rowFieldIndex, connectivity, rowActiveRegions );
   addDiagSparsityPattern( colPatternLocal, colFieldIndex, connectivity, colActiveRegions );
 
@@ -1157,7 +1286,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
 
 // Compute the sparsity pattern of the matrix connectivity - location for the specified
 // field (diagonal entry in the m_connectivity collection)
-void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
+void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                                          localIndex const & fieldIdx,
                                          Connectivity const connectivity,
                                          localIndex_array const & activeRegionsInput ) const
@@ -1809,7 +1938,7 @@ void DofManager::addDiagSparsityPattern( SparsityPattern & connLocPatt,
 void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs,
                                      localIndex const nRows,
                                      localIndex const nCols,
-                                     SparsityPattern & pattern ) const
+                                     Dof_SparsityPattern & pattern ) const
 {
   // Number of entries
   localIndex nnz = pairs.size();
@@ -1876,6 +2005,13 @@ localIndex DofManager::ParallelMatrixGetLocalRowID( EpetraMatrix const &A, globa
   return A.unwrappedPointer()->LRID( index );
 }
 
+// Return the local number of columns on each processor
+// NOTE: direct use of NumMyCols() counts also for overlays. To avoid those, DomainMap() is needed
+localIndex DofManager::numMyCols( EpetraMatrix const &A ) const
+{
+  return A.unwrappedPointer()->DomainMap().NumMyElements();
+}
+
 // Release internal memory
 void DofManager::cleanUp() const
 {
@@ -1938,7 +2074,7 @@ void DofManager::printParallelMatrix( ParallelMatrix const & matrix, string cons
 }
 
 // Print a CSR pattern on file or on screen
-void DofManager::printSparsityPattern( SparsityPattern const & pattern, string const & fileName ) const
+void DofManager::printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName ) const
 {
   if( fileName.length() == 0 )
   {
@@ -1993,6 +2129,9 @@ void DofManager::printConnectivityMatrix() const
             break;
           case Connectivity::Node:
             std::cout << " N ";
+            break;
+          case Connectivity::USER_DEFINED:
+            std::cout << " U ";
             break;
           case Connectivity::None:
             std::cout << "   ";
