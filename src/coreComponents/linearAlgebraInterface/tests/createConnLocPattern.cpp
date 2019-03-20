@@ -444,6 +444,7 @@ void createConnLocPattern( DomainPartition * const domain,
 
   return;
 
+  /*
   for( auto& regionPtr : regionListPtr )
   {
     regionNames[regionPtr.second] = regionPtr.first;
@@ -510,6 +511,7 @@ void createConnLocPattern( DomainPartition * const domain,
   connLocPattern.close();
 
   regionPtrs.clear();
+  */
 }
 
 // Create the location-location pattern for the Laplace equation with FEM
