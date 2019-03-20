@@ -111,8 +111,8 @@ TEST_F(DofManagerTest, TestOne)
   // ParallelMatrix userPattern;
   // createLocLocPattern( domain, 0, 0, userPattern );
 
-  ParallelMatrix connLocInput;
-  createConnLocPattern( domain, 0, 0, 1, connLocInput );
+  // ParallelMatrix connLocInput;
+  // createConnLocPattern( domain, 0, 0, 1, connLocInput );
 
   double timeAddField, timeAddCoupling, timeGetSingleSparsityPattern, timeGetGlobalSparsityPattern, timeGetIndices;
 
@@ -123,7 +123,7 @@ TEST_F(DofManagerTest, TestOne)
   //dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 1);
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
   dofManager.addField( "massmatrix", DofManager::Location::Elem, DofManager::Connectivity::None, 2, testRegion3 );
-  dofManager.addField( "user-defined", connLocInput, DofManager::Connectivity::Face );
+  // dofManager.addField( "user-defined", connLocInput, DofManager::Connectivity::Face );
 
   /*
    dofManager.addField( "facenode", DofManager::Location::Node, DofManager::Connectivity::Face, testRegion2 );
@@ -179,9 +179,9 @@ TEST_F(DofManagerTest, TestOne)
   if( printPattern )
     dofManager.printParallelMatrix( pattern, "coupling2_transp.mtx" );
 
-  dofManager.getSparsityPattern( pattern, "user-defined", "user-defined" );
-  if( printPattern )
-    dofManager.printParallelMatrix( pattern, "user-defined.mtx" );
+  // dofManager.getSparsityPattern( pattern, "user-defined", "user-defined" );
+  // if( printPattern )
+  //   dofManager.printParallelMatrix( pattern, "user-defined.mtx" );
 
   getElapsedTime( timeGetSingleSparsityPattern );
   setTimer( timeGetGlobalSparsityPattern );
