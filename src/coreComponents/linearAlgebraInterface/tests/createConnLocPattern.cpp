@@ -442,6 +442,8 @@ void createConnLocPattern( DomainPartition * const domain,
   auto const & regionListPtr = elemManager->GetRegions().keys();
   string_array regionNames( regionListPtr.size() );
 
+  return;
+
   for( auto& regionPtr : regionListPtr )
   {
     regionNames[regionPtr.second] = regionPtr.first;
@@ -528,7 +530,6 @@ void createLocLocPattern( DomainPartition * const domain,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription("Global DOF numbers for the primary field variable");
 
-  localIndex dim = 1;
   localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
   localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
   globalIndex n_global_rows = 0;
