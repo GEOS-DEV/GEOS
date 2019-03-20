@@ -462,7 +462,6 @@ void createConnLocPattern( DomainPartition * const domain,
 
   // point 2
 
-  /*
   localIndex numLocalNodes, numLocalRows;
   globalIndex numGlobalRows, firstLocalRow, firstLocalConnectivity;
   createIndexArray_ElemVersion( domain,
@@ -476,6 +475,9 @@ void createConnLocPattern( DomainPartition * const domain,
                                 firstLocalRow,
                                 firstLocalConnectivity );
 
+  // point 3
+
+  /*
   // add sparsity pattern (LC matrix)
   Dof_SparsityPattern connLocPattLocal;
   addDiagSparsityPattern( connLocPattLocal,
