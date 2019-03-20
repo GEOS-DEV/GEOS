@@ -76,7 +76,10 @@ public:
   /**
    * Destructor
    */
-  ~DofManager() = default;
+  ~DofManager()
+  {
+    cleanUp();
+  }
 
   /**
    * Enumeration of geometric objects for support location.  Note that this enum
@@ -331,11 +334,6 @@ public:
    */
   void printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName = "" ) const;
 
-  /**
-   * Release internal storage
-   */
-  void cleanUp() const;
-
 private:
   /**
    *  Limit on max number of fields
@@ -486,10 +484,9 @@ private:
                            Dof_SparsityPattern & pattern ) const;
 
   /**
-   * Map a global row index to local row index
+   * Release internal storage
    */
-  localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A,
-                                          globalIndex const index ) const;
+  void cleanUp();
 
   /**
    * Performe a matrix matrix product with Parallel Matrix
@@ -500,6 +497,12 @@ private:
                              bool const transB,
                              EpetraMatrix &C,
                              bool const call_FillComplete = true ) const;
+
+  /**
+   * Map a global row index to local row index
+   */
+  localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A,
+                                          globalIndex const index ) const;
 
   /**
    * Return the local number of columns on each processor

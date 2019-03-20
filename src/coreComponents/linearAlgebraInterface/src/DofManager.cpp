@@ -300,7 +300,6 @@ void DofManager::addField( string const & field,
   GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
 }
 
-
 // addField: allow the usage of a predefine location-connection pattern (user-defined)
 // Interface to allow only two parameters
 void DofManager::addField( string const & field,
@@ -314,8 +313,8 @@ void DofManager::addField( string const & field,
 
 // Just another interface to allow three parameters (no connectivity)
 void DofManager::addField( string const & field,
-               ParallelMatrix const & connLocInput,
-               localIndex const components )
+                           ParallelMatrix const & connLocInput,
+                           localIndex const components )
 {
   DofManager::addField( field,
                         connLocInput,
@@ -325,8 +324,8 @@ void DofManager::addField( string const & field,
 
 // Just another interface to allow three parameters (no components)
 void DofManager::addField( string const & field,
-               ParallelMatrix const & connLocInput,
-               Connectivity const connectivity )
+                           ParallelMatrix const & connLocInput,
+                           Connectivity const connectivity )
 {
   DofManager::addField( field,
                         connLocInput,
@@ -1031,7 +1030,6 @@ void DofManager::getIndices( globalIndex_array & indices,
                              localIndex const index,
                              string const & field ) const
 {
-
   // resize to 0
   indices.resize( 0 );
 
@@ -1172,7 +1170,6 @@ void DofManager::getIndices( globalIndex_array & indices,
 // Create the permutation that collects together all DoFs of each MPI process
 void DofManager::createPermutation( ParallelMatrix & permutation ) const
 {
-
   globalIndex sumGlobalDofs = 0;
   globalIndex_array ilower( m_fields.size() );
   globalIndex_array iupper( m_fields.size() );
@@ -2013,16 +2010,26 @@ localIndex DofManager::numMyCols( EpetraMatrix const &A ) const
 }
 
 // Release internal memory
-void DofManager::cleanUp() const
+void DofManager::cleanUp()
 {
-  for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  localIndex numFields = m_fields.size();
+
+  // Release memory related to field descrition
+  for( localIndex i = 0 ; i < numFields ; ++i )
   {
+    m_fields[i].regionNames.clear();
+    m_fields[i].regionPtrs.clear();
     delete m_fields[i].connLocPattern;
   }
+  m_fields.clear();
 
-  for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+  // Release memory related to connectivity description
+  m_connectivity.clear();
+
+  // Release memory related to sparsity pattern description
+  for( localIndex i = 0 ; i < numFields ; ++i )
   {
-    for( localIndex j = 0 ; j < m_fields.size() ; ++j )
+    for( localIndex j = 0 ; j < numFields ; ++j )
     {
       if( m_sparsityPattern[i][j].first != nullptr )
       {
@@ -2031,6 +2038,7 @@ void DofManager::cleanUp() const
       }
     }
   }
+  m_sparsityPattern.clear();
 }
 
 // Print a CSR pattern on file

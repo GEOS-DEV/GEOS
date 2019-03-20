@@ -275,8 +275,6 @@ TEST_F(DofManagerTest, TestOne)
               << std::fixed
               << std::setprecision( 2 ) << 100.0 << "%" << std::endl;
   }
-
-  dofManager.cleanUp();
 }
 
 int main( int argc, char** argv )

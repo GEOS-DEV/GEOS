@@ -506,6 +506,8 @@ void createConnLocPattern( DomainPartition * const domain,
     }
   }
   connLocPattern.close();
+
+  regionPtrs.clear();
 }
 
 // Create the location-location pattern for the Laplace equation with FEM
