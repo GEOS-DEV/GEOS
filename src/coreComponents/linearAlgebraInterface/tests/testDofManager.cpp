@@ -111,8 +111,8 @@ TEST_F(DofManagerTest, TestOne)
   // ParallelMatrix userPattern;
   // createLocLocPattern( domain, 0, 0, userPattern );
 
-  // ParallelMatrix connLocInput;
-  // createConnLocPattern( domain, 0, 0, 1, connLocInput );
+  ParallelMatrix connLocInput;
+  createConnLocPattern( domain, 0, 0, 1, connLocInput );
 
   double timeAddField, timeAddCoupling, timeGetSingleSparsityPattern, timeGetGlobalSparsityPattern, timeGetIndices;
 
