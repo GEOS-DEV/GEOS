@@ -442,9 +442,8 @@ void createConnLocPattern( DomainPartition * const domain,
   auto const & regionListPtr = elemManager->GetRegions().keys();
   string_array regionNames( regionListPtr.size() );
 
-  return;
+  // point 1
 
-  /*
   for( auto& regionPtr : regionListPtr )
   {
     regionNames[regionPtr.second] = regionPtr.first;
@@ -461,6 +460,9 @@ void createConnLocPattern( DomainPartition * const domain,
     GEOS_ERROR_IF( regionPtrs[er] == nullptr, "Specified element region not found" );
   }
 
+  // point 2
+
+  /*
   localIndex numLocalNodes, numLocalRows;
   globalIndex numGlobalRows, firstLocalRow, firstLocalConnectivity;
   createIndexArray_ElemVersion( domain,
