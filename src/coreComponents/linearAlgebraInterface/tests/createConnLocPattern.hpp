@@ -40,7 +40,7 @@ typedef std::pair<localIndex, globalIndex> indexPair;
 struct pairComparison
 {
   inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
-                          {
+  {
     if( lhs.first < rhs.first )
       return true;
     else if( lhs.first == rhs.first )
@@ -56,7 +56,7 @@ struct pairComparison
 struct pairSecondComparison
 {
   inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
-                          {
+  {
     return ( lhs.second < rhs.second );
   }
 };
@@ -64,8 +64,8 @@ struct pairSecondComparison
 /**
  * Create face index array
  */
-void createIndexArray_FaceVersion( DomainPartition * domain,
-                                   MeshLevel * meshLevel,
+void createIndexArray_FaceVersion( DomainPartition * const domain,
+                                   MeshLevel * const meshLevel,
                                    const string & fieldName,
                                    array1d<ElementRegion*> const & regionPtrs,
                                    localIndex const numComponents,
@@ -78,8 +78,8 @@ void createIndexArray_FaceVersion( DomainPartition * domain,
 /**
  * Create element index array
  */
-void createIndexArray_ElemVersion( DomainPartition * domain,
-                                   MeshLevel * meshLevel,
+void createIndexArray_ElemVersion( DomainPartition * const domain,
+                                   MeshLevel * const meshLevel,
                                    const string & fieldName,
                                    array1d<ElementRegion*> const & regionPtrs,
                                    localIndex const numComponents,

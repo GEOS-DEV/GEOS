@@ -454,7 +454,7 @@ private:
   struct pairComparison
   {
     inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
-                            {
+    {
       if( lhs.first < rhs.first )
         return true;
       else if( lhs.first == rhs.first )
@@ -470,7 +470,7 @@ private:
   struct pairSecondComparison
   {
     inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
-                            {
+    {
       return ( lhs.second < rhs.second );
     }
   };

@@ -219,6 +219,7 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
     {
       CellElementSubRegion * const subRegion = regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
 
+      /*
       subRegion->RegisterViewWrapper<globalIndex_array>( fieldName )->
         setApplyDefaultValue( static_cast<globalIndex>( DofManager::LocationStatus::notAssigned ) )->
         setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
@@ -236,6 +237,7 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
           count++;
         }
       }
+      */
     }
   }
 

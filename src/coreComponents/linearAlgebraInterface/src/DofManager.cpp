@@ -2014,7 +2014,7 @@ void DofManager::cleanUp()
 {
   localIndex numFields = m_fields.size();
 
-  // Release memory related to field descrition
+  // Release memory related to field description
   for( localIndex i = 0 ; i < numFields ; ++i )
   {
     m_fields[i].regionNames.clear();
