@@ -510,7 +510,6 @@ void createConnLocPattern( DomainPartition * const domain,
   regionPtrs.clear();
 }
 
-/*
 // Create the location-location pattern for the Laplace equation with FEM
 void createLocLocPattern( DomainPartition * const domain,
                           localIndex const meshBodyIndex,
@@ -529,8 +528,8 @@ void createLocLocPattern( DomainPartition * const domain,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription("Global DOF numbers for the primary field variable");
 
-  localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
-  localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
+  localIndex n_ghost_rows = nodeManager->GetNumberOfGhosts();
+  localIndex n_local_rows = nodeManager->size()-n_ghost_rows;
   globalIndex n_global_rows = 0;
 
   localIndex_array displacementIndices;
@@ -547,28 +546,12 @@ void createLocLocPattern( DomainPartition * const domain,
                     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   Epetra_Map rowMap( n_global_rows, 0, Epetra_MpiComm( MPI_COMM_GEOSX ) );
-  Epetra_FECrsGraph sparsity(Copy, rowMap, 0);
+  Epetra_FECrsGraph sparsity( Copy, rowMap, 0 );
   laplaceFEM.SetSparsityPattern( domain, &sparsity );
   sparsity.FillComplete();
 
   locLocPattern.create( sparsity );
-  for( globalIndex irow = 0 ; irow < n_global_rows ; ++irow )
-  {
-    int rowNnz;
-    int * colIndices;
-    sparsity.ExtractMyRowView( integer_conversion<int>(irow), rowNnz, colIndices );
-
-    real64_array values( rowNnz );
-    values = 1.0;
-    globalIndex_array globalColIndices( rowNnz );
-    for( int i = 0 ; i < rowNnz ; ++i )
-    {
-      globalColIndices[i] = integer_conversion<globalIndex>( colIndices[i] );
-    }
-    locLocPattern.insert( irow, globalColIndices, values );
-  }
-  locLocPattern.close();
+  locLocPattern.unwrappedPointer()->PutScalar( 1.0 );
 }
-*/
 
 }
