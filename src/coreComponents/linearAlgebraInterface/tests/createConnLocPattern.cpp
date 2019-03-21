@@ -206,8 +206,7 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
     firstLocalRow += localGather[p];
   }
 
-  return;
-  /*
+  // return;
 
   // step 3. loop again (sequential policy)
   //         allocate the index array
@@ -239,6 +238,9 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
       }
     }
   }
+
+  return;
+  /*
 
   GEOS_ERROR_IF( count != numLocalNodes, "Mismatch during assignment of local row indices" );
 
