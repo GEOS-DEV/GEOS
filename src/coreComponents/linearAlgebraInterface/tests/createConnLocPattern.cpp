@@ -26,8 +26,8 @@ namespace geosx
 {
 
 // Create face index array
-void createIndexArray_FaceVersion( DomainPartition * domain,
-                                   MeshLevel * meshLevel,
+void createIndexArray_FaceVersion( DomainPartition * const domain,
+                                   MeshLevel * const meshLevel,
                                    const string & fieldName,
                                    array1d<ElementRegion*> const & regionPtrs,
                                    localIndex const numComponents,
@@ -161,8 +161,8 @@ void createIndexArray_FaceVersion( DomainPartition * domain,
 }
 
 // Create element index array
-void createIndexArray_ElemVersion( DomainPartition * domain,
-                                   MeshLevel * meshLevel,
+void createIndexArray_ElemVersion( DomainPartition * const domain,
+                                   MeshLevel * const meshLevel,
                                    const string & fieldName,
                                    array1d<ElementRegion*> const & regionPtrs,
                                    localIndex const numComponents,
@@ -205,6 +205,9 @@ void createIndexArray_ElemVersion( DomainPartition * domain,
   {
     firstLocalRow += localGather[p];
   }
+
+  return;
+  /*
 
   // step 3. loop again (sequential policy)
   //         allocate the index array
@@ -262,6 +265,7 @@ void createIndexArray_ElemVersion( DomainPartition * domain,
   numLocalRows = numLocalNodes * numComponents;
   numGlobalRows *= numComponents;
   firstLocalRow *= numComponents;
+  */
 }
 
 // Convert a COO matrix in CSR format
