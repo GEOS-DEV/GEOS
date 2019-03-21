@@ -119,10 +119,10 @@ void createConnLocPattern( DomainPartition * const domain,
 /**
  * Create the location-location pattern for the Laplace equation with FEM
  */
-void createLocLocPattern( DomainPartition * const domain,
-                          localIndex const meshBodyIndex,
-                          localIndex const meshLevelIndex,
-                          ParallelMatrix & locLocPattern );
+//void createLocLocPattern( DomainPartition * const domain,
+//                          localIndex const meshBodyIndex,
+//                          localIndex const meshLevelIndex,
+//                          ParallelMatrix & locLocPattern );
 
 } /* namespace geosx */
 

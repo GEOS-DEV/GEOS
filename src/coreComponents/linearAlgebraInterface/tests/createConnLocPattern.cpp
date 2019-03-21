@@ -206,8 +206,6 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
     firstLocalRow += localGather[p];
   }
 
-  // return;
-
   // step 3. loop again (sequential policy)
   //         allocate the index array
   //         set unique global indices
@@ -219,7 +217,6 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
     {
       CellElementSubRegion * const subRegion = regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
 
-      /*
       subRegion->RegisterViewWrapper<globalIndex_array>( fieldName )->
         setApplyDefaultValue( static_cast<globalIndex>( DofManager::LocationStatus::notAssigned ) )->
         setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
@@ -237,12 +234,8 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
           count++;
         }
       }
-      */
     }
   }
-
-  return;
-  /*
 
   GEOS_ERROR_IF( count != numLocalNodes, "Mismatch during assignment of local row indices" );
 
@@ -269,7 +262,6 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
   numLocalRows = numLocalNodes * numComponents;
   numGlobalRows *= numComponents;
   firstLocalRow *= numComponents;
-  */
 }
 
 // Convert a COO matrix in CSR format
@@ -450,8 +442,6 @@ void createConnLocPattern( DomainPartition * const domain,
   auto const & regionListPtr = elemManager->GetRegions().keys();
   string_array regionNames( regionListPtr.size() );
 
-  // point 1
-
   for( auto& regionPtr : regionListPtr )
   {
     regionNames[regionPtr.second] = regionPtr.first;
@@ -468,8 +458,6 @@ void createConnLocPattern( DomainPartition * const domain,
     GEOS_ERROR_IF( regionPtrs[er] == nullptr, "Specified element region not found" );
   }
 
-  // point 2
-
   localIndex numLocalNodes, numLocalRows;
   globalIndex numGlobalRows, firstLocalRow, firstLocalConnectivity;
   createIndexArray_ElemVersion( domain,
@@ -483,9 +471,6 @@ void createConnLocPattern( DomainPartition * const domain,
                                 firstLocalRow,
                                 firstLocalConnectivity );
 
-  // point 3
-
-  /*
   // add sparsity pattern (LC matrix)
   Dof_SparsityPattern connLocPattLocal;
   addDiagSparsityPattern( connLocPattLocal,
@@ -523,9 +508,9 @@ void createConnLocPattern( DomainPartition * const domain,
   connLocPattern.close();
 
   regionPtrs.clear();
-  */
 }
 
+/*
 // Create the location-location pattern for the Laplace equation with FEM
 void createLocLocPattern( DomainPartition * const domain,
                           localIndex const meshBodyIndex,
@@ -584,5 +569,6 @@ void createLocLocPattern( DomainPartition * const domain,
   }
   locLocPattern.close();
 }
+*/
 
 }
