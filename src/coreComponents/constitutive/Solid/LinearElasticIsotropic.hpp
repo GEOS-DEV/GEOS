@@ -16,8 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- *  Created on: Aug 4, 2016
+/**
+ *  @file LinearElasticIsotropic.hpp
  */
 
 #ifndef LINEARELASTICISOTROPIC_HPP_
