@@ -79,6 +79,8 @@ FluxApproximationBase::GetCatalog()
 
 void FluxApproximationBase::compute(DomainPartition * domain)
 {
+  GEOSX_MARK_BEGIN("FluxApproximationBase::compute");
+
   computeMainStencil(domain, getStencil());
 
   if( !m_fractureRegionName.empty() )
@@ -104,6 +106,8 @@ void FluxApproximationBase::compute(DomainPartition * domain)
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
     computeBoundaryStencil(domain, targetSet, stencil->reference());
   });
+
+  GEOSX_MARK_END("FluxApproximationBase::compute");
 }
 
 FluxApproximationBase::CellStencil const &
