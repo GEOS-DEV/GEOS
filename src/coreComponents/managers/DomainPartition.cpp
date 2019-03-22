@@ -183,29 +183,41 @@ void DomainPartition::GenerateSets(  )
 void DomainPartition::SetupCommunications()
 {
   GEOSX_MARK_FUNCTION;
-  PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
-  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
-  //get communicator, rank, and coordinates
-  MPI_Comm cartcomm;
+  if( m_metisNeighborList.empty() )
   {
-    int reorder = 0;
-    MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
-    GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
+    PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
+    SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
+
+    //get communicator, rank, and coordinates
+    MPI_Comm cartcomm;
+    {
+      int reorder = 0;
+      MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+      GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
+    }
+    int rank = -1;
+    int nsdof = 3;
+    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+
+    MPI_Comm_rank(cartcomm, &rank);
+    MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
+
+    int ncoords[3];
+    AddNeighbors(0, cartcomm, ncoords);
+
+    MPI_Comm_free(&cartcomm);
   }
-  int rank = -1;
-  int nsdof = 3;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
-
-  MPI_Comm_rank(cartcomm, &rank);
-  MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
-
-  int ncoords[3];
-  AddNeighbors(0, cartcomm, ncoords);
-
-  MPI_Comm_free(&cartcomm);
-
+  else
+  {
+    for( auto & neighborRank : m_metisNeighborList )
+    {
+      NeighborCommunicator neighbor;
+      neighbor.SetNeighborRank( neighborRank );
+      allNeighbors.push_back( std::move(neighbor) );
+    }
+  }
 
   ManagedGroup * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
@@ -215,8 +227,6 @@ void DomainPartition::SetupCommunications()
   {
     neighbor.AddNeighborGroupToMesh(meshLevel);
   }
-
-
 
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
