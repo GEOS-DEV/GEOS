@@ -67,6 +67,7 @@ public:
     integer numSweeps = 2;
     bool    isSymmetric = true;
     string  nullSpaceType = "constantModes";
+    string  solver = "Petsc"; /* in PETSc, can be: "Petsc", "Trilinos", "Hypre" */
   }
   amg;
 
