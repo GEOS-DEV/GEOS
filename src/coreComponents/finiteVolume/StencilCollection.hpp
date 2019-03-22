@@ -93,9 +93,9 @@ public:
 
   /// evaluate a user function on each connection
   template <typename POLICY=stencilPolicy, typename LAMBDA=void>
-  void forAll(LAMBDA && lambda) const;
+  void forAll( LAMBDA && lambda ) const;
 
-  Accessor operator[](localIndex iconn) const;
+  Accessor operator[]( localIndex iconn ) const;
 
 private:
 
@@ -117,31 +117,35 @@ class StencilCollection<IndexType, WeightType>::Accessor
 {
 public:
 
-  Accessor(StencilCollection<IndexType, WeightType> const & stencil, localIndex index)
-    : m_size( integer_conversion<localIndex>( stencil.m_connections.size(index) ) ),
+  Accessor(StencilCollection<IndexType, WeightType> const & stencil, localIndex const index)
+    : m_size( stencil.m_connections.size(index) ),
       m_entries( stencil.m_connections[index] )
   {}
 
   /// return the stencil size
-  localIndex size() const { return integer_conversion<localIndex>(m_size); }
+  localIndex size() const { return m_size; }
 
   /// return the point index of connected point i
-  IndexType index(localIndex i) { return m_entries[i].index; }
+  IndexType index( localIndex const i ) const { return m_entries[i].index; }
 
   /// apply a user-defined function on the two connected cells only
   template <typename LAMBDA>
-  void forConnected(LAMBDA && lambda) const
+  void forConnected( LAMBDA && lambda ) const
   {
-    for (localIndex i = 0; i < 2; ++i)
+    for (localIndex i = 0; i < StencilCollection<IndexType, WeightType>::NUM_POINT_IN_FLUX; ++i)
+    {
       lambda( m_entries[i].index, i );
+    }
   }
 
   /// apply a user-defined function on the stencil
   template <typename LAMBDA>
-  void forAll(LAMBDA && lambda) const
+  void forAll( LAMBDA && lambda ) const
   {
     for (localIndex i = 0; i < size(); ++i)
+    {
       lambda( m_entries[i].index, m_entries[i].weight, i );
+    }
   }
 
 private:
@@ -152,13 +156,13 @@ private:
 
 template<typename IndexType, typename WeightType>
 StencilCollection<IndexType, WeightType>::StencilCollection()
-  : StencilCollection(0, 0)
+  : StencilCollection( 0, 0 )
 {
 
 }
 
 template<typename IndexType, typename WeightType>
-StencilCollection<IndexType, WeightType>::StencilCollection(localIndex numConn, localIndex avgStencilSize)
+StencilCollection<IndexType, WeightType>::StencilCollection( localIndex numConn, localIndex avgStencilSize )
   : m_connections()
 {
   reserve(numConn, avgStencilSize);
@@ -171,7 +175,7 @@ localIndex StencilCollection<IndexType, WeightType>::numConnections() const
 }
 
 template<typename IndexType, typename WeightType>
-void StencilCollection<IndexType, WeightType>::reserve(localIndex numConn, localIndex avgStencilSize)
+void StencilCollection<IndexType, WeightType>::reserve( localIndex numConn, localIndex avgStencilSize )
 {
   m_connections.reserveNumArrays( numConn );
   m_connections.reserveValues( numConn * avgStencilSize );
@@ -179,12 +183,11 @@ void StencilCollection<IndexType, WeightType>::reserve(localIndex numConn, local
 
 template<typename IndexType, typename WeightType>
 template<typename POLICY, typename LAMBDA>
-void StencilCollection<IndexType, WeightType>::forAll(LAMBDA &&lambda) const
+void StencilCollection<IndexType, WeightType>::forAll( LAMBDA && lambda ) const
 {
-  RAJA::RangeSegment seg(0, numConnections());
-  RAJA::forall<POLICY>(seg, [=] (localIndex index) mutable -> void
+  forall_in_range<POLICY>( 0, numConnections(), GEOSX_LAMBDA ( localIndex const index )
   {
-    lambda(Accessor(*this, index));
+    lambda( Accessor( *this, index ) );
   });
 }
 
@@ -212,7 +215,7 @@ void StencilCollection<IndexType, WeightType>::zero( localIndex const connectorI
 {
   localIndex const connectionListIndex = m_connectorIndices.at( connectorIndex );
 
-  Entry * entries = m_connections[connectionListIndex];
+  Entry * const entries = m_connections[connectionListIndex];
 
   if( ( entries[0].index == cells[0] && entries[1].index == cells[1] ) ||
       ( entries[0].index == cells[1] && entries[1].index == cells[0] ) )
@@ -235,7 +238,7 @@ template<typename IndexType, typename WeightType>
 typename StencilCollection<IndexType, WeightType>::Accessor
 StencilCollection<IndexType, WeightType>::operator[](localIndex iconn) const
 {
-  return Accessor(*this, iconn);
+  return Accessor( *this, iconn );
 }
 
 }

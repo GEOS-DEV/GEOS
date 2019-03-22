@@ -146,10 +146,10 @@ template< typename T, int MAXSIZE >
 using stackArray2d = stack_array<T, 2, MAXSIZE>;
 
 template< typename T >
-using csArrayView2d = LvArray::CSArray2DView<T>;
+using csArrayView2d = LvArray::CSArray2DView<T, localIndex>;
 
 template< typename T >
-using csArray2d = LvArray::CSArray2D<T>;
+using csArray2d = LvArray::CSArray2D<T, localIndex>;
 
 template< typename T >
 using array3d = LvArray::Array<T,3,localIndex>;
