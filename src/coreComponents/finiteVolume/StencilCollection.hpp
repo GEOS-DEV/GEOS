@@ -38,7 +38,6 @@ namespace geosx
  * which evaluates user-provided functions on the stencil
  *
  * TODO:
- * - optimize for contiguous memory layout
  * - group by by stencil size and/or element region for efficient execution
  */
 template <typename IndexType, typename WeightType>
@@ -54,10 +53,10 @@ public:
   /**
    * @brief Maximum number of points in a stencil (required to use static arrays in kernels)
    */
-  static localIndex constexpr MAX_STENCIL_SIZE = 16;
+  static localIndex constexpr MAX_STENCIL_SIZE = 18;
 
   // provide aliases for template type parameters
-  using index_type = IndexType;
+  using index_type  = IndexType;
   using weight_type = WeightType;
 
   /**
@@ -71,7 +70,7 @@ public:
 
   explicit StencilCollection();
 
-  explicit StencilCollection(localIndex numConn, localIndex avgStencilSize);
+  explicit StencilCollection( localIndex numConn, localIndex avgStencilSize );
 
   /// return the size of the stencil collection (i.e. number of connections)
   localIndex numConnections() const;
@@ -80,10 +79,10 @@ public:
   void reserve(localIndex numConn, localIndex avgStencilSize);
 
   /// add data for one connection
-  void add(IndexType const cells[2],
-           array1d<IndexType> const & stencilCells,
-           array1d<WeightType> const & stencilWeights,
-           localIndex const connectorIndex );
+  void add( localIndex const numPts,
+            IndexType  const * indices,
+            WeightType const * weights,
+            localIndex const connectorIndex );
 
   /// zero out connections
   void zero( localIndex const connectorIndex,
@@ -100,22 +99,13 @@ public:
 
 private:
 
-  /**
-   * @struct A structure describing a single (generally multi-point) FV connection stencil
-   */
-  struct Connection
+  struct Entry
   {
-    IndexType           connectedPointIndices[2]; ///< identifiers of connected points
-    array1d<IndexType>  stencilPointIndices;      ///< identifiers of points in stencil
-    array1d<WeightType> stencilWeights;           ///< stencil weights (e.g. transmissibilities)
-
-    void resize(localIndex const size)
-    { stencilPointIndices.resize(size);
-      stencilWeights.resize(size);    }
+    IndexType  index;
+    WeightType weight;
   };
 
-  /// array that holds the list of CellConnection objects.
-  array1d<Connection> m_connectionList;
+  csArray2d<Entry> m_connections;
   map<localIndex, localIndex> m_connectorIndices;
 
 };
@@ -128,23 +118,22 @@ class StencilCollection<IndexType, WeightType>::Accessor
 public:
 
   Accessor(StencilCollection<IndexType, WeightType> const & stencil, localIndex index)
-    : m_conn(stencil.m_connectionList[index]) {}
+    : m_size( integer_conversion<localIndex>( stencil.m_connections.size(index) ) ),
+      m_entries( stencil.m_connections[index] )
+  {}
 
   /// return the stencil size
-  localIndex size() const { return m_conn.stencilPointIndices.size(); }
+  localIndex size() const { return integer_conversion<localIndex>(m_size); }
 
   /// return the point index of connected point i
-  IndexType connectedIndex( localIndex i ) { return m_conn.connectedPointIndices[i]; }
-
-  /// return the point index of stencil point i
-  IndexType stencilIndex ( localIndex i ) { return m_conn.stencilPointIndices[i]; }
+  IndexType index(localIndex i) { return m_entries[i].index; }
 
   /// apply a user-defined function on the two connected cells only
   template <typename LAMBDA>
   void forConnected(LAMBDA && lambda) const
   {
     for (localIndex i = 0; i < 2; ++i)
-      lambda(m_conn.connectedPointIndices[i], i);
+      lambda( m_entries[i].index, i );
   }
 
   /// apply a user-defined function on the stencil
@@ -152,13 +141,13 @@ public:
   void forAll(LAMBDA && lambda) const
   {
     for (localIndex i = 0; i < size(); ++i)
-      lambda(m_conn.stencilPointIndices[i], m_conn.stencilWeights[i], i);
+      lambda( m_entries[i].index, m_entries[i].weight, i );
   }
 
 private:
 
-  StencilCollection<IndexType, WeightType>::Connection const & m_conn;
-
+  localIndex m_size;
+  StencilCollection<IndexType, WeightType>::Entry const * m_entries;
 };
 
 template<typename IndexType, typename WeightType>
@@ -170,7 +159,7 @@ StencilCollection<IndexType, WeightType>::StencilCollection()
 
 template<typename IndexType, typename WeightType>
 StencilCollection<IndexType, WeightType>::StencilCollection(localIndex numConn, localIndex avgStencilSize)
-  : m_connectionList()
+  : m_connections()
 {
   reserve(numConn, avgStencilSize);
 }
@@ -178,13 +167,14 @@ StencilCollection<IndexType, WeightType>::StencilCollection(localIndex numConn, 
 template<typename IndexType, typename WeightType>
 localIndex StencilCollection<IndexType, WeightType>::numConnections() const
 {
-  return m_connectionList.size();
+  return m_connections.size();
 }
 
 template<typename IndexType, typename WeightType>
 void StencilCollection<IndexType, WeightType>::reserve(localIndex numConn, localIndex avgStencilSize)
 {
-  m_connectionList.reserve(numConn);
+  m_connections.reserveNumArrays( numConn );
+  m_connections.reserveValues( numConn * avgStencilSize );
 }
 
 template<typename IndexType, typename WeightType>
@@ -199,15 +189,21 @@ void StencilCollection<IndexType, WeightType>::forAll(LAMBDA &&lambda) const
 }
 
 template<typename IndexType, typename WeightType>
-void StencilCollection<IndexType, WeightType>::add(IndexType const cells[2],
-                                                   const array1d<IndexType> & stencilCells,
-                                                   const array1d<WeightType> & stencilWeights,
-                                                   localIndex const connectorIndex )
+void StencilCollection<IndexType, WeightType>::add( localIndex const numPts,
+                                                    IndexType  const * indices,
+                                                    WeightType const * weights,
+                                                    localIndex const connectorIndex )
 {
-  GEOS_ERROR_IF( stencilCells.size() >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
-  Connection conn = { { cells[0], cells[1] }, stencilCells, stencilWeights };
-  m_connectionList.push_back(conn);
-  m_connectorIndices[connectorIndex] = m_connectionList.size()-1;
+  GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+
+  stackArray1d<Entry, MAX_STENCIL_SIZE> entries(numPts);
+  for (localIndex i = 0; i < numPts; ++i)
+  {
+    entries[i] = { indices[i], weights[i] };
+  }
+
+  m_connections.appendArray( entries.data(), numPts );
+  m_connectorIndices[connectorIndex] = m_connections.size() - 1;
 }
 
 template<typename IndexType, typename WeightType>
@@ -216,14 +212,15 @@ void StencilCollection<IndexType, WeightType>::zero( localIndex const connectorI
 {
   localIndex const connectionListIndex = m_connectorIndices.at( connectorIndex );
 
-  array1d<WeightType> & weights = m_connectionList[connectionListIndex].stencilWeights;
+  Entry * entries = m_connections[connectionListIndex];
 
-  if( ( m_connectionList[connectionListIndex].connectedPointIndices[0] == cells[0] &&
-        m_connectionList[connectionListIndex].connectedPointIndices[1] == cells[1] ) ||
-      ( m_connectionList[connectionListIndex].connectedPointIndices[0] == cells[1] &&
-        m_connectionList[connectionListIndex].connectedPointIndices[1] == cells[0] ) )
+  if( ( entries[0].index == cells[0] && entries[1].index == cells[1] ) ||
+      ( entries[0].index == cells[1] && entries[1].index == cells[0] ) )
   {
-    weights = 0;
+    for (localIndex i = 0; i < m_connections.size(connectionListIndex); ++i)
+    {
+      entries[i].weight = 0; // TODO remove entries altogether?
+    }
   }
 }
 

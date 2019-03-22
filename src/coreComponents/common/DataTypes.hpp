@@ -43,6 +43,7 @@
 #include "Array.hpp"
 #include "StackArrayWrapper.hpp"
 #include "SortedArray.hpp"
+#include "CSArray2D.hpp"
 #include "math/TensorT/TensorT.h"
 
 #ifdef GEOSX_USE_ATK
@@ -143,6 +144,12 @@ using arraySlice2d = LvArray::ArraySlice<T, 2, localIndex>;
 
 template< typename T, int MAXSIZE >
 using stackArray2d = stack_array<T, 2, MAXSIZE>;
+
+template< typename T >
+using csArrayView2d = LvArray::CSArray2DView<T>;
+
+template< typename T >
+using csArray2d = LvArray::CSArray2D<T>;
 
 template< typename T >
 using array3d = LvArray::Array<T,3,localIndex>;

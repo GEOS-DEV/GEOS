@@ -1375,7 +1375,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       }
 
       // get global identifiers of the upstream cell
-      CellDescriptor cell_up = stencil.connectedIndex( k_up );
+      CellDescriptor cell_up = stencil.index(k_up);
       localIndex er_up  = cell_up.region;
       localIndex esr_up = cell_up.subRegion;
       localIndex ei_up  = cell_up.index;
