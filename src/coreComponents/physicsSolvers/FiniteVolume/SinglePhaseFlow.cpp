@@ -39,6 +39,8 @@
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 
+#include "physicsSolvers/FiniteVolume/SinglePhaseFlow_kernels.hpp"
+
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
@@ -555,49 +557,6 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   }
 }
 
-template< bool ISPORO >
-struct AssembleAccumulationTermsHelper;
-
-template<>
-struct AssembleAccumulationTermsHelper<true>
-{
-  inline static constexpr void porosityUpdate( real64 & poro,
-                                               real64 & dPoro_dPres,
-                                               real64 const biotCoefficient,
-                                               real64 const poroOld,
-                                               real64 const bulkModulus,
-                                               real64 const totalMeanStress,
-                                               real64 const oldTotalMeanStress,
-                                               real64 const dPres,
-                                               real64 const poroRef,
-                                               real64 const pvmult,
-                                               real64 const dPVMult_dPres )
-  {
-    dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
-    poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
-  }
-};
-
-template<>
-struct AssembleAccumulationTermsHelper<false>
-{
-  inline static constexpr void porosityUpdate( real64 & poro,
-                                               real64 & dPoro_dPres,
-                                               real64 const biotCoefficient,
-                                               real64 const poroOld,
-                                               real64 const bulkModulus,
-                                               real64 const totalMeanStress,
-                                               real64 const oldTotalMeanStress,
-                                               real64 const dPres,
-                                               real64 const poroRef,
-                                               real64 const pvmult,
-                                               real64 const dPVMult_dPres )
-  {
-    poro = poroRef * pvmult;
-    dPoro_dPres = dPVMult_dPres * poroRef;
-  }
-};
-
 
 template< bool ISPORO >
 void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
@@ -637,38 +596,36 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      if (elemGhostRank[ei] < 0)
+      if (elemGhostRank[ei] >= 0)
       {
-        globalIndex const elemDOF = dofNumber[ei];
-        real64 const densNew = dens[ei][0];
-        real64 const volNew = volume[ei] + dVol[ei];
+        return;
+      }
 
-        real64 dPoro_dPres;
-        AssembleAccumulationTermsHelper<ISPORO>::porosityUpdate( poro[ei], dPoro_dPres,
-                                                                 biotCoefficient,
-                                                                 poroOld[ei],
-                                                                 bulkModulus[ei][0],
-                                                                 totalMeanStress[ei],
-                                                                 oldTotalMeanStress[ei],
-                                                                 dPres[ei],
-                                                                 poroRef[ei],
-                                                                 pvmult[ei][0],
-                                                                 dPVMult_dPres[ei][0] );
+      real64 localAccum, localAccumJacobian;
+      globalIndex const elemDOF = dofNumber[ei];
 
-
-        // Residual contribution is mass conservation in the cell
-        real64 const localAccum = poro[ei]    * densNew     * volNew
-                                - poroOld[ei] * densOld[ei] * volume[ei];
-
-        // Derivative of residual wrt to pressure in the cell
-        real64 const localAccumJacobian = dPoro_dPres * densNew * volNew
-                                        + dDens_dPres[ei][0] * poro[ei] * volNew;
+      SinglePhaseFlowKernels::MakeAccumulation<ISPORO>( dPres[ei],
+                                                        dens[ei][0],
+                                                        densOld[ei],
+                                                        dDens_dPres[ei][0],
+                                                        volume[ei],
+                                                        dVol[ei],
+                                                        poroRef[ei],
+                                                        poroOld[ei],
+                                                        pvmult[ei][0],
+                                                        dPVMult_dPres[ei][0],
+                                                        biotCoefficient,
+                                                        bulkModulus[ei][0],
+                                                        totalMeanStress[ei],
+                                                        oldTotalMeanStress[ei],
+                                                        poro[ei],
+                                                        localAccum,
+                                                        localAccumJacobian );
 
         // add contribution to global residual and jacobian
-        residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
-        jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+      residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
+      jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
 
-      }
     } );
   } );
 }
@@ -700,6 +657,9 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & visc        = m_viscosity;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres = m_dVisc_dPres;
 
+  integer const gravityFlag = m_gravityFlag;
+  localIndex const fluidIndex = m_fluidIndex;
+
   constexpr localIndex numElems = 2;
   constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
 
@@ -716,89 +676,31 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
       stackArray1d<real64, numElems> localFlux(numElems);
       stackArray2d<real64, numElems*maxStencilSize> localFluxJacobian(numElems, stencilSize);
 
-      stackArray1d<real64, numElems> densWeight(numElems);
-      stackArray1d<real64, numElems> mobility(numElems);
-      stackArray1d<real64, numElems> dMobility_dP(numElems);
-      stackArray1d<real64, maxStencilSize> dDensMean_dP(stencilSize);
-      stackArray1d<real64, maxStencilSize> dFlux_dP(stencilSize);
+      SinglePhaseFlowKernels::MakeFlux( stencil,
+                                        pres,
+                                        dPres,
+                                        gravDepth,
+                                        dens,
+                                        dDens_dPres,
+                                        visc,
+                                        dVisc_dPres,
+                                        fluidIndex,
+                                        gravityFlag,
+                                        dt,
+                                        localFlux,
+                                        localFluxJacobian );
 
-      // clear working arrays
+      // extract DOF numbers
       eqnRowIndices = -1;
-      dDensMean_dP = 0.0;
-
-      // density averaging weights
-      densWeight = 0.5;
-
-      // calculate quantities on primary connected cells
-      real64 densMean = 0.0;
       stencil.forConnected( [&] ( CellDescriptor const & cell, localIndex i )
       {
-        localIndex const er  = cell.region;
-        localIndex const esr = cell.subRegion;
-        localIndex const ei  = cell.index;
-
-        eqnRowIndices[i] = dofNumber[er][esr][ei];
-
-        // density
-        real64 const density   = dens[er][esr][m_fluidIndex][ei][0];
-        real64 const dDens_dP  = dDens_dPres[er][esr][m_fluidIndex][ei][0];
-
-        // viscosity
-        real64 const viscosity = visc[er][esr][m_fluidIndex][ei][0];
-        real64 const dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
-
-        // mobility
-        mobility[i]  = density / viscosity;
-        dMobility_dP[i]  = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
-
-        // average density
-        densMean += densWeight[i] * density;
-        dDensMean_dP[i] = densWeight[i] * dDens_dP;
+        eqnRowIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
       });
 
-      //***** calculation of flux *****
-
-      // compute potential difference MPFA-style
-      real64 potDif = 0.0;
       stencil.forAll( [&] ( CellDescriptor const & cell, real64 w, localIndex i )
       {
-        localIndex const er  = cell.region;
-        localIndex const esr = cell.subRegion;
-        localIndex const ei  = cell.index;
-
-        dofColIndices[i] = dofNumber[er][esr][ei];
-
-        real64 const gravD    = gravDepth[er][esr][ei];
-        real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
-        real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
-
-        potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
-        dFlux_dP[i] = w * (1.0 - dGrav_dP);
+        dofColIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
       });
-
-      // upwinding of fluid properties (make this an option?)
-      localIndex const k_up = (potDif >= 0) ? 0 : 1;
-
-      // compute the final flux and derivatives
-      real64 const flux = mobility[k_up] * potDif;
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
-      {
-        dFlux_dP[ke] *= mobility[k_up];
-      }
-
-      dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
-
-      //***** end flux terms *****
-
-      // populate local flux vector and derivatives
-      localFlux[0] =  dt * flux;
-      localFlux[1] = -localFlux[0];
-
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
-      {
-        localFluxJacobian[0][ke] =   dt * dFlux_dP[ke];
-        localFluxJacobian[1][ke] = - dt * dFlux_dP[ke];
-      }
 
       // Add to global residual/jacobian
       jacobian->SumIntoGlobalValues( integer_conversion<int>(numElems),
