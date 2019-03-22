@@ -203,114 +203,10 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
   }
 }
 
-
-MultiFluidBase * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup * dataGroup ) const
-{
-  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
-
-  MultiFluidBase * const fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
-  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
-
-  return fluid;
-}
-
-MultiFluidBase const * CompositionalMultiphaseFlow::GetFluidModel( ManagedGroup const * dataGroup ) const
-{
-  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
-
-  MultiFluidBase const * const fluid = constitutiveModels->GetGroup<MultiFluidBase>( m_fluidName );
-  GEOS_ERROR_IF( fluid == nullptr, "Target group does not contain the fluid model" );
-
-  return fluid;
-}
-
-ConstitutiveBase * CompositionalMultiphaseFlow::GetSolidModel( ManagedGroup * dataGroup ) const
-{
-  ManagedGroup * const contitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( contitutiveModels == nullptr, "Target group does not contain constitutive models" );
-
-  ConstitutiveBase * const solid = contitutiveModels->GetGroup<ConstitutiveBase>( m_solidName );
-  GEOS_ERROR_IF( solid == nullptr, "Target group does not contain the solid model" );
-
-  return solid;
-}
-
-ConstitutiveBase const * CompositionalMultiphaseFlow::GetSolidModel( ManagedGroup const * dataGroup ) const
-{
-  ManagedGroup const * const contitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( contitutiveModels == nullptr, "Target group does not contain constitutive models" );
-
-  ConstitutiveBase const * const solid = contitutiveModels->GetGroup<ConstitutiveBase>( m_solidName );
-  GEOS_ERROR_IF( solid == nullptr, "Target group does not contain the solid model" );
-
-  return solid;
-}
-
-RelativePermeabilityBase * CompositionalMultiphaseFlow::GetRelPermModel( ManagedGroup * dataGroup ) const
-{
-  ManagedGroup * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
-
-  RelativePermeabilityBase * const relPerm = constitutiveModels->GetGroup<RelativePermeabilityBase>( m_relPermName );
-  GEOS_ERROR_IF( relPerm == nullptr, "Target group does not contain the relative permeability model" );
-
-  return relPerm;
-}
-
-RelativePermeabilityBase const * CompositionalMultiphaseFlow::GetRelPermModel( ManagedGroup const * dataGroup ) const
-{
-  ManagedGroup const * const constitutiveModels = dataGroup->GetGroup( ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
-
-  RelativePermeabilityBase const * const relPerm = constitutiveModels->GetGroup<RelativePermeabilityBase>( m_relPermName );
-  GEOS_ERROR_IF( relPerm == nullptr, "Target group does not contain the relative permeability model" );
-
-  return relPerm;
-}
-
-namespace
-{
-
-template<typename LAMBDA>
-typename std::enable_if<std::is_convertible<LAMBDA,
-                                            std::function<void(localIndex,localIndex,ElementRegion *,CellElementSubRegion *)>
-                                           >::value, void>::type
-applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
-{
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  elemManager->forElementSubRegionsComplete( lambda );
-}
-
-template<typename LAMBDA>
-typename std::enable_if<std::is_convertible<LAMBDA,std::function<void(CellElementSubRegion *)>>::value, void>::type
-applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
-{
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  elemManager->forElementSubRegions( lambda );
-}
-
-template<typename LAMBDA>
-typename std::enable_if<std::is_convertible<LAMBDA,
-                                            std::function<void(localIndex,localIndex,ElementRegion const *,CellElementSubRegion const *)>
-                                           >::value, void>::type
-applyToSubRegions( DomainPartition const * const domain, LAMBDA && lambda )
-{
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  elemManager->forElementSubRegionsComplete( lambda );
-}
-
-}
-
 void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const dataGroup )
 {
+  GEOSX_MARK_FUNCTION;
+
   arrayView2d<real64 const> const & compDens =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
 
@@ -346,17 +242,11 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
   });
 }
 
-void CompositionalMultiphaseFlow::UpdateComponentFractionAll( DomainPartition * const domain )
-{
-  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
-  {
-    UpdateComponentFraction( subRegion );
-  });
-}
-
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * const dataGroup )
 {
-  MultiFluidBase * fluid = GetFluidModel( dataGroup );
+  GEOSX_MARK_FUNCTION;
+
+  MultiFluidBase * fluid = GetConstitutiveModel<MultiFluidBase>( dataGroup, m_fluidName );
 
   arrayView2d<real64> const & phaseVolFrac =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
@@ -443,17 +333,11 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
   });
 }
 
-void CompositionalMultiphaseFlow::UpdatePhaseVolumeFractionAll( DomainPartition * const domain )
-{
-  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
-  {
-    UpdatePhaseVolumeFraction( subRegion );
-  });
-}
-
 void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGroup )
 {
-  MultiFluidBase * const fluid = GetFluidModel( dataGroup );
+  GEOSX_MARK_FUNCTION;
+
+  MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( dataGroup, m_fluidName );
 
   arrayView1d<real64 const> const & pres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
@@ -467,17 +351,11 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
   //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
-void CompositionalMultiphaseFlow::UpdateFluidModelAll( DomainPartition * const domain )
-{
-  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
-  {
-    UpdateFluidModel( subRegion );
-  });
-}
-
 void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
 {
-  ConstitutiveBase * const solid = GetSolidModel( dataGroup );
+  GEOSX_MARK_FUNCTION;
+
+  ConstitutiveBase * const solid = GetConstitutiveModel<ConstitutiveBase>( dataGroup, m_solidName );
 
   arrayView1d<real64 const> const & pres  = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
@@ -488,17 +366,11 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
   });
 }
 
-void CompositionalMultiphaseFlow::UpdateSolidModelAll( DomainPartition * const domain )
-{
-  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
-  {
-    UpdateSolidModel( subRegion );
-  });
-}
-
 void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
 {
-  RelativePermeabilityBase * const relPerm = GetRelPermModel( dataGroup );
+  GEOSX_MARK_FUNCTION;
+
+  RelativePermeabilityBase * const relPerm = GetConstitutiveModel<RelativePermeabilityBase>( dataGroup, m_relPermName );
 
   arrayView2d<real64> const & phaseVolFrac =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
@@ -506,16 +378,10 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
   relPerm->BatchUpdate( phaseVolFrac );
 }
 
-void CompositionalMultiphaseFlow::UpdateRelPermModelAll( DomainPartition * const domain )
-{
-  applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
-  {
-    UpdateRelPermModel( subRegion );
-  });
-}
-
 void CompositionalMultiphaseFlow::UpdateState( ManagedGroup * const dataGroup )
 {
+  GEOSX_MARK_FUNCTION;
+
   UpdateComponentFraction( dataGroup );
   UpdateFluidModel( dataGroup );
   UpdatePhaseVolumeFraction( dataGroup );
@@ -523,30 +389,22 @@ void CompositionalMultiphaseFlow::UpdateState( ManagedGroup * const dataGroup )
   UpdateRelPermModel( dataGroup );
 }
 
-void CompositionalMultiphaseFlow::UpdateStateAll( DomainPartition * const domain )
-{
-  UpdateComponentFractionAll( domain );
-  UpdateFluidModelAll( domain );
-  UpdatePhaseVolumeFractionAll( domain );
-  UpdateSolidModelAll( domain );
-  UpdateRelPermModelAll( domain );
-}
-
 void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const domain )
 {
-  // 1. Assume global component fractions have been prescribed.
-  // Initialize constitutive state to get fluid density.
-  UpdateFluidModelAll( domain );
+  GEOSX_MARK_FUNCTION;
 
-  // 2. Back-calculate global component densities from fractions and total fluid density
-  // in order to initialize the primary solution variables
   applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
                                    ElementRegion * const region,
                                    ElementSubRegionBase * const subRegion )
   {
+    // 1. Assume global component fractions have been prescribed.
+    // Initialize constitutive state to get fluid density.
+    UpdateFluidModel( subRegion );
+
+    // 2. Back-calculate global component densities from fractions and total fluid density
+    // in order to initialize the primary solution variables
     arrayView2d<real64 const> const & compFrac  = m_compFrac[er][esr];
     arrayView2d<real64 const> const & totalDens = m_totalDens[er][esr][m_fluidIndex];
-
     arrayView2d<real64> compDens = m_globalCompDensity[er][esr];
 
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
@@ -556,20 +414,22 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
         compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
       }
     });
+
+    // 3. Calculate phase saturations
+    UpdatePhaseVolumeFraction( subRegion );
+
+    // 4. Initialize solid state
+    UpdateSolidModel( subRegion );
+
+    // 5. Initialize rel perm state
+    UpdateRelPermModel( subRegion );
   });
-
-  // 3. Calculate phase saturations
-  UpdatePhaseVolumeFractionAll(domain);
-
-  // 4. Initialize solid state
-  UpdateSolidModelAll( domain );
-
-  // 5. Initialize rel perm state
-  UpdateRelPermModelAll( domain );
 }
 
 void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
+  GEOSX_MARK_FUNCTION;
+
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
@@ -594,7 +454,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   // set mass fraction flag on subregion models
   applyToSubRegions( domain, [&] ( ManagedGroup * subRegion )
   {
-    MultiFluidBase * fluid = GetFluidModel( subRegion );
+    MultiFluidBase * fluid = GetConstitutiveModel<MultiFluidBase>( subRegion, m_fluidName );
     fluid->setMassFlag( static_cast<bool>(m_useMass) );
   });
 
@@ -608,6 +468,8 @@ real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
                                                 integer const cycleNumber,
                                                 DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   real64 dt_return = dt;
 
   ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
@@ -672,6 +534,8 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 co
                                                 DomainPartition * const domain,
                                                 EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
+
   // bind the stored views to the current domain
   ResetViews( domain );
 
@@ -875,7 +739,7 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
                                                EpetraBlockSystem * const blockSystem )
 {
   // assume that there is only a single MeshLevel for now
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
   // for this solver, the dof are on the cell center, and the block of rows corresponds to a cell
@@ -943,6 +807,8 @@ void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain
                                                   EpetraBlockSystem * const blockSystem,
                                                   real64 const time_n, real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
@@ -972,6 +838,8 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
                                                              real64 const time_n,
                                                              real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
@@ -1114,6 +982,8 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
                                                      real64 const time_n,
                                                      real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   NumericalMethodsManager const * const numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
@@ -1459,6 +1329,8 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
                                                               real64 const time_n,
                                                               real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
@@ -1553,6 +1425,8 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * con
                                                            EpetraBlockSystem * const blockSystem,
                                                            real64 const time_n, real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
                                                                 BlockIDs::compositionalBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
@@ -1652,7 +1526,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                     ManagedGroup * subRegion,
                     string const & )
   {
-    MultiFluidBase * const fluid = GetFluidModel(subRegion );
+    MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( subRegion, m_fluidName );
 
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference<array1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
 
@@ -1900,7 +1774,10 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
                                          mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
-  UpdateStateAll(domain);
+  applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion )
+  {
+    UpdateState( subRegion );
+  } );
 }
 
 void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
@@ -1920,7 +1797,10 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
     });
   });
 
-  UpdateStateAll(domain);
+  applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion )
+  {
+    UpdateState( subRegion );
+  } );
 }
 
 void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
