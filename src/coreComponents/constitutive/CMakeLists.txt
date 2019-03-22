@@ -5,10 +5,10 @@ set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
      ExponentialRelation.hpp
-     LinearElasticIsotropic.hpp
      Fluid/SingleFluidBase.hpp
      Fluid/MultiFluidBase.hpp
      Fluid/CompressibleSinglePhaseFluid.hpp
+     Solid/LinearElasticIsotropic.hpp
      Solid/PoreVolumeCompressibleSolid.hpp
      RelPerm/RelativePermeabilityBase.hpp
      RelPerm/BrooksCoreyRelativePermeability.hpp
@@ -22,10 +22,10 @@ set( constitutive_headers
 set( constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
-     LinearElasticIsotropic.cpp
      Fluid/SingleFluidBase.cpp
      Fluid/MultiFluidBase.cpp
      Fluid/CompressibleSinglePhaseFluid.cpp
+     Solid/LinearElasticIsotropic.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
      RelPerm/RelativePermeabilityBase.cpp
      RelPerm/BrooksCoreyRelativePermeability.cpp

@@ -17,15 +17,12 @@
  */
 
 /*
- * HypoElasticLinear.hpp
- *
  *  Created on: Aug 4, 2016
- *      Author: rrsettgast
  */
 
 #ifndef LINEARELASTICISOTROPIC_HPP_
 #define LINEARELASTICISOTROPIC_HPP_
-#include "ConstitutiveBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 
 namespace geosx
