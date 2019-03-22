@@ -76,7 +76,7 @@ public:
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
+  virtual void GenerateMesh( DomainPartition * const domain ) override;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
