@@ -133,7 +133,6 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   if( m_parameters.preconditionerType == "none" )
   {
     PCSetType(prec, PCNONE);
-
   }
   else if( m_parameters.preconditionerType == "jacobi" )
   {
@@ -159,41 +158,50 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   else if( m_parameters.preconditionerType == "amg" )
   {
 
-    PCSetType(prec, GAMG);
+    if(m_parameters.amg.solver == "Petsc")
+    {
+      PCSetType(prec, PCMG);
+      if (m_parameters.amg.cycleType == "v"){
+        PCMGSetCycleType(prec, PC_MG_CYCLE_V);
+      } else {
+        PCMGSetCycleType(prec, PC_MG_CYCLE_W);
+      }
+      PetscOptionsSetValue(NULL, "-pc_mg_levels", m_parameters.amg.maxLevels);
+      PCMGSetNumberSmooth(prec, m_parameters.amg.numSweeps); 
+      // by default, Chebyshev + SOR smoother
+    } 
+    else if(m_parameters.amg.solver == "Hypre")
+    {
+      PCSetType(prec, PCHYPRE);
+      PCHYPRESetType(prec, "boomeramg")
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_max_levels", m_parameters.amg.maxLevels); 
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_cycle_type", m_parameters.amg.cycleType); // "V" or "W"
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_smooth_type", "Schwarz-smoothers"); // "Schwarz-smoothers" "Pilut" "ParaSails" "Euclid"
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_coarsen_type", "Falgout"); // "CLJP" "Ruge-Stueben"  "modifiedRuge-Stueben"   "Falgout"  "PMIS"  "HMIS"
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_down", m_parameters.amg.numSweeps); 
+      // PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_up", m_parameters.amg.numSweeps); 
+      // PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_coarse", m_parameters.amg.numSweeps); 
 
-    // Options
-    if (m_parameters.amg.cycleType == "v"){
-      PCMGSetCycleType(prec, PC_MG_CYCLE_V);
-    } else {
-      PCMGSetCycleType(prec, PC_MG_CYCLE_W);
+      // Maybe relevant options?
+      // -pc_hypre_boomeramg_relax_type_down <symmetric-SOR/Jacobi> Relax type for the down cycles (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+      // -pc_hypre_boomeramg_relax_type_up <symmetric-SOR/Jacobi> Relax type for the up cycles (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+      // -pc_hypre_boomeramg_relax_type_coarse <Gaussian-elimination> Relax type on coarse grid (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+
+    } 
+    else if(m_parameters.amg.solver == "Trilinos")
+    {
+      PCSetType(prec, PCML);
+      PetscOptionsSetValue(NULL, "-pc_type", ml);
+      PetscOptionsSetValue(NULL, "-pc_ml_maxNlevels", m_parameters.amg.maxLevels);
+
+      // -pc_ml_CoarsenScheme <Uncoupled> Aggregate Coarsen Scheme (choose one of) Uncoupled Coupled MIS METIS (ML_Aggregate_Set_CoarsenScheme_*)
+      // -pc_ml_Symmetrize: <FALSE> Symmetrize aggregation (ML_Set_Symmetrize)
+      // -pc_ml_nullspace <AUTO> Which type of null space information to use (choose one of) AUTO USER BLOCK SCALAR (None)
+    } 
+    else
+    {
+      GEOS_ERROR( "The requested linear AMG solver isn't available in PETSc" );
     }
-  
-    // GAMG options
-    // -pc_gamg_type <agg>: Type of AMG method (one of) geo agg classical (PCGAMGSetType)
-    // -pc_gamg_repartition: <FALSE> Repartion coarse grids (PCGAMGSetRepartition)
-    // -pc_gamg_reuse_interpolation: <FALSE> Reuse prolongation operator (PCGAMGReuseInterpolation)
-    // -pc_gamg_asm_use_agg: <FALSE> Use aggregation aggregates for ASM smoother (PCGAMGASMSetUseAggs)
-    // -pc_gamg_use_parallel_coarse_grid_solver: <FALSE> Use parallel coarse grid solver (otherwise put last grid on one process) (PCGAMGSetUseParallelCoarseGridSolve)
-    // -pc_gamg_process_eq_limit <50>: Limit (goal) on number of equations per process on coarse grids (PCGAMGSetProcEqLim)
-    // -pc_gamg_coarse_eq_limit <50>: Limit on number of equations for the coarse grid (PCGAMGSetCoarseEqLim)
-    // -pc_gamg_threshold_scale <1.>: Scaling of threshold for each level not specified (PCGAMGSetThresholdScale)
-    // -pc_gamg_threshold <0.>: Relative threshold to use for dropping edges in aggregation graph (PCGAMGSetThreshold)
-    // -pc_mg_levels <30>: Set number of MG levels (PCGAMGSetNlevels)
-    // GAMG-AGG options
-    // -pc_gamg_agg_nsmooths <1>: smoothing steps for smoothed aggregation, usually 1 (PCGAMGSetNSmooths)
-    // -pc_gamg_sym_graph: <FALSE> Set for asymmetric matrices (PCGAMGSetSymGraph)
-    // -pc_gamg_square_graph <1>: Number of levels to square graph for faster coarsening and lower coarse grid complexity (PCGAMGSetSquareGraph)
-    // Matrix/graph coarsen (MatCoarsen) options -------------------------------------------------
-    // -mat_coarsen_type <mis>: Type of aggregator (one of) mis hem (MatCoarsenSetType)
-
-    // list.set( "ML output", m_parameters.verbosity );
-    // list.set( "max levels", m_parameters.amg.maxLevels );
-    // list.set( "aggregation: type", "Uncoupled" );
-    // list.set( "PDE equations", m_parameters.dofsPerNode );
-    // list.set( "smoother: sweeps", m_parameters.amg.numSweeps );
-    // list.set( "prec type", translate[m_parameters.amg.cycleType] );
-    // list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
-    // list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
   }
   else
     GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
@@ -217,25 +225,3 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
 
 } // end geosx namespace
 
-// HANNAH: Trilinos options for ILU, ICC, ILUT
-
-// solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-          // Domain decomposition preconditioner (additive
-          // Schwarz). That is, each processor augments its
-          // submatrix according to options[AZ overlap] and
-          // approximately “solves” the resulting subsystem
-          // using the solver specified by
-          // options[AZ subdomain solve].
-          // Note: options[AZ reorder] determines whether
-          // matrix equations are reordered (RCM) before
-          // “solving” submatrix problem.
-// solver.SetAztecOption( AZ_overlap, 0 );
-          // Determines the submatrices factored with the domain
-          // decomposition algorithms (see options[AZ precond]).
-          // DEFAULT: 0.
-// solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
-          // Specifies the solver to use on each subdomain when
-          // options[AZ precond] is set to AZ dom decomp DEFAULT: AZ ilut. 
-          // Similar to AZ ilu using icc(k) instead of ilu(k)
-// solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
-          // The level of graph fill-in (k) for incomplete factorizations: ilu(k), icc(k), bilu(k). DEFAULT: 0
