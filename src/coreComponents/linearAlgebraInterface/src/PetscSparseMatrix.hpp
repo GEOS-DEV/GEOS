@@ -28,7 +28,7 @@
 #define PETSCSPARSEMATRIX_HPP_
 
 #include "InterfaceTypes.hpp"
-#include "common/DataTypes.hpp"
+#include "../../common/DataTypes.hpp"
 #include <petscvec.h>
 #include <petscmat.h>
 #include "PetscVector.hpp"

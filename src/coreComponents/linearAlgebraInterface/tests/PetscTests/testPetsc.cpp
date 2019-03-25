@@ -1,4 +1,4 @@
-#include "../../src/PETScSolver.hpp"
+#include "../../src/PetscSolver.hpp"
 #include <math.h>
 
 // to compile: make all (check makefile)
@@ -622,7 +622,7 @@ int main()
   test_PETScSparseMatrix(rank);
 
   // testNativeSolvers
-  testNativeSolvers(rank, 10);
+  // testNativeSolvers(rank, 10);
 
   PetscFinalize();
   return 0;
