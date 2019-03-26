@@ -6,7 +6,7 @@ message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
 # OPTIONS
-option( ENABLE_CALIPER "" ON )
+option( ENABLE_CALIPER "" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
