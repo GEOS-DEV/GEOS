@@ -229,8 +229,6 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
                                          DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem )
 {
-  GEOSX_MARK_FUNCTION;
-
   ResetViews( domain );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);

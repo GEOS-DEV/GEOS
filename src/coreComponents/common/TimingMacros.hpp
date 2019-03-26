@@ -31,7 +31,7 @@
 #define GEOSX_MARK_LOOP_END(loop) CALI_CXX_MARK_LOOP_END(loop)
 #define GEOSX_MARK_LOOP_ITERATION(loop, iter) CALI_CXX_MARK_LOOP_ITERATION(loop, iter)
 
-
+#define GEOSX_MARK_SCOPE(name) cali::Function __cali_ann##__LINE__(DO_STRINGIFY(name))
 
 #define GEOSX_MARK_FUNCTION_SCOPED cali::Function __cali_ann##__func__(__PRETTY_FUNCTION__)
 
