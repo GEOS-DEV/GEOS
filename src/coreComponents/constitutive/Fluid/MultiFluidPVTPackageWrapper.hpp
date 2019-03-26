@@ -49,12 +49,6 @@ public:
 
   virtual ~MultiFluidPVTPackageWrapper() override;
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override final {}
-
-
 
   virtual void PointUpdate( real64 const & pressure,
                             real64 const & temperature,
