@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshBody.cpp
- *
- *  Created on: Sep 13, 2017
- *      Author: settgast
+/**
+ * @file MeshBody.cpp
  */
 
 #include "MeshBody.hpp"
@@ -32,7 +29,8 @@ using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
                     ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup(name,parent),
+  m_globalLengthScale(0)
 {
   RegisterViewWrapper<integer>( viewKeys.meshLevels );
 }
@@ -47,6 +45,11 @@ MeshBody::~MeshBody()
 MeshLevel * MeshBody::CreateMeshLevel( integer const newLevel )
 {
   return this->RegisterGroup<MeshLevel>( "Level0" );
+}
+
+void MeshBody::setGlobalLengthScale( real64 scale )
+{
+  m_globalLengthScale = scale;
 }
 
 } /* namespace geosx */

@@ -8,7 +8,9 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   cflFactor="0.25"
                                   discretization="FE1"
-                                  targetRegions="Region2"/>
+                                  targetRegions="Region2"
+                                  solidMaterialName="shale"
+                                  />
   </Solvers>
 
   

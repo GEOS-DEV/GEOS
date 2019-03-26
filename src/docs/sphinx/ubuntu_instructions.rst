@@ -1,11 +1,10 @@
-################################################################################
 Compiling GEOSX on macOS Using an Ubuntu Virtual Machine
-################################################################################
+================================================================================
 
 This document summarizes the steps needed to compile GEOSX on a device running macOS via an Ubuntu Virtual Machine.  The virtualization layer provided by VirtualBox will be used.
 
-1. Installing VirtualBox
-================================================================================
+Installing VirtualBox
+--------------------------------------------------------------------------------
 
 The following instructions are taken from `Matthew Palmer's blog <https://matthewpalmer.net/blog/2017/12/10/install-virtualbox-mac-high-sierra/index.html>`__.
 
@@ -26,8 +25,8 @@ The following instructions are taken from `Matthew Palmer's blog <https://matthe
 
 - Re-run the VirtualBox installer. It should succeed.
 
-2. Creating an Ubuntu Virtual Machine
-================================================================================
+Creating an Ubuntu Virtual Machine
+--------------------------------------------------------------------------------
 - Download an image of the latest Long Term Support (LTS) version of Ubuntu `here <https://www.ubuntu.com/download/desktop>`__.
 
 - Open the VirtualBox Manager window by double-clicking on the "VirtualBox" item in the "Applications" folder.
@@ -162,8 +161,8 @@ Click ``OK`` to close all Settings windows.
 
 
 
-3. Compiling GEOSX
-================================================================================
+Compiling GEOSX
+--------------------------------------------------------------------------------
 
 - Install packages needed for compiling GEOSX
 
@@ -174,8 +173,8 @@ Click ``OK`` to close all Settings windows.
 
 - Follow instructions provided at the `Getting Started with GEOSX <https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst>`__ page.
 
-4. Generate Sphinx documentation files
-================================================================================
+Generate Sphinx documentation files
+--------------------------------------------------------------------------------
 
 - To generate the documentation files, you will need to install Sphinx using
 
