@@ -55,7 +55,9 @@ namespace timingHelpers
 #define GEOSX_MARK_END(name) CALI_MARK_END(DO_STRINGIFY(name))
 
 #else
-
+#define GEOSX_MARK_FUNCTION_TAG(name)
+#define GEOSX_MARK_FUNCTION_SCOPED
+#define GEOSX_MARK_FUNCTION_PRETTY
 #define GEOSX_MARK_FUNCTION
 
 #define GEOSX_MARK_LOOP_BEGIN(loop, loopName)
