@@ -1168,6 +1168,11 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 //  fsgerManager->ApplyBoundaryCondition( this, &,
 //                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
+
+
+  fsManager->ApplyFieldValue( time_n, domain, "faceManager", "Pressure" );
+  ApplyChomboPressure( domain, *blockSystem );
+
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                                     BlockIDs::displacementBlock );
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
