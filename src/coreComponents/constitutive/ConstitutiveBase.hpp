@@ -78,11 +78,6 @@ public:
 
   virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) { assert(false); return nullptr; }
 
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const {}
-
 
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
                                         R2Tensor const & Rot,
@@ -95,8 +90,6 @@ public:
                                          localIndex const q ) {}
 
   virtual void resize( localIndex ) override;
-
-  virtual void GetStiffness( realT c[6][6] ) const {}
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;

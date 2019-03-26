@@ -54,16 +54,6 @@ public:
   static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
   virtual string GetCatalogName() override { return CatalogName(); }
 
-
-  virtual void SetParamStatePointers( void *& ) override final;
-
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override;
-
-  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer() override final;
-
   R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
                                  R2Tensor const & Rot,
                                  localIndex const i,
@@ -71,69 +61,30 @@ public:
                                  integer const systemAssembleFlag ) override;
 
 
-  void GetStiffness( realT c[6][6] ) const override;
+  void GetStiffness( localIndex const k, real64 c[6][6] ) const;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto bulkModulus0String  = "BulkModulus0";
-    static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto density0String  = "density0";
-    static constexpr auto densityString  = "density";
+    static constexpr auto poissonRatioString =  "PoissonRatio" ;
     static constexpr auto shearModulus0String = "ShearModulus0";
-    static constexpr auto shearModulusString = "ShearModulus";
+    static constexpr auto youngsModulus0String =  "YoungsModulus" ;
 
+    static constexpr auto compressibilityString =  "compressibility" ;
+    static constexpr auto referencePressureString =  "referencePressure" ;
+    static constexpr auto biotCoefficientString =  "BiotCoefficient" ;
+
+
+    static constexpr auto bulkModulusString  = "BulkModulus";
+    static constexpr auto densityString  = "density";
     static constexpr auto deviatorStressString = "DeviatorStress";
     static constexpr auto meanStressString = "MeanStress";
+    static constexpr auto shearModulusString = "ShearModulus";
 
 
-    dataRepository::ViewKey youngsModulus = { "YoungsModulus" };
-    dataRepository::ViewKey bulkModulus = { bulkModulusString };
-    dataRepository::ViewKey shearModulus = { shearModulusString };
-    dataRepository::ViewKey poissonRatio = { "PoissonRatio" };
-    dataRepository::ViewKey density = { "density" };
-    dataRepository::ViewKey compressibility = { "compressibility" };
-    dataRepository::ViewKey referencePressure = { "referencePressure" };
-    dataRepository::ViewKey biotCoefficient = { "BiotCoefficient" };
-
-    dataRepository::ViewKey deviatorStress = { deviatorStressString };
-    dataRepository::ViewKey meanStress = { meanStressString };
   } m_linearElasticIsotropicViewKeys;
 
-  struct groupKeyStruct : public ConstitutiveBase::groupKeyStruct
-  {} m_linearElasticIsotropicGroupKeys;
-
-  virtual viewKeyStruct       & viewKeys()       override { return m_linearElasticIsotropicViewKeys; }
-  virtual viewKeyStruct const & viewKeys() const override { return m_linearElasticIsotropicViewKeys; }
-
-  virtual groupKeyStruct       & groupKeys()      override { return m_linearElasticIsotropicGroupKeys; }
-  virtual groupKeyStruct const & groupKeys() const override { return m_linearElasticIsotropicGroupKeys; }
-
-
-  real64 &       density()       { return this->getReference<real64>( m_linearElasticIsotropicViewKeys.density ); }
-  real64 const & density() const { return this->getReference<real64>( m_linearElasticIsotropicViewKeys.density ); }
-
-
-  real64 &       bulkModulus()       { return m_bulkModulus0; }
-  real64 const & bulkModulus() const { return m_bulkModulus0; }
-
-  real64 &       shearModulus()       { return m_shearModulus0; }
-  real64 const & shearModulus() const { return m_shearModulus0; }
-
-  array2d<R2SymTensor> &       deviatorStress()       { return m_deviatorStress; }
-  array2d<R2SymTensor> const & deviatorStress() const { return m_deviatorStress; }
-
-  array2d<real64> &       meanStress()       { return m_meanStress; }
-  array2d<real64> const & meanStress() const { return m_meanStress; }
-
-  struct dataPointers
-  {
-    real64 * restrict m_bulkModulus0;
-    real64 * restrict m_shearModulus0;
-    array2d<real64> * restrict m_bulkModulus = nullptr;
-    array2d<real64> * restrict m_shearModulus = nullptr;
-    array2d<R2SymTensor> * restrict m_deviatorStress = nullptr;
-    array2d<real64> * restrict m_meanStress = nullptr;
-  } m_dataPointers;
 
   virtual void StateUpdatePointPressure(real64 const & pres,
                                         localIndex const k,
@@ -149,8 +100,9 @@ private:
   real64 m_shearModulus0;
   real64 m_density0;
   array2d<real64> m_density;
-  array2d<real64> m_bulkModulus;
-  array2d<real64> m_shearModulus;
+  array1d<real64> m_bulkModulus;
+  array1d<real64> m_shearModulus;
+
   array2d<real64> m_meanStress;
   array2d<R2SymTensor> m_deviatorStress;
 
