@@ -40,7 +40,7 @@ namespace geosx
  * TODO:
  * - group by by stencil size and/or element region for efficient execution
  */
-template <typename IndexType, typename WeightType>
+template <typename INDEX, typename WEIGHT>
 class StencilCollection
 {
 public:
@@ -56,8 +56,8 @@ public:
   static localIndex constexpr MAX_STENCIL_SIZE = 18;
 
   // provide aliases for template type parameters
-  using index_type  = IndexType;
-  using weight_type = WeightType;
+  using index_type  = INDEX;
+  using weight_type = WEIGHT;
 
   /**
    * @struct Accessor
@@ -80,13 +80,13 @@ public:
 
   /// add data for one connection
   void add( localIndex const numPts,
-            IndexType  const * indices,
-            WeightType const * weights,
+            INDEX  const * indices,
+            WEIGHT const * weights,
             localIndex const connectorIndex );
 
   /// zero out connections
   void zero( localIndex const connectorIndex,
-             IndexType const cells[2] );
+             INDEX const cells[2] );
 
   /// called after adding connections is done to compress the data and release unused memory
   void compress();
@@ -99,8 +99,8 @@ public:
 
   struct Entry
   {
-    IndexType  index;
-    WeightType weight;
+    INDEX  index;
+    WEIGHT weight;
   };
 
   csArrayView2d<Entry const> getConnections() const { return m_connections; }
@@ -114,8 +114,8 @@ private:
 
 // *** implementation ***
 
-template <typename IndexType, typename WeightType>
-class StencilCollection<IndexType, WeightType>::Accessor
+template <typename INDEX, typename WEIGHT>
+class StencilCollection<INDEX, WEIGHT>::Accessor
 {
 public:
 
@@ -128,13 +128,13 @@ public:
   localIndex size() const { return m_size; }
 
   /// return the point index of connected point i
-  IndexType index( localIndex const i ) const { return m_entries[i].index; }
+  INDEX index( localIndex const i ) const { return m_entries[i].index; }
 
   /// apply a user-defined function on the two connected cells only
   template <typename LAMBDA>
   void forConnected( LAMBDA && lambda ) const
   {
-    for (localIndex i = 0; i < StencilCollection<IndexType, WeightType>::NUM_POINT_IN_FLUX; ++i)
+    for (localIndex i = 0; i < StencilCollection<INDEX, WEIGHT>::NUM_POINT_IN_FLUX; ++i)
     {
       lambda( m_entries[i].index, i );
     }
@@ -153,39 +153,39 @@ public:
 private:
 
   localIndex m_size;
-  StencilCollection<IndexType, WeightType>::Entry const * m_entries;
+  StencilCollection<INDEX, WEIGHT>::Entry const * m_entries;
 };
 
-template<typename IndexType, typename WeightType>
-StencilCollection<IndexType, WeightType>::StencilCollection()
+template<typename INDEX, typename WEIGHT>
+StencilCollection<INDEX, WEIGHT>::StencilCollection()
   : StencilCollection( 0, 0 )
 {
 
 }
 
-template<typename IndexType, typename WeightType>
-StencilCollection<IndexType, WeightType>::StencilCollection( localIndex numConn, localIndex avgStencilSize )
+template<typename INDEX, typename WEIGHT>
+StencilCollection<INDEX, WEIGHT>::StencilCollection( localIndex numConn, localIndex avgStencilSize )
   : m_connections()
 {
   reserve(numConn, avgStencilSize);
 }
 
-template<typename IndexType, typename WeightType>
-localIndex StencilCollection<IndexType, WeightType>::numConnections() const
+template<typename INDEX, typename WEIGHT>
+localIndex StencilCollection<INDEX, WEIGHT>::numConnections() const
 {
   return m_connections.size();
 }
 
-template<typename IndexType, typename WeightType>
-void StencilCollection<IndexType, WeightType>::reserve( localIndex numConn, localIndex avgStencilSize )
+template<typename INDEX, typename WEIGHT>
+void StencilCollection<INDEX, WEIGHT>::reserve( localIndex numConn, localIndex avgStencilSize )
 {
   m_connections.reserveNumArrays( numConn );
   m_connections.reserveValues( numConn * avgStencilSize );
 }
 
-template<typename IndexType, typename WeightType>
+template<typename INDEX, typename WEIGHT>
 template<typename POLICY, typename LAMBDA>
-void StencilCollection<IndexType, WeightType>::forAll( LAMBDA && lambda ) const
+void StencilCollection<INDEX, WEIGHT>::forAll( LAMBDA && lambda ) const
 {
   csArrayView2d<Entry const> const & connections = getConnections();
   forall_in_range<POLICY>( 0, numConnections(), GEOSX_LAMBDA ( localIndex const index )
@@ -194,10 +194,10 @@ void StencilCollection<IndexType, WeightType>::forAll( LAMBDA && lambda ) const
   });
 }
 
-template<typename IndexType, typename WeightType>
-void StencilCollection<IndexType, WeightType>::add( localIndex const numPts,
-                                                    IndexType  const * indices,
-                                                    WeightType const * weights,
+template<typename INDEX, typename WEIGHT>
+void StencilCollection<INDEX, WEIGHT>::add( localIndex const numPts,
+                                                    INDEX  const * indices,
+                                                    WEIGHT const * weights,
                                                     localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
@@ -212,9 +212,9 @@ void StencilCollection<IndexType, WeightType>::add( localIndex const numPts,
   m_connectorIndices[connectorIndex] = m_connections.size() - 1;
 }
 
-template<typename IndexType, typename WeightType>
-void StencilCollection<IndexType, WeightType>::zero( localIndex const connectorIndex,
-                                                     IndexType const cells[2] )
+template<typename INDEX, typename WEIGHT>
+void StencilCollection<INDEX, WEIGHT>::zero( localIndex const connectorIndex,
+                                                     INDEX const cells[2] )
 {
   localIndex const connectionListIndex = m_connectorIndices.at( connectorIndex );
 
@@ -231,15 +231,15 @@ void StencilCollection<IndexType, WeightType>::zero( localIndex const connectorI
 }
 
 
-template<typename IndexType, typename WeightType>
-void StencilCollection<IndexType, WeightType>::compress()
+template<typename INDEX, typename WEIGHT>
+void StencilCollection<INDEX, WEIGHT>::compress()
 {
   // nothing for the moment
 }
 
-template<typename IndexType, typename WeightType>
-typename StencilCollection<IndexType, WeightType>::Accessor
-StencilCollection<IndexType, WeightType>::operator[](localIndex iconn) const
+template<typename INDEX, typename WEIGHT>
+typename StencilCollection<INDEX, WEIGHT>::Accessor
+StencilCollection<INDEX, WEIGHT>::operator[](localIndex iconn) const
 {
   return Accessor( m_connections, iconn );
 }

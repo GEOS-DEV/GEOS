@@ -76,6 +76,7 @@ void makeStencilTPFA(localIndex size, StencilCollection<INDEX, T> & stencil)
 
     stencil.add(2, cells.data(), weights.data(), kf);
   }
+  stencil.compress();
 }
 
 template<typename LAMBDA>
