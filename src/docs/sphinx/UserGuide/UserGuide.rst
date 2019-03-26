@@ -10,6 +10,7 @@ Welcome to the GEOSX user guide.
    InputXML
    ExternalMesh
    LinearSolver
+   /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 
 ****************************************************
 Examples

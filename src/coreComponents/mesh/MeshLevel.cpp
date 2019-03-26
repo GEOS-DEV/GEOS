@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshLevel.cpp
- *
- *  Created on: Sep 13, 2017
- *      Author: settgast
+/**
+ * @file MeshLevel.cpp
  */
 
 #include "MeshLevel.hpp"

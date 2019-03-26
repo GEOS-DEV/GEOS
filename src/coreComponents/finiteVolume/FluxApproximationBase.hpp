@@ -122,12 +122,13 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto fieldNameString          = "fieldName";
-    static constexpr auto boundaryFieldNameString  = "boundaryFieldName";
-    static constexpr auto coeffNameString          = "coefficientName";
-    static constexpr auto cellStencilString        = "cellStencil";
-    static constexpr auto fratureRegionNameString = "fractureRegions";
-    static constexpr auto fratureStencilString     = "fractureStencil";
+    static constexpr auto fieldNameString             = "fieldName";
+    static constexpr auto boundaryFieldNameString     = "boundaryFieldName";
+    static constexpr auto coeffNameString             = "coefficientName";
+    static constexpr auto cellStencilString           = "cellStencil";
+    static constexpr auto fratureRegionNameString     = "fractureRegions";
+    static constexpr auto fratureStencilString        = "fractureStencil";
+    static constexpr auto areaRelativeToleranceString = "areaRelTol";
   };
 
   struct groupKeyStruct
@@ -162,6 +163,10 @@ protected:
 
   /// names of the fracture regions
   string m_fractureRegionName;
+
+  /// relative tolerance
+  real64 m_areaRelTol;
+
 };
 
 template<typename LAMBDA>

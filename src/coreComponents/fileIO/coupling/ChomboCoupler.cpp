@@ -39,8 +39,8 @@ ChomboCoupler::ChomboCoupler(MPI_Comm const comm, const std::string& outputPath,
   m_counter(0)
 {
   /* Create a dummy pressure field */
-  FaceManager* faces = m_mesh.getFaceManager();
-  faces->AddKeylessDataField< array1d<double> >("Pressure");
+  FaceManager * faces = m_mesh.getFaceManager();
+  faces->RegisterViewWrapper< array1d<real64> >("Pressure");
 }
 
 void ChomboCoupler::write(double dt)
@@ -68,15 +68,6 @@ void ChomboCoupler::write(double dt)
   FieldMap_in face_fields;
   real64 * pressure_ptr = faces->getReference<real64_array>("Pressure").data();
   face_fields["Pressure"] = std::make_tuple(H5T_NATIVE_DOUBLE, 1, pressure_ptr);
-  
-  int rank;
-  MPI_Comm_rank(m_comm, &rank);
-
-  /* Update the dummy pressure field */
-  for (localIndex i = 0; i < n_faces; ++i)
-  {
-    pressure_ptr[ i ] = (i + 1) * m_counter * (rank + 1);
-  }
 
   /* Build the node FieldMap. */
   r1_array const& reference_pos = nodes->getReference<r1_array>(nodes->viewKeys.referencePosition);
@@ -102,9 +93,6 @@ void ChomboCoupler::read(bool usePressures)
   waitForFileExistence(m_comm, m_inputPath.data());
 
   GEOS_LOG_RANK_0("File found: " << m_inputPath);
-  
-  int rank;
-  MPI_Comm_rank(m_comm, &rank);
 
   if (usePressures)
   {
@@ -124,18 +112,10 @@ void ChomboCoupler::read(bool usePressures)
     readBoundaryFile(m_comm, m_inputPath.data(),
                      m_face_offset, m_n_faces_written, n_faces, face_fields,
                      m_node_offset, m_n_nodes_written, n_nodes, node_fields);
-
-    integer_array const & ruptureState = faces->getReference<integer_array>("ruptureState");
-    for (localIndex i = 0; i < n_faces; ++i)
-    {
-      if (ruptureState[ i ] > 1)
-      {
-        double expectedPressure = 2 * (i + 1) * m_counter * (rank + 1);
-        GEOS_ERROR_IF(std::abs(pressure_ptr[ i ] - expectedPressure) > 1e-10, "i = " << i << ", pressure_ptr[i] = " << pressure_ptr[i] << ", expectedPressure = " << expectedPressure);
-      }
-    }
   }
 
+  int rank;
+  MPI_Comm_rank(m_comm, &rank);
   if (rank == 0)
   {
     std::remove(m_inputPath.data());
