@@ -31,7 +31,6 @@ namespace computationalGeometry
 {
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
@@ -43,12 +42,14 @@ namespace computationalGeometry
 real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          const array1d<R1Tensor>& points,
                          R1Tensor& center,
-                         R1Tensor& normal )
+                         R1Tensor& normal,
+                         real64 const areaTolerance )
 {
   R1Tensor v1,v2,vc;
   const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
+  normal=0.;
 
   if( n>2 )
   {
@@ -65,25 +66,33 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
       v1 -= x0;
       v2 -= x0;
 
-      normal.Cross(v1,v2);
-      const real64 triangleArea = normal.Normalize();
+      R1Tensor triangleNormal;
+      triangleNormal.Cross( v1,v2 );
+      const real64 triangleArea = triangleNormal.Normalize();
+      triangleNormal *= triangleArea;
+      normal += triangleNormal;
       area += triangleArea;
       vc *= triangleArea;
       center += vc;
     }
-    if(area > 0.0)
+    if( area > areaTolerance )
     {
       center /= (area * 3.0);
+      normal.Normalize();
       area *= 0.5;
     }
-    else
+    else if( area < -areaTolerance )
     {
       for( localIndex a=0 ; a<n ; ++a )
         GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
                       << points[pointsIndices[a]](1) << " "
                       << points[pointsIndices[a]](2) << " "
                       << pointsIndices[a]);
-      GEOS_ERROR("Negative area found");
+      GEOS_ERROR("Negative area found : " + std::to_string( area ) );
+    }
+    else
+    {
+      return 0.;
     }
   }
   else if( n==1 )
@@ -106,12 +115,10 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
     area = Dot(x1_x0, x1_x0);
     area = sqrt(area);
   }
-
   return area;
 }
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop

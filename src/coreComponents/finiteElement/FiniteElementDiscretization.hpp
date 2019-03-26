@@ -33,6 +33,7 @@ namespace geosx
 
 class NodeManager;
 class CellBlockManager;
+class ElementSubRegionBase;
 
 namespace dataRepository
 {
@@ -69,13 +70,15 @@ public:
   ///@}
 
 
-  void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
+  std::unique_ptr<FiniteElementBase> getFiniteElement( string const & catalogName ) const;
+
+  void ApplySpaceToTargetCells( ElementSubRegionBase * const group ) const;
 
 
 
 
   void CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const & X,
-                                        dataRepository::ManagedGroup * const cellBlock ) const;
+                                        ElementSubRegionBase * const cellBlock ) const;
 
   localIndex getNumberOfQuadraturePoints() const;
 

@@ -3,13 +3,13 @@
 =============================== ==== ======= ========================================== 
 Name                            Type Default Description                                
 =============================== ==== ======= ========================================== 
-CompositionalMultiphaseFluid    node         :ref:`XML_CompositionalMultiphaseFluid`    
-BlackOilFluid                   node         :ref:`XML_BlackOilFluid`                   
 VanGenuchtenCapillaryPressure   node         :ref:`XML_VanGenuchtenCapillaryPressure`   
-PoreVolumeCompressibleSolid     node         :ref:`XML_PoreVolumeCompressibleSolid`     
-CompressibleSinglePhaseFluid    node         :ref:`XML_CompressibleSinglePhaseFluid`    
+BlackOilFluid                   node         :ref:`XML_BlackOilFluid`                   
 BrooksCoreyCapillaryPressure    node         :ref:`XML_BrooksCoreyCapillaryPressure`    
 BrooksCoreyRelativePermeability node         :ref:`XML_BrooksCoreyRelativePermeability` 
+CompositionalMultiphaseFluid    node         :ref:`XML_CompositionalMultiphaseFluid`    
+PoreVolumeCompressibleSolid     node         :ref:`XML_PoreVolumeCompressibleSolid`     
+CompressibleSinglePhaseFluid    node         :ref:`XML_CompressibleSinglePhaseFluid`    
 LinearElasticIsotropic          node         :ref:`XML_LinearElasticIsotropic`          
 =============================== ==== ======= ========================================== 
 

@@ -112,7 +112,8 @@ void ElementRegionManager::ExpandObjectCatalogs()
 
 
 void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                               xmlWrapper::xmlNode schemaParent)
+                                               xmlWrapper::xmlNode schemaParent,
+                                               integer documentationType)
 {
   xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
   if( targetChoiceNode.empty() )
@@ -123,7 +124,7 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   }
 
   ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
-  SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode, documentationType);
 }
 
 void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )

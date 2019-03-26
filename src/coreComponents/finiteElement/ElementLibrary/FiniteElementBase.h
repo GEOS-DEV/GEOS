@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FiniteElementBase.h
- *
- *  Created on: Nov 20, 2012
- *      Author: settgast
+/**
+ * @file FiniteElementBase.h
  */
 
 #ifndef FINITEELEMENTBASE_H_
@@ -28,9 +25,13 @@
 
 #include <assert.h>
 #include "common/DataTypes.hpp"
+#include "ObjectCatalog.hpp"
 
 namespace geosx
 {
+class BasisBase;
+class QuadratureBase;
+
 class FiniteElementBase
 {
 public:
@@ -41,9 +42,80 @@ public:
 
   virtual ~FiniteElementBase();
 
+  static string CatalogName() { return "FiniteElementBase"; }
+  using CatalogInterface = cxx_utilities::CatalogInterface< FiniteElementBase, BasisBase const &,
+                                                                               QuadratureBase const &,
+                                                                               const int >;
+  static CatalogInterface::CatalogType& GetCatalog()
+  {
+    static FiniteElementBase::CatalogInterface::CatalogType catalog;
+    return catalog;
+  }
 
 
-  virtual void reinit( const array1d<R1TensorT<3> > &mapped_support_points) = 0;
+  enum class ElementType
+  {
+    Tetrahedal,
+    Pyramid,
+    Prism,
+    Hexahedral,
+    Polyhedral,
+    Polytope,
+    INVALID
+  };
+
+  struct ElementTypeStrings
+  {
+    static constexpr auto Tetrahedal  = "C3D4";
+    static constexpr auto Pyramid     = "C3D5";
+    static constexpr auto Prism       = "C3D6";
+    static constexpr auto Hexahedral  = "C3D8";
+    static constexpr auto Polyhedral  = "POLYHEDRAL";
+    static constexpr auto Polytope    = "POLYTOPE";
+  };
+
+  static string ElementTypeToString( ElementType const type )
+  {
+    switch( type )
+    {
+      case ElementType::Tetrahedal:
+        return "C3D4";
+      case ElementType::Pyramid:
+        return "C3D5";
+      case ElementType::Prism:
+        return "C3D6";
+      case ElementType::Hexahedral:
+        return "C3D8";
+      case ElementType::Polyhedral:
+        return "POLYHEDRAL";
+      case ElementType::Polytope:
+        return "POLYTOPE";
+      case ElementType::INVALID:
+      default:
+        GEOS_ERROR("Invalid Element Type specified");
+        return "INVALID";
+    }
+  }
+
+  static ElementType StringToElementType( string const & type )
+  {
+    if( type=="C3D4" )
+      return ElementType::Tetrahedal;
+    else if( type=="C3D5" )
+      return ElementType::Pyramid;
+    else if( type=="C3D6" )
+      return ElementType::Prism;
+    else if( type=="C3D8" )
+      return ElementType::Hexahedral;
+    else if( type=="POLYHEDRAL" )
+      return ElementType::Polyhedral;
+    else if( type=="POLYTOPE" )
+      return ElementType::Polytope;
+    else
+      return ElementType::INVALID;
+  }
+
+  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points) = 0;
 
 
 //  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
