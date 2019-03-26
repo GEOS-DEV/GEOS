@@ -182,7 +182,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
     R1Tensor f_local[ NUM_NODES_PER_ELEM ];
 
     real64 c[6][6];
-    constitutiveRelation->GetStiffness( c );
+    constitutiveRelation->GetStiffness( k, c );
 
 
     CopyGlobalToLocal<NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
@@ -318,7 +318,7 @@ ImplicitElementKernelWrapper::Launch(
     R_StiffnessDamping.Scale(0);
 
     real64 c[6][6];
-    constitutiveRelation->GetStiffness( c );
+    constitutiveRelation->GetStiffness( k, c );
 
     if(elemGhostRank[k] < 0)
     {
