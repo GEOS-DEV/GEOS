@@ -774,7 +774,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   localIndex const NDOF = m_numDofPerCell;
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+  stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<CellDescriptor, real64>::Accessor stencil, localIndex iconn )
   {
     localIndex const stencilSize = stencil.size();
     stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
@@ -829,7 +829,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   // add additional connectivity resulting from boundary stencils
   fluxApprox->forBoundaryStencils( [&] ( FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection )
   {
-    boundaryStencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil )
+    boundaryStencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil, localIndex iconn )
     {
       localIndex const stencilSize = stencil.size();
       stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
@@ -1121,7 +1121,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
 
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
-  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & blockLocalDofNumber = m_dofNumber;
 
@@ -1155,302 +1154,305 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
   real64 constexpr densWeight[numElems] = { 0.5, 0.5 };
 
-  stencilCollection.forAll<RAJA::seq_exec>(GEOSX_LAMBDA (StencilCollection<CellDescriptor, real64>::Accessor stencil)
+  fluxApprox->forCellStencils( [&] ( FluxApproximationBase::CellStencil const & stencilCollection )
   {
-    localIndex const stencilSize = stencil.size();
-
-    // create local work arrays
-    stackArray1d<long long, numElems * maxNumComp>  eqnRowIndices( numElems * NC );
-    stackArray1d<long long, maxStencil * maxNumDof> dofColIndices( stencilSize * NDOF );
-
-    stackArray1d<double, numElems * maxNumComp>                          localFlux( numElems * NC );
-    stackArray2d<double, numElems * maxNumComp * maxStencil * maxNumDof> localFluxJacobian( numElems * NC, stencilSize * NDOF );
-
-    stackArray1d<real64, maxNumComp> dPhaseCompFrac_dCompDens( NC );
-
-    stackArray1d<real64, maxStencil>              dPhaseFlux_dP( stencilSize );
-    stackArray2d<real64, maxStencil * maxNumComp> dPhaseFlux_dC( stencilSize, NC );
-
-    stackArray1d<real64, maxNumComp>                           compFlux( NC );
-    stackArray2d<real64, maxStencil * maxNumComp>              dCompFlux_dP( stencilSize, NC );
-    stackArray3d<real64, maxStencil * maxNumComp * maxNumComp> dCompFlux_dC( stencilSize, NC, NC );
-
-    stackArray1d<real64, maxNumComp> dRelPerm_dC( NC );
-    stackArray1d<real64, maxNumComp> dDens_dC( NC );
-    stackArray1d<real64, maxNumComp> dVisc_dC( NC );
-
-    stackArray1d<real64, numElems>              mobility( numElems );
-    stackArray1d<real64, numElems>              dMobility_dP( numElems );
-    stackArray2d<real64, numElems * maxNumComp> dMobility_dC( numElems, NC );
-
-    stackArray1d<real64, numElems>              dDensMean_dP( numElems );
-    stackArray2d<real64, numElems * maxNumComp> dDensMean_dC( numElems, NC );
-
-    stackArray1d<real64, maxStencil>            dPresGrad_dP( stencilSize );
-
-    stackArray1d<real64, numElems>              dGravHead_dP( numElems );
-    stackArray2d<real64, numElems * maxNumComp> dGravHead_dC( numElems, NC );
-
-    // reset the local values
-    compFlux = 0.0;
-    dCompFlux_dP = 0.0;
-    dCompFlux_dC = 0.0;
-
-    localFlux = 0.0;
-    localFluxJacobian = 0.0;
-
-    // set equation indices for both connected cells
-    stencil.forConnected( [&] ( auto const & cell,
-                                localIndex i )
+    stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<CellDescriptor, real64>::Accessor stencil, localIndex iconn )
     {
-      localIndex const er  = cell.region;
-      localIndex const esr = cell.subRegion;
-      localIndex const ei  = cell.index;
+      localIndex const stencilSize = stencil.size();
 
-      globalIndex const offset = NDOF * blockLocalDofNumber[er][esr][ei];
-      for (localIndex ic = 0; ic < NC; ++ic)
-      {
-        eqnRowIndices[i * NC + ic] = offset + ic;
-      }
-    });
+      // create local work arrays
+      stackArray1d<long long, numElems * maxNumComp>  eqnRowIndices( numElems * NC );
+      stackArray1d<long long, maxStencil * maxNumDof> dofColIndices( stencilSize * NDOF );
 
-    // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
-    for (localIndex ip = 0; ip < NP; ++ip)
-    {
-      // clear working arrays
-      real64 densMean = 0.0;
-      dDensMean_dP = 0.0;
-      dDensMean_dC = 0.0;
+      stackArray1d<double, numElems * maxNumComp>                          localFlux( numElems * NC );
+      stackArray2d<double, numElems * maxNumComp * maxStencil * maxNumDof> localFluxJacobian( numElems * NC, stencilSize * NDOF );
 
-      real64 presGrad = 0.0;
-      dPresGrad_dP = 0.0;
+      stackArray1d<real64, maxNumComp> dPhaseCompFrac_dCompDens( NC );
 
-      real64 gravHead = 0.0;
-      dGravHead_dP = 0.0;
-      dGravHead_dC = 0.0;
+      stackArray1d<real64, maxStencil>              dPhaseFlux_dP( stencilSize );
+      stackArray2d<real64, maxStencil * maxNumComp> dPhaseFlux_dC( stencilSize, NC );
 
-      real64 phaseFlux = 0.0;
-      dPhaseFlux_dP = 0.0;
-      dPhaseFlux_dC = 0.0;
+      stackArray1d<real64, maxNumComp>                           compFlux( NC );
+      stackArray2d<real64, maxStencil * maxNumComp>              dCompFlux_dP( stencilSize, NC );
+      stackArray3d<real64, maxStencil * maxNumComp * maxNumComp> dCompFlux_dC( stencilSize, NC, NC );
 
-      // calculate quantities on primary connected cells
+      stackArray1d<real64, maxNumComp> dRelPerm_dC( NC );
+      stackArray1d<real64, maxNumComp> dDens_dC( NC );
+      stackArray1d<real64, maxNumComp> dVisc_dC( NC );
+
+      stackArray1d<real64, numElems>              mobility( numElems );
+      stackArray1d<real64, numElems>              dMobility_dP( numElems );
+      stackArray2d<real64, numElems * maxNumComp> dMobility_dC( numElems, NC );
+
+      stackArray1d<real64, numElems>              dDensMean_dP( numElems );
+      stackArray2d<real64, numElems * maxNumComp> dDensMean_dC( numElems, NC );
+
+      stackArray1d<real64, maxStencil>            dPresGrad_dP( stencilSize );
+
+      stackArray1d<real64, numElems>              dGravHead_dP( numElems );
+      stackArray2d<real64, numElems * maxNumComp> dGravHead_dC( numElems, NC );
+
+      // reset the local values
+      compFlux = 0.0;
+      dCompFlux_dP = 0.0;
+      dCompFlux_dC = 0.0;
+
+      localFlux = 0.0;
+      localFluxJacobian = 0.0;
+
+      // set equation indices for both connected cells
       stencil.forConnected( [&] ( auto const & cell,
-                                 localIndex i )
-      {
-        localIndex const er  = cell.region;
-        localIndex const esr = cell.subRegion;
-        localIndex const ei  = cell.index;
-
-        // density
-        real64 const density  = phaseDens[er][esr][m_fluidIndex][ei][0][ip];
-        real64 const dDens_dP = dPhaseDens_dPres[er][esr][m_fluidIndex][ei][0][ip];
-        applyChainRule( NC, dCompFrac_dCompDens[er][esr][ei], dPhaseDens_dComp[er][esr][m_fluidIndex][ei][0][ip], dDens_dC );
-
-        // viscosity
-        real64 const viscosity = phaseVisc[er][esr][m_fluidIndex][ei][0][ip];
-        real64 const dVisc_dP  = dPhaseVisc_dPres[er][esr][m_fluidIndex][ei][0][ip];
-        applyChainRule( NC, dCompFrac_dCompDens[er][esr][ei], dPhaseVisc_dComp[er][esr][m_fluidIndex][ei][0][ip], dVisc_dC );
-
-        //relative permeability
-        real64 const relPerm = phaseRelPerm[er][esr][m_relPermIndex][ei][0][ip];
-        real64 dRelPerm_dP = 0.0;
-        dRelPerm_dC = 0.0;
-        for (localIndex jp = 0; jp < NP; ++jp)
-        {
-          real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[er][esr][m_relPermIndex][ei][0][ip][jp];
-          dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
-
-          for (localIndex jc = 0; jc < NC; ++jc)
-          {
-            dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
-          }
-        }
-
-        // mobility and pressure derivative
-        mobility[i] = relPerm * density / viscosity;
-        dMobility_dP[i] = dRelPerm_dP * density / viscosity
-                        + mobility[i] * (dDens_dP / density - dVisc_dP / viscosity);
-
-        // average density and pressure derivative
-        densMean += densWeight[i] * density;
-        dDensMean_dP[i] = densWeight[i] * dDens_dP;
-
-        // compositional derivatives
-        for (localIndex jc = 0; jc < NC; ++jc)
-        {
-          dDensMean_dC[i][jc] = densWeight[i] * dDens_dC[jc];
-
-          dMobility_dC[i][jc] = dRelPerm_dC[jc] * density / viscosity
-                              + mobility[i] * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
-        }
-      });
-
-      //***** calculation of flux *****
-
-      // compute potential difference MPFA-style
-      stencil.forAll( [&] ( CellDescriptor cell,
-                            real64 w,
-                            localIndex i )
+                                  localIndex i )
       {
         localIndex const er  = cell.region;
         localIndex const esr = cell.subRegion;
         localIndex const ei  = cell.index;
 
         globalIndex const offset = NDOF * blockLocalDofNumber[er][esr][ei];
-        for (localIndex jdof = 0; jdof < NDOF; ++jdof)
+        for (localIndex ic = 0; ic < NC; ++ic)
         {
-          dofColIndices[i * NDOF + jdof] = offset + jdof;
-        }
-
-        presGrad += w * (pres[er][esr][ei] + dPres[er][esr][ei]);
-        dPresGrad_dP[i] += w;
-
-        if (m_gravityFlag)
-        {
-          real64 const gravD = w * gravDepth[er][esr][ei];
-          gravHead += densMean * gravD;
-
-          // need to add contributions from both cells the mean density depends on
-          stencil.forConnected( [&] ( CellDescriptor,
-                                      localIndex j )
-          {
-            dGravHead_dP[j] += dDensMean_dP[j] * gravD;
-            for (localIndex jc = 0; jc < NC; ++jc)
-            {
-              dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-            }
-          });
+          eqnRowIndices[i * NC + ic] = offset + ic;
         }
       });
 
-      // *** upwinding ***
-
-      // use PPU currently; advanced stuff like IHU would go here
-      // TODO isolate into a kernel?
-
-      // compute phase potential gradient
-      real64 potGrad = presGrad + gravHead;
-
-      // choose upstream cell
-      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
-
-      // skip the phase flux if phase not present or immobile upstream
-      if (std::fabs(mobility[k_up]) < 1e-20) // TODO better constant
+      // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
+      for (localIndex ip = 0; ip < NP; ++ip)
       {
-        continue;
-      }
+        // clear working arrays
+        real64 densMean = 0.0;
+        dDensMean_dP = 0.0;
+        dDensMean_dC = 0.0;
 
-      // pressure gradient depends on all points in the stencil
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
-      {
-        dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
-      }
+        real64 presGrad = 0.0;
+        dPresGrad_dP = 0.0;
 
-      // gravitational head depends only on the two cells connected (same as mean density)
-      for (localIndex ke = 0; ke < numElems; ++ke)
-      {
-        dPhaseFlux_dP[ke] += dGravHead_dP[ke];
-        for (localIndex jc = 0; jc < NC; ++jc)
+        real64 gravHead = 0.0;
+        dGravHead_dP = 0.0;
+        dGravHead_dC = 0.0;
+
+        real64 phaseFlux = 0.0;
+        dPhaseFlux_dP = 0.0;
+        dPhaseFlux_dC = 0.0;
+
+        // calculate quantities on primary connected cells
+        stencil.forConnected( [&] ( auto const & cell,
+                                   localIndex i )
         {
-          dPhaseFlux_dC[ke][jc] += dGravHead_dC[ke][jc];
-        }
-      }
+          localIndex const er  = cell.region;
+          localIndex const esr = cell.subRegion;
+          localIndex const ei  = cell.index;
 
-      // compute the phase flux and derivatives using upstream cell mobility
-      phaseFlux = mobility[k_up] * potGrad;
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
-      {
-        dPhaseFlux_dP[ke] *= mobility[k_up];
-        for (localIndex jc = 0; jc < NC; ++jc)
-        {
-          dPhaseFlux_dC[ke][jc] *= mobility[k_up];
-        }
-      }
+          // density
+          real64 const density  = phaseDens[er][esr][m_fluidIndex][ei][0][ip];
+          real64 const dDens_dP = dPhaseDens_dPres[er][esr][m_fluidIndex][ei][0][ip];
+          applyChainRule( NC, dCompFrac_dCompDens[er][esr][ei], dPhaseDens_dComp[er][esr][m_fluidIndex][ei][0][ip], dDens_dC );
 
-      // add contribution from upstream cell mobility derivatives
-      dPhaseFlux_dP[k_up] += dMobility_dP[k_up] * potGrad;
-      for (localIndex jc = 0; jc < NC; ++jc)
-      {
-        dPhaseFlux_dC[k_up][jc] += dMobility_dC[k_up][jc] * potGrad;
-      }
+          // viscosity
+          real64 const viscosity = phaseVisc[er][esr][m_fluidIndex][ei][0][ip];
+          real64 const dVisc_dP  = dPhaseVisc_dPres[er][esr][m_fluidIndex][ei][0][ip];
+          applyChainRule( NC, dCompFrac_dCompDens[er][esr][ei], dPhaseVisc_dComp[er][esr][m_fluidIndex][ei][0][ip], dVisc_dC );
 
-      // get global identifiers of the upstream cell
-      CellDescriptor cell_up = stencil.index(k_up);
-      localIndex er_up  = cell_up.region;
-      localIndex esr_up = cell_up.subRegion;
-      localIndex ei_up  = cell_up.index;
+          //relative permeability
+          real64 const relPerm = phaseRelPerm[er][esr][m_relPermIndex][ei][0][ip];
+          real64 dRelPerm_dP = 0.0;
+          dRelPerm_dC = 0.0;
+          for (localIndex jp = 0; jp < NP; ++jp)
+          {
+            real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[er][esr][m_relPermIndex][ei][0][ip][jp];
+            dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
 
-      // slice some constitutive arrays to avoid too much indexing in component loop
-      arraySlice1d<real64> phaseCompFracSub = phaseCompFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
-      arraySlice1d<real64> dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
-      arraySlice2d<real64> dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+            for (localIndex jc = 0; jc < NC; ++jc)
+            {
+              dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
+            }
+          }
 
-      // compute component fluxes and derivatives using upstream cell composition
-      for (localIndex ic = 0; ic < NC; ++ic)
-      {
-        real64 const ycp = phaseCompFracSub[ic];
-        compFlux[ic] += phaseFlux * ycp;
+          // mobility and pressure derivative
+          mobility[i] = relPerm * density / viscosity;
+          dMobility_dP[i] = dRelPerm_dP * density / viscosity
+                          + mobility[i] * (dDens_dP / density - dVisc_dP / viscosity);
 
-        // derivatives stemming from phase flux
-        for (localIndex ke = 0; ke < stencilSize; ++ke)
-        {
-          dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+          // average density and pressure derivative
+          densMean += densWeight[i] * density;
+          dDensMean_dP[i] = densWeight[i] * dDens_dP;
+
+          // compositional derivatives
           for (localIndex jc = 0; jc < NC; ++jc)
           {
-            dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+            dDensMean_dC[i][jc] = densWeight[i] * dDens_dC[jc];
+
+            dMobility_dC[i][jc] = dRelPerm_dC[jc] * density / viscosity
+                                + mobility[i] * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
+          }
+        });
+
+        //***** calculation of flux *****
+
+        // compute potential difference MPFA-style
+        stencil.forAll( [&] ( CellDescriptor cell,
+                              real64 w,
+                              localIndex i )
+        {
+          localIndex const er  = cell.region;
+          localIndex const esr = cell.subRegion;
+          localIndex const ei  = cell.index;
+
+          globalIndex const offset = NDOF * blockLocalDofNumber[er][esr][ei];
+          for (localIndex jdof = 0; jdof < NDOF; ++jdof)
+          {
+            dofColIndices[i * NDOF + jdof] = offset + jdof;
+          }
+
+          presGrad += w * (pres[er][esr][ei] + dPres[er][esr][ei]);
+          dPresGrad_dP[i] += w;
+
+          if (m_gravityFlag)
+          {
+            real64 const gravD = w * gravDepth[er][esr][ei];
+            gravHead += densMean * gravD;
+
+            // need to add contributions from both cells the mean density depends on
+            stencil.forConnected( [&] ( CellDescriptor,
+                                        localIndex j )
+            {
+              dGravHead_dP[j] += dDensMean_dP[j] * gravD;
+              for (localIndex jc = 0; jc < NC; ++jc)
+              {
+                dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+              }
+            });
+          }
+        });
+
+        // *** upwinding ***
+
+        // use PPU currently; advanced stuff like IHU would go here
+        // TODO isolate into a kernel?
+
+        // compute phase potential gradient
+        real64 potGrad = presGrad + gravHead;
+
+        // choose upstream cell
+        localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+        // skip the phase flux if phase not present or immobile upstream
+        if (std::fabs(mobility[k_up]) < 1e-20) // TODO better constant
+        {
+          continue;
+        }
+
+        // pressure gradient depends on all points in the stencil
+        for (localIndex ke = 0; ke < stencilSize; ++ke)
+        {
+          dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
+        }
+
+        // gravitational head depends only on the two cells connected (same as mean density)
+        for (localIndex ke = 0; ke < numElems; ++ke)
+        {
+          dPhaseFlux_dP[ke] += dGravHead_dP[ke];
+          for (localIndex jc = 0; jc < NC; ++jc)
+          {
+            dPhaseFlux_dC[ke][jc] += dGravHead_dC[ke][jc];
           }
         }
 
-        // additional derivatives stemming from upstream cell phase composition
-        dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
+        // compute the phase flux and derivatives using upstream cell mobility
+        phaseFlux = mobility[k_up] * potGrad;
+        for (localIndex ke = 0; ke < stencilSize; ++ke)
+        {
+          dPhaseFlux_dP[ke] *= mobility[k_up];
+          for (localIndex jc = 0; jc < NC; ++jc)
+          {
+            dPhaseFlux_dC[ke][jc] *= mobility[k_up];
+          }
+        }
 
-        // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component densities
-        applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dPhaseCompFrac_dCompDens );
+        // add contribution from upstream cell mobility derivatives
+        dPhaseFlux_dP[k_up] += dMobility_dP[k_up] * potGrad;
         for (localIndex jc = 0; jc < NC; ++jc)
         {
-          dCompFlux_dC[k_up][ic][jc] += phaseFlux * dPhaseCompFrac_dCompDens[jc];
+          dPhaseFlux_dC[k_up][jc] += dMobility_dC[k_up][jc] * potGrad;
+        }
+
+        // get global identifiers of the upstream cell
+        CellDescriptor cell_up = stencil.index(k_up);
+        localIndex er_up  = cell_up.region;
+        localIndex esr_up = cell_up.subRegion;
+        localIndex ei_up  = cell_up.index;
+
+        // slice some constitutive arrays to avoid too much indexing in component loop
+        arraySlice1d<real64> phaseCompFracSub = phaseCompFrac[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+        arraySlice1d<real64> dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+        arraySlice2d<real64> dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][m_fluidIndex][ei_up][0][ip];
+
+        // compute component fluxes and derivatives using upstream cell composition
+        for (localIndex ic = 0; ic < NC; ++ic)
+        {
+          real64 const ycp = phaseCompFracSub[ic];
+          compFlux[ic] += phaseFlux * ycp;
+
+          // derivatives stemming from phase flux
+          for (localIndex ke = 0; ke < stencilSize; ++ke)
+          {
+            dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+            for (localIndex jc = 0; jc < NC; ++jc)
+            {
+              dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+            }
+          }
+
+          // additional derivatives stemming from upstream cell phase composition
+          dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
+
+          // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component densities
+          applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dPhaseCompFrac_dCompDens );
+          for (localIndex jc = 0; jc < NC; ++jc)
+          {
+            dCompFlux_dC[k_up][ic][jc] += phaseFlux * dPhaseCompFrac_dCompDens[jc];
+          }
         }
       }
-    }
 
-    // *** end of upwinding
+      // *** end of upwinding
 
-    // populate local flux vector and derivatives
-    for (localIndex ic = 0; ic < NC; ++ic)
-    {
-      localFlux[ic]      =  dt * compFlux[ic];
-      localFlux[NC + ic] = -dt * compFlux[ic];
-
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      // populate local flux vector and derivatives
+      for (localIndex ic = 0; ic < NC; ++ic)
       {
-        localIndex const localDofIndexPres = ke * NDOF;
-        localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
-        localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
+        localFlux[ic]      =  dt * compFlux[ic];
+        localFlux[NC + ic] = -dt * compFlux[ic];
 
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for (localIndex ke = 0; ke < stencilSize; ++ke)
         {
-          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-          localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
-          localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
+          localIndex const localDofIndexPres = ke * NDOF;
+          localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
+          localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
+
+          for (localIndex jc = 0; jc < NC; ++jc)
+          {
+            localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+            localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
+            localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
+          }
         }
       }
-    }
 
-    // TODO: apply equation/variable change transformation(s)
+      // TODO: apply equation/variable change transformation(s)
 
-    // Add to global residual/jacobian
-    residual->SumIntoGlobalValues( integer_conversion<int>( numElems * NC ),
-                                   eqnRowIndices.data(),
-                                   localFlux.data() );
+      // Add to global residual/jacobian
+      residual->SumIntoGlobalValues( integer_conversion<int>( numElems * NC ),
+                                     eqnRowIndices.data(),
+                                     localFlux.data() );
 
-    jacobian->SumIntoGlobalValues( integer_conversion<int>( numElems * NC ),
-                                   eqnRowIndices.data(),
-                                   integer_conversion<int>( stencilSize * NDOF ),
-                                   dofColIndices.data(),
-                                   localFluxJacobian.data(),
-                                   Epetra_FECrsMatrix::ROW_MAJOR );
+      jacobian->SumIntoGlobalValues( integer_conversion<int>( numElems * NC ),
+                                     eqnRowIndices.data(),
+                                     integer_conversion<int>( stencilSize * NDOF ),
+                                     dofColIndices.data(),
+                                     localFluxJacobian.data(),
+                                     Epetra_FECrsMatrix::ROW_MAJOR );
 
-  });
+    } );
+  } );
 }
 
 void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition const * const domain,

@@ -439,7 +439,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   globalIndex_array elementLocalDofIndexCol(numElems);
   fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
   {
-    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil, localIndex iconn )
     {
       stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
       {
@@ -480,7 +480,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   // add additional connectivity resulting from boundary stencils
   fluxApprox->forBoundaryStencils( [&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection)
   {
-    boundaryStencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil )
+    boundaryStencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil, localIndex iconn )
     {
       elementLocalDofIndexRow.resize(1);
       stencil.forConnected( [&] ( PointDescriptor const & point, localIndex const i )
@@ -689,7 +689,7 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
   fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
   {
-    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+    stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<CellDescriptor, real64>::Accessor stencil, localIndex iconn )
     {
       localIndex const stencilSize = stencil.size();
 
@@ -974,7 +974,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
     FluxApproximationBase::BoundaryStencil const & stencilCollection = fluxApprox->getBoundaryStencil(setName);
 
-    stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil )
+    stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil, localIndex iconn )
     {
       localIndex const stencilSize = stencil.size();
 
@@ -1116,8 +1116,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                     localFluxJacobian.data());
 
       residual->SumIntoGlobalValues(1, &eqnRowIndex, &localFlux);
-    });
-  });
+    } );
+  } );
 }
 
 real64

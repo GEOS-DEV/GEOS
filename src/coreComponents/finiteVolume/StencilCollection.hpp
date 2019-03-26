@@ -92,18 +92,20 @@ public:
   void compress();
 
   /// evaluate a user function on each connection
-  template <typename POLICY=stencilPolicy, typename LAMBDA=void>
+  template <typename POLICY=stencilPolicy, typename LAMBDA>
   void forAll( LAMBDA && lambda ) const;
 
   Accessor operator[]( localIndex iconn ) const;
-
-private:
 
   struct Entry
   {
     IndexType  index;
     WeightType weight;
   };
+
+  csArrayView2d<Entry const> getConnections() const { return m_connections; }
+
+private:
 
   csArray2d<Entry> m_connections;
   map<localIndex, localIndex> m_connectorIndices;
@@ -117,9 +119,9 @@ class StencilCollection<IndexType, WeightType>::Accessor
 {
 public:
 
-  Accessor(StencilCollection<IndexType, WeightType> const & stencil, localIndex const index)
-    : m_size( stencil.m_connections.size(index) ),
-      m_entries( stencil.m_connections[index] )
+  Accessor( csArrayView2d<Entry const> const & connections, localIndex const index )
+    : m_size( connections.size(index) ),
+      m_entries( connections[index] )
   {}
 
   /// return the stencil size
@@ -185,9 +187,10 @@ template<typename IndexType, typename WeightType>
 template<typename POLICY, typename LAMBDA>
 void StencilCollection<IndexType, WeightType>::forAll( LAMBDA && lambda ) const
 {
+  csArrayView2d<Entry const> const & connections = getConnections();
   forall_in_range<POLICY>( 0, numConnections(), GEOSX_LAMBDA ( localIndex const index )
   {
-    lambda( Accessor( *this, index ) );
+    lambda( Accessor( connections, index ), index );
   });
 }
 
@@ -238,7 +241,7 @@ template<typename IndexType, typename WeightType>
 typename StencilCollection<IndexType, WeightType>::Accessor
 StencilCollection<IndexType, WeightType>::operator[](localIndex iconn) const
 {
-  return Accessor( *this, iconn );
+  return Accessor( m_connections, iconn );
 }
 
 }
