@@ -634,11 +634,11 @@ public:
   {
     HAS_MEMBER_FUNCTION(isSorted,bool,const,,)
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_isSorted<U>::value, bool>::type shouldResize()
+    static typename std::enable_if<traits::is_set<U>::value, bool>::type shouldResize()
     { return false;  }
 
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_isSorted<U>::value, bool>::type shouldResize()
+    static typename std::enable_if<!traits::is_set<U>::value, bool>::type shouldResize()
     { return true; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual bool shouldResize() const override final
