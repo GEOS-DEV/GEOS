@@ -7,17 +7,18 @@
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
-    <SolidMechanics_LagrangianFEM name="lagSolve" 
+    <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="0"
                                   discretization="FE1"
                                   targetRegions="Region2"
+                                  solidMaterialName="granite"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-3"
                               maxIterNewton="8"
                               verbosityFlag="0"/>
-     </SolidMechanics_LagrangianFEM>
+     </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
                       verboseLevel="3"

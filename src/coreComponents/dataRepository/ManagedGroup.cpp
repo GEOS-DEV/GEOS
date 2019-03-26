@@ -153,8 +153,10 @@ void ManagedGroup::reserve( indexType const newsize )
   m_capacity = newsize;
 }
 
-void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode const & targetNode )
+void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
+  xmlWrapper::addIncludedXML(targetNode);
+
   // loop over the child nodes of the targetNode
   for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
