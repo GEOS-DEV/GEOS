@@ -79,7 +79,7 @@ FluxApproximationBase::GetCatalog()
 
 void FluxApproximationBase::compute(DomainPartition * domain)
 {
-  GEOSX_MARK_BEGIN("FluxApproximationBase::compute");
+  GEOSX_MARK_FUNCTION_SCOPED;
 
   computeMainStencil(domain, getStencil());
 
@@ -106,8 +106,6 @@ void FluxApproximationBase::compute(DomainPartition * domain)
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
     computeBoundaryStencil(domain, targetSet, stencil->reference());
   });
-
-  GEOSX_MARK_END("FluxApproximationBase::compute");
 }
 
 FluxApproximationBase::CellStencil const &
