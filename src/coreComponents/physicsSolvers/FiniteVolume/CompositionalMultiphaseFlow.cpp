@@ -534,8 +534,6 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 co
                                                 DomainPartition * const domain,
                                                 EpetraBlockSystem * const blockSystem )
 {
-  GEOSX_MARK_FUNCTION;
-
   // bind the stored views to the current domain
   ResetViews( domain );
 
