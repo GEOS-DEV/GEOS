@@ -176,6 +176,12 @@ public:
   void UpdateRelPermModel( ManagedGroup * dataGroup );
 
   /**
+   * @brief Recompute phase mobility from constitutive and primary variables
+   * @param domain the domain containing the mesh and fields
+   */
+  void UpdatePhaseMobility( ManagedGroup * dataGroup );
+
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
@@ -263,6 +269,11 @@ public:
     static constexpr auto dPhaseVolumeFraction_dPressureString          = "dPhaseVolumeFraction_dPressure";
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dPhaseVolumeFraction_dGlobalCompDensity";
 
+    // intermediate values for mobilities
+    static constexpr auto phaseMobilityString                     = "phaseMobility";
+    static constexpr auto dPhaseMobility_dPressureString          = "dPhaseMobility_dPressure";
+    static constexpr auto dPhaseMobility_dGlobalCompDensityString = "dPhaseMobility_dGlobalCompDensity";
+
     // these are used to store last converged time step values
     static constexpr auto phaseVolumeFractionOldString     = "phaseVolumeFractionOld";
     static constexpr auto phaseDensityOldString            = "phaseDensityOld";
@@ -301,6 +312,11 @@ public:
     ViewKey phaseVolumeFraction                     = { phaseVolumeFractionString };
     ViewKey dPhaseVolumeFraction_dPressure          = { dPhaseVolumeFraction_dPressureString };
     ViewKey dPhaseVolumeFraction_dGlobalCompDensity = { dPhaseVolumeFraction_dGlobalCompDensityString };
+
+    // intermediate values for mobilities
+    ViewKey phaseMobility                     = { phaseMobilityString };
+    ViewKey dPhaseMobility_dPressure          = { dPhaseMobility_dPressureString };
+    ViewKey dPhaseMobility_dGlobalCompDensity = { dPhaseMobility_dGlobalCompDensityString };
 
     // these are used to store last converged time step values
     ViewKey phaseVolumeFractionOld     = { phaseVolumeFractionOldString };
@@ -444,6 +460,10 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFrac;
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseVolFrac_dPres;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseVolFrac_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseMob;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseMob_dCompDens;
 
   /// views into backup fields
 
