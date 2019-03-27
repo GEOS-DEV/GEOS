@@ -14,7 +14,8 @@ set( constitutive_headers
      Fluid/PVTFunctions/BrineViscosityFunction.hpp
      Fluid/PVTFunctions/CO2SolubilityFunction.hpp     
      Fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
-     Fluid/PVTFunctions/PVTFunction.hpp
+     Fluid/PVTFunctions/FlashModelBase.hpp
+     Fluid/PVTFunctions/PVTFunctionBase.hpp
      Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
      Fluid/PVTFunctions/UtilityFunctions.hpp     
      Solid/PoreVolumeCompressibleSolid.hpp
@@ -39,7 +40,8 @@ set( constitutive_sources
      Fluid/PVTFunctions/BrineViscosityFunction.cpp 
      Fluid/PVTFunctions/CO2SolubilityFunction.cpp
      Fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
-     Fluid/PVTFunctions/PVTFunction.cpp
+     Fluid/PVTFunctions/FlashModelBase.cpp
+     Fluid/PVTFunctions/PVTFunctionBase.cpp
      Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
      Fluid/PVTFunctions/UtilityFunctions.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
