@@ -725,7 +725,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DomainPartition * const d
   blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
 
   Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
-  arrayView1d<real64 const> const & facePressure = faceManager->getReference< array1d<real64> >("Pressure");
+  arrayView1d<real64 const> const & facePressure = faceManager->getReference< array1d<real64> >("ChomboPressure");
 
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
   {
@@ -1170,8 +1170,11 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 
 
 
-  fsManager->ApplyFieldValue( time_n, domain, "faceManager", "Pressure" );
-  ApplyChomboPressure( domain, *blockSystem );
+  if( faceManager->hasView("ChomboPressure") )
+  {
+    fsManager->ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
+    ApplyChomboPressure( domain, *blockSystem );
+  }
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                                     BlockIDs::displacementBlock );
