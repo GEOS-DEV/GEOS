@@ -82,7 +82,7 @@ protected:
 
 };
 
-typedef std::shared_ptr<FlashModelBase> FlashModel;
+typedef std::unique_ptr<FlashModelBase> FlashModel;
 
 void CalculateCO2Solubility(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& solubiltiy);
 
