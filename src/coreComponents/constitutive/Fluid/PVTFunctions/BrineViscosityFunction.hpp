@@ -18,50 +18,54 @@
  */
 
 /**
-  * @file BrineViscosityFunction.hpp
-  */
+ * @file BrineViscosityFunction.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BRINEVISCOSITYFUNCTION_HPP
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BRINEVISCOSITYFUNCTION_HPP
 
-#include "constitutive/Fluid/PVTFunctions/PVTFunction.hpp"
+#include "PVTFunctionBase.hpp"
 
 namespace geosx
 {
-  
+
 namespace PVTProps
 {
 
-  class BrineViscosityFunction : public PVTFunctionBase
+class BrineViscosityFunction : public PVTFunctionBase
+{
+public:
+
+
+  BrineViscosityFunction( string_array const & inputPara,
+                          string_array const & componentNames,
+                          real64_array const & componentMolarWeight );
+  ~BrineViscosityFunction() override
+  {}
+
+  static constexpr auto m_catalogName = "BrineViscosity";
+  static string CatalogName()                    { return m_catalogName; }
+  virtual string GetCatalogName() override final { return CatalogName(); }
+
+  virtual PVTFUNCTYPE FunctionType() const override
   {
-  public:
+    return PVTFUNCTYPE::VISCOSITY;
 
+  }
 
-    BrineViscosityFunction(const string_array& inputPara, const string_array& componentNames, const real64_array& componentMolarWeight);
-    ~BrineViscosityFunction() {}
+  virtual void Evaluation( const EvalVarArgs& pressure,
+                           const EvalVarArgs& temperature,
+                           const array1dT<EvalVarArgs>& phaseComposition,
+                           EvalVarArgs& value, bool useMass = 0) const override;
 
-    virtual const string& FunctionName() const
-    {
-      return m_functionName;
-    }
-    
-    virtual PVTFUNCTYPE FunctionType() const
-    {
-      return PVTFUNCTYPE::VISCOSITY;
+private:
 
-    }  
+  void MakeCoef(string_array const & inputPara);
 
-    virtual void Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass = 0) const;
+  real64 m_coef0;
+  real64 m_coef1;
 
-  private:
-
-    void MakeCoef(const string_array& inputPara);
-    
-    string m_functionName;
-    real64 m_coef0;
-    real64 m_coef1;    
-    
-  };  
+};
 
 }
 

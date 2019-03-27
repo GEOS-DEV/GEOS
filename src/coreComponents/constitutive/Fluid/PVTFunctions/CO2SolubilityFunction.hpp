@@ -18,48 +18,55 @@
  */
 
 /**
-  * @file CO2SolubilityFunction.hpp
-  */
+ * @file CO2SolubilityFunction.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CO2SOLUBILITYFUNCTION_HPP
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CO2SOLUBILITYFUNCTION_HPP
 
-#include "constitutive/Fluid/PVTFunctions/PVTFunction.hpp"
+#include "FlashModelBase.hpp"
 
 namespace geosx
 {
 
 namespace PVTProps
 {
-  
-  class CO2SolubilityFunction : public FlashModelBase
-  {
-  public:
 
-    CO2SolubilityFunction(const string_array& inputPara, const string_array& phaseNames, const string_array& componentNames, const real64_array& componentMolarWeight);
-    ~CO2SolubilityFunction() {}
+class CO2SolubilityFunction : public FlashModelBase
+{
+public:
 
-    virtual const string& FlashModelName() const
-    {
-      return m_modelName;
-    }
-    
-    virtual void Partition(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& compFraction, array1dT<EvalVarArgs>& phaseFraction, array1dT<array1dT<EvalVarArgs> >& phaseCompFraction) const;    
+  CO2SolubilityFunction( const string_array& inputPara,
+                         const string_array& phaseNames,
+                         const string_array& componentNames,
+                         real64_array const & componentMolarWeight);
 
-  private:
+  ~CO2SolubilityFunction() override
+  {}
 
-    void MakeTable(const string_array& inputPara);    
-    
-    TableFunctionPtr m_CO2SolubilityTable; 
-    string m_modelName;
-    localIndex m_CO2Index;
-    localIndex m_waterIndex;    
-    localIndex m_phaseGasIndex;
-    localIndex m_phaseLiquidIndex;    
-  };  
+  static constexpr auto m_catalogName = "CO2Solubility";
+  static string CatalogName()                    { return m_catalogName; }
+  virtual string GetCatalogName() override final { return CatalogName(); }
+
+  virtual void Partition( const EvalVarArgs& pressure,
+                          const EvalVarArgs& temperature,
+                          const array1dT<EvalVarArgs>& compFraction,
+                          array1dT<EvalVarArgs>& phaseFraction,
+                          array1dT<array1dT<EvalVarArgs> >& phaseCompFraction) const override;
+
+private:
+
+  void MakeTable(const string_array& inputPara);
+
+  TableFunctionPtr m_CO2SolubilityTable;
+  localIndex m_CO2Index;
+  localIndex m_waterIndex;
+  localIndex m_phaseGasIndex;
+  localIndex m_phaseLiquidIndex;
+};
 
 }
 
 }
-  
+
 #endif

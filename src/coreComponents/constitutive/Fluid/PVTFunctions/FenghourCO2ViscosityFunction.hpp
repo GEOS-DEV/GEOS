@@ -18,13 +18,13 @@
  */
 
 /**
-  * @file FenghourCO2ViscosityFunction.hpp
-  */
+ * @file FenghourCO2ViscosityFunction.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_FENGHOURCO2VISCOSITYFUNCTION_HPP
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_FENGHOURCO2VISCOSITYFUNCTION_HPP
 
-#include "constitutive/Fluid/PVTFunctions/PVTFunction.hpp"
+#include "PVTFunctionBase.hpp"
 
 namespace geosx
 {
@@ -32,35 +32,38 @@ namespace geosx
 namespace PVTProps
 {
 
-  class FenghourCO2ViscosityFunction : public PVTFunctionBase
+class FenghourCO2ViscosityFunction : public PVTFunctionBase
+{
+public:
+
+  FenghourCO2ViscosityFunction( const string_array& inputPara,
+                                const string_array& componentNames,
+                                const real64_array& componentMolarWeight );
+  ~FenghourCO2ViscosityFunction() override
+      {}
+
+  static constexpr auto m_catalogName = "FenghourCO2Viscosity";
+  static string CatalogName()                    { return m_catalogName; }
+  virtual string GetCatalogName() override final { return CatalogName(); }
+
+  virtual PVTFUNCTYPE FunctionType() const override
   {
-  public:
+    return PVTFUNCTYPE::VISCOSITY;
 
-    FenghourCO2ViscosityFunction(const string_array& inputPara, const string_array& componentNames, const real64_array& componentMolarWeight);
-    ~FenghourCO2ViscosityFunction() {}
+  }
 
-    virtual const string& FunctionName() const
-    {
-      return m_functionName;
-    }
-    
-    virtual PVTFUNCTYPE FunctionType() const
-    {
-      return PVTFUNCTYPE::VISCOSITY;
-
-    }  
-
-    virtual void Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass = 0) const;
+  virtual void Evaluation( const EvalVarArgs& pressure,
+                           const EvalVarArgs& temperature,
+                           const array1dT<EvalVarArgs>& phaseComposition,
+                           EvalVarArgs& value, bool useMass = 0) const override;
 
 
-  private:
-    
-    void MakeTable(const string_array& inputPara);    
-    
-    TableFunctionPtr m_CO2ViscosityTable; 
-    string m_functionName;
-    
-  };  
+private:
+
+  void MakeTable(const string_array& inputPara);
+
+  TableFunctionPtr m_CO2ViscosityTable;
+};
 
 }
 

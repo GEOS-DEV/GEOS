@@ -27,7 +27,8 @@
 
 #include <memory>
 
-#include "constitutive/Fluid/PVTFunctions/PVTFunction.hpp"
+#include "PVTFunctions/FlashModelBase.hpp"
+#include "PVTFunctions/PVTFunctionBase.hpp"
 
 
 namespace geosx
@@ -101,9 +102,9 @@ public:
                        real64 & dTotalDensity_dPressure,
                        real64 & dTotalDensity_dTemperature,
                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction,
-		       const PVTProps::array1dT<PVTProps::PVTFunction>& phaseDensityFuns,
-		       const PVTProps::array1dT<PVTProps::PVTFunction>& phaseViscosityFuns,
-		       const PVTProps::FlashModel flashModel);		       
+                       const PVTProps::array1dT<PVTProps::PVTFunction>& phaseDensityFuns,
+                       const PVTProps::array1dT<PVTProps::PVTFunction>& phaseViscosityFuns,
+                       const PVTProps::FlashModel flashModel);
 
   virtual void Compute( real64 const & pressure,
                         real64 const & temperature,
@@ -156,6 +157,7 @@ private:
 
   string m_flashModelParaFile;
 
+  // number of entries corrosponds to number of phases
   PVTProps::array1dT<PVTProps::PVTFunction> m_phaseDensityFuns;
   PVTProps::array1dT<PVTProps::PVTFunction> m_phaseViscosityFuns;  
 
