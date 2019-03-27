@@ -18,8 +18,8 @@
  */
 
 /**
-  * @file BrineViscosityFunction.cpp
-  */
+ * @file BrineViscosityFunction.cpp
+ */
 
 
 #include "constitutive/Fluid/PVTFunctions/BrineViscosityFunction.hpp"
@@ -29,44 +29,51 @@ using namespace std;
 namespace geosx
 {
 
-  using namespace stringutilities;  
-  
+using namespace stringutilities;
+
 namespace PVTProps
 {
 
-  BrineViscosityFunction::BrineViscosityFunction(const string_array& inputPara, const string_array& componentNames, const real64_array& componentMolarWeight) : PVTFunctionBase(componentNames, componentMolarWeight), m_functionName(inputPara[1])
-  {
+BrineViscosityFunction::BrineViscosityFunction( string_array const & inputPara,
+                                                string_array const & componentNames,
+                                                real64_array const & componentMolarWeight):
+  PVTFunctionBase( inputPara[1], componentNames, componentMolarWeight)
+{
 
-    MakeCoef(inputPara);
-    
-  }
+  MakeCoef(inputPara);
 
-  void BrineViscosityFunction::MakeCoef(const string_array& inputPara)
-  {
+}
 
-    static const real64 a = 0.0816;
-    static const real64 b = 0.0122;
-    static const real64 c = 0.000128;
-    static const real64 d = 0.000629;    
-    static const real64 k = -0.7;    
+void BrineViscosityFunction::MakeCoef(string_array const & inputPara)
+{
 
-    static const real64 waterVisc = 8.9e-4; //at 25C
-    
-    real64 m = stod(inputPara[2]);    
+  static const real64 a = 0.0816;
+  static const real64 b = 0.0122;
+  static const real64 c = 0.000128;
+  static const real64 d = 0.000629;
+  static const real64 k = -0.7;
 
-    m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
+  static const real64 waterVisc = 8.9e-4; //at 25C
 
-    m_coef1 =  d * (1.0 - exp(k * m)) * waterVisc;
-    
-  }
-    
-    
-  void BrineViscosityFunction::Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass) const
-  {
+  real64 m = stod(inputPara[2]);
 
-    value = m_coef0 + m_coef1 * temperature;
-    
-  }
+  m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
+
+  m_coef1 =  d * (1.0 - exp(k * m)) * waterVisc;
+
+}
+
+
+void BrineViscosityFunction::Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass) const
+{
+
+  value = m_coef0 + m_coef1 * temperature;
+
+}
+
+REGISTER_CATALOG_ENTRY( PVTFunctionBase,
+                        BrineViscosityFunction,
+                        string_array const &, string_array const &, real64_array const & )
 
 }
 

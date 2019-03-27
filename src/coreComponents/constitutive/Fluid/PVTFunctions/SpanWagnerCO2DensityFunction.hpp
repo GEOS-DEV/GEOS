@@ -18,13 +18,13 @@
  */
 
 /**
-  * @file SpanWagnerCO2DensityFunction.hpp
-  */
+ * @file SpanWagnerCO2DensityFunction.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_SPANWAGNERCO2DENSITYFUNCTION_HPP
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_SPANWAGNERCO2DENSITYFUNCTION_HPP
 
-#include "constitutive/Fluid/PVTFunctions/PVTFunction.hpp"
+#include "PVTFunctionBase.hpp"
 
 namespace geosx
 {
@@ -32,40 +32,47 @@ namespace geosx
 namespace PVTProps
 {
 
-  class SpanWagnerCO2DensityFunction : public PVTFunctionBase
-  {
-  public:
+class SpanWagnerCO2DensityFunction : public PVTFunctionBase
+{
+public:
 
 
-    SpanWagnerCO2DensityFunction(const string_array& inputPara, const string_array& componentNames, const real64_array& componentMolarWeight);
-    ~SpanWagnerCO2DensityFunction() {}
+  SpanWagnerCO2DensityFunction( const string_array& inputPara,
+                                const string_array& componentNames,
+                                const real64_array& componentMolarWeight);
 
-    virtual const string& FunctionName() const
-    {
-      return m_functionName;
-    }
-    
-    virtual PVTFUNCTYPE FunctionType() const
-    {
-      return PVTFUNCTYPE::DENSITY;
-
-    }  
-
-    virtual void Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass = 0) const;
+  ~SpanWagnerCO2DensityFunction() override {}
 
 
-  private:
-    
-    void MakeTable(const string_array& inputPara);    
-    
-    TableFunctionPtr m_CO2DensityTable; 
-    string m_functionName;
-    localIndex m_CO2Index;
-    
-  };  
+  static constexpr auto m_catalogName = "SpanWagnerCO2Density";
+  static string CatalogName()                    { return m_catalogName; }
+  virtual string GetCatalogName() override final { return CatalogName(); }
+
+
+  virtual PVTFUNCTYPE FunctionType() const override
+      {
+    return PVTFUNCTYPE::DENSITY;
+
+      }
+
+  virtual void Evaluation( const EvalVarArgs& pressure,
+                           const EvalVarArgs& temperature,
+                           const array1dT<EvalVarArgs>& phaseComposition,
+                           EvalVarArgs& value,
+                           bool useMass = 0) const override;
+
+
+private:
+
+  void MakeTable(const string_array& inputPara);
+
+  TableFunctionPtr m_CO2DensityTable;
+  localIndex m_CO2Index;
+
+};
 
 }
 
 }
-  
+
 #endif
