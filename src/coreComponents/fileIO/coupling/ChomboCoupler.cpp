@@ -38,9 +38,7 @@ ChomboCoupler::ChomboCoupler(MPI_Comm const comm, const std::string& outputPath,
   m_mesh(mesh),
   m_counter(0)
 {
-  /* Create a dummy pressure field */
-  FaceManager * faces = m_mesh.getFaceManager();
-  faces->RegisterViewWrapper< array1d<real64> >("Pressure");
+  m_mesh.getFaceManager()->RegisterViewWrapper< array1d<real64> >("ChomboPressure");
 }
 
 void ChomboCoupler::write(double dt)
@@ -66,7 +64,7 @@ void ChomboCoupler::write(double dt)
 
   /* Build the face FieldMap. */
   FieldMap_in face_fields;
-  real64 * pressure_ptr = faces->getReference<real64_array>("Pressure").data();
+  real64 * pressure_ptr = faces->getReference<real64_array>("ChomboPressure").data();
   face_fields["Pressure"] = std::make_tuple(H5T_NATIVE_DOUBLE, 1, pressure_ptr);
 
   /* Build the node FieldMap. */
@@ -104,7 +102,7 @@ void ChomboCoupler::read(bool usePressures)
 
     /* Build the face FieldMap. */
     FieldMap_out face_fields;
-    real64 * pressure_ptr = faces->getReference<real64_array>("Pressure").data();
+    real64 * pressure_ptr = faces->getReference<real64_array>("ChomboPressure").data();
     face_fields["Pressure"] = std::make_tuple(H5T_NATIVE_DOUBLE, 1, pressure_ptr);
 
     FieldMap_out node_fields;
