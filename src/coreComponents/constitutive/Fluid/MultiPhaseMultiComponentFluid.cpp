@@ -154,41 +154,11 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
 
       if(streq(strs[0], "DensityFun")) 
       {
-
-        if(streq(strs[1], "BrineCO2Density"))
-        {
-
-          m_phaseDensityFuns.push_back(std::make_shared<BrineCO2DensityFunction>(strs, m_componentNames, m_componentMolarWeight));
-
-        }
-        else if(streq(strs[1], "SpanWagnerCO2Density"))
-        {
-
-          m_phaseDensityFuns.push_back(std::make_shared<SpanWagnerCO2DensityFunction>(strs, m_componentNames, m_componentMolarWeight));
-        }
-        else
-          GEOS_ERROR("Error: Invalid density function: " << strs[1] << ".");
-
+        m_phaseDensityFuns.push_back( PVTFunctionBase::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
       }
       else if(streq(strs[0], "ViscosityFun")) 
       {
-
-        if(streq(strs[1], "BrineViscosity"))
-        {
-
-          m_phaseViscosityFuns.push_back(std::make_shared<BrineViscosityFunction>(strs, m_componentNames, m_componentMolarWeight));
-
-        }
-        else if(streq(strs[1], "FenghourCO2Viscosity"))
-        {
-
-          m_phaseViscosityFuns.push_back(std::make_shared<FenghourCO2ViscosityFunction>(strs, m_componentNames, m_componentMolarWeight));
-
-
-        }
-        else
-          GEOS_ERROR("Error: Invalid viscosity function: " << strs[1] << ".");
-
+        m_phaseViscosityFuns.push_back( PVTFunctionBase::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
       }
       else 
         GEOS_ERROR("Error: Invalid PVT function: " << strs[0] << ".");
@@ -213,14 +183,11 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
       if(streq(strs[0], "FlashModel")) 
       {
 
-        if(streq(strs[1], "CO2SolubilityFun"))
-        {
-
-          m_flashModel = std::make_shared<CO2SolubilityFunction>(strs, m_phaseNames, m_componentNames, m_componentMolarWeight);
-
-        }
-        else
-          GEOS_ERROR("Error: Invalid flash model: " << strs[1] << ".");
+        m_flashModel = ( FlashModelBase::CatalogInterface::Factory( strs[1],
+                                                                    strs,
+                                                                    m_phaseNames,
+                                                                    m_componentNames,
+                                                                    m_componentMolarWeight) );
       }
       else 
         GEOS_ERROR("Error: Not flash model: " << strs[0] << ".");
@@ -304,7 +271,7 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
                                              arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction,
                                              const array1dT<PVTProps::PVTFunction>& phaseDensityFuns,
                                              const array1dT<PVTProps::PVTFunction>& phaseViscosityFuns,
-                                             const PVTProps::FlashModel flashModel )
+                                             const PVTProps::FlashModel & flashModel )
 {
 
   CompositionalVarContainer<1> phaseFrac {

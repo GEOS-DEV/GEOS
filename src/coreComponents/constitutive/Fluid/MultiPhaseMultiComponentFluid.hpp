@@ -104,7 +104,7 @@ public:
                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction,
                        const PVTProps::array1dT<PVTProps::PVTFunction>& phaseDensityFuns,
                        const PVTProps::array1dT<PVTProps::PVTFunction>& phaseViscosityFuns,
-                       const PVTProps::FlashModel flashModel);
+                       const PVTProps::FlashModel & flashModel);
 
   virtual void Compute( real64 const & pressure,
                         real64 const & temperature,
@@ -159,7 +159,7 @@ private:
 
   // number of entries corrosponds to number of phases
   PVTProps::array1dT<PVTProps::PVTFunction> m_phaseDensityFuns;
-  PVTProps::array1dT<PVTProps::PVTFunction> m_phaseViscosityFuns;  
+  PVTProps::array1dT<PVTProps::PVTFunction> m_phaseViscosityFuns;
 
   PVTProps::FlashModel m_flashModel;
   
