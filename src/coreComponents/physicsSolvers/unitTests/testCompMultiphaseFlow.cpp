@@ -315,7 +315,11 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
           dPres[ei] = dP;
-          solver->UpdateStateAll(domain);
+
+          applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion2 )
+          {
+            solver->UpdateState( subRegion2 );
+          });
 
           residual->Scale( 0.0 );
           assembleFunction( solver, domain, jacobian, residual );
@@ -339,7 +343,11 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
           real64 const dRho = perturbParameter * totalDensity;
           dCompDens[ei][jc] = dRho;
-          solver->UpdateStateAll(domain);
+
+          applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion2 )
+          {
+            solver->UpdateState( subRegion2 );
+          });
 
           residual->Scale( 0.0 );
           assembleFunction( solver, domain, jacobian, residual );
