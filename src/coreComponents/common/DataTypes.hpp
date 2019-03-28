@@ -687,7 +687,7 @@ public:
     }
     default:
     {
-      GEOS_ERROR( LOCATION );
+      GEOS_ERROR( "TypeID not recognized." );
     }
     }
   }
@@ -751,7 +751,7 @@ public:
 
     default:
     {
-      GEOS_ERROR( LOCATION );
+      GEOS_ERROR( "TypeID not recognized." );
     }
     }
   }
@@ -882,7 +882,7 @@ public:
     {
       if( errorIfTypeNotFound )
       {
-        GEOS_ERROR( LOCATION );
+        GEOS_ERROR( "TypeID not recognized." );
       }
     }
     }
@@ -1054,7 +1054,7 @@ public:
     }
     default:
     {
-      GEOS_ERROR( LOCATION );
+      GEOS_ERROR( "TypeID not recognized." );
       return lambda( double(1) );
     }
     }
@@ -1163,7 +1163,7 @@ public:
 
     default:
     {
-      GEOS_ERROR( LOCATION );
+      GEOS_ERROR( "TypeID not recognized." );
     }
     }
   }
@@ -1271,7 +1271,7 @@ public:
 //    }
     default:
     {
-      GEOS_ERROR( LOCATION );
+      GEOS_ERROR( "TypeID not recognized." );
     }
     }
   }
