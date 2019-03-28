@@ -64,6 +64,8 @@ private:
 
   void MakeTable(const string_array& inputPara);
 
+  void CalculateBrineDensity(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& density);
+  
   TableFunctionPtr m_BrineDensityTable;
   localIndex m_CO2Index;
   localIndex m_waterIndex;

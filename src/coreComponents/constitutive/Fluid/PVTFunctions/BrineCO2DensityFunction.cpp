@@ -182,6 +182,42 @@ void BrineCO2DensityFunction::Evaluation(const EvalVarArgs& pressure, const Eval
 
 }
 
+void BrineCO2DensityFunction::CalculateBrineDensity(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& density)
+  {
+  
+    static const real64 c1 = -9.9595;
+    static const real64 c2 = 7.0845;  
+    static const real64 c3 = 3.9093;
+
+    static const real64 a1 = -0.004539;
+    static const real64 a2 = -0.0001638;
+    static const real64 a3 = 0.00002551;
+
+    static const real64 AA = -3.033405;
+    static const real64 BB = 10.128163;
+    static const real64 CC = -8.750567;
+    static const real64 DD = 2.663107;
+
+    real64 P, x;
+  
+    for(unsigned long i = 0; i < pressure.size(); ++i)
+      {
+
+	P = pressure[i] / 1e5;
+
+	for(unsigned long j = 0; j < temperature.size(); ++j)    
+	  {
+      
+	    x = c1 * exp(a1 * salinity) + c2 * exp(a2 * temperature[j]) + c3 * exp(a3 * P);
+
+	    density[i][j] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
+
+	  }
+      }
+  
+  }
+
+  
 REGISTER_CATALOG_ENTRY( PVTFunctionBase,
                         BrineCO2DensityFunction,
                         string_array const &, string_array const &, real64_array const & )
