@@ -62,9 +62,14 @@ public:
                            bool useMass = 0) const override;
 
 
+  static void CalculateCO2Density(const real64_vector& pressure, const real64_vector& temperature, array1dT<real64_vector>& density);
+  
 private:
 
   void MakeTable(const string_array& inputPara);
+
+  static void SpanWagnerCO2Density(const real64 &T, const real64 &P, real64 &rho, real64 (*f)(const real64 &x1, const real64 &x2, const real64 &x3));
+  
 
   TableFunctionPtr m_CO2DensityTable;
   localIndex m_CO2Index;

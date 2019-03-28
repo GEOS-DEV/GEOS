@@ -62,6 +62,10 @@ private:
 
   void MakeTable(const string_array& inputPara);
 
+  void CalculateCO2Viscosity(const real64_vector& pressure, const real64_vector& temperature, const array1dT<real64_vector>& density, array1dT<real64_vector>& viscosity);
+
+  void FenghourCO2Viscosity(const real64 &Tcent, const real64 &den, real64 &vis);
+
   TableFunctionPtr m_CO2ViscosityTable;
 };
 
