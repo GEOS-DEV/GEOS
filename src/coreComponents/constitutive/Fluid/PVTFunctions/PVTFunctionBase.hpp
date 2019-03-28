@@ -83,13 +83,6 @@ protected:
 
 typedef std::unique_ptr<PVTFunctionBase> PVTFunction;
 
-void CalculateCO2Density(const real64_vector& pressure, const real64_vector& temperature, array1dT<real64_vector>& density);
-
-void CalculateCO2Viscosity(const real64_vector& pressure, const real64_vector& temperature, array1dT<real64_vector>& viscosity);
-
-void CalculateBrineDensity(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& density);
-
-
 }
 
 }
