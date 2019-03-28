@@ -82,11 +82,11 @@ public:
   /**
    * This method is called when it's host event is triggered
    */
-  virtual void Execute( real64 const & time_n,
-                        real64 const & dt,
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
