@@ -79,6 +79,8 @@ FluxApproximationBase::GetCatalog()
 
 void FluxApproximationBase::compute(DomainPartition * domain)
 {
+  GEOSX_MARK_FUNCTION_SCOPED;
+
   computeMainStencil(domain, getStencil());
 
   if( !m_fractureRegionName.empty() )
