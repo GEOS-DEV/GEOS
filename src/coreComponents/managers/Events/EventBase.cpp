@@ -228,11 +228,11 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 }
 
 
-void EventBase::Execute(real64 const& time_n,
-                        real64 const& dt,
+void EventBase::Execute(real64 const time_n,
+                        real64 const dt,
                         const integer cycleNumber,
-                        integer const ,
-                        real64 const & ,
+                        integer const,
+                        real64 const,
                         ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
@@ -360,10 +360,10 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 }
 
 
-void EventBase::Cleanup(real64 const& time_n,
+void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)

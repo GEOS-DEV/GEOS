@@ -339,11 +339,10 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
-    ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-
     int const maxNumResolves = m_maxNumResolves;
     for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
+      ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
                                         getLinearSystemRepository() );
       if( surfaceGenerator!=nullptr )
@@ -710,6 +709,41 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
       }
     }
   });
+}
+
+void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DomainPartition * const domain,
+                                                       systemSolverInterface::EpetraBlockSystem & blockSystem )
+{
+  FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
+  NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
+
+  arrayView1d<real64 const> const & faceArea  = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceNormal  = faceManager->faceNormal();
+  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+
+  arrayView1d<globalIndex> const &
+  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+
+  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
+  arrayView1d<real64 const> const & facePressure = faceManager->getReference< array1d<real64> >("ChomboPressure");
+
+  for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
+  {
+    globalIndex nodeDOF[20];
+    real64 nodeRHS[20];
+
+    int const numNodes = integer_conversion<int>(facesToNodes[kf].size());
+    for( int a=0 ; a<numNodes ; ++a )
+    {
+      for( int component=0 ; component<3 ; ++component )
+      {
+        nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
+        nodeRHS[3*a+component] = - facePressure[kf] * faceNormal[kf][component] * faceArea[kf] / numNodes;
+      }
+    }
+    rhs->SumIntoGlobalValues( numNodes*3, nodeDOF, nodeRHS );
+  }
+
 }
 
 void
@@ -1133,6 +1167,14 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
 //  fsgerManager->ApplyBoundaryCondition( this, &,
 //                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
+
+
+
+  if( faceManager->hasView("ChomboPressure") )
+  {
+    fsManager->ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
+    ApplyChomboPressure( domain, *blockSystem );
+  }
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                                     BlockIDs::displacementBlock );
