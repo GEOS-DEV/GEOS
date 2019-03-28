@@ -41,11 +41,11 @@ BlueprintOutput::~BlueprintOutput()
 {}
 
 
-void BlueprintOutput::Execute(real64 const& time_n,
-                              real64 const& dt,
+void BlueprintOutput::Execute(real64 const time_n,
+                              real64 const dt,
                               integer const cycleNumber,
                               integer const eventCounter,
-                              real64 const & eventProgress,
+                              real64 const eventProgress,
                               ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);

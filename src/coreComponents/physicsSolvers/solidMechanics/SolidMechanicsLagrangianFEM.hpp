@@ -429,7 +429,8 @@ public:
                         real64 const time,
                         systemSolverInterface::EpetraBlockSystem & blockSystem );
 
-
+  void ApplyChomboPressure( DomainPartition * const domain,
+                            systemSolverInterface::EpetraBlockSystem & blockSystem );
 
   void SetTimeIntegrationOption( string const & stringVal )
   {
