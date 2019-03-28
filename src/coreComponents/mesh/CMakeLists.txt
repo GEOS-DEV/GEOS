@@ -46,7 +46,7 @@ set(mesh_sources
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
-                 DEPENDS_ON            managers metis
+                 DEPENDS_ON            managers metis cxx-utilities
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
