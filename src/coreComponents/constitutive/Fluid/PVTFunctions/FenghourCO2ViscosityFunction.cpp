@@ -23,6 +23,7 @@
 
 
 #include "constitutive/Fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
+#include "constitutive/Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
 
 using namespace std;
 
@@ -85,12 +86,16 @@ void FenghourCO2ViscosityFunction::MakeTable(const string_array& inputPara)
   unsigned long nT = temperatures.size();
 
   array1dT<real64_vector> viscosities(nP);
+  array1dT<real64_vector> densities(nP);  
   for(unsigned long i = 0; i < nP; ++i)
   {
     viscosities[i].resize(nT);
+    densities[i].resize(nT);    
   }
 
-  CalculateCO2Viscosity(pressures, temperatures, viscosities);
+  SpanWagnerCO2DensityFunction::CalculateCO2Density(pressures, temperatures, densities);
+  
+  CalculateCO2Viscosity(pressures, temperatures, densities, viscosities);
 
   m_CO2ViscosityTable = make_shared<XYTable>("FenghourCO2ViscosityTable", pressures, temperatures, viscosities);
 
@@ -115,6 +120,57 @@ void FenghourCO2ViscosityFunction::Evaluation(const EvalVarArgs& pressure, const
 
 }
 
+void FenghourCO2ViscosityFunction::FenghourCO2Viscosity(const real64 &Tcent, const real64 &den, real64 &vis)
+{
+  static const real64 espar = 251.196;
+  static const real64 esparInv = 1.0 / espar;
+  static const real64 aa[5] = { 0.235156,  -0.491266, 5.211155e-2, 5.347906e-2, -1.537102e-2 };
+  static const real64 d11 =  0.4071119e-2;
+  static const real64 d21 =  0.7198037e-4;
+  static const real64 d64 =  0.2411697e-16;
+  static const real64 d81 =  0.2971072e-22;
+  static const real64 d82 = -0.1627888e-22;
+
+  // temperature in Kelvin
+  const real64 Tkelvin = Tcent + 273.15;
+  // evaluate vlimit from eqns 3-5
+  const real64 Tred   = Tkelvin * esparInv;
+  const real64 x = log(Tred);
+  const real64 lnGfun = aa[0] + x * (aa[1] + x * (aa[2] + x *(aa[3] + x * aa[4])));
+  const real64 GfunInv = exp(-lnGfun);
+  const real64 vlimit = 1.00697 * sqrt(Tkelvin) * GfunInv;
+
+  const real64 d2 = den * den;
+  const real64 vxcess = den * (d11 + den * (d21 + d2*d2*(d64 / (Tred*Tred*Tred) + d2*(d81 + d82/Tred))));
+    
+  static const real64 vcrit = 0.0;
+
+  vis = 1e-6 * (vlimit + vxcess + vcrit);
+
+}
+
+  void FenghourCO2ViscosityFunction::CalculateCO2Viscosity(const real64_vector& pressure, const real64_vector& temperature, const array1dT<real64_vector>& density, array1dT<real64_vector>& viscosity)
+{
+
+  real64 PPa, TK, rho;
+  
+  for(unsigned long i = 0; i < pressure.size(); ++i)
+    {
+
+      PPa = pressure[i];
+      
+      for(unsigned long j = 0; j < temperature.size(); ++j)    
+	{
+
+	  FenghourCO2Viscosity(temperature[j], density[i][j], viscosity[i][j]);
+	    
+	}
+
+    }
+
+}
+  
+  
 REGISTER_CATALOG_ENTRY( PVTFunctionBase,
                         FenghourCO2ViscosityFunction,
                         string_array const &, string_array const &, real64_array const & )
