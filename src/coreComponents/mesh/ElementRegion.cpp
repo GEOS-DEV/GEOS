@@ -28,6 +28,11 @@
 #include "CellBlockManager.hpp"
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
+#include "AggregateElementSubRegion.hpp"
+#include "cxx-utilities/src/src/SparsityPattern.hpp"
+
+#include "metis.h"
+
 //#include "constitutive/ConstitutiveManager.hpp"
 //#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 //#include "finiteElement/basis/BasisBase.hpp"
@@ -64,6 +69,8 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
   RegisterViewWrapper( viewKeyStruct::fractureSetString, &m_fractureSetNames, false )->
     setInputFlag(InputFlags::OPTIONAL);
 
+  RegisterViewWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
+    setInputFlag(InputFlags::OPTIONAL);
 }
 
 
@@ -190,6 +197,101 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
     subRegion->CopyFromCellBlock( source );
   }
 }
+
+void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
+{
+  if(m_coarseningRatio <= 0.)
+  {
+    return;
+  }
+  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  AggregateElementSubRegion * const aggregateSubRegion =
+    elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
+
+  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
+  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
+  array2d<localIndex> const & elemList           = faceManager->elementList();
+  constexpr localIndex numElems = 2;
+
+  // Counting the total number of cell and number of vertices  
+  localIndex nbCellElements = 0;
+  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+    {
+      nbCellElements += elementSubRegion->size();
+    });
+  // Number of aggregate computation
+  localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
+  GEOS_LOG_RANK_0("Generating " +  std::to_string(nbAggregates) + " aggregates on region " + this->getName());
+
+  // METIS variable declarations
+  using idx_t = ::idx_t;
+  idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
+  METIS_SetDefaultOptions(options);                                 // ... That are set by default
+  idx_t nnodes = integer_conversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
+  idx_t nconst = 1;                                                 // Number of balancy constraints
+  idx_t objval;                                                     // Total communication volume
+  array1d< idx_t > parts(nnodes);                                   // Map element index -> aggregate index
+  idx_t nparts = integer_conversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
+  
+
+  // Compute the connectivity graph
+  LvArray::SparsityPattern< localIndex> graph(nbCellElements, nbCellElements);
+  localIndex nbConnections = 0;
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    if( elemRegionList[kf][0] != -1 && elemRegionList[kf][1] != -1 )
+    {
+      localIndex const esr0 = elemSubRegionList[kf][0];
+      localIndex const ei0  = elemList[kf][0];
+      localIndex const esr1 = elemSubRegionList[kf][1];
+      localIndex const ei1  = elemList[kf][1];
+      graph.insertNonZero(ei0, ei1);
+      graph.insertNonZero(ei1, ei0);
+      nbConnections++;
+    }
+  }
+  
+  // METIS graph definition
+  array1d< idx_t > xadjs(nnodes + 1);
+  array1d< idx_t> adjncy(nbConnections*2);
+
+  // Fill the METIS graph structure
+  xadjs[0] = integer_conversion< idx_t >(0);
+  for( localIndex row = 0; row < nbCellElements; ++row )
+  {
+    localIndex numNonZeros = graph.numNonZeros( row );
+    auto columns = graph.getColumns( row );
+    xadjs[integer_conversion<idx_t>(row+1)] = xadjs[row] + integer_conversion< idx_t >( numNonZeros ) ;
+    for(localIndex col = 0; col < numNonZeros; col++)
+    {
+      adjncy[xadjs[row]+col] = integer_conversion< idx_t >( columns[col] );
+    }
+  }
+
+  // METIS partitionning
+  METIS_PartGraphRecursive( &nnodes, &nconst, xadjs.data(), adjncy.data(), nullptr, nullptr, nullptr, &nparts,
+                            nullptr, nullptr, options, &objval, parts.data());
+
+  // Compute Aggregate barycenters
+  array1d< R1Tensor > aggregateBarycenters(nparts);
+  array1d< real64 > aggregateVolumes(nparts);
+  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+    {
+      for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+      {
+        R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
+        center *= elementSubRegion->getElementVolume()[cellIndex];
+        aggregateBarycenters[parts[cellIndex]] += center;
+        aggregateVolumes[parts[cellIndex]] += elementSubRegion->getElementVolume()[cellIndex];
+      }
+    });
+  for( localIndex aggregateIndex = 0; aggregateIndex < nparts; aggregateIndex++)
+  {
+    aggregateBarycenters[aggregateIndex] /= aggregateVolumes[aggregateIndex];
+  }
+  aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, parts, aggregateBarycenters);
+}
+
 
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )
  {
