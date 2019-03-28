@@ -60,6 +60,5 @@ void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregat
     m_fineToCoarse[m_nbFineCellsPerCoarseCell[coarseCell] + offset[coarseCell]++] = fineCell;
 
   }
-  std::cout << "My name is : " << getName() << std::endl;
 }
 }
