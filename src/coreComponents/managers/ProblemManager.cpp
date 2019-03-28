@@ -768,6 +768,7 @@ void ProblemManager::GenerateMesh()
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+      elemManager->GenerateAggregates( faceManager, nodeManager );
 
       domain->GenerateSets();
 
