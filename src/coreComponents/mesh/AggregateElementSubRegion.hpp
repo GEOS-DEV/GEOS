@@ -21,8 +21,6 @@
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
-#include "cxx-utilities/src/src/ChaiVector.hpp"
-#include "cxx-utilities/src/src/SparsityPattern.hpp"
 
 #include "metis.h"
 

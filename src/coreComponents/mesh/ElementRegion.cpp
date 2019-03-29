@@ -29,6 +29,7 @@
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
+#include "cxx-utilities/src/src/ChaiVector.hpp"
 #include "cxx-utilities/src/src/SparsityPattern.hpp"
 
 #include "metis.h"
