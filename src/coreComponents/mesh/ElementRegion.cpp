@@ -213,9 +213,6 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
   array2d<localIndex> const & elemList           = faceManager->elementList();
-  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
-                                                                                 viewKeyStruct::
-                                                                                 ghostRankString);
 
   constexpr localIndex numElems = 2;
 
@@ -250,8 +247,6 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   }
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    if ( faceGhostRank[kf] >= 0 )
-      continue;
     if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
@@ -296,6 +291,8 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
+      if( elementSubRegion->GhostRank()[cellIndex >= 0] )
+        continue;
       aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementVolume()[cellIndex];
     }
   });
@@ -306,6 +303,8 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
+      if( elementSubRegion->GhostRank()[cellIndex >= 0] )
+        continue;
       normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]] =
         elementSubRegion->getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
     }
@@ -317,6 +316,8 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
+      if( elementSubRegion->GhostRank()[cellIndex >= 0] )
+        continue;
       R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
       center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
       aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += center;
