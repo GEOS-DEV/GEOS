@@ -54,6 +54,8 @@ EventBase::EventBase( const std::string& name,
   m_lastCycle(0),
   m_target(nullptr)
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  
   RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("event target");
@@ -130,6 +132,25 @@ ManagedGroup * EventBase::CreateChild( string const & childKey, string const & c
 }
 
 
+void EventBase::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType)
+{
+  // Create a choice node if necessary
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  if( targetChoiceNode.empty() )
+  {
+    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+    targetChoiceNode.append_attribute("minOccurs") = "0";
+    targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
+  }
+
+  // Enable recursion in the schema
+  this->getParent()->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
+  {
+    SchemaUtilities::SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
+  });
+}
 
 
 
@@ -207,11 +228,11 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 }
 
 
-void EventBase::Execute(real64 const& time_n,
-                        real64 const& dt,
+void EventBase::Execute(real64 const time_n,
+                        real64 const dt,
                         const integer cycleNumber,
-                        integer const ,
-                        real64 const & ,
+                        integer const,
+                        real64 const,
                         ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
@@ -339,10 +360,10 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 }
 
 
-void EventBase::Cleanup(real64 const& time_n,
+void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)

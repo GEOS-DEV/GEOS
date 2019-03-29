@@ -79,11 +79,11 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forCellBlocks([&](CellBlockSubRegion * const cellBlock) -> void
+    elemManager->forElementSubRegions([&]( auto * const elementSubRegion) -> void
     {
-      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      cellBlock->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      cellBlock->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+      elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      elementSubRegion->template RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
     });
 
     FaceManager * const faceManager = meshLevel->getFaceManager();
@@ -161,7 +161,7 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
   m_elemGhostRank =
     elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
   m_volume =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CellBlockSubRegion::viewKeyStruct::elementVolumeString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CellElementSubRegion::viewKeyStruct::elementVolumeString );
   m_gravDepth =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::gravityDepthString );
   m_porosityRef =

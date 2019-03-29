@@ -20,9 +20,16 @@
 
 namespace geosx
 {
-QuadratureBase::~QuadratureBase()
-{}
+QuadratureBase::QuadratureBase( std::string const & name,
+                                ManagedGroup * const parent):
+  ManagedGroup(name, parent)
+{
+  setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
+}
 
+QuadratureBase::~QuadratureBase()
+{
+}
 
 QuadratureBase::CatalogInterface::CatalogType& QuadratureBase::GetCatalog()
 {

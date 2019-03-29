@@ -27,6 +27,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
+#include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
@@ -81,11 +82,11 @@ public:
   /**
    * This method is called when it's host event is triggered
    */
-  virtual void Execute( real64 const & time_n,
-                        real64 const & dt,
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -345,6 +346,7 @@ public:
 
 
   ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual void ExpandObjectCatalogs() override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
@@ -403,8 +405,11 @@ protected:
 
   string getDiscretizationName() const {return m_discretizationName;}
 
-protected:
+  template<typename BASETYPE>
+  BASETYPE const * GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name );
 
+  template<typename BASETYPE>
+  BASETYPE * GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name );
 
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
@@ -424,7 +429,69 @@ protected:
 
 };
 
+template<typename BASETYPE>
+BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name )
+{
+  ManagedGroup const * const constitutiveModels =
+    dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
+  BASETYPE const * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+
+  return model;
+}
+
+template<typename BASETYPE>
+BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name )
+{
+  ManagedGroup * const constitutiveModels =
+    dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  BASETYPE * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+
+  return model;
+}
+
+template<typename LAMBDA>
+typename std::enable_if<std::is_convertible<LAMBDA,
+  std::function<void(localIndex,localIndex,ElementRegion const *,CellElementSubRegion const *)>>::value, void>::type
+applyToSubRegions( DomainPartition const * const domain, LAMBDA && lambda )
+{
+  MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegionsComplete( lambda );
+}
+
+template<typename LAMBDA>
+typename std::enable_if<std::is_convertible<LAMBDA,
+  std::function<void(localIndex,localIndex,ElementRegion *,CellElementSubRegion *)>>::value, void>::type
+applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
+{
+  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegionsComplete( lambda );
+}
+
+template<typename LAMBDA>
+typename std::enable_if<std::is_convertible<LAMBDA,std::function<void(CellElementSubRegion const *)>>::value, void>::type
+applyToSubRegions( DomainPartition const * const domain, LAMBDA && lambda )
+{
+  MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegions( lambda );
+}
+
+template<typename LAMBDA>
+typename std::enable_if<std::is_convertible<LAMBDA,std::function<void(CellElementSubRegion *)>>::value, void>::type
+applyToSubRegions( DomainPartition * const domain, LAMBDA && lambda )
+{
+  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegions( lambda );
+}
 
 } /* namespace ANST */
 

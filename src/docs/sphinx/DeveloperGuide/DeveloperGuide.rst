@@ -12,6 +12,8 @@ Here we describe the process for development in the GEOSX framework.
    DeveloperGuidelines
    
    GitWorkflow
+
+   /coreComponents/fileIO/schema/docs/SchemaGeneration
    
    UnitTests
    

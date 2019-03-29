@@ -1,14 +1,14 @@
 
 
-=========================== ============ ======= ======== ================================================================================================================================================== 
-Name                        Type         Default Use      Description                                                                                                                                        
-=========================== ============ ======= ======== ================================================================================================================================================== 
-phaseNames                  string_array         required List of fluid phases                                                                                                                               
-phaseMinVolumeFraction      real64_array 0                Minimum volume fraction value for each phase                                                                                                       
-phaseCapPressureExponentInv real64_array 0.5              Inverse of capillary power law exponent for each phase                                                                                             
-phaseCapPressureMultiplier  real64_array 1                Entry pressure value for each phase                                                                                                                
-capPressureEpsilon          real64       1e-06            Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1 
-name                        string               required                                                                                                                                                    
-=========================== ============ ======= ======== ================================================================================================================================================== 
+=========================== ============ ======== ================================================================================================================================================== 
+Name                        Type         Default  Description                                                                                                                                        
+=========================== ============ ======== ================================================================================================================================================== 
+phaseNames                  string_array required List of fluid phases                                                                                                                               
+phaseMinVolumeFraction      real64_array 0        Minimum volume fraction value for each phase                                                                                                       
+phaseCapPressureExponentInv real64_array 0.5      Inverse of capillary power law exponent for each phase                                                                                             
+phaseCapPressureMultiplier  real64_array 1        Entry pressure value for each phase                                                                                                                
+capPressureEpsilon          real64       1e-06    Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1 
+name                        string       required A name is required for any non-unique nodes                                                                                                        
+=========================== ============ ======== ================================================================================================================================================== 
 
 

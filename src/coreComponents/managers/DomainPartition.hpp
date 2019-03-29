@@ -107,7 +107,7 @@ public:
   struct groupKeysStruct
   {
     static constexpr auto meshBodiesString = "MeshBodies";
-    static constexpr auto constitutiveManagerString = "ConstitutiveManager";
+    static constexpr auto constitutiveManagerString = "Constitutive";
 
     dataRepository::GroupKey meshBodies           = { meshBodiesString };
     dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
@@ -137,9 +137,12 @@ public:
   MeshBody * getMeshBody( integer const index )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
 
+  std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
+  std::set<int> const & getMetisNeighborList() const {return m_metisNeighborList;}
 
 private:
 
+  std::set<int> m_metisNeighborList;
 
 };
 

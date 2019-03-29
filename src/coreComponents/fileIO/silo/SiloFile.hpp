@@ -521,6 +521,8 @@ private:
 
   dataRepository::PlotLevel m_plotLevel;
 
+  bool m_ghostFlags;
+
   /**
    *
    * @return returns the ordering of nodes for a silo zone type.
@@ -986,9 +988,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                         getIndexInParent();
       }
 
-      for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+      elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
 
         nels += subRegion->size();
 
@@ -1000,7 +1001,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             mixlen += subRegion->size();
           }
         }
-      }
+      });
     }
 
     array1d<void*> vars(nvars);
@@ -1033,9 +1034,9 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
         matIndices[a] = constitutiveManager->GetConstitituveRelation( elemRegion->getMaterialList()[a] )->getIndexInParent();
       }
 
-      for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+      elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+                                                              CellElementSubRegion const * const subRegion )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
 
         if( numMatInRegion == 1 )
         {
@@ -1076,7 +1077,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             }
           }
         }
-      }
+      });
     }
     
     for( localIndex a=0 ; a<activeMaterialNames.size() ; ++a )

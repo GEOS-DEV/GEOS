@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * xmlWrapper.hpp
- *
- *  Created on: Jun 3, 2017
- *      Author: rrsettgast
+/**
+ * @file xmlWrapper.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
@@ -48,9 +45,22 @@ public:
   using xmlResult = pugi::xml_parse_result;
   using xmlNode = pugi::xml_node;
   using xmlAttribute = pugi::xml_attribute;
+  using xmlTypes = pugi::xml_node_type;
+
+  static constexpr auto filePathString = "filePath";
 
   xmlWrapper();
   virtual ~xmlWrapper();
+
+  /**
+   * Function to add xml nodes from included files.
+   * @param targetNode the node for which to look for included children specifications
+   *
+   * This function looks for a "Included" node under the targetNode, loops over all subnodes under the "Included"
+   * node, and then parses the file specified in those subnodes taking all the nodes in the file and adding them to
+   * the targetNode.
+   */
+  static void addIncludedXML( xmlNode & targetNode );
 
   template< typename T >
   static void StringToInputVariable( T& target, string value );

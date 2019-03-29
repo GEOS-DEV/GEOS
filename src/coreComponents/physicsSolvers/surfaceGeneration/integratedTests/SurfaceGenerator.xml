@@ -5,23 +5,23 @@
 
   
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
+    gravityVector="0.0, 0.0, -9.81">
 
-    <SolidMechanics_LagrangianFEM name="lagSolve" 
+    <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="0"
                                   discretization="FE1"
                                   targetRegions="Region2"
+                                  solidMaterialName="granite"
                                   >
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-3"
                               maxIterNewton="8"
                               verbosityFlag="0"/>
-     </SolidMechanics_LagrangianFEM>
+     </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="1"
+                      verboseLevel="3"
                       targetRegions="Region2">
     </SurfaceGenerator>
   </Solvers>
@@ -32,19 +32,24 @@
                   elementTypes="C3D8" 
                   xCoords="0, 2"
                   yCoords="-1, 1"
-                  zCoords="0, 1"
+                  zCoords="-1, 1"
                   nx="2"
                   ny="2"
-                  nz="1"
+                  nz="2"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="fracPlane" xMin="-1.00, -0.1, -1.00" xMax="2.01, 0.01, 1.01"/>
+    <Box name="fracPlane" xMin="-1.00, -0.1, -1.01" xMax="2.01, 0.01, 1.01"/>
   </Geometry>
 
 
   <Events maxTime="1.0">
+    <PeriodicEvent name="outputs"
+                   timeFrequency="0.5"
+                   targetExactTimestep="0"
+                   target="/Outputs/siloOutput" />
+
     <PeriodicEvent name="solverApplications"
                    forceDt="0.5"
                    target="/Solvers/lagSolve" />
@@ -72,7 +77,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -88,9 +93,6 @@
   </Constitutive>
 
 
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="frac"
@@ -133,11 +135,16 @@
 
 
   <Functions>
+    <TableFunction name="timeFunction"
+                   inputVarNames="time"
+                   coordinates= "0.0 1.0 1.0e9"
+                   values     = "0.0 1.0 1.0" />
+    
   </Functions>
 
-  <Partition>
+  <!-- <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
+  </Partition> -->
 
  
   <Outputs>
@@ -147,6 +154,6 @@
 
 
 
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
+  <!-- <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/> -->
 
 </Problem>
