@@ -58,13 +58,13 @@ public:
   }
 
   AggregateElementSubRegion( string const & name,
-                          dataRepository::ManagedGroup * const parent );
+                             dataRepository::ManagedGroup * const parent );
 
   virtual ~AggregateElementSubRegion() override;
  
   void CreateFromFineToCoarseMap( localIndex nbAggregates,
-                                  const array1d< idx_t >& fineToCoarse,
-                                  const array1d< R1Tensor >& barycenters);
+                                  array1d< idx_t > const & fineToCoarse,
+                                  array1d< R1Tensor > const & barycenters);
 
   const array1d< localIndex >& GetFineToCoarseMap()
   {
@@ -72,8 +72,8 @@ public:
   }
   
   virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                     const NodeManager& nodeManager,
-                                     const bool useReferencePos = true) const override
+                                                   NodeManager const & nodeManager,
+                                                   const bool useReferencePos = true) const override
   {
     return m_elementCenter[k];
   }

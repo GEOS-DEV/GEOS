@@ -23,7 +23,7 @@
 namespace geosx
 {
 AggregateElementSubRegion::AggregateElementSubRegion( string const & name,
-                                                dataRepository::ManagedGroup * const parent):
+                                                      dataRepository::ManagedGroup * const parent):
   ElementSubRegionBase( name, parent )
 {
 }
@@ -33,8 +33,8 @@ AggregateElementSubRegion::~AggregateElementSubRegion()
 }
 
 void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregates,
-                                                           const array1d< idx_t >& fineToCoarse,
-                                                           const array1d< R1Tensor >& barycenters)
+                                                           array1d< idx_t > const & fineToCoarse,
+                                                           array1d< R1Tensor > const & barycenters)
 {
   m_elementCenter = barycenters;
   m_nbFineCellsPerCoarseCell.resize( nbAggregates + 1 );
