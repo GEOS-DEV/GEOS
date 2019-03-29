@@ -239,14 +239,19 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   // Compute the connectivity graph
   LvArray::SparsityPattern< localIndex> graph(nbCellElements, nbCellElements);
   localIndex nbConnections = 0;
+  array1d< localIndex > offsetSubRegions( this->numSubGroups() );
+  for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
+  {
+    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->GetSubRegion(subRegionIndex)->size();
+  }
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
     if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
-      localIndex const ei0  = elemList[kf][0];
+      localIndex const ei0  = elemList[kf][0] + offsetSubRegions[esr0];
       localIndex const esr1 = elemSubRegionList[kf][1];
-      localIndex const ei1  = elemList[kf][1];
+      localIndex const ei1  = elemList[kf][1] + offsetSubRegions[esr1];
       graph.insertNonZero(ei0, ei1);
       graph.insertNonZero(ei1, ei0);
       nbConnections++;
