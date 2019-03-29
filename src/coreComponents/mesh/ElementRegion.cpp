@@ -243,7 +243,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   // Compute the connectivity graph
   LvArray::SparsityPattern< localIndex> graph(nbCellElements, nbCellElements);
   localIndex nbConnections = 0;
-  array1d< localIndex > offsetSubRegions( this->numSubGroups() );
+  array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
   {
     offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->GetSubRegion(subRegionIndex)->size();
