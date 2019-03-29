@@ -8,8 +8,10 @@ set( constitutive_headers
      Fluid/SingleFluidBase.hpp
      Fluid/MultiFluidBase.hpp
      Fluid/CompressibleSinglePhaseFluid.hpp
+     Solid/LinearElasticAnisotropic.hpp
      Solid/LinearElasticIsotropic.hpp
      Solid/PoreVolumeCompressibleSolid.hpp
+     Solid/SolidBase.hpp
      RelPerm/RelativePermeabilityBase.hpp
      RelPerm/BrooksCoreyRelativePermeability.hpp
      CapillaryPressure/CapillaryPressureBase.hpp
@@ -25,8 +27,10 @@ set( constitutive_sources
      Fluid/SingleFluidBase.cpp
      Fluid/MultiFluidBase.cpp
      Fluid/CompressibleSinglePhaseFluid.cpp
+     Solid/LinearElasticAnisotropic.cpp
      Solid/LinearElasticIsotropic.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
+     Solid/SolidBase.cpp
      RelPerm/RelativePermeabilityBase.cpp
      RelPerm/BrooksCoreyRelativePermeability.cpp
      CapillaryPressure/CapillaryPressureBase.cpp
