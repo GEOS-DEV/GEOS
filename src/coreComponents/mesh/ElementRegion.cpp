@@ -291,7 +291,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
-      if( elementSubRegion->GhostRank()[cellIndex >= 0] )
+      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
         continue;
       aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementVolume()[cellIndex];
     }
@@ -303,7 +303,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
-      if( elementSubRegion->GhostRank()[cellIndex >= 0] )
+      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
         continue;
       normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]] =
         elementSubRegion->getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
@@ -316,7 +316,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
-      if( elementSubRegion->GhostRank()[cellIndex >= 0] )
+      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
         continue;
       R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
       center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
