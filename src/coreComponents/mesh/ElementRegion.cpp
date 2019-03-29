@@ -280,22 +280,41 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
                             nullptr, nullptr, options, &objval, parts.data());
 
   // Compute Aggregate barycenters
-  array1d< R1Tensor > aggregateBarycenters(nparts);
-  array1d< real64 > aggregateVolumes(nparts);
+  array1d< R1Tensor > aggregateBarycenters( nparts );
+  array1d< real64 > aggregateVolumes( nparts );
+  array1d< real64 > normalizeVolumes( nbCellElements );
+  
+  // First, compute the volume of each aggregates
   this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
-    {
-      for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
-      {
-        R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
-        center *= elementSubRegion->getElementVolume()[cellIndex];
-        aggregateBarycenters[parts[cellIndex]] += center;
-        aggregateVolumes[parts[cellIndex]] += elementSubRegion->getElementVolume()[cellIndex];
-      }
-    });
-  for( localIndex aggregateIndex = 0; aggregateIndex < nparts; aggregateIndex++)
   {
-    aggregateBarycenters[aggregateIndex] /= aggregateVolumes[aggregateIndex];
-  }
+    for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+    {
+      localIndex subRegionIndex = elementSubRegion->getIndexInParent();
+      aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementVolume()[cellIndex];
+    }
+  });
+
+  // Second, compute the normalized volume of each fine elements
+  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  {
+    for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+    {
+      localIndex subRegionIndex = elementSubRegion->getIndexInParent();
+      normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]] =
+        elementSubRegion->getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
+    }
+  });
+
+  // Third, normalize the centers
+  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  {
+    for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+    {
+      localIndex subRegionIndex = elementSubRegion->getIndexInParent();
+      aggregateBarycenters[parts[cellIndex] + offsetSubRegions[subRegionIndex]] += elementSubRegion->getElementCenter()[cellIndex];
+      aggregateBarycenters[parts[cellIndex] + offsetSubRegions[subRegionIndex]] *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
+    }
+  });
 
   // Convert from metis to GEOSX types
   array1d< localIndex > partsGEOS( parts.size() );
