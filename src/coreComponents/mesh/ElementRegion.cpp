@@ -293,9 +293,9 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   // First, compute the volume of each aggregates
   this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
   {
+    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
-      localIndex subRegionIndex = elementSubRegion->getIndexInParent();
       aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementVolume()[cellIndex];
     }
   });
@@ -303,9 +303,9 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   // Second, compute the normalized volume of each fine elements
   this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
   {
+    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
-      localIndex subRegionIndex = elementSubRegion->getIndexInParent();
       normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]] =
         elementSubRegion->getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
     }
@@ -314,11 +314,12 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   // Third, normalize the centers
   this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
   {
+    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
-      localIndex subRegionIndex = elementSubRegion->getIndexInParent();
-      aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementCenter()[cellIndex];
-      aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
+      R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
+      center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
+      aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += center;
     }
   });
 
