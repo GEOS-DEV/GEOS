@@ -61,23 +61,24 @@ BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
 
 }
 
-std::unique_ptr<ConstitutiveBase>
-BrooksCoreyRelativePermeability::DeliverClone(string const & name, ManagedGroup * const parent) const
+void
+BrooksCoreyRelativePermeability::DeliverClone( string const & name,
+                                               ManagedGroup * const parent,
+                                               std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr< BrooksCoreyRelativePermeability > clone = std::make_unique<BrooksCoreyRelativePermeability>( name, parent );
+  std::unique_ptr< BrooksCoreyRelativePermeability > newModel = std::make_unique<BrooksCoreyRelativePermeability>( name, parent );
 
-  clone->m_phaseNames = this->m_phaseNames;
-  clone->m_phaseTypes = this->m_phaseTypes;
-  clone->m_phaseOrder = this->m_phaseOrder;
+  newModel->m_phaseNames = this->m_phaseNames;
+  newModel->m_phaseTypes = this->m_phaseTypes;
+  newModel->m_phaseOrder = this->m_phaseOrder;
 
-  clone->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
-  clone->m_phaseRelPermExponent   = this->m_phaseRelPermExponent;
-  clone->m_phaseRelPermMaxValue   = this->m_phaseRelPermMaxValue;
+  newModel->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
+  newModel->m_phaseRelPermExponent   = this->m_phaseRelPermExponent;
+  newModel->m_phaseRelPermMaxValue   = this->m_phaseRelPermMaxValue;
 
-  clone->m_satScale = this->m_satScale;
+  newModel->m_satScale = this->m_satScale;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
-  return rval;
+  clone = std::move( newModel );
 }
 
 
