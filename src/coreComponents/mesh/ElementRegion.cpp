@@ -206,6 +206,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     return;
   }
   ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  localIndex regionIndex = getIndexInParent();
   AggregateElementSubRegion * const aggregateSubRegion =
     elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
 
@@ -240,7 +241,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   localIndex nbConnections = 0;
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    if( elemRegionList[kf][0] != -1 && elemRegionList[kf][1] != -1 )
+    if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
       localIndex const ei0  = elemList[kf][0];
