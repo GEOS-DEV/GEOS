@@ -112,7 +112,8 @@ void ElementRegionManager::ExpandObjectCatalogs()
 
 
 void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                               xmlWrapper::xmlNode schemaParent)
+                                               xmlWrapper::xmlNode schemaParent,
+                                               integer documentationType)
 {
   xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
   if( targetChoiceNode.empty() )
@@ -123,24 +124,8 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   }
 
   ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
-  SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode, documentationType);
 }
-
-//void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
-//{
-//  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
-//  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-//  {
-//    if( childNode.name() == string("ElementRegion") )
-//    {
-//      std::string regionName = childNode.attribute("name").value();
-//      GEOS_LOG_RANK_0(regionName);
-//
-//      ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
-//      elemRegion->ReadXML(childNode);
-//    }
-//  }
-//}
 
 void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
 {
@@ -422,7 +407,8 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 int
 ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                        ElementReferenceAccessor<localIndex_array> & packList )
+                                        ElementReferenceAccessor<localIndex_array> & packList,
+                                        bool const overwriteMap )
 {
   int unpackedSize = 0;
 
@@ -445,7 +431,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
       /// THIS IS WRONG
       localIndex_array & elemList = packList[kReg][kSubReg];
-      unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList );
+      unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList, false, overwriteMap );
     });
   }
 

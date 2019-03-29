@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
 
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
 
 class Epetra_FECrsGraph;
 
@@ -138,24 +139,12 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
+  template< bool ISPORO >
   void AssembleAccumulationTerms( DomainPartition const * const domain,
                                   Epetra_FECrsMatrix * const jacobian,
                                   Epetra_FEVector * const residual,
                                   real64 const time_n,
                                   real64 const dt );
-
-  /**
-   * @brief assembles the accumulation terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  void AssembleAccumulationTermsCoupled( DomainPartition const * const domain,
-                                         Epetra_FECrsMatrix * const jacobian,
-                                         Epetra_FEVector * const residual,
-                                         real64 const time_n,
-                                         real64 const dt );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -282,7 +271,19 @@ private:
    * @brief Function to update all constitutive models
    * @param domain the domain
    */
-  void UpdateConstitutiveModels( DomainPartition * const domain );
+  void UpdateFluidModel( ManagedGroup * const dataGroup );
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateSolidModel( ManagedGroup * const dataGroup );
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateState( ManagedGroup * dataGroup );
 
   /// views into primary variable fields
 

@@ -27,6 +27,11 @@
 #include "InputFlags.hpp"
 #include "RestartFlags.hpp"
 
+#ifndef USE_DYNAMIC_CASTING
+/// macro definition to specify whether or not to use dynamic_cast
+#define USE_DYNAMIC_CASTING 1;
+#endif
+
 namespace axom
 {
 namespace sidre
@@ -360,6 +365,10 @@ public:
    */
   ViewWrapperBase * setInputFlag( InputFlags const input )
   {
+    if( input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED )
+    {
+      this->setSizedFromParent(0);
+    }
     m_inputFlag = input;
     return this;
   }

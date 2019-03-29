@@ -52,7 +52,7 @@ CellElementSubRegion::~CellElementSubRegion()
 
 void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
-  this->SetElementType(source->GetElementType());
+  this->SetElementType(source->GetElementTypeString());
   this->numNodesPerElement() = source->numNodesPerElement();
   this->numFacesPerElement() = source->numFacesPerElement();
   this->resize(source->size());
@@ -128,7 +128,9 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
 
 localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                                 localIndex_array & packList )
+                                                 localIndex_array & packList,
+                                                 bool const overwriteUpMaps,
+                                                 bool const overwriteDownMaps )
 {
   localIndex unPackedSize = 0;
 

@@ -129,11 +129,11 @@ real64 SolverBase::SolverStep( real64 const& time_n,
 }
 
 
-void SolverBase::Execute( real64 const& time_n,
-                          real64 const& dt,
+void SolverBase::Execute( real64 const time_n,
+                          real64 const dt,
                           integer const cycleNumber,
                           integer const eventCounter,
-                          real64 const & eventProgress,
+                          real64 const eventProgress,
                           ManagedGroup * domain )
 {
   if( dt > 0 )
@@ -268,7 +268,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   for( int dtAttempt = 0 ; dtAttempt<maxNumberDtCuts ; ++dtAttempt )
   {
     // reset the solver state, since we are restarting the time step
-    ResetStateToBeginningOfStep( domain );
+    if (dtAttempt > 0)
+      ResetStateToBeginningOfStep( domain );
 
     // main Newton loop
     // keep residual from previous iteration in case we need to do a line search

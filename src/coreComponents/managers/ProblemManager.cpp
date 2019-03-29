@@ -125,7 +125,7 @@ ProblemManager::ProblemManager( const std::string& name,
                                      m_functionManager,
                                      false );
 
-
+  // Command line entries
   commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the input xml file.");
@@ -518,13 +518,18 @@ void ProblemManager::GenerateDocumentation()
     // Generate an extensive data structure
     GenerateDataStructureSkeleton(0);
 
-    SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this);
+    // Generate schema
+    SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
+
+    // Generate non-schema documentation
+    SchemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1);
   }
 }
 
 
 void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                         xmlWrapper::xmlNode schemaParent)
+                                         xmlWrapper::xmlNode schemaParent,
+                                         integer documentationType)
 {
   xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
   if( targetChoiceNode.empty() )
@@ -539,31 +544,40 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   DomainPartition * domain  = getDomainPartition();
 
   m_functionManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode, documentationType);
 
   FieldSpecificationManager * bcManager = FieldSpecificationManager::get();
   bcManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode, documentationType);
 
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode, documentationType);
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshLevels(domain);
   ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
   elementManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode);
+  SchemaUtilities::SchemaConstruction(elementManager, schemaRoot, targetChoiceNode, documentationType);
+
 
   // Add entries that are only used in the pre-processor
-  xmlWrapper::xmlNode targetIncludeNode = targetChoiceNode.append_child("xsd:element");
-  targetIncludeNode.append_attribute("name") = "Included";
-  targetIncludeNode.append_attribute("type") = "xsd:anyType";
-  targetIncludeNode.append_attribute("maxOccurs") = "1";
+  ManagedGroup * IncludedList = this->RegisterGroup<ManagedGroup>("Included");
+  IncludedList->setInputFlags(InputFlags::OPTIONAL);
 
-  targetIncludeNode = targetChoiceNode.append_child("xsd:element");
-  targetIncludeNode.append_attribute("name") = "Parameters";
-  targetIncludeNode.append_attribute("type") = "xsd:anyType";
-  targetIncludeNode.append_attribute("maxOccurs") = "1";
+  ManagedGroup * includedFile = IncludedList->RegisterGroup<ManagedGroup>("File");
+  includedFile->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  
+  ManagedGroup * parameterList = this->RegisterGroup<ManagedGroup>("Parameters");
+  parameterList->setInputFlags(InputFlags::OPTIONAL);
+
+  ManagedGroup * parameter = parameterList->RegisterGroup<ManagedGroup>("Parameter");
+  parameter->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  parameter->RegisterViewWrapper<string>("value")->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Input parameter definition for the preprocessor");
+
+  SchemaUtilities::SchemaConstruction(IncludedList, schemaRoot, targetChoiceNode, documentationType);
+  SchemaUtilities::SchemaConstruction(parameterList, schemaRoot, targetChoiceNode, documentationType);
 }
 
 
@@ -612,6 +626,10 @@ void ProblemManager::ParseInputFile()
     GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
+
+  string::size_type const pos=inputFileName.find_last_of('/');
+  string path = inputFileName.substr( 0, pos + 1 );
+  xmlDocument.append_child(xmlWrapper::filePathString).append_attribute(xmlWrapper::filePathString) = path.c_str();
   xmlProblemNode = xmlDocument.child(this->getName().c_str());
 
   ProcessInputFileRecursive( xmlProblemNode );
@@ -742,9 +760,9 @@ void ProblemManager::GenerateMesh()
 
       faceManager->BuildFaces( nodeManager, elemManager );
 
-      elemManager->GenerateFractureMesh( faceManager );
-
       edgeManager->BuildEdges(faceManager, nodeManager );
+
+      elemManager->GenerateFractureMesh( faceManager );
 
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );

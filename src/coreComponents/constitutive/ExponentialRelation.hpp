@@ -143,50 +143,29 @@ struct ExponentApproximationTypeWrapper
  * @tparam LAMBDA the type of the user-provided generic lambda
  * @param type type/order of the approximation (linear, quadratic, full)
  * @param lambda user-provided generic lambda to be called with an instance of EAT wrapper type
- * @return whatever the user-provided lambda returns
  */
-template< typename LAMBDA >
-static auto ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type,
-                                                  LAMBDA && lambda )
+template<typename T, typename LAMBDA>
+void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type, T const & x0, T const & y0, T const & alpha, LAMBDA && lambda )
 {
   switch( type )
   {
     case ExponentApproximationType::Full:
     {
-      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Full>() );
+      return lambda( ExponentialRelation<T, ExponentApproximationType::Full>(x0, y0, alpha) );
     }
     case ExponentApproximationType::Quadratic:
     {
-      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Quadratic>() );
+      return lambda( ExponentialRelation<T, ExponentApproximationType::Quadratic>(x0, y0, alpha) );
     }
     case ExponentApproximationType::Linear:
     {
-      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Linear>() );
+      return lambda( ExponentialRelation<T, ExponentApproximationType::Linear>(x0, y0, alpha) );
     }
     default:
     {
       GEOS_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
     }
   }
-}
-
-/**
- * @brief Function to covert a runtime choice of ExponentApproximationType to an actual relation object
- * @tparam T scalar real-valued type
- * @tparam LAMBDA type of the user-provided generic lambda
- * @param type runtime choice of ExponentApproximationType
- * @param lambda user-provided generic lambda that will be passed an instance of ExponentialRelation<T,?>
- * @return whatever the user-provided lambda returns
- */
-template<typename T, typename LAMBDA>
-auto makeExponentialRelation( ExponentApproximationType type,
-                              LAMBDA && lambda )
-{
-  return ExponentApproximationTypeSwitchBlock( type, [&] ( auto eat )
-  {
-    ExponentialRelation<real64, decltype(eat)::value> relation;
-    return lambda( relation );
-  } );
 }
 
 /**
@@ -198,18 +177,13 @@ auto makeExponentialRelation( ExponentApproximationType type,
  * @param y0 scaling coefficient
  * @param alpha exponential coefficient
  * @param lambda user-provided generic lambda that will be passed an instance of ExponentialRelation<T,?>
- * @return whatever the user-provided lambda returns
  */
 template<typename T, typename LAMBDA>
-auto makeExponentialRelation( ExponentApproximationType type,
+void makeExponentialRelation( ExponentApproximationType type,
                               T const & x0, T const & y0, T const & alpha,
                               LAMBDA && lambda )
 {
-  return ExponentApproximationTypeSwitchBlock( type, [&] ( auto eat )
-  {
-    ExponentialRelation<real64, decltype(eat)::value> relation( x0, y0, alpha );
-    return lambda( relation );
-  } );
+  ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::move(lambda));
 }
 
 namespace detail

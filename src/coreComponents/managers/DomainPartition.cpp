@@ -160,7 +160,7 @@ void DomainPartition::GenerateSets(  )
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
-          localIndex const numNodes = subRegion->numNodesPerElement();
+          localIndex const numNodes = subRegion->numNodesPerElement( k );
           integer count = 0;
           for( localIndex a = 0 ; a<numNodes ; ++a )
           {
@@ -183,29 +183,41 @@ void DomainPartition::GenerateSets(  )
 void DomainPartition::SetupCommunications()
 {
   GEOSX_MARK_FUNCTION;
-  PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
-  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
-  //get communicator, rank, and coordinates
-  MPI_Comm cartcomm;
+  if( m_metisNeighborList.empty() )
   {
-    int reorder = 0;
-    MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
-    GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
+    PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
+    SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
+
+    //get communicator, rank, and coordinates
+    MPI_Comm cartcomm;
+    {
+      int reorder = 0;
+      MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+      GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
+    }
+    int rank = -1;
+    int nsdof = 3;
+    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+
+    MPI_Comm_rank(cartcomm, &rank);
+    MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
+
+    int ncoords[3];
+    AddNeighbors(0, cartcomm, ncoords);
+
+    MPI_Comm_free(&cartcomm);
   }
-  int rank = -1;
-  int nsdof = 3;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
-
-  MPI_Comm_rank(cartcomm, &rank);
-  MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
-
-  int ncoords[3];
-  AddNeighbors(0, cartcomm, ncoords);
-
-  MPI_Comm_free(&cartcomm);
-
+  else
+  {
+    for( auto & neighborRank : m_metisNeighborList )
+    {
+      NeighborCommunicator neighbor;
+      neighbor.SetNeighborRank( neighborRank );
+      allNeighbors.push_back( std::move(neighbor) );
+    }
+  }
 
   ManagedGroup * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
@@ -216,11 +228,8 @@ void DomainPartition::SetupCommunications()
     neighbor.AddNeighborGroupToMesh(meshLevel);
   }
 
-
-
-  NodeManager * nodeManager = meshLevel->getNodeManager();
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
-
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
   nodeManager->SetMaxGlobalIndex();
@@ -236,6 +245,24 @@ void DomainPartition::SetupCommunications()
                                                            allNeighbors );
 
   CommunicationTools::FindGhosts( meshLevel, allNeighbors );
+
+
+
+
+  faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
+  real64_array & faceArea  = faceManager->faceArea();
+  r1_array & faceNormal = faceManager->faceNormal();
+  r1_array & faceCenter = faceManager->faceCenter();
+  r1_array const & X = nodeManager->referencePosition();
+  array1d<array1d<localIndex> > const & nodeList = faceManager->nodeList();
+
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(nodeList[kf],
+                                                             X,
+                                                             faceCenter[kf],
+                                                             faceNormal[kf]);
+  }
 
 }
 

@@ -109,7 +109,7 @@ ManagedGroup * VTMMeshGenerator::CreateChild( string const & childKey, string co
   return nullptr;
 }
 
-void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
+void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
     /// Basic mesh registration
     ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
