@@ -27,13 +27,6 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const linearElasticIsotropic = "LinearElasticIsotropic";
-}
-}
 
 namespace constitutive
 {
@@ -46,7 +39,7 @@ namespace constitutive
 class LinearElasticIsotropic : public SolidBase
 {
 public:
-  LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent );
+  LinearElasticIsotropic( string const & name, ManagedGroup * const parent );
 
   virtual ~LinearElasticIsotropic() override;
 
@@ -56,7 +49,8 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
+  static constexpr auto m_catalogNameString = "LinearElasticIsotropic";
+  static std::string CatalogName() { return m_catalogNameString; }
   virtual string GetCatalogName() override { return CatalogName(); }
 
   virtual void StateUpdatePoint( localIndex const k,
@@ -87,10 +81,6 @@ public:
   } m_linearElasticIsotropicViewKeys;
 
 
-  virtual void StateUpdatePointPressure(real64 const & pres,
-                                        localIndex const k,
-                                        localIndex const q) override final;
-
 protected:
   virtual void PostProcessInput() override;
 
@@ -102,27 +92,8 @@ private:
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
 
-  /// scalar compressibility parameter
-  real64 m_compressibility;
-
-  /// reference pressure parameter
-  real64 m_referencePressure;
-
-  /// scalar Biot's coefficient
-  real64 m_biotCoefficient;
-
-  array2d<real64> m_poreVolumeMultiplier;
-  array2d<real64> m_dPVMult_dPressure;
-
-  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
-inline void LinearElasticIsotropic::StateUpdatePointPressure( real64 const & pres,
-                                                              localIndex const k,
-                                                              localIndex const q )
-{
-  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
-}
 
 }
 

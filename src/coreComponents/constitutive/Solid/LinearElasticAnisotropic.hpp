@@ -27,13 +27,7 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const linearElasticIsotropic = "LinearElasticAnisotropic";
-}
-}
+
 
 namespace constitutive
 {
@@ -46,7 +40,7 @@ namespace constitutive
 class LinearElasticAnisotropic : public SolidBase
 {
 public:
-  LinearElasticAnisotropic( std::string const & name, ManagedGroup * const parent );
+  LinearElasticAnisotropic( string const & name, ManagedGroup * const parent );
 
   virtual ~LinearElasticAnisotropic() override;
 
@@ -56,7 +50,8 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
+  static constexpr auto m_catalogNameString = "LinearElasticAnisotropic";
+  static std::string CatalogName() { return m_catalogNameString; }
   virtual string GetCatalogName() override { return CatalogName(); }
 
   virtual void StateUpdatePoint( localIndex const k,
