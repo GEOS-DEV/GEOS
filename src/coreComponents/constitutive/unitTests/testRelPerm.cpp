@@ -392,7 +392,7 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase)
   // TODO test over a range of values
   real64 const start_sat = 0.3;
   real64 const end_sat   = 0.7;
-  real64 const dS = 1e-2;
+  real64 const dS = 1e-1;
   real64 const alpha = 0.4;
   array1d<real64> sat(2);
   sat[0] = start_sat;
@@ -421,7 +421,7 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase)
   // TODO test over a range of values
   real64 const start_sat = 0.3;
   real64 const end_sat   = 0.7;
-  real64 const dS = 1e-2;
+  real64 const dS = 1e-1;
   real64 const alpha = 0.4;
   array1d<real64> sat(3);
   sat[0] = start_sat;
@@ -453,7 +453,7 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase)
   // TODO test over a range of values
   real64 const start_sat = 0.3;
   real64 const end_sat   = 0.7;
-  real64 const dS = 1e-2;
+  real64 const dS = 1e-1;
   real64 const alpha = 0.4;
   array1d<real64> sat(2);
   sat[0] = start_sat;
