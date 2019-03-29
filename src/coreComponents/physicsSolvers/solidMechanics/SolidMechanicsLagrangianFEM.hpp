@@ -535,7 +535,7 @@ void Integrate( const R2SymTensor& fieldvar,
                 real64 const& detJ,
                 real64 const& detF,
                 const R2Tensor& Finv,
-                arraySlice1d<R1Tensor> & result)
+                R1Tensor * restrict const result)
 {
   real64 const integrationFactor = detJ * detF;
 
@@ -599,11 +599,11 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex k) mutable
   {
-    r1_array v_local( NUM_NODES_PER_ELEM );
-    r1_array u_local( NUM_NODES_PER_ELEM );
-    r1_array f_local( NUM_NODES_PER_ELEM );
+    R1Tensor v_local[NUM_NODES_PER_ELEM];
+    R1Tensor u_local[NUM_NODES_PER_ELEM];
+    R1Tensor f_local[NUM_NODES_PER_ELEM];
 
-    CopyGlobalToLocal<R1Tensor,NUM_NODES_PER_ELEM>( elemsToNodes[k],
+    CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
                                                     u, vel,
                                                     u_local, v_local );
 
@@ -639,7 +639,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
       R2SymTensor Dadt;
       HughesWinget(Rot, Dadt, Ldt);
 
-      constitutiveRelation->StateUpdatePoint( Dadt, Rot, k, q, 0);
+      constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
 
       R2SymTensor TotalStress;
       TotalStress = devStress[k][q];
@@ -649,7 +649,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
     }//quadrature loop
 
 
-    AddLocalToGlobal( elemsToNodes[k], f_local, acc, NUM_NODES_PER_ELEM );
+    AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
   });
 
   return dt;
