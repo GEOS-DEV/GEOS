@@ -44,8 +44,10 @@ public:
 
   virtual ~LinearElasticAnisotropic() override;
 
-  virtual std::unique_ptr<ConstitutiveBase>
-  DeliverClone( string const & name, ManagedGroup * const parent ) const override;
+  virtual void
+  DeliverClone( string const & name,
+                ManagedGroup * const parent,
+                std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;

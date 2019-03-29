@@ -59,8 +59,9 @@ public:
 
   virtual ~BlackOilFluid() override;
 
-  std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                  ManagedGroup * const parent ) const override;
+  void DeliverClone( string const & name,
+                     ManagedGroup * const parent,
+                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::blackOilFluid; }
 
