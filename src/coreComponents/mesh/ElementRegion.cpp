@@ -290,7 +290,14 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   {
     aggregateBarycenters[aggregateIndex] /= aggregateVolumes[aggregateIndex];
   }
-  aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, parts, aggregateBarycenters);
+
+  // Convert from metis to GEOSX types
+  array1d< localIndex > partsGEOS( parts.size() );
+  for( localIndex fineCellIndex = 0; fineCellIndex < partsGEOS.size(); fineCellIndex++ )
+  {
+    partsGEOS[fineCellIndex] = integer_conversion< localIndex >( parts[fineCellIndex] );
+  }
+  aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
 }
 
 

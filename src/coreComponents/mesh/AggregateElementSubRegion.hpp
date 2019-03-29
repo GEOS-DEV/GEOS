@@ -22,7 +22,6 @@
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
 
-#include "metis.h"
 
 
 namespace geosx
@@ -63,7 +62,7 @@ public:
   virtual ~AggregateElementSubRegion() override;
  
   void CreateFromFineToCoarseMap( localIndex nbAggregates,
-                                  array1d< idx_t > const & fineToCoarse,
+                                  array1d< localIndex > const & fineToCoarse,
                                   array1d< R1Tensor > const & barycenters);
 
   const array1d< localIndex >& GetFineToCoarseMap()

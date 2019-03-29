@@ -33,7 +33,7 @@ AggregateElementSubRegion::~AggregateElementSubRegion()
 }
 
 void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregates,
-                                                           array1d< idx_t > const & fineToCoarse,
+                                                           array1d< localIndex > const & fineToCoarse,
                                                            array1d< R1Tensor > const & barycenters)
 {
   m_elementCenter = barycenters;
