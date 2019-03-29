@@ -123,9 +123,6 @@ private:
 
   /// Number of fine cells per aggregate
   array1d< localIndex > m_nbFineCellsPerCoarseCell;
-
-  /// Barycenters of aggregates
-  array1d< R1Tensor > m_aggregateBarycenters;
 };
 }
 
