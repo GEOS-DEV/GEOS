@@ -17,11 +17,11 @@
  */
 
 /**
- *  @file LinearElasticIsotropic.hpp
+ *  @file LinearElasticAnisotropic.hpp
  */
 
-#ifndef LINEARELASTICISOTROPIC_HPP_
-#define LINEARELASTICISOTROPIC_HPP_
+#ifndef LINEARELASTICANISOTROPIC_HPP_
+#define LINEARELASTICANISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 
@@ -31,7 +31,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const linearElasticIsotropic = "LinearElasticIsotropic";
+string const linearElasticIsotropic = "LinearElasticAnisotropic";
 }
 }
 
@@ -39,16 +39,16 @@ namespace constitutive
 {
 
 /**
- * @class LinearElasticIsotropic
+ * @class LinearElasticAnisotropic
  *
  * Class to provide a linear elastic isotropic material response.
  */
-class LinearElasticIsotropic : public SolidBase
+class LinearElasticAnisotropic : public SolidBase
 {
 public:
-  LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent );
+  LinearElasticAnisotropic( std::string const & name, ManagedGroup * const parent );
 
-  virtual ~LinearElasticIsotropic() override;
+  virtual ~LinearElasticAnisotropic() override;
 
   virtual std::unique_ptr<ConstitutiveBase>
   DeliverClone( string const & name, ManagedGroup * const parent ) const override;
@@ -70,26 +70,11 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto bulkModulus0String  = "BulkModulus0";
-    static constexpr auto poissonRatioString =  "PoissonRatio" ;
-    static constexpr auto shearModulus0String = "ShearModulus0";
-    static constexpr auto youngsModulus0String =  "YoungsModulus" ;
-
-    static constexpr auto compressibilityString =  "compressibility" ;
-    static constexpr auto referencePressureString =  "referencePressure" ;
-    static constexpr auto biotCoefficientString =  "BiotCoefficient" ;
-
-
-    static constexpr auto bulkModulusString  = "BulkModulus";
-    static constexpr auto shearModulusString = "ShearModulus";
-
+    static constexpr auto stiffness0String  = "stiffness0";
+    static constexpr auto stiffnessString  = "stiffness";
 
   } m_linearElasticIsotropicViewKeys;
 
-
-  virtual void StateUpdatePointPressure(real64 const & pres,
-                                        localIndex const k,
-                                        localIndex const q) override final;
 
 protected:
   virtual void PostProcessInput() override;
@@ -97,32 +82,10 @@ protected:
 private:
 
 
-  real64 m_bulkModulus0;
-  real64 m_shearModulus0;
-  array1d<real64> m_bulkModulus;
-  array1d<real64> m_shearModulus;
-
-  /// scalar compressibility parameter
-  real64 m_compressibility;
-
-  /// reference pressure parameter
-  real64 m_referencePressure;
-
-  /// scalar Biot's coefficient
-  real64 m_biotCoefficient;
-
-  array2d<real64> m_poreVolumeMultiplier;
-  array2d<real64> m_dPVMult_dPressure;
-
-  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
+  SolidBase::StiffnessTensor m_stiffness0;
+  array2d<real64> m_stiffness;
 };
 
-inline void LinearElasticIsotropic::StateUpdatePointPressure( real64 const & pres,
-                                                              localIndex const k,
-                                                              localIndex const q )
-{
-  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
-}
 
 }
 

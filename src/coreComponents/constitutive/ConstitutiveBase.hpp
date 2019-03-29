@@ -57,7 +57,7 @@ public:
   inline static string makeFieldName(string const & prefix, string const & name) { return prefix + "_" + name; }
 
 
-  ConstitutiveBase( std::string const & name,
+  ConstitutiveBase( string const & name,
                     ManagedGroup * const parent );
 
   virtual ~ConstitutiveBase() override;
@@ -79,11 +79,11 @@ public:
   virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) { assert(false); return nullptr; }
 
 
-  virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
-                                        R2Tensor const & Rot,
-                                        localIndex const i,
-                                        localIndex const q,
-                                        integer const systemAssembleFlag ) { return R2SymTensor(); }
+//  virtual R2SymTensor StateUpdatePoint( localIndex const i,
+//                                        localIndex const q,
+//                                        R2SymTensor const & D,
+//                                        R2Tensor const & Rot,
+//                                        integer const systemAssembleFlag ) { return R2SymTensor(); }
 
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
