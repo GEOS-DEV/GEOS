@@ -317,8 +317,8 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
     {
       localIndex subRegionIndex = elementSubRegion->getIndexInParent();
-      aggregateBarycenters[parts[cellIndex] + offsetSubRegions[subRegionIndex]] += elementSubRegion->getElementCenter()[cellIndex];
-      aggregateBarycenters[parts[cellIndex] + offsetSubRegions[subRegionIndex]] *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
+      aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementCenter()[cellIndex];
+      aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
     }
   });
 
