@@ -213,6 +213,10 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
   array2d<localIndex> const & elemList           = faceManager->elementList();
+  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
+                                                                                 viewKeyStruct::
+                                                                                 ghostRankString);
+
   constexpr localIndex numElems = 2;
 
   // Counting the total number of cell and number of vertices  
@@ -246,7 +250,9 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   }
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex )
+    if ( faceGhostRank[kf] >= 0 )
+      continue;
+    if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
       localIndex const ei0  = elemList[kf][0] + offsetSubRegions[esr0];
