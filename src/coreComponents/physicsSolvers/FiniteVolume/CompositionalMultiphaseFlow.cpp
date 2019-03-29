@@ -41,6 +41,8 @@
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 
+#include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow_kernels.hpp"
+
 namespace geosx
 {
 
@@ -214,27 +216,12 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
   arrayView2d<real64 const> const & dCompDens =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-    real64 totalDensity = 0.0;
-
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
-    {
-      totalDensity += compDens[a][ic] + dCompDens[a][ic];
-    }
-
-    real64 const totalDensityInv = 1.0 / totalDensity;
-
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
-    {
-      compFrac[a][ic] = (compDens[a][ic] + dCompDens[a][ic]) * totalDensityInv;
-      for (localIndex jc = 0; jc < m_numComponents; ++jc)
-      {
-        dCompFrac_dCompDens[a][ic][jc] = - compFrac[a][ic] * totalDensityInv;
-      }
-      dCompFrac_dCompDens[a][ic][ic] += totalDensityInv;
-    }
-  });
+  KenrelLaunchSelector1<CompositionalMultiphaseFlowKernels::UpdateComponentFraction>( m_numComponents,
+                                                                                      0, dataGroup->size(),
+                                                                                      compDens,
+                                                                                      dCompDens,
+                                                                                      compFrac,
+                                                                                      dCompFrac_dCompDens );
 }
 
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * const dataGroup )
@@ -283,53 +270,20 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
   arrayView4d<real64 const> const & dPhaseDens_dComp =
     fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
 
-  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-  localIndex const NC = m_numComponents;
-  localIndex const NP = m_numPhases;
-
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-    stackArray1d<real64, maxNumComp> work( NC );
-
-    // compute total density from component partial densities
-    real64 totalDensity = 0.0;
-    real64 const dTotalDens_dCompDens = 1.0;
-    for (localIndex ic = 0; ic < NC; ++ic)
-    {
-      totalDensity += compDens[a][ic] + dCompDens[a][ic];
-    }
-
-    for (localIndex ip = 0; ip < NP; ++ip)
-    {
-      // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
-      real64 const phaseDensInv = 1.0 / phaseDens[a][0][ip];
-
-      // compute saturation and derivatives except multiplying by the total density
-      phaseVolFrac[a][ip] = phaseFrac[a][0][ip] * phaseDensInv;
-
-      dPhaseVolFrac_dPres[a][ip] =
-        (dPhaseFrac_dPres[a][0][ip] - phaseVolFrac[a][ip] * dPhaseDens_dPres[a][0][ip]) * phaseDensInv;
-
-      for (localIndex jc = 0; jc < NC; ++jc)
-      {
-        dPhaseVolFrac_dComp[a][ip][jc] =
-          (dPhaseFrac_dComp[a][0][ip][jc] - phaseVolFrac[a][ip] * dPhaseDens_dComp[a][0][ip][jc]) * phaseDensInv;
-      }
-
-      // apply chain rule to convert derivatives from global component fractions to densities
-      applyChainRuleInPlace( NC, dCompFrac_dCompDens[a], dPhaseVolFrac_dComp[a][ip], work );
-
-      // now finalize the computation by multiplying by total density
-      for (localIndex jc = 0; jc < NC; ++jc)
-      {
-        dPhaseVolFrac_dComp[a][ip][jc] *= totalDensity;
-        dPhaseVolFrac_dComp[a][ip][jc] += phaseVolFrac[a][ip] * dTotalDens_dCompDens;
-      }
-
-      phaseVolFrac[a][ip] *= totalDensity;
-      dPhaseVolFrac_dPres[a][ip] *= totalDensity;
-    }
-  });
+  KenrelLaunchSelector2<CompositionalMultiphaseFlowKernels::UpdatePhaseVolumeFraction>( m_numComponents, m_numPhases,
+                                                                                        0, dataGroup->size(),
+                                                                                        compDens,
+                                                                                        dCompDens,
+                                                                                        dCompFrac_dCompDens,
+                                                                                        phaseDens,
+                                                                                        dPhaseDens_dPres,
+                                                                                        dPhaseDens_dComp,
+                                                                                        phaseFrac,
+                                                                                        dPhaseFrac_dPres,
+                                                                                        dPhaseFrac_dComp,
+                                                                                        phaseVolFrac,
+                                                                                        dPhaseVolFrac_dPres,
+                                                                                        dPhaseVolFrac_dComp );
 }
 
 void CompositionalMultiphaseFlow::UpdatePhaseMobility( ManagedGroup * const dataGroup )
@@ -386,55 +340,22 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( ManagedGroup * const data
   arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac =
     relperm->getReference<array4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
 
-  localIndex constexpr maxNumComp  = MultiFluidBase::MAX_NUM_COMPONENTS;
-  localIndex const NC = m_numComponents;
-  localIndex const NP = m_numPhases;
-
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-    stackArray1d<real64, maxNumComp> dRelPerm_dC( NC );
-    stackArray1d<real64, maxNumComp> dDens_dC( NC );
-    stackArray1d<real64, maxNumComp> dVisc_dC( NC );
-
-    for (localIndex ip = 0; ip < NP; ++ip)
-    {
-      real64 const density = phaseDens[a][0][ip];
-      real64 const dDens_dP = dPhaseDens_dPres[a][0][ip];
-      applyChainRule( NC, dCompFrac_dCompDens[a], dPhaseDens_dComp[a][0][ip], dDens_dC );
-
-      real64 const viscosity = phaseVisc[a][0][ip];
-      real64 const dVisc_dP = dPhaseVisc_dPres[a][0][ip];
-      applyChainRule( NC, dCompFrac_dCompDens[a], dPhaseVisc_dComp[a][0][ip], dVisc_dC );
-
-      real64 const relPerm = phaseRelPerm[a][0][ip];
-      real64 dRelPerm_dP = 0.0;
-      dRelPerm_dC = 0.0;
-
-      for (localIndex jp = 0; jp < NP; ++jp)
-      {
-        real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[a][0][ip][jp];
-        dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[a][jp];
-
-        for (localIndex jc = 0; jc < NC; ++jc)
-        {
-          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[a][jp][jc];
-        }
-      }
-
-      real64 const mobility = relPerm * density / viscosity;
-
-      phaseMob[a][ip] = mobility;
-      dPhaseMob_dPres[a][ip] = dRelPerm_dP * density / viscosity
-                             + mobility * (dDens_dP / density - dVisc_dP / viscosity);
-
-      // compositional derivatives
-      for (localIndex jc = 0; jc < NC; ++jc)
-      {
-        dPhaseMob_dComp[a][ip][jc] = dRelPerm_dC[jc] * density / viscosity
-                                   + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
-      }
-    }
-  } );
+  KenrelLaunchSelector2<CompositionalMultiphaseFlowKernels::UpdatePhaseMobility>( m_numComponents, m_numPhases,
+                                                                                  0, dataGroup->size(),
+                                                                                  dCompFrac_dCompDens,
+                                                                                  phaseDens,
+                                                                                  dPhaseDens_dPres,
+                                                                                  dPhaseDens_dComp,
+                                                                                  phaseVisc,
+                                                                                  dPhaseVisc_dPres,
+                                                                                  dPhaseVisc_dComp,
+                                                                                  phaseRelPerm,
+                                                                                  dPhaseRelPerm_dPhaseVolFrac,
+                                                                                  dPhaseVolFrac_dPres,
+                                                                                  dPhaseVolFrac_dComp,
+                                                                                  phaseMob,
+                                                                                  dPhaseMob_dPres,
+                                                                                  dPhaseMob_dComp );
 }
 
 void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGroup )
