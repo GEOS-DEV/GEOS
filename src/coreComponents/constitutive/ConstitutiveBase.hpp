@@ -30,15 +30,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const stateData( "StateData" );
-string const parameterData( "ParameterData" );
-}
-}
-
 namespace constitutive
 {
 
@@ -62,28 +53,10 @@ public:
 
   virtual ~ConstitutiveBase() override;
 
-  virtual std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                          ManagedGroup * const parent ) const = 0;
+  virtual void DeliverClone( string const & name,
+                             ManagedGroup * const parent,
+                             std::unique_ptr<ConstitutiveBase> & clone ) const = 0;
 
-
-  virtual void SetParamStatePointers( void *& ) {}
-
-
-  typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
-                                         R2Tensor const & Rot,
-                                         localIndex const i,
-                                         localIndex const q,
-                                         void * dataPtrs,
-                                         integer const systemAssembleFlag );
-
-  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) { assert(false); return nullptr; }
-
-
-//  virtual R2SymTensor StateUpdatePoint( localIndex const i,
-//                                        localIndex const q,
-//                                        R2SymTensor const & D,
-//                                        R2Tensor const & Rot,
-//                                        integer const systemAssembleFlag ) { return R2SymTensor(); }
 
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
