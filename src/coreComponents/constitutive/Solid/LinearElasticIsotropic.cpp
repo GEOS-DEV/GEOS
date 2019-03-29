@@ -32,15 +32,11 @@ namespace constitutive
 
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
-  ConstitutiveBase( name, parent ),
+  SolidBase( name, parent ),
   m_bulkModulus0(),
   m_shearModulus0(),
-  m_density0(),
-  m_density(),
   m_bulkModulus(),
   m_shearModulus(),
-  m_meanStress(),
-  m_deviatorStress(),
   m_compressibility(),
   m_referencePressure(),
   m_biotCoefficient(),
@@ -48,10 +44,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   m_dPVMult_dPressure(),
   m_poreVolumeRelation()
 {
-  RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Reference Material Density");
-
   RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -88,15 +80,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("ReferencePressure");
 
-  RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
-    setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Stress Deviator stress");
-
-  RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
-    setApplyDefaultValue(-1)->
-    setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Mean stress");
-
 
   RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->
     setApplyDefaultValue(-1)->
@@ -109,10 +92,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Bulk Modulus Field");
-
-  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->
-    setApplyDefaultValue(-1)->
-    setDescription("Material Density");
 
   RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
     setApplyDefaultValue(-1)->
@@ -152,22 +131,18 @@ LinearElasticIsotropic::DeliverClone( string const & name,
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                                       localIndex const numConstitutivePointsPerParentIndex )
+                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
   m_bulkModulus.resize( parent->size() );
   m_shearModulus.resize( parent->size() );
-  m_deviatorStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_poreVolumeMultiplier = 1.0;
 
   m_bulkModulus = m_bulkModulus0;
-  m_density = m_density0;
   m_shearModulus = m_shearModulus0;
 
 }
@@ -224,11 +199,11 @@ void LinearElasticIsotropic::PostProcessInput()
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 }
 
-R2SymTensor LinearElasticIsotropic::StateUpdatePoint( R2SymTensor const & D,
-                                                      R2Tensor const & Rot,
-                                                      localIndex const i,
-                                                      localIndex const q,
-                                                      integer const systemAssembleFlag )
+void LinearElasticIsotropic::StateUpdatePoint( localIndex const i,
+                                               localIndex const q,
+                                               R2SymTensor const & D,
+                                               R2Tensor const & Rot,
+                                               integer const systemAssembleFlag )
 {
   real64 volumeStrain = D.Trace();
   m_meanStress[i][q] += volumeStrain * m_bulkModulus0;
@@ -241,9 +216,6 @@ R2SymTensor LinearElasticIsotropic::StateUpdatePoint( R2SymTensor const & D,
 
   temp.QijAjkQlk( m_deviatorStress[i][q], Rot );
   m_deviatorStress[i][q] = temp;
-
-  temp.PlusIdentity( m_meanStress[i][q] );
-  return temp;
 }
 
 void LinearElasticIsotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const
