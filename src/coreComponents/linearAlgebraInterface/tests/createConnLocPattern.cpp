@@ -182,7 +182,7 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
   numLocalNodes = 0;
   for( localIndex er = 0 ; er < regionPtrs.size() ; ++er )
   {
-    regionPtrs[er]->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
+    regionPtrs[er]->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const * const subRegion )
     {
       localIndex numGhost = subRegion->GetNumberOfGhosts();
       numLocalNodes += subRegion->size() - numGhost;
