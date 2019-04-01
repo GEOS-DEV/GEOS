@@ -624,12 +624,6 @@
 		<xsd:attribute name="currentSubEvent" type="integer" />
 		<!--isTargetExecuting = index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
-		<!--targetTime = Event time-->
-		<xsd:attribute name="targetTime" type="real64" />
-		<!--targetCycle = event cycle-->
-		<xsd:attribute name="targetCycle" type="integer" />
-		<!--targetExactTimestep = allows timesteps to be truncated to match time frequency perfectly-->
-		<xsd:attribute name="targetExactTimestep" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="PeriodicEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -706,9 +700,11 @@
 	<xsd:complexType name="BoundarySetDataType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="ThickPlaneType" />
 	<xsd:complexType name="BoxType">
 		<!--center = (no description available)-->
 		<xsd:attribute name="center" type="R1Tensor" />
