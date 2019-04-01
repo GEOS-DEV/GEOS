@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
 
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
 
 class Epetra_FECrsGraph;
 
@@ -181,11 +182,24 @@ public:
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
                                      localIndex offset ) override;
+
   /**
    * @brief Function to update all constitutive models
    * @param domain the domain
    */
-  void UpdateConstitutiveModels( DomainPartition * const domain );
+  void UpdateFluidModel( ManagedGroup * const dataGroup );
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateSolidModel( ManagedGroup * const dataGroup );
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateState( ManagedGroup * dataGroup );
 
 
   /**@}*/

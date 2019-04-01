@@ -146,9 +146,12 @@ public:
   MeshBody * getMeshBody( integer const index )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
 
+  std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
+  std::set<int> const & getMetisNeighborList() const {return m_metisNeighborList;}
 
 private:
 
+  std::set<int> m_metisNeighborList;
 
 };
 

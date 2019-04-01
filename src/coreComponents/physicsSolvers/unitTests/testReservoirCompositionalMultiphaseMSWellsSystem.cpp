@@ -336,7 +336,10 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
           dPres[ei] = dP;
 	  // after perturbing, update the pressure-dependent quantities in the reservoir
-          flowSolver->UpdateStateAll( domain );
+          applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion2 )
+          {
+            flowSolver->UpdateState( subRegion2 );
+          });
 
           residual->Scale( 0.0 );
           assembleFunction( wellSolver, domain, jacobian, residual );
@@ -362,7 +365,10 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
 
           real64 const dRho = perturbParameter * totalDensity;
           dCompDens[ei][jc] = dRho;
-          flowSolver->UpdateStateAll( domain );
+          applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion2 )
+          {
+            flowSolver->UpdateState( subRegion2 );
+          });
 
           residual->Scale( 0.0 );
           assembleFunction( wellSolver, domain, jacobian, residual );
