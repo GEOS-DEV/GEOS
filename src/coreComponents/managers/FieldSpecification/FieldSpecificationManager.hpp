@@ -204,17 +204,8 @@ public:
                          "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
 
-          dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
-          string_array setNames = fs->GetSetNames();
-          for( auto & setName : setNames )
-          {
-            dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
-            if( setWrapper != nullptr )
-            {
-              set<localIndex> const & targetSet = setWrapper->reference();
-              lambda( fs, setName, targetSet, targetGroup, targetName );
-            }
-          }
+          /// Apply on all the childs
+          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
         }
       }
     }
@@ -229,6 +220,37 @@ private:
   FieldSpecificationManager( string const & name, dataRepository::ManagedGroup * const parent );
   virtual ~FieldSpecificationManager() override;
 
+  template< typename LAMBDA >
+  void ApplyOnTargetRecursive( ManagedGroup * target,
+                               FieldSpecificationBase const * fs,
+                               string const & targetName,
+                               LAMBDA && lambda
+                             ) const
+  {
+    if( target->getParent()->getName() == ElementRegion::viewKeyStruct::elementSubRegions
+        && target->getName() != ObjectManagerBase::groupKeyStruct::setsString
+        && target->getName() != ObjectManagerBase::groupKeyStruct::neighborDataString )
+    {
+      dataRepository::ManagedGroup const * setGroup = target->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+      string_array setNames = fs->GetSetNames();
+      for( auto & setName : setNames )
+      {
+        dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+        if( setWrapper != nullptr )
+        {
+          set<localIndex> const & targetSet = setWrapper->reference();
+          lambda( fs, setName, targetSet, target, targetName );
+        }
+      } 
+    }
+    else
+    {
+      target->forSubGroups([&]( ManagedGroup * subTarget ) -> void
+      {
+        ApplyOnTargetRecursive( subTarget, fs, targetName, lambda );
+      });
+    }
+  }
 };
 
 template< typename LAMBDA >
