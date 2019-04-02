@@ -51,6 +51,12 @@
                    timeFrequency="100.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="1e99"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"
+                   endTime="-1" />
   </Events>
 
 
@@ -89,7 +95,7 @@
                component="0"
                initialCondition="1"
                setNames="all"
-               objectPath=""
+               objectPath="ElementRegions"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -124,7 +130,7 @@
                scale="5e6"/>
 
     <FieldSpecification name="sourceTerm1"
-               objectPath=""
+               objectPath="ElementRegions"
                fieldName="pressure"
                scale="1e7"
                setNames="source"/>
@@ -149,12 +155,6 @@
                fieldName="pressure"
                scale="5e6"/>
 
-    <FieldSpecification name="sourceTerm2"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb2"
-               fieldName="pressure"
-               scale="1e7"
-               setNames="source"/>
-
     <FieldSpecification name="sinkTerm2"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb2"
                fieldName="pressure"
@@ -172,5 +172,6 @@
 
   <Outputs>
       <Silo name="siloOutput"/>
+      <Restart name="sidreRestart"/>
   </Outputs>
 </Problem>
