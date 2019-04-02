@@ -56,8 +56,8 @@ public:
   // tag to access the next and previous well elements of a connection
   struct ElemTag
   {
-    static constexpr integer PREV = 0;
-    static constexpr integer NEXT = 1;
+    static constexpr integer CURRENT = 0;
+    static constexpr integer NEXT    = 1;
   };
 
   /**
@@ -87,8 +87,6 @@ public:
 
   localIndex numDofPerElement() const { return m_numDofPerElement; }
 
-  localIndex numDofPerConnection() const { return m_numDofPerConnection; }
-
   localIndex numDofPerResElement() const { return m_numDofPerResElement; }
 
   globalIndex getFirstWellElementDofNumber() const { return m_firstWellElemDofNumber; }
@@ -109,8 +107,8 @@ public:
    */
   virtual void SetSparsityPattern( DomainPartition const * const domain,
                                    Epetra_FECrsGraph * const sparsity,
-				   globalIndex firstWellElemDofNumber,
-				   localIndex numDofPerResElement );
+                                   globalIndex firstWellElemDofNumber,
+                                   localIndex numDofPerResElement );
 
   /**
    * @brief sets the dof indices for this solver
@@ -182,17 +180,11 @@ protected:
   /// the number of Degrees of Freedom per well element
   localIndex m_numDofPerElement;
 
-  /// the number of Degrees of Freedom per well connection
-  localIndex m_numDofPerConnection;
-
   /// the number of Degrees of Freedom per reservoir element
   localIndex m_numDofPerResElement;
 
   /// the number of the first Degree of Freedom corresponding to a well var/eq
   globalIndex m_firstWellElemDofNumber;
-
-  /// flag to determine whether the well mass balance equations are normalized
-  integer m_normalizeMassBalanceEqnsFlag;
   
   /// views into reservoir constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_resGravDepth;

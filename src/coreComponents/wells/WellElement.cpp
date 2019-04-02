@@ -37,6 +37,11 @@ WellElement::WellElement(string const & name, ManagedGroup * const parent)
   RegisterViewWrapper( viewKeyStruct::locationString, &m_location, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Segment physical coordinates");
+
+  RegisterViewWrapper( viewKeyStruct::nextWellElementNameString, &m_nextWellElementName, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Next well element name");
+
 }
 
 WellElement::~WellElement()

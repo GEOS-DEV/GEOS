@@ -46,15 +46,20 @@ public:
   struct viewKeyStruct
   {
     static constexpr auto locationString = "location";
+    static constexpr auto nextWellElementNameString = "nextSegmentName";
 
     dataRepository::ViewKey location = { locationString };
-    
+    dataRepository::ViewKey nextWellElementName = { nextWellElementNameString };    
+
   } viewKeysWellElement;
 
 private:
 
   // geometry
   R1Tensor m_location;
+
+  // connectivity
+  string m_nextWellElementName;
 
 };
 

@@ -211,7 +211,7 @@ public:
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
    */
-  void FormMomentumEquations( DomainPartition * const domain,
+  void FormPressureRelations( DomainPartition * const domain,
                               Epetra_FECrsMatrix * const jacobian,
                               Epetra_FEVector * const residual );
 
@@ -232,8 +232,8 @@ public:
    */
   void SetSparsityPattern( DomainPartition const * const domain,
                            Epetra_FECrsGraph * const sparsity,
-			   globalIndex firstWellElemDofNumber,
-			   localIndex numDofPerResElement) override;
+                           globalIndex firstWellElemDofNumber,
+                           localIndex numDofPerResElement) override;
 
   /**
    * @brief sets the dof indices for this solver
@@ -260,12 +260,9 @@ public:
     // primary solution field
     static constexpr auto pressureString      = "segmentPressure";
     static constexpr auto deltaPressureString = "deltaSegmentPressure";
-    static constexpr auto rateString          = "connectionRate";
-    static constexpr auto deltaRateString     = "deltaConnectionRate";
+    static constexpr auto connRateString      = "connectionRate";
+    static constexpr auto deltaConnRateString = "deltaConnectionRate";
 
-    // normalizer for the mass balance equations in well elements
-    static constexpr auto massBalanceNormalizerString = "segmentMassBalanceNormalizer";
-    
     // perforation rates
     static constexpr auto perforationRateString        = "perforationRate";
     static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
@@ -279,11 +276,8 @@ public:
     // primary solution field
     ViewKey pressure      = { pressureString };
     ViewKey deltaPressure = { deltaPressureString };
-    ViewKey rate          = { rateString };
-    ViewKey deltaVelovity = { deltaRateString };
-
-    // normalizer for the mass balance equations in well elements
-    ViewKey massBalanceNormalizer = { massBalanceNormalizerString };
+    ViewKey rate          = { connRateString };
+    ViewKey deltaVelovity = { deltaConnRateString };
     
     // perforation rates
     ViewKey perforationRate        = { perforationRateString };
@@ -318,14 +312,6 @@ private:
    */
   constitutive::SingleFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
   
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the well manager to access individual wells
-   * @param dt time step
-   */
-  void BackupFields( DomainPartition * const domain,
-		     real64 const & dt );
-
   /**
    * @brief Setup stored reservoir views into domain data for the current step
    * @param domain the domain containing the well manager to access individual wells

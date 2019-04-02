@@ -254,7 +254,7 @@ public:
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
    */
-  void FormMomentumEquations( DomainPartition * const domain,
+  void FormPressureRelations( DomainPartition * const domain,
                               Epetra_FECrsMatrix * const jacobian,
                               Epetra_FEVector * const residual );
 
@@ -275,8 +275,8 @@ public:
    */
   void SetSparsityPattern( DomainPartition const * const domain,
                            Epetra_FECrsGraph * const sparsity,
-			   globalIndex firstWellElemDofNumber,
-			   localIndex numDofPerResElement ) override;
+                           globalIndex firstWellElemDofNumber,
+                           localIndex numDofPerResElement ) override;
 
   /**
    * @brief sets the dof indices for this solver
@@ -312,8 +312,8 @@ public:
     static constexpr auto deltaPressureString          = "deltaSegmentPressure";
     static constexpr auto globalCompDensityString      = "segmentGlobalCompDensity";
     static constexpr auto deltaGlobalCompDensityString = "deltaSegmentGlobalCompDensity";
-    static constexpr auto mixtureRateString        = "segmentMixtureConnectionRate";
-    static constexpr auto deltaMixtureRateString   = "deltaSegmentMixtureConnectionRate";
+    static constexpr auto mixtureConnRateString        = "segmentMixtureConnectionRate";
+    static constexpr auto deltaMixtureConnRateString   = "deltaSegmentMixtureConnectionRate";
 
     // saturations
     static constexpr auto phaseVolumeFractionString = "segmentPhaseVolumeFraction";
@@ -347,8 +347,8 @@ public:
     ViewKey deltaPressure          = { deltaPressureString };
     ViewKey globalCompDensity      = { globalCompDensityString };
     ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
-    ViewKey mixtureRate            = { mixtureRateString };
-    ViewKey deltaMixtureRate       = { deltaMixtureRateString };
+    ViewKey mixtureRate            = { mixtureConnRateString };
+    ViewKey deltaMixtureRate       = { deltaMixtureConnRateString };
     
     // saturation
     ViewKey phaseVolFrac        = { phaseVolumeFractionString };
@@ -378,34 +378,6 @@ protected:
 
 
 private:
-
-  /**
-   * @brief Extract the fluid model used by this solver from a group
-   * @param dataGroup target group (e.g. wellElementSubRegion)
-   * @return
-   */
-  constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Extract the fluid model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. wellElementSubRegion)
-   * @return
-   */
-  constitutive::MultiFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
-
-  /**
-   * @brief Extract the relative permeability model used by this solver from a group
-   * @param dataGroup target group (e.g. wellElementSubRegion)
-   * @return
-   */
-  constitutive::RelativePermeabilityBase * GetRelPermModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Extract the relative permeability model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. wellElementSubRegion)
-   * @return
-   */
-  constitutive::RelativePermeabilityBase const * GetRelPermModel( ManagedGroup const * const dataGroup ) const;
   
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term

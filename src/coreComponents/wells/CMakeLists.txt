@@ -4,8 +4,6 @@
 set( wells_headers
      WellManager.hpp
      Well.hpp
-     Connection.hpp
-     ConnectionData.hpp
      Perforation.hpp
      PerforationData.hpp
      PerforationManager.hpp
@@ -18,8 +16,6 @@ set( wells_headers
 set( wells_sources
      WellManager.cpp
      Well.cpp
-     Connection.cpp
-     ConnectionData.cpp
      Perforation.cpp
      PerforationData.cpp
      PerforationManager.cpp

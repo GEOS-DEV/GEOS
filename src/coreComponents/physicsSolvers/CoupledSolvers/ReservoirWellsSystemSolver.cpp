@@ -144,8 +144,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   
   // construct row map, and set a pointer to the row map
   globalIndex const nResDOF  = flowSolver.numDofPerCell();
-  globalIndex const nWellDOF = wellSolver.numDofPerElement()
-                             + wellSolver.numDofPerConnection();
+  globalIndex const nWellDOF = wellSolver.numDofPerElement();
   globalIndex const totalNumberOfDofs = numResGlobalRows  * nResDOF   // dofs in reservoir
                                       + numWellGlobalRows * nWellDOF; // dofs in wells
   Epetra_Map * const

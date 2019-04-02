@@ -29,6 +29,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * 
   ElementSubRegionBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
+  RegisterViewWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
   RegisterViewWrapper( viewKeyStruct::wellElementVolumeString, &m_wellElementVolume, false );
 }
@@ -66,6 +67,14 @@ void WellElementSubRegion::InitializePreSubGroups( ManagedGroup * const problemM
   for (localIndex iwelem = 0; iwelem < size(); ++iwelem)
   {
     m_wellElementIndex[iwelem] = iwelem;
+    if (iwelem == 0)
+    {
+      m_nextWellElementIndex[iwelem] = -1;
+    }
+    else
+    {
+      m_nextWellElementIndex[iwelem] = iwelem - 1;
+    }
     m_wellElementVolume[iwelem] = 1.;
   }
 }

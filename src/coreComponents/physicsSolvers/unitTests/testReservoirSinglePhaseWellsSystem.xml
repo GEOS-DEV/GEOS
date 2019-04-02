@@ -7,10 +7,10 @@
     gravityVector="0.0, 0.0, -9.81">
 
     <ReservoirWellsSystem name="reservoirWellsSystem"
-		   flowSolverName="singlePhaseFlow"
-                   wellSolverName="singlePhaseWell"
-                   verboseLevel="1"
-                   targetRegions="Region2">
+                          flowSolverName="singlePhaseFlow"
+                          wellSolverName="singlePhaseWell"
+                          verboseLevel="1"
+                          targetRegions="Region2">
       <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
     </ReservoirWellsSystem>
@@ -90,62 +90,54 @@
   </Constitutive>
 
   <Wells name="wellGroup"
-	 materialList="water">
+         materialList="water">
     <Well name="prod0"
           type="producer"
-	  control="BHP"
-	  targetBHP="4e6"
-	  targetRate="0"
+          control="BHP"
+          targetBHP="4e6"
+          targetRate="0"
           referenceDepth="0.5">
       <Segments>
-	<Segment name="prod0_unique_seg"
-		 location="9 0.5 0.5"/>
+        <Segment name="prod0_unique_seg"
+                 nextSegmentName=""
+                 location="9 0.5 0.5"/>
       </Segments> 
-      <Connections>
-	<Connection name="prod0_first_conn"
-		    prevSegmentName=""
-		    nextSegmentName="prod0_unique_seg" />
-      </Connections> 
       <Perforations>
         <Perforation name="prod0_p0"
-		     location="9.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="prod0_unique_seg" />
+                     location="9.5 0.5 0.5"
+                     transmissibility="1e-12"
+                     segmentName="prod0_unique_seg" />
         <Perforation name="prod0_p1"
-		     location="8.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="prod0_unique_seg" /> 
+                     location="8.5 0.5 0.5"
+                     transmissibility="1e-12"
+                     segmentName="prod0_unique_seg" /> 
       </Perforations> 
     </Well>
 
     <Well name="inj1"
           type="injector"
-  	  control="oilRate" 
-	  targetBHP="1e8"
-	  targetRate="1e-6"
+          control="oilRate" 
+          targetBHP="1e8"
+          targetRate="1e-6"
           referenceDepth="0.5">
       <Segments>
-	<Segment name="inj1_unique_seg"
-		 location="1.5 0.5 0.5"/>
+        <Segment name="inj1_unique_seg"
+                 nextSegmentName=""
+                 location="1.5 0.5 0.5"/>
       </Segments> 
-      <Connections>
-	<Connection name="inj1_first_conn"
-		    prevSegmentName=""
-		    nextSegmentName="inj1_unique_seg" />
-      </Connections> 
       <Perforations>
         <Perforation name="inj1_p0"
-		     location="0.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="inj1_unique_seg" />
-	<Perforation name="inj1_p1"
-		     location="1.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="inj1_unique_seg" />
-	<Perforation name="inj1_p2"
-		     location="2.5 0.5 0.5"
-		     transmissibility="1e-12"
-		     segmentName="inj1_unique_seg" />
+                     location="0.5 0.5 0.5"
+                     transmissibility="1e-12"
+                     segmentName="inj1_unique_seg" />
+        <Perforation name="inj1_p1"
+                     location="1.5 0.5 0.5"
+                     transmissibility="1e-12"
+                     segmentName="inj1_unique_seg" />
+        <Perforation name="inj1_p2"
+                     location="2.5 0.5 0.5"
+                     transmissibility="1e-12"
+                     segmentName="inj1_unique_seg" />
       </Perforations> 
     </Well>
     
@@ -153,42 +145,42 @@
   
   <FieldSpecifications>
     <FieldSpecification name="permx"
-               component="0"
-               initialCondition="1"  
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-               fieldName="permeability"
-               scale="2.0e-16"/>
+                        component="0"
+                        initialCondition="1"  
+                        setNames="all"
+                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+                        fieldName="permeability"
+                        scale="2.0e-16"/>
 
     <FieldSpecification name="permy"
-               component="1"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-               fieldName="permeability"
-               scale="2.0e-16"/>
+                        component="1"
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+                        fieldName="permeability"
+                        scale="2.0e-16"/>
 
     <FieldSpecification name="permz"
-               component="2"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-               fieldName="permeability"
-               scale="2.0e-16"/>
+                        component="2"
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+                        fieldName="permeability"
+                        scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-               fieldName="referencePorosity"
-               scale="0.05"/>
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+                        fieldName="referencePorosity"
+                        scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-               fieldName="pressure"
-               scale="5e6"/>
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+                        fieldName="pressure"
+                        scale="5e6"/>
   </FieldSpecifications>
     
   <Functions>

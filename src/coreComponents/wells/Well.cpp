@@ -34,7 +34,6 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
   : ObjectManagerBase( name, parent ),
     m_wellElementSubRegion( groupKeyStruct::wellElementDataString, this ),
     m_wellElementManager(groupKeyStruct::wellElementsString, this ),
-    m_connectionData( groupKeyStruct::connectionDataString, this ),
     m_perforationData( groupKeyStruct::perforationDataString, this ),
     m_perforationManager( groupKeyStruct::perforationsString, this ),
     m_referenceDepth( 0.0 ),
@@ -74,8 +73,6 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
   
   RegisterGroup( groupKeyStruct::wellElementDataString, &m_wellElementSubRegion, false );
   RegisterGroup( groupKeyStruct::wellElementsString,    &m_wellElementManager,   false );
-  
-  RegisterGroup( groupKeyStruct::connectionDataString,  &m_connectionData,  false );
 
   RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData,    false );
   RegisterGroup( groupKeyStruct::perforationsString,    &m_perforationManager, false );
@@ -144,7 +141,7 @@ void Well::PostProcessInput()
   // debug:
   for (int ic = 0; ic < m_injectionStream.size(); ++ic)
     std::cout << "ic = " << ic << " injectionStream[" << ic << "]= "
-	      << m_injectionStream[ic] << std::endl;
+              << m_injectionStream[ic] << std::endl;
   
   // this is temporary
   m_wellElementSubRegion.resize( m_wellElementManager.numWellElementsGlobal() );

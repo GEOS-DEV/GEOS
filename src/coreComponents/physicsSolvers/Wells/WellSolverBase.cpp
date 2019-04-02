@@ -39,10 +39,8 @@ WellSolverBase::WellSolverBase( std::string const & name,
     m_fluidName(),
     m_resFluidIndex(),
     m_numDofPerElement(0),
-    m_numDofPerConnection(0),
     m_numDofPerResElement(0),
-    m_firstWellElemDofNumber(-1),
-    m_normalizeMassBalanceEqnsFlag(0)
+    m_firstWellElemDofNumber(-1)
 {
   RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
     setApplyDefaultValue(1)->
@@ -64,8 +62,8 @@ void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
 
 void WellSolverBase::SetSparsityPattern( DomainPartition const * const domain,
                                          Epetra_FECrsGraph * const sparsity,
-					 globalIndex firstWellElemDofNumber,
-					 localIndex numDofPerResElement )
+                                         globalIndex firstWellElemDofNumber,
+                                         localIndex numDofPerResElement )
 {
 }
 
@@ -123,12 +121,11 @@ WellSolverBase::~WellSolverBase() = default;
 globalIndex WellSolverBase::getElementOffset( globalIndex welemDofNumber ) const
 {
   localIndex const resNDOF  = numDofPerResElement(); // dof is pressure
-  localIndex const wellNDOF = numDofPerElement()
-                            + numDofPerConnection(); // dofs are pressure and rate
+  localIndex const wellNDOF = numDofPerElement(); // dofs are pressure and rate
   
   globalIndex const firstElemDofNumber = getFirstWellElementDofNumber();
-  globalIndex const currentElemOffset = firstElemDofNumber * resNDOF // number of eqns in J_RR
-                                      + (welemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
+  globalIndex const currentElemOffset  = firstElemDofNumber * resNDOF // number of eqns in J_RR
+                                       + (welemDofNumber - firstElemDofNumber) * wellNDOF; // number of eqns in J_WW, before this element's equations
 
   return currentElemOffset;
 }

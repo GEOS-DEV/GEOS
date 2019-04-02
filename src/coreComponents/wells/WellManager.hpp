@@ -61,8 +61,6 @@ public:
 
   string_array const & getMaterialList() const {return m_materialList;}
 
-  globalIndex numWells() const { return m_numWells; }
-  
   struct viewKeyStruct 
   {
     static constexpr auto materialListString = "materialList";
@@ -71,8 +69,6 @@ public:
   
 private:
 
-  globalIndex m_numWells;
-  
   R1Tensor m_gravityVector;
   bool m_gravityFlag;
 
