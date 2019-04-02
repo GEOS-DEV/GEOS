@@ -14,6 +14,8 @@ set(managers_headers
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
     Outputs/TimeHistoryOutput.hpp
+    Tasks/TaskBase.hpp
+    Tasks/TasksManager.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -22,7 +24,7 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
-    FieldSpecification/FieldSpecificationOps.hpp
+    FieldSpecification/CopyField.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
@@ -46,6 +48,8 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
+    Tasks/TaskBase.cpp
+    Tasks/TasksManager.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -54,6 +58,7 @@ set(managers_sources
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp
+    FieldSpecification/CopyField.cpp
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp
