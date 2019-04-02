@@ -195,17 +195,21 @@ public:
           dataRepository::ManagedGroup * targetGroup = meshLevel;
 
           string processedPath;
-          for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
+          if( fs->GetObjectPath().empty() )
           {
-            targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
-            processedPath += "/" + targetPath[pathLevel];
-
-            GEOS_ERROR_IF( targetGroup == nullptr,
-                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
+            ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
           }
+          else {
+            for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
+            {
+              targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
+              processedPath += "/" + targetPath[pathLevel];
 
-          /// Apply on all the childs
-          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
+              GEOS_ERROR_IF( targetGroup == nullptr,
+                  "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
+            }
+            ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
+          }
         }
       }
     }
