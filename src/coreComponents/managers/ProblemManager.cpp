@@ -24,6 +24,7 @@
 #include "optionparser.h"
 
 #include "DomainPartition.hpp"
+#include "managers/Tasks/TasksManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
@@ -117,6 +118,7 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   RegisterGroup<OutputManager>(groupKeys.outputManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
+  RegisterGroup<TasksManager>(groupKeys.taskManager);
 
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();

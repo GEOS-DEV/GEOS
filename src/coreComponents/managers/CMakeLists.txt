@@ -15,6 +15,8 @@ set(managers_headers
     Outputs/RestartOutput.hpp
     Outputs/BlueprintOutput.hpp
     Outputs/ChomboIO.hpp
+    Tasks/TaskBase.hpp
+    Tasks/TasksManager.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -23,6 +25,7 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
+    FieldSpecification/CopyField.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp)
@@ -32,7 +35,7 @@ set(managers_headers
 # Specify all sources
 #
 set(managers_sources
-  	DomainPartition.cpp
+    DomainPartition.cpp
     EventManager.cpp
     Events/EventBase.cpp
     Events/PeriodicEvent.cpp
@@ -44,6 +47,8 @@ set(managers_sources
     Outputs/RestartOutput.cpp
     Outputs/BlueprintOutput.cpp
     Outputs/ChomboIO.cpp
+    Tasks/TaskBase.cpp
+    Tasks/TasksManager.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -52,6 +57,7 @@ set(managers_sources
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp
+    FieldSpecification/CopyField.cpp
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp)

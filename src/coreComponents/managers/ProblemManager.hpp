@@ -167,6 +167,7 @@ public:
     dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
     dataRepository::GroupKey outputManager = { "Outputs" };
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };
+    dataRepository::GroupKey taskManager = { "Tasks" };
   } groupKeys;
 
   PhysicsSolverManager & GetPhysicsSolverManager()
