@@ -4,7 +4,8 @@
 
 if(ENABLE_PVTPackage)
 set( gtest_geosx_tests
-     testCompMultiphaseFlow.cpp
+    testCompMultiphaseFlow.cpp
+    testCompMultiphaseFlowCapPressure.cpp
    )
 endif(ENABLE_PVTPackage)
 
