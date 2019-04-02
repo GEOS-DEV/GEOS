@@ -195,21 +195,15 @@ public:
           dataRepository::ManagedGroup * targetGroup = meshLevel;
 
           string processedPath;
-          if( fs->GetObjectPath().empty() )
+          for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
-          }
-          else {
-            for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
-            {
-              targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
-              processedPath += "/" + targetPath[pathLevel];
+            targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
+            processedPath += "/" + targetPath[pathLevel];
 
-              GEOS_ERROR_IF( targetGroup == nullptr,
-                  "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
-            }
-            ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
+            GEOS_ERROR_IF( targetGroup == nullptr,
+                "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
+          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
         }
       }
     }
@@ -231,7 +225,10 @@ private:
                                LAMBDA && lambda
                              ) const
   {
-    if( target->getParent()->getName() == ElementRegion::viewKeyStruct::elementSubRegions
+    if( ( target->getParent()->getName() == ElementRegion::viewKeyStruct::elementSubRegions
+        || target->getName() == "nodeManager"
+        || target->getName() == "FaceManager"
+        || target->getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are inconsistencies with the name of the Managers...
         && target->getName() != ObjectManagerBase::groupKeyStruct::setsString
         && target->getName() != ObjectManagerBase::groupKeyStruct::neighborDataString )
     {
