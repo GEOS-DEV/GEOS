@@ -23,6 +23,10 @@ public:
 
   virtual ~SolidBase() override;
 
+  virtual void DeliverClone( string const & name,
+                             ManagedGroup * const parent,
+                             std::unique_ptr<ConstitutiveBase> & clone ) const override;
+
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
