@@ -72,6 +72,26 @@ void PoroElastic<BASE>::PostProcessInput()
 }
 
 template< typename BASE >
+void PoroElastic<BASE>::DeliverClone( string const & name,
+                                      ManagedGroup * const parent,
+                                      std::unique_ptr<ConstitutiveBase> & clone ) const
+{
+  if( !clone )
+  {
+    clone = std::make_unique<PoroElastic<BASE> >( name, parent );
+  }
+  BASE::DeliverClone( name, parent, clone );
+  PoroElastic<BASE> * const newConstitutiveRelation = dynamic_cast<PoroElastic<BASE> *>(clone.get());
+
+  newConstitutiveRelation->m_compressibility      = m_compressibility;
+  newConstitutiveRelation->m_referencePressure    = m_referencePressure;
+  newConstitutiveRelation->m_biotCoefficient      = m_biotCoefficient;
+  newConstitutiveRelation->m_poreVolumeMultiplier = m_poreVolumeMultiplier;
+  newConstitutiveRelation->m_dPVMult_dPressure    = m_dPVMult_dPressure;
+  newConstitutiveRelation->m_poreVolumeRelation   = m_poreVolumeRelation;
+}
+
+template< typename BASE >
 void PoroElastic<BASE>::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {

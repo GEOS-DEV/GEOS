@@ -81,8 +81,13 @@ LinearElasticIsotropic::DeliverClone( string const & name,
                                       ManagedGroup * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr<LinearElasticIsotropic>
-  newConstitutiveRelation = std::make_unique<LinearElasticIsotropic>( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique<LinearElasticIsotropic>( name, parent );
+  }
+  SolidBase::DeliverClone( name, parent, clone );
+  LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast<LinearElasticIsotropic *>(clone.get());
+
 
   newConstitutiveRelation->m_bulkModulus0 = m_bulkModulus0;
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
@@ -93,8 +98,6 @@ LinearElasticIsotropic::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_meanStress = m_meanStress;
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
-
-  clone = std::move(newConstitutiveRelation);
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
