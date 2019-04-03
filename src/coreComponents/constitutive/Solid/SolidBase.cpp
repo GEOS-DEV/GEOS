@@ -45,6 +45,21 @@ SolidBase::SolidBase( string const & name,
 SolidBase::~SolidBase()
 {}
 
+void
+SolidBase::DeliverClone( string const & name,
+                         ManagedGroup * const parent,
+                         std::unique_ptr<ConstitutiveBase> & clone ) const
+{
+  SolidBase * const newConstitutiveRelation = dynamic_cast<SolidBase*>(clone.get());
+
+  newConstitutiveRelation->m_density0 = m_density0;
+  newConstitutiveRelation->m_density = m_density;
+
+  newConstitutiveRelation->m_meanStress = m_meanStress;
+  newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
+}
+
+
 void SolidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
