@@ -21,7 +21,7 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
                                  LAMBDA && lambda )
 {
   bool rval = true;
-  if( constitutiveRelation->GetCatalogName()==LinearElasticIsotropic::CatalogName() )
+  if( dynamic_cast<LinearElasticIsotropic * >( constitutiveRelation ) )
   {
     lambda( static_cast<LinearElasticIsotropic & >( *constitutiveRelation) );
   }
