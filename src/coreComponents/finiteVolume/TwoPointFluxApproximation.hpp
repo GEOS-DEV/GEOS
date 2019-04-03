@@ -43,6 +43,13 @@ protected:
 
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) override;
 
+  virtual void computeCoarsetencil( DomainPartition * domain,
+                                    CellStencil const & fineStencil,
+                                    CellStencil & coarseStencil,
+                                    std::string const & elementaryPressure1Name,
+                                    std::string const & elementaryPressure2Name,
+                                    std::string const & elementaryPressure3Name);
+
   virtual void computeFractureStencil( DomainPartition const & domain,
                                        CellStencil & fractureStencil,
                                        CellStencil & cellStencil ) override;

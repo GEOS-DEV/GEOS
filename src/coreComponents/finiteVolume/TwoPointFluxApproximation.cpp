@@ -23,6 +23,11 @@
 #include "TwoPointFluxApproximation.hpp"
 
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/AggregateElementSubRegion.hpp"
+#include "Epetra_SerialDenseMatrix.h"
+#include "Teuchos_SerialDenseMatrix.hpp"
+#include "Teuchos_SerialDenseVector.hpp"
+#include "Teuchos_LAPACK.hpp"
 
 namespace geosx
 {
@@ -153,7 +158,162 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   stencil.compress();
 }
 
+void TwoPointFluxApproximation::computeCoarsetencil( DomainPartition * domain,
+                                                     CellStencil const & fineStencil,
+                                                     CellStencil & coarseStencil,
+                                                     std::string const & elementaryPressure1Name,
+                                                     std::string const & elementaryPressure2Name,
+                                                     std::string const & elementaryPressure3Name )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegion * const elemRegion = elemManager->GetRegion(0); // TODO : still one region / elemsubregion
+  AggregateElementSubRegion * const aggregateElement = elemRegion->GetSubRegion("coarse")->group_cast< AggregateElementSubRegion * >();
+  const array1d< localIndex > & fineToCoarse = aggregateElement->GetFineToCoarseMap();
+  // TODO : will it work for fractures ? (no)
 
+  array1d<CellDescriptor> stencilCells(2);
+  array1d<real64> stencilWeights(2);
+  std::set< std::pair< localIndex, localIndex > > interfaces;
+  fineStencil.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil ) //TODO maybe find a clever way to iterate between coarse interfaces ?
+  {
+    localIndex const stencilSize = stencil.size();
+    if( stencil.size() == 2)
+    {
+      CellDescriptor const & cell1 = stencil.connectedIndex(0);
+      CellDescriptor const & cell2 = stencil.connectedIndex(1);
+      localIndex aggregateNumber1 = fineToCoarse[cell1.index];
+      localIndex aggregateNumber2 = fineToCoarse[cell2.index];
+      if( aggregateNumber1 != aggregateNumber2 && interfaces.find(std::make_pair(aggregateNumber1,aggregateNumber2)) == interfaces.end() ) // We find two adjacent aggregates TODO maybe find a clever way to iterate between coarse interfaces ?
+      {
+        stencilCells[0] = { cell1.region, 0, aggregateNumber1 }; // We can consider here that there is only 1 subregion
+        stencilCells[1] = { cell2.region, 0, aggregateNumber2 };
+
+        // Now we compute the transmissibilities
+        R1Tensor barycenter1 = aggregateElement->getElementCenter()[aggregateNumber1];
+        R1Tensor barycenter2 = aggregateElement->getElementCenter()[aggregateNumber2];
+        barycenter1 -= barycenter2; // normal between the two aggregates
+        barycenter1.Normalize();
+
+        int systemSize = integer_conversion< int >(aggregateElement->GetNbCellsPerAggregate( aggregateNumber1 )
+                                                 + aggregateElement->GetNbCellsPerAggregate( aggregateNumber2 ));
+        Teuchos::LAPACK< int, real64 > lapack;
+        Teuchos::SerialDenseMatrix< int, real64 > A(systemSize, 4);
+        Teuchos::SerialDenseVector< int, real64 > pTarget(systemSize);
+
+        /// Get the elementary pressures
+        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure1 =
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( elementaryPressure1Name );
+        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure2 =
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( elementaryPressure2Name );
+        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> pressure3 =
+          elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( elementaryPressure3Name );
+        int count =0;
+
+        /// Setup the least square system
+        aggregateElement->forFineCellsInAggregate( aggregateNumber1,
+                                                   [&] ( localIndex fineCellIndex )
+        {
+          A(count,0) = pressure1[cell1.region][cell1.subRegion][fineCellIndex];
+          A(count,1) = pressure2[cell1.region][cell1.subRegion][fineCellIndex];
+          A(count,2) = pressure3[cell1.region][cell1.subRegion][fineCellIndex];
+          A(count,3) = 1.;
+          R1Tensor barycenterFineCell = elemRegion->GetSubRegion(cell1.subRegion)->getElementCenter()[fineCellIndex];
+          pTarget(count++) = barycenterFineCell[0]*barycenter1[0]
+                             + barycenterFineCell[1]*barycenter1[1]
+                             + barycenterFineCell[2]*barycenter1[2];
+        });
+        aggregateElement->forFineCellsInAggregate( aggregateNumber2,
+                                                   [&] ( localIndex fineCellIndex )
+        {
+          A(count,0) = pressure1[cell2.region][cell2.subRegion][fineCellIndex];
+          A(count,1) = pressure2[cell2.region][cell2.subRegion][fineCellIndex];
+          A(count,2) = pressure3[cell2.region][cell2.subRegion][fineCellIndex];
+          A(count,3) = 1.;
+          R1Tensor barycenterFineCell = elemRegion->GetSubRegion(cell1.subRegion)->getElementCenter()[fineCellIndex];
+          pTarget(count++) = barycenterFineCell[0]*barycenter1[0]
+                             + barycenterFineCell[1]*barycenter1[1]
+                             + barycenterFineCell[2]*barycenter1[2];
+        });
+
+        int info;
+        real64  rwork1;
+        real64 svd[4];
+        int rank;
+
+        // Solve the least square system
+        lapack.GELSS(systemSize,4,1,A.values(),A.stride(),pTarget.values(),pTarget.stride(),svd,-1,&rank,&rwork1,-1,&info);
+        int lwork = static_cast< int > ( rwork1 );
+        real64 * rwork = new real64[lwork];
+        lapack.GELSS(systemSize,4,1,A.values(),A.stride(),pTarget.values(),pTarget.stride(),svd,-1,&rank,rwork,lwork,&info);
+        pTarget.print(std::cout);
+        GEOS_ERROR("stop");
+
+        // Computation of coarse-grid flow parameters
+        real64 coarseAveragePressure1 = 0.;
+        real64 coarseAveragePressure2 = 0.;
+        array1d<real64> coarseFlowRate(2);
+
+        aggregateElement->forFineCellsInAggregate( aggregateNumber1,
+                                                   [&] ( localIndex fineCellIndex )
+        {
+          coarseAveragePressure1 +=  pTarget[0] * pressure1[cell1.region][cell1.subRegion][fineCellIndex]
+                                   + pTarget[1] * pressure2[cell1.region][cell1.subRegion][fineCellIndex]
+                                   + pTarget[2] * pressure3[cell1.region][cell1.subRegion][fineCellIndex]
+                                   + pTarget[3];
+          coarseAveragePressure1 *= elemRegion->GetSubRegion(cell1.subRegion)->getElementVolume()[fineCellIndex];
+        });
+        aggregateElement->forFineCellsInAggregate( aggregateNumber2,
+                                                   [&] ( localIndex fineCellIndex )
+        {
+          coarseAveragePressure2 +=  pTarget[0] * pressure1[cell2.region][cell2.subRegion][fineCellIndex]
+                                   + pTarget[1] * pressure2[cell2.region][cell2.subRegion][fineCellIndex]
+                                   + pTarget[2] * pressure3[cell2.region][cell2.subRegion][fineCellIndex]
+                                   + pTarget[3];
+          coarseAveragePressure2 *= elemRegion->GetSubRegion(cell2.subRegion)->getElementVolume()[fineCellIndex];
+        });
+
+        coarseAveragePressure1 /= aggregateElement->getElementVolume()[aggregateNumber1];
+        coarseAveragePressure2 /= aggregateElement->getElementVolume()[aggregateNumber2];
+
+        fineStencil.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencilBis )
+        {
+          localIndex const stencilSizeBis = stencilBis.size();
+          if( stencilBis.size() == 2)
+          {
+            CellDescriptor const & cell1Bis = stencilBis.connectedIndex(0);
+            CellDescriptor const & cell2Bis = stencilBis.connectedIndex(1);
+            localIndex aggregateNumber1Bis = fineToCoarse[cell1Bis.index];
+            localIndex aggregateNumber2Bis = fineToCoarse[cell2Bis.index];
+            if( aggregateNumber1Bis == aggregateNumber1 &&
+                aggregateNumber2Bis == aggregateNumber2 ) // TODO clever way to find the interfaces of adjacent fine cells within aggregates?
+            {
+              real64 finePressure1 =   pTarget[0] * pressure1[cell1.region][cell1.subRegion][cell1Bis.index]
+                                     + pTarget[1] * pressure2[cell1.region][cell1.subRegion][cell1Bis.index]
+                                     + pTarget[2] * pressure3[cell1.region][cell1.subRegion][cell1Bis.index]
+                                     + pTarget[3];
+
+              real64 finePressure2 =   pTarget[0] * pressure1[cell2.region][cell2.subRegion][cell2Bis.index]
+                                     + pTarget[1] * pressure2[cell2.region][cell2.subRegion][cell2Bis.index]
+                                     + pTarget[2] * pressure3[cell2.region][cell2.subRegion][cell2Bis.index]
+                                     + pTarget[3];
+              stencilBis.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
+              {
+                  coarseFlowRate[i] += w * ( finePressure1 - finePressure2 ); //TODO sign ?
+              });
+            }
+          }
+        });
+        for( localIndex i = 0; i < 2; i++ )
+        {
+          stencilWeights[i] = coarseFlowRate[i] / ( coarseAveragePressure1 - coarseAveragePressure2 ); // TODO sign ?
+        }
+        coarseStencil.add(stencilCells.data(), stencilCells, stencilWeights, 0.);
+        interfaces.insert(std::make_pair(aggregateNumber1, aggregateNumber2));
+      }
+    }
+});
+}
 
 
 void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & domain,
