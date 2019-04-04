@@ -108,7 +108,6 @@ public:
   /// check if a stencil exists
   bool hasBoundaryStencil(string const & setName) const;
 
-
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
   void forCellStencils(LAMBDA && lambda) const;
@@ -118,39 +117,40 @@ public:
   void forBoundaryStencils(LAMBDA && lambda) const;
 
   /// triggers computation of the stencil, implemented in derived classes
-  void compute(DomainPartition * domain);
+  void compute( DomainPartition const & domain );
 
   struct viewKeyStruct
   {
     static constexpr auto fieldNameString             = "fieldName";
     static constexpr auto boundaryFieldNameString     = "boundaryFieldName";
     static constexpr auto coeffNameString             = "coefficientName";
-    static constexpr auto cellStencilString           = "cellStencil";
-    static constexpr auto fratureRegionNameString     = "fractureRegions";
-    static constexpr auto fratureStencilString        = "fractureStencil";
+    static constexpr auto targetRegionsString         = "targetRegions";
     static constexpr auto areaRelativeToleranceString = "areaRelTol";
+
+    static constexpr auto cellStencilString           = "cellStencil";
+    static constexpr auto fractureStencilString       = "fractureStencil";
   };
 
   struct groupKeyStruct
   {
-    static constexpr auto boundarySetDataString = "BoundarySetData";
   };
 
 protected:
-  void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
-  virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
+  virtual void computeCellStencil( DomainPartition const & domain,
+                                   CellStencil & stencil ) = 0;
 
   virtual void computeFractureStencil( DomainPartition const & domain,
                                        CellStencil & fractureStencil,
                                        CellStencil & cellStencil ) = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
-  virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;
-
-  /// pointer to boundary set manager
-  dataRepository::ManagedGroup * m_boundarySetData;
+  virtual void computeBoundaryStencil( DomainPartition const & domain,
+                                       set<localIndex> const & faceSet,
+                                       BoundaryStencil & stencil ) = 0;
 
   /// name of the primary solution field
   string m_fieldName;
@@ -161,8 +161,8 @@ protected:
   /// name of the coefficient field
   string m_coeffName;
 
-  /// names of the fracture regions
-  string m_fractureRegionName;
+  /// names of target regions to build the stencil for
+  string_array m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;
