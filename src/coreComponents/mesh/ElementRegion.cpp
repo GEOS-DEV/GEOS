@@ -224,7 +224,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     });
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
-  GEOS_LOG_RANK_0("Generating " +  std::to_string(nbAggregates) + " aggregates on region " + this->getName());
+  GEOS_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
 
   // METIS variable declarations
   using idx_t = ::idx_t;
