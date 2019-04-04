@@ -248,17 +248,16 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   localIndex const NC   = solver->numFluidComponents();
   localIndex const NDOF = solver->numDofPerCell();
 
-  Epetra_FECrsMatrix * jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
-  Epetra_FEVector    * residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-  Epetra_Map const   * rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
+  Epetra_FEVector    * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  Epetra_Map const   * const rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
 
   // get a view into local residual vector
   int localSizeInt;
-  double* localResidual = nullptr;
+  double * localResidual = nullptr;
   residual->ExtractView(&localResidual, &localSizeInt);
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
 
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
@@ -274,99 +273,97 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   auto jacobianFD = std::make_unique<Epetra_FECrsMatrix>( Copy, jacobian->Graph() );
   jacobianFD->Scale( 0.0 );
 
-  for (localIndex er = 0; er < elemManager->numRegions(); ++er)
+  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+                                         ElementRegion * const region,
+                                         ElementSubRegionBase * const subRegion )
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
+    arrayView1d<integer> & elemGhostRank =
+      subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+    arrayView1d<globalIndex> & dofNumber =
+      subRegion-> template getReference<array1d<globalIndex >>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
+
+    arrayView1d<real64> & pres =
+      subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+
+    arrayView1d<real64> & dPres =
+      subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+
+    arrayView2d<real64> & compDens =
+      subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+
+    arrayView2d<real64> & dCompDens =
+      subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+
+    for (localIndex ei = 0; ei < subRegion->size(); ++ei)
     {
-      arrayView1d<integer> & elemGhostRank =
-        subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+      if (elemGhostRank[ei] >= 0)
+        continue;
 
-      arrayView1d<globalIndex> & dofNumber =
-        subRegion-> template getReference<array1d<globalIndex >>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
+      globalIndex offset = dofNumber[ei] * NDOF;
 
-      arrayView1d<real64> & pres =
-        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
-
-      arrayView1d<real64> & dPres =
-        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
-
-      arrayView2d<real64> & compDens =
-        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
-
-      arrayView2d<real64> & dCompDens =
-        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
-
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      real64 totalDensity = 0.0;
+      for (localIndex ic = 0; ic < NC; ++ic)
       {
-        if (elemGhostRank[ei] >= 0)
-          continue;
+        totalDensity += compDens[ei][ic];
+      }
 
-        globalIndex offset = dofNumber[ei] * NDOF;
+      {
+        solver->ResetStateToBeginningOfStep(domain);
 
-        real64 totalDensity = 0.0;
-        for (localIndex ic = 0; ic < NC; ++ic)
+        real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
+        dPres[ei] = dP;
+
+        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
         {
-          totalDensity += compDens[ei][ic];
-        }
+          solver->UpdateState( subRegion2 );
+        });
 
+        residual->Scale( 0.0 );
+        assembleFunction( solver, domain, jacobian, residual );
+
+        long long const dofIndex = integer_conversion<long long>(offset);
+
+        for (int lid = 0; lid < localSizeInt; ++lid)
         {
-          solver->ResetStateToBeginningOfStep(domain);
-
-          real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
-          dPres[ei] = dP;
-
-          applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion2 )
+          real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
+          if (std::fabs(dRdP) > 0.0)
           {
-            solver->UpdateState( subRegion2 );
-          });
-
-          residual->Scale( 0.0 );
-          assembleFunction( solver, domain, jacobian, residual );
-
-          long long const dofIndex = integer_conversion<long long>(offset);
-
-          for (int lid = 0; lid < localSizeInt; ++lid)
-          {
-            real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
-            if (std::fabs(dRdP) > 0.0)
-            {
-              long long gid = rowMap->GID64(lid);
-              jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
-            }
-          }
-        }
-
-        for (localIndex jc = 0; jc < NC; ++jc)
-        {
-          solver->ResetStateToBeginningOfStep(domain);
-
-          real64 const dRho = perturbParameter * totalDensity;
-          dCompDens[ei][jc] = dRho;
-
-          applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion2 )
-          {
-            solver->UpdateState( subRegion2 );
-          });
-
-          residual->Scale( 0.0 );
-          assembleFunction( solver, domain, jacobian, residual );
-
-          long long const dofIndex = integer_conversion<long long>(offset + jc + 1);
-
-          for (int lid = 0; lid < localSizeInt; ++lid)
-          {
-            real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
-            if (std::fabs(dRdRho) > 0.0)
-            {
-              long long gid = rowMap->GID64(lid);
-              jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
-            }
+            long long gid = rowMap->GID64(lid);
+            jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
           }
         }
       }
-    });
-  }
+
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        solver->ResetStateToBeginningOfStep(domain);
+
+        real64 const dRho = perturbParameter * totalDensity;
+        dCompDens[ei][jc] = dRho;
+
+        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+        {
+          solver->UpdateState( subRegion2 );
+        });
+
+        residual->Scale( 0.0 );
+        assembleFunction( solver, domain, jacobian, residual );
+
+        long long const dofIndex = integer_conversion<long long>(offset + jc + 1);
+
+        for (int lid = 0; lid < localSizeInt; ++lid)
+        {
+          real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
+          if (std::fabs(dRdRho) > 0.0)
+          {
+            long long gid = rowMap->GID64(lid);
+            jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
+          }
+        }
+      }
+    }
+  } );
 
   jacobianFD->GlobalAssemble(true);
 

@@ -518,6 +518,42 @@ public:
     }
   }
 
+  /**
+   * @brief Apply a given functor to a subset of subgroups (non-const version)
+   * @tparam T subgroup type
+   * @tparam LAMBDA functor type
+   * @param subgroupNames list of subgroup names to apply the functor to
+   * @param lambda the functor
+   */
+  template< typename T = ManagedGroup, typename LAMBDA >
+  void forSubGroups( string_array const & subgroupNames, LAMBDA lambda )
+  {
+    for( string const & subgroupName : subgroupNames )
+    {
+      T * subGroup = GetGroup<T>( subgroupName );
+      GEOS_ERROR_IF( subGroup == nullptr, "Subgroup does not exist: " << subgroupName );
+      lambda( subGroup );
+    }
+  }
+
+  /**
+   * @brief Apply a given functor to a subset of subgroups (const version)
+   * @tparam T subgroup type
+   * @tparam LAMBDA functor type
+   * @param subgroupNames list of subgroup names to apply the functor to
+   * @param lambda the functor
+   */
+  template< typename T = ManagedGroup, typename LAMBDA >
+  void forSubGroups( string_array const & subgroupNames, LAMBDA lambda ) const
+  {
+    for( string const & subgroupName : subgroupNames )
+    {
+      T const * subGroup = GetGroup<T>( subgroupName );
+      GEOS_ERROR_IF( subGroup == nullptr, "Subgroup does not exist: " << subgroupName );
+      lambda( subGroup );
+    }
+  }
+
   template< typename T = ViewWrapperBase, typename LAMBDA >
   void forViewWrappers( LAMBDA lambda )
   {
