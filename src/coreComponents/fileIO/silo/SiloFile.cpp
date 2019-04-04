@@ -1654,12 +1654,20 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
         elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                                    auto const * const subRegion )
         {
-          ViewWrapper<arrayType> const &
-          sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
-          arrayType const & sourceArray = sourceWrapper.reference();
+          // check if the field actually exists / plotted on the current subregion
+          if (viewPointers[er][esr].count(fieldName) > 0)
+          {
+            ViewWrapper<arrayType> const & sourceWrapper =
+              ViewWrapper<arrayType>::cast(*(viewPointers[er][esr][fieldName]));
+            arrayType const & sourceArray = sourceWrapper.reference();
 
-          targetArray.copy(counter, sourceArray );
-          counter += sourceArray.size(0);
+            targetArray.copy(counter, sourceArray);
+            counter += sourceArray.size(0);
+          }
+          else
+          {
+            counter += subRegion->size();
+          }
         });
       }
     });
