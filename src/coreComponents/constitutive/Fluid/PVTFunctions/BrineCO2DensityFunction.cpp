@@ -1,4 +1,3 @@
-
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
@@ -38,7 +37,6 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
                                                   real64_array const & componentMolarWeight):
   PVTFunctionBase( inputPara[1], componentNames, componentMolarWeight)
 {
-
   bool notFound = 1;
 
   for(localIndex i = 0; i < componentNames.size(); ++i)
@@ -73,12 +71,10 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
 
 
   MakeTable(inputPara);
-
 }
 
 void BrineCO2DensityFunction::MakeTable(string_array const & inputPara)
 {
-
   real64_vector pressures;
   real64_vector temperatures;
 
@@ -129,14 +125,11 @@ void BrineCO2DensityFunction::MakeTable(string_array const & inputPara)
   CalculateBrineDensity(pressures, temperatures, m, densities);
 
   m_BrineDensityTable = make_shared<XYTable>("BrineDensityTable", pressures, temperatures, densities);
-
-
 }
 
 
 void BrineCO2DensityFunction::Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass) const
 {
-
   EvalArgs2D P, T, density;
   P.m_var = pressure.m_var;
   P.m_der[0] = 1.0;
@@ -146,10 +139,10 @@ void BrineCO2DensityFunction::Evaluation(const EvalVarArgs& pressure, const Eval
 
   density = m_BrineDensityTable->Value(P, T);
 
-  static const real64 a = 37.51;
-  static const real64 b = -9.585e-2;
-  static const real64 c = 8.740e-4;
-  static const real64 d = -5.044e-7;
+  constexpr real64 a = 37.51;
+  constexpr real64 b = -9.585e-2;
+  constexpr real64 c = 8.740e-4;
+  constexpr real64 d = -5.044e-7;
 
   real64 temp = T.m_var;
 
@@ -169,58 +162,48 @@ void BrineCO2DensityFunction::Evaluation(const EvalVarArgs& pressure, const Eval
 
   if(useMass)
   {
-
     value = den + CO2MW * C - C * den * V;
-
   }
   else
   {
-
     value = den / waterMW + C - C * den * V / waterMW;
-
   }
-
 }
 
 void BrineCO2DensityFunction::CalculateBrineDensity(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& density)
+{
+  constexpr real64 c1 = -9.9595;
+  constexpr real64 c2 = 7.0845;  
+  constexpr real64 c3 = 3.9093;
+
+  constexpr real64 a1 = -0.004539;
+  constexpr real64 a2 = -0.0001638;
+  constexpr real64 a3 = 0.00002551;
+
+  constexpr real64 AA = -3.033405;
+  constexpr real64 BB = 10.128163;
+  constexpr real64 CC = -8.750567;
+  constexpr real64 DD = 2.663107;
+
+  real64 P, x;
+
+  for(unsigned long i = 0; i < pressure.size(); ++i)
   {
-  
-    static const real64 c1 = -9.9595;
-    static const real64 c2 = 7.0845;  
-    static const real64 c3 = 3.9093;
 
-    static const real64 a1 = -0.004539;
-    static const real64 a2 = -0.0001638;
-    static const real64 a3 = 0.00002551;
+    P = pressure[i] / 1e5;
 
-    static const real64 AA = -3.033405;
-    static const real64 BB = 10.128163;
-    static const real64 CC = -8.750567;
-    static const real64 DD = 2.663107;
+    for(unsigned long j = 0; j < temperature.size(); ++j)    
+    {
+      x = c1 * exp(a1 * salinity) + c2 * exp(a2 * temperature[j]) + c3 * exp(a3 * P);
 
-    real64 P, x;
-  
-    for(unsigned long i = 0; i < pressure.size(); ++i)
-      {
-
-	P = pressure[i] / 1e5;
-
-	for(unsigned long j = 0; j < temperature.size(); ++j)    
-	  {
-      
-	    x = c1 * exp(a1 * salinity) + c2 * exp(a2 * temperature[j]) + c3 * exp(a3 * P);
-
-	    density[i][j] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
-
-	  }
-      }
-  
+      density[i][j] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
+    }
   }
-
+}
   
 REGISTER_CATALOG_ENTRY( PVTFunctionBase,
                         BrineCO2DensityFunction,
                         string_array const &, string_array const &, real64_array const & )
 
-}
-}
+} // namespace PVTProps
+} // namespace geosx

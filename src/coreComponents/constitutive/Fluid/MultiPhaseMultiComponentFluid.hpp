@@ -34,10 +34,8 @@
 namespace geosx
 {
 
-  /*
-using namespace PVTProps;
-using namespace Utility;
-  */
+// using namespace PVTProps;
+// using namespace Utility;
   
 namespace dataRepository
 {
