@@ -1,4 +1,3 @@
-
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
@@ -66,20 +65,16 @@ void FenghourCO2ViscosityFunction::MakeTable(const string_array& inputPara)
 
   while(P <= PEnd)
   {
-
     pressures.push_back(P);
     P += dP;
-
   }
 
   T = TStart;
 
   while(T <= TEnd)
   {
-
     temperatures.push_back(T);
     T += dT;
-
   }
 
   unsigned long nP = pressures.size();
@@ -98,14 +93,11 @@ void FenghourCO2ViscosityFunction::MakeTable(const string_array& inputPara)
   CalculateCO2Viscosity(pressures, temperatures, densities, viscosities);
 
   m_CO2ViscosityTable = make_shared<XYTable>("FenghourCO2ViscosityTable", pressures, temperatures, viscosities);
-
-
 }
 
 
 void FenghourCO2ViscosityFunction::Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass) const
 {
-
   EvalArgs2D P, T, viscosity;
   P.m_var = pressure.m_var;
   P.m_der[0] = 1.0;
@@ -117,19 +109,18 @@ void FenghourCO2ViscosityFunction::Evaluation(const EvalVarArgs& pressure, const
 
   value.m_var = viscosity.m_var;
   value.m_der[0] = viscosity.m_der[0];
-
 }
 
-void FenghourCO2ViscosityFunction::FenghourCO2Viscosity(const real64 &Tcent, const real64 &den, real64 &vis)
+void FenghourCO2ViscosityFunction::FenghourCO2Viscosity(real64 const Tcent, real64 const den, real64 &vis)
 {
-  static const real64 espar = 251.196;
-  static const real64 esparInv = 1.0 / espar;
-  static const real64 aa[5] = { 0.235156,  -0.491266, 5.211155e-2, 5.347906e-2, -1.537102e-2 };
-  static const real64 d11 =  0.4071119e-2;
-  static const real64 d21 =  0.7198037e-4;
-  static const real64 d64 =  0.2411697e-16;
-  static const real64 d81 =  0.2971072e-22;
-  static const real64 d82 = -0.1627888e-22;
+  constexpr real64 espar = 251.196;
+  constexpr real64 esparInv = 1.0 / espar;
+  constexpr real64 aa[5] = { 0.235156,  -0.491266, 5.211155e-2, 5.347906e-2, -1.537102e-2 };
+  constexpr real64 d11 =  0.4071119e-2;
+  constexpr real64 d21 =  0.7198037e-4;
+  constexpr real64 d64 =  0.2411697e-16;
+  constexpr real64 d81 =  0.2971072e-22;
+  constexpr real64 d82 = -0.1627888e-22;
 
   // temperature in Kelvin
   const real64 Tkelvin = Tcent + 273.15;
@@ -143,31 +134,20 @@ void FenghourCO2ViscosityFunction::FenghourCO2Viscosity(const real64 &Tcent, con
   const real64 d2 = den * den;
   const real64 vxcess = den * (d11 + den * (d21 + d2*d2*(d64 / (Tred*Tred*Tred) + d2*(d81 + d82/Tred))));
     
-  static const real64 vcrit = 0.0;
+  constexpr real64 vcrit = 0.0;
 
   vis = 1e-6 * (vlimit + vxcess + vcrit);
-
 }
 
-  void FenghourCO2ViscosityFunction::CalculateCO2Viscosity(const real64_vector& pressure, const real64_vector& temperature, const array1dT<real64_vector>& density, array1dT<real64_vector>& viscosity)
+void FenghourCO2ViscosityFunction::CalculateCO2Viscosity(const real64_vector& pressure, const real64_vector& temperature, const array1dT<real64_vector>& density, array1dT<real64_vector>& viscosity)
 {
-
-  real64 PPa, TK, rho;
-  
   for(unsigned long i = 0; i < pressure.size(); ++i)
+  {
+    for(unsigned long j = 0; j < temperature.size(); ++j)    
     {
-
-      PPa = pressure[i];
-      
-      for(unsigned long j = 0; j < temperature.size(); ++j)    
-	{
-
-	  FenghourCO2Viscosity(temperature[j], density[i][j], viscosity[i][j]);
-	    
-	}
-
+      FenghourCO2Viscosity(temperature[j], density[i][j], viscosity[i][j]);
     }
-
+  }
 }
   
   

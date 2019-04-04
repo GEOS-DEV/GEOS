@@ -50,10 +50,9 @@ public:
 
 
   virtual PVTFUNCTYPE FunctionType() const override
-      {
+  {
     return PVTFUNCTYPE::DENSITY;
-
-      }
+  }
 
   virtual void Evaluation( const EvalVarArgs& pressure,
                            const EvalVarArgs& temperature,

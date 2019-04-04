@@ -47,13 +47,13 @@ BrineViscosityFunction::BrineViscosityFunction( string_array const & inputPara,
 void BrineViscosityFunction::MakeCoef(string_array const & inputPara)
 {
 
-  static const real64 a = 0.0816;
-  static const real64 b = 0.0122;
-  static const real64 c = 0.000128;
-  static const real64 d = 0.000629;
-  static const real64 k = -0.7;
+  constexpr real64 a = 0.0816;
+  constexpr real64 b = 0.0122;
+  constexpr real64 c = 0.000128;
+  constexpr real64 d = 0.000629;
+  constexpr real64 k = -0.7;
 
-  static const real64 waterVisc = 8.9e-4; //at 25C
+  constexpr real64 waterVisc = 8.9e-4; //at 25C
 
   real64 m = stod(inputPara[2]);
 

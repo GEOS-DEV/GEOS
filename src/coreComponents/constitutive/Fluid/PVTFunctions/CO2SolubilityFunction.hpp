@@ -58,9 +58,9 @@ private:
 
   void MakeTable(const string_array& inputPara);
 
-  void CO2Solubility(const double &T, const double &P, double &V_r, double (*f)(const double &x1, const double &x2, const double &x3));
+  void CO2Solubility(real64 const T, real64 const P, real64 &V_r, real64 (*f)(real64 const x1, real64 const x2, real64 const x3));
 
-  void CalculateCO2Solubility(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& solubiltiy);  
+  void CalculateCO2Solubility(const real64_vector& pressure, const real64_vector& temperature, real64 const salinity, array1dT<real64_vector>& solubiltiy);  
   
   TableFunctionPtr m_CO2SolubilityTable;
   localIndex m_CO2Index;
