@@ -118,14 +118,14 @@
     <FieldSpecification name="referencePorosity1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region1"
+               objectPath="ElementRegions/Region1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region1/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region1/elementSubRegions/cb1"
                fieldName="pressure"
                scale="5e6"/>
 
@@ -136,7 +136,7 @@
                setNames="source"/>
 
     <FieldSpecification name="sinkTerm1"
-               objectPath="ElementRegions/elementRegions/Region1/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region1/elementSubRegions/cb1"
                fieldName="pressure"
                scale="0.0"
                setNames="sink"/>
@@ -144,19 +144,19 @@
     <FieldSpecification name="referencePorosity2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2"
+               objectPath="ElementRegions/Region2"
                fieldName="referencePorosity"
                scale="0.07"/>
 
     <FieldSpecification name="initialPressure2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2"
+               objectPath="ElementRegions/Region2"
                fieldName="pressure"
                scale="5e6"/>
 
     <FieldSpecification name="sinkTerm2"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb2"
+               objectPath="ElementRegions/Region2/elementSubRegions/cb2"
                fieldName="pressure"
                scale="0.0"
                setNames="sink"/>
