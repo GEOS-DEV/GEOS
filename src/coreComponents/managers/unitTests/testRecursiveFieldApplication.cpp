@@ -127,9 +127,15 @@ TEST(FieldSpecification, Recursive)
   auto fieldSpecificationManager = FieldSpecificationManager::get();
 
   reg0->GetSubRegion("reg0hex")->RegisterViewWrapper< array1d<real64> >( "field0" );
-  std::cout << reg0->GetSubRegion("reg0hex") << std::endl;
+  reg0->GetSubRegion("reg0tet")->RegisterViewWrapper< array1d<real64> >( "field0" );
+  reg1->GetSubRegion("reg1tet")->RegisterViewWrapper< array1d<real64> >( "field0" );
+  reg1->GetSubRegion("reg1hex")->RegisterViewWrapper< array1d<real64> >( "field0" );
+
   reg0->GetSubRegion("reg0hex")->RegisterViewWrapper< array1d<real64> >( "field1" );
+  reg0->GetSubRegion("reg0tet")->RegisterViewWrapper< array1d<real64> >( "field1" );
+
   reg0->GetSubRegion("reg0hex")->RegisterViewWrapper< array1d<real64> >( "field2" );
+
   reg1->GetSubRegion("reg1tet")->RegisterViewWrapper< array1d<real64> >( "field3" );
 
   reg0->GetSubRegion("reg0hex")->GetGroup("sets")->RegisterViewWrapper<localIndex_set>( std::string("all") );
