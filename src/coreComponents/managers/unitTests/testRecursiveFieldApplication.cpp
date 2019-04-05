@@ -78,6 +78,8 @@ void RegisterAndApplyField( DomainPartition * domain,
 
 TEST(FieldSpecification, Recursive)
 {
+
+  // Mesh Definitions
   localIndex nbTetReg0 = 30;
   localIndex nbHexReg0 = 60;
   localIndex nbTetReg1 = 40;
@@ -124,6 +126,8 @@ TEST(FieldSpecification, Recursive)
   reg0->GenerateMesh(cellBlockManager->GetGroup(keys::cellBlocks) );
   reg1->GenerateMesh(cellBlockManager->GetGroup(keys::cellBlocks) );
 
+
+  /// Field Definition
   auto fieldSpecificationManager = FieldSpecificationManager::get();
 
   reg0->GetSubRegion("reg0hex")->RegisterViewWrapper< array1d<real64> >( "field0" );
@@ -168,16 +172,40 @@ TEST(FieldSpecification, Recursive)
   RegisterAndApplyField(domain.get(), "field2", "ElementRegions/reg0/elementSubRegions/reg0hex", 3.);
   RegisterAndApplyField(domain.get(), "field3", "ElementRegions/reg1/elementSubRegions/reg1tet", 4.);
 
+  /// Check if the values are well set
+
   auto field0 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field0" );
+  auto field1 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field1" );
+  auto field2 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field2" );
+  auto field3 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field3" );
   elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
                                                    ElementRegion * const region,
                                                    ElementSubRegionBase const * const subRegion )
   {
-     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-     {
-       GEOS_ERROR_IF(field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set");
-     });
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      GEOS_ERROR_IF(field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set");
+    });
   });
+
+  reg0->forElementSubRegionsIndex( [&](localIndex const esr, ElementSubRegionBase * const subRegion )->void
+  {
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      GEOS_ERROR_IF(field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set");
+    });
+  });
+
+  forall_in_range<elemPolicy>( 0, reg0Hex->size(), GEOSX_LAMBDA ( localIndex ei )
+  {
+    GEOS_ERROR_IF(field2[0][0][ei] < 1. || field2[0][0][ei] > 3., "Recursive fields are not set");
+  });
+
+  forall_in_range<elemPolicy>( 0, reg1Tet->size(), GEOSX_LAMBDA ( localIndex ei )
+  {
+    GEOS_ERROR_IF(field3[1][1][ei] < 4. || field3[1][1][ei] > 4., "Recursive fields are not set");
+  });
+
 
 }
 
