@@ -197,6 +197,14 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
+            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
+            {
+              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
+            }
+            if( targetPath[pathLevel] == dataRepository::keys::elementRegions )
+            {
+              continue;
+            }
             targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
 
