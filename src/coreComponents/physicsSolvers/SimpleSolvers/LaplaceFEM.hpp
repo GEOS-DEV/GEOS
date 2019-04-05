@@ -29,6 +29,10 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 
+#include "DofManager.hpp"
+
+// Just to print the matrix
+#include "TrilinosInterface.hpp"
 
 struct stabledt
 {
@@ -125,17 +129,8 @@ public:
 //                           integer const cycleNumber,
 //                           DomainPartition * const domain );
 
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
-
-  void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex_array& localIndices,
-                                     localIndex offset );
+  void SetupSystem( DomainPartition * const domain,
+                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   void SetupMLPreconditioner( DomainPartition const & domain,
                               ML_Epetra::MultiLevelPreconditioner* MLPrec );
@@ -164,10 +159,6 @@ public:
 
   } laplaceFEMViewKeys;
 
-
-
-
-
 protected:
   virtual void PostProcessInput() override final;
 
@@ -176,9 +167,11 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   LaplaceFEM();
+  DofManager dofManager;
+  bool firstTime = true;
 
+  int mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
 };
-
 
 } /* namespace geosx */
 

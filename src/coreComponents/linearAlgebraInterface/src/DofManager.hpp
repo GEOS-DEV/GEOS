@@ -55,6 +55,7 @@ struct Dof_SparsityPattern
   localIndex nCols; //<! number of columns
   localIndex_array rowLengths; //<! row lengths, size numLocalRows
   globalIndex_array colIndices; //<! packed column indices, size numLocalNonZeros
+  localIndex_array nnzEntries; //! packed values (of type localIndex), size numLocalNonZeros
 };
 
 using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
@@ -364,6 +365,7 @@ private:
     string docstring; //!< documentation string
     localIndex numLocalNodes; //!< number of local nodes
     localIndex numLocalRows; //!< number of local rows
+    localIndex numLocalConnectivity; //!< number of local connectors
     globalIndex numGlobalRows; //!< number of ghost rows
     globalIndex firstLocalRow; //!< first row on this processor (without field offset)
     globalIndex fieldOffset; //!< global row offset for multi-field problems
@@ -446,7 +448,7 @@ private:
   /**
    * Definifion for entries of sparse matrix in COO format
    */
-  typedef std::pair<localIndex, globalIndex> indexPair;
+  typedef std::tuple<localIndex, globalIndex, localIndex> indexPair;
 
   /**
    * Compare structure used to create CSR matrix from COO format
@@ -455,10 +457,10 @@ private:
   {
     inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
     {
-      if( lhs.first < rhs.first )
+      if( std::get<0>( lhs ) < std::get<0>( rhs ) )
         return true;
-      else if( lhs.first == rhs.first )
-        return lhs.second < rhs.second;
+      else if( std::get<0>( lhs ) == std::get<0>( rhs ) )
+        return std::get<1>( lhs ) < std::get<1>( rhs );
       else
         return false;
     }
@@ -471,7 +473,7 @@ private:
   {
     inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
     {
-      return ( lhs.second < rhs.second );
+      return ( std::get<1>( lhs ) < std::get<1>( rhs ) );
     }
   };
 
@@ -503,6 +505,18 @@ private:
    */
   localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A,
                                           globalIndex const index ) const;
+
+  /**
+   * Map a local row index to global row index
+   */
+  localIndex ParallelMatrixGetGlobalRowID( EpetraMatrix const &A,
+                                           localIndex const index ) const;
+
+  /**
+   * Map a local row index to global row index
+   */
+  localIndex ParallelMatrixGetGlobalRowID( EpetraMatrix const &A,
+                                           globalIndex const index ) const;
 
   /**
    * Return the local number of columns on each processor

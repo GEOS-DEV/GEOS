@@ -135,6 +135,17 @@ public:
                              localIndex const maxEntriesPerRow,
                              MPI_Comm const & comm );
 
+  /**
+   * @brief Create a rectangular matrix from number of local rows/global columns.
+   * \param comm MPI communicator.
+   * \param localRows Local number of rows.
+   * \param globalCols Global number of columns.
+   * \param maxEntriesPerRow Maximum number of entries per row (hint).
+   */
+  void createWithLocalRowGlobalCol( localIndex const localRows,
+                                    globalIndex const globalCols,
+                                    localIndex const maxEntriesPerRow,
+                                    MPI_Comm const & comm );
 
   /**
    * @brief Reinitialize the matrix.
@@ -335,10 +346,10 @@ public:
    * \param src Input matrix (B).
    * \param dst Output matrix (C).
    *
-   * Note that the output matrix C should have the same 
+   * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
    * on C, then C's sparsity pattern must already contain
-   * the nonzero entries produced by the product this*B. 
+   * the nonzero entries produced by the product this*B.
    */
   void multiply( EpetraMatrix const &src,
                  EpetraMatrix &dst ) const;

@@ -444,10 +444,12 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
                                                 params,
                                                 blockID );
 
+  /*
   if( verboseLevel() >= 2 )
   {
     solution->Print( std::cout );
   }
+  */
 
 }
 

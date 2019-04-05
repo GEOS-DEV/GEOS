@@ -110,6 +110,16 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
   m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
 }
 
+void EpetraMatrix::createWithLocalRowGlobalCol( localIndex const localRows,
+                                                globalIndex const globalCols,
+                                                localIndex const maxEntriesPerRow,
+                                                MPI_Comm const & comm )
+{
+  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>(-1), localRows, 0, Epetra_MpiComm( comm ) ));
+  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalCols, 0, Epetra_MpiComm( comm ) ));
+  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, maxEntriesPerRow, false ) );
+}
+
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Reinitialize.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -132,7 +142,6 @@ void EpetraMatrix::open()
 // Fix the sparsity pattern, make the data contiguous in memory and optimize storage.
 void EpetraMatrix::close()
 {
-
   m_matrix->GlobalAssemble( *m_src_map, *m_dst_map );
   assembled = true;
 }

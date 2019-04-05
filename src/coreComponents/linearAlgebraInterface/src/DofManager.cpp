@@ -275,10 +275,11 @@ void DofManager::addField( string const & field,
 
   last.connLocPattern = new ParallelMatrix();
   ParallelMatrix* connLocPattDistr = last.connLocPattern;
-  connLocPattDistr->createWithGlobalSize( connLocPattLocal.nRows,
-                                          connLocPattLocal.nCols,
-                                          maxEntriesPerRow,
-                                          MPI_COMM_GEOSX );
+  connLocPattDistr->createWithLocalRowGlobalCol( last.numLocalConnectivity,
+                                                 connLocPattLocal.nCols,
+                                                 maxEntriesPerRow,
+                                                 MPI_COMM_GEOSX );
+
   for( globalIndex i = 0 ; i < connLocPattLocal.nRows ; ++i )
   {
     localIndex nnz = connLocPattLocal.rowLengths[i + 1] - connLocPattLocal.rowLengths[i];
@@ -286,6 +287,8 @@ void DofManager::addField( string const & field,
     {
       real64_array values( nnz );
       values = 1;
+      for( localIndex iLoc = 0 ; iLoc < nnz ; ++iLoc)
+        values[iLoc] = static_cast<real64>( connLocPattLocal.nnzEntries[connLocPattLocal.rowLengths[i]+iLoc] + 1 );
       connLocPattDistr->insert( i,
                                 connLocPattLocal.colIndices.data( connLocPattLocal.rowLengths[i] ),
                                 values.data(),
@@ -407,9 +410,10 @@ void DofManager::addField( string const & field,
   {
     globalIndex_array globalGather;
 
-    last.firstLocalConnectivity = connLocInput.unwrappedPointer()->NumMyRows();
+    last.numLocalConnectivity = integer_conversion<localIndex>( connLocInput.unwrappedPointer()->NumMyRows() );
 
-    CommunicationTools::allGather( last.firstLocalConnectivity, globalGather );
+    CommunicationTools::allGather( integer_conversion<globalIndex>( last.numLocalConnectivity ),
+                                   globalGather );
 
     last.firstLocalConnectivity = 0;
     for( localIndex p = 0 ; p < mpiRank ; ++p )
@@ -419,6 +423,7 @@ void DofManager::addField( string const & field,
   }
   else
   {
+    last.numLocalConnectivity = 0;
     last.firstLocalConnectivity = 0;
   }
 
@@ -458,7 +463,7 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   //         and sequentially number objects
   field.numLocalNodes = 0;
   localIndex numLocalNodesWithGhost = 0;
-  globalIndex numLocalConnectivity = 0;
+  field.numLocalConnectivity = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
   {
@@ -501,7 +506,10 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
               }
             }
           }
-          ++numLocalConnectivity;
+          if( ghostRank[e] < 0 )
+          {
+            ++field.numLocalConnectivity;
+          }
         }
       }
     }
@@ -526,7 +534,8 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
 
   // for starting the connectivity numbering
   globalIndex_array globalGather;
-  CommunicationTools::allGather( numLocalConnectivity, globalGather );
+  CommunicationTools::allGather( integer_conversion<globalIndex>( field.numLocalConnectivity ),
+                                 globalGather );
 
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
@@ -611,7 +620,7 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   // step 3. loop again (sequential policy)
   //         allocate the index array
   //         set unique global indices
-  globalIndex count = 0;
+  field.numLocalConnectivity = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
   {
@@ -633,19 +642,21 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
       {
         if( ghostRank[elem] < 0 )
         {
-          indexArray[elem] = field.firstLocalRow + count;
-          count++;
+          indexArray[elem] = field.firstLocalRow + field.numLocalConnectivity;
+          field.numLocalConnectivity++;
         }
       }
     }
   }
 
-  GEOS_ERROR_IF( count != field.numLocalNodes, "Mismatch during assignment of local row indices" );
+  GEOS_ERROR_IF( field.numLocalConnectivity != field.numLocalNodes,
+                 "Mismatch during assignment of local row indices" );
 
   // for starting the connectivity numbering
   globalIndex_array globalGather;
 
-  CommunicationTools::allGather( count, globalGather );
+  CommunicationTools::allGather( integer_conversion<globalIndex>( field.numLocalConnectivity ),
+                                 globalGather );
 
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
@@ -1051,16 +1062,16 @@ void DofManager::getIndices( globalIndex_array & indices,
       // get field description
       FieldDescription const & fieldDesc = m_fields[fieldIdx];
 
-      globalIndex_array firstLocalConnectivity( fieldDesc.regionPtrs.size() );
+      globalIndex firstLocalConnectivity = 0;
 
       if( region < fieldDesc.regionPtrs.size() )
       {
         if( subregion < fieldDesc.regionPtrs[region]->numSubRegions() )
         {
-          for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+          for( localIndex er = 0 ; er < region ; ++er )
           {
             localIndex localCount = 0;
-            for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
+            for( localIndex esr = 0 ; esr < subregion ; esr++ )
             {
               CellElementSubRegion const * const
               subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
@@ -1078,54 +1089,28 @@ void DofManager::getIndices( globalIndex_array & indices,
             localIndex_array localGather;
             CommunicationTools::allGather( localCount, localGather );
 
-            firstLocalConnectivity[er] = 0;
             for( localIndex p = 0 ; p < mpiRank ; ++p )
             {
-              firstLocalConnectivity[er] += localGather[p];
+              firstLocalConnectivity += localGather[p];
             }
           }
         }
       }
 
-      if( region < fieldDesc.regionPtrs.size() )
+      // Retrieve row
+      real64_array values;
+      globalIndex
+      globalRow = ParallelMatrixGetGlobalRowID( *fieldDesc.connLocPattern,
+                                                firstLocalConnectivity + integer_conversion<globalIndex>( index ) );
+      if( globalRow >= 0 )
       {
-        if( subregion < fieldDesc.regionPtrs[region]->numSubRegions() )
+        globalIndex_array indicesOrig;
+        fieldDesc.connLocPattern->getRowCopy( globalRow, indicesOrig, values );
+        indices.resize( indicesOrig.size() );
+        // Add offset
+        for( localIndex i = 0 ; i < indicesOrig.size() ; ++i )
         {
-          globalIndex globalCount = fieldDesc.firstLocalConnectivity;
-          for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
-          {
-            globalIndex localCount = firstLocalConnectivity[er];
-            for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
-            {
-              CellElementSubRegion const * const
-              subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
-              integer_array const & ghostRank = subRegion->m_ghostRank;
-
-              for( localIndex elem = 0 ; elem < ghostRank.size() ; ++elem )
-              {
-                if( ghostRank[elem] < 0 )
-                {
-                  if( er == region && esr == subregion && index == localCount )
-                  {
-                    localIndex localRow = ParallelMatrixGetLocalRowID( *fieldDesc.connLocPattern, globalCount );
-                    if( localRow >= 0 )
-                    {
-                      // Retrieve row
-                      real64_array values;
-                      fieldDesc.connLocPattern->getRowCopy( globalCount, indices, values );
-                      // Add offset
-                      for( localIndex i = 0 ; i < indices.size() ; ++i )
-                      {
-                        indices[i] += m_fields[fieldIdx].fieldOffset;
-                      }
-                    }
-                  }
-                  ++localCount;
-                  ++globalCount;
-                }
-              }
-            }
-          }
+          indices[static_cast<localIndex>( values[i] ) - 1] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
         }
       }
     }
@@ -1153,15 +1138,18 @@ void DofManager::getIndices( globalIndex_array & indices,
     // get field description
     const FieldDescription & fieldDesc = m_fields[fieldIdx];
 
-    if( index >= fieldDesc.connLocPattern->ilower() and index < fieldDesc.connLocPattern->iupper() )
+    // Retrieve row
+    real64_array values;
+    globalIndex globalRow = ParallelMatrixGetGlobalRowID( *fieldDesc.connLocPattern, index );
+    if( globalRow >= 0 )
     {
-      // Retrieve row
-      real64_array values;
-      fieldDesc.connLocPattern->getRowCopy( index, indices, values );
+      globalIndex_array indicesOrig;
+      fieldDesc.connLocPattern->getRowCopy( globalRow, indicesOrig, values );
+      indices.resize( indicesOrig.size() );
       // Add offset
       for( localIndex i = 0 ; i < indices.size() ; ++i )
       {
-        indices[i] += m_fields[fieldIdx].fieldOffset;
+        indices[static_cast<localIndex>( values[i] ) - 1] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
       }
     }
   }
@@ -1364,8 +1352,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
               {
                 for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                 {
-                  pairs.push_back( std::make_pair( firstLocalConnectivity + count,
-                                                   fieldDesc.numComponents * ( fieldDesc.firstLocalConnectivity + elemIndex ) + i ) );
+                  pairs.push_back( std::make_tuple( firstLocalConnectivity + count,
+                                                    fieldDesc.numComponents * ( fieldDesc.firstLocalConnectivity + elemIndex ) + i,
+                                                    fieldDesc.numComponents * e + i ) );
                 }
                 ++count;
               }
@@ -1440,8 +1429,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                 {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                   {
-                    pairs.push_back( std::make_pair( firstLocalConnectivity + elemIndex,
-                                                     fieldDesc.numComponents * indexArray[map[e][n]] + i ) );
+                    pairs.push_back( std::make_tuple( firstLocalConnectivity + elemIndex,
+                                                      fieldDesc.numComponents * indexArray[map[e][n]] + i,
+                                                      fieldDesc.numComponents * n + i ) );
                   }
                 }
                 ++elemIndex;
@@ -1518,8 +1508,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                   {
                     if( indexArrayFace[map[e][n]] >= 0 )
                     {
-                      pairs.push_back( std::make_pair( indexArrayFace[map[e][n]],
-                                                       fieldDesc.numComponents * indexArrayFaceOrig[map[e][n]] + i ) );
+                      pairs.push_back( std::make_tuple( indexArrayFace[map[e][n]],
+                                                        fieldDesc.numComponents * indexArrayFaceOrig[map[e][n]] + i,
+                                                        fieldDesc.numComponents * n + i ) );
                     }
                   }
                 }
@@ -1581,8 +1572,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                   {
                     if( indexArrayFace[map[e][n]] >= 0 )
                     {
-                      pairs.push_back( std::make_pair( indexArrayFace[map[e][n]],
-                                                       fieldDesc.numComponents * indexArrayElem[e] + i ) );
+                      pairs.push_back( std::make_tuple( indexArrayFace[map[e][n]],
+                                                        fieldDesc.numComponents * indexArrayElem[e] + i,
+                                                        fieldDesc.numComponents * n + i ) );
                     }
                   }
                 }
@@ -1655,8 +1647,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                     {
                       for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                       {
-                        pairs.push_back( std::make_pair( faceId,
-                                                         fieldDesc.numComponents * indexArrayNode[nodeIndices[j]] + i ) );
+                        pairs.push_back( std::make_tuple( faceId,
+                                                          fieldDesc.numComponents * indexArrayNode[nodeIndices[j]] + i,
+                                                          fieldDesc.numComponents * j + i ) );
                       }
                     }
                   }
@@ -1732,8 +1725,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                 {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                   {
-                    pairs.push_back( std::make_pair( indexArrayNode[map[e][n]],
-                                                     fieldDesc.numComponents * indexArrayNodeOrig[map[e][n]] + i ) );
+                    pairs.push_back( std::make_tuple( indexArrayNode[map[e][n]],
+                                                      fieldDesc.numComponents * indexArrayNodeOrig[map[e][n]] + i,
+                                                      fieldDesc.numComponents * n + i ) );
                   }
                 }
               }
@@ -1792,8 +1786,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                 {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                   {
-                    pairs.push_back( std::make_pair( indexArrayNode[map[e][n]],
-                                                     fieldDesc.numComponents * indexArrayElem[e] + i ) );
+                    pairs.push_back( std::make_tuple( indexArrayNode[map[e][n]],
+                                                      fieldDesc.numComponents * indexArrayElem[e] + i,
+                                                      fieldDesc.numComponents * n + i ) );
                   }
                 }
               }
@@ -1866,8 +1861,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                     {
                       for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                       {
-                        pairs.push_back( std::make_pair( indexArrayNode[nodeIndices[j]],
-                                                         fieldDesc.numComponents * faceId + i ) );
+                        pairs.push_back( std::make_tuple( indexArrayNode[nodeIndices[j]],
+                                                          fieldDesc.numComponents * faceId + i,
+                                                          fieldDesc.numComponents * j + i ) );
                       }
                     }
                   }
@@ -1893,10 +1889,10 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
     pairs.resize( endPairs - pairs.begin() );
   }
 
-  localIndex nRowsLoc = ( emptyPairs ) ? 0 : pairs.back().first;
+  localIndex nRowsLoc = ( emptyPairs ) ? 0 : std::get<0>( pairs.back() );
   localIndex nColsLoc = ( emptyPairs ) ?
                         0 :
-                        std::max_element( pairs.begin(), pairs.end(), pairSecondComparison() )->second ;
+                        std::get<1>( *std::max_element( pairs.begin(), pairs.end(), pairSecondComparison() ) ) ;
 
   // Find the global number of rows
   localIndex_array localGather;
@@ -1947,6 +1943,7 @@ void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs,
   // Allocate matrix with right sizes
   pattern.rowLengths.resize( nRows + 1 );
   pattern.colIndices.resize( nnz );
+  pattern.nnzEntries.resize( nnz );
 
   // Convert
   localIndex irow0 = 0;
@@ -1955,8 +1952,9 @@ void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs,
   pattern.rowLengths[0] = 0;
   for( localIndex i = 0 ; i < nnz ; ++i )
   {
-    irow1 = pairs[i].first;
-    pattern.colIndices[k++] = pairs[i].second;
+    irow1 = std::get<0>( pairs[i] );
+    pattern.colIndices[k] = std::get<1>( pairs[i] );
+    pattern.nnzEntries[k++] = std::get<2>( pairs[i] );
     if( irow1 > irow0 )
     {
       for( localIndex j = irow0 ; j < irow1 ; ++j )
@@ -2000,6 +1998,18 @@ void DofManager::MatrixMatrixMultiply( EpetraMatrix const &A,
 localIndex DofManager::ParallelMatrixGetLocalRowID( EpetraMatrix const &A, globalIndex const index ) const
 {
   return A.unwrappedPointer()->LRID( index );
+}
+
+// Map a local row index to global row index
+localIndex DofManager::ParallelMatrixGetGlobalRowID( EpetraMatrix const &A, localIndex const index ) const
+{
+  return A.unwrappedPointer()->GRID64( index );
+}
+
+// Map a local row index to global row index
+localIndex DofManager::ParallelMatrixGetGlobalRowID( EpetraMatrix const &A, globalIndex const index ) const
+{
+  return A.unwrappedPointer()->GRID64( index );
 }
 
 // Return the local number of columns on each processor
@@ -2093,7 +2103,7 @@ void DofManager::printSparsityPattern( Dof_SparsityPattern const & pattern, stri
       {
         for( localIndex j = pattern.rowLengths[i] ; j < pattern.rowLengths[i + 1] ; ++j )
         {
-          std::cout << i + 1 << " " << pattern.colIndices[j] + 1 << std::endl;
+          std::cout << i + 1 << " " << pattern.colIndices[j] + 1 << " " << pattern.nnzEntries[j] + 1 << std::endl;
         }
       }
     }
@@ -2108,7 +2118,7 @@ void DofManager::printSparsityPattern( Dof_SparsityPattern const & pattern, stri
     {
       for( localIndex j = pattern.rowLengths[i] ; j < pattern.rowLengths[i + 1] ; ++j )
       {
-        fid << i + 1 << " " << pattern.colIndices[j] + 1 << " " << 1 << std::endl;
+        fid << i + 1 << " " << pattern.colIndices[j] + 1 << " " << pattern.nnzEntries[j] + 1 << std::endl;
       }
     }
     fid.close();
