@@ -238,7 +238,8 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   
 
   // Compute the connectivity graph
-  LvArray::SparsityPattern< localIndex> graph(nbCellElements, nbCellElements);
+  LvArray::SparsityPattern< idx_t, idx_t > graph( integer_conversion< idx_t >( nbCellElements ),
+                                                  integer_conversion< idx_t >( nbCellElements ) );
   localIndex nbConnections = 0;
   array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
@@ -250,35 +251,18 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
-      localIndex const ei0  = elemList[kf][0] + offsetSubRegions[esr0];
+      idx_t const ei0  = integer_conversion< idx_t >( elemList[kf][0] + offsetSubRegions[esr0] );
       localIndex const esr1 = elemSubRegionList[kf][1];
-      localIndex const ei1  = elemList[kf][1] + offsetSubRegions[esr1];
+      idx_t const ei1  = integer_conversion< idx_t >( elemList[kf][1] + offsetSubRegions[esr1] );
       graph.insertNonZero(ei0, ei1);
       graph.insertNonZero(ei1, ei0);
       nbConnections++;
     }
   }
-  
-  // METIS graph definition
-  array1d< idx_t > xadjs(nnodes + 1);
-  array1d< idx_t> adjncy(nbConnections*2);
-
-  // Fill the METIS graph structure
-  xadjs[0] = integer_conversion< idx_t >(0);
-  for( localIndex row = 0; row < nbCellElements; ++row )
-  {
-    localIndex numNonZeros = graph.numNonZeros( row );
-    auto columns = graph.getColumns( row );
-    xadjs[integer_conversion<idx_t>(row+1)] = xadjs[row] + integer_conversion< idx_t >( numNonZeros ) ;
-    for(localIndex col = 0; col < numNonZeros; col++)
-    {
-      adjncy[xadjs[row]+col] = integer_conversion< idx_t >( columns[col] );
-    }
-  }
 
   // METIS partitionning
-  METIS_PartGraphRecursive( &nnodes, &nconst, xadjs.data(), adjncy.data(), nullptr, nullptr, nullptr, &nparts,
-                            nullptr, nullptr, options, &objval, parts.data());
+  METIS_PartGraphRecursive( &nnodes, &nconst, graph.getOffsets(), graph.getColumns(), nullptr, nullptr, nullptr,
+                            &nparts, nullptr, nullptr, options, &objval, parts.data() );
 
   // Compute Aggregate barycenters
   array1d< R1Tensor > aggregateBarycenters( nparts );
