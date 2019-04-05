@@ -681,6 +681,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 {
 
   integer const component = GetComponent();
+  std::cout << "allo"<< std::endl;
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
