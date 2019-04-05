@@ -584,6 +584,120 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
   }
 }
 
+void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver,
+                                            DomainPartition * domain,
+                                            real64 perturbParameter,
+                                            real64 relTol )
+{
+  localIndex const NC = solver->numFluidComponents();
+  localIndex const NP = solver->numFluidPhases();
+
+  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager * elemManager = mesh->getElemManager();
+
+  ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
+  MultiFluidBase * fluid = constitutiveManager->GetGroup<MultiFluidBase>( solver->fluidIndex() );
+  ASSERT_NE( fluid, nullptr );
+
+  auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
+  auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
+
+  for (localIndex er = 0; er < elemManager->numRegions(); ++er)
+  {
+    ElementRegion * elemRegion = elemManager->GetRegion(er);
+    SCOPED_TRACE( "Region " + std::to_string(er) + " (" + elemRegion->getName() + ")" );
+
+    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
+    {
+      SCOPED_TRACE( "Subregion " + std::to_string(esr) + " (" + subRegion->getName() + ")" );
+
+      arrayView1d<real64> & pres =
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+
+      arrayView1d<real64> & dPres =
+        subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+
+      arrayView2d<real64> & compDens =
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+
+      arrayView2d<real64> & dCompDens =
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+
+      arrayView2d<real64> & phaseMob =
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::phaseMobilityString );
+
+      arrayView2d<real64> & dPhaseMob_dPres =
+        subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dPressureString );
+
+      arrayView3d<real64> & dPhaseMob_dCompDens =
+        subRegion-> template getReference<array3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
+
+      // reset the solver state to zero out variable updates
+      solver->ResetStateToBeginningOfStep( domain );
+
+      // make a copy of unperturbed values of component fractions
+      array2d<real64> phaseVolFracOrig( subRegion->size(), NP );
+      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      {
+        for (localIndex ip = 0; ip < NP; ++ip)
+        {
+          phaseVolFracOrig[ei][ip] = phaseMob[ei][ip];
+        }
+      }
+
+      // update pressure and check derivatives
+      {
+        // perturb pressure in each cell
+        for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+        {
+          real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
+          dPres[ei] = dP;
+        }
+
+        // recompute component fractions
+        solver->UpdateState( subRegion );
+
+        // check values in each cell
+        for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+        {
+          SCOPED_TRACE( "Element " + std::to_string(ei) );
+
+          checkDerivative( phaseMob[ei], phaseVolFracOrig[ei], dPhaseMob_dPres[ei], dPres[ei], relTol,
+                           "phaseVolFrac", "Pres", phases );
+        }
+      }
+
+      // update component density and check derivatives
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
+        solver->ResetStateToBeginningOfStep( domain );
+
+        // perturb a single component density in each cell
+        for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+        {
+          real64 const dRho = perturbParameter * (compDens[ei][jc] + perturbParameter);
+          dCompDens[ei][jc] = dRho;
+        }
+
+        // recompute component fractions
+        solver->UpdateState( subRegion );
+
+        // check values in each cell
+        for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+        {
+          SCOPED_TRACE( "Element " + std::to_string(ei) );
+
+          auto dS_dRho = invertLayout( dPhaseMob_dCompDens[ei], NP, NC );
+          string var = "compDens[" + components[jc] + "]";
+
+          checkDerivative( phaseMob[ei], phaseVolFracOrig[ei], dS_dRho[jc], dCompDens[ei][jc], relTol,
+                           "phaseMob", var, phases );
+        }
+      }
+    });
+  }
+}
 
 class CompositionalMultiphaseFlowTest : public ::testing::Test
 {
@@ -648,6 +762,16 @@ TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseVolumeFrac
   testPhaseVolumeFractionNumericalDerivatives(solver, domain, eps, tol);
 }
 
+TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseMobility)
+{
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const tol = 5e-2; // 5% error margin
+
+  DomainPartition * domain = problemManager.getDomainPartition();
+
+  testPhaseMobilityNumericalDerivatives(solver, domain, eps, tol);
+}
+
 TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation)
 {
   //real64 const eps = sqrt( std::numeric_limits<real64>::epsilon() );
@@ -693,6 +817,7 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
                            targetSolver->AssembleFluxTerms( targetDomain, targetJacobian, targetResidual, time, dt );
                          });
 }
+
 
 TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance)
 {
