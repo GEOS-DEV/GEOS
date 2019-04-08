@@ -124,6 +124,8 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlocks );
 
+  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager ); 
+
   void GenerateFractureMesh( FaceManager const * const faceManager );
 
   subGroupMap & GetSubRegions()
@@ -290,6 +292,7 @@ public:
   {
     static constexpr auto materialListString = "materialList";
     static constexpr auto fractureSetString = "fractureSet";
+    static constexpr auto coarseningRatioString = "coarseningRatio"; 
     static constexpr auto elementSubRegions = "elementSubRegions";
     static constexpr auto sourceCellBlockNames = "cellBlocks";
 
@@ -315,6 +318,7 @@ private:
   string_array m_fractureSetNames;
   string_array m_materialList;
   string m_numericalMethod;
+  real64 m_coarseningRatio;
 
 };
 
