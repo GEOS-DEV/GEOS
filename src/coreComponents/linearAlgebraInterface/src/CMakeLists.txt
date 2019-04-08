@@ -35,7 +35,7 @@ set( linearAlgebraInterface_sources
      BlasMatrix.cpp
      BlasVector.cpp)
 
-set( dependencyList common trilinos hypre lapack_suite mpi)
+set( dependencyList common trilinos hypre lapack_suite raja hdf5 pugixml mpi )
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
