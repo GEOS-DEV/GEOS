@@ -25,7 +25,6 @@
 #define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXSTENCIL_HPP_
 
 #include <common/DataTypes.hpp>
-#include <rajaInterface/GEOS_RAJA_Interface.hpp>
 
 namespace geosx
 {
@@ -34,11 +33,6 @@ namespace geosx
  * @class StencilCollection
  *
  * Class representing a spatial discretization stencil.
- * The idea is to hide implementation (i.e. memory layout) behind a lambda-based interface
- * which evaluates user-provided functions on the stencil
- *
- * TODO:
- * - group by by stencil size and/or element region for efficient execution
  */
 template <typename INDEX, typename WEIGHT>
 class StencilCollection
@@ -58,15 +52,6 @@ public:
   // provide aliases for template type parameters
   using index_type  = INDEX;
   using weight_type = WEIGHT;
-
-  /**
-   * @struct Accessor
-   *
-   * A wrapper of a single connection stencil
-   * Hides implementation details of stencil representation
-   * (e.g. array of structs vs struct of arrays vs CSR-like storage)
-   */
-  class Accessor;
 
   explicit StencilCollection();
 
@@ -91,12 +76,6 @@ public:
   /// called after adding connections is done to compress the data and release unused memory
   void compress();
 
-  /// evaluate a user function on each connection
-  template <typename POLICY=stencilPolicy, typename LAMBDA>
-  void forAll( LAMBDA && lambda ) const;
-
-  Accessor operator[]( localIndex iconn ) const;
-
   struct Entry
   {
     INDEX  index;
@@ -110,50 +89,6 @@ private:
   csArray2d<Entry> m_connections;
   map<localIndex, localIndex> m_connectorIndices;
 
-};
-
-// *** implementation ***
-
-template <typename INDEX, typename WEIGHT>
-class StencilCollection<INDEX, WEIGHT>::Accessor
-{
-public:
-
-  Accessor( csArrayView2d<Entry const> const & connections, localIndex const index )
-    : m_size( connections.size(index) ),
-      m_entries( connections[index] )
-  {}
-
-  /// return the stencil size
-  localIndex size() const { return m_size; }
-
-  /// return the point index of connected point i
-  INDEX index( localIndex const i ) const { return m_entries[i].index; }
-
-  /// apply a user-defined function on the two connected cells only
-  template <typename LAMBDA>
-  void forConnected( LAMBDA && lambda ) const
-  {
-    for (localIndex i = 0; i < StencilCollection<INDEX, WEIGHT>::NUM_POINT_IN_FLUX; ++i)
-    {
-      lambda( m_entries[i].index, i );
-    }
-  }
-
-  /// apply a user-defined function on the stencil
-  template <typename LAMBDA>
-  void forAll( LAMBDA && lambda ) const
-  {
-    for (localIndex i = 0; i < size(); ++i)
-    {
-      lambda( m_entries[i].index, m_entries[i].weight, i );
-    }
-  }
-
-private:
-
-  localIndex m_size;
-  StencilCollection<INDEX, WEIGHT>::Entry const * m_entries;
 };
 
 template<typename INDEX, typename WEIGHT>
@@ -181,17 +116,6 @@ void StencilCollection<INDEX, WEIGHT>::reserve( localIndex numConn, localIndex a
 {
   m_connections.reserveNumArrays( numConn );
   m_connections.reserveValues( numConn * avgStencilSize );
-}
-
-template<typename INDEX, typename WEIGHT>
-template<typename POLICY, typename LAMBDA>
-void StencilCollection<INDEX, WEIGHT>::forAll( LAMBDA && lambda ) const
-{
-  csArrayView2d<Entry const> const & connections = getConnections();
-  forall_in_range<POLICY>( 0, numConnections(), GEOSX_LAMBDA ( localIndex const index )
-  {
-    lambda( Accessor( connections, index ), index );
-  });
 }
 
 template<typename INDEX, typename WEIGHT>
@@ -235,13 +159,6 @@ template<typename INDEX, typename WEIGHT>
 void StencilCollection<INDEX, WEIGHT>::compress()
 {
   // nothing for the moment
-}
-
-template<typename INDEX, typename WEIGHT>
-typename StencilCollection<INDEX, WEIGHT>::Accessor
-StencilCollection<INDEX, WEIGHT>::operator[](localIndex iconn) const
-{
-  return Accessor( m_connections, iconn );
 }
 
 }

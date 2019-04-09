@@ -41,11 +41,12 @@
 #endif
 
 #include "finiteVolume/StencilCollection.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <chrono>
 #include <iostream>
 
-#define TEST_SIZE 10000000
+#define TEST_SIZE 1000000
 
 using namespace geosx;
 
@@ -104,22 +105,6 @@ void testStencilLoop( LAMBDA && compute )
   {
     EXPECT_FLOAT_EQ( out[kf], (in[kf]/2 + in[kf+1]/2) );
   }
-}
-
-TEST(testStencilCollection, acessorIterationTPFA)
-{
-  testStencilLoop( [&] ( arrayView1d<double const> const & dataIn,
-                         arrayView1d<double> const & dataOut,
-                         StencilCollection<Cell, double> const & stencil )
-  {
-    stencil.forAll<stencilPolicy>( GEOSX_LAMBDA (StencilCollection<Cell, double>::Accessor conn, localIndex iconn )
-    {
-      conn.forAll( [&] (Cell const & cell, double w, localIndex i)
-      {
-        dataOut[iconn] += w * dataIn[cell.ei];
-      } );
-    } );
-  } );
 }
 
 TEST(testStencilCollection, noAcessorIterationTPFA)
