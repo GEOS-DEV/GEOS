@@ -1206,6 +1206,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView2d<localIndex> & facesToElementSubRegions = faceManager.elementSubRegionList();
   arrayView2d<localIndex> & facesToElementIndex = faceManager.elementList();
 
+  arrayView1d<R1Tensor> const & faceNormals = faceManager.faceNormal();
+
   arrayView1d<localIndex> const & parentFaceIndices =
     faceManager.getReference<localIndex_array>( faceManager.viewKeys.parentIndex );
 
@@ -1356,7 +1358,13 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         ruptureState[newFaceIndex] = 2;
 
         facesToEdges[newFaceIndex] = facesToEdges[faceIndex];
-        facesToNodes[newFaceIndex] = facesToNodes[faceIndex];
+//        facesToNodes[newFaceIndex] = facesToNodes[faceIndex];
+        for( localIndex a=0 ; a<facesToNodes[faceIndex].size() ; ++a )
+        {
+          localIndex const aa = a == 0 ? a : facesToNodes[faceIndex].size() - a;
+          facesToNodes[newFaceIndex][aa] = facesToNodes[faceIndex][a];
+        }
+        faceNormals[newFaceIndex] *= -1;
 
         externalFaces.insert( newFaceIndex );
         externalFaces.insert( faceIndex );

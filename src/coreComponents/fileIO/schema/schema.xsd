@@ -305,6 +305,12 @@
 		<xsd:attribute name="substepFactor" type="integer" default="1" />
 		<!--targetExactStartStop = allows timesteps to be truncated to match the start/stop times exactly-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<!--targetTime = Event time-->
+		<xsd:attribute name="targetTime" type="real64" default="-1" />
+		<!--targetCycle = event cycle-->
+		<xsd:attribute name="targetCycle" type="integer" default="-1" />
+		<!--targetExactTimestep = allows timesteps to be truncated to match time frequency perfectly-->
+		<xsd:attribute name="targetExactTimestep" type="integer" default="-1" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -478,13 +484,26 @@
 		<xsd:attribute name="fractureRegions" type="string" default="" />
 		<!--coefficientName = Name of coefficient field-->
 		<xsd:attribute name="coefficientName" type="string" use="required" />
+		<!--areaRelTol = Relative tolerance for area calculations.-->
+		<xsd:attribute name="areaRelTol" type="real64" default="1e-08" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ThickPlaneType">
+		<!--origin = Origin point (x,y,z) of the plane (basically, any point on the plane)-->
+		<xsd:attribute name="origin" type="R1Tensor" use="required" />
+		<!--normal = Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
+		<xsd:attribute name="normal" type="R1Tensor" use="required" />
+		<!--thickness = The total thickness of the plane (with half to each side)-->
+		<xsd:attribute name="thickness" type="real64" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BoxType">
 		<!--xMin = Minimum (x,y,z) coordinates of the box-->
@@ -556,6 +575,16 @@
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--parallelThreads = Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--outputPath = Path at which the geosx to chombo file will be written.-->
+		<xsd:attribute name="outputPath" type="string" use="required" />
+		<!--beginCycle = Cycle at which the coupling will commence.-->
+		<xsd:attribute name="beginCycle" type="real64" use="required" />
+		<!--inputPath = Path at which the chombo to geosx file will be written.-->
+		<xsd:attribute name="inputPath" type="string" default="/INVALID_INPUT_PATH" />
+		<!--waitForInput = True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.-->
+		<xsd:attribute name="waitForInput" type="integer" use="required" />
+		<!--useChomboPressures = True iff geosx should use the pressures chombo writes out.-->
+		<xsd:attribute name="useChomboPressures" type="integer" default="0" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -636,6 +665,8 @@
  0 - Infinitesimal Strain 
   1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
+		<!--solidMaterialName = The name of the material that should be used in the constitutive updates-->
+		<xsd:attribute name="solidMaterialName" type="string" use="required" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -689,6 +720,8 @@
  0 - Infinitesimal Strain 
   1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
+		<!--solidMaterialName = The name of the material that should be used in the constitutive updates-->
+		<xsd:attribute name="solidMaterialName" type="string" use="required" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
