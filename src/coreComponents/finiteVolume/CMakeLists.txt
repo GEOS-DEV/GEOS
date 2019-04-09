@@ -5,7 +5,7 @@ set( finiteVolume_headers
      FiniteVolumeManager.hpp
      FluxApproximationBase.hpp
      TwoPointFluxApproximation.hpp
-     StencilCollection.hpp
+     FluxStencil.hpp
    )
 #
 # Specify all sources

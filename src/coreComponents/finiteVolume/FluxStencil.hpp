@@ -17,7 +17,7 @@
  */
 
 /*
- * @file StencilCollection.hpp
+ * @file FluxStencil.hpp
  *
  */
 
@@ -30,12 +30,12 @@ namespace geosx
 {
 
 /**
- * @class StencilCollection
+ * @class FluxStencil
  *
  * Class representing a spatial discretization stencil.
  */
 template <typename INDEX, typename WEIGHT>
-class StencilCollection
+class FluxStencil
 {
 public:
 
@@ -53,20 +53,22 @@ public:
   using index_type  = INDEX;
   using weight_type = WEIGHT;
 
-  explicit StencilCollection();
+  explicit FluxStencil();
 
-  explicit StencilCollection( localIndex numConn, localIndex avgStencilSize );
+  explicit FluxStencil( localIndex const numConn,
+                              localIndex const avgStencilSize );
 
   /// return the size of the stencil collection (i.e. number of connections)
   localIndex numConnections() const;
 
   /// resize the collection
-  void reserve(localIndex numConn, localIndex avgStencilSize);
+  void reserve(localIndex const numConn,
+               localIndex const avgStencilSize);
 
   /// add data for one connection
   void add( localIndex const numPts,
-            INDEX  const * indices,
-            WEIGHT const * weights,
+            INDEX  const * const indices,
+            WEIGHT const * const weights,
             localIndex const connectorIndex );
 
   /// zero out connections
@@ -92,37 +94,39 @@ private:
 };
 
 template<typename INDEX, typename WEIGHT>
-StencilCollection<INDEX, WEIGHT>::StencilCollection()
-  : StencilCollection( 0, 0 )
+FluxStencil<INDEX, WEIGHT>::FluxStencil()
+  : FluxStencil( 0, 0 )
 {
 
 }
 
 template<typename INDEX, typename WEIGHT>
-StencilCollection<INDEX, WEIGHT>::StencilCollection( localIndex numConn, localIndex avgStencilSize )
+FluxStencil<INDEX, WEIGHT>::FluxStencil( localIndex const numConn,
+                                                     localIndex const avgStencilSize )
   : m_connections()
 {
   reserve(numConn, avgStencilSize);
 }
 
 template<typename INDEX, typename WEIGHT>
-localIndex StencilCollection<INDEX, WEIGHT>::numConnections() const
+localIndex FluxStencil<INDEX, WEIGHT>::numConnections() const
 {
   return m_connections.size();
 }
 
 template<typename INDEX, typename WEIGHT>
-void StencilCollection<INDEX, WEIGHT>::reserve( localIndex numConn, localIndex avgStencilSize )
+void FluxStencil<INDEX, WEIGHT>::reserve( localIndex const numConn,
+                                                localIndex const avgStencilSize )
 {
   m_connections.reserveNumArrays( numConn );
   m_connections.reserveValues( numConn * avgStencilSize );
 }
 
 template<typename INDEX, typename WEIGHT>
-void StencilCollection<INDEX, WEIGHT>::add( localIndex const numPts,
-                                                    INDEX  const * indices,
-                                                    WEIGHT const * weights,
-                                                    localIndex const connectorIndex )
+void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
+                                            INDEX  const * const indices,
+                                            WEIGHT const * const weights,
+                                            localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
@@ -137,8 +141,8 @@ void StencilCollection<INDEX, WEIGHT>::add( localIndex const numPts,
 }
 
 template<typename INDEX, typename WEIGHT>
-void StencilCollection<INDEX, WEIGHT>::zero( localIndex const connectorIndex,
-                                                     INDEX const cells[2] )
+void FluxStencil<INDEX, WEIGHT>::zero( localIndex const connectorIndex,
+                                             INDEX const cells[2] )
 {
   localIndex const connectionListIndex = m_connectorIndices.at( connectorIndex );
 
@@ -147,7 +151,7 @@ void StencilCollection<INDEX, WEIGHT>::zero( localIndex const connectorIndex,
   if( ( entries[0].index == cells[0] && entries[1].index == cells[1] ) ||
       ( entries[0].index == cells[1] && entries[1].index == cells[0] ) )
   {
-    for (localIndex i = 0; i < m_connections.size(connectionListIndex); ++i)
+    for (localIndex i = 0; i < m_connections.size( connectionListIndex ); ++i)
     {
       entries[i].weight = 0; // TODO remove entries altogether?
     }
@@ -156,7 +160,7 @@ void StencilCollection<INDEX, WEIGHT>::zero( localIndex const connectorIndex,
 
 
 template<typename INDEX, typename WEIGHT>
-void StencilCollection<INDEX, WEIGHT>::compress()
+void FluxStencil<INDEX, WEIGHT>::compress()
 {
   // nothing for the moment
 }

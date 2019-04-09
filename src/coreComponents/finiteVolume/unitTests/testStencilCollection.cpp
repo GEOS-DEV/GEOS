@@ -40,7 +40,7 @@
 #define __null nullptr
 #endif
 
-#include "finiteVolume/StencilCollection.hpp"
+#include "finiteVolume/FluxStencil.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <chrono>
@@ -61,7 +61,7 @@ struct Cell
 };
 
 template<typename INDEX, typename T>
-void makeStencilTPFA(localIndex size, StencilCollection<INDEX, T> & stencil)
+void makeStencilTPFA(localIndex size, FluxStencil<INDEX, T> & stencil)
 {
   stencil.reserve(size, 2);
 
@@ -83,7 +83,7 @@ void makeStencilTPFA(localIndex size, StencilCollection<INDEX, T> & stencil)
 template<typename LAMBDA>
 void testStencilLoop( LAMBDA && compute )
 {
-  StencilCollection<Cell, double> stencil;
+  FluxStencil<Cell, double> stencil;
   makeStencilTPFA(TEST_SIZE, stencil);
 
   array1d<double> in(TEST_SIZE + 1);
@@ -111,15 +111,15 @@ TEST(testStencilCollection, noAcessorIterationTPFA)
 {
   testStencilLoop( [&] ( arrayView1d<double const> const & dataIn,
                          arrayView1d<double> const & dataOut,
-                         StencilCollection<Cell, double> const & stencil )
+                         FluxStencil<Cell, double> const & stencil )
   {
-    csArrayView2d<StencilCollection<Cell, double>::Entry const> const & connections = stencil.getConnections();
+    csArrayView2d<FluxStencil<Cell, double>::Entry const> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
       for (localIndex i = 0; i < connections.size(iconn); ++i)
       {
-        StencilCollection<Cell, double>::Entry const & entry = connections(iconn, i);
+        FluxStencil<Cell, double>::Entry const & entry = connections(iconn, i);
         dataOut[iconn] += entry.weight * dataIn[entry.index.ei];
       }
     } );
