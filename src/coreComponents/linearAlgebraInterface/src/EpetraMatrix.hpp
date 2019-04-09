@@ -505,6 +505,41 @@ public:
    */
   void write( string const & filename ) const;
 
+  /**
+   * @brief Performe a matrix matrix product with Parallel Matrix
+   */
+  void MatrixMatrixMultiply( EpetraMatrix const &A,
+                             bool const transA,
+                             EpetraMatrix const &B,
+                             bool const transB,
+                             EpetraMatrix &C,
+                             bool const call_FillComplete = true ) const;
+
+  /**
+   * @brief Map a global row index to local row index
+   */
+  localIndex ParallelMatrixGetLocalRowID( globalIndex const index ) const;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  localIndex ParallelMatrixGetGlobalRowID( localIndex const index ) const;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  localIndex ParallelMatrixGetGlobalRowID( globalIndex const index ) const;
+
+  /**
+   * @brief Return the local number of columns on each processor
+   */
+  localIndex numMyCols() const;
+
+  /**
+   * @brief Print the given parallel matrix in Matrix Market format (MTX file)
+   */
+  void printParallelMatrix( string const & fileName ) const;
+
   //@}
 
 private:

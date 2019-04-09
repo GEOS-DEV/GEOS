@@ -182,7 +182,7 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
   dofManager.addField( "Temperature", DofManager::Location::Node, DofManager::Connectivity::Elem );
 
   ParallelMatrix sparsity;
-  dofManager.getSparsityPattern( sparsity );
+  dofManager.getSparsityPattern( sparsity, "Temperature", "Temperature" );
 
   Epetra_FECrsMatrix const * const sparsityPtr = sparsity.unwrappedPointer();
 
@@ -220,8 +220,6 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
     GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( "Temperature_dof_indices" );
-
-  std::cout << indexArray << std::endl;
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::dummyScalarBlock,
                                                               BlockIDs::dummyScalarBlock );
@@ -264,32 +262,10 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
         {
           globalIndex_array indices;
           dofManager.getIndices( indices, DofManager::Connectivity::Elem, er, esr, k, "Temperature" );
-          for( localIndex i = 0 ; i < indices.size() ; ++i )
+          for( int i = 0 ; i < indices.size() ; ++i )
           {
-            element_index[i] = std::find( indexArray.begin(), indexArray.end(), indices[i] ) - indexArray.begin();
-            //element_index[i] = indexArray[indices[i]];
-            //element_index[i] = indices[i];
+            element_index[i] = integer_conversion<long long>( indices[i] );
           }
-
-          element_index.Print( std::cout );
-          for(int aa=0;aa<8;++aa)
-            std::cout << aa << " " << dNdX[k][0][aa] << std::endl;
-
-          /*
-          ////////////////////////////////////////////////////
-          {
-            std::cout << k << " " << indices << std::endl;
-            std::cout << k << " " << element_index << std::endl;
-            NodeManager * const nodeManager0 = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
-            r1_array const & referencePosition = nodeManager0->getReference<r1_array>(keys::referencePositionString);
-            for(int a=0;a<indices.size();++a)
-            {
-              R1Tensor nodePosition = referencePosition[element_index[a]];
-              std::cout << nodePosition << std::endl;
-            }
-          }
-          ////////////////////////////////////////////////////
-          */
 
           element_rhs.Scale(0);
           element_matrix.Scale(0);
@@ -309,12 +285,8 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
             }
           }
 
-          if (k==0){
-                  element_index.Print( std::cout );
-                  element_matrix.Print( std::cout );
           matrix->SumIntoGlobalValues( element_index,
                                        element_matrix);
-          }
 
           rhs->SumIntoGlobalValues( element_index,
                                     element_rhs);
@@ -339,31 +311,39 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  std::cout << "ApplySystemSolution" << std::endl;
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::dummyScalarBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
-
-  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( "Temperature_dof_indices" );
-
-  string const & fieldName = getReference<string>(laplaceFEMViewKeys.fieldVarName);
+  // Retrieve original map, solution and fieldVar
+  Epetra_Map const * const rowMap = blockSystem->GetRowMap( BlockIDs::dummyScalarBlock );
+  Epetra_FEVector const * solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
   real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
 
   int dummy;
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  localIndex numLocalDofs = dofManager.numLocalDofs( "Temperature" );
-  for( localIndex r=0 ; r<numLocalDofs ; ++r)
+  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( "Temperature_dof_indices" );
+
+  // Map values from local_solution to fieldVar
+  for( localIndex r = 0 ; r < indexArray.size() ; ++r )
   {
     int lid = rowMap->LID(integer_conversion<int>(indexArray[r]));
     // Check if it is available
     if( lid >= 0 )
     {
-      fieldVar[r] = local_solution[r];
+      fieldVar[r] = local_solution[lid];
     }
   }
+
+  // Syncronize ghost nodes
+  std::map<string, string_array> fieldNames;
+  fieldNames["node"].push_back( "Temperature" );
+
+  CommunicationTools::
+  SynchronizeFields( fieldNames, mesh,
+                     domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 }
 
 void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,

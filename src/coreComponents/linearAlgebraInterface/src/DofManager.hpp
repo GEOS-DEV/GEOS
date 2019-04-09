@@ -253,9 +253,14 @@ public:
   globalIndex numGlobalDofs( string const & field = "" ) const;
 
   /**
-   * Return local number of dofs on this processor.  If field argument is empty, return monolithic size
+   * Return local number of dofs on this processor.  If field argument is empty, return monolithic size.
    */
   localIndex numLocalDofs( string const & field = "" ) const;
+
+  /**
+   * Return the sum of local dofs across all previous processors w.r.t. to the calling one for the specified field.
+   */
+  localIndex offsetLocalDofs( string const & field = "" ) const;
 
   /**
    * Get a sparsity pattern.  Without additional arguments, this function routines the sparsity pattern for the
@@ -323,12 +328,6 @@ public:
    * Print the connectivity-location pattern for a specific field
    */
   void printConnectivityLocationPattern( string const & field, string const & fileName = "" ) const;
-
-  /**
-   * Print the given parallel matrix in Matrix Market format (MTX file)
-   */
-  void printParallelMatrix( ParallelMatrix const & matrix,
-                            string const & filename ) const;
 
   /**
    * Print a CSR pattern on file or on screen
@@ -490,39 +489,10 @@ private:
    */
   void cleanUp();
 
-  /**
-   * Performe a matrix matrix product with Parallel Matrix
+  /*
+   * just to call member functions
    */
-  void MatrixMatrixMultiply( EpetraMatrix const &A,
-                             bool const transA,
-                             EpetraMatrix const &B,
-                             bool const transB,
-                             EpetraMatrix &C,
-                             bool const call_FillComplete = true ) const;
-
-  /**
-   * Map a global row index to local row index
-   */
-  localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A,
-                                          globalIndex const index ) const;
-
-  /**
-   * Map a local row index to global row index
-   */
-  localIndex ParallelMatrixGetGlobalRowID( EpetraMatrix const &A,
-                                           localIndex const index ) const;
-
-  /**
-   * Map a local row index to global row index
-   */
-  localIndex ParallelMatrixGetGlobalRowID( EpetraMatrix const &A,
-                                           globalIndex const index ) const;
-
-  /**
-   * Return the local number of columns on each processor
-   */
-  localIndex numMyCols( EpetraMatrix const &A ) const;
-
+  ParallelMatrix parallelMatrix;
 };
 
 } /* namespace geosx */

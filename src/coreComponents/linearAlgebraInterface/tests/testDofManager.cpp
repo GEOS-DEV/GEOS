@@ -153,42 +153,42 @@ TEST_F(DofManagerTest, TestOne)
 
   dofManager.getSparsityPattern( pattern, "displacement", "displacement" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "displacement" );
+    pattern.printParallelMatrix( "displacement" );
 
   dofManager.getSparsityPattern( pattern, "pressure", "pressure" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "pressure" );
+    pattern.printParallelMatrix( "pressure" );
 
   dofManager.getSparsityPattern( pattern, "massmatrix", "massmatrix" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "massmatrix.mtx" );
+    pattern.printParallelMatrix( "massmatrix.mtx" );
 
   dofManager.getSparsityPattern( pattern, "displacement", "pressure" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "coupling1.mtx" );
+    pattern.printParallelMatrix( "coupling1.mtx" );
 
   dofManager.getSparsityPattern( pattern, "pressure", "displacement" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "coupling1_empty.mtx" );
+    pattern.printParallelMatrix( "coupling1_empty.mtx" );
 
   dofManager.getSparsityPattern( pattern, "pressure", "massmatrix" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "coupling2.mtx" );
+    pattern.printParallelMatrix( "coupling2.mtx" );
 
   dofManager.getSparsityPattern( pattern, "massmatrix", "pressure" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "coupling2_transp.mtx" );
+    pattern.printParallelMatrix( "coupling2_transp.mtx" );
 
   dofManager.getSparsityPattern( pattern, "user-defined", "user-defined" );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "user-defined.mtx" );
+    pattern.printParallelMatrix( "user-defined.mtx" );
 
   getElapsedTime( timeGetSingleSparsityPattern );
   setTimer( timeGetGlobalSparsityPattern );
 
   dofManager.getSparsityPattern( pattern );
   if( printPattern )
-    dofManager.printParallelMatrix( pattern, "global" );
+    pattern.printParallelMatrix( "global" );
 
   // Create the permutation collecting all unknowns belonging to each process
   ParallelMatrix permutation;
@@ -198,7 +198,7 @@ TEST_F(DofManagerTest, TestOne)
   // Apply the permutation
   dofManager.permuteSparsityPattern( pattern, permutation, permutedPattern );
   if( printPattern )
-    dofManager.printParallelMatrix( permutedPattern, "permutatedGlobal" );
+    permutedPattern.printParallelMatrix( "permutatedGlobal" );
 
   getElapsedTime( timeGetGlobalSparsityPattern );
   setTimer( timeGetIndices );

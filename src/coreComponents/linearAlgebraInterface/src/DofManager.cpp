@@ -141,6 +141,30 @@ localIndex DofManager::numLocalDofs( string const & field ) const
   }
 }
 
+// Return the sum of local dofs across all previous processors w.r.t. to the calling one for the specified field.
+localIndex DofManager::offsetLocalDofs( string const & field ) const
+{
+  if( field.length() > 0 )
+  {
+    // check if the field name is already added
+    GEOS_ERROR_IF( !keyInUse( field ), "offsetLocalDofs: requested field name must be already existing." );
+
+    // get field index
+    localIndex fieldIdx = fieldIndex( field );
+
+    return m_fields[fieldIdx].firstLocalRow;
+  }
+  else
+  {
+    localIndex sumOffsetLocalDofs = 0;
+    for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+    {
+      sumOffsetLocalDofs += m_fields[i].firstLocalRow;
+    }
+    return sumOffsetLocalDofs;
+  }
+}
+
 // Just an interface to allow only three parameters
 void DofManager::addField( string const & field,
                            Location const location,
@@ -275,10 +299,22 @@ void DofManager::addField( string const & field,
 
   last.connLocPattern = new ParallelMatrix();
   ParallelMatrix* connLocPattDistr = last.connLocPattern;
-  connLocPattDistr->createWithLocalRowGlobalCol( last.numLocalConnectivity,
-                                                 connLocPattLocal.nCols,
-                                                 maxEntriesPerRow,
-                                                 MPI_COMM_GEOSX );
+  if( connectivity == Connectivity::Elem )
+  {
+    // In case of elemental connectivity, it reflects the mesh partitioning also in the connLoc matrix
+    connLocPattDistr->createWithLocalSize( last.numLocalConnectivity,
+                                           last.numLocalRows,
+                                           maxEntriesPerRow,
+                                           MPI_COMM_GEOSX );
+  }
+  else
+  {
+    // Simply divide into homogeneous chunks
+    connLocPattDistr->createWithGlobalSize( connLocPattLocal.nRows,
+                                            connLocPattLocal.nCols,
+                                            maxEntriesPerRow,
+                                            MPI_COMM_GEOSX );
+  }
 
   for( globalIndex i = 0 ; i < connLocPattLocal.nRows ; ++i )
   {
@@ -286,9 +322,11 @@ void DofManager::addField( string const & field,
     if( nnz > 0 )
     {
       real64_array values( nnz );
-      values = 1;
+      // Keep track of the original order
       for( localIndex iLoc = 0 ; iLoc < nnz ; ++iLoc)
+      {
         values[iLoc] = static_cast<real64>( connLocPattLocal.nnzEntries[connLocPattLocal.rowLengths[i]+iLoc] + 1 );
+      }
       connLocPattDistr->insert( i,
                                 connLocPattLocal.colIndices.data( connLocPattLocal.rowLengths[i] ),
                                 values.data(),
@@ -385,7 +423,7 @@ void DofManager::addField( string const & field,
   last.connLocPattern = new ParallelMatrix(connLocInput);
 
   // compute useful values (number of local and global rows)
-  last.numLocalRows = numMyCols(connLocInput);
+  last.numLocalRows = connLocInput.numMyCols();
   last.numLocalNodes = last.numLocalRows / components;
 
   localIndex_array localGather;
@@ -734,8 +772,19 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     // Diagonal block
     ParallelMatrix const * connLocPattDistr = m_fields[rowFieldIndex].connLocPattern;
 
-    locLocDistr.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
-    MatrixMatrixMultiply( *connLocPattDistr, true, *connLocPattDistr, false, locLocDistr );
+    if( m_connectivity[rowFieldIndex][colFieldIndex] == Connectivity::Elem )
+    {
+      locLocDistr.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows, 1, MPI_COMM_GEOSX );
+    }
+    else
+    {
+      locLocDistr.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
+    }
+    parallelMatrix.MatrixMatrixMultiply( *connLocPattDistr,
+                                         true,
+                                         *connLocPattDistr,
+                                         false,
+                                         locLocDistr );
   }
   else if( rowFieldIndex >= 0 and colFieldIndex >= 0 )
   {
@@ -751,7 +800,12 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                           colConnLocPattDistr->globalCols(),
                                           1,
                                           MPI_COMM_GEOSX );
-        MatrixMatrixMultiply( *rowConnLocPattDistr, true, *colConnLocPattDistr, false, locLocDistr, false );
+        parallelMatrix.MatrixMatrixMultiply( *rowConnLocPattDistr,
+                                             true,
+                                             *colConnLocPattDistr,
+                                             false,
+                                             locLocDistr,
+                                             false );
       }
       else
       {
@@ -762,7 +816,12 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                           rowConnLocPattDistr->globalCols(),
                                           1,
                                           MPI_COMM_GEOSX );
-        MatrixMatrixMultiply( *colConnLocPattDistr, true, *rowConnLocPattDistr, false, locLocDistr, false );
+        parallelMatrix.MatrixMatrixMultiply( *colConnLocPattDistr,
+                                             true,
+                                             *rowConnLocPattDistr,
+                                             false,
+                                             locLocDistr,
+                                             false );
       }
     }
     else
@@ -796,8 +855,19 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
           // Diagonal block
           ParallelMatrix const * connLocPattDistr = m_fields[iGlo].connLocPattern;
 
-          localPattern.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
-          MatrixMatrixMultiply( *connLocPattDistr, true, *connLocPattDistr, false, localPattern );
+          if( m_connectivity[iGlo][jGlo] == Connectivity::Elem )
+          {
+            localPattern.createWithLocalSize( m_fields[iGlo].numLocalRows, 1, MPI_COMM_GEOSX );
+          }
+          else
+          {
+            localPattern.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
+          }
+          parallelMatrix.MatrixMatrixMultiply( *connLocPattDistr,
+                                               true,
+                                               *connLocPattDistr,
+                                               false,
+                                               localPattern );
 
           for( globalIndex i = localPattern.ilower() ; i < localPattern.iupper() ; ++i )
           {
@@ -824,7 +894,12 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
 
             localPattern.createWithGlobalSize( rowConnLocPattDistr->globalCols(), colConnLocPattDistr->globalCols(),
                                                1, MPI_COMM_GEOSX );
-            MatrixMatrixMultiply( *rowConnLocPattDistr, true, *colConnLocPattDistr, false, localPattern, false );
+            parallelMatrix.MatrixMatrixMultiply( *rowConnLocPattDistr,
+                                                 true,
+                                                 *colConnLocPattDistr,
+                                                 false,
+                                                 localPattern,
+                                                 false );
           }
           else
           {
@@ -833,7 +908,12 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
 
             localPattern.createWithGlobalSize( colConnLocPattDistr->globalCols(), rowConnLocPattDistr->globalCols(),
                                                1, MPI_COMM_GEOSX );
-            MatrixMatrixMultiply( *colConnLocPattDistr, true, *rowConnLocPattDistr, false, localPattern, false );
+            parallelMatrix.MatrixMatrixMultiply( *colConnLocPattDistr,
+                                                 true,
+                                                 *rowConnLocPattDistr,
+                                                 false,
+                                                 localPattern,
+                                                 false );
           }
 
           // Assembly (with right offsets)
@@ -868,11 +948,19 @@ void DofManager::permuteSparsityPattern( ParallelMatrix const & locLocDistr,
   ParallelMatrix productStep1;
 
   productStep1.createWithGlobalSize( locLocDistr.globalRows(), permutation.globalCols(), 1, MPI_COMM_GEOSX );
-  MatrixMatrixMultiply( locLocDistr, false, permutation, false, productStep1 );
+  parallelMatrix.MatrixMatrixMultiply( locLocDistr,
+                                       false,
+                                       permutation,
+                                       false,
+                                       productStep1 );
 
   // Matrix B = P*C
   permutedMatrix.createWithGlobalSize( permutation.globalCols(), productStep1.globalCols(), 1, MPI_COMM_GEOSX );
-  MatrixMatrixMultiply( permutation, true, productStep1, false, permutedMatrix );
+  parallelMatrix.MatrixMatrixMultiply( permutation,
+                                       true,
+                                       productStep1,
+                                       false,
+                                       permutedMatrix );
 }
 
 // Just an interface to allow only three parameters
@@ -1100,8 +1188,8 @@ void DofManager::getIndices( globalIndex_array & indices,
       // Retrieve row
       real64_array values;
       globalIndex
-      globalRow = ParallelMatrixGetGlobalRowID( *fieldDesc.connLocPattern,
-                                                firstLocalConnectivity + integer_conversion<globalIndex>( index ) );
+      globalRow = fieldDesc.connLocPattern->ParallelMatrixGetGlobalRowID(
+        firstLocalConnectivity + integer_conversion<globalIndex>( index ) );
       if( globalRow >= 0 )
       {
         globalIndex_array indicesOrig;
@@ -1140,7 +1228,7 @@ void DofManager::getIndices( globalIndex_array & indices,
 
     // Retrieve row
     real64_array values;
-    globalIndex globalRow = ParallelMatrixGetGlobalRowID( *fieldDesc.connLocPattern, index );
+    globalIndex globalRow = fieldDesc.connLocPattern->ParallelMatrixGetGlobalRowID( index );
     if( globalRow >= 0 )
     {
       globalIndex_array indicesOrig;
@@ -1149,7 +1237,15 @@ void DofManager::getIndices( globalIndex_array & indices,
       // Add offset
       for( localIndex i = 0 ; i < indices.size() ; ++i )
       {
-        indices[static_cast<localIndex>( values[i] ) - 1] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
+        // To handle elements order when not connected through elements
+        if( connectivity == Connectivity::Elem )
+        {
+          indices[static_cast<localIndex>( values[i] ) - 1] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
+        }
+        else
+        {
+          indices[i] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
+        }
       }
     }
   }
@@ -1972,53 +2068,6 @@ void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs,
   }
 }
 
-// Perform the matrix-matrix product A*src = dst.
-void DofManager::MatrixMatrixMultiply( EpetraMatrix const &A,
-                                       bool const transA,
-                                       EpetraMatrix const &B,
-                                       bool const transB,
-                                       EpetraMatrix &C,
-                                       bool const call_FillComplete ) const
-{
-  int
-  err = EpetraExt::MatrixMatrix::Multiply( *A.unwrappedPointer(), transA,
-                                           *B.unwrappedPointer(), transB, *C.unwrappedPointer(), call_FillComplete );
-
-  GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
-
-  // Using "call_FillComplete_on_result = false" with rectangular matrices because in this
-  // case the function does not work. After the multiplication is performed, call close().
-  if( !call_FillComplete )
-  {
-    C.close();
-  }
-}
-
-// Map a global row index to local row index
-localIndex DofManager::ParallelMatrixGetLocalRowID( EpetraMatrix const &A, globalIndex const index ) const
-{
-  return A.unwrappedPointer()->LRID( index );
-}
-
-// Map a local row index to global row index
-localIndex DofManager::ParallelMatrixGetGlobalRowID( EpetraMatrix const &A, localIndex const index ) const
-{
-  return A.unwrappedPointer()->GRID64( index );
-}
-
-// Map a local row index to global row index
-localIndex DofManager::ParallelMatrixGetGlobalRowID( EpetraMatrix const &A, globalIndex const index ) const
-{
-  return A.unwrappedPointer()->GRID64( index );
-}
-
-// Return the local number of columns on each processor
-// NOTE: direct use of NumMyCols() counts also for overlays. To avoid those, DomainMap() is needed
-localIndex DofManager::numMyCols( EpetraMatrix const &A ) const
-{
-  return A.unwrappedPointer()->DomainMap().NumMyElements();
-}
-
 // Release internal memory
 void DofManager::cleanUp()
 {
@@ -2075,20 +2124,7 @@ void DofManager::printConnectivityLocationPattern( string const & field, string 
   }
 
   // Print the selected pattern
-  printParallelMatrix( *pattern, name );
-}
-
-// Print the given parallel matrix in Matrix Market format (MTX file)
-void DofManager::printParallelMatrix( ParallelMatrix const & matrix, string const & fileName ) const
-{
-  // Ensure the ".mtx" extension
-  string name( fileName );
-  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" )
-  {
-    name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
-  }
-
-  EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *matrix.unwrappedPointer() );
+  pattern->printParallelMatrix( name );
 }
 
 // Print a CSR pattern on file or on screen

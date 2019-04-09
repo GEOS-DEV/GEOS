@@ -105,19 +105,9 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( -1, integer_conversion<int, localIndex>( localRows ), 0, Epetra_MpiComm( comm ) ));
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( -1, integer_conversion<int, localIndex>( localCols ), 0, Epetra_MpiComm( comm ) ));
+  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>( -1 ), integer_conversion<int, localIndex>( localRows ), 0, Epetra_MpiComm( comm ) ));
+  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>( -1 ), integer_conversion<int, localIndex>( localCols ), 0, Epetra_MpiComm( comm ) ));
   m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
-}
-
-void EpetraMatrix::createWithLocalRowGlobalCol( localIndex const localRows,
-                                                globalIndex const globalCols,
-                                                localIndex const maxEntriesPerRow,
-                                                MPI_Comm const & comm )
-{
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>(-1), localRows, 0, Epetra_MpiComm( comm ) ));
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalCols, 0, Epetra_MpiComm( comm ) ));
-  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, maxEntriesPerRow, false ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -487,6 +477,84 @@ real64 EpetraMatrix::normFrobenius() const
 bool EpetraMatrix::isAssembled() const
 {
   return assembled;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// MatrixMatrixMultiply
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Perform the matrix-matrix product A*src = dst.
+void EpetraMatrix::MatrixMatrixMultiply( EpetraMatrix const &A,
+                                       bool const transA,
+                                       EpetraMatrix const &B,
+                                       bool const transB,
+                                       EpetraMatrix &C,
+                                       bool const call_FillComplete ) const
+{
+  int
+  err = EpetraExt::MatrixMatrix::Multiply( *A.unwrappedPointer(), transA,
+                                           *B.unwrappedPointer(), transB, *C.unwrappedPointer(), call_FillComplete );
+
+  GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
+
+  // Using "call_FillComplete_on_result = false" with rectangular matrices because in this
+  // case the function does not work. After the multiplication is performed, call close().
+  if( !call_FillComplete )
+  {
+    C.close();
+  }
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ParallelMatrixGetLocalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a global row index to local row index
+localIndex EpetraMatrix::ParallelMatrixGetLocalRowID( globalIndex const index ) const
+{
+  return m_matrix->LRID( index );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ParallelMatrixGetGlobalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a local row index to global row index
+localIndex EpetraMatrix::ParallelMatrixGetGlobalRowID( localIndex const index ) const
+{
+  return m_matrix->GRID64( integer_conversion<int>( index ) );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// ParallelMatrixGetGlobalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a local row index to global row index
+localIndex EpetraMatrix::ParallelMatrixGetGlobalRowID( globalIndex const index ) const
+{
+  return m_matrix->GRID64( integer_conversion<int>( index ) );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// numMyCols
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Return the local number of columns on each processor
+// NOTE: direct use of NumMyCols() counts also for overlays. To avoid those, DomainMap() is needed
+localIndex EpetraMatrix::numMyCols( ) const
+{
+  return m_matrix->DomainMap().NumMyElements();
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// printParallelMatrix
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Print the given parallel matrix in Matrix Market format (MTX file)
+void EpetraMatrix::printParallelMatrix( string const & fileName ) const
+{
+  // Ensure the ".mtx" extension
+  string name( fileName );
+  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" )
+  {
+    name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
+  }
+
+  EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *m_matrix );
 }
 
 } // end geosx namespace
