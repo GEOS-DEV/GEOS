@@ -81,11 +81,8 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
 
 Well::~Well()
 {
-
 }
-
-
-  
+ 
 dataRepository::ManagedGroup * Well::CreateChild(string const & childKey, string const & childName)
 {
   return nullptr;
@@ -93,7 +90,6 @@ dataRepository::ManagedGroup * Well::CreateChild(string const & childKey, string
 
 void Well::InitializePostSubGroups( ManagedGroup * const rootGroup )
 {
-  //resize(1);
 }
   
 void Well::PostProcessInput()
@@ -147,7 +143,6 @@ void Well::PostProcessInput()
   m_wellElementSubRegion.resize( m_wellElementManager.numWellElementsGlobal() );
   
 }
-
 
 R1Tensor const & Well::getGravityVector() const
 {

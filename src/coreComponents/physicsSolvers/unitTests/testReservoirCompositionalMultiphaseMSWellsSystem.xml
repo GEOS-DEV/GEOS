@@ -104,23 +104,15 @@
           referenceDepth="0.5">
       <Segments>
         <Segment name="prod0_seg0"
+                 nextSegmentName=""
 		 location="4 0.5 0.5"/>
 	<Segment name="prod0_seg1"
+                 nextSegmentName="prod0_seg0"
 		 location="5 0.5 0.5"/>
         <Segment name="prod0_seg2"
+                 nextSegmentName="prod0_seg1"
 		 location="6 0.5 0.5"/>
       </Segments> 
-      <Connections>
-	<Connection name="prod0_conn0"
-		    prevSegmentName=""
-		    nextSegmentName="prod0_seg0" />
-        <Connection name="prod0_conn1"
-		    prevSegmentName="prod0_seg0"
-		    nextSegmentName="prod0_seg1" />
-        <Connection name="prod0_conn2"
-		    prevSegmentName="prod0_seg1"
-		    nextSegmentName="prod0_seg2" />
-      </Connections>
       <Perforations> 
 	<Perforation name="prod0_p0"
 		     location="3.5 0.5 0.5"
@@ -149,19 +141,13 @@
           referenceDepth="0.5"
 	  injectionStream="0.1 0.1 0.1 0.7">
       <Segments>
-	<Segment name="inj0_seg1"
+	<Segment name="inj0_seg0"
+                 nextSegmentName=""
 		 location="0.5 0.5 0.5"/>
-  	<Segment name="inj0_seg0"
+  	<Segment name="inj0_seg1"
+                 nextSegmentName="inj0_seg0"
 		 location="1.5 0.5 0.5"/>
       </Segments> 
-      <Connections>
-	<Connection name="inj0_conn0"
-		    prevSegmentName=""
-		    nextSegmentName="inj0_seg1" />
-        <Connection name="inj0_conn1"
-		    prevSegmentName="inj0_seg1"
-		    nextSegmentName="inj0_seg0" />
-      </Connections> 
       <Perforations>
 	<Perforation name="inj0_p0"
 		     location="0.5 0.5 0.5"

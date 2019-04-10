@@ -296,12 +296,14 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
     ElementRegion * const elemRegion = elemManager->GetRegion(er);
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
-      arrayView1d<integer> & elemGhostRank =
-        subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-
+      // get degrees of freedom and ghosting information
       arrayView1d<globalIndex> & dofNumber =
         subRegion-> template getReference<array1d<globalIndex >>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
+      arrayView1d<integer> & elemGhostRank =
+        subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+      // get primary variables on reservoir elements
       arrayView1d<real64> & pres =
         subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
 
@@ -318,7 +320,9 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)
       {
         if (elemGhostRank[ei] >= 0)
+        {
           continue;
+        }
 
         globalIndex const eiOffset = dofNumber[ei] * resNDOF;
 
@@ -396,13 +400,18 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
-    
-    array1d<globalIndex> const & wellElemDofNumber =
+
+    // get the degrees of freedom, ghosting information and next well element index
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( CompositionalMultiphaseWell::viewKeyStruct::dofNumberString );
 
-    arrayView1d<integer> const & wellElemGhostRank =
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );
+
+    // get primary variables on well elements
     arrayView1d<real64> const & wellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
 
@@ -421,14 +430,14 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
     arrayView1d<real64> const & dConnRate =
       wellElementSubRegion->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureConnRateString );
 
-    arrayView1d<localIndex const> const & nextWellElemIndex =
-      wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );    
     
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->size(); ++iwelem)
     {
       if (wellElemGhostRank[iwelem] >= 0)
+      {
         continue;
+      }
 
       globalIndex const iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
 
@@ -453,7 +462,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         long long const dofIndex = integer_conversion<long long>( iwelemOffset + CompositionalMultiphaseWell::ColOffset::DPRES );
 
         // consider mass balance eq lid in RESERVOIR elems and WELL elems
-        //      this is computing J_RW and J_WW
+        // this is computing J_RW and J_WW
         for (int lid = 0; lid < localSizeInt; ++lid)
         {
           real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
@@ -489,17 +498,6 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
           }
         }
       }
-    }
-
-    // b) compute all the derivatives wrt to the connection in WELL elem iwelem 
-    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->size(); ++iwelem)
-    {
-      localIndex const iwelemNext = nextWellElemIndex[iwelem];
-      
-      if (iwelemNext < 0 || wellElemGhostRank[iwelemNext] >= 0)
-        continue;
-
-      globalIndex iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
 
       {
         solver->ResetStateToBeginningOfStep(domain);
@@ -514,7 +512,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         long long const dofIndex = integer_conversion<long long>(iwelemOffset + NC + 1);
 
         // consider mass balance eq lid in RESERVOIR elems and WELL elems
-        //      this is computing J_RW and J_WW
+        // this is computing J_RW and J_WW
         for (int lid = 0; lid < localSizeInt; ++lid)
         {
           real64 dRdRate = (localResidual[lid] - localResidualOrig[lid]) / dRate;

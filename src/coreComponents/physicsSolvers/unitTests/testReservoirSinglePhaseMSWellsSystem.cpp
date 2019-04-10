@@ -294,12 +294,14 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
     ElementRegion * const elemRegion = elemManager->GetRegion(er);
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
-      arrayView1d<integer> & elemGhostRank =
-        subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-
+      // get the dof numbers and ghosting information
       arrayView1d<globalIndex> & dofNumber =
         subRegion-> template getReference<array1d<globalIndex >>( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
+      arrayView1d<integer> & elemGhostRank =
+        subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+      // get the primary variables on reservoir elements
       arrayView1d<real64> & pres =
         subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
 
@@ -310,9 +312,11 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)
       {
         if (elemGhostRank[ei] >= 0)
+        {
           continue;
-
-        globalIndex eiOffset = dofNumber[ei] * resNDOF;
+        }
+        
+        globalIndex const eiOffset = dofNumber[ei] * resNDOF;
 
         {
           solver->ResetStateToBeginningOfStep(domain);
@@ -332,7 +336,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
           long long const dofIndex = integer_conversion<long long>(eiOffset);
 
           // consider mass balance eq lid in RESERVOIR elems and WELL elems
-          //      this is computing J_RR and J_RW
+          // this is computing J_RR and J_RW
           for (int lid = 0; lid < localSizeInt; ++lid)
           {
             real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
@@ -355,12 +359,17 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
   {
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
     
-    array1d<globalIndex> const & wellElemDofNumber =
+    // get the degrees of freedom and ghosting information
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( SinglePhaseWell::viewKeyStruct::dofNumberString );
 
-    arrayView1d<integer> const & wellElemGhostRank =
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );
+
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
+    // get the primary variables on well elements
     array1d<real64> const & wellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::pressureString );
 
@@ -371,18 +380,17 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
       wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::connRateString );
 
     array1d<real64> const & dConnRate =
-      wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
-
-    arrayView1d<localIndex const> const & nextWellElemIndex =
-      wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );    
+      wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaConnRateString );    
     
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->size(); ++iwelem)
     {
       if (wellElemGhostRank[iwelem] >= 0)
+      {
         continue;
+      }
 
-      globalIndex iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
+      globalIndex const iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
 
       {
         solver->ResetStateToBeginningOfStep(domain);

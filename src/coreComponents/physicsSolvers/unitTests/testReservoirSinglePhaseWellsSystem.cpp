@@ -294,25 +294,29 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
     ElementRegion * const elemRegion = elemManager->GetRegion(er);
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto * const subRegion )
     {
+      // get the degrees of freedom and the ghosting info
       arrayView1d<integer> & elemGhostRank =
         subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
       arrayView1d<globalIndex> & dofNumber =
         subRegion-> template getReference<array1d<globalIndex >>( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
 
+      // get the primary variables on the reservoir elements
       arrayView1d<real64> & pres =
         subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
 
       arrayView1d<real64> & dPres =
         subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
 
-      // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei 
+      // compute all the derivatives wrt to the pressure in RESERVOIR elem ei 
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)
       {
         if (elemGhostRank[ei] >= 0)
+        {
           continue;
+        }
 
-        globalIndex eiOffset = dofNumber[ei] * resNDOF;
+        globalIndex const eiOffset = dofNumber[ei] * resNDOF;
 
         {
           solver->ResetStateToBeginningOfStep(domain);
@@ -332,7 +336,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
           long long const dofIndex = integer_conversion<long long>(eiOffset);
 
           // consider mass balance eq lid in RESERVOIR elems and WELL elems
-          //      this is computing J_RR and J_RW
+          // this is computing J_RR and J_RW
           for (int lid = 0; lid < localSizeInt; ++lid)
           {
             real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
@@ -355,12 +359,17 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
   {
     WellElementSubRegion * wellElementSubRegion = well->getWellElements();
     
-    array1d<globalIndex> const & wellElemDofNumber =
+    // get the dof numbers, ghosting info and next well element index
+    array1d<globalIndex const> const & wellElemDofNumber =
       wellElementSubRegion->getReference<array1d<globalIndex>>( SinglePhaseWell::viewKeyStruct::dofNumberString );
 
-    arrayView1d<integer> const & wellElemGhostRank =
+    arrayView1d<integer const> const & wellElemGhostRank =
       wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );
+
+    // get the primary variables on the well elements
     array1d<real64> const & wellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::pressureString );
 
@@ -372,17 +381,16 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
 
     array1d<real64> const & dConnRate =
       wellElementSubRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
-
-    arrayView1d<localIndex const> const & nextWellElemIndex =
-      wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );    
     
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem 
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->size(); ++iwelem)
     {
       if (wellElemGhostRank[iwelem] >= 0)
+      {
         continue;
+      }
 
-      globalIndex iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
+      globalIndex const iwelemOffset = wellSolver->getElementOffset( wellElemDofNumber[iwelem] );
 
       {
         solver->ResetStateToBeginningOfStep(domain);
@@ -399,7 +407,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         long long dofIndex = integer_conversion<long long>(iwelemOffset + SinglePhaseWell::ColOffset::DPRES );
 
         // consider mass balance eq lid in RESERVOIR elems and WELL elems
-        //      this is computing J_RW and J_WW
+        // this is computing J_RW and J_WW
         for (int lid = 0; lid < localSizeInt; ++lid)
         {
           real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
@@ -422,7 +430,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         dofIndex = integer_conversion<long long>(iwelemOffset + SinglePhaseWell::ColOffset::DRATE );
 
         // consider mass balance eq lid in RESERVOIR elems and WELL elems
-        //      this is computing J_RW and J_WW
+        // this is computing J_RW and J_WW
         for (int lid = 0; lid < localSizeInt; ++lid)
         {
           real64 dRdRate = (localResidual[lid] - localResidualOrig[lid]) / dRate;

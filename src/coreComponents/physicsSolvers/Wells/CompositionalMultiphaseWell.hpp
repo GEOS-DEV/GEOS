@@ -380,12 +380,6 @@ protected:
 private:
   
   /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
-   */
-  void BackupFields( DomainPartition * const domain );
-
-  /**
    * @brief Setup stored reservoir views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;

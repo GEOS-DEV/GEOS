@@ -137,6 +137,7 @@ protected:
   // segments
   WellElementSubRegion m_wellElementSubRegion;
   WellElementManager m_wellElementManager;
+
   // perforation
   PerforationData    m_perforationData;
   PerforationManager m_perforationManager;

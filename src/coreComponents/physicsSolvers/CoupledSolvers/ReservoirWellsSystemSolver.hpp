@@ -118,7 +118,7 @@ private:
 
   // solver that assembles the reservoir equations
   string m_flowSolverName;
-  // solver that assembles the well
+  // solver that assembles the well equations and compute perforation rates
   string m_wellSolverName;
 
 };

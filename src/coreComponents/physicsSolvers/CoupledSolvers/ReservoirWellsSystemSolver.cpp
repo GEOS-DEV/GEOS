@@ -104,7 +104,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   // get the number of local reservoir elements, and ghost elements...i.e. local rows and ghost rows
   elementRegionManager->forElementSubRegions( [&]( ObjectManagerBase * const subRegion )
   {
-    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
+    localIndex const subRegionGhosts = subRegion->GetNumberOfGhosts();
     numResGhostRows += subRegionGhosts;
     numResLocalRows += subRegion->size() - subRegionGhosts;
   });
@@ -114,7 +114,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                                            numResGlobalRows,
                                            0 );
   /*
-  // TODO: uncomment this
+  // TODO: make this work in parallel
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back(viewKeysSinglePhaseFlow.blockLocalDofNumber.Key());
   CommunicationTools::
@@ -123,14 +123,14 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
   */
 
-  // 2) Communicate number of local well rows
+  // 2) Communicate the number of local well rows
 
   // get the number of local well elements, and ghost elements...i.e. local rows and ghost rows
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
     // well elements
-    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
-    localIndex subRegionGhosts = wellElementSubRegion->GetNumberOfGhosts();
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+    localIndex const subRegionGhosts = wellElementSubRegion->GetNumberOfGhosts();
     numWellGhostRows += subRegionGhosts;
     numWellLocalRows += wellElementSubRegion->size() - subRegionGhosts;
   });
@@ -138,7 +138,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   wellSolver.SetNumRowsAndTrilinosIndices( domain,
                                            numWellLocalRows,
                                            numWellGlobalRows,
-					   numResGlobalRows); // offset for well global rows
+                                           numResGlobalRows ); // offset for well global rows
 
   // TODO: synchronize the well vars
   
@@ -176,7 +176,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                           std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
-								BlockIDs::fluidPressureBlock );
+                                                                BlockIDs::fluidPressureBlock );
   
   // construct solution vector
   blockSystem->SetSolutionVector( BlockIDs::fluidPressureBlock,
@@ -198,13 +198,15 @@ void ReservoirWellsSystemSolver::AssembleSystem( DomainPartition * const domain,
 
   // set Jacobian and residual to zero
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
-								BlockIDs::fluidPressureBlock );
+                                                                BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
   jacobian->Scale(0.0);
   residual->Scale(0.0);
 
+  // assemble J_RR (excluding perforation rates)
   flowSolver.AssembleSystem( domain, blockSystem, time, dt );
+  // assemble J_WW, J_WR, J_RW + perforation rates in J_RR
   wellSolver.AssembleSystem( domain, blockSystem, time, dt );
 
   jacobian->GlobalAssemble( true );
@@ -235,7 +237,9 @@ real64 ReservoirWellsSystemSolver::CalculateResidualNorm( systemSolverInterface:
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
+  // compute norm of reservoir equations residuals
   real64 const reservoirResidualNorm = flowSolver.CalculateResidualNorm( blockSystem, domain );
+  // compute norm of well equations residuals
   real64 const wellResidualNorm      = wellSolver.CalculateResidualNorm( blockSystem, domain );
   
   return ( reservoirResidualNorm > wellResidualNorm )
@@ -272,7 +276,9 @@ void ReservoirWellsSystemSolver::ApplySystemSolution( systemSolverInterface::Epe
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
+  // update the reservoir variables
   flowSolver.ApplySystemSolution( blockSystem, scalingFactor, domain );
+  // update the well variables
   wellSolver.ApplySystemSolution( blockSystem, scalingFactor, domain );
 }
 
@@ -281,7 +287,9 @@ void ReservoirWellsSystemSolver::ResetStateToBeginningOfStep( DomainPartition * 
   FlowSolverBase & flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>());
   WellSolverBase & wellSolver = *(this->getParent()->GetGroup(m_wellSolverName)->group_cast<WellSolverBase*>());
 
+  // reset reservoir variables
   flowSolver.ResetStateToBeginningOfStep( domain );
+  // reset well variables
   wellSolver.ResetStateToBeginningOfStep( domain ); 
 }
   
@@ -313,6 +321,7 @@ real64 ReservoirWellsSystemSolver::SolverStep( real64 const & time_n,
 {
   real64 dt_return = dt;
 
+  // setup reservoir and well systems
   ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 
   // currently the only method is implicit time integration
@@ -322,7 +331,7 @@ real64 ReservoirWellsSystemSolver::SolverStep( real64 const & time_n,
                                           domain,
                                           getLinearSystemRepository() );
 
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  // complete time step in reservoir and well systems
   ImplicitStepComplete( time_n, dt_return, domain );
 
   return dt_return;

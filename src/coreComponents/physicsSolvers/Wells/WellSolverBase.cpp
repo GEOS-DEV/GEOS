@@ -120,6 +120,19 @@ WellSolverBase::~WellSolverBase() = default;
 
 globalIndex WellSolverBase::getElementOffset( globalIndex welemDofNumber ) const
 {
+  /*
+   * firstWellElemDofNumber denotes the first DOF number of the well segments, for all the wells (i.e., first segment of first well)
+   * currentElemDofNumber denotes the DOF number of the current segment
+   *
+   * The coordinates of this element's 2x2 block in J_WW can be accessed using:
+   *
+   * IndexRow = firstWellElemDofNumber * resNDOF ( = all the equations in J_RR)
+   *          + (currentElemDofNumber - firstWellElemDofNumber ) * wellNDOF ( = offset of current segment in J_WW)
+   *          + idof ( = local dofs for this segment, pressure and rate)
+   *           
+   * This is needed because resNDOF is not equal to wellNDOF
+   */
+
   localIndex const resNDOF  = numDofPerResElement(); // dof is pressure
   localIndex const wellNDOF = numDofPerElement(); // dofs are pressure and rate
   

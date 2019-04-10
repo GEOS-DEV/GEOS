@@ -51,12 +51,12 @@ public:
   WellManager( WellManager && ) = delete;
 
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
-  
+
   Well * getWell( string const & name );
 
   void setGravityVector(R1Tensor const & gravity, bool gravityFlag = true);
-
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
+
   bool getGravityFlag() const { return m_gravityFlag; }
 
   string_array const & getMaterialList() const {return m_materialList;}
