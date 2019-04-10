@@ -28,7 +28,7 @@
 
 #include "InterfaceTypes.hpp"
 #include <petscvec.h>
-#include "common/DataTypes.hpp"
+// #include "common/DataTypes.hpp"
 
 namespace geosx
 {
@@ -81,7 +81,7 @@ class PetscVector
    * \param values Array of values to populate vector.
    *
    */
-  void create(int const size, real64 *values);
+  void create(int const size, PetscScalar *values);
 
   /**
    * @brief Construct vector from std::vector.
@@ -91,7 +91,7 @@ class PetscVector
    * \param vec Std vector to cast as PetscVector
    *
    */
-  void create(std::vector<real64> &vec);
+  void create(std::vector<PetscScalar> &vec);
 
   /**
    * @brief Set vector value.
@@ -102,10 +102,10 @@ class PetscVector
    * \param value Values to add in given element.
    *
    */
-  void set(int element, real64 value);
+  void set(int element, PetscScalar value);
 
   // /* set values of vector elements */
-  // void set(array1d<int> elements, array1d<real64> values);
+  // void set(array1d<int> elements, array1d<PetscScalar> values);
 
   /**
    * @brief Add into vector value.
@@ -116,10 +116,10 @@ class PetscVector
    * \param value Values to add in given element.
    *
    */
-  void add(int element, real64 value);
+  void add(int element, PetscScalar value);
 
   // /* add values to vector elements */
-  // void add(array1d<int> elements, array1d<real64> values);
+  // void add(array1d<int> elements, array1d<PetscScalar> values);
 
   //@}
 
@@ -132,7 +132,7 @@ class PetscVector
    * \param scalingFactor Scaling Factor.
    *
    */
-  void scale(real64 const scalingFactor);
+  void scale(PetscScalar const scalingFactor);
 
   /**
    * @brief Dot product with the vector vec.
@@ -141,7 +141,7 @@ class PetscVector
    * \param dst Result.
    *
    */
-  void dot(PetscVector const vec, real64 *dst);
+  void dot(PetscVector const vec, PetscScalar *dst);
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
@@ -162,7 +162,7 @@ class PetscVector
    * \param x Vector to add.
    *
    */
-  void axpy(real64 const alpha, PetscVector const &x);
+  void axpy(PetscScalar const alpha, PetscVector const &x);
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -174,7 +174,7 @@ class PetscVector
    * \param beta Scaling factor for self vector.
    *
    */
-  void axpby(real64 const alpha, PetscVector &x, real64 const beta);
+  void axpby(PetscScalar const alpha, PetscVector &x, PetscScalar const beta);
 
   /**
    * @brief 1-norm of the vector.
@@ -182,7 +182,7 @@ class PetscVector
    * \param 1-norm of the vector.
    *
    */
-  void norm1(real64 &result) const;
+  void norm1(PetscScalar &result) const;
 
   /**
    * @brief 2-norm of the vector.
@@ -190,7 +190,7 @@ class PetscVector
    * \param 2-norm of the vector.
    *
    */
-  void norm2(real64 &result) const;
+  void norm2(PetscScalar &result) const;
 
   /**
    * @brief Infinity-norm of the vector.
@@ -198,7 +198,7 @@ class PetscVector
    * \param Inf-norm of the vector.
    *
    */
-  void normInf(real64 &result) const;
+  void normInf(PetscScalar &result) const;
 
   //@}
 
@@ -218,7 +218,7 @@ class PetscVector
   /**
    * @brief Returns element i of the vector.
    */
-  real64 getElement(int i) const;
+  PetscScalar getElement(int i) const;
 
   /**
    * @brief Returns a const pointer to the underlying Vec.

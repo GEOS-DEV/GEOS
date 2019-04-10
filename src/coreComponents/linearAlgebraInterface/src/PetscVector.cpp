@@ -80,7 +80,7 @@ PetscVector::~PetscVector()
 // Create from array
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from array
-void PetscVector::create(const int size, real64 *vals)
+void PetscVector::create(const int size, PetscScalar *vals)
 {
 
   int indices[size];
@@ -98,7 +98,7 @@ void PetscVector::create(const int size, real64 *vals)
 // Create from vector
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from vector
-void PetscVector::create(std::vector<real64> &vec)
+void PetscVector::create(std::vector<PetscScalar> &vec)
 {
   int size = vec.size();
 
@@ -114,7 +114,7 @@ void PetscVector::create(std::vector<real64> &vec)
 }
 
 /* set value of vector element */
-void PetscVector::set(int element, real64 value)
+void PetscVector::set(int element, PetscScalar value)
 {
 	VecSetValue(_vec, element, value, INSERT_VALUES);
 	VecAssemblyBegin(_vec);
@@ -122,10 +122,10 @@ void PetscVector::set(int element, real64 value)
 }
 
 // /* set values of vector elements */
-// void PetscVector::set(array1d<int> elements, array1d<real64> values){}
+// void PetscVector::set(array1d<int> elements, array1d<PetscScalar> values){}
 
 /* add value to vector element */
-void PetscVector::add(int element, real64 value)
+void PetscVector::add(int element, PetscScalar value)
 {
 	VecSetValue(_vec, element, value, ADD_VALUES);
 	VecAssemblyBegin(_vec);
@@ -133,7 +133,7 @@ void PetscVector::add(int element, real64 value)
 }
 
 // /* add values to vector elements */
-// void PetscVector::set(array1d<int> elements, array1d<real64> values){}
+// void PetscVector::set(array1d<int> elements, array1d<PetscScalar> values){}
 
 // ----------------------------
 // Linear Algebra
@@ -143,7 +143,7 @@ void PetscVector::add(int element, real64 value)
 // Scale
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Multiply all elements by scalingFactor.
-void PetscVector::scale(real64 const scalingFactor)
+void PetscVector::scale(PetscScalar const scalingFactor)
 {
 	VecScale(_vec, scalingFactor);
 }
@@ -152,7 +152,7 @@ void PetscVector::scale(real64 const scalingFactor)
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-void PetscVector::dot(PetscVector const vec, real64 *dst)
+void PetscVector::dot(PetscVector const vec, PetscScalar *dst)
 {
 	VecDot(_vec, vec._vec, dst);
 }
@@ -171,7 +171,7 @@ void PetscVector::copy(PetscVector const &x)
 // Axpy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + this.
-void PetscVector::axpy(real64 const alpha, PetscVector const &x)
+void PetscVector::axpy(PetscScalar const alpha, PetscVector const &x)
 {
 	VecAXPY(_vec, alpha, x._vec);
 }
@@ -180,7 +180,7 @@ void PetscVector::axpy(real64 const alpha, PetscVector const &x)
 // Axpby
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + beta*this.
-void PetscVector::axpby(real64 const alpha, PetscVector &x, real64 const beta)
+void PetscVector::axpby(PetscScalar const alpha, PetscVector &x, PetscScalar const beta)
 {
 	VecScale(_vec, beta);
 	VecAXPY(_vec, alpha, x._vec);
@@ -190,7 +190,7 @@ void PetscVector::axpby(real64 const alpha, PetscVector &x, real64 const beta)
 // 1-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // 1-norm of the vector.
-void PetscVector::norm1(real64 &result) const
+void PetscVector::norm1(PetscScalar &result) const
 {
 	VecNorm(_vec, NORM_1, &result);
 }
@@ -199,7 +199,7 @@ void PetscVector::norm1(real64 &result) const
 // 2-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // 2-norm of the vector.
-void PetscVector::norm2(real64 &result) const
+void PetscVector::norm2(PetscScalar &result) const
 {
 	VecNorm(_vec, NORM_2, &result);
 }
@@ -208,7 +208,7 @@ void PetscVector::norm2(real64 &result) const
 // Inf-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Inf-norm of the vector.
-void PetscVector::normInf(real64 &result) const
+void PetscVector::normInf(PetscScalar &result) const
 {
 	VecNorm(_vec, NORM_INFINITY, &result);
 }
@@ -221,7 +221,7 @@ void PetscVector::normInf(real64 &result) const
 // Get element
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get element i
-real64 PETScVector::getElement(int i) const
+PetscScalar PETScVector::getElement(int i) const
 {
 
 	double value[1];

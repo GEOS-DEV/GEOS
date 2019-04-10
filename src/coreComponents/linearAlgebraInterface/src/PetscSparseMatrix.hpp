@@ -28,7 +28,7 @@
 #define PETSCSPARSEMATRIX_HPP_
 
 #include "InterfaceTypes.hpp"
-#include "../../common/DataTypes.hpp"
+// #include "../../common/DataTypes.hpp"
 #include <petscvec.h>
 #include <petscmat.h>
 #include "PetscVector.hpp"
@@ -167,13 +167,13 @@ public:
    */
   void add( int const iRow,
             int const nCols,
-            real64 const *values,
+            PetscScalar const *values,
             int const *cols );
 
   /* add values to sparse matrix located at indices */
   // void add( array1d<int> const rowIndices,
   //           array1d<int> const colIndices,
-  //           array2d<real64> const values);
+  //           array2d<PetscScalar> const values);
 
   /**
    * @brief Add to one element.
@@ -187,7 +187,7 @@ public:
    */
   void add( int const iRow,
             int const iCol,
-            real64 const value );
+            PetscScalar const value );
 
   /**
    * @brief Set row of elements.
@@ -204,7 +204,7 @@ public:
    */
   void set( int const iRow,
             int const nCols,
-            real64 const *values,
+            PetscScalar const *values,
             int const *cols );
 
   /**
@@ -219,7 +219,7 @@ public:
    */
   void set( int const iRow,
             int const iCol,
-            real64 const value );
+            PetscScalar const value );
 
   /**
    * @brief Insert to row of elements.
@@ -235,7 +235,7 @@ public:
    */
   void insert( int const iRow,
                int const nCols,
-               real64 const *values,
+               PetscScalar const *values,
                int const *cols );
 
   //@}
@@ -279,9 +279,9 @@ public:
    * \param useTranspose Boolean, set to true to use <tt>A^T</tt>.
    *
    */
- void gemv( real64 const alpha,
+ void gemv( PetscScalar const alpha,
             PetscVector  const &x,
-            real64 const beta,
+            PetscScalar const beta,
             PetscVector  &y,
             bool useTranspose);
 
@@ -291,7 +291,7 @@ public:
    * \param scalingFactor Scaling factor.
    *
    */
-  void scale( real64 const scalingFactor );
+  void scale( PetscScalar const scalingFactor );
 
   /**
    * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
@@ -328,7 +328,7 @@ public:
    *
    */
   void clearRow( int const row,
-                 real64 const factor );
+                 PetscScalar const factor );
 
   //@}
 
@@ -341,7 +341,7 @@ public:
    */
   void getRow( int GlobalRow,
                int &NumEntries,
-               real64* Values,
+               PetscScalar* Values,
                int* Indices ) const;
 
   /**
@@ -350,7 +350,7 @@ public:
    */
   void getRow( int GlobalRow,
                int &NumEntries,
-               std::vector<real64> &vecValues,
+               std::vector<PetscScalar> &vecValues,
                std::vector<int> &vecIndices ) const;
 
   /**
@@ -359,7 +359,7 @@ public:
    */
   void getLocalRow( int myRow,
                     int & NumEntries,
-                    real64 * & Values,
+                    PetscScalar * & Values,
                     int * & Indices ) const;
 
   /**
@@ -368,7 +368,7 @@ public:
    */
   void getLocalRow( int myRow,
                     int &NumEntries,
-                    std::vector<real64> &vecValues,
+                    std::vector<PetscScalar> &vecValues,
                     std::vector<int> &vecIndices ) const;
 
   /**
@@ -413,17 +413,17 @@ public:
   /**
    * @brief Returns the infinity norm of the matrix.
    */
-  real64 normInf() const;
+  PetscScalar normInf() const;
 
   /**
    * @brief Returns the one norm of the matrix.
    */
-  real64 norm1() const;
+  PetscScalar norm1() const;
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
    */
-  real64 normFrobenius() const;
+  PetscScalar normFrobenius() const;
 
   /**
    * @brief Returns true is the matrix has been assembled, false if not.

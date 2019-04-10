@@ -178,7 +178,7 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 // Add row values at row iRow and columns cols (size nCols)
  void PetscSparseMatrix::add( int const iRow,
            					  int const nCols,
-           					  real64 const *values,
+           					  PetscScalar const *values,
            					  int const *cols )
  {
  	int rows[1] = {iRow};
@@ -191,7 +191,7 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 // Add a value at row iRow and column iCol
  void PetscSparseMatrix::add( int const iRow,
            					  int const iCol,
-           					  real64 const value )
+           					  PetscScalar const value )
  {
  	MatSetValue(_mat, iRow, iCol, value, ADD_VALUES);
  }
@@ -202,7 +202,7 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 // Add the value of elements (iRow,[nCols]) to values.
  void PetscSparseMatrix::set( int const iRow,
            					  int const nCols,
-           					  real64 const *values,
+           					  PetscScalar const *values,
            					  int const *cols )
   {
  	int rows[1] = {iRow};
@@ -215,7 +215,7 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 // Set the value of the element (iRow,iCol) to value.
  void PetscSparseMatrix::set( int const iRow,
            					  int const iCol,
-           					  real64 const value )
+           					  PetscScalar const value )
   {
  	MatSetValue(_mat, iRow, iCol, value, INSERT_VALUES);
  }
@@ -225,7 +225,7 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
  void PetscSparseMatrix::insert( int const iRow,
               					 int const nCols,
-              					 real64 const *values,
+              					 PetscScalar const *values,
               					 int const *cols )
   {
  	int rows[1] = {iRow};
@@ -265,9 +265,9 @@ void PetscSparseMatrix::residual( PetscVector const &x,
 // Generalized matrix/vector product.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
-void PetscSparseMatrix::gemv( real64 const alpha,
+void PetscSparseMatrix::gemv( PetscScalar const alpha,
          					  PetscVector  const &x,
-         					  real64 const beta,
+         					  PetscScalar const beta,
          					  PetscVector  &y,
          					  bool useTranspose)
 {
@@ -289,7 +289,7 @@ void PetscSparseMatrix::gemv( real64 const alpha,
 // Scale.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Multiply all elements by scalingFactor.
-void PetscSparseMatrix::scale( real64 const scalingFactor )
+void PetscSparseMatrix::scale( PetscScalar const scalingFactor )
 {
 	MatScale(_mat, scalingFactor);
 }
@@ -328,7 +328,7 @@ void PetscSparseMatrix::leftRightScale( PetscVector const &vecLeft,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Clear row and multiply diagonal term by factor.
 void PetscSparseMatrix::clearRow( int const row,
-            				   	  real64 const factor )
+            				   	  PetscScalar const factor )
  {
 	int rows[1] = {row};
 	double diag = 1;
@@ -367,7 +367,7 @@ void PetscSparseMatrix::clearRow( int const row,
 // Extract the global row and output the number of elements, values and column indices.
 void PetscSparseMatrix::getRow( int GlobalRow,
            						int &NumEntries,
-           						real64* Values,
+           						PetscScalar* Values,
            						int* Indices ) const
 {
  	const double* vals;
@@ -392,7 +392,7 @@ void PetscSparseMatrix::getRow( int GlobalRow,
 * - vecIndices: vector of column indices */
 void PetscSparseMatrix::getRow( int GlobalRow,
              					int &NumEntries,
-             					std::vector<real64> &vecValues,
+             					std::vector<PetscScalar> &vecValues,
              					std::vector<int> &vecIndices ) const
 {
 	const double* vals;
@@ -413,7 +413,7 @@ void PetscSparseMatrix::getRow( int GlobalRow,
 // Extract the local row and output the number of elements, values and column indices.
 void PetscSparseMatrix::getLocalRow( int myRow,
                					 	 int & NumEntries,
-               					 	 real64 * & Values,
+               					 	 PetscScalar * & Values,
                					 	 int * & Indices ) const
 {
  	// myRow -> globalRow
@@ -444,7 +444,7 @@ void PetscSparseMatrix::getLocalRow( int myRow,
   * - vecIndices: vector of column indices */
  void PetscSparseMatrix::getLocalRow( int myRow,
                    					int &NumEntries,
-                   					std::vector<real64> &vecValues,
+                   					std::vector<PetscScalar> &vecValues,
                    					std::vector<int> &vecIndices ) const
 
  {
@@ -563,9 +563,9 @@ int PetscSparseMatrix::myCols() const
 // Inf-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the infinity norm of the matrix.
-real64 PetscSparseMatrix::normInf() const
+PetscScalar PetscSparseMatrix::normInf() const
 {
-	real64 normInf;
+	PetscScalar normInf;
 	MatNorm(_mat, NORM_INFINITY, &normInf);
 	return normInf;
 }
@@ -574,9 +574,9 @@ real64 PetscSparseMatrix::normInf() const
 // 1-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the one norm of the matrix.
-real64 PetscSparseMatrix::norm1() const
+PetscScalar PetscSparseMatrix::norm1() const
 {
-	real64 norm1;
+	PetscScalar norm1;
 	MatNorm(_mat, NORM_1, &norm1);
 	return norm1;
 }
@@ -585,9 +585,9 @@ real64 PetscSparseMatrix::norm1() const
 // Frobenius-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the Frobenius norm of the matrix.
-real64 PetscSparseMatrix::normFrobenius() const
+PetscScalar PetscSparseMatrix::normFrobenius() const
 {
-	real64 normFrob;
+	PetscScalar normFrob;
 	MatNorm(_mat, NORM_FROBENIUS, &normFrob);
 	return normFrob;
 }
