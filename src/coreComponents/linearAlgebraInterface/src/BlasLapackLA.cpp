@@ -14,21 +14,21 @@ namespace geosx
 
 //-------------------------------------------------------Mathematical methods---
 
-real64 BlasLapackLA::norm1(array1d<real64> const & X) const
+real64 BlasLapackLA::vectorNorm1(array1d<real64> const & X) const
 {
   return cblas_dasum( integer_conversion<int>(X.size()),
                       X.data(),
                       1);
 }
 
-real64 BlasLapackLA::norm2(array1d<real64> const & X) const
+real64 BlasLapackLA::vectorNorm2(array1d<real64> const & X) const
 {
   return cblas_dnrm2( integer_conversion<int>(X.size()),
                       X.data(),
                       1);
 }
 
-real64 BlasLapackLA::normInf(array1d<real64> const & X) const
+real64 BlasLapackLA::vectorNormInf(array1d<real64> const & X) const
 {
   int ind = cblas_idamax( integer_conversion<int>(X.size()),
                           X.data(),

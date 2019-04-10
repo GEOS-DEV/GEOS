@@ -33,17 +33,17 @@ public:
   /**
    * @brief Returns the 1-norm of the vector.
    */
-  real64 norm1( array1d<real64> const & X ) const;
+  real64 vectorNorm1( array1d<real64> const & X ) const;
 
   /**
    * @brief Returns the two norm of the vector.
    */
-  real64 norm2( array1d<real64> const & X ) const;
+  real64 vectorNorm2( array1d<real64> const & X ) const;
 
   /**
    * @brief Infinity-norm of the vector.
    */
-  real64 normInf( array1d<real64> const & X ) const;
+  real64 vectorNormInf( array1d<real64> const & X ) const;
 
   /**
    * @brief Vector-Vector sum;

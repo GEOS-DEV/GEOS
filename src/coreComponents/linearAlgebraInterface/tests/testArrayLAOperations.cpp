@@ -102,7 +102,6 @@ void testArray1dLA()
   std::default_random_engine generator;
   std::uniform_real_distribution< real64 > distribution( 0.0, 1.0 );
   real64 alfa = distribution( generator );
-  real64 beta;
 
   for( int iSize = 1 ; iSize <= 10 ; ++iSize )
   {
@@ -113,7 +112,9 @@ void testArray1dLA()
 
     // b.
     for (int i = 0; i < iSize; ++i)
+    {
       v1[i] = distribution(generator);
+    }
 
     // c.
     v2 = 0.0;
@@ -131,61 +132,68 @@ void testArray1dLA()
     denseLA.vectorVectorAdd(v2, v1, -1.0 );
 
     // h.
-    EXPECT_LT( denseLA.norm1(v1) / denseLA.norm1(v2), machinePrecision );
-    EXPECT_LT( denseLA.norm2(v1) / denseLA.norm2(v2), machinePrecision );
-    EXPECT_LT( denseLA.normInf(v1) / denseLA.normInf(v2), machinePrecision );
+    EXPECT_NEAR( denseLA.vectorNorm1(v1),
+                 denseLA.vectorNorm1(v2),
+                 machinePrecision*denseLA.vectorNorm1(v2));
+    EXPECT_NEAR( denseLA.vectorNorm2(v1),
+                 denseLA.vectorNorm2(v2),
+                 machinePrecision*denseLA.vectorNorm2(v2) );
+    EXPECT_NEAR( denseLA.vectorNormInf(v1),
+                 denseLA.vectorNormInf(v2),
+                 machinePrecision*denseLA.vectorNormInf(v2) );
 
     // i.
-    beta = denseLA.norm2(v2) - std::sqrt( denseLA.vectorDot(v2, v2));
-    EXPECT_LT( beta / denseLA.norm1(v2), machinePrecision );
+    real64 beta = denseLA.vectorDot(v2, v2);
+    EXPECT_NEAR( std::sqrt( denseLA.vectorDot(v2, v2)),
+                 denseLA.vectorNorm2(v2),
+                 machinePrecision*denseLA.vectorNorm2(v2) );
 
   }
 
 }
 
-//template<typename LAI>
-//void testSerialMatrix()
-//{
-//
-//  using SerialMatrix = typename LAI::SerialMatrix;
-////  using SerialVector = typename LAI::SerialVector;
-//
-//  real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
-//  SerialMatrix A, B, C, D, LHS, RHS;
-//  std::default_random_engine generator;
-//  std::uniform_real_distribution<double> distribution( 0.0, 1.0 );
-//  real64 alfa = distribution( generator );
-//  real64 beta = distribution( generator );
-//
-//  localIndex MA, NA, MB, NB, ND, K;
-//
-//  // Test 2: repeat the following step for vectors of increasing size:
-//  //
-//  // a. compute LHS = ( alfa*A*B + beta*C ) * D
-//  // b. compute RHS = alfa*A*(B*D) + beta*C*D
-//  // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
-//  //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
-//
-//  MA = 10;
-//  NB = 10;
-//  ND = 10;
-//  K = 20;
-//
-//  for( localIndex mA = 1 ; mA <= MA ; ++mA )
-//    for( localIndex nB = 1 ; nB <= NB ; ++nB )
-//      for( localIndex nD = 1 ; nD <= ND ; ++nD )
-//        for( localIndex k = 1 ; k <= K ; ++k )
-//        {
-//          // Resize matrix operators
-//          A.resize( mA, k );
-//          B.resize( k, nB );
-//          C.resize( A.getNumRows(), B.getNumCols() );
-//          D.resize( B.getNumCols(), nD );
-//          LHS.resize( A.getNumRows(), D.getNumCols() );
-//          RHS.resize( A.getNumRows(), D.getNumCols() );
-//
-//          // Populate A, B, C, and D with uniformly distributed random
-//          // coefficients
+template<typename LAI>
+void testArray2dLA()
+{
+  BlasLapackLA denseLA;
+
+  real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
+
+  array2d<real64> A, B, C, D, LHS, RHS;
+  std::default_random_engine generator;
+  std::uniform_real_distribution<double> distribution( 0.0, 1.0 );
+  real64 alfa = distribution( generator );
+  real64 beta = distribution( generator );
+
+  localIndex MA, NA, MB, NB, ND, K;
+
+  // Test 2: repeat the following step for vectors of increasing size:
+  //
+  // a. compute LHS = ( alfa*A*B + beta*C ) * D
+  // b. compute RHS = alfa*A*(B*D) + beta*C*D
+  // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
+  //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
+
+  MA = 10;
+  NB = 10;
+  ND = 10;
+  K = 20;
+
+  for( localIndex mA = 1 ; mA <= MA ; ++mA )
+    for( localIndex nB = 1 ; nB <= NB ; ++nB )
+      for( localIndex nD = 1 ; nD <= ND ; ++nD )
+        for( localIndex k = 1 ; k <= K ; ++k )
+        {
+          // Resize matrix operators
+          A.resize( mA, k );
+          B.resize( k, nB );
+          C.resize( A.size(0), B.size(1) );
+          D.resize( B.size(1), nD );
+          LHS.resize( A.size(0), D.size(1) );
+          RHS.resize( A.size(0), D.size(1) );
+
+          // Populate A, B, C, and D with uniformly distributed random
+          // coefficients
 //          A.rand();
 //          B.rand();
 //          C.rand();
@@ -214,7 +222,7 @@ void testArray1dLA()
 //          EXPECT_LT( RHS.norm1() / LHS.norm1(), machinePrecision );
 //          EXPECT_LT( RHS.normFrobenius() / LHS.normFrobenius(), machinePrecision );
 //
-//        }
+        }
 //
 //  // Test 3: repeat the following step for vectors of increasing size:
 //  //
@@ -391,7 +399,7 @@ void testArray1dLA()
 //
 //        }
 //
-//}
+}
 
 //template<typename LAI>
 //void testSerialMatrixVector()
@@ -534,7 +542,7 @@ TEST(testDenseLAOperations,testLapackDenseLAOperations)
 {
 
   testArray1dLA<BlasLapackLA>();
-//  testSerialMatrix<LapackSuiteInterface>();
+  testArray2dLA<BlasLapackLA>();
 //  testSerialMatrixVector<LapackSuiteInterface>();
 //  testSerialMatrixInverse<LapackSuiteInterface>();
 
