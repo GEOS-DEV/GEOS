@@ -422,7 +422,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   real64 & det )
 {
   // --- Check that source matrix is square
-  int order = A.size( 0 );
+  int order = integer_conversion<lapack_int>(A.size( 0 ));
   GEOS_ASSERT_MSG( order > 0 &&
                    order == A.size( 1 ),
                    "Matrix must be square" );
@@ -436,7 +436,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
   //     note: if order greater than 3 we compute the determinant by
   //           first constructing the LU factors, later reused for calculating
   //           the inverse.
-  lapack_int NN;
+  lapack_int NN = order;
   array1d<lapack_int> IPIV;
   lapack_int INFO;
   array1d<double> INV_WORK;
@@ -451,7 +451,6 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
     matrixCopy(A, Ainv);
 
     // Declare workspace for permutations and scratch array
-    NN = integer_conversion<lapack_int>( order );
     IPIV.resize(NN);
     INV_WORK.resize(NN);
 
