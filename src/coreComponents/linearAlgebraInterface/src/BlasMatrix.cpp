@@ -239,7 +239,7 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
   //     note: if order greater than 3 we compute the determinant by
   //           first constructing the LU factors, later reused for calculating
   //           the inverse.
-  lapack_int NN;
+  lapack_int NN = integer_conversion<lapack_int>( this->getNumCols() );
   array1d<lapack_int> IPIV;
   lapack_int INFO;
   array1d<double> INV_WORK;
@@ -255,7 +255,6 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
     dst.m_values = this->m_values;
 
     // Declare workspace for permutations and scratch array
-    NN = integer_conversion<lapack_int>( this->getNumCols() );
     IPIV.resize(NN);
     INV_WORK.resize(NN);
 
