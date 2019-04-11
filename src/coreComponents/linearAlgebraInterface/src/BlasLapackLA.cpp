@@ -36,11 +36,11 @@ real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X ) const
   return std::abs( X[ind] );
 }
 
-real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
+real64 BlasLapackLA::determinant( array2d<real64> const & A ) const // @suppress("No return")
                                   {
   // --- check that matrix is square
   GEOS_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) &&
-                       A.size( 0 ) > 0,
+                   A.size( 0 ) > 0,
                    "Matrix must be square with order greater than zero" );
 
   switch( A.size( 0 ) )
@@ -51,67 +51,69 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
     }
     case 2:
       {
-      return A( 0, 0 ) * A( 1, 1 ) - A( 0, 1 ) * A( 1, 2 );
+      return A( 0, 0 ) * A( 1, 1 ) - A( 0, 1 ) * A( 1, 0 );
     }
     case 3:
-    {
+      {
       return
-        A( 0, 0 ) * ( A( 1, 1 ) * A( 2, 2 ) - A( 1, 2 ) * A( 2, 1 ) ) +
-        A( 0, 1 ) * ( A( 1, 2 ) * A( 2, 0 ) - A( 1, 0 ) * A( 2, 2 ) ) +
-        A( 0, 2 ) * ( A( 1, 0 ) * A( 2, 1 ) - A( 1, 1 ) * A( 2, 0 ) );
+      A( 0, 0 ) * ( A( 1, 1 ) * A( 2, 2 ) - A( 1, 2 ) * A( 2, 1 ) ) +
+      A( 0, 1 ) * ( A( 1, 2 ) * A( 2, 0 ) - A( 1, 0 ) * A( 2, 2 ) ) +
+      A( 0, 2 ) * ( A( 1, 0 ) * A( 2, 1 ) - A( 1, 1 ) * A( 2, 0 ) );
     }
     case 4:
-    {
+      {
       return
-      v[0] * ( v[5] * ( v[10] * v[15] - v[11] * v[14] ) -
-               v[9] * ( v[6] * v[15] - v[7] * v[14] ) +
-               v[13] * ( v[6] * v[11] - v[7] * v[10] )
-             ) -
-      v[4] * ( v[1] * ( v[10] * v[15] - v[11] * v[14] ) -
-               v[9] * ( v[2] * v[15] - v[3] * v[14] ) +
-               v[13] * ( v[2] * v[11] - v[3] * v[10] )
-              ) +
-      v[8] * ( v[1] * ( v[6] * v[15] - v[7] * v[14] ) -
-               v[5] * ( v[2] * v[15] - v[3] * v[14] ) +
-               v[13] * ( v[2] * v[7] - v[3] * v[6] )
-          ) -
-      v[12] * ( v[1] * ( v[6] * v[11] - v[7] * v[10] ) -
-                v[5] * ( v[2] * v[11] - v[3] * v[10] ) +
-                v[9] * ( v[2] * v[7] - v[3] * v[6] )
-          );
+      A( 0, 0 ) * ( A( 1, 1 ) * ( A( 2, 2 ) * A( 3, 3 ) - A( 3, 2 ) * A( 2, 3 ) ) -
+                    A( 1, 2 ) * ( A( 2, 1 ) * A( 3, 3 ) - A( 3, 1 ) * A( 2, 3 ) ) +
+                    A( 1, 3 ) * ( A( 2, 1 ) * A( 3, 2 ) - A( 3, 1 ) * A( 2, 2 ) )
+                  ) -
+      A( 0, 1 ) * ( A( 1, 0 ) * ( A( 2, 2 ) * A( 3, 3 ) - A( 3, 2 ) * A( 2, 3 ) ) -
+                    A( 1, 2 ) * ( A( 2, 0 ) * A( 3, 3 ) - A( 3, 0 ) * A( 2, 3 ) ) +
+                    A( 1, 3 ) * ( A( 2, 0 ) * A( 3, 2 ) - A( 3, 0 ) * A( 2, 2 ) )
+                  ) +
+      A( 0, 2 ) * ( A( 1, 0 ) * ( A( 2, 1 ) * A( 3, 3 ) - A( 3, 1 ) * A( 2, 3 ) ) -
+                    A( 1, 1 ) * ( A( 2, 0 ) * A( 3, 3 ) - A( 3, 0 ) * A( 2, 3 ) ) +
+                    A( 1, 3 ) * ( A( 2, 0 ) * A( 3, 1 ) - A( 3, 0 ) * A( 2, 1 ) )
+                  ) -
+      A( 0, 3 ) * ( A( 1, 0 ) * ( A( 2, 1 ) * A( 3, 2 ) - A( 3, 1 ) * A( 2, 2 ) ) -
+                    A( 1, 1 ) * ( A( 2, 0 ) * A( 3, 2 ) - A( 3, 0 ) * A( 2, 2 ) ) +
+                    A( 1, 2 ) * ( A( 2, 0 ) * A( 3, 1 ) - A( 3, 0 ) * A( 2, 1 ) )
+                  );
     }
-//    default:
-//
-//      // Compute the determinant via LU factorization
-//      lapack_int INFO;
-//      lapack_int NN = integer_conversion<lapack_int>( this->getNumRows() );
-//      array1d<lapack_int> IPIV( NN );
-//      array1d<double> LUfactor( m_values );
-//
-//      INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
-//                             NN,
-//                             NN,
-//                             LUfactor.data(),
-//                             NN,
-//                             IPIV.data() );
-//      GEOS_ASSERT_MSG( INFO == 0,
-//                       "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
-//
-//      real64 det = 1.0;
-//      for( int i = 0 ; i < NN ; ++i )
-//      {
-//        if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
-//        {
-//          det *= -LUfactor[NN * i + i];
-//        }
-//        else
-//        {
-//          det *= LUfactor[NN * i + i];
-//        }
-//      }
-//      return det;
+    default:
+
+      // Compute the determinant via LU factorization
+      lapack_int INFO;
+      lapack_int NN = integer_conversion<lapack_int>( A.size(0) );
+      array1d<lapack_int> IPIV( NN );
+      array2d<double> LUfactor( A );
+
+      INFO = LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
+                             NN,
+                             NN,
+                             LUfactor.data(),
+                             NN,
+                             IPIV.data() );
+      GEOS_ASSERT_MSG( INFO == 0,
+                       "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
+
+      real64 det = 1.0;
+      for( int i = 0 ; i < NN ; ++i )
+      {
+        if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
+        {
+          det *= -LUfactor( i, i);
+        }
+        else
+        {
+          det *= LUfactor( i, i);
+        }
+      }
+
+      return det;
+
   }
-  return -999;
+
 }
 
 real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A ) const
@@ -410,9 +412,9 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   array2d<real64> & Ainv )
 {
   real64 det;
-  BlasLapackLA::matrixInverse( A,
-                               Ainv,
-                               det );
+  matrixInverse( A,
+                 Ainv,
+                 det );
 }
 
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
@@ -422,121 +424,122 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
   // --- Check that source matrix is square
   int order = A.size( 0 );
   GEOS_ASSERT_MSG( order > 0 &&
-                       order == A.size( 1 ),
+                   order == A.size( 1 ),
                    "Matrix must be square" );
 
   // --- Check that inverse matrix has appropriate dimension
   GEOS_ASSERT_MSG( Ainv.size( 0 ) == order &&
-                       Ainv.size( 1 ) == order,
+                   Ainv.size( 1 ) == order,
                    "Inverse matrix has wrong dimensions" );
 
   // --- Check if matrix is singular by computing the determinant
   //     note: if order greater than 3 we compute the determinant by
   //           first constructing the LU factors, later reused for calculating
   //           the inverse.
-//  lapack_int NN;
-//  array1d<lapack_int> IPIV;
-//  lapack_int INFO;
-//  array1d<double> INV_WORK;
-//
-//  if (order <= 3)
-//  {
-//    det = this->determinant();
-//    real64 oneOverDet = 1. / this->determinant();
-//  }
-//  else
-//  {
-//    // Copy this in dst
-//    dst.m_values = this->m_values;
-//
-//    // Declare workspace for permutations and scratch array
-//    NN = integer_conversion<lapack_int>( this->getNumCols() );
-//    IPIV.resize(NN);
-//    INV_WORK.resize(NN);
-//
-//    // Call to LAPACK using LAPACKE
-//    // --- Compute LU factorization (LAPACK function DGETRF)
-//    INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
-//                           NN,
-//                           NN,
-//                           dst.m_values.data(),
-//                           NN,
-//                           IPIV.data() );
-//    GEOS_ASSERT_MSG( INFO == 0,
-//                     "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
-//
-//    // --- Compute determinant (not done calling directly the function determinant
-//    det = 1.0;
-//    for( int i = 0 ; i < NN ; ++i )
-//    {
-//      if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
-//      {
-//        det *= -dst.m_values[NN * i + i];
-//      }
-//      else
-//      {
-//        det *= dst.m_values[NN * i + i];
-//      }
-//    }
-//  }
-//
-//  real64 oneOverDet = 1. / this->determinant();
-//  GEOS_ASSERT_MSG( !( std::isinf( oneOverDet ) ), "Matrix is singular" );
-//
-//  // --- Compute inverse
-//  switch( order )
-//    {
-//      case 1:
-//        dst( 0, 0 ) = oneOverDet;
-//        return;
-//
-//        // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
-//      case 2:
-//        {
-//        dst( 0, 0 ) = ( *this )( 1, 1 ) * oneOverDet;
-//        dst( 0, 1 ) = -( *this )( 0, 1 ) * oneOverDet;
-//        dst( 1, 0 ) = -( *this )( 1, 0 ) * oneOverDet;
-//        dst( 1, 1 ) = ( *this )( 0, 0 ) * oneOverDet;
-//        return;
-//      }
-//        ;
-//
-//      case 3:
-//        {
-//        dst( 0, 0 ) = ( ( *this )( 1, 1 ) * ( *this )( 2, 2 ) -
-//                        ( *this )( 1, 2 ) * ( *this )( 2, 1 ) ) * oneOverDet;
-//        dst( 0, 1 ) = ( ( *this )( 0, 2 ) * ( *this )( 2, 1 ) -
-//                        ( *this )( 0, 1 ) * ( *this )( 2, 2 ) ) * oneOverDet;
-//        dst( 0, 2 ) = ( ( *this )( 0, 1 ) * ( *this )( 1, 2 ) -
-//                        ( *this )( 0, 2 ) * ( *this )( 1, 1 ) ) * oneOverDet;
-//        dst( 1, 0 ) = ( ( *this )( 1, 2 ) * ( *this )( 2, 0 ) -
-//                        ( *this )( 1, 0 ) * ( *this )( 2, 2 ) ) * oneOverDet;
-//        dst( 1, 1 ) = ( ( *this )( 0, 0 ) * ( *this )( 2, 2 ) -
-//                        ( *this )( 0, 2 ) * ( *this )( 2, 0 ) ) * oneOverDet;
-//        dst( 1, 2 ) = ( ( *this )( 0, 2 ) * ( *this )( 1, 0 ) -
-//                        ( *this )( 0, 0 ) * ( *this )( 1, 2 ) ) * oneOverDet;
-//        dst( 2, 0 ) = ( ( *this )( 1, 0 ) * ( *this )( 2, 1 ) -
-//                        ( *this )( 1, 1 ) * ( *this )( 2, 0 ) ) * oneOverDet;
-//        dst( 2, 1 ) = ( ( *this )( 0, 1 ) * ( *this )( 2, 0 ) -
-//                        ( *this )( 0, 0 ) * ( *this )( 2, 1 ) ) * oneOverDet;
-//        dst( 2, 2 ) = ( ( *this )( 0, 0 ) * ( *this )( 1, 1 ) -
-//                        ( *this )( 0, 1 ) * ( *this )( 1, 0 ) ) * oneOverDet;
-//        return;
-//      }
-//      default:
-//    {
-//    // --- Invert (LAPACK function DGETRI)
-//    INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
-//                           NN,
-//                           dst.m_values.data(),
-//                           NN,
-//                           IPIV.data() );
-//    GEOS_ASSERT_MSG( INFO == 0,
-//                     "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
-//
-//    return;
-//    }
-//  }
+  lapack_int NN;
+  array1d<lapack_int> IPIV;
+  lapack_int INFO;
+  array1d<double> INV_WORK;
+
+  if (order <= 3)
+  {
+    det = determinant(A);
+  }
+  else
+  {
+    // Copy A in Ainv
+    matrixCopy(A, Ainv);
+
+    // Declare workspace for permutations and scratch array
+    NN = integer_conversion<lapack_int>( order );
+    IPIV.resize(NN);
+    INV_WORK.resize(NN);
+
+    // Call to LAPACK using LAPACKE
+    // --- Compute LU factorization (LAPACK function DGETRF)
+    INFO = LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
+                           NN,
+                           NN,
+                           Ainv.data(),
+                           NN,
+                           IPIV.data() );
+    GEOS_ASSERT_MSG( INFO == 0,
+                     "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
+
+    // --- Compute determinant (not done calling directly the function determinant
+    //     (avoid computing twice LUfactors, currently stored in Ainv, needed for
+    //     computing the inverse)
+    det = 1.0;
+    for( int i = 0 ; i < NN ; ++i )
+    {
+      if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
+      {
+        det *= -Ainv(i,i);
+      }
+      else
+      {
+        det *= Ainv(i,i);
+      }
+    }
+  }
+
+  real64 oneOverDet = 1. / det;
+  GEOS_ASSERT_MSG( !( std::isinf( oneOverDet ) ), "Matrix is singular" );
+
+  // --- Compute inverse
+  switch( order )
+    {
+      case 1:
+        Ainv( 0, 0 ) = oneOverDet;
+        return;
+
+        // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
+      case 2:
+        {
+        Ainv( 0, 0 ) =  A( 1, 1 ) * oneOverDet;
+        Ainv( 0, 1 ) = -A( 0, 1 ) * oneOverDet;
+        Ainv( 1, 0 ) = -A( 1, 0 ) * oneOverDet;
+        Ainv( 1, 1 ) =  A( 0, 0 ) * oneOverDet;
+        return;
+      }
+        ;
+
+      case 3:
+        {
+        Ainv( 0, 0 ) = ( A( 1, 1 ) * A( 2, 2 ) -
+                         A( 1, 2 ) * A( 2, 1 ) ) * oneOverDet;
+        Ainv( 0, 1 ) = ( A( 0, 2 ) * A( 2, 1 ) -
+                         A( 0, 1 ) * A( 2, 2 ) ) * oneOverDet;
+        Ainv( 0, 2 ) = ( A( 0, 1 ) * A( 1, 2 ) -
+                         A( 0, 2 ) * A( 1, 1 ) ) * oneOverDet;
+        Ainv( 1, 0 ) = ( A( 1, 2 ) * A( 2, 0 ) -
+                         A( 1, 0 ) * A( 2, 2 ) ) * oneOverDet;
+        Ainv( 1, 1 ) = ( A( 0, 0 ) * A( 2, 2 ) -
+                         A( 0, 2 ) * A( 2, 0 ) ) * oneOverDet;
+        Ainv( 1, 2 ) = ( A( 0, 2 ) * A( 1, 0 ) -
+                         A( 0, 0 ) * A( 1, 2 ) ) * oneOverDet;
+        Ainv( 2, 0 ) = ( A( 1, 0 ) * A( 2, 1 ) -
+                         A( 1, 1 ) * A( 2, 0 ) ) * oneOverDet;
+        Ainv( 2, 1 ) = ( A( 0, 1 ) * A( 2, 0 ) -
+                         A( 0, 0 ) * A( 2, 1 ) ) * oneOverDet;
+        Ainv( 2, 2 ) = ( A( 0, 0 ) * A( 1, 1 ) -
+                         A( 0, 1 ) * A( 1, 0 ) ) * oneOverDet;
+        return;
+      }
+      default:
+    {
+    // --- Invert (LAPACK function DGETRI)
+    INFO = LAPACKE_dgetri( LAPACK_ROW_MAJOR,
+                           NN,
+                           Ainv.data(),
+                           NN,
+                           IPIV.data() );
+    GEOS_ASSERT_MSG( INFO == 0,
+                     "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
+
+    return;
+    }
+  }
 }
 
 void BlasLapackLA::vectorCopy( array1d<real64> const & X,
@@ -550,6 +553,22 @@ void BlasLapackLA::vectorCopy( array1d<real64> const & X,
                X.data(),
                1,
                Y.data(),
+               1 );
+  return;
+}
+
+void BlasLapackLA::matrixCopy( array2d<real64> const & A,
+                               array2d<real64> & B )
+{
+  GEOS_ASSERT_MSG( A.size(0) == B.size(0) &&
+                   A.size(1) == B.size(1),
+                   "Matrix dimensions not compatible for copying" );
+
+  // Call to BLAS using CBLAS interface
+  cblas_dcopy( integer_conversion<int>( A.size(0)*A.size(1) ),
+               A.data(),
+               1,
+               B.data(),
                1 );
   return;
 }

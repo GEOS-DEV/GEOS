@@ -403,6 +403,23 @@ public:
    */
   void vectorCopy( array1d<real64> const & X,
                    array1d<real64> & Y );
+
+  /**
+   * @brief Vector copy;
+   * <tt>B</tt> = <tt>A<tt>
+   *
+   * \param IN
+   * <tt>A</tt> - GEOSX array2d.
+   *
+   * \param INOUT
+   * <tt>B</tt> - GEOSX array2d.
+   *
+   * @warning
+   * Assumes that <tt>A</tt> and <tt>B</tt> have the same size.
+   *
+   */
+  void matrixCopy( array2d<real64> const & A,
+                   array2d<real64> & B );
   //@}
 
   //----------------------------------------------------------------------------

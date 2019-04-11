@@ -596,14 +596,17 @@ void testArray2dInverseLA()
     }
 
     // b.
-    //E.computeInverse( Einv, det );
+    Einv.resize( E.size(0), E.size(1) );
+    denseLA.matrixInverse(E, Einv, det );
 
-//    // c.
-//    EinvXE.resize( E.getNumRows() );
-//    Einv.matrixMultiply( E, EinvXE );
-//
-//    // d.
-//    EXPECT_LT( std::fabs( EinvXE.determinant() - 1. ), machinePrecision );
+    // c.
+    EinvXE.resize( E.size(0), E.size(1) );
+    denseLA.matrixMatrixMultiply( Einv, E, EinvXE );
+
+    // d.
+    EXPECT_NEAR( denseLA.determinant(EinvXE),
+                 1.,
+                 machinePrecision );
   }
 }
 
