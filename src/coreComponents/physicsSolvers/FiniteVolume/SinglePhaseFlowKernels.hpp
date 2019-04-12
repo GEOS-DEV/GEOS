@@ -20,8 +20,8 @@
  * @file SinglePhaseFlow_kernels.hpp
  */
 
-#ifndef GEOSX_SINGLEPHASEFLOW_KERNELS_HPP
-#define GEOSX_SINGLEPHASEFLOW_KERNELS_HPP
+#ifndef GEOSX_SINGLEPHASEFLOWKERNELS_HPP
+#define GEOSX_SINGLEPHASEFLOWKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -339,4 +339,4 @@ inline static void MakeFlux( StencilCollection<localIndex, real64>::Accessor ste
 
 } // namespace geosx
 
-#endif //GEOSX_SINGLEPHASEFLOW_KERNELS_HPP
+#endif //GEOSX_SINGLEPHASEFLOWKERNELS_HPP
