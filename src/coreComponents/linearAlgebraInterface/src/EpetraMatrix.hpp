@@ -107,7 +107,7 @@ public:
    */
   void createWithGlobalSize( globalIndex const globalSize,
                              localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm = MPI_COMM_WORLD );
+                             MPI_Comm const & comm );
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -120,7 +120,7 @@ public:
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm = MPI_COMM_WORLD );
+                            MPI_Comm const & comm );
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -133,7 +133,7 @@ public:
   void createWithGlobalSize( globalIndex const globalRows,
                              globalIndex const globalCols,
                              localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm = MPI_COMM_WORLD );
+                             MPI_Comm const & comm );
 
 
   /**

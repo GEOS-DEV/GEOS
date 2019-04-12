@@ -330,9 +330,9 @@ TEST(testCapPressure, numericalDerivatives_brooksCoreyCapPressureTwoPhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.2; 
-  real64 const end_sat   = 0.8;
-  real64 const dS = 1e-4;
+  real64 const start_sat = 0.4; 
+  real64 const end_sat   = 0.6;
+  real64 const dS = 1e-1;
   array1d<real64> sat(2);
   sat[0] = start_sat; sat[1] = 1.0-sat[0];
   while (sat[0] <= end_sat)
@@ -357,11 +357,13 @@ TEST(testCapPressure, numericalDerivatives_brooksCoreyCapPressureThreePhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.2;
-  real64 const end_sat   = 0.8;
-  real64 const dS = 1e-4;
+  real64 const start_sat = 0.4;
+  real64 const end_sat   = 0.6;
+  real64 const dS = 1e-1;
   array1d<real64> sat(3);
-  sat[0] = start_sat; sat[1] = 0.5*(1-sat[0]); sat[2] = 1.0-sat[0]-sat[1]; 
+  sat[0] = start_sat;
+  sat[1] = 0.5*(1-sat[0]);
+  sat[2] = 1.0-sat[0]-sat[1]; 
   while (sat[0] <= end_sat)
   {
     testNumericalDerivatives( fluid, sat, eps, tol );
@@ -385,9 +387,9 @@ TEST(testCapPressure, numericalDerivatives_vanGenuchtenCapPressureTwoPhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.2;
-  real64 const end_sat   = 0.8;
-  real64 const dS        = 1e-4;
+  real64 const start_sat = 0.4;
+  real64 const end_sat   = 0.6;
+  real64 const dS        = 1e-1;
   array1d<real64> sat(2);
   sat[0] = start_sat; sat[1] = 1-sat[1];
   while (sat[0] <= end_sat)
@@ -413,9 +415,9 @@ TEST(testCapPressure, numericalDerivatives_vanGenuchtenCapPressureThreePhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.2;
-  real64 const end_sat   = 0.8;
-  real64 const dS        = 1e-4;
+  real64 const start_sat = 0.4;
+  real64 const end_sat   = 0.6;
+  real64 const dS        = 1e-1;
   array1d<real64> sat(3);
   sat[0] = start_sat;
   sat[1] = 0.5*(1-sat[0]);
