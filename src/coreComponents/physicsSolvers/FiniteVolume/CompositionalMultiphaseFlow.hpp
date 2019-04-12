@@ -423,12 +423,6 @@ private:
                                       real64 const time, real64 const dt,
                                       systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
-  template<typename KERNELWRAPPER, typename... ARGS>
-  static void KenrelLaunchSelector1( localIndex numComp, ARGS && ... args );
-
-  template<typename KERNELWRAPPER, typename... ARGS>
-  static void KenrelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args );
-
   /// the max number of fluid phases
   localIndex m_numPhases;
 
@@ -505,72 +499,6 @@ private:
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseRelPerm_dPhaseVolFrac;
 };
 
-template<typename T, typename LAMBDA>
-auto KenrelLaunchSelectorCompSwitch(T value, LAMBDA && lambda)
-{
-  static_assert( std::is_integral<T>::value, "KenrelLaunchSelectorCompSwitch: type should be integral" );
-
-  switch (value)
-  {
-    case 1:  return lambda( std::integral_constant<T, 1>() );
-    case 2:  return lambda( std::integral_constant<T, 2>() );
-    case 3:  return lambda( std::integral_constant<T, 3>() );
-    case 4:  return lambda( std::integral_constant<T, 4>() );
-    case 5:  return lambda( std::integral_constant<T, 5>() );
-    case 6:  return lambda( std::integral_constant<T, 6>() );
-    case 7:  return lambda( std::integral_constant<T, 7>() );
-    case 8:  return lambda( std::integral_constant<T, 8>() );
-    case 9:  return lambda( std::integral_constant<T, 9>() );
-    case 10: return lambda( std::integral_constant<T, 10>() );
-    case 11: return lambda( std::integral_constant<T, 11>() );
-    case 12: return lambda( std::integral_constant<T, 12>() );
-    case 13: return lambda( std::integral_constant<T, 13>() );
-    case 14: return lambda( std::integral_constant<T, 14>() );
-    case 15: return lambda( std::integral_constant<T, 15>() );
-    default: GEOS_ERROR("KenrelLaunchSelectorCompSwitch: unsupported value = " << value);
-  }
-
-  return lambda( std::integral_constant<T, 1>() );
-}
-
-template<typename T, typename LAMBDA>
-auto KenrelLaunchSelectorPhaseSwitch(T value, LAMBDA && lambda)
-{
-  static_assert( std::is_integral<T>::value, "KenrelLaunchSelectorPhaseSwitch: type should be integral" );
-
-  switch (value)
-  {
-    case 1:  return lambda( std::integral_constant<T, 1>() );
-    case 2:  return lambda( std::integral_constant<T, 2>() );
-    case 3:  return lambda( std::integral_constant<T, 3>() );
-    default: GEOS_ERROR("KenrelLaunchSelectorPhaseSwitch: unsupported value = " << value);
-  }
-
-  return lambda( std::integral_constant<T, 1>() );
-}
-
-template<typename KERNELWRAPPER, typename... ARGS>
-void CompositionalMultiphaseFlow::KenrelLaunchSelector1( localIndex numComp, ARGS && ... args )
-{
-  KenrelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-  {
-    KERNELWRAPPER::template Launch<NC()>( std::forward<ARGS>(args)... );
-  } );
-}
-
-template<typename KERNELWRAPPER, typename... ARGS>
-void CompositionalMultiphaseFlow::KenrelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
-{
-  // gcc-7 produces bugged code without explicit capture list here...
-  KenrelLaunchSelectorCompSwitch( numComp, [&numPhase, &args...] ( auto NC_ )
-  {
-    KenrelLaunchSelectorPhaseSwitch( numPhase, [&] ( auto NP )
-    {
-      auto constexpr NC = decltype(NC_)::value; // damn you stupid C++ rules (https://stackoverflow.com/questions/43665610)
-      KERNELWRAPPER::template Launch<NC, NP()>( std::forward<ARGS>(args)... );
-    } );
-  } );
-}
 
 } // namespace geosx
 
