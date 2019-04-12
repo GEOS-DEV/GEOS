@@ -164,7 +164,7 @@ public:
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdateRelPermModel( Well * well );
+  void UpdateMixtureDensity( Well * well );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -320,6 +320,11 @@ public:
     static constexpr auto dPhaseVolumeFraction_dPressureString = "dSegmentPhaseVolumeFraction_dPres";
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dSegmentPhaseVolumeFraction_dComp";
 
+    // mixture density
+    static constexpr auto mixtureDensityString = "segmentMixtureDensity";
+    static constexpr auto dMixtureDensity_dPressureString = "dSegmentMixtureDensity_dPres";
+    static constexpr auto dMixtureDensity_dCompString = "dSegmentMixtureDensity_dComp";
+
     // intermediate values for constitutive model input
     static constexpr auto globalCompFractionString                     = "segmentGlobalComponentFraction";
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dSegmentGlobalComponentFraction_dGlobalCompDensity";
@@ -355,6 +360,11 @@ public:
     ViewKey dPhaseVolFrac_dPres = { dPhaseVolumeFraction_dPressureString };
     ViewKey dPhaseVolFrac_dComp = { dPhaseVolumeFraction_dGlobalCompDensityString };
     
+    // mixture density
+    ViewKey mixtureDensity = { mixtureDensityString };
+    ViewKey dMixtureDensity_dPres = { dMixtureDensity_dPressureString };
+    ViewKey dMixtureDensity_dComp = { dMixtureDensity_dGlobalCompDensityString };
+
     // global composition to input injection stream
     ViewKey globalComponentFrac        = { globalCompFractionString };
     ViewKey dGlobalComponentFrac_dComp = { dGlobalCompFraction_dGlobalCompDensityString };

@@ -842,11 +842,6 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
 }
 */
 
-/*
-
-Here I will need to figure things out later 
-currently the derivatives of phase densities make this test fail
-
 TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Flux)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
@@ -873,7 +868,7 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Flux)
                          });
   
 }
-*/
+
 
 TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Control)
 {
