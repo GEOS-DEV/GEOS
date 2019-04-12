@@ -158,15 +158,15 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   else if( m_parameters.preconditionerType == "amg" )
   {
 
-    if(m_parameters.amg.solver == "Petsc")
+    if(m_parameters.amg.solver== "Petsc")
     {
       PCSetType(prec, PCMG);
-      if (m_parameters.amg.cycleType == "v"){
+      PetscOptionsSetValue(NULL, "-pc_mg_levels", m_parameters.amg.maxLevels);
+      if (m_parameters.amg.cycleType == "V"){
         PCMGSetCycleType(prec, PC_MG_CYCLE_V);
       } else {
         PCMGSetCycleType(prec, PC_MG_CYCLE_W);
       }
-      PetscOptionsSetValue(NULL, "-pc_mg_levels", m_parameters.amg.maxLevels);
       PCMGSetNumberSmooth(prec, m_parameters.amg.numSweeps); 
       // by default, Chebyshev + SOR smoother
     } 
@@ -175,28 +175,17 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
       PCSetType(prec, PCHYPRE);
       PCHYPRESetType(prec, "boomeramg")
       PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_max_levels", m_parameters.amg.maxLevels); 
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_cycle_type", m_parameters.amg.cycleType); // "V" or "W"
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_smooth_type", "Schwarz-smoothers"); // "Schwarz-smoothers" "Pilut" "ParaSails" "Euclid"
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_coarsen_type", "Falgout"); // "CLJP" "Ruge-Stueben"  "modifiedRuge-Stueben"   "Falgout"  "PMIS"  "HMIS"
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_cycle_type", m_parameters.amg.cycleType); 
+      // relaxation method on one level
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_down", m_parameters.amgHypre.smootherType_up); 
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_up", m_parameters.amgHypre.smootherType_down); 
+      // move between grids
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_smooth_type", m_parameters.amgHypre.coarseType_up);
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_coarsen_type", m_parameters.amgHypre.coarseType_down);
+      // number of relaxation sweeps on one level
       PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_down", m_parameters.amg.numSweeps); 
-      // PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_up", m_parameters.amg.numSweeps); 
-      // PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_coarse", m_parameters.amg.numSweeps); 
-
-      // Maybe relevant options?
-      // -pc_hypre_boomeramg_relax_type_down <symmetric-SOR/Jacobi> Relax type for the down cycles (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-      // -pc_hypre_boomeramg_relax_type_up <symmetric-SOR/Jacobi> Relax type for the up cycles (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-      // -pc_hypre_boomeramg_relax_type_coarse <Gaussian-elimination> Relax type on coarse grid (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-
-    } 
-    else if(m_parameters.amg.solver == "Trilinos")
-    {
-      PCSetType(prec, PCML);
-      PetscOptionsSetValue(NULL, "-pc_type", ml);
-      PetscOptionsSetValue(NULL, "-pc_ml_maxNlevels", m_parameters.amg.maxLevels);
-
-      // -pc_ml_CoarsenScheme <Uncoupled> Aggregate Coarsen Scheme (choose one of) Uncoupled Coupled MIS METIS (ML_Aggregate_Set_CoarsenScheme_*)
-      // -pc_ml_Symmetrize: <FALSE> Symmetrize aggregation (ML_Set_Symmetrize)
-      // -pc_ml_nullspace <AUTO> Which type of null space information to use (choose one of) AUTO USER BLOCK SCALAR (None)
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_up", m_parameters.amg.numSweeps); 
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_coarse", m_parameters.amg.numSweeps); // coarsest grid
     } 
     else
     {
