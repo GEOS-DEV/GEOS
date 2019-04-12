@@ -188,17 +188,16 @@ real64 BlasMatrix::determinant() const
     default:
 
       // Compute the determinant via LU factorization
-      lapack_int INFO;
       lapack_int NN = integer_conversion<lapack_int>( this->getNumRows() );
       array1d<lapack_int> IPIV( NN );
       array1d<double> LUfactor( m_values );
 
-      INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
-                             NN,
-                             NN,
-                             LUfactor.data(),
-                             NN,
-                             IPIV.data() );
+      lapack_int INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
+                                        NN,
+                                        NN,
+                                        LUfactor.data(),
+                                        NN,
+                                        IPIV.data() );
       GEOS_ASSERT_MSG( INFO == 0,
                        "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
 
@@ -241,7 +240,6 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
   //           the inverse.
   lapack_int NN = integer_conversion<lapack_int>( this->getNumCols() );
   array1d<lapack_int> IPIV;
-  lapack_int INFO;
   array1d<double> INV_WORK;
 
   if (order <= 3)
@@ -260,12 +258,12 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
 
     // Call to LAPACK using LAPACKE
     // --- Compute LU factorization (LAPACK function DGETRF)
-    INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
-                           NN,
-                           NN,
-                           dst.m_values.data(),
-                           NN,
-                           IPIV.data() );
+    lapack_int INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
+                                      NN,
+                                      NN,
+                                      dst.m_values.data(),
+                                      NN,
+                                      IPIV.data() );
     GEOS_ASSERT_MSG( INFO == 0,
                      "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
 
@@ -330,11 +328,11 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
       default:
     {
     // --- Invert (LAPACK function DGETRI)
-    INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
-                           NN,
-                           dst.m_values.data(),
-                           NN,
-                           IPIV.data() );
+      lapack_int INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
+                                           NN,
+                                           dst.m_values.data(),
+                                           NN,
+                                           IPIV.data() );
     GEOS_ASSERT_MSG( INFO == 0,
                      "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
 

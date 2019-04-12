@@ -83,12 +83,11 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const // @suppress
     default:
 
       // Compute the determinant via LU factorization
-      lapack_int INFO;
       lapack_int NN = integer_conversion<lapack_int>( A.size(0) );
       array1d<lapack_int> IPIV( NN );
       array2d<double> LUfactor( A );
 
-      INFO = LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
+      lapack_int INFO =  LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
                              NN,
                              NN,
                              LUfactor.data(),
@@ -438,7 +437,6 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
   //           the inverse.
   lapack_int NN = order;
   array1d<lapack_int> IPIV;
-  lapack_int INFO;
   array1d<double> INV_WORK;
 
   if (order <= 3)
@@ -456,7 +454,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
 
     // Call to LAPACK using LAPACKE
     // --- Compute LU factorization (LAPACK function DGETRF)
-    INFO = LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
+    lapack_int INFO = LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
                            NN,
                            NN,
                            Ainv.data(),
@@ -528,7 +526,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
       default:
     {
     // --- Invert (LAPACK function DGETRI)
-    INFO = LAPACKE_dgetri( LAPACK_ROW_MAJOR,
+    lapack_int INFO = LAPACKE_dgetri( LAPACK_ROW_MAJOR,
                            NN,
                            Ainv.data(),
                            NN,
