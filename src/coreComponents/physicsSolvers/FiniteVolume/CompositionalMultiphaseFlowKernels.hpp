@@ -39,17 +39,17 @@ struct UpdateComponentFractionKernel
 
   template<localIndex NC>
   static inline RAJA_HOST_DEVICE void
-  Compute( arraySlice1d<real64 const> const & compDens,
-           arraySlice1d<real64 const> const & dCompDens,
-           arraySlice1d<real64> const & compFrac,
-           arraySlice2d<real64> const & dCompFrac_dCompDens );
+  Compute( arraySlice1d<real64 const> compDens,
+           arraySlice1d<real64 const> dCompDens,
+           arraySlice1d<real64> compFrac,
+           arraySlice2d<real64> dCompFrac_dCompDens );
 
   static inline RAJA_HOST_DEVICE void
   Compute( localIndex NC,
-           arraySlice1d<real64 const> const & compDens,
-           arraySlice1d<real64 const> const & dCompDens,
-           arraySlice1d<real64> const & compFrac,
-           arraySlice2d<real64> const & dCompFrac_dCompDens );
+           arraySlice1d<real64 const> compDens,
+           arraySlice1d<real64 const> dCompDens,
+           arraySlice1d<real64> compFrac,
+           arraySlice2d<real64> dCompFrac_dCompDens );
 
   template<localIndex NC>
   static void Launch( localIndex begin, localIndex end,
@@ -95,33 +95,33 @@ struct UpdatePhaseVolumeFractionKernel
 
   template<localIndex NC, localIndex NP>
   static inline RAJA_HOST_DEVICE void
-  Compute( arraySlice1d<real64 const> const & compDens,
-           arraySlice1d<real64 const> const & dCompDens,
-           arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-           arraySlice1d<real64 const> const & phaseDens,
-           arraySlice1d<real64 const> const & dPhaseDens_dPres,
-           arraySlice2d<real64 const> const & dPhaseDens_dComp,
-           arraySlice1d<real64 const> const & phaseFrac,
-           arraySlice1d<real64 const> const & dPhaseFrac_dPres,
-           arraySlice2d<real64 const> const & dPhaseFrac_dComp,
-           arraySlice1d<real64> const & phaseVolFrac,
-           arraySlice1d<real64> const & dPhaseVolFrac_dPres,
-           arraySlice2d<real64> const & dPhaseVolFrac_dComp );
+  Compute( arraySlice1d<real64 const> compDens,
+           arraySlice1d<real64 const> dCompDens,
+           arraySlice2d<real64 const> dCompFrac_dCompDens,
+           arraySlice1d<real64 const> phaseDens,
+           arraySlice1d<real64 const> dPhaseDens_dPres,
+           arraySlice2d<real64 const> dPhaseDens_dComp,
+           arraySlice1d<real64 const> phaseFrac,
+           arraySlice1d<real64 const> dPhaseFrac_dPres,
+           arraySlice2d<real64 const> dPhaseFrac_dComp,
+           arraySlice1d<real64> phaseVolFrac,
+           arraySlice1d<real64> dPhaseVolFrac_dPres,
+           arraySlice2d<real64> dPhaseVolFrac_dComp );
 
   static inline RAJA_HOST_DEVICE void
   Compute( localIndex NC, localIndex NP,
-           arraySlice1d<real64 const> const & compDens,
-           arraySlice1d<real64 const> const & dCompDens,
-           arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-           arraySlice1d<real64 const> const & phaseDens,
-           arraySlice1d<real64 const> const & dPhaseDens_dPres,
-           arraySlice2d<real64 const> const & dPhaseDens_dComp,
-           arraySlice1d<real64 const> const & phaseFrac,
-           arraySlice1d<real64 const> const & dPhaseFrac_dPres,
-           arraySlice2d<real64 const> const & dPhaseFrac_dComp,
-           arraySlice1d<real64> const & phaseVolFrac,
-           arraySlice1d<real64> const & dPhaseVolFrac_dPres,
-           arraySlice2d<real64> const & dPhaseVolFrac_dComp );
+           arraySlice1d<real64 const> compDens,
+           arraySlice1d<real64 const> dCompDens,
+           arraySlice2d<real64 const> dCompFrac_dCompDens,
+           arraySlice1d<real64 const> phaseDens,
+           arraySlice1d<real64 const> dPhaseDens_dPres,
+           arraySlice2d<real64 const> dPhaseDens_dComp,
+           arraySlice1d<real64 const> phaseFrac,
+           arraySlice1d<real64 const> dPhaseFrac_dPres,
+           arraySlice2d<real64 const> dPhaseFrac_dComp,
+           arraySlice1d<real64> phaseVolFrac,
+           arraySlice1d<real64> dPhaseVolFrac_dPres,
+           arraySlice2d<real64> dPhaseVolFrac_dComp );
 
   template<localIndex NC, localIndex NP>
   static void Launch( localIndex begin, localIndex end,
@@ -213,37 +213,37 @@ struct UpdatePhaseMobilityKernel
 
   template<localIndex NC, localIndex NP>
   static inline RAJA_HOST_DEVICE void
-  Compute( arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-           arraySlice1d<real64 const> const & phaseDens,
-           arraySlice1d<real64 const> const & dPhaseDens_dPres,
-           arraySlice2d<real64 const> const & dPhaseDens_dComp,
-           arraySlice1d<real64 const> const & phaseVisc,
-           arraySlice1d<real64 const> const & dPhaseVisc_dPres,
-           arraySlice2d<real64 const> const & dPhaseVisc_dComp,
-           arraySlice1d<real64 const> const & phaseRelPerm,
-           arraySlice2d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac,
-           arraySlice1d<real64 const> const & dPhaseVolFrac_dPres,
-           arraySlice2d<real64 const> const & dPhaseVolFrac_dComp,
-           arraySlice1d<real64> const & phaseMob,
-           arraySlice1d<real64> const & dPhaseMob_dPres,
-           arraySlice2d<real64> const & dPhaseMob_dComp );
+  Compute( arraySlice2d<real64 const> dCompFrac_dCompDens,
+           arraySlice1d<real64 const> phaseDens,
+           arraySlice1d<real64 const> dPhaseDens_dPres,
+           arraySlice2d<real64 const> dPhaseDens_dComp,
+           arraySlice1d<real64 const> phaseVisc,
+           arraySlice1d<real64 const> dPhaseVisc_dPres,
+           arraySlice2d<real64 const> dPhaseVisc_dComp,
+           arraySlice1d<real64 const> phaseRelPerm,
+           arraySlice2d<real64 const> dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d<real64 const> dPhaseVolFrac_dPres,
+           arraySlice2d<real64 const> dPhaseVolFrac_dComp,
+           arraySlice1d<real64> phaseMob,
+           arraySlice1d<real64> dPhaseMob_dPres,
+           arraySlice2d<real64> dPhaseMob_dComp );
 
   static inline RAJA_HOST_DEVICE void
   Compute( localIndex NC, localIndex NP,
-           arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-           arraySlice1d<real64 const> const & phaseDens,
-           arraySlice1d<real64 const> const & dPhaseDens_dPres,
-           arraySlice2d<real64 const> const & dPhaseDens_dComp,
-           arraySlice1d<real64 const> const & phaseVisc,
-           arraySlice1d<real64 const> const & dPhaseVisc_dPres,
-           arraySlice2d<real64 const> const & dPhaseVisc_dComp,
-           arraySlice1d<real64 const> const & phaseRelPerm,
-           arraySlice2d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac,
-           arraySlice1d<real64 const> const & dPhaseVolFrac_dPres,
-           arraySlice2d<real64 const> const & dPhaseVolFrac_dComp,
-           arraySlice1d<real64> const & phaseMob,
-           arraySlice1d<real64> const & dPhaseMob_dPres,
-           arraySlice2d<real64> const & dPhaseMob_dComp );
+           arraySlice2d<real64 const> dCompFrac_dCompDens,
+           arraySlice1d<real64 const> phaseDens,
+           arraySlice1d<real64 const> dPhaseDens_dPres,
+           arraySlice2d<real64 const> dPhaseDens_dComp,
+           arraySlice1d<real64 const> phaseVisc,
+           arraySlice1d<real64 const> dPhaseVisc_dPres,
+           arraySlice2d<real64 const> dPhaseVisc_dComp,
+           arraySlice1d<real64 const> phaseRelPerm,
+           arraySlice2d<real64 const> dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d<real64 const> dPhaseVolFrac_dPres,
+           arraySlice2d<real64 const> dPhaseVolFrac_dComp,
+           arraySlice1d<real64> phaseMob,
+           arraySlice1d<real64> dPhaseMob_dPres,
+           arraySlice2d<real64> dPhaseMob_dComp );
 
   template<localIndex NC, localIndex NP>
   static void Launch( localIndex begin, localIndex end,

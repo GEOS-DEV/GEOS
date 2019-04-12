@@ -34,10 +34,10 @@ namespace CompositionalMultiphaseFlowKernels
 
 template<localIndex NC>
 inline RAJA_HOST_DEVICE void
-UpdateComponentFractionKernel::Compute( arraySlice1d<real64 const> const & compDens,
-                                        arraySlice1d<real64 const> const & dCompDens,
-                                        arraySlice1d<real64> const & compFrac,
-                                        arraySlice2d<real64> const & dCompFrac_dCompDens )
+UpdateComponentFractionKernel::Compute( arraySlice1d<real64 const> compDens,
+                                        arraySlice1d<real64 const> dCompDens,
+                                        arraySlice1d<real64> compFrac,
+                                        arraySlice2d<real64> dCompFrac_dCompDens )
 {
   real64 totalDensity = 0.0;
 
@@ -61,10 +61,10 @@ UpdateComponentFractionKernel::Compute( arraySlice1d<real64 const> const & compD
 
 inline RAJA_HOST_DEVICE void
 UpdateComponentFractionKernel::Compute( localIndex NC,
-                                        arraySlice1d<real64 const> const & compDens,
-                                        arraySlice1d<real64 const> const & dCompDens,
-                                        arraySlice1d<real64> const & compFrac,
-                                        arraySlice2d<real64> const & dCompFrac_dCompDens )
+                                        arraySlice1d<real64 const> compDens,
+                                        arraySlice1d<real64 const> dCompDens,
+                                        arraySlice1d<real64> compFrac,
+                                        arraySlice2d<real64> dCompFrac_dCompDens )
 {
   real64 totalDensity = 0.0;
 
@@ -144,18 +144,18 @@ LAUNCH_UpdateComponentFractionKernel(10);
 
 template<localIndex NC, localIndex NP>
 inline RAJA_HOST_DEVICE void
-UpdatePhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> const & compDens,
-                                          arraySlice1d<real64 const> const & dCompDens,
-                                          arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-                                          arraySlice1d<real64 const> const & phaseDens,
-                                          arraySlice1d<real64 const> const & dPhaseDens_dPres,
-                                          arraySlice2d<real64 const> const & dPhaseDens_dComp,
-                                          arraySlice1d<real64 const> const & phaseFrac,
-                                          arraySlice1d<real64 const> const & dPhaseFrac_dPres,
-                                          arraySlice2d<real64 const> const & dPhaseFrac_dComp,
-                                          arraySlice1d<real64> const & phaseVolFrac,
-                                          arraySlice1d<real64> const & dPhaseVolFrac_dPres,
-                                          arraySlice2d<real64> const & dPhaseVolFrac_dComp )
+UpdatePhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> compDens,
+                                          arraySlice1d<real64 const> dCompDens,
+                                          arraySlice2d<real64 const> dCompFrac_dCompDens,
+                                          arraySlice1d<real64 const> phaseDens,
+                                          arraySlice1d<real64 const> dPhaseDens_dPres,
+                                          arraySlice2d<real64 const> dPhaseDens_dComp,
+                                          arraySlice1d<real64 const> phaseFrac,
+                                          arraySlice1d<real64 const> dPhaseFrac_dPres,
+                                          arraySlice2d<real64 const> dPhaseFrac_dComp,
+                                          arraySlice1d<real64> phaseVolFrac,
+                                          arraySlice1d<real64> dPhaseVolFrac_dPres,
+                                          arraySlice2d<real64> dPhaseVolFrac_dComp )
 {
   stackArray1d<real64, NC> work( NC );
 
@@ -201,18 +201,18 @@ UpdatePhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> const & com
 
 inline RAJA_HOST_DEVICE void
 UpdatePhaseVolumeFractionKernel::Compute( localIndex NC, localIndex NP,
-                                          arraySlice1d<real64 const> const & compDens,
-                                          arraySlice1d<real64 const> const & dCompDens,
-                                          arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-                                          arraySlice1d<real64 const> const & phaseDens,
-                                          arraySlice1d<real64 const> const & dPhaseDens_dPres,
-                                          arraySlice2d<real64 const> const & dPhaseDens_dComp,
-                                          arraySlice1d<real64 const> const & phaseFrac,
-                                          arraySlice1d<real64 const> const & dPhaseFrac_dPres,
-                                          arraySlice2d<real64 const> const & dPhaseFrac_dComp,
-                                          arraySlice1d<real64> const & phaseVolFrac,
-                                          arraySlice1d<real64> const & dPhaseVolFrac_dPres,
-                                          arraySlice2d<real64> const & dPhaseVolFrac_dComp )
+                                          arraySlice1d<real64 const> compDens,
+                                          arraySlice1d<real64 const> dCompDens,
+                                          arraySlice2d<real64 const> dCompFrac_dCompDens,
+                                          arraySlice1d<real64 const> phaseDens,
+                                          arraySlice1d<real64 const> dPhaseDens_dPres,
+                                          arraySlice2d<real64 const> dPhaseDens_dComp,
+                                          arraySlice1d<real64 const> phaseFrac,
+                                          arraySlice1d<real64 const> dPhaseFrac_dPres,
+                                          arraySlice2d<real64 const> dPhaseFrac_dComp,
+                                          arraySlice1d<real64> phaseVolFrac,
+                                          arraySlice1d<real64> dPhaseVolFrac_dPres,
+                                          arraySlice2d<real64> dPhaseVolFrac_dComp )
 {
   localIndex constexpr maxNC = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
@@ -378,20 +378,20 @@ LAUNCH_UpdatePhaseVolumeFractionKernel(10,3);
 
 template<localIndex NC, localIndex NP>
 inline RAJA_HOST_DEVICE void
-UpdatePhaseMobilityKernel::Compute( arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-                                    arraySlice1d<real64 const> const & phaseDens,
-                                    arraySlice1d<real64 const> const & dPhaseDens_dPres,
-                                    arraySlice2d<real64 const> const & dPhaseDens_dComp,
-                                    arraySlice1d<real64 const> const & phaseVisc,
-                                    arraySlice1d<real64 const> const & dPhaseVisc_dPres,
-                                    arraySlice2d<real64 const> const & dPhaseVisc_dComp,
-                                    arraySlice1d<real64 const> const & phaseRelPerm,
-                                    arraySlice2d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac,
-                                    arraySlice1d<real64 const> const & dPhaseVolFrac_dPres,
-                                    arraySlice2d<real64 const> const & dPhaseVolFrac_dComp,
-                                    arraySlice1d<real64> const & phaseMob,
-                                    arraySlice1d<real64> const & dPhaseMob_dPres,
-                                    arraySlice2d<real64> const & dPhaseMob_dComp )
+UpdatePhaseMobilityKernel::Compute( arraySlice2d<real64 const> dCompFrac_dCompDens,
+                                    arraySlice1d<real64 const> phaseDens,
+                                    arraySlice1d<real64 const> dPhaseDens_dPres,
+                                    arraySlice2d<real64 const> dPhaseDens_dComp,
+                                    arraySlice1d<real64 const> phaseVisc,
+                                    arraySlice1d<real64 const> dPhaseVisc_dPres,
+                                    arraySlice2d<real64 const> dPhaseVisc_dComp,
+                                    arraySlice1d<real64 const> phaseRelPerm,
+                                    arraySlice2d<real64 const> dPhaseRelPerm_dPhaseVolFrac,
+                                    arraySlice1d<real64 const> dPhaseVolFrac_dPres,
+                                    arraySlice2d<real64 const> dPhaseVolFrac_dComp,
+                                    arraySlice1d<real64> phaseMob,
+                                    arraySlice1d<real64> dPhaseMob_dPres,
+                                    arraySlice2d<real64> dPhaseMob_dComp )
 {
   stackArray1d<real64, NC> dRelPerm_dC( NC );
   stackArray1d<real64, NC> dDens_dC( NC );
@@ -439,20 +439,20 @@ UpdatePhaseMobilityKernel::Compute( arraySlice2d<real64 const> const & dCompFrac
 
 inline RAJA_HOST_DEVICE void
 UpdatePhaseMobilityKernel::Compute( localIndex NC, localIndex NP,
-                                    arraySlice2d<real64 const> const & dCompFrac_dCompDens,
-                                    arraySlice1d<real64 const> const & phaseDens,
-                                    arraySlice1d<real64 const> const & dPhaseDens_dPres,
-                                    arraySlice2d<real64 const> const & dPhaseDens_dComp,
-                                    arraySlice1d<real64 const> const & phaseVisc,
-                                    arraySlice1d<real64 const> const & dPhaseVisc_dPres,
-                                    arraySlice2d<real64 const> const & dPhaseVisc_dComp,
-                                    arraySlice1d<real64 const> const & phaseRelPerm,
-                                    arraySlice2d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac,
-                                    arraySlice1d<real64 const> const & dPhaseVolFrac_dPres,
-                                    arraySlice2d<real64 const> const & dPhaseVolFrac_dComp,
-                                    arraySlice1d<real64> const & phaseMob,
-                                    arraySlice1d<real64> const & dPhaseMob_dPres,
-                                    arraySlice2d<real64> const & dPhaseMob_dComp )
+                                    arraySlice2d<real64 const> dCompFrac_dCompDens,
+                                    arraySlice1d<real64 const> phaseDens,
+                                    arraySlice1d<real64 const> dPhaseDens_dPres,
+                                    arraySlice2d<real64 const> dPhaseDens_dComp,
+                                    arraySlice1d<real64 const> phaseVisc,
+                                    arraySlice1d<real64 const> dPhaseVisc_dPres,
+                                    arraySlice2d<real64 const> dPhaseVisc_dComp,
+                                    arraySlice1d<real64 const> phaseRelPerm,
+                                    arraySlice2d<real64 const> dPhaseRelPerm_dPhaseVolFrac,
+                                    arraySlice1d<real64 const> dPhaseVolFrac_dPres,
+                                    arraySlice2d<real64 const> dPhaseVolFrac_dComp,
+                                    arraySlice1d<real64> phaseMob,
+                                    arraySlice1d<real64> dPhaseMob_dPres,
+                                    arraySlice2d<real64> dPhaseMob_dComp )
 {
   localIndex constexpr maxNC = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
