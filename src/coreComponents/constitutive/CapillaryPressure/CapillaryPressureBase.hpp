@@ -47,7 +47,7 @@ public:
   static constexpr integer REFERENCE_PHASE = PhaseType::OIL; 
   
   CapillaryPressureBase( std::string const & name,
-			 dataRepository::ManagedGroup * const parent );
+                         dataRepository::ManagedGroup * const parent );
   
   virtual ~CapillaryPressureBase() override;
 
@@ -82,9 +82,9 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phaseNamesString     = "phaseNames";
-    static constexpr auto phaseTypesString     = "phaseTypes";
-    static constexpr auto phaseOrderString     = "phaseOrder";
+    static constexpr auto phaseNamesString = "phaseNames";
+    static constexpr auto phaseTypesString = "phaseTypes";
+    static constexpr auto phaseOrderString = "phaseOrder";
     
     static constexpr auto phaseCapPressureString                    = "phaseCapPressure";                    // Pc_p
     static constexpr auto dPhaseCapPressure_dPhaseVolFractionString = "dPhaseCapPressure_dPhaseVolFraction"; // dPc_p/dS_p
@@ -151,11 +151,11 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
     for( localIndex q=0 ; q<numQ ; ++q )
     {
       LEAFCLASS::Compute( NP,
-			  phaseVolumeFraction[k],
-			  phaseCapPressure[k][q],
-			  dPhaseCapPressure_dPhaseVolFrac[k][q],
-			  phaseOrder,
-			  args... );
+                          phaseVolumeFraction[k],
+                          phaseCapPressure[k][q],
+                          dPhaseCapPressure_dPhaseVolFrac[k][q],
+                          phaseOrder,
+                          args... );
     }
   });
 }

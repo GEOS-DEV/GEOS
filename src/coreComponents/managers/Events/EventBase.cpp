@@ -263,7 +263,13 @@ void EventBase::Execute(real64 const time_n,
     Step(time_n, dt, cycleNumber, domain);
   }
 
-  lastTime = time_n;
+  // In some cases, a periodic event controlled by a time-frequency may trigger on a zero-dt step.
+  // This leads to ambiguity as to which cycle the event should execute on.
+  // To resolve this, only increment lastTime if dt=0, and cause the event to trigger on both.
+  if (dt > 0.0)
+  {
+    lastTime = time_n;
+  }
   lastCycle = cycleNumber;
 }
 

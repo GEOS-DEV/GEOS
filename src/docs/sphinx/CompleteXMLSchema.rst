@@ -168,6 +168,13 @@ Element: Geometry
 .. include:: ../../coreComponents/fileIO/schema/docs/Geometry.rst
 
 
+.. _XML_ThickPlane:
+
+Element: ThickPlane
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane.rst
+
+
 .. _XML_Box:
 
 Element: Box
@@ -790,6 +797,13 @@ Datastructure: BoundarySetData
 Datastructure: Geometry
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Geometry_other.rst
+
+
+.. _DATASTRUCTURE_ThickPlane:
+
+Datastructure: ThickPlane
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane_other.rst
 
 
 .. _DATASTRUCTURE_Box:
