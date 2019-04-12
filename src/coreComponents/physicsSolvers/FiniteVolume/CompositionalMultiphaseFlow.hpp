@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
 #include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
+#include <constitutive/CapillaryPressure/CapillaryPressureBase.hpp>
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "../../mesh/ElementRegionManager.hpp"
 
@@ -176,6 +177,12 @@ public:
   void UpdateRelPermModel( ManagedGroup * dataGroup );
 
   /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
+   */
+  void UpdateCapPressureModel( ManagedGroup * dataGroup );
+
+  /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
@@ -248,7 +255,9 @@ public:
 
     static constexpr auto relPermNameString  = "relPermName";
     static constexpr auto relPermIndexString = "relPermIndex";
-
+    static constexpr auto capPressureNameString  = "capPressureName";
+    static constexpr auto capPressureIndexString = "capPressureIndex"; 
+    
     static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
     // primary solution field
@@ -283,7 +292,8 @@ public:
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
-
+    static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
+    
     using ViewKey = dataRepository::ViewKey;
 
     // inputs
@@ -292,6 +302,8 @@ public:
 
     ViewKey relPermName  = { relPermNameString };
     ViewKey relPermIndex = { relPermIndexString };
+    ViewKey capPressureName  = { capPressureNameString };
+    ViewKey capPressureIndex = { capPressureIndexString };
 
     ViewKey blockLocalDofNumber    = { blockLocalDofNumberString };
 
@@ -327,6 +339,7 @@ public:
     // these are allocated on faces for BC application until we can get constitutive models on faces
     ViewKey phaseViscosity             = { phaseViscosityString };
     ViewKey phaseRelativePermeability  = { phaseRelativePermeabilityString };
+    ViewKey phaseCapillaryPressure     = { phaseCapillaryPressureString };
 
   } viewKeysCompMultiphaseFlow;
 
@@ -335,6 +348,9 @@ public:
   } groupKeysCompMultiphaseFlow;
 
 protected:
+
+  virtual void PostProcessInput() override;
+  
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
@@ -441,6 +457,15 @@ private:
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
 
+  /// flag to determine whether or not to apply capillary pressure
+  integer m_capPressureFlag;
+  
+  /// name of the cap pressure constitutive model
+  string m_capPressureName;
+
+  /// index of the cap pressure constitutive model
+  localIndex m_capPressureIndex;
+
 
   /// views into primary variable fields
 
@@ -497,6 +522,10 @@ private:
 
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseRelPerm;
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseRelPerm_dPhaseVolFrac;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseCapPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCapPressure_dPhaseVolFrac;
+
 };
 
 } // namespace geosx

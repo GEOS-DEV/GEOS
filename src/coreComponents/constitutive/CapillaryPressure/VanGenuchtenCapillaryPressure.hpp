@@ -44,7 +44,7 @@ class VanGenuchtenCapillaryPressure : public CapillaryPressureBase
 public:
 
   VanGenuchtenCapillaryPressure( std::string const & name,
-   				 dataRepository::ManagedGroup * const parent );
+                                 dataRepository::ManagedGroup * const parent );
 
   virtual ~VanGenuchtenCapillaryPressure() override;
 
@@ -170,11 +170,11 @@ VanGenuchtenCapillaryPressure::Compute( localIndex const NP,
   {  
     real64 const volFracScaled = (phaseVolFraction[ip_gas] - phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
     real64 const exponentInv   = phaseCapPressureExponentInv[ip_gas]; // div by 0 taken care of by initialization check
-    real64 const multiplier    = phaseCapPressureMultiplier[ip_gas];
+    real64 const multiplier    = -phaseCapPressureMultiplier[ip_gas]; // for gas capillary pressure, take the opposite of the VG function
 
     real64 const scaledWettingVolFrac                = 1-volFracScaled;
-    real64 const dScaledWettingPhaseVolFrac_dVolFrac = -volFracScaleInv;
-	
+    real64 const dScaledWettingPhaseVolFrac_dVolFrac =  -volFracScaleInv;
+    
     EvaluateVanGenuchtenFunction( scaledWettingVolFrac,
                                   dScaledWettingPhaseVolFrac_dVolFrac,
                                   phaseCapPressure[ip_gas],
@@ -182,6 +182,7 @@ VanGenuchtenCapillaryPressure::Compute( localIndex const NP,
                                   exponentInv,
                                   multiplier,
                                   eps );
+
   }
 }
 
@@ -211,8 +212,8 @@ VanGenuchtenCapillaryPressure::EvaluateVanGenuchtenFunction( real64 const & scal
   else // enforce a constant and bounded capillary pressure
   {
     phaseCapPressure = (scaledWettingVolFrac < eps) // div by 0 taken care of by initialization check
-                ? multiplier * std::pow( 1 / std::pow( eps,   exponent ) - 1, 0.5*(1-exponentInv) )
-                : multiplier * std::pow( 1 / std::pow( 1-eps, exponent ) - 1, 0.5*(1-exponentInv) );
+                     ? multiplier * std::pow( 1 / std::pow( eps,   exponent ) - 1, 0.5*(1-exponentInv) )
+                     : multiplier * std::pow( 1 / std::pow( 1-eps, exponent ) - 1, 0.5*(1-exponentInv) );
   }    
 }
 

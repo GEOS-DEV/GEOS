@@ -3,6 +3,7 @@
 # Specify all headers
 #
 set(mesh_headers
+    AggregateElementSubRegion.hpp
     BufferOps.hpp
     CellBlockManager.hpp
     CellBlock.hpp
@@ -25,6 +26,7 @@ set(mesh_headers
 # Specify all sources
 #
 set(mesh_sources
+    AggregateElementSubRegion.cpp
     BufferOps.cpp
     CellBlockManager.cpp
     CellBlock.cpp
@@ -44,7 +46,7 @@ set(mesh_sources
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
-                 DEPENDS_ON            managers
+                 DEPENDS_ON            managers metis
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
