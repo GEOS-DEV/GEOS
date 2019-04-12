@@ -39,7 +39,7 @@
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlow_kernels.hpp"
+#include "physicsSolvers/FiniteVolume/SinglePhaseFlowKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
