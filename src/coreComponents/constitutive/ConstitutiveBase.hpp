@@ -89,9 +89,12 @@ public:
   virtual groupKeyStruct       & groupKeys()       { return m_ConstitutiveBaseGroupKeys; }
   virtual groupKeyStruct const & groupKeys() const { return m_ConstitutiveBaseGroupKeys; }
 
+  localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
+
 protected:
 
 private:
+  localIndex m_numQuadraturePoints;
   ManagedGroup * m_constitutiveDataGroup = nullptr;
 
   ConstitutiveBase( ConstitutiveBase const & ) = delete;

@@ -48,22 +48,18 @@ public:
     static constexpr auto meanStressString = "MeanStress";
   };
 
+  real64   density0() const { return m_density0; }
+  real64 & density0()       { return m_density0; }
 
-  struct StiffnessTensor
-  {
-    real64 c11;
-    real64 c22;
-    real64 c33;
-    real64 c44;
-    real64 c55;
-    real64 c66;
-    real64 c23;
-    real64 c13;
-    real64 c12;
-    real64 c21;
-    real64 c31;
-    real64 c32;
-  };
+  arrayView2d<real64>       const & density()       { return m_density; }
+  arrayView2d<real64 const> const & density() const { return m_density; }
+
+  arrayView2d<real64>        const & meanStress()       { return m_meanStress; }
+  arrayView2d<real64 const > const & meanStress() const { return m_meanStress; }
+
+  arrayView2d<R2SymTensor>       const & deviatorStress()       { return m_deviatorStress; }
+  arrayView2d<R2SymTensor const> const & deviatorStress() const { return m_deviatorStress; }
+
 protected:
 
 //  template< typename LEAFCLASS, typename POLICY=materialUpdatePolicy, typename ... ARGS >
