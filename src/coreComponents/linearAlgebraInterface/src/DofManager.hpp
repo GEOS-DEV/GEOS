@@ -59,6 +59,7 @@ struct Dof_SparsityPattern
 };
 
 using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
+using ParallelVector = typename TrilinosInterface::ParallelVector;
 
 /**
  * The DoFManager is responsible for allocating global dofs, constructing
@@ -268,14 +269,18 @@ public:
    */
   void getSparsityPattern( ParallelMatrix & locLocDistr,
                            string const & rowField = "",
-                           string const & colField = "" ) const;
+                           string const & colField = "",
+                           bool const withVector = false,
+                           ParallelVector * vector = nullptr ) const;
 
   /**
    * Get a sparsity pattern. Low level version
    */
   void getSparsityPattern( ParallelMatrix & locLocDistr,
                            localIndex const rowFieldIndex,
-                           localIndex const colFieldIndex ) const;
+                           localIndex const colFieldIndex,
+                           bool const withVector = false,
+                           ParallelVector * vector = nullptr ) const;
 
   /**
    * Get global indices for dofs connected by the connector type.  We have two versions, since cells need

@@ -73,6 +73,14 @@ public:
   //@{
 
   /**
+   * @brief Create a vector based on a previous vector.
+   *
+   * \param vector an already formed EpetraVector.
+   *
+   */
+  void create( EpetraVector const & src );
+
+  /**
    * @brief Create a vector based on local number of elements.
    *
    * Create a vector based on local number of elements.  Global size is

@@ -719,7 +719,9 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
 // Create the sparsity pattern (location-location). High level interface
 void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                      string const & rowField,
-                                     string const & colField ) const
+                                     string const & colField,
+                                     bool const withVector,
+                                     ParallelVector * vector ) const
 {
   localIndex rowFieldIndex, colFieldIndex;
 
@@ -755,13 +757,15 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
   }
 
   // Call the low level routine
-  getSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex );
+  getSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex, withVector, vector );
 }
 
 // Create the sparsity pattern (location-location). Low level interface
 void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                      localIndex const rowFieldIndex,
-                                     localIndex const colFieldIndex ) const
+                                     localIndex const colFieldIndex,
+                                     bool const withVector,
+                                     ParallelVector * vector ) const
 {
   GEOS_ERROR_IF( rowFieldIndex * colFieldIndex < 0,
                  "getSparsityPattern accepts both two existing field indices (positive values) and "
@@ -775,10 +779,18 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     if( m_connectivity[rowFieldIndex][colFieldIndex] == Connectivity::Elem )
     {
       locLocDistr.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows, 1, MPI_COMM_GEOSX );
+      if( withVector )
+      {
+        vector->createWithLocalSize( m_fields[rowFieldIndex].numLocalRows, MPI_COMM_GEOSX );
+      }
     }
     else
     {
       locLocDistr.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
+      if( withVector )
+      {
+        vector->createWithGlobalSize( connLocPattDistr->globalCols(), MPI_COMM_GEOSX );
+      }
     }
     parallelMatrix.MatrixMatrixMultiply( *connLocPattDistr,
                                          true,
@@ -800,6 +812,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                           colConnLocPattDistr->globalCols(),
                                           1,
                                           MPI_COMM_GEOSX );
+        if( withVector )
+        {
+          vector->createWithGlobalSize( rowConnLocPattDistr->globalCols(), MPI_COMM_GEOSX );
+        }
         parallelMatrix.MatrixMatrixMultiply( *rowConnLocPattDistr,
                                              true,
                                              *colConnLocPattDistr,
@@ -816,6 +832,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                           rowConnLocPattDistr->globalCols(),
                                           1,
                                           MPI_COMM_GEOSX );
+        if( withVector )
+        {
+          vector->createWithGlobalSize( rowConnLocPattDistr->globalCols(), MPI_COMM_GEOSX );
+        }
         parallelMatrix.MatrixMatrixMultiply( *colConnLocPattDistr,
                                              true,
                                              *rowConnLocPattDistr,
@@ -830,6 +850,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
       globalIndex nRows = m_fields[rowFieldIndex].connLocPattern->globalCols();
       globalIndex nCols = m_fields[colFieldIndex].connLocPattern->globalCols();
       locLocDistr.createWithGlobalSize( nRows, nCols, 0, MPI_COMM_GEOSX );
+      if( withVector )
+      {
+        vector->createWithGlobalSize( nRows, MPI_COMM_GEOSX );
+      }
     }
   }
   else if( rowFieldIndex < 0 and colFieldIndex < 0 )
@@ -841,6 +865,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
       sumGlobalDofs += m_fields[i].numGlobalRows;
     }
     locLocDistr.createWithGlobalSize( sumGlobalDofs, sumGlobalDofs, 1, MPI_COMM_GEOSX );
+    if( withVector )
+    {
+      vector->createWithGlobalSize( sumGlobalDofs, MPI_COMM_GEOSX );
+    }
 
     ParallelMatrix localPattern;
 
@@ -936,6 +964,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     }
   }
   locLocDistr.close();
+  if( withVector )
+  {
+    vector->close();
+  }
 }
 
 // Permute the GLOBAL sparsity pattern (location-location). Low level interface

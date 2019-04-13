@@ -182,6 +182,10 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
 
   // Compute and check relative error
   error /= normSol;
+  if( mpiRank == 0)
+  {
+    std::cout << "Relative error: " << error << std::endl;
+  }
   EXPECT_NEAR( error, 0.0, tol );
 }
 

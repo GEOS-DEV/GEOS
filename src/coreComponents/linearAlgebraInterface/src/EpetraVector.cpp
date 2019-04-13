@@ -65,6 +65,15 @@ EpetraVector::EpetraVector( EpetraVector const &src )
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Create from EpetraVector
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+void EpetraVector::create( EpetraVector const &src )
+{
+  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
+  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer()));
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create from Epetra_Map
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from an Epetra_Map.
@@ -85,7 +94,10 @@ void EpetraVector::create( Epetra_Map const &map )
 // into the vector length.
 void EpetraVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm )
 {
-  Epetra_Map map = Epetra_Map( -1, integer_conversion<int, localIndex>( localSize ), 0, Epetra_MpiComm( comm ) );
+  Epetra_Map map = Epetra_Map( integer_conversion<globalIndex>( -1 ),
+                               integer_conversion<int, localIndex>( localSize ),
+                               0,
+                               Epetra_MpiComm( comm ) );
   create( map );
 }
 

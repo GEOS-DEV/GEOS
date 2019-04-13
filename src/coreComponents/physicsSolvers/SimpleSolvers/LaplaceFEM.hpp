@@ -28,7 +28,9 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
+#include "DofManager.hpp"
 #include "DofManager.hpp"
 
 // Just to print the matrix
@@ -51,6 +53,9 @@ class ManagedGroup;
 class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
+
+using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
+using ParallelVector = typename TrilinosInterface::ParallelVector;
 
 class LaplaceFEM : public SolverBase
 {
@@ -139,7 +144,139 @@ public:
                                   DomainPartition & domain,
                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
+  void ApplyDirichletBC_implicit( real64 const time,
+                                  DomainPartition & domain,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs );
 
+  /////////////////////////////////////////////////////////////////////////////////////////
+  void ApplyBoundaryConditionToSystem( FieldSpecificationManager const & fsManager,
+                                       string const & functionName,
+                                       set<localIndex> const & targetSet,
+                                       real64 const time,
+                                       dataRepository::ManagedGroup * dataGroup,
+                                       string const & fieldName,
+                                       string const & dofMapName,
+                                       integer const & dofDim,
+                                       integer const & component,
+                                       real64 const & scale,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs );
+
+  template< typename LAMBDA >
+  void ApplyBoundaryConditionToSystem( FieldSpecificationManager const & fsManager,
+                                       string const & functionName,
+                                       set<localIndex> const & targetSet,
+                                       real64 const time,
+                                       dataRepository::ManagedGroup * dataGroup,
+                                       arrayView1d<globalIndex const> const & dofMap,
+                                       integer const & dofDim,
+                                       integer const & component,
+                                       real64 const & scale,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs,
+                                       LAMBDA && lambda )
+  {
+    NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+    globalIndex_array dof( targetSet.size() );
+    real64_array rhsContribution( targetSet.size() );
+
+    if( functionName.empty() )
+    {
+
+      integer counter=0;
+      for( auto a : targetSet )
+      {
+        dof( counter ) = dofDim*dofMap[a]+component;
+        SpecifyFieldValue( dof( counter ),
+                           matrix,
+                           rhsContribution( counter ),
+                           scale,
+                           lambda( a ) );
+
+        ++counter;
+      }
+      ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+
+      GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+
+      if( function->isFunctionOfTime()==2 )
+      {
+        real64 value = scale * function->Evaluate( &time );
+        integer counter=0;
+        for( auto a : targetSet )
+        {
+          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+          SpecifyFieldValue( dof( counter ),
+                             matrix,
+                             rhsContribution( counter ),
+                             value,
+                             lambda( a ) );
+          ++counter;
+        }
+        ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+      }
+      else
+      {
+        real64_array result;
+        result.resize( integer_conversion<localIndex>( targetSet.size()));
+        function->Evaluate( dataGroup, time, targetSet, result );
+        integer counter=0;
+        for( auto a : targetSet )
+        {
+          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+          SpecifyFieldValue( dof( counter ),
+                             matrix,
+                             rhsContribution( counter ),
+                             scale*result[counter],
+                             lambda( a ) );
+          ++counter;
+        }
+        ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
+      }
+    }
+  }
+
+  static inline void SpecifyFieldValue( globalIndex const dof,
+                                        ParallelMatrix & matrix,
+                                        real64 & rhs,
+                                        real64 const & bcValue,
+                                        real64 const fieldValue )
+  {
+    if( true )//node_is_ghost[*nd] < 0 )
+    {
+      //real64 LARGE = blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 1.0 );
+      //rhs = -LARGE*( bcValue - fieldValue );
+      if( matrix.ParallelMatrixGetLocalRowID( dof ) >= 0 )
+      {
+        matrix.clearRow( dof, 1.0 );
+        rhs = bcValue;
+      }
+      else
+      {
+        rhs = 0.0;
+      }
+    }
+  }
+
+  static inline void ReplaceGlobalValues( ParallelVector & rhs,
+                                          localIndex const num,
+                                          globalIndex const * const dof,
+                                          real64 const * const values )
+  {
+    rhs.set( dof, values, num );
+  }
+
+  void solve( ParallelMatrix const * const matrix,
+              ParallelVector * const rhs,
+              ParallelVector * const solution,
+              SystemSolverParameters const * const params );
+  /////////////////////////////////////////////////////////////////////////////////////////
 
   enum class timeIntegrationOption
   {
@@ -159,6 +296,10 @@ public:
 
   } laplaceFEMViewKeys;
 
+  inline ParallelVector const * getSolution() const {
+    return & m_solution;
+  };
+
 protected:
   virtual void PostProcessInput() override final;
 
@@ -171,6 +312,10 @@ private:
   bool firstTime = true;
 
   int mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
+
+  ParallelMatrix m_matrix;
+  ParallelVector m_rhs;
+  ParallelVector m_solution;
 };
 
 } /* namespace geosx */
