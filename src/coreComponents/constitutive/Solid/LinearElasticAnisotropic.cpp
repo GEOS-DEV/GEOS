@@ -44,6 +44,8 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Ma
     setApplyDefaultValue(-1)->
     setDescription("Elastic Modulus Field");
 
+  m_stiffness.resize( 0, 9 );
+
 }
 
 
@@ -64,7 +66,7 @@ LinearElasticAnisotropic::DeliverClone( string const & name,
   LinearElasticAnisotropic * const newConstitutiveRelation = dynamic_cast<LinearElasticAnisotropic *>(clone.get());
 
 
-  newConstitutiveRelation->m_stiffness0 = m_stiffness0;
+//  newConstitutiveRelation->m_stiffness0 = m_stiffness0;
   newConstitutiveRelation->m_stiffness = m_stiffness;
 }
 
@@ -93,6 +95,13 @@ void LinearElasticAnisotropic::StateUpdatePoint( localIndex const i,
 
 void LinearElasticAnisotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const
 {
+  for( int i=0 ; i<6 ; ++i )
+  {
+    for( int j=0 ; j<6 ; ++j )
+    {
+      c[i][j] = m_stiffness0.m_data[i][j];
+    }
+  }
 }
 
 

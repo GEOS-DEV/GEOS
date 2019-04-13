@@ -73,13 +73,18 @@ public:
   } m_linearElasticIsotropicViewKeys;
 
 
+  struct StiffnessTensor
+  {
+    real64 m_data[6][6];
+  };
+
 protected:
   virtual void PostProcessInput() override;
 
 private:
 
 
-  SolidBase::StiffnessTensor m_stiffness0;
+  StiffnessTensor m_stiffness0;
   array2d<real64> m_stiffness;
 };
 

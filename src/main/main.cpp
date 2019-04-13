@@ -62,7 +62,6 @@ int main( int argc, char *argv[] )
   }
 #endif
 
-  // cxx_utilities::setSignalHandling(cxx_utilities::handler1);
   cxx_utilities::SetFPE();
 
   std::string restartFileName;

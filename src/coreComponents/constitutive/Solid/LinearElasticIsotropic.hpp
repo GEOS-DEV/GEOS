@@ -83,6 +83,19 @@ public:
   } m_linearElasticIsotropicViewKeys;
 
 
+  real64   bulkModulus0()  const { return m_bulkModulus0; }
+  real64 & bulkModulus0()        { return m_bulkModulus0; }
+
+  real64 shearModulus0() const { return m_shearModulus0; }
+  real64 & shearModulus0()     { return m_shearModulus0; }
+
+  arrayView1d<real64> const &       bulkModulus()       { return m_bulkModulus; }
+  arrayView1d<real64 const> const & bulkModulus() const { return m_bulkModulus; }
+
+  arrayView1d<real64> const &       shearModulus()       { return m_shearModulus; }
+  arrayView1d<real64 const> const & shearModulus() const { return m_shearModulus; }
+
+
 protected:
   virtual void PostProcessInput() override;
 
