@@ -53,41 +53,44 @@ public:
    *
    * @note
    * This function is hardcoded for square matrices up to order four.
-   * For dimensions larger than four, the function calls LAPACK functions
-   * DGETRF. Because of the row major ordering used by GEOSX array2d the
-   * lapacke functions LAPACKE_dgetrf internally transpose
-   * the matrix (copy), calls fortran routine, and then transpose the output
-   * back (not needed in case of column major ordering).
+   * For dimensions larger than four, the determinant is computed using
+   * lapacke function LAPACKE_dgetrf. To avoid matrix transposition/copy
+   * due to the row major ordering used in GEOSX for array2d, the determinant
+   * is computed for the transpose matrix, i.e. assuming column major
+   * ordering, for best performance.
    */
   real64 determinant( array2d<real64> const & A ) const;
 
   /**
    * @brief Returns the infinity norm of the matrix.
    *
-   * @warning
-   * Because of the row major ordering used by GEOSX array2d the
-   * lapacke function LAPACKE_dlange allocates internally a working
-   * array (not needed in case of column major ordering).
+   * @note
+   * Row major ordering is used for GEOSX array2d. Since LAPACK native
+   * routines are using a column major ordering (Fortran), the infinity
+   * norm is computed as the one norm of the transpose matrix, i.e. assuming
+   * column major ordering, for best performance.
    */
   real64 matrixNormInf(array2d<real64> const & A) const;
 
   /**
    * @brief Returns the one norm of the matrix.
    *
-   * @warning
-   * Because of the row major ordering used by GEOSX array2d the
-   * lapacke function LAPACKE_dlange allocates internally a working
-   * array (not needed in case of column major ordering).
+   * @note
+   * Row major ordering is used for GEOSX array2d. Since LAPACK native
+   * routines are using a column major ordering (Fortran), the one norm
+   * is computed as the infinity norm of the transpose matrix, i.e. assuming
+   * column major ordering, for best performance.
    */
   real64 matrixNorm1(array2d<real64> const & A) const;
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
    *
-   * @warning
-   * Because of the row major ordering used by GEOSX array2d the
-   * lapacke function LAPACKE_dlange allocates internally a working
-   * array (not needed in case of column major ordering).
+   * @note
+   * Row major ordering is used for GEOSX array2d. Since LAPACK native
+   * routines are using a column major ordering (Fortran), the one norm
+   * is computed for the transpose matrix, i.e. assuming column major
+   * ordering, for best performance.
    */
   real64 matrixNormFrobenius(array2d<real64> const & A) const;
 
@@ -340,7 +343,7 @@ public:
   /**
    * @brief Compute inverse; <tt>Ainv<tt> = <tt>A</tt><sup>-1</sup>.
    *
-   * Assign the inverse of the given matrix <tt>A<tt> to <tt>Ainv<tt>.
+   * Assign the inverse of the given square matrix <tt>A<tt> to <tt>Ainv<tt>.
    *
    * \param IN
    * <tt>A</tt> - GEOSX array2d.
@@ -351,12 +354,14 @@ public:
    * @warning
    * Assumes <tt>Ainv<tt> already has the same size as <tt>A</tt>.
    *
-   * @note This function is hardcoded for square matrices up to order three.
-   * For dimensions larger than three, the function calls LAPACK functions DGETRF
-   * and DGETRI. Because of the row major ordering used by GEOSX array2d the
-   * lapacke functions LAPACKE_dgetrf and LAPACKE_dgetri internally transpose
-   * the matrix (copy), call fortran routines, and then transpose the output
-   * back (not needed in case of column major ordering).
+   * @note This function is hardcoded for matrices up to order three.
+   * For dimensions larger than three, the function calls lapacke
+   * functions LAPACKE_dgetrf and LAPACKE_dgetri. Because of the row major
+   * ordering used by GEOSX array2d, the inverse of <tt>A<tt> is practically
+   * computed as the transpose matrix of the transpose matrix inverse using
+   * lapack operation based on column-major ordering. This removes the need
+   * for any copy/transposition that would be required operating with the
+   * row-major layout.
    */
   void matrixInverse( array2d<real64> const & A,
                        array2d<real64> & Ainv );
@@ -376,16 +381,18 @@ public:
    * @warning
    * Assumes <tt>Ainv<tt> already has the same size as <tt>A</tt>.
    *
-   * @note This function is hardcoded for square matrices up to order three.
-   * For dimensions larger than four, the function calls LAPACK functions DGETRF
-   * and DGETRI. Because of the row major ordering used by GEOSX array2d the
-   * lapacke functions LAPACKE_dgetrf and LAPACKE_dgetri internally transpose
-   * the matrix (copy), call fortran routines, and then transpose the output
-   * back (not needed in case of column major ordering).
+   * @note This function is hardcoded for matrices up to order three.
+   * For dimensions larger than three, the function calls lapacke
+   * functions LAPACKE_dgetrf and LAPACKE_dgetri. Because of the row major
+   * ordering used by GEOSX array2d, the inverse of <tt>A<tt> is practically
+   * computed as the transpose matrix of the transpose matrix inverse using
+   * lapack operation based on column-major ordering. This removes the need
+   * for any copy/transposition that would be required operating with the
+   * row-major layout.
    */
   void matrixInverse( array2d<real64> const & A,
                       array2d<real64> & Ainv,
-                      real64 & det);
+                      real64 & detA);
 
   /**
    * @brief Vector copy;
@@ -429,12 +436,12 @@ public:
   /**
    * @brief Print service method for GEOSX array1d.
    */
-  void vectorPrint(array1d<real64> const & X);
+  void printVector(array1d<real64> const & X);
 
   /**
    * @brief Print service method for GEOSX array2d.
    */
-  void matrixPrint(array2d<real64> const & X);
+  void printMatrix(array2d<real64> const & X);
 
   //@}
 

@@ -201,8 +201,11 @@ void testArray2dLA()
   K = 20;
 
   for( localIndex mA = 1 ; mA <= MA ; ++mA )
+  {
     for( localIndex nB = 1 ; nB <= NB ; ++nB )
+    {
       for( localIndex nD = 1 ; nD <= ND ; ++nD )
+      {
         for( localIndex k = 1 ; k <= K ; ++k )
         {
           // Resize matrix operators
@@ -256,7 +259,9 @@ void testArray2dLA()
                        denseLA.matrixNormFrobenius( RHS ),
                        denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
         }
-
+      }
+    }
+  }
   // Test 3: repeat the following step for vectors of increasing size:
   //
   // a. compute LHS = ( alfa*A^T*B + beta*C ) * D
@@ -270,8 +275,11 @@ void testArray2dLA()
   K = 20;
 
   for( localIndex nA = 1 ; nA <= NA ; ++nA )
+  {
     for( localIndex nB = 1 ; nB <= NB ; ++nB )
+    {
       for( localIndex nD = 1 ; nD <= ND ; ++nD )
+      {
         for( localIndex k = 1 ; k <= K ; ++k )
         {
 
@@ -329,6 +337,9 @@ void testArray2dLA()
                        denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
 
         }
+      }
+    }
+  }
 
   // Test 3: repeat the following step for vectors of increasing size:
   //
@@ -343,8 +354,11 @@ void testArray2dLA()
   K = 20;
 
   for( localIndex mA = 1 ; mA <= MA ; ++mA )
+  {
     for( localIndex mB = 1 ; mB <= MB ; ++mB )
+    {
       for( localIndex nD = 1 ; nD <= ND ; ++nD )
+      {
         for( localIndex k = 1 ; k <= K ; ++k )
         {
 
@@ -400,6 +414,9 @@ void testArray2dLA()
                        denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
 
         }
+      }
+    }
+  }
 
   // Test 4: repeat the following step for vectors of increasing size:
   //
@@ -414,8 +431,11 @@ void testArray2dLA()
   K = 20;
 
   for( localIndex nA = 1 ; nA <= NA ; ++nA )
+  {
     for( localIndex mB = 1 ; mB <= MB ; ++mB )
+    {
       for( localIndex nD = 1 ; nD <= ND ; ++nD )
+      {
         for( localIndex k = 1 ; k <= K ; ++k )
         {
 
@@ -471,6 +491,9 @@ void testArray2dLA()
                        denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
 
         }
+      }
+    }
+  }
 
 }
 
@@ -502,6 +525,7 @@ void testArray2dArray1dLA()
   real64 alfa, beta;
 
   for( localIndex mA = 1 ; mA <= MA ; ++mA )
+  {
     for( localIndex nA = 1 ; nA <= NA ; ++nA )
     {
       // Resize matrices and vectors
@@ -555,7 +579,7 @@ void testArray2dArray1dLA()
                    beta,
                    alfa * machinePrecision );
     }
-
+  }
 }
 
 template<typename LAI>
@@ -589,9 +613,13 @@ void testArray2dInverseLA()
       for( int j = 0 ; j < E.size(1) ; ++j )
       {
         if( i == j )
+        {
           E( i, i ) = 2;
+        }
         else if( abs( i - j ) == 1 )
+        {
           E( i, j ) = -1;
+        }
       }
     }
 
@@ -608,6 +636,7 @@ void testArray2dInverseLA()
                  1.,
                  machinePrecision );
   }
+
 }
 
 // END_RST_NARRATIVE
@@ -637,7 +666,6 @@ TEST(testDenseLAOperations,testLapackDenseLAOperations)
   testArray2dLA<BlasLapackLA>();
   testArray2dArray1dLA<BlasLapackLA>();
   testArray2dInverseLA<BlasLapackLA>();
-//  testSerialMatrixInverse<LapackSuiteInterface>();
 
 }
 

@@ -36,7 +36,7 @@ real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X ) const
   return std::abs( X[ind] );
 }
 
-real64 BlasLapackLA::determinant( array2d<real64> const & A ) const // @suppress("No return")
+real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
                                   {
   // --- check that matrix is square
   GEOS_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) &&
@@ -87,14 +87,17 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const // @suppress
       array1d<lapack_int> IPIV( NN );
       array2d<double> LUfactor( A );
 
-      lapack_int INFO =  LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
-                             NN,
-                             NN,
-                             LUfactor.data(),
-                             NN,
-                             IPIV.data() );
-      GEOS_ASSERT_MSG( INFO == 0,
-                       "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
+      // We compute the LU factors for the transpose matrix, i.e. choosing the
+      // LAPACK_COL_MAJOR ordering, to avoid transposition/copy requires for
+      // LAPACK_ROW_MAJOR ordering.
+      lapack_int INFO =  LAPACKE_dgetrf( LAPACK_COL_MAJOR,
+                                         NN,
+                                         NN,
+                                         LUfactor.data(),
+                                         NN,
+                                         IPIV.data() );
+
+      GEOS_ASSERT_MSG( INFO == 0, "LAPACKE_dgetrf error code: " << INFO );
 
       real64 det = 1.0;
       for( int i = 0 ; i < NN ; ++i )
@@ -116,33 +119,38 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const // @suppress
 }
 
 real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A ) const
-                                    {
-  return LAPACKE_dlange( LAPACK_ROW_MAJOR,
-                         'I',
-                         integer_conversion<lapack_int>( A.size( 0 ) ),
+{
+  // Computed as one-norm of the transpose matrix, i.e. assuming
+  // column major ordering
+  return LAPACKE_dlange( LAPACK_COL_MAJOR,
+                         '1',
                          integer_conversion<lapack_int>( A.size( 1 ) ),
+                         integer_conversion<lapack_int>( A.size( 0 ) ),
                          A.data(),
                          integer_conversion<lapack_int>( A.size( 1 ) ) );
 
 }
 
 real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A ) const
-                                  {
-  return LAPACKE_dlange( LAPACK_ROW_MAJOR,
-                         '1',
-                         integer_conversion<lapack_int>( A.size( 0 ) ),
+{
+  // Computed as infinity-norm of the transpose matrix, i.e. assuming
+  // column major ordering
+  return LAPACKE_dlange( LAPACK_COL_MAJOR,
+                         'I',
                          integer_conversion<lapack_int>( A.size( 1 ) ),
+                         integer_conversion<lapack_int>( A.size( 0 ) ),
                          A.data(),
                          integer_conversion<lapack_int>( A.size( 1 ) ) );
 
 }
 
 real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A ) const
-                                          {
-  return LAPACKE_dlange( LAPACK_ROW_MAJOR,
+{
+  // Computed using the transpose matrix, i.e. assuming column major ordering
+  return LAPACKE_dlange( LAPACK_COL_MAJOR,
                          'F',
-                         integer_conversion<lapack_int>( A.size( 0 ) ),
                          integer_conversion<lapack_int>( A.size( 1 ) ),
+                         integer_conversion<lapack_int>( A.size( 0 ) ),
                          A.data(),
                          integer_conversion<lapack_int>( A.size( 1 ) ) );
 
@@ -224,24 +232,45 @@ void BlasLapackLA::matrixVectorMultiply( array2d<real64> const & A,
                                          real64 const beta )
 {
   GEOS_ASSERT_MSG( A.size( 1 ) == X.size() &&
-                       A.size( 0 ) == Y.size(),
+                   A.size( 0 ) == Y.size(),
                    "Matrix, source vector and destination vector not compatible" );
 
-  int M = integer_conversion<int>( A.size( 0 ) );
-  int N = integer_conversion<int>( A.size( 1 ) );
+//  int M = integer_conversion<int>( A.size( 0 ) );
+//  int N = integer_conversion<int>( A.size( 1 ) );
+//
+//  cblas_dgemv( CblasRowMajor,
+//               CblasNoTrans,
+//               M,
+//               N,
+//               alpha,
+//               A.data(),
+//               N,
+//               X.data(),
+//               1,
+//               beta,
+//               Y.data(),
+//               1 );
 
-  cblas_dgemv( CblasRowMajor,
+  int M = integer_conversion<int>( A.size( 0 ) );
+  int N = 1;
+  int K = integer_conversion<int>( A.size( 1 ) );
+
+  // CblasColMajor used for better performance. A*X = Y is computed
+  // as X^T * A^T = Y^T
+  cblas_dgemm( CblasColMajor,
                CblasNoTrans,
+               CblasNoTrans,
+               N,
                M,
-               N,
+               K,
                alpha,
-               A.data(),
-               N,
                X.data(),
-               1,
+               N,
+               A.data(),
+               K,
                beta,
                Y.data(),
-               1 );
+               N );
 
   return;
 }
@@ -256,21 +285,42 @@ void BlasLapackLA::matrixTVectorMultiply( array2d<real64> const & A,
                        A.size( 1 ) == Y.size(),
                    "Matrix, source vector and destination vector not compatible" );
 
-  int M = integer_conversion<int>( A.size( 0 ) );
-  int N = integer_conversion<int>( A.size( 1 ) );
+//  int M = integer_conversion<int>( A.size( 0 ) );
+//  int N = integer_conversion<int>( A.size( 1 ) );
+//
+//  cblas_dgemv( CblasRowMajor,
+//               CblasTrans,
+//               M,
+//               N,
+//               alpha,
+//               A.data(),
+//               N,
+//               X.data(),
+//               1,
+//               beta,
+//               Y.data(),
+//               1 );
 
-  cblas_dgemv( CblasRowMajor,
+  int M = integer_conversion<int>( A.size( 1 ) );
+  int N = 1;
+  int K = integer_conversion<int>( A.size( 0 ) );
+
+  // CblasColMajor used for better performance. A^T*X = Y is computed
+  // as X^T * A = Y^T
+  cblas_dgemm( CblasColMajor,
+               CblasNoTrans,
                CblasTrans,
+               N,
                M,
-               N,
+               K,
                alpha,
-               A.data(),
-               N,
                X.data(),
-               1,
+               N,
+               A.data(),
+               M,
                beta,
                Y.data(),
-               1 );
+               N );
 
   return;
 }
@@ -291,17 +341,33 @@ void BlasLapackLA::matrixMatrixMultiply( array2d<real64> const & A,
   int N = integer_conversion<int>( B.size( 1 ) );
   int K = integer_conversion<int>( A.size( 1 ) );
 
-  cblas_dgemm( CblasRowMajor,
+//  cblas_dgemm( CblasRowMajor,
+//               CblasNoTrans,
+//               CblasNoTrans,
+//               M,
+//               N,
+//               K,
+//               alpha,
+//               A.data(),
+//               K,
+//               B.data(),
+//               N,
+//               beta,
+//               C.data(),
+//               N );
+  // CblasColMajor used for better performance. A*B = C is computed
+  // as B^T * A^T = C^T
+  cblas_dgemm( CblasColMajor,
                CblasNoTrans,
                CblasNoTrans,
-               M,
                N,
+               M,
                K,
                alpha,
-               A.data(),
-               K,
                B.data(),
                N,
+               A.data(),
+               K,
                beta,
                C.data(),
                N );
@@ -324,17 +390,33 @@ void BlasLapackLA::matrixTMatrixMultiply( array2d<real64> const & A,
   int N = integer_conversion<int>( B.size( 1 ) );
   int K = integer_conversion<int>( A.size( 0 ) );
 
-  cblas_dgemm( CblasRowMajor,
-               CblasTrans,
+//  cblas_dgemm( CblasRowMajor,
+//               CblasTrans,
+//               CblasNoTrans,
+//               M,
+//               N,
+//               K,
+//               alpha,
+//               A.data(),
+//               M,
+//               B.data(),
+//               N,
+//               beta,
+//               C.data(),
+//               N );
+  // CblasColMajor used for better performance. A^T*B = C is computed
+  // as B^T * A = C^T
+  cblas_dgemm( CblasColMajor,
                CblasNoTrans,
-               M,
+               CblasTrans,
                N,
+               M,
                K,
                alpha,
-               A.data(),
-               M,
                B.data(),
                N,
+               A.data(),
+               M,
                beta,
                C.data(),
                N );
@@ -357,16 +439,32 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
   int N = integer_conversion<int>( B.size( 0 ) );
   int K = integer_conversion<int>( A.size( 1 ) );
 
-  cblas_dgemm( CblasRowMajor,
-               CblasNoTrans,
+//  cblas_dgemm( CblasRowMajor,
+//               CblasNoTrans,
+//               CblasTrans,
+//               M,
+//               N,
+//               K,
+//               alpha,
+//               A.data(),
+//               K,
+//               B.data(),
+//               K,
+//               beta,
+//               C.data(),
+//               N );
+  // CblasColMajor used for better performance. A*B^T = C is computed
+  // as B * A^T = C^T
+  cblas_dgemm( CblasColMajor,
                CblasTrans,
-               M,
+               CblasNoTrans,
                N,
+               M,
                K,
                alpha,
-               A.data(),
-               K,
                B.data(),
+               K,
+               A.data(),
                K,
                beta,
                C.data(),
@@ -390,17 +488,33 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
   int N = integer_conversion<int>( B.size( 0 ) );
   int K = integer_conversion<int>( A.size( 0 ) );
 
-  cblas_dgemm( CblasRowMajor,
+//  cblas_dgemm( CblasRowMajor,
+//               CblasTrans,
+//               CblasTrans,
+//               M,
+//               N,
+//               K,
+//               alpha,
+//               A.data(),
+//               M,
+//               B.data(),
+//               K,
+//               beta,
+//               C.data(),
+//               N );
+  // CblasColMajor used for better performance. A^T*B^T = C is computed
+  // as B * A = C^T
+  cblas_dgemm( CblasColMajor,
                CblasTrans,
                CblasTrans,
-               M,
                N,
+               M,
                K,
                alpha,
-               A.data(),
-               M,
                B.data(),
                K,
+               A.data(),
+               M,
                beta,
                C.data(),
                N );
@@ -410,15 +524,15 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   array2d<real64> & Ainv )
 {
-  real64 det;
+  real64 detA;
   matrixInverse( A,
                  Ainv,
-                 det );
+                 detA );
 }
 
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   array2d<real64> & Ainv,
-                                  real64 & det )
+                                  real64 & detA )
 {
   // --- Check that source matrix is square
   int order = integer_conversion<lapack_int>(A.size( 0 ));
@@ -441,7 +555,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
 
   if (order <= 3)
   {
-    det = determinant(A);
+    detA = determinant(A);
   }
   else
   {
@@ -452,51 +566,54 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
     IPIV.resize(NN);
     INV_WORK.resize(NN);
 
-    // Call to LAPACK using LAPACKE
-    // --- Compute LU factorization (LAPACK function DGETRF)
-    lapack_int INFO = LAPACKE_dgetrf( LAPACK_ROW_MAJOR,
-                           NN,
-                           NN,
-                           Ainv.data(),
-                           NN,
-                           IPIV.data() );
-    GEOS_ASSERT_MSG( INFO == 0,
-                     "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
+    // Compute determinant (not done calling directly the function determinant
+    // (avoid computing twice LUfactors, currently stored in Ainv, needed for
+    // computing the inverse). Again we compute the LU factors for the
+    // transpose matrix, i.e. choosing the LAPACK_COL_MAJOR ordering, to
+    // avoid transposition/copy requires for LAPACK_ROW_MAJOR ordering.
+    lapack_int INFO = LAPACKE_dgetrf( LAPACK_COL_MAJOR,
+                                      NN,
+                                      NN,
+                                      Ainv.data(),
+                                      NN,
+                                      IPIV.data() );
+    GEOS_ASSERT_MSG( INFO == 0, "LAPACKE_dgetrf error code: " << INFO );
 
-    // --- Compute determinant (not done calling directly the function determinant
-    //     (avoid computing twice LUfactors, currently stored in Ainv, needed for
-    //     computing the inverse)
-    det = 1.0;
+    detA = 1.0;
     for( int i = 0 ; i < NN ; ++i )
     {
       if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
       {
-        det *= -Ainv(i,i);
+        detA *= -Ainv(i,i);
       }
       else
       {
-        det *= Ainv(i,i);
+        detA *= Ainv(i,i);
       }
     }
   }
 
-  real64 oneOverDet = 1. / det;
-  GEOS_ASSERT_MSG( !( std::isinf( oneOverDet ) ), "Matrix is singular" );
+  // Check if matrix is singular
+  GEOS_ASSERT_MSG( std::fabs(detA) >
+                   std::numeric_limits<real64>::epsilon() *
+                   matrixNormFrobenius(A),
+                   "Matrix is singular" );
+  real64 oneOverDetA = 1. / detA;
 
   // --- Compute inverse
   switch( order )
     {
       case 1:
-        Ainv( 0, 0 ) = oneOverDet;
+        Ainv( 0, 0 ) = oneOverDetA;
         return;
 
         // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
       case 2:
         {
-        Ainv( 0, 0 ) =  A( 1, 1 ) * oneOverDet;
-        Ainv( 0, 1 ) = -A( 0, 1 ) * oneOverDet;
-        Ainv( 1, 0 ) = -A( 1, 0 ) * oneOverDet;
-        Ainv( 1, 1 ) =  A( 0, 0 ) * oneOverDet;
+        Ainv( 0, 0 ) =  A( 1, 1 ) * oneOverDetA;
+        Ainv( 0, 1 ) = -A( 0, 1 ) * oneOverDetA;
+        Ainv( 1, 0 ) = -A( 1, 0 ) * oneOverDetA;
+        Ainv( 1, 1 ) =  A( 0, 0 ) * oneOverDetA;
         return;
       }
         ;
@@ -504,35 +621,35 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
       case 3:
         {
         Ainv( 0, 0 ) = ( A( 1, 1 ) * A( 2, 2 ) -
-                         A( 1, 2 ) * A( 2, 1 ) ) * oneOverDet;
+                         A( 1, 2 ) * A( 2, 1 ) ) * oneOverDetA;
         Ainv( 0, 1 ) = ( A( 0, 2 ) * A( 2, 1 ) -
-                         A( 0, 1 ) * A( 2, 2 ) ) * oneOverDet;
+                         A( 0, 1 ) * A( 2, 2 ) ) * oneOverDetA;
         Ainv( 0, 2 ) = ( A( 0, 1 ) * A( 1, 2 ) -
-                         A( 0, 2 ) * A( 1, 1 ) ) * oneOverDet;
+                         A( 0, 2 ) * A( 1, 1 ) ) * oneOverDetA;
         Ainv( 1, 0 ) = ( A( 1, 2 ) * A( 2, 0 ) -
-                         A( 1, 0 ) * A( 2, 2 ) ) * oneOverDet;
+                         A( 1, 0 ) * A( 2, 2 ) ) * oneOverDetA;
         Ainv( 1, 1 ) = ( A( 0, 0 ) * A( 2, 2 ) -
-                         A( 0, 2 ) * A( 2, 0 ) ) * oneOverDet;
+                         A( 0, 2 ) * A( 2, 0 ) ) * oneOverDetA;
         Ainv( 1, 2 ) = ( A( 0, 2 ) * A( 1, 0 ) -
-                         A( 0, 0 ) * A( 1, 2 ) ) * oneOverDet;
+                         A( 0, 0 ) * A( 1, 2 ) ) * oneOverDetA;
         Ainv( 2, 0 ) = ( A( 1, 0 ) * A( 2, 1 ) -
-                         A( 1, 1 ) * A( 2, 0 ) ) * oneOverDet;
+                         A( 1, 1 ) * A( 2, 0 ) ) * oneOverDetA;
         Ainv( 2, 1 ) = ( A( 0, 1 ) * A( 2, 0 ) -
-                         A( 0, 0 ) * A( 2, 1 ) ) * oneOverDet;
+                         A( 0, 0 ) * A( 2, 1 ) ) * oneOverDetA;
         Ainv( 2, 2 ) = ( A( 0, 0 ) * A( 1, 1 ) -
-                         A( 0, 1 ) * A( 1, 0 ) ) * oneOverDet;
+                         A( 0, 1 ) * A( 1, 0 ) ) * oneOverDetA;
         return;
       }
       default:
     {
-    // --- Invert (LAPACK function DGETRI)
-    lapack_int INFO = LAPACKE_dgetri( LAPACK_ROW_MAJOR,
+    // Invert (LAPACK function DGETRI). The LU factors computed for the
+    // transpose matrix stored in Ainv are used.
+    lapack_int INFO = LAPACKE_dgetri( LAPACK_COL_MAJOR,
                            NN,
                            Ainv.data(),
                            NN,
                            IPIV.data() );
-    GEOS_ASSERT_MSG( INFO == 0,
-                     "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
+    GEOS_ASSERT_MSG( INFO == 0, "LAPACKE_dgetri error code: " << INFO );
 
     return;
     }
@@ -572,7 +689,7 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
 
 //----------------------------------------------------------------I/O methods---
 // vector nice output
-void BlasLapackLA::vectorPrint( array1d<real64> const & X )
+void BlasLapackLA::printVector( array1d<real64> const & X )
 {
   for( int i = 0 ; i < X.size() ; ++i )
   {
@@ -582,7 +699,7 @@ void BlasLapackLA::vectorPrint( array1d<real64> const & X )
 }
 
 // vector nice output
-void BlasLapackLA::matrixPrint( array2d<real64> const & X )
+void BlasLapackLA::printMatrix( array2d<real64> const & X )
 {
   for( int i = 0 ; i < X.size( 0 ) ; ++i )
   {
