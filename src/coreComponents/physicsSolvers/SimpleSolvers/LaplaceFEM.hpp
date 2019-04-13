@@ -298,7 +298,7 @@ public:
 
   inline ParallelVector const * getSolution() const {
     return & m_solution;
-  };
+  }
 
 protected:
   virtual void PostProcessInput() override final;
