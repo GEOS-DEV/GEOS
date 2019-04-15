@@ -70,15 +70,6 @@ public:
     solver = "Petsc";
   }
   amg;
-
-  struct 
-  {
-    string smootherType_up = "Jacobi"; // Relax type for the down cycles (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-    string smootherType_down = "Jacobi"; // Relax type for the up cycles (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-    string coarseType_up = "Schwarz-smoothers"; // "Schwarz-smoothers" "Pilut" "ParaSails" "Euclid"
-    string coarseType_down = "CLJP"; // "CLJP" "Ruge-Stueben"  "modifiedRuge-Stueben"   "Falgout"  "PMIS"  "HMIS"
-  }
-  amgHypre;
   
   struct
   {

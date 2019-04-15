@@ -158,33 +158,34 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   else if( m_parameters.preconditionerType == "amg" )
   {
 
-    if(m_parameters.amg.solver== "Petsc")
-    {
-      PCSetType(prec, PCMG);
-      PetscOptionsSetValue(NULL, "-pc_mg_levels", m_parameters.amg.maxLevels);
-      if (m_parameters.amg.cycleType == "V"){
-        PCMGSetCycleType(prec, PC_MG_CYCLE_V);
-      } else {
-        PCMGSetCycleType(prec, PC_MG_CYCLE_W);
-      }
-      PCMGSetNumberSmooth(prec, m_parameters.amg.numSweeps); 
-      // by default, Chebyshev + SOR smoother
-    } 
-    else if(m_parameters.amg.solver == "Hypre")
+    std::map<string, string> translate; // maps GEOSX to PETSc syntax for Hyper options
+
+    translate.insert( std::make_pair( "jacobi", "Jacobi" ));
+    translate.insert( std::make_pair( "sequentialGaussSeidel", "sequential-Gauss-Seidel" ));
+    translate.insert( std::make_pair( "seqboundaryGaussSeidel", "seqboundary-Gauss-Seidel" ));
+    translate.insert( std::make_pair( "sorJacobi", "SOR/Jacobi" ));
+    translate.insert( std::make_pair( "backwardSorJacobi", "backward-SOR/Jacobi" ));
+    translate.insert( std::make_pair( "symmetricSorJacobi", "symmetric-SOR/Jacobi" ));
+    translate.insert( std::make_pair( "l1scaledSorJacobi", "l1scaled-SOR/Jacobi" ));
+    translate.insert( std::make_pair( "direct", "Gaussian-elimination" ));
+    translate.insert( std::make_pair( "l1GaussSeidel", "l1-Gauss-Seidel" ));
+    translate.insert( std::make_pair( "backwardl1GaussSeidel", "backward-l1-Gauss-Seidel" ));
+    translate.insert( std::make_pair( "cg", "CG" ));
+    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
+    translate.insert( std::make_pair( "fcfJacobi", "FCF-Jacobi" ));
+    translate.insert( std::make_pair( "l1scaledJacobi", "l1scaled-Jacobi" ));
+
+    if(m_parameters.amg.solver == "Hypre")
     {
       PCSetType(prec, PCHYPRE);
       PCHYPRESetType(prec, "boomeramg")
       PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_max_levels", m_parameters.amg.maxLevels); 
       PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_cycle_type", m_parameters.amg.cycleType); 
-      // relaxation method on one level
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_down", m_parameters.amgHypre.smootherType_up); 
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_up", m_parameters.amgHypre.smootherType_down); 
-      // move between grids
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_smooth_type", m_parameters.amgHypre.coarseType_up);
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_coarsen_type", m_parameters.amgHypre.coarseType_down);
-      // number of relaxation sweeps on one level
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_down", m_parameters.amg.numSweeps); 
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_up", m_parameters.amg.numSweeps); 
+      // relaxation method
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_all", translate[m_parameters.amg.smootherType]); // <symmetric-SOR/Jacobi> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_coarse", translate[m_parameters.amg.coarseType]); // <Gaussian-elimination> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+      // number of relaxation sweeps
+      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_all", m_parameters.amg.numSweeps); 
       PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_coarse", m_parameters.amg.numSweeps); // coarsest grid
     } 
     else
