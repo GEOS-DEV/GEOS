@@ -125,7 +125,6 @@
                               ShearModulus0="28.57e6"
                               BiotCoefficient="1"
                               referencePressure="2.125e6"
-                              compressibility="3e-10"
                               />
 
     <CompressibleSinglePhaseFluid name="water"
