@@ -114,7 +114,7 @@ public:
    */
   void vectorVectorAdd( array1d<real64> const & X,
                         array1d<real64> & Y,
-                        real64 const alpha = 1. );
+                        real64 const alpha = 1. ) const;
 
   /**
    * @brief Matrix-Matrix sum;
@@ -136,7 +136,7 @@ public:
    */
   void matrixMatrixAdd( array2d<real64> const & A,
                         array2d<real64> & B,
-                        real64 const alpha = 1. );
+                        real64 const alpha = 1. ) const;
 
   /**
    * @brief In-place scalar-vector product;
@@ -146,7 +146,7 @@ public:
    * scalarThis - Scalar to multiply with \a this.
    */
   void vectorScale( array1d<real64> & X,
-                    real64 alpha );
+                    real64 alpha ) const;
 
   /**
    * @brief In-place scalar-matrix product;
@@ -156,7 +156,7 @@ public:
    * alpha - Scalar to multiply with <tt>A</tt>.
    */
   void matrixScale( array2d<real64> & A,
-                    real64 alpha);
+                    real64 alpha) const;
 
   /**
    * @brief Dot product of two vectors.
@@ -168,7 +168,7 @@ public:
    *
    */
   real64 vectorDot( array1d<real64> const & X,
-                    array1d<real64> const & Y);
+                    array1d<real64> const & Y) const;
 
   /**
    * @brief Matrix-Vector product;
@@ -194,7 +194,7 @@ public:
                             array1d<real64> const & X,
                             array1d<real64>  & Y,
                             real64 const alpha=1.,
-                            real64 const beta=0.);
+                            real64 const beta=0.) const;
 
   /**
    * @brief transpose(Matrix)-Vector product;
@@ -220,7 +220,7 @@ public:
                              array1d<real64> const & X,
                              array1d<real64>  & Y,
                              real64 const alpha=1.,
-                             real64 const beta=0.);
+                             real64 const beta=0.) const;
 
   /**
    * @brief Matrix-Matrix product;
@@ -249,7 +249,7 @@ public:
                              array2d<real64> const & B,
                              array2d<real64> & C,
                              real64 const alpha=1.,
-                             real64 const beta=0.);
+                             real64 const beta=0.) const;
 
   /**
    * @brief transpose(Matrix)-Matrix product;
@@ -278,7 +278,7 @@ public:
                               array2d<real64> const & B,
                               array2d<real64> & C,
                               real64 const alpha=1.,
-                              real64 const beta=0.);
+                              real64 const beta=0.) const;
 
   /**
    * @brief Matrix-transpose(Matrix) product;
@@ -307,7 +307,7 @@ public:
                               array2d<real64> const & B,
                               array2d<real64> & C,
                               real64 const alpha=1.,
-                              real64 const beta=0.);
+                              real64 const beta=0.) const;
 
   /**
    * @brief transpose(Matrix)-transpose(Matrix) product;
@@ -338,7 +338,7 @@ public:
                                array2d<real64> const & B,
                                array2d<real64> & C,
                                real64 const alpha=1.,
-                               real64 const beta=0.);
+                               real64 const beta=0.) const;
 
   /**
    * @brief Compute inverse; <tt>Ainv<tt> = <tt>A</tt><sup>-1</sup>.
@@ -364,7 +364,7 @@ public:
    * row-major layout.
    */
   void matrixInverse( array2d<real64> const & A,
-                       array2d<real64> & Ainv );
+                       array2d<real64> & Ainv ) const;
 
   /**
    * @brief Compute inverse; <tt>Ainv<tt> = <tt>A</tt><sup>-1</sup>.
@@ -392,7 +392,7 @@ public:
    */
   void matrixInverse( array2d<real64> const & A,
                       array2d<real64> & Ainv,
-                      real64 & detA);
+                      real64 & detA) const;
 
   /**
    * @brief Vector copy;
@@ -409,7 +409,7 @@ public:
    *
    */
   void vectorCopy( array1d<real64> const & X,
-                   array1d<real64> & Y );
+                   array1d<real64> & Y ) const;
 
   /**
    * @brief Vector copy;
@@ -426,7 +426,7 @@ public:
    *
    */
   void matrixCopy( array2d<real64> const & A,
-                   array2d<real64> & B );
+                   array2d<real64> & B ) const;
   //@}
 
   //----------------------------------------------------------------------------
@@ -436,12 +436,12 @@ public:
   /**
    * @brief Print service method for GEOSX array1d.
    */
-  void printVector(array1d<real64> const & X);
+  void printVector(array1d<real64> const & X) const;
 
   /**
    * @brief Print service method for GEOSX array2d.
    */
-  void printMatrix(array2d<real64> const & X);
+  void printMatrix(array2d<real64> const & X) const;
 
   //@}
 

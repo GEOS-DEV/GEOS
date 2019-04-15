@@ -43,26 +43,30 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
                    A.size( 0 ) > 0,
                    "Matrix must be square with order greater than zero" );
 
+  real64 det;
   switch( A.size( 0 ) )
   {
     case 1:
-      {
-      return A( 0, 0 );
+    {
+      det =  A( 0, 0 );
+      break;
     }
     case 2:
-      {
-      return A( 0, 0 ) * A( 1, 1 ) - A( 0, 1 ) * A( 1, 0 );
+    {
+      det = A( 0, 0 ) * A( 1, 1 ) - A( 0, 1 ) * A( 1, 0 );
+      break;
     }
     case 3:
-      {
-      return
+    {
+      det =
       A( 0, 0 ) * ( A( 1, 1 ) * A( 2, 2 ) - A( 1, 2 ) * A( 2, 1 ) ) +
       A( 0, 1 ) * ( A( 1, 2 ) * A( 2, 0 ) - A( 1, 0 ) * A( 2, 2 ) ) +
       A( 0, 2 ) * ( A( 1, 0 ) * A( 2, 1 ) - A( 1, 1 ) * A( 2, 0 ) );
+      break;
     }
     case 4:
-      {
-      return
+    {
+      det =
       A( 0, 0 ) * ( A( 1, 1 ) * ( A( 2, 2 ) * A( 3, 3 ) - A( 3, 2 ) * A( 2, 3 ) ) -
                     A( 1, 2 ) * ( A( 2, 1 ) * A( 3, 3 ) - A( 3, 1 ) * A( 2, 3 ) ) +
                     A( 1, 3 ) * ( A( 2, 1 ) * A( 3, 2 ) - A( 3, 1 ) * A( 2, 2 ) )
@@ -79,9 +83,10 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
                     A( 1, 1 ) * ( A( 2, 0 ) * A( 3, 2 ) - A( 3, 0 ) * A( 2, 2 ) ) +
                     A( 1, 2 ) * ( A( 2, 0 ) * A( 3, 1 ) - A( 3, 0 ) * A( 2, 1 ) )
                   );
+      break;
     }
     default:
-
+    {
       // Compute the determinant via LU factorization
       lapack_int NN = integer_conversion<lapack_int>( A.size(0) );
       array1d<lapack_int> IPIV( NN );
@@ -99,7 +104,7 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
 
       GEOS_ASSERT_MSG( INFO == 0, "LAPACKE_dgetrf error code: " << INFO );
 
-      real64 det = 1.0;
+      det = 1.0;
       for( int i = 0 ; i < NN ; ++i )
       {
         if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
@@ -112,9 +117,11 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
         }
       }
 
-      return det;
-
+      break;
+    }
   }
+
+  return det;
 
 }
 
@@ -158,7 +165,7 @@ real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A ) const
 
 void BlasLapackLA::vectorVectorAdd( array1d<real64> const & X,
                                     array1d<real64> & Y,
-                                    real64 const alpha )
+                                    real64 const alpha ) const
 {
 
   GEOS_ASSERT_MSG( X.size() == Y.size(),
@@ -175,7 +182,7 @@ void BlasLapackLA::vectorVectorAdd( array1d<real64> const & X,
 
 void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
                                     array2d<real64> & B,
-                                    real64 const alpha )
+                                    real64 const alpha ) const
 {
 
   GEOS_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
@@ -192,7 +199,7 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
 }
 
 void BlasLapackLA::vectorScale( array1d<real64> & X,
-                                real64 alpha )
+                                real64 alpha ) const
 {
 
   cblas_dscal( integer_conversion<int>( X.size() ),
@@ -203,7 +210,7 @@ void BlasLapackLA::vectorScale( array1d<real64> & X,
 }
 
 void BlasLapackLA::matrixScale( array2d<real64> & A,
-                                real64 alpha )
+                                real64 alpha ) const
 {
   cblas_dscal( integer_conversion<int>( A.size( 0 ) * A.size( 1 ) ),
                alpha,
@@ -213,7 +220,7 @@ void BlasLapackLA::matrixScale( array2d<real64> & A,
 }
 
 real64 BlasLapackLA::vectorDot( array1d<real64> const & X,
-                                array1d<real64> const & Y )
+                                array1d<real64> const & Y ) const
 {
   GEOS_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for dot product" );
@@ -229,7 +236,7 @@ void BlasLapackLA::matrixVectorMultiply( array2d<real64> const & A,
                                          array1d<real64> const & X,
                                          array1d<real64> & Y,
                                          real64 const alpha,
-                                         real64 const beta )
+                                         real64 const beta ) const
 {
   GEOS_ASSERT_MSG( A.size( 1 ) == X.size() &&
                    A.size( 0 ) == Y.size(),
@@ -279,7 +286,7 @@ void BlasLapackLA::matrixTVectorMultiply( array2d<real64> const & A,
                                           array1d<real64> const & X,
                                           array1d<real64> & Y,
                                           real64 const alpha,
-                                          real64 const beta )
+                                          real64 const beta ) const
 {
   GEOS_ASSERT_MSG( A.size( 0 ) == X.size() &&
                        A.size( 1 ) == Y.size(),
@@ -329,7 +336,7 @@ void BlasLapackLA::matrixMatrixMultiply( array2d<real64> const & A,
                                          array2d<real64> const & B,
                                          array2d<real64> & C,
                                          real64 const alpha,
-                                         real64 const beta )
+                                         real64 const beta ) const
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
@@ -378,7 +385,7 @@ void BlasLapackLA::matrixTMatrixMultiply( array2d<real64> const & A,
                                           array2d<real64> const & B,
                                           array2d<real64> & C,
                                           real64 const alpha,
-                                          real64 const beta )
+                                          real64 const beta ) const
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -427,7 +434,7 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
                                           array2d<real64> const & B,
                                           array2d<real64> & C,
                                           real64 const alpha,
-                                          real64 const beta )
+                                          real64 const beta ) const
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
@@ -476,7 +483,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
                                            array2d<real64> const & B,
                                            array2d<real64> & C,
                                            real64 const alpha,
-                                           real64 const beta )
+                                           real64 const beta ) const
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -522,7 +529,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
 }
 
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
-                                  array2d<real64> & Ainv )
+                                  array2d<real64> & Ainv ) const
 {
   real64 detA;
   matrixInverse( A,
@@ -532,7 +539,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
 
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   array2d<real64> & Ainv,
-                                  real64 & detA )
+                                  real64 & detA ) const
 {
   // --- Check that source matrix is square
   int order = integer_conversion<lapack_int>(A.size( 0 ));
@@ -604,22 +611,22 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
   switch( order )
     {
       case 1:
+      {
         Ainv( 0, 0 ) = oneOverDetA;
-        return;
+        break;
+      }
 
-        // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
       case 2:
-        {
+      {
         Ainv( 0, 0 ) =  A( 1, 1 ) * oneOverDetA;
         Ainv( 0, 1 ) = -A( 0, 1 ) * oneOverDetA;
         Ainv( 1, 0 ) = -A( 1, 0 ) * oneOverDetA;
         Ainv( 1, 1 ) =  A( 0, 0 ) * oneOverDetA;
-        return;
+        break;
       }
-        ;
 
       case 3:
-        {
+      {
         Ainv( 0, 0 ) = ( A( 1, 1 ) * A( 2, 2 ) -
                          A( 1, 2 ) * A( 2, 1 ) ) * oneOverDetA;
         Ainv( 0, 1 ) = ( A( 0, 2 ) * A( 2, 1 ) -
@@ -638,7 +645,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                          A( 0, 0 ) * A( 2, 1 ) ) * oneOverDetA;
         Ainv( 2, 2 ) = ( A( 0, 0 ) * A( 1, 1 ) -
                          A( 0, 1 ) * A( 1, 0 ) ) * oneOverDetA;
-        return;
+        break;
       }
       default:
     {
@@ -651,13 +658,14 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                            IPIV.data() );
     GEOS_ASSERT_MSG( INFO == 0, "LAPACKE_dgetri error code: " << INFO );
 
-    return;
+    break;
     }
   }
+  return;
 }
 
 void BlasLapackLA::vectorCopy( array1d<real64> const & X,
-                               array1d<real64> & Y )
+                               array1d<real64> & Y ) const
 {
   GEOS_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for copying" );
@@ -672,7 +680,7 @@ void BlasLapackLA::vectorCopy( array1d<real64> const & X,
 }
 
 void BlasLapackLA::matrixCopy( array2d<real64> const & A,
-                               array2d<real64> & B )
+                               array2d<real64> & B ) const
 {
   GEOS_ASSERT_MSG( A.size(0) == B.size(0) &&
                    A.size(1) == B.size(1),
@@ -689,7 +697,7 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
 
 //----------------------------------------------------------------I/O methods---
 // vector nice output
-void BlasLapackLA::printVector( array1d<real64> const & X )
+void BlasLapackLA::printVector( array1d<real64> const & X ) const
 {
   for( int i = 0 ; i < X.size() ; ++i )
   {
@@ -699,7 +707,7 @@ void BlasLapackLA::printVector( array1d<real64> const & X )
 }
 
 // vector nice output
-void BlasLapackLA::printMatrix( array2d<real64> const & X )
+void BlasLapackLA::printMatrix( array2d<real64> const & X ) const
 {
   for( int i = 0 ; i < X.size( 0 ) ; ++i )
   {

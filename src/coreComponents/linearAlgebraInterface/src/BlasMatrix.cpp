@@ -150,24 +150,28 @@ real64 BlasMatrix::determinant() const
   GEOS_ASSERT_MSG( m_numRows == m_numCols && m_numRows > 0,
                    "Matrix must be square with order greater than zero" );
 
+  real64 det;
   switch( m_numRows )
   {
     case 1:
-      return m_values[0];
+      det = m_values[0];
+      break;
     case 2:
-      return m_values[0] * m_values[3] - m_values[1] * m_values[2];
+      det = m_values[0] * m_values[3] - m_values[1] * m_values[2];
+      break;
     case 3:
       {
       real64 const * const v = m_values.data();
-      return
+      det =
           v[0] * ( v[4] * v[8] - v[5] * v[7] ) +
           v[3] * ( v[2] * v[7] - v[1] * v[8] ) +
           v[6] * ( v[1] * v[5] - v[2] * v[4] );
+      break;
     }
     case 4:
       {
       real64 const * const v = m_values.data();
-      return
+      det =
       v[0] * ( v[5] * ( v[10] * v[15] - v[11] * v[14] ) -
                v[9] * ( v[6] * v[15] - v[7] * v[14] ) +
                v[13] * ( v[6] * v[11] - v[7] * v[10] )
@@ -184,6 +188,7 @@ real64 BlasMatrix::determinant() const
                 v[5] * ( v[2] * v[11] - v[3] * v[10] ) +
                 v[9] * ( v[2] * v[7] - v[3] * v[6] )
           );
+      break;
     }
     default:
 
@@ -201,7 +206,7 @@ real64 BlasMatrix::determinant() const
       GEOS_ASSERT_MSG( INFO == 0,
                        "LAPACKE_dgetrf error code: " + std::to_string( INFO ) );
 
-      real64 det = 1.0;
+      det = 1.0;
       for( int i = 0 ; i < NN ; ++i )
       {
         if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
@@ -213,8 +218,9 @@ real64 BlasMatrix::determinant() const
           det *= LUfactor[NN * i + i];
         }
       }
-      return det;
+      break;
   }
+  return det;
 }
 
 void BlasMatrix::computeInverse( BlasMatrix & dst )
@@ -290,7 +296,7 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
     {
       case 1:
         dst( 0, 0 ) = oneOverDet;
-        return;
+        break;
 
         // Case 2 to 4 copied from deal.ii full_matrix.templates.h (Maple generated)
       case 2:
@@ -299,7 +305,7 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
         dst( 0, 1 ) = -( *this )( 0, 1 ) * oneOverDet;
         dst( 1, 0 ) = -( *this )( 1, 0 ) * oneOverDet;
         dst( 1, 1 ) = ( *this )( 0, 0 ) * oneOverDet;
-        return;
+        break;
       }
         ;
 
@@ -323,7 +329,7 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
                         ( *this )( 0, 0 ) * ( *this )( 2, 1 ) ) * oneOverDet;
         dst( 2, 2 ) = ( ( *this )( 0, 0 ) * ( *this )( 1, 1 ) -
                         ( *this )( 0, 1 ) * ( *this )( 1, 0 ) ) * oneOverDet;
-        return;
+        break;
       }
       default:
     {
@@ -336,9 +342,10 @@ void BlasMatrix::computeInverse( BlasMatrix & dst, real64& det )
     GEOS_ASSERT_MSG( INFO == 0,
                      "LAPACKE_dgetri error code: " + std::to_string( INFO ) );
 
-    return;
+    break;
     }
   }
+  return;
 }
 
 real64 BlasMatrix::normInf() const
