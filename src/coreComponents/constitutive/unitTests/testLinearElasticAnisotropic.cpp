@@ -241,18 +241,27 @@ TEST( LinearElasticAnisotropicTests, testXML )
 {
   ConstitutiveManager constitutiveManager("constitutive",nullptr);
 
-  string const inputFileName = "../src/coreComponents/constitutive/unitTests/testLinearElasticAnisotropic.xml";
+  string const inputStream =
+  "<?xml version=\"1.0\" ?>"
+  "<Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+  "  <LinearElasticAnisotropic name=\"granite\""
+  "                            density0=\"2700\""
+  "                            c11=\"1.0e10\" c12=\"1.1e9\"  c13=\"1.2e9\"  c14=\"1.3e9\" c15=\"1.4e9\" c16=\"1.5e9\""
+  "                            c21=\"2.0e9\"  c22=\"2.1e10\" c23=\"2.2e9\"  c24=\"2.3e9\" c25=\"2.4e9\" c26=\"2.5e9\""
+  "                            c31=\"3.0e9\"  c32=\"3.1e9\"  c33=\"3.2e10\" c34=\"3.3e9\" c35=\"3.4e9\" c36=\"3.5e9\""
+  "                            c41=\"4.0e9\"  c42=\"4.1e9\"  c43=\"4.2e9\"  c44=\"4.3e9\" c45=\"4.4e9\" c46=\"4.5e9\""
+  "                            c51=\"5.0e9\"  c52=\"5.1e9\"  c53=\"5.2e9\"  c54=\"5.3e9\" c55=\"5.4e9\" c56=\"5.5e9\""
+  "                            c61=\"6.0e9\"  c62=\"6.1e9\"  c63=\"6.2e9\"  c64=\"6.3e9\" c65=\"6.4e9\" c66=\"6.5e9\" />"
+  "</Constitutive>";
+
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_file( inputFileName.c_str() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
   if (!xmlResult)
   {
     GEOS_LOG_RANK_0("XML parsed with errors!");
     GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
-  string::size_type const pos=inputFileName.find_last_of('/');
-  string path = inputFileName.substr( 0, pos + 1 );
-  xmlDocument.append_child(xmlWrapper::filePathString).append_attribute(xmlWrapper::filePathString) = path.c_str();
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child("Constitutive");
   constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
@@ -265,7 +274,6 @@ TEST( LinearElasticAnisotropicTests, testXML )
 
   arrayView1d<LinearElasticAnisotropic::StiffnessTensor const> const &
   stiffness = model->stiffness() ;
-  std::cout<<stiffness.size()<<std::endl;
 
   real64 c[6][6] = { { 1.0e10, 1.1e9,  1.2e9,  1.3e9,  1.4e9,  1.5e9 },
                      { 2.0e9,  2.1e10, 2.2e9,  2.3e9,  2.4e9,  2.5e9 },
