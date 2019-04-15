@@ -422,24 +422,7 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   }
   /////////////////////////////////////////////////////////////////////////////////////
 
-  {
-  int dummy;
-  double* local_solution = nullptr;
-  m_solution.unwrappedPointer()->ExtractView(&local_solution,&dummy);
-
-  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( "Temperature_dof_indices" );
-
-  // Map values from local_solution to fieldVar
-  for( localIndex r = 0 ; r < indexArray.size() ; ++r )
-  {
-    localIndex lid = m_matrix.ParallelMatrixGetLocalRowID( indexArray[r] );
-    // Check if it is available
-    if( lid >= 0 )
-    {
-      fieldVar[r] = local_solution[lid];
-    }
-  }
-  }
+  dofManager.copyVectorToField( m_solution, "Temperature", nodeManager );
 
   // Syncronize ghost nodes
   std::map<string, string_array> fieldNames;
@@ -490,7 +473,7 @@ void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
                               SystemSolverParameters const * const params )
 {
   m_solution.create( m_rhs );
-  solve( &m_matrix, &m_rhs, &m_solution, params );
+  solve( m_matrix, m_rhs, m_solution, params );
 
   if( verboseLevel() >= 2 )
   {
@@ -689,36 +672,27 @@ void LaplaceFEM::ApplyBoundaryConditionToSystem( FieldSpecificationManager const
 }
 */
 
-void LaplaceFEM::solve( ParallelMatrix const * const matrix,
-                        ParallelVector * const rhs,
-                        ParallelVector * const solution,
+void LaplaceFEM::solve( ParallelMatrix & matrix,
+                        ParallelVector & rhs,
+                        ParallelVector & solution,
                         SystemSolverParameters const * const params )
 {
-  solution->set( 0.0 );
 
+  // Now create a solver parameter list and solver
+  LinearSolverParameters parameters;
+  LinearSolver solver( parameters );
 
-  //if(params->scalingOption())
-  if(true)
-  {
-    Epetra_Vector scaling(matrix->unwrappedPointer()->RowMap());
-    matrix->unwrappedPointer()->InvRowSums(scaling);
-    matrix->unwrappedPointer()->LeftScale(scaling);
+  // Set basic options
+  parameters.verbosity = 0;
+  parameters.solverType = "cg";
+  parameters.krylov.tolerance = 1e-8;
+  parameters.krylov.maxIterations = 250;
+  parameters.preconditionerType = "amg";
+  parameters.amg.smootherType = "gaussSeidel";
+  parameters.amg.coarseType = "direct";
 
-    Epetra_MultiVector tmp(*rhs->unwrappedPointer());
-    rhs->unwrappedPointer()->Multiply(1.0,scaling,tmp,0.0);
-  }
-
-  Epetra_LinearProblem problem( matrix->unwrappedPointer(),
-                                solution->unwrappedPointer(),
-                                rhs->unwrappedPointer() );
-  AztecOO solver(problem);
-  solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
-  solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
-  solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
-  solver.SetAztecParam(AZ_drop,params->ilut_drop());
-  solver.SetAztecOption(AZ_output,params->verbose());
-  solver.Iterate(params->numKrylovIter(),
-                 params->krylovTol() );
+  // Solve using the iterative solver and compare norms with true solution
+  solver.solve( matrix, solution, rhs );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////

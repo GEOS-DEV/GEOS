@@ -56,6 +56,7 @@ class DomainPartition;
 
 using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
 using ParallelVector = typename TrilinosInterface::ParallelVector;
+using LinearSolver = typename TrilinosInterface::LinearSolver;
 
 class LaplaceFEM : public SolverBase
 {
@@ -248,19 +249,14 @@ public:
                                         real64 const & bcValue,
                                         real64 const fieldValue )
   {
-    if( true )//node_is_ghost[*nd] < 0 )
+    if( matrix.getLocalRowID( dof ) >= 0 )
     {
-      //real64 LARGE = blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 1.0 );
-      //rhs = -LARGE*( bcValue - fieldValue );
-      if( matrix.ParallelMatrixGetLocalRowID( dof ) >= 0 )
-      {
-        matrix.clearRow( dof, 1.0 );
-        rhs = bcValue;
-      }
-      else
-      {
-        rhs = 0.0;
-      }
+      matrix.clearRow( dof, 1.0 );
+      rhs = bcValue;
+    }
+    else
+    {
+      rhs = 0.0;
     }
   }
 
@@ -272,9 +268,9 @@ public:
     rhs.set( dof, values, num );
   }
 
-  void solve( ParallelMatrix const * const matrix,
-              ParallelVector * const rhs,
-              ParallelVector * const solution,
+  void solve( ParallelMatrix & matrix,
+              ParallelVector & rhs,
+              ParallelVector & solution,
               SystemSolverParameters const * const params );
   /////////////////////////////////////////////////////////////////////////////////////////
 

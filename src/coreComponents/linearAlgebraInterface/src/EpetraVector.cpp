@@ -359,6 +359,25 @@ localIndex EpetraVector::localSize() const
   return m_vector.get()->MyLength();
 }
 
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getLocalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a global row index to local row index
+localIndex EpetraVector::getLocalRowID( globalIndex const index ) const
+{
+  return m_vector->Map().LID( index );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// extractLocalVector
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Extract a view of the local portion of the array
+void EpetraVector::extractLocalVector( real64 ** localVector ) const
+{
+  int dummy;
+  m_vector->ExtractView( localVector, &dummy );
+}
+
 } // end geosx
 
 // END_RST_NARRATIVE

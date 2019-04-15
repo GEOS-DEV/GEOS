@@ -505,28 +505,28 @@ void EpetraMatrix::MatrixMatrixMultiply( EpetraMatrix const &A,
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// ParallelMatrixGetLocalRowID
+// getLocalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a global row index to local row index
-localIndex EpetraMatrix::ParallelMatrixGetLocalRowID( globalIndex const index ) const
+localIndex EpetraMatrix::getLocalRowID( globalIndex const index ) const
 {
   return m_matrix->LRID( index );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// ParallelMatrixGetGlobalRowID
+// getGlobalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a local row index to global row index
-localIndex EpetraMatrix::ParallelMatrixGetGlobalRowID( localIndex const index ) const
+localIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
 {
   return m_matrix->GRID64( integer_conversion<int>( index ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// ParallelMatrixGetGlobalRowID
+// getGlobalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a local row index to global row index
-localIndex EpetraMatrix::ParallelMatrixGetGlobalRowID( globalIndex const index ) const
+localIndex EpetraMatrix::getGlobalRowID( globalIndex const index ) const
 {
   return m_matrix->GRID64( integer_conversion<int>( index ) );
 }

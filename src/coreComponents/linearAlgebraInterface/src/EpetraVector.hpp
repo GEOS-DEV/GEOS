@@ -358,6 +358,16 @@ public:
    */
   void write( string const & filename ) const;
 
+  /**
+   * Map a global row index to local row index
+   */
+  localIndex getLocalRowID( globalIndex const index ) const;
+
+  /**
+   * Extract a view of the local portion of the array
+   */
+  void extractLocalVector( real64 ** localVector ) const;
+
   //@}
 
 private:

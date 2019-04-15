@@ -325,6 +325,13 @@ public:
                                ParallelMatrix & permutedMatrix ) const;
 
   /**
+   * Copy values from DOF to nodes
+   */
+  void copyVectorToField( ParallelVector const & vector,
+                          string const & field,
+                          dataRepository::ManagedGroup * const manager ) const;
+
+  /**
    * Print the global connectivity matrix
    */
   void printConnectivityMatrix() const;

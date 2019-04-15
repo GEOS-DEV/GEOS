@@ -518,17 +518,17 @@ public:
   /**
    * @brief Map a global row index to local row index
    */
-  localIndex ParallelMatrixGetLocalRowID( globalIndex const index ) const;
+  localIndex getLocalRowID( globalIndex const index ) const;
 
   /**
    * @brief Map a local row index to global row index
    */
-  localIndex ParallelMatrixGetGlobalRowID( localIndex const index ) const;
+  localIndex getGlobalRowID( localIndex const index ) const;
 
   /**
    * @brief Map a local row index to global row index
    */
-  localIndex ParallelMatrixGetGlobalRowID( globalIndex const index ) const;
+  localIndex getGlobalRowID( globalIndex const index ) const;
 
   /**
    * @brief Return the local number of columns on each processor
