@@ -325,9 +325,16 @@ public:
                                ParallelMatrix & permutedMatrix ) const;
 
   /**
-   * Copy values from DOF to nodes
+   * Copy values from DOFs to nodes
    */
   void copyVectorToField( ParallelVector const & vector,
+                          string const & field,
+                          dataRepository::ManagedGroup * const manager ) const;
+
+  /**
+   * Copy values from nodes to DOFs
+   */
+  void copyFieldToVector( ParallelVector const & vector,
                           string const & field,
                           dataRepository::ManagedGroup * const manager ) const;
 

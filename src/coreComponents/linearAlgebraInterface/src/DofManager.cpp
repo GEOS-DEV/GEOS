@@ -995,8 +995,43 @@ void DofManager::permuteSparsityPattern( ParallelMatrix const & locLocDistr,
                                        permutedMatrix );
 }
 
-// Copy values from DOF to nodes
+// Copy values from DOFs to nodes
 void DofManager::copyVectorToField( ParallelVector const & vector,
+                                    string const & field,
+                                    dataRepository::ManagedGroup * const manager ) const
+{
+  // check if the field name is already added
+  GEOS_ERROR_IF( !keyInUse( field ),
+                 "printConnectivityLocationPattern: requested field name must be already existing." );
+
+  // get field index
+  localIndex fieldIdx = fieldIndex( field );
+
+  // Retrieve fieldVar
+  real64_array & fieldVar = manager->getReference<real64_array>(string( field ));
+
+  // Retrieve indexArray
+  globalIndex_array const &
+  indexArray = manager->getReference<globalIndex_array>( m_fields[fieldIdx].key );
+
+  // Get local vector
+  real64 * localVector = nullptr;
+  vector.extractLocalVector( &localVector );
+
+  // Map values from localVector to fieldVar
+  for( localIndex r = 0 ; r < indexArray.size() ; ++r )
+  {
+    localIndex lid = vector.getLocalRowID( indexArray[r] );
+    // Check if it is available
+    if( lid >= 0 )
+    {
+      localVector[lid] = fieldVar[r];
+    }
+  }
+}
+
+// Copy values from nodes to DOFs
+void DofManager::copyFieldToVector( ParallelVector const & vector,
                                     string const & field,
                                     dataRepository::ManagedGroup * const manager ) const
 {
