@@ -119,7 +119,7 @@
 
   <Constitutive>
   
-      <LinearElasticIsotropic name="shale"
+      <PoroLinearElasticIsotropic name="shale"
                               density0="2700"
                               BulkModulus0="61.9e6"
                               ShearModulus0="28.57e6"
