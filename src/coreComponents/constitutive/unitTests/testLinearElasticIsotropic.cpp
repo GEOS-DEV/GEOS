@@ -206,18 +206,23 @@ TEST( LinearElasticIsotropicTests, testXML )
   ConstitutiveManager constitutiveManager("constitutive",nullptr);
   LinearElasticIsotropic cm( "model", &constitutiveManager );
 
-  string const inputFileName = "../src/coreComponents/constitutive/unitTests/testLinearElasticIsotropic.xml";
+  string const inputStream =
+  "<?xml version=\"1.0\" ?>"
+  "  <Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+  "  <LinearElasticIsotropic name=\"granite\" "
+  "  density0=\"2700\" "
+  "  BulkModulus0=\"5.5556e9\" "
+  "  ShearModulus0=\"4.16667e9\"/>"
+  "</Constitutive>";
+
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_file( inputFileName.c_str() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
   if (!xmlResult)
   {
     GEOS_LOG_RANK_0("XML parsed with errors!");
     GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
-  string::size_type const pos=inputFileName.find_last_of('/');
-  string path = inputFileName.substr( 0, pos + 1 );
-  xmlDocument.append_child(xmlWrapper::filePathString).append_attribute(xmlWrapper::filePathString) = path.c_str();
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child("Constitutive");
   constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
