@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<Constitutive xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">  
-  <LinearElasticIsotropic name="granite"
-                          density0="2700"
-                          BulkModulus0="5.5556e9"
-                          ShearModulus0="4.16667e9"/>
-</Constitutive>
-                              
