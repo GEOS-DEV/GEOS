@@ -1008,7 +1008,7 @@ void DofManager::copyVectorToField( ParallelVector const & vector,
   localIndex fieldIdx = fieldIndex( field );
 
   // Retrieve fieldVar
-  real64_array & fieldVar = manager->getReference<real64_array>(string( field ));
+  real64_array & fieldVar = manager->getReference<real64_array>( field );
 
   // Retrieve indexArray
   globalIndex_array const &
@@ -1043,7 +1043,7 @@ void DofManager::copyFieldToVector( ParallelVector const & vector,
   localIndex fieldIdx = fieldIndex( field );
 
   // Retrieve fieldVar
-  real64_array & fieldVar = manager->getReference<real64_array>(string( field ));
+  real64_array & fieldVar = manager->getReference<real64_array>( field );
 
   // Retrieve indexArray
   globalIndex_array const &
