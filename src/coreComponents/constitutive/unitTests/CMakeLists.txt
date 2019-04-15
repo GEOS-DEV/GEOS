@@ -4,6 +4,7 @@
 
 set( gtest_geosx_tests
      testLinearElasticIsotropic.cpp
+     testLinearElasticAnisotropic.cpp
      testRelPerm.cpp
      testCapillaryPressure.cpp 
    )
