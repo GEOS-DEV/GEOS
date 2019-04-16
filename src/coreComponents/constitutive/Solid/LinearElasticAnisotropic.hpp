@@ -35,7 +35,7 @@ namespace constitutive
 /**
  * @class LinearElasticAnisotropic
  *
- * Class to provide a linear elastic isotropic material response.
+ * Class to provide a linear elastic anisotropic material response.
  */
 class LinearElasticAnisotropic : public SolidBase
 {
@@ -65,7 +65,7 @@ public:
 
   void GetStiffness( localIndex const k, real64 c[6][6] ) const;
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     static constexpr auto c11 = "c11";
     static constexpr auto c12 = "c12";
@@ -109,10 +109,10 @@ public:
     static constexpr auto c65 = "c65";
     static constexpr auto c66 = "c66";
 
-    static constexpr auto stiffness0String  = "stiffness0";
+    static constexpr auto defaultStiffnessString  = "defaultStiffness";
     static constexpr auto stiffnessString  = "stiffness";
 
-  } m_linearElasticIsotropicViewKeys;
+  };
 
   struct StiffnessTensor
   {
@@ -129,7 +129,7 @@ protected:
 private:
 
 
-  StiffnessTensor m_stiffness0;
+  StiffnessTensor m_defaultStiffness;
   array1d<StiffnessTensor> m_stiffness;
 };
 

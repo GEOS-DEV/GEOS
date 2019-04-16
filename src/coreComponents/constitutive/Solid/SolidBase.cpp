@@ -16,15 +16,15 @@ namespace constitutive
 SolidBase::SolidBase( string const & name,
                       ManagedGroup * const parent ):
   ConstitutiveBase( name, parent ),
-  m_density0{0},
+  m_defaultDensity{0},
   m_density{},
   m_meanStress{},
   m_deviatorStress{}
 {
 
-  RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 )->
+  RegisterViewWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Reference Material Density");
+    setDescription("Default Material Density");
 
   RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->
     setApplyDefaultValue(-1)->
@@ -52,7 +52,7 @@ SolidBase::DeliverClone( string const & name,
 {
   SolidBase * const newConstitutiveRelation = dynamic_cast<SolidBase*>(clone.get());
 
-  newConstitutiveRelation->m_density0 = m_density0;
+  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_density = m_density;
 
   newConstitutiveRelation->m_meanStress = m_meanStress;
@@ -67,7 +67,7 @@ void SolidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const p
 
   this->resize( parent->size() );
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_density = m_density0;
+  m_density = m_defaultDensity;
 
   m_deviatorStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
