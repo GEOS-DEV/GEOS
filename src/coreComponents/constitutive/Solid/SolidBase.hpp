@@ -42,14 +42,14 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto density0String  = "density0";
+    static constexpr auto defaultDensityString  = "defaultDensity";
     static constexpr auto densityString  = "density";
     static constexpr auto deviatorStressString = "DeviatorStress";
     static constexpr auto meanStressString = "MeanStress";
   };
 
-  real64   density0() const { return m_density0; }
-  real64 & density0()       { return m_density0; }
+  real64   defaultDensity() const { return m_defaultDensity; }
+  real64 & defaultDensity()       { return m_defaultDensity; }
 
   arrayView2d<real64>       const & density()       { return m_density; }
   arrayView2d<real64 const> const & density() const { return m_density; }
@@ -66,7 +66,7 @@ protected:
 //  void BatchUpdateKernel( ARGS && ... args );
 
 
-  real64 m_density0;
+  real64 m_defaultDensity;
   array2d<real64> m_density;
 
   array2d<real64> m_meanStress;
