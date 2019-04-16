@@ -59,14 +59,14 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   real64 constexpr K = 2e10;
   real64 constexpr G = 1e10;
   cm.bulkModulus0() = K;
-  cm.shearModulus0() = G;
+  cm.defaultShearModulus() = G;
 
   dataRepository::ManagedGroup disc( "discretization", nullptr );
   disc.resize(2);
   cm.AllocateConstitutiveData( &disc, 2 );
 
   cm.bulkModulus() = cm.bulkModulus0();
-  cm.shearModulus() = cm.shearModulus0();
+  cm.shearModulus() = cm.defaultShearModulus();
 
   arrayView2d<real64>      const & meanStress = cm.meanStress();
   arrayView2d<R2SymTensor> const & deviatorStress = cm.deviatorStress();
@@ -210,9 +210,9 @@ TEST( LinearElasticIsotropicTests, testXML )
   "<?xml version=\"1.0\" ?>"
   "  <Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
   "  <LinearElasticIsotropic name=\"granite\" "
-  "  density0=\"2700\" "
-  "  BulkModulus0=\"5.5556e9\" "
-  "  ShearModulus0=\"4.16667e9\"/>"
+  "  defaultDensity=\"2700\" "
+  "  defaultBulkModulus=\"5.5556e9\" "
+  "  defaultShearModulus=\"4.16667e9\"/>"
   "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
