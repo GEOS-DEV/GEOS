@@ -39,6 +39,11 @@ namespace constitutive
 class LinearElasticIsotropic : public SolidBase
 {
 public:
+  /**
+   * constructor
+   * @param name name of the instance in the catalog
+   * @param parent the group which contains this instance
+   */
   LinearElasticIsotropic( string const & name, ManagedGroup * const parent );
 
   virtual ~LinearElasticIsotropic() override;
@@ -62,32 +67,30 @@ public:
                                  integer const systemAssembleFlag ) override;
 
 
+  /**
+   * accessor to return the stiffness at a given element
+   * @param k the element number
+   * @param c the stiffness array
+   */
   void GetStiffness( localIndex const k, real64 c[6][6] ) const;
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    static constexpr auto bulkModulus0String  = "BulkModulus0";
-    static constexpr auto poissonRatioString =  "PoissonRatio" ;
-    static constexpr auto shearModulus0String = "ShearModulus0";
-    static constexpr auto youngsModulus0String =  "YoungsModulus" ;
-
-    static constexpr auto compressibilityString =  "compressibility" ;
-    static constexpr auto referencePressureString =  "referencePressure" ;
-    static constexpr auto biotCoefficientString =  "BiotCoefficient" ;
-
+    static constexpr auto bulkModulus0String  = "defaultBulkModulus";
+    static constexpr auto poissonRatioString =  "defaultPoissonRatio" ;
+    static constexpr auto shearModulus0String = "defaultShearModulus";
+    static constexpr auto youngsModulus0String =  "defaultYoungsModulus" ;
 
     static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto shearModulusString = "ShearModulus";
+  };
 
 
-  } m_linearElasticIsotropicViewKeys;
+  real64   bulkModulus0()  const { return m_defaultBulkModulus; }
+  real64 & bulkModulus0()        { return m_defaultBulkModulus; }
 
-
-  real64   bulkModulus0()  const { return m_bulkModulus0; }
-  real64 & bulkModulus0()        { return m_bulkModulus0; }
-
-  real64 shearModulus0() const { return m_shearModulus0; }
-  real64 & shearModulus0()     { return m_shearModulus0; }
+  real64 defaultShearModulus() const { return m_defaultShearModulus; }
+  real64 & defaultShearModulus()     { return m_defaultShearModulus; }
 
   arrayView1d<real64> const &       bulkModulus()       { return m_bulkModulus; }
   arrayView1d<real64 const> const & bulkModulus() const { return m_bulkModulus; }
@@ -102,8 +105,8 @@ protected:
 private:
 
 
-  real64 m_bulkModulus0;
-  real64 m_shearModulus0;
+  real64 m_defaultBulkModulus;
+  real64 m_defaultShearModulus;
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
 

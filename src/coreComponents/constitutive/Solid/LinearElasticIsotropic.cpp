@@ -33,17 +33,17 @@ namespace constitutive
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
   SolidBase( name, parent ),
-  m_bulkModulus0(),
-  m_shearModulus0(),
+  m_defaultBulkModulus(),
+  m_defaultShearModulus(),
   m_bulkModulus(),
   m_shearModulus()
 {
-  RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 )->
+  RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_defaultBulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Bulk Modulus Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 )->
+  RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_defaultShearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Shear Modulus Parameter");
@@ -89,11 +89,11 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast<LinearElasticIsotropic *>(clone.get());
 
 
-  newConstitutiveRelation->m_bulkModulus0 = m_bulkModulus0;
+  newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
-  newConstitutiveRelation->m_density0 = m_density0;
+  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_density = m_density;
-  newConstitutiveRelation->m_shearModulus0 = m_shearModulus0;
+  newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
 
   newConstitutiveRelation->m_meanStress = m_meanStress;
@@ -109,8 +109,8 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
   m_bulkModulus.resize( parent->size() );
   m_shearModulus.resize( parent->size() );
 
-  m_bulkModulus = m_bulkModulus0;
-  m_shearModulus = m_shearModulus0;
+  m_bulkModulus = m_defaultBulkModulus;
+  m_shearModulus = m_defaultShearModulus;
 
 }
 
@@ -118,8 +118,8 @@ void LinearElasticIsotropic::PostProcessInput()
 {
   real64 & nu = getReference<real64>( viewKeyStruct::poissonRatioString );
   real64 & E  = getReference<real64>( viewKeyStruct::youngsModulus0String );
-  real64 & K  = m_bulkModulus0;
-  real64 & G  = m_shearModulus0;
+  real64 & K  = m_defaultBulkModulus;
+  real64 & G  = m_defaultShearModulus;
 
   int numConstantsSpecified = 0;
   if( nu >= 0.0 )
@@ -159,23 +159,23 @@ void LinearElasticIsotropic::PostProcessInput()
   }
 }
 
-void LinearElasticIsotropic::StateUpdatePoint( localIndex const i,
+void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
                                                localIndex const q,
                                                R2SymTensor const & D,
                                                R2Tensor const & Rot,
                                                integer const systemAssembleFlag )
 {
   real64 volumeStrain = D.Trace();
-  m_meanStress[i][q] += volumeStrain * m_bulkModulus0;
+  m_meanStress[k][q] += volumeStrain * m_bulkModulus[k];
 
   R2SymTensor temp = D;
   temp.PlusIdentity( -volumeStrain / 3.0 );
-  temp *= 2.0 * m_shearModulus0;
-  m_deviatorStress[i][q] += temp;
+  temp *= 2.0 * m_shearModulus[k];
+  m_deviatorStress[k][q] += temp;
 
 
-  temp.QijAjkQlk( m_deviatorStress[i][q], Rot );
-  m_deviatorStress[i][q] = temp;
+  temp.QijAjkQlk( m_deviatorStress[k][q], Rot );
+  m_deviatorStress[k][q] = temp;
 }
 
 void LinearElasticIsotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const

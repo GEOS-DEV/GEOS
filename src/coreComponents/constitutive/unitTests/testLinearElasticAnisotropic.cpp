@@ -55,7 +55,7 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
 
 void stressCalc( real64 const c[6][6], R2SymTensor const Ddt, real64 stressVoigt[6] )
 {
-  real64 const DdtVoigt[6] = { Ddt(0,0), Ddt(1,1), Ddt(2,2), Ddt(1,2), Ddt(0,2), Ddt(0,1) };
+  real64 const DdtVoigt[6] = { Ddt(0,0), Ddt(1,1), Ddt(2,2), 2*Ddt(1,2), 2*Ddt(0,2), 2*Ddt(0,1) };
 
   for( int i=0 ; i<6 ; ++i )
   {
@@ -245,7 +245,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   "<?xml version=\"1.0\" ?>"
   "<Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
   "  <LinearElasticAnisotropic name=\"granite\""
-  "                            density0=\"2700\""
+  "                            defaultDensity=\"2700\""
   "                            c11=\"1.0e10\" c12=\"1.1e9\"  c13=\"1.2e9\"  c14=\"1.3e9\" c15=\"1.4e9\" c16=\"1.5e9\""
   "                            c21=\"2.0e9\"  c22=\"2.1e10\" c23=\"2.2e9\"  c24=\"2.3e9\" c25=\"2.4e9\" c26=\"2.5e9\""
   "                            c31=\"3.0e9\"  c32=\"3.1e9\"  c33=\"3.2e10\" c34=\"3.3e9\" c35=\"3.4e9\" c36=\"3.5e9\""
