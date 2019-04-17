@@ -249,6 +249,11 @@ public:
                     bool const symmetric ) const;
 
   /**
+   * Get key.
+   */
+  string getKey( string const & field ) const;
+
+  /**
    * Return global number of dofs across all processors. If field argument is empty, return monolithic size.
    */
   globalIndex numGlobalDofs( string const & field = "" ) const;
@@ -420,6 +425,11 @@ private:
    * This mpi rank
    */
   int mpiRank;
+
+  /**
+   * Initialize data structure for connectivity and sparsity pattern
+   */
+  void initializeDataStructure();
 
   /**
    * Check if string key is already being used

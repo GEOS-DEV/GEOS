@@ -304,11 +304,11 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   LaplaceFEM();
+
+  // Data structure to handle degrees of freedom
   DofManager dofManager;
-  bool firstTime = true;
 
-  int mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
-
+  // System matrix, rhs and solution
   ParallelMatrix m_matrix;
   ParallelVector m_rhs;
   ParallelVector m_solution;

@@ -160,12 +160,8 @@ void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
                                     DomainPartition * const domain,
                                     systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
-  // Just one computation of the sparsity pattern!!!
-  if( firstTime )
-  {
-    firstTime = false;
-    SetupSystem( domain, blockSystem );
-  }
+  // Computation of the sparsity pattern
+  SetupSystem( domain, blockSystem );
 }
 
 void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
@@ -178,10 +174,10 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
                               EpetraBlockSystem * const blockSystem )
 {
   dofManager.setMesh( domain, 0, 0 );
-  dofManager.addField( "Temperature", DofManager::Location::Node, DofManager::Connectivity::Elem );
+  dofManager.addField( m_fieldName, DofManager::Location::Node, DofManager::Connectivity::Elem );
 
   ParallelMatrix & sparsity = m_matrix;
-  dofManager.getSparsityPattern( sparsity, "Temperature", "Temperature", true, &m_rhs );
+  dofManager.getSparsityPattern( sparsity, m_fieldName, m_fieldName, true, &m_rhs );
 
   /////////////////////////////////////////////////////////////////////////////////////
   // TRILINOS CODE
@@ -221,7 +217,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   feDiscretizationManager = numericalMethodManager->
     GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( "Temperature_dof_indices" );
+  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( dofManager.getKey( m_fieldName ) );
 
   {
   // Initialize all entries to zero
@@ -260,7 +256,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       {
         if(elemGhostRank[k] < 0)
         {
-          dofManager.getIndices( element_index, DofManager::Connectivity::Elem, er, esr, k, "Temperature" );
+          dofManager.getIndices( element_index, DofManager::Connectivity::Elem, er, esr, k, m_fieldName );
 
           element_rhs = 0.0;
           element_matrix = 0.0;
@@ -338,10 +334,10 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
         if(elemGhostRank[k] < 0)
         {
           globalIndex_array indices;
-          dofManager.getIndices( indices, DofManager::Connectivity::Elem, er, esr, k, "Temperature" );
+          dofManager.getIndices( indices, DofManager::Connectivity::Elem, er, esr, k, m_fieldName );
           for( int i = 0 ; i < indices.size() ; ++i )
           {
-            element_index[i] = integer_conversion<long long>( indices[i] );
+            element_index[i] = integer_conversion<int>( indices[i] );
           }
 
           element_rhs.Scale(0);
@@ -394,7 +390,7 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   // Retrieve fieldVar
-  real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
+  real64_array & fieldVar = nodeManager->getReference<real64_array>( m_fieldName );
 
   /////////////////////////////////////////////////////////////////////////////////////
   // TRILINOS CODE
@@ -407,7 +403,7 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( "Temperature_dof_indices" );
+  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( dofManager.getKey( m_fieldName ) );
 
   // Map values from local_solution to fieldVar
   for( localIndex r = 0 ; r < indexArray.size() ; ++r )
@@ -422,11 +418,11 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   }
   /////////////////////////////////////////////////////////////////////////////////////
 
-  dofManager.copyVectorToField( m_solution, "Temperature", nodeManager );
+  dofManager.copyVectorToField( m_solution, m_fieldName, nodeManager );
 
   // Syncronize ghost nodes
   std::map<string, string_array> fieldNames;
-  fieldNames["node"].push_back( "Temperature" );
+  fieldNames["node"].push_back( m_fieldName );
 
   CommunicationTools::
   SynchronizeFields( fieldNames, mesh,
@@ -503,7 +499,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
   fsManager->Apply( time,
                     &domain,
                     "nodeManager",
-                    "Temperature",
+                    m_fieldName,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
@@ -513,8 +509,8 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
                                                                  time,
                                                                  targetGroup,
-                                                                 "Temperature",
-                                                                 "Temperature_dof_indices",
+                                                                 m_fieldName,
+                                                                 dofManager.getKey( m_fieldName ),
                                                                  1,
                                                                  &blockSystem,
                                                                  BlockIDs::dummyScalarBlock );
@@ -531,7 +527,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
   fsManager->Apply( time,
                     &domain,
                     "nodeManager",
-                    "Temperature",
+                    m_fieldName,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
@@ -546,8 +542,8 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                     targetSet,
                                     time,
                                     targetGroup,
-                                    "Temperature",
-                                    "Temperature_dof_indices",
+                                    m_fieldName,
+                                    dofManager.getKey( m_fieldName ),
                                     1,
                                     component,
                                     scale,

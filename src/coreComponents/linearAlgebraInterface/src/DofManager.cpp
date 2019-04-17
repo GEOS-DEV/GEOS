@@ -31,6 +31,11 @@ DofManager::DofManager()
   mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
   mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
 
+  initializeDataStructure();
+}
+
+// Initialize data structure for connectivity and sparsity pattern
+void DofManager::initializeDataStructure() {
   // we pre-allocate an oversized array to store connectivity type
   // instead of resizing it dynamically as fields are added.
   m_connectivity.resize( MAX_NUM_FIELDS, MAX_NUM_FIELDS );
@@ -60,7 +65,12 @@ void DofManager::setMesh( DomainPartition * const domain,
                           localIndex const meshLevelIndex,
                           localIndex const meshBodyIndex )
 {
-  GEOS_ERROR_IF( m_meshLevel != nullptr, "A mesh is already assigned to this DofManager." );
+  if( m_domain != nullptr )
+  {
+    // Domain is changed! Delete old data structure and create new
+    cleanUp();
+    initializeDataStructure();
+  }
   m_domain = domain;
   m_meshLevel = m_domain->getMeshBodies()->GetGroup<MeshBody>( meshBodyIndex )->
                 getMeshLevel( integer_conversion<int>( meshLevelIndex ) );
@@ -91,6 +101,18 @@ bool DofManager::keyInUse( string const & key ) const
     }
   }
   return false;
+}
+
+// Get key.
+string DofManager::getKey( string const & field ) const
+{
+  // check if the field name is already added
+  GEOS_ERROR_IF( !keyInUse( field ), "numGlobalDofs: requested field name must be already existing." );
+
+  // get field index
+  localIndex fieldIdx = fieldIndex( field );
+
+  return m_fields[fieldIdx].key;
 }
 
 // Return global number of dofs across all processors. If field argument is empty, return monolithic size.
