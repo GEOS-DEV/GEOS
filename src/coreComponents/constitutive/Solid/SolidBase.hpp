@@ -34,7 +34,7 @@ public:
                                  localIndex const q,
                                  R2SymTensor const & Dadt,
                                  R2Tensor const & Rot,
-                                 integer const systemAssembleFlag ) = 0;
+                                 integer const updateStiffnessFlag ) = 0;
 
 //  virtual void BatchUpdate( arrayView2d<real64 const> const & Dadt,
 //                            arrayView2d<real64 const> const & Rot )
