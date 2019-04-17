@@ -1780,6 +1780,15 @@ void CompositionalMultiphaseWell::ResetViews(DomainPartition * const domain)
   m_dResCompFrac_dCompDens =
     elemManager->ConstructViewAccessor<array3d<real64>, arrayView3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
+  m_resPhaseMob =
+    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::phaseMobilityString );
+
+  m_dResPhaseMob_dPres =
+    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dPressureString );
+
+  m_dResPhaseMob_dCompDens =
+    elemManager->ConstructViewAccessor<array3d<real64>, arrayView3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
+
   m_resPhaseVolFrac =
     elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString );
 
@@ -2150,6 +2159,9 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & resPressure  = m_resPressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dResPressure = m_deltaResPressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & resGravDepth = m_resGravDepth;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & phaseMob = m_phaseMob;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dPhaseMob_dPres = m_dPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dPhaseMob_dComp = m_dPhaseMob_dCompDens;
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dResPhaseVolFrac_dPres = m_dResPhaseVolFrac_dPres;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dResPhaseVolFrac_dComp = m_dResPhaseVolFrac_dCompDens;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dResCompFrac_dCompDens = m_dResCompFrac_dCompDens;

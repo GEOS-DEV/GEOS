@@ -451,6 +451,10 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resCompFrac;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResCompFrac_dCompDens;
 
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resPhaseMob;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dResPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResPhaseMob_dCompDens;
+
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resPhaseVolFrac;
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dResPhaseVolFrac_dPres;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResPhaseVolFrac_dCompDens;
