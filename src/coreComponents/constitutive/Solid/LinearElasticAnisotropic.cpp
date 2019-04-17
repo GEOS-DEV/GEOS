@@ -202,7 +202,7 @@ void LinearElasticAnisotropic::StateUpdatePoint( localIndex const k,
                                                  localIndex const q,
                                                  R2SymTensor const & D,
                                                  R2Tensor const & Rot,
-                                                 integer const systemAssembleFlag )
+                                                 integer const updateStiffnessFlag )
 {
   R2SymTensor T;
   real64 * const restrict Tdata = T.Data();

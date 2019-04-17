@@ -64,7 +64,7 @@ public:
                                  localIndex const q,
                                  R2SymTensor const & D,
                                  R2Tensor const & Rot,
-                                 integer const systemAssembleFlag ) override;
+                                 integer const updateStiffnessFlag ) override;
 
 
   /**
