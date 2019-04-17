@@ -121,9 +121,9 @@
   <Constitutive>
   
       <LinearElasticIsotropic name="shale"
-                              density0="2400"
-                              BulkModulus0="1611.1e6"
-                              ShearModulus0="1208.3e6"
+                              defaultDensity="2400"
+                              defaultBulkModulus="1611.1e6"
+                              defaultShearModulus="1208.3e6"
                               BiotCoefficient="1"
                               referencePressure="2.125e6"
                               compressibility="3e-10"
