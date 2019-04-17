@@ -70,10 +70,10 @@ inline void CalculateGradient(R2Tensor& Gradient,
 }
 
 template< int N >
-inline void CalculateGradients( R2Tensor& Gradient0,
-                                R2Tensor& Gradient1,
-                                arraySlice1d<R1Tensor const> const & var0,
-                                arraySlice1d<R1Tensor const> const & var1,
+inline void CalculateGradients( R2Tensor & Gradient0,
+                                R2Tensor & Gradient1,
+                                R1Tensor const * restrict const var0,
+                                R1Tensor const * restrict const var1,
                                 arraySlice1d<R1Tensor const> const & dNdX )
 {
   Gradient0.dyadic_ab( var0[0], dNdX[0] );

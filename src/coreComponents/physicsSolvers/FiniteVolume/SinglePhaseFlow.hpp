@@ -317,7 +317,7 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStressOld;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStress;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_bulkModulus;
+  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_bulkModulus;
   ElementRegionManager::MaterialViewAccessor<real64>              m_biotCoefficient;
 };
 

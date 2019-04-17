@@ -632,7 +632,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
     arrayView1d<real64 const> const & dPres              = m_poroElasticFlag ? m_deltaPressure[er][esr]             : poroOld;
     arrayView1d<real64 const> const & oldTotalMeanStress = m_poroElasticFlag ? m_totalMeanStressOld[er][esr]        : poroOld;
     arrayView1d<real64 const> const & totalMeanStress    = m_poroElasticFlag ? m_totalMeanStress[er][esr]           : poroOld;
-    arrayView2d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : dPVMult_dPres;
+    arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
     real64 const & biotCoefficient                       = m_poroElasticFlag ? m_biotCoefficient[er][esr][m_solidIndex] : 0;
 
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
@@ -647,7 +647,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
         AssembleAccumulationTermsHelper<ISPORO>::porosityUpdate( poro[ei], dPoro_dPres,
                                                                  biotCoefficient,
                                                                  poroOld[ei],
-                                                                 bulkModulus[ei][0],
+                                                                 bulkModulus[ei],
                                                                  totalMeanStress[ei],
                                                                  oldTotalMeanStress[ei],
                                                                  dPres[ei],
@@ -1315,7 +1315,7 @@ void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
     m_totalMeanStressOld = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "oldTotalMeanStress" );
     m_totalMeanStress    = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "totalMeanStress" );
 
-    m_bulkModulus = elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( "BulkModulus",
+    m_bulkModulus = elemManager->ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( "BulkModulus",
                                                                                                        constitutiveManager );
     m_biotCoefficient = elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient",
                                                                             constitutiveManager );

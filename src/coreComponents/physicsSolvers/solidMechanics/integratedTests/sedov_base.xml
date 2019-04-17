@@ -54,19 +54,19 @@
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              density0="2700"
-                              BulkModulus0="5.5556e9"
-                              ShearModulus0="4.16667e9"/>
+                              defaultDensity="2700"
+                              defaultBulkModulus="5.5556e9"
+                              defaultShearModulus="4.16667e9"/>
 
       <LinearElasticIsotropic name="shale"
-                              density0="2700"
-                              BulkModulus0="5.5556e9"
-                              ShearModulus0="4.16667e9"/>
+                              defaultDensity="2700"
+                              defaultBulkModulus="5.5556e9"
+                              defaultShearModulus="4.16667e9"/>
 
       <LinearElasticIsotropic name="water"
-                              density0="1000"
-                              BulkModulus0="2.0e9"
-                              ShearModulus0="0.0"/>
+                              defaultDensity="1000"
+                              defaultBulkModulus="2.0e9"
+                              defaultShearModulus="0.0"/>
   </Constitutive>
 
 
