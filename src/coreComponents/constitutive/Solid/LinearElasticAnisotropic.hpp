@@ -60,7 +60,7 @@ public:
                                  localIndex const q,
                                  R2SymTensor const & D,
                                  R2Tensor const & Rot,
-                                 integer const systemAssembleFlag ) override;
+                                 integer const updateStiffnessFlag ) override;
 
 
   void GetStiffness( localIndex const k, real64 c[6][6] ) const;
@@ -114,12 +114,24 @@ public:
 
   };
 
+  /**
+   * @struct wrapper struct for the stiffness tensor
+   */
   struct StiffnessTensor
   {
     real64 m_data[6][6];
   };
 
+  /**
+   * @brief accessor for the stiffness field
+   * @return
+   */
   arrayView1d<StiffnessTensor> const &       stiffness()       { return m_stiffness; }
+
+  /**
+   * @brief immutable accessor for the stiffness field
+   * @return
+   */
   arrayView1d<StiffnessTensor const> const & stiffness() const { return m_stiffness; }
 
 
@@ -129,8 +141,8 @@ protected:
 private:
 
 
-  StiffnessTensor m_defaultStiffness;
-  array1d<StiffnessTensor> m_stiffness;
+  StiffnessTensor m_defaultStiffness; /// default value for stiffness tensor
+  array1d<StiffnessTensor> m_stiffness; /// stiffness tensor field
 };
 
 

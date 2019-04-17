@@ -65,7 +65,18 @@ void stressCalc( real64 const c[6][6], R2SymTensor const Ddt, real64 stressVoigt
       stressVoigt[i] += c[i][j] * DdtVoigt[j];
     }
   }
+}
 
+void stressCheck( real64 const meanStress, R2SymTensor const & deviatorStress, real64 const stressV[6] )
+{
+  real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
+  ASSERT_DOUBLE_EQ( meanStress , p );
+  ASSERT_DOUBLE_EQ( deviatorStress(0,0) , stressV[0] - p );
+  ASSERT_DOUBLE_EQ( deviatorStress(1,1) , stressV[1] - p );
+  ASSERT_DOUBLE_EQ( deviatorStress(2,2) , stressV[2] - p );
+  ASSERT_DOUBLE_EQ( deviatorStress(1,2) , stressV[3] );
+  ASSERT_DOUBLE_EQ( deviatorStress(0,2) , stressV[4] );
+  ASSERT_DOUBLE_EQ( deviatorStress(0,1) , stressV[5] );
 }
 
 TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
@@ -106,17 +117,8 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot(2,2) = 1;
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
-
     stressCalc( c.m_data, Ddt, stressV );
-
-    real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , stressV[0] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , stressV[1] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , stressV[2] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , stressV[3] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , stressV[4] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , stressV[5] );
+    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
   }
 
   {
@@ -131,15 +133,8 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
+    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
-    real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , stressV[0] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , stressV[1] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , stressV[2] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , stressV[3] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , stressV[4] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , stressV[5] );
   }
 
   {
@@ -154,15 +149,8 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
+    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
-    real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , stressV[0] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , stressV[1] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , stressV[2] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , stressV[3] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , stressV[4] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , stressV[5] );
   }
 
   {
@@ -177,15 +165,8 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
+    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
-    real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , stressV[0] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , stressV[1] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , stressV[2] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , stressV[3] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , stressV[4] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , stressV[5] );
   }
 
   {
@@ -200,15 +181,8 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
+    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
-    real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , stressV[0] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , stressV[1] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , stressV[2] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , stressV[3] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , stressV[4] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , stressV[5] );
   }
 
   {
@@ -223,15 +197,8 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
+    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
-    real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , stressV[0] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , stressV[1] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , stressV[2] - p );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , stressV[3] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , stressV[4] );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , stressV[5] );
   }
 }
 
