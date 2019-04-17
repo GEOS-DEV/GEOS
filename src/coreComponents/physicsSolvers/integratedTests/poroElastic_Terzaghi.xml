@@ -119,13 +119,13 @@
 
   <Constitutive>
   
-      <LinearElasticIsotropic name="shale"
-                              density0="2700"
-                              BulkModulus0="61.9e6"
-                              ShearModulus0="28.57e6"
+      <PoroLinearElasticIsotropic name="shale"
+                              defaultDensity="2700"
+                              defaultBulkModulus="61.9e6"
+                              defaultShearModulus="28.57e6"
                               BiotCoefficient="1"
+                              compressibility="1.6155088853e-08"
                               referencePressure="2.125e6"
-                              compressibility="3e-10"
                               />
 
     <CompressibleSinglePhaseFluid name="water"
