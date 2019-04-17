@@ -25,7 +25,11 @@ respectively.
 The case of a mass matrix, where every element is linked only to itself, is an
 example when there are no connectors, i.e. these have to be set to none.
 
-DoFs are handled through sparse matrices (see CSR description ...).
+DoFs are handled through sparse matrices.
+Inside the node, a simple compress row storage (CRS) matrix type is implemented
+in the class itself and used to collect connectivity-location information.
+Among nodes, the ``ParallelMatrix`` data structure, i.e. a distributed CSR, is
+used.
 CSR matrices contain information about the sparsity pattern only, thus binary
 matrices are used.
 
@@ -48,19 +52,25 @@ The main functionalities of ``DoF Manager`` are:
 * ``addField``: creates a new set of DoF, labeled ``field``, with specific
   ``location`` and ``connectivity``.
   Default number of ``components`` is ``1``, like for pressure in flux.
+  Default ``regions`` is the empty string, meaning all domain.
 
  .. code-block:: c
 
   void addField(string const & field,
                 Location const location,
                 Connectivity const connectivity,
-                localIndex const components = 1,
-                string_array const & regions = string_array() );
+                localIndex const components,
+                string_array const & regions);
 
 * ``addCoupling``: creates a coupling between two fields (``rowField`` and
-  ``colField``) according to a given ``connectivity``.
-  It can creates also the coupling between ``colField`` and ``rowField``, i.e.
-  it transposes the rectangular sparsity pattern.
+  ``colField``) according to a given ``connectivity`` in the regions defined
+  by ``regions``.
+  Of course, both fields (row and column) must have already been defined on
+  the regions where is required the coupling among them.
+  Default value for ``regions`` is the whole intersection between the regions
+  where the first and the second fields are defined.
+  This method can create also the coupling between ``colField`` and
+  ``rowField``, i.e. the transpose of the rectangular sparsity pattern.
   This behaviour is avoided by default, but can be activated setting
   ``symmetric`` to ``true``.
 
@@ -69,7 +79,31 @@ The main functionalities of ``DoF Manager`` are:
   void addCoupling(string const & rowField,
                    string const & colField,
                    Connectivity const connectivity,
-                   bool const symmetric = false);
+                   string_array const & regions,
+                   bool const symmetric);
+
+* ``createPermutation``: creates the permutation matrix mapping the field-based
+  numbering (the default) to the MPI rank-based numbering.
+  Every rank numbers all its unknowns before to move to the next process.
+
+ .. code-block:: c
+
+  void createPermutation( ParallelMatrix & permutation ) const;
+
+* ``permuteSparsityPattern``: permute the global sparsity pattern (once it is
+  formed) according to a permutation matrix.
+
+ .. code-block:: c
+
+  void permuteSparsityPattern( ParallelMatrix const & locLocDistr,
+                               ParallelMatrix const & permutation,
+                               ParallelMatrix & permutedMatrix ) const;
+
+* ``cleanUp``: releases internal memory.
+
+ .. code-block:: c
+
+  void cleanUp() const;
 
 Minor methods are:
 
@@ -80,7 +114,7 @@ Minor methods are:
 
  .. code-block:: c
 
-  globalIndex numGlobalDofs( string const & field = "all" ) const;
+  globalIndex numGlobalDofs( string const & field = "" ) const;
 
 * ``numLocalDofs``: returns the number of DoFs on this process for the
   specified ``field``.
@@ -89,7 +123,7 @@ Minor methods are:
 
  .. code-block:: c
 
-  localIndex numLocalDofs( string const & field = "all" ) const;
+  localIndex numLocalDofs( string const & field = "" ) const;
 
 * ``getSparsityPattern``: gets the sparsity ``pattern`` for the given
   ``rowField`` and ``colField``.
@@ -98,8 +132,8 @@ Minor methods are:
  .. code-block:: c
 
   void getSparsityPattern( SparsityPattern & pattern,
-                           string const & rowField = "all",
-                           string const & colField = "all") const;
+                           string const & rowField = "",
+                           string const & colField = "") const;
 
 * ``getIndices``: gets global ``indices`` for DoFs with a given local ``index``
   and linked by a specific ``connectivity``.
@@ -115,12 +149,30 @@ Minor methods are:
                    localIndex const region,
                    localIndex const subregion,
                    localIndex const index,
-                   string const & field = "all") const;
+                   string const & field = "") const;
 
   void getIndices( globalIndex_array & indices,
                    Connectivity const connectivity,
                    localIndex const index,
-                   string const & field = "all") const;
+                   string const & field = "") const;
+
+* ``printConnectivityLocationPattern``: prints the connectivity-location
+  pattern for ``field``.
+  Unless a filename is provided, the default behaviour is to print on screen.
+
+ .. code-block:: c
+
+  void printConnectivityLocationPattern( string const & field,
+                                         string const & fileName = "" ) const;
+
+
+* ``printParallelMatrix``: prints a ``ParallelMatrix`` on the file named
+  ``filename`` using MatrixMarket format (MTX file).
+
+ .. code-block:: c
+
+  void printParallelMatrix( ParallelMatrix const & matrix,
+                            string const & filename ) const;
 
 Example
 =======
@@ -142,7 +194,7 @@ pressure), being the flux computation based on the pressure on the two adjacent
 elements.
 
 .. _meshFig:
-.. figure:: /coreComponents/linearAlgebraInterface/docs/images/mesh.svg
+.. figure:: /coreComponents/linearAlgebraInterface/docs/images/mesh2D.svg
    :align: center
    :width: 250
    :figclass: align-center
@@ -172,3 +224,65 @@ and the matrix itself, i.e. :math:`\mathsf{P = C_L^T C_L}`.
    Sparsity pattern of the global matrix, where red and green entries are
    related to the displacement field and to the pressure field, respectively.
    Blue entries represent coupling blocks.
+
+Real mesh and patterns
+======================
+
+Now we build the pattern of the Jacobian matrix for a simple 3D mesh, shown in
+:numref:`meshCubeFig`. Fields are:
+
+- displacement (location: node, connectivity: element) defined on the blue,
+  orange and red regions;
+- pressure (location: element, connectivity: face) defined on the green, orange
+  and red regions;
+- mass matrix (location: element, connectivity: element) defined on the green
+  region only.
+
+Moreover, following coupling are imposed:
+
+- displacement-pressure (connectivity: element) on the orange region only;
+- pressure-mass matrix and transpose (connectivity: element) everywhere it is
+  possibile.
+
+.. _meshCubeFig:
+.. figure:: /coreComponents/linearAlgebraInterface/docs/images/meshCube3D.svg
+   :align: center
+   :width: 400
+   :figclass: align-center
+
+   Real mesh used to compute the Jacobian pattern.
+
+:numref:`globalPatterFig` shows the global pattern with the field-based
+ordering of unknowns.
+Different colors mean different fields.
+Red unkwnons are associated with displacement, yellow ones with pressure and
+blue ones with mass matrix.
+Orange means the coupling among displacement and pressure, while green is the
+symmetric coupling among pressure and mass matrix.
+
+.. _globalPatterFig:
+.. figure:: /coreComponents/linearAlgebraInterface/docs/images/global.svg
+   :align: center
+   :width: 400
+   :figclass: align-center
+
+   Global pattern with field-based ordering.
+   Red is associated with displacement unknowns, yellow with pressure ones and
+   blue with those of mass matrix field.
+   Orange means the coupling among displacement and pressure, while green is
+   the symmetric coupling among pressure and mass matrix.
+
+:numref:`permutedPatterFig` shows the global pattern with the MPI rank-based
+ordering of unknowns.
+In this case, just two processes are used.
+Again, different colors indicate different ranks.
+
+.. _permutedPatterFig:
+.. figure:: /coreComponents/linearAlgebraInterface/docs/images/permutedGlobal.svg
+   :align: center
+   :width: 400
+   :figclass: align-center
+
+   Global pattern with MPI rank-based ordering.
+   Red unkwnons are owned by rank 0 and green ones by rank 1.
+   Blue indicates the coupling among the two processes.

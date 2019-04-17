@@ -65,8 +65,8 @@ VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
 }
 
 std::unique_ptr<ConstitutiveBase>
-VanGenuchtenCapillaryPressure::DeliverClone(string const & name,
-					   ManagedGroup * const parent) const
+VanGenuchtenCapillaryPressure::DeliverClone( string const & name,
+                                             ManagedGroup * const parent ) const
 {
   std::unique_ptr< VanGenuchtenCapillaryPressure > clone = std::make_unique<VanGenuchtenCapillaryPressure>( name, parent );
 
@@ -115,16 +115,16 @@ void VanGenuchtenCapillaryPressure::PostProcessInput()
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
     GEOS_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 0 || m_phaseCapPressureExponentInv[ip] > 1.0)
-		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "VanGenuchtenCapillaryPressure: invalid exponent inverse value: " << m_phaseCapPressureExponentInv[ip] );
 
     GEOS_ERROR_IF(    (m_phaseCapPressureMultiplier[ip] < 0.0)
-		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "VanGenuchtenCapillaryPressure: invalid entry pressure: " << m_phaseCapPressureMultiplier[ip] );
 
     GEOS_ERROR_IF(    (m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2)
-		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
-                   "BrooksCoreyCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon );
+                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+                   "VanGenuchtenCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon );
 
   }
 
@@ -144,7 +144,7 @@ void VanGenuchtenCapillaryPressure::BatchUpdate( arrayView2d<real64 const> const
                                                                            phaseMinVolumeFraction,
                                                                            phaseCapPressureExponentInv,
                                                                            phaseCapPressureMultiplier,
-									   capPressureEpsilon,
+                                                                           capPressureEpsilon,
                                                                            m_volFracScale );
 }
 
@@ -162,11 +162,11 @@ void VanGenuchtenCapillaryPressure::PointUpdate( arraySlice1d<real64 const> cons
            phaseVolFraction,
            capPressure,
            dCapPressure_dVolFrac,
-	   m_phaseOrder,
+           m_phaseOrder,
            m_phaseMinVolumeFraction,
            m_phaseCapPressureExponentInv,
            m_phaseCapPressureMultiplier,
-	   m_capPressureEpsilon,
+           m_capPressureEpsilon,
            m_volFracScale );
 }
 
